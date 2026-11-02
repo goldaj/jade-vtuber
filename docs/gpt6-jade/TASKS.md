@@ -3,6 +3,17 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## Contre-revue Astra finale — 2 novembre 2026
+- Conservation vérifiée des 324 chemins suivis de la version intégrée et des 103
+  objets LFS ; aucun changement runtime/configuration/tests/dépendances dû à la
+  migration publique, à fins de ligne près. Les 84 tests et la démo réussissent.
+- Scans publics et contrôle des sauvegardes privées réalisés ; aucun secret connu
+  détecté. Les limites binaires, deux écarts fonctionnels hérités et le renforcement
+  nécessaire du contrôle CI sont décrits dans
+  [la reprise Terra](../migration/2026-11-02/08-ASTRA-CONTROLE-DEPOT-PUBLIC.md).
+- Aucun correctif applicatif effectué pendant cette passe ; arrêt de la revue et
+  poursuite éventuelle sous Terra sur `develop`.
+
 ## Consolidation sur une seule branche — 2 novembre 2026
 - `main` réunit le moteur, les configurations d'exemple, la documentation et les
   ressources 2D. Les anciennes branches ont été comparées aux sources intégrées ;

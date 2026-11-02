@@ -11,6 +11,7 @@ Cet index est créé le 2 novembre 2026, avant les modifications documentaires d
 | [Exécution Terra](2026-11-02-execution.md) | Demande et suivi de l’intégration actuelle | Heures individuelles non fournies ; exécution en cours |
 | [Préparation publique](2026-11-02-publication.md) | Demande de nettoyage, suppression du clone et état de publication | Heures individuelles indisponibles ; ne présente pas les données privées |
 | [Nouveau dépôt officiel](2026-11-02-nouveau-depot.md) | Demande de création d’un dépôt public sans historique et d’une sauvegarde privée | Échanges accessibles uniquement ; heures individuelles absentes |
+| [Contrôle final Astra](2026-11-02-astra-final.md) | Demande de contrôle, instruction de suivi et synthèse de la vérification du dépôt public | Revue documentaire et technique ; pas de nouvelle recette réelle des connecteurs |
 | Documents supplémentaires de `develop` | Audits du 30 octobre et pistes migrées du 1er novembre : à conserver lors de l’intégration | Ces documents sont encore sur la branche cible ; leur provenance est décrite dans le dossier de migration |
 
 Le chat antérieur « Analyser le projet AI VTuber » a été retrouvé. Seule une page récente a été consultée : elle concerne la modélisation 2D, hors périmètre de cette intervention. Son historique complet n’a pas été récupéré ni recopié. Les échanges ChatGPT ayant produit la refonte ne sont disponibles ici qu’à travers les documents du dépôt et les descriptions de PR ; aucune transcription supplémentaire n’est inventée.

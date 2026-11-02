@@ -11,6 +11,12 @@ reste la branche destinée aux versions de production ; son existence ne signifi
 pas qu’une production est déjà active. Intégrer ultérieurement les changements
 validés de `develop` vers `main` selon les instructions du propriétaire.
 
+La contre-revue Astra du dépôt public est consignée dans le
+[rapport de reprise Terra](docs/migration/2026-11-02/08-ASTRA-CONTROLE-DEPOT-PUBLIC.md).
+Pour cette reprise, le propriétaire demande de terminer la revue puis de laisser
+Terra exécuter la suite. Si le chat est relancé alors qu'il est encore sous Astra,
+demander simplement le passage à Terra avant de poursuivre les travaux.
+
 Ne jamais committer de secrets, fichiers de configuration privés, enregistrements ni transcriptions. La configuration privée est externe au dépôt et peut être sélectionnée avec `JADE_SECRETS_FILE`. Ne pas divulguer son contenu. Ne pas activer de connecteur, microphone ou appel payant sans demande explicite.
 
 Sous Windows, privilégier `D:\Codex` pour les outils, caches, temporaires et nouveaux espaces de travail ; respecter les chemins établis et jonctions de compatibilité. Ne pas perturber d’autres services.
