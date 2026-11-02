@@ -6,6 +6,11 @@ Avant toute modification, lire [l’index des conversations](docs/conversations/
 
 Ce dépôt rassemble le moteur et les sources de Jade. Respecter les branches et le travail existants ; vérifier l’état du dépôt avant toute modification. Les anciennes instructions sont conservées à titre historique dans [l’archive](docs/archives/AGENTS-avant-nouveau-depot.md).
 
+Les travaux hors production se font sur `develop` dans ce dépôt public. `main`
+reste la branche destinée aux versions de production ; son existence ne signifie
+pas qu’une production est déjà active. Intégrer ultérieurement les changements
+validés de `develop` vers `main` selon les instructions du propriétaire.
+
 Ne jamais committer de secrets, fichiers de configuration privés, enregistrements ni transcriptions. La configuration privée est externe au dépôt et peut être sélectionnée avec `JADE_SECRETS_FILE`. Ne pas divulguer son contenu. Ne pas activer de connecteur, microphone ou appel payant sans demande explicite.
 
 Sous Windows, privilégier `D:\Codex` pour les outils, caches, temporaires et nouveaux espaces de travail ; respecter les chemins établis et jonctions de compatibilité. Ne pas perturber d’autres services.
