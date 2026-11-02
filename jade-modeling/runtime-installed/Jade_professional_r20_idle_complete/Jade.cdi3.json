@@ -1,0 +1,482 @@
+{
+	"Version": 3,
+	"Parameters": [
+		{
+			"Id": "ParamAngleX",
+			"GroupId": "",
+			"Name": "Angle X"
+		},
+		{
+			"Id": "ParamAngleY",
+			"GroupId": "",
+			"Name": "Angle Y"
+		},
+		{
+			"Id": "ParamAngleZ",
+			"GroupId": "",
+			"Name": "Angle Z"
+		},
+		{
+			"Id": "ParamEyeLOpen",
+			"GroupId": "",
+			"Name": "EyeL Open"
+		},
+		{
+			"Id": "ParamEyeLSmile",
+			"GroupId": "",
+			"Name": "EyeL Smile"
+		},
+		{
+			"Id": "ParamEyeROpen",
+			"GroupId": "",
+			"Name": "EyeR Open"
+		},
+		{
+			"Id": "ParamEyeRSmile",
+			"GroupId": "",
+			"Name": "EyeR Smile"
+		},
+		{
+			"Id": "ParamEyeBallX",
+			"GroupId": "",
+			"Name": "Eyeball X"
+		},
+		{
+			"Id": "ParamEyeBallY",
+			"GroupId": "",
+			"Name": "Eyeball Y"
+		},
+		{
+			"Id": "ParamBrowLY",
+			"GroupId": "",
+			"Name": "BrowL Y"
+		},
+		{
+			"Id": "ParamBrowRY",
+			"GroupId": "",
+			"Name": "BrowR Y"
+		},
+		{
+			"Id": "ParamBrowLX",
+			"GroupId": "",
+			"Name": "BrowL X"
+		},
+		{
+			"Id": "ParamBrowRX",
+			"GroupId": "",
+			"Name": "BrowR X"
+		},
+		{
+			"Id": "ParamBrowLAngle",
+			"GroupId": "",
+			"Name": "BrowL Angle"
+		},
+		{
+			"Id": "ParamBrowRAngle",
+			"GroupId": "",
+			"Name": "BrowR Angle"
+		},
+		{
+			"Id": "ParamBrowLForm",
+			"GroupId": "",
+			"Name": "BrowL Form"
+		},
+		{
+			"Id": "ParamBrowRForm",
+			"GroupId": "",
+			"Name": "BrowR Form"
+		},
+		{
+			"Id": "ParamMouthForm",
+			"GroupId": "",
+			"Name": "Mouth Form"
+		},
+		{
+			"Id": "ParamMouthOpenY",
+			"GroupId": "",
+			"Name": "Mouth Open"
+		},
+		{
+			"Id": "ParamCheek",
+			"GroupId": "",
+			"Name": "Cheek"
+		},
+		{
+			"Id": "ParamBodyAngleX",
+			"GroupId": "",
+			"Name": "Body X"
+		},
+		{
+			"Id": "ParamBodyAngleY",
+			"GroupId": "",
+			"Name": "Body Y"
+		},
+		{
+			"Id": "ParamBodyAngleZ",
+			"GroupId": "",
+			"Name": "Body Z"
+		},
+		{
+			"Id": "ParamBreath",
+			"GroupId": "",
+			"Name": "Breath"
+		},
+		{
+			"Id": "ParamHairFront",
+			"GroupId": "",
+			"Name": "Hair Move Front"
+		},
+		{
+			"Id": "ParamHairSide",
+			"GroupId": "",
+			"Name": "Hair Move Side"
+		},
+		{
+			"Id": "ParamHairBack",
+			"GroupId": "",
+			"Name": "Hair Move Back"
+		},
+		{
+			"Id": "ParamEarSwingL",
+			"GroupId": "",
+			"Name": "Ear Swing L"
+		},
+		{
+			"Id": "ParamEarSwingR",
+			"GroupId": "",
+			"Name": "Ear Swing R"
+		},
+		{
+			"Id": "ParamAhogeSwing",
+			"GroupId": "",
+			"Name": "Ahoge Swing"
+		},
+		{
+			"Id": "ParamClothSwing",
+			"GroupId": "",
+			"Name": "Cloth Swing"
+		},
+		{
+			"Id": "ParamEarPoseL",
+			"GroupId": "",
+			"Name": "Ear Pose L"
+		},
+		{
+			"Id": "ParamEarPoseR",
+			"GroupId": "",
+			"Name": "Ear Pose R"
+		},
+		{
+			"Id": "ParamHairBackC",
+			"GroupId": "",
+			"Name": "Rear Hair Centre"
+		},
+		{
+			"Id": "ParamHairBackLInner",
+			"GroupId": "",
+			"Name": "Rear Hair L Inner"
+		},
+		{
+			"Id": "ParamHairBackLOuter",
+			"GroupId": "",
+			"Name": "Rear Hair L Outer"
+		},
+		{
+			"Id": "ParamHairBackRInner",
+			"GroupId": "",
+			"Name": "Rear Hair R Inner"
+		},
+		{
+			"Id": "ParamHairBackROuter",
+			"GroupId": "",
+			"Name": "Rear Hair R Outer"
+		},
+		{
+			"Id": "ParamHairBangC",
+			"GroupId": "",
+			"Name": "Hair Bang Centre Body"
+		},
+		{
+			"Id": "ParamHairBangCTip",
+			"GroupId": "",
+			"Name": "Hair Bang Centre Tip"
+		},
+		{
+			"Id": "ParamHairBangLInner",
+			"GroupId": "",
+			"Name": "Hair Bang L Inner Body"
+		},
+		{
+			"Id": "ParamHairBangLInnerTip",
+			"GroupId": "",
+			"Name": "Hair Bang L Inner Tip"
+		},
+		{
+			"Id": "ParamHairBangRInner",
+			"GroupId": "",
+			"Name": "Hair Bang R Inner Body"
+		},
+		{
+			"Id": "ParamHairBangRInnerTip",
+			"GroupId": "",
+			"Name": "Hair Bang R Inner Tip"
+		},
+		{
+			"Id": "ParamHairBangLOuter",
+			"GroupId": "",
+			"Name": "Hair Bang L Outer Body"
+		},
+		{
+			"Id": "ParamHairBangLOuterTip",
+			"GroupId": "",
+			"Name": "Hair Bang L Outer Tip"
+		},
+		{
+			"Id": "ParamHairBangROuter",
+			"GroupId": "",
+			"Name": "Hair Bang R Outer Body"
+		},
+		{
+			"Id": "ParamHairBangROuterTip",
+			"GroupId": "",
+			"Name": "Hair Bang R Outer Tip"
+		},
+		{
+			"Id": "ParamHairTempleL",
+			"GroupId": "",
+			"Name": "Hair Temple L Body"
+		},
+		{
+			"Id": "ParamHairTempleLTip",
+			"GroupId": "",
+			"Name": "Hair Temple L Tip"
+		},
+		{
+			"Id": "ParamHairTempleR",
+			"GroupId": "",
+			"Name": "Hair Temple R Body"
+		},
+		{
+			"Id": "ParamHairTempleRTip",
+			"GroupId": "",
+			"Name": "Hair Temple R Tip"
+		},
+		{
+			"Id": "ParamHairBackCTip",
+			"GroupId": "",
+			"Name": "Rear Hair Centre Tip"
+		},
+		{
+			"Id": "ParamHairBackLInnerTip",
+			"GroupId": "",
+			"Name": "Rear Hair L Inner Tip"
+		},
+		{
+			"Id": "ParamHairBackRInnerTip",
+			"GroupId": "",
+			"Name": "Rear Hair R Inner Tip"
+		},
+		{
+			"Id": "ParamHairBackLOuterTip",
+			"GroupId": "",
+			"Name": "Rear Hair L Outer Tip"
+		},
+		{
+			"Id": "ParamHairBackROuterTip",
+			"GroupId": "",
+			"Name": "Rear Hair R Outer Tip"
+		},
+		{
+			"Id": "ParamHairBackCLDetail",
+			"GroupId": "",
+			"Name": "Rear C Left Detail"
+		},
+		{
+			"Id": "ParamHairBackCCDetail",
+			"GroupId": "",
+			"Name": "Rear C Centre Detail"
+		},
+		{
+			"Id": "ParamHairBackCRDetail",
+			"GroupId": "",
+			"Name": "Rear C Right Detail"
+		},
+		{
+			"Id": "ParamHairBackLInnerUDetail",
+			"GroupId": "",
+			"Name": "Rear L Inner Upper Detail"
+		},
+		{
+			"Id": "ParamHairBackLInnerDDetail",
+			"GroupId": "",
+			"Name": "Rear L Inner Lower Detail"
+		},
+		{
+			"Id": "ParamHairBackRInnerUDetail",
+			"GroupId": "",
+			"Name": "Rear R Inner Upper Detail"
+		},
+		{
+			"Id": "ParamHairBackRInnerDDetail",
+			"GroupId": "",
+			"Name": "Rear R Inner Lower Detail"
+		},
+		{
+			"Id": "ParamHairBackLOuterUDetail",
+			"GroupId": "",
+			"Name": "Rear L Outer Upper Detail"
+		},
+		{
+			"Id": "ParamHairBackLOuterMDetail",
+			"GroupId": "",
+			"Name": "Rear L Outer Middle Detail"
+		},
+		{
+			"Id": "ParamHairBackLOuterDDetail",
+			"GroupId": "",
+			"Name": "Rear L Outer Lower Detail"
+		},
+		{
+			"Id": "ParamHairBackROuterUDetail",
+			"GroupId": "",
+			"Name": "Rear R Outer Upper Detail"
+		},
+		{
+			"Id": "ParamHairBackROuterMDetail",
+			"GroupId": "",
+			"Name": "Rear R Outer Middle Detail"
+		},
+		{
+			"Id": "ParamHairBackROuterDDetail",
+			"GroupId": "",
+			"Name": "Rear R Outer Lower Detail"
+		}
+	],
+	"ParameterGroups": [],
+	"Parts": [
+		{
+			"Id": "PartJAD_ROOT",
+			"Name": "00_ROOT"
+		},
+		{
+			"Id": "PartJAD_HAIR_BACK",
+			"Name": "10_HAIR_BACK"
+		},
+		{
+			"Id": "PartJAD_BODY",
+			"Name": "20_BODY"
+		},
+		{
+			"Id": "PartJAD_HEAD",
+			"Name": "30_HEAD"
+		},
+		{
+			"Id": "PartJAD_FX",
+			"Name": "80_FX"
+		},
+		{
+			"Id": "PartJAD_ARCHIVE",
+			"Name": "99_ARCHIVE_NO_EXPORT"
+		},
+		{
+			"Id": "PartJAD_HAIR_BACK_L",
+			"Name": "11_HAIR_BACK_L"
+		},
+		{
+			"Id": "PartJAD_HAIR_BACK_C",
+			"Name": "12_HAIR_BACK_C"
+		},
+		{
+			"Id": "PartJAD_HAIR_BACK_R",
+			"Name": "13_HAIR_BACK_R"
+		},
+		{
+			"Id": "PartJAD_BODY_SKIN",
+			"Name": "21_BODY_SKIN"
+		},
+		{
+			"Id": "PartJAD_ARM_L",
+			"Name": "22_ARM_L"
+		},
+		{
+			"Id": "PartJAD_ARM_R",
+			"Name": "23_ARM_R"
+		},
+		{
+			"Id": "PartJAD_DRESS",
+			"Name": "24_DRESS"
+		},
+		{
+			"Id": "PartJAD_EAR_L",
+			"Name": "31_EAR_L"
+		},
+		{
+			"Id": "PartJAD_EAR_R",
+			"Name": "32_EAR_R"
+		},
+		{
+			"Id": "PartJAD_FACE",
+			"Name": "33_FACE"
+		},
+		{
+			"Id": "PartJAD_HAIR_FRONT",
+			"Name": "40_HAIR_FRONT"
+		},
+		{
+			"Id": "PartJAD_DRESS_SLEEVE_L",
+			"Name": "25_DRESS_SLEEVE_L"
+		},
+		{
+			"Id": "PartJAD_DRESS_SLEEVE_R",
+			"Name": "26_DRESS_SLEEVE_R"
+		},
+		{
+			"Id": "PartJAD_DRESS_SKIRT",
+			"Name": "27_DRESS_SKIRT"
+		},
+		{
+			"Id": "PartJAD_BROW_L",
+			"Name": "34_BROW_L"
+		},
+		{
+			"Id": "PartJAD_BROW_R",
+			"Name": "35_BROW_R"
+		},
+		{
+			"Id": "PartJAD_EYE_L",
+			"Name": "36_EYE_L"
+		},
+		{
+			"Id": "PartJAD_EYE_R",
+			"Name": "37_EYE_R"
+		},
+		{
+			"Id": "PartJAD_MOUTH",
+			"Name": "38_MOUTH"
+		},
+		{
+			"Id": "PartJAD_HAIR_BANG_L",
+			"Name": "41_HAIR_BANG_L"
+		},
+		{
+			"Id": "PartJAD_HAIR_BANG_C",
+			"Name": "42_HAIR_BANG_C"
+		},
+		{
+			"Id": "PartJAD_HAIR_BANG_R",
+			"Name": "43_HAIR_BANG_R"
+		},
+		{
+			"Id": "PartJAD_HAIR_TEMPLE_L",
+			"Name": "44_HAIR_TEMPLE_L"
+		},
+		{
+			"Id": "PartJAD_HAIR_TEMPLE_R",
+			"Name": "45_HAIR_TEMPLE_R"
+		},
+		{
+			"Id": "PartJAD_HAIR_AHOGE",
+			"Name": "46_HAIR_AHOGE"
+		}
+	]
+}

@@ -1,0 +1,67 @@
+{
+  "schema": "jade-publication-readiness-v1",
+  "date": "2026-10-28",
+  "release_authorized": false,
+  "source_repo": "goldaj/jade-ai-vtuber",
+  "source_branch": "codex/chat-gpt6-jade-rebuild",
+  "contributor_branch": "research/gpt6-jade-publication-readiness-20261028",
+  "public_target": "UNDECIDED_OWNER_DECISION_REQUIRED",
+  "scope": "non_destructive_scaffolding_only",
+  "known_history_paths": [
+    "master:.env",
+    "speechtotext-discord:.env"
+  ],
+  "artifact_policy": "no_art_or_original_prompt_in_preview",
+  "checks": [
+    {
+      "id": "full_private_backup_with_restore",
+      "status": "BLOCKED_OWNER_LOCAL_ACTION"
+    },
+    {
+      "id": "full_all_ref_secret_scan",
+      "status": "NOT_PERFORMED"
+    },
+    {
+      "id": "secret_inventory_and_provider_revocation",
+      "status": "NOT_PERFORMED"
+    },
+    {
+      "id": "review_old_git_commits_branches_tags_ci_artifacts_forks_lfs",
+      "status": "NOT_PERFORMED"
+    },
+    {
+      "id": "code_identity_endpoint_and_personal_data_review",
+      "status": "NOT_PERFORMED"
+    },
+    {
+      "id": "art_rights_licenses_and_model_provenance",
+      "status": "NOT_PERFORMED"
+    },
+    {
+      "id": "new_clean_public_snapshot_review",
+      "status": "NOT_PERFORMED"
+    },
+    {
+      "id": "fresh_clone_offline_runtime_and_ci",
+      "status": "NOT_PERFORMED"
+    },
+    {
+      "id": "public_software_license_owner_choice",
+      "status": "NOT_PERFORMED"
+    },
+    {
+      "id": "independent_security_review",
+      "status": "NOT_PERFORMED"
+    },
+    {
+      "id": "explicit_owner_approval",
+      "status": "NOT_PERFORMED"
+    }
+  ],
+  "reasons": [
+    "Original private Git repo and LFS preserved",
+    "Root .env still appears in historic branches",
+    "Current clean source cannot prove entire history clean",
+    "Approval never inferred from successful unit tests"
+  ]
+}

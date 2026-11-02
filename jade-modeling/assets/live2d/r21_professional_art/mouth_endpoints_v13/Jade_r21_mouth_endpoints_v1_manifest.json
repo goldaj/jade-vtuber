@@ -1,0 +1,88 @@
+{
+  "schema": "jade.r21.mouth-endpoint-art.v1",
+  "status": "ok",
+  "open_mouth_source": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\Jade_r21_professional_master_v3_mouth_open_ah_v2_chroma.png",
+  "mapping_report": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v3_assets_v2\\Jade_r21_master_v3_asset_build.json",
+  "mouth_source_bbox": [
+    501,
+    374,
+    547,
+    405
+  ],
+  "method": {
+    "neutral": "keep the existing painted neutral line at MouthOpenY=0",
+    "transition": "fade/deform neutral line while opening separated interior art",
+    "open": "interior, tongue, upper teeth and outline visible at MouthOpenY=1",
+    "mouth_form": "deform the separated open set across frown/neutral/smile"
+  },
+  "layers": [
+    {
+      "name": "JAD_R21_MOUTH_SOCKET_SKIN",
+      "group": "30_SKIN",
+      "z": 413,
+      "role": "mouth_socket_skin_underlay",
+      "file": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\mouth_endpoints_v13\\JAD_R21_MOUTH_SOCKET_SKIN.png",
+      "x": 1801,
+      "y": 837,
+      "width": 216,
+      "height": 216
+    },
+    {
+      "name": "JAD_R21_MOUTH_OPEN_INTERIOR",
+      "group": "50_FACE_FEATURES",
+      "z": 622,
+      "role": "mouth_open_interior",
+      "file": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\mouth_endpoints_v13\\JAD_R21_MOUTH_OPEN_INTERIOR.png",
+      "x": 1801,
+      "y": 837,
+      "width": 216,
+      "height": 216
+    },
+    {
+      "name": "JAD_R21_MOUTH_OPEN_TONGUE",
+      "group": "50_FACE_FEATURES",
+      "z": 623,
+      "role": "mouth_open_tongue",
+      "file": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\mouth_endpoints_v13\\JAD_R21_MOUTH_OPEN_TONGUE.png",
+      "x": 1801,
+      "y": 837,
+      "width": 216,
+      "height": 216
+    },
+    {
+      "name": "JAD_R21_MOUTH_OPEN_TEETH_UPPER",
+      "group": "50_FACE_FEATURES",
+      "z": 624,
+      "role": "mouth_open_upper_teeth",
+      "file": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\mouth_endpoints_v13\\JAD_R21_MOUTH_OPEN_TEETH_UPPER.png",
+      "x": 1801,
+      "y": 837,
+      "width": 216,
+      "height": 216
+    },
+    {
+      "name": "JAD_R21_MOUTH_OPEN_OUTLINE",
+      "group": "50_FACE_FEATURES",
+      "z": 625,
+      "role": "mouth_open_outline",
+      "file": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\mouth_endpoints_v13\\JAD_R21_MOUTH_OPEN_OUTLINE.png",
+      "x": 1801,
+      "y": 837,
+      "width": 216,
+      "height": 216
+    },
+    {
+      "name": "JAD_R21_MOUTH_NEUTRAL_CLEAN",
+      "group": "50_FACE_FEATURES",
+      "z": 620,
+      "role": "neutral_mouth_clean",
+      "file": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\mouth_endpoints_v13\\JAD_R21_MOUTH_NEUTRAL_CLEAN.png",
+      "x": 1837,
+      "y": 885,
+      "width": 156,
+      "height": 96
+    }
+  ],
+  "open_ah_preview": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\mouth_endpoints_v13\\Jade_r21_mouth_open_ah_preview.png",
+  "rig_manifest_used_for_preview": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_rig_layers_v1\\Jade_r21_rig_layers_v1_manifest.json"
+}

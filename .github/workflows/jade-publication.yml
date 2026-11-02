@@ -1,0 +1,33 @@
+name: Jade publication hygiene (current files)
+on:
+  pull_request:
+    paths:
+      - "config/profiles/**"
+      - "src/utility/**"
+      - "src/jade_runtime/assets.py"
+      - "tests/test_jade_publication_*.py"
+      - "tools/jade_publication_*.py"
+      - "tools/jade_ci_preflight.py"
+      - "docs/publication/**"
+      - ".github/workflows/jade-publication.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Dependency-free Python/TOML and tracked-file check
+        run: python tools/jade_ci_preflight.py
+      - name: Offline configuration tests
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_jade_publication_*.py' -v
+      # Do not scan history on the shallow PR checkout: release gate is separate.

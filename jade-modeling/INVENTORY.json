@@ -1,0 +1,18 @@
+{
+  "selection_policy": "Only the most recent relevant editable sources, current candidate/native baseline, latest valid installed runtime, current documentation and required tool dependencies. Original local archives are unchanged.",
+  "selected_files": 202,
+  "selected_bytes": 435192199,
+  "excluded_duplicate_files": 3186,
+  "excluded_duplicate_bytes": 4588117944,
+  "removed_from_current_git_tree": 367,
+  "originals_preserved": true,
+  "excluded_categories": [
+    "Previous Cubism/Krita/PSD checkpoints and backups",
+    "Earlier runtime exports and installed model backups",
+    "Historical reports, screenshots, recordings and generated fixtures",
+    "Unrelated older tool entry points; required helper modules retained",
+    "Application distributions, compiled executables and installed dependencies",
+    "OBS streaming credentials, preserved only in the protected vault"
+  ],
+  "selection_manifest": "ASSET_MANIFEST.json"
+}

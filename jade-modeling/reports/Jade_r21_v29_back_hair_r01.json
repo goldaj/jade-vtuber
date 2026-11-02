@@ -1,0 +1,107 @@
+{
+  "status": "candidate_requires_native_gate",
+  "source_sha256": "F414CDC057CEE33036F975F0455EE43846988DECFB05ACACC0397AC91A6C5208",
+  "output_sha256": "80BEFA0F8F38FCA9320AE6F63418D1E8946D88A86D335D8EEF132C73DDFF3953",
+  "restored_existing": [
+    "JAD_R21_HAIR_BACK_L_OUTER",
+    "JAD_R21_HAIR_BACK_L_MID_OUTER",
+    "JAD_R21_HAIR_BACK_L_LOWER",
+    "JAD_R21_HAIR_BACK_R_OUTER",
+    "JAD_R21_HAIR_BACK_R_MID_OUTER",
+    "JAD_R21_HAIR_BACK_R_LOWER"
+  ],
+  "upper_segments_preserved": [
+    "JAD_R21_HAIR_BACK_L_MID_OUTER",
+    "JAD_R21_HAIR_BACK_R_OUTER",
+    "JAD_R21_HAIR_BACK_R_MID_OUTER"
+  ],
+  "new_meshes": [
+    {
+      "name": "JAD_R21_HAIR_BACK_L_MID_OUTER_PAINT_RESTORED",
+      "source_ref": "#1544",
+      "drawable_ref": "#1546",
+      "part_ref": "#1050",
+      "parent_ref": "#1084",
+      "coord_type_ref": "#756",
+      "vertices": 60,
+      "triangles": 90,
+      "draw_order": 500,
+      "bounds": [
+        1290.54639,
+        1012.08295,
+        1506.79028,
+        1523.83875
+      ]
+    },
+    {
+      "name": "JAD_R21_HAIR_BACK_R_OUTER_PAINT_RESTORED",
+      "source_ref": "#1549",
+      "drawable_ref": "#1551",
+      "part_ref": "#1050",
+      "parent_ref": "#1055",
+      "coord_type_ref": "#756",
+      "vertices": 36,
+      "triangles": 46,
+      "draw_order": 500,
+      "bounds": [
+        2410.08325,
+        1053.66663,
+        2641.16675,
+        1492.33337
+      ]
+    },
+    {
+      "name": "JAD_R21_HAIR_BACK_R_MID_OUTER_PAINT_RESTORED",
+      "source_ref": "#1554",
+      "drawable_ref": "#1556",
+      "part_ref": "#1050",
+      "parent_ref": "#1055",
+      "coord_type_ref": "#756",
+      "vertices": 89,
+      "triangles": 126,
+      "draw_order": 500,
+      "bounds": [
+        2308.29834,
+        950.0,
+        2534.28809,
+        1641.703
+      ]
+    },
+    {
+      "name": "JAD_R21_HAIR_NECK_OVERLAP_L",
+      "source_ref": "#1559",
+      "drawable_ref": "#1561",
+      "part_ref": "#1050",
+      "parent_ref": "#1378",
+      "coord_type_ref": "#756",
+      "vertices": 27,
+      "triangles": 32,
+      "draw_order": 499,
+      "bounds": [
+        1710,
+        960,
+        1850,
+        1138
+      ]
+    },
+    {
+      "name": "JAD_R21_HAIR_NECK_OVERLAP_R",
+      "source_ref": "#1564",
+      "drawable_ref": "#1566",
+      "part_ref": "#1050",
+      "parent_ref": "#1378",
+      "coord_type_ref": "#756",
+      "vertices": 27,
+      "triangles": 32,
+      "draw_order": 499,
+      "bounds": [
+        1990,
+        960,
+        2130,
+        1138
+      ]
+    }
+  ],
+  "all_raster_bytes_preserved": true,
+  "remaining": "Native seam gate; hidden roots of bottom locks and independent dynamics are not finalized."
+}

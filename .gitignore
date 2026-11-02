@@ -1,0 +1,34 @@
+chat_exchange.py
+*.json
+__pycache__/
+logs/*
+audio/*
+audio.mp3
+subtitle.txt
+.env
+.venv
+src/twitch/get_twitch_access_token_manually.py
+
+# Private configuration and local generated files
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+.private/
+.ruff_cache/
+jade-modeling/reports/*.avi
+jade-modeling/reports/*.mp4
+jade-modeling/tools/third-party/
+!jade-modeling/**/*.json
+
+# Future public release: private materials stay outside the public source tree.
+config/private/
+private/
+secrets/
+.secrets/
+*.local.toml
+*.private.toml
+*.secret.toml
+*.env.backup

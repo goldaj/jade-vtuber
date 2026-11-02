@@ -1,0 +1,60 @@
+{
+  "schema": "jade.r21.eye-endpoint-art.v1",
+  "status": "ok",
+  "closed_source": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\Jade_r21_professional_master_v3_closed_eyes_v1_chroma.png",
+  "open_mapping_report": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v3_assets_v2\\Jade_r21_master_v3_asset_build.json",
+  "method": {
+    "open_eye": "deform continuously from EyeOpen=1 toward zero, then fade",
+    "closed_eye": "fade in the true painted endpoint only near EyeOpen=0",
+    "socket": "always visible behind both open and closed eye art",
+    "forbidden": "no simultaneous fully open and fully closed artwork"
+  },
+  "layers": [
+    {
+      "name": "JAD_R21_EYE_L_SOCKET_SKIN",
+      "group": "30_SKIN",
+      "z": 411,
+      "role": "eye_socket_skin_underlay",
+      "file": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\eye_endpoints_v7\\JAD_R21_EYE_L_SOCKET_SKIN.png",
+      "x": 1945,
+      "y": 681,
+      "width": 252,
+      "height": 192
+    },
+    {
+      "name": "JAD_R21_EYE_R_SOCKET_SKIN",
+      "group": "30_SKIN",
+      "z": 412,
+      "role": "eye_socket_skin_underlay",
+      "file": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\eye_endpoints_v7\\JAD_R21_EYE_R_SOCKET_SKIN.png",
+      "x": 1621,
+      "y": 681,
+      "width": 252,
+      "height": 192
+    },
+    {
+      "name": "JAD_R21_EYE_L_CLOSED_TRUE",
+      "group": "50_FACE_FEATURES",
+      "z": 605,
+      "role": "true_closed_eye_endpoint",
+      "file": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\eye_endpoints_v7\\JAD_R21_EYE_L_CLOSED_TRUE.png",
+      "x": 1945,
+      "y": 681,
+      "width": 252,
+      "height": 192
+    },
+    {
+      "name": "JAD_R21_EYE_R_CLOSED_TRUE",
+      "group": "50_FACE_FEATURES",
+      "z": 606,
+      "role": "true_closed_eye_endpoint",
+      "file": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\eye_endpoints_v7\\JAD_R21_EYE_R_CLOSED_TRUE.png",
+      "x": 1621,
+      "y": 681,
+      "width": 252,
+      "height": 192
+    }
+  ],
+  "closed_preview": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\eye_endpoints_v7\\Jade_r21_eye_endpoints_closed_preview.png",
+  "rig_manifest_used_for_preview": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v3_rig_layers_v1c\\Jade_r21_rig_layers_v1_manifest.json"
+}

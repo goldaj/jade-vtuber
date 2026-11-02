@@ -1,0 +1,15 @@
+{
+  "verified_manifest_files": 202,
+  "model_packages": 1,
+  "references_checked": 23,
+  "missing_references": [],
+  "parse_failures": [],
+  "packages": [
+    {
+      "model": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade.model3.json",
+      "references": 12,
+      "missing": 0,
+      "complete": true
+    }
+  ]
+}

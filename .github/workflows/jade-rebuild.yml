@@ -1,0 +1,55 @@
+name: Jade rebuild offline tests
+on:
+  push:
+    branches:
+      - codex/chat-gpt6-jade-rebuild
+      - research/gpt6-jade-publication-readiness-20261028
+      - codex/jade-runtime-integration-20261102
+      - develop
+      - main
+  pull_request:
+    branches:
+      - develop
+      - main
+  workflow_dispatch:
+
+jobs:
+  offline:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install locked dependencies including optional transports
+        run: |
+          python -m pip install --disable-pip-version-check poetry==2.2.1
+          poetry sync --only main --extras discord --extras mic --extras vts --extras discord-voice --no-interaction
+      - name: Compile Python
+        run: poetry run python -m compileall -q src main.py
+      - name: Run offline unit tests
+        run: poetry run python -m unittest discover -s tests -v
+      - name: Demo CLI smoke (must never call OpenAI)
+        shell: bash
+        run: |
+          printf '/exit\n' | poetry run python main.py
+      - name: Check non-OpenAI voice dependencies are absent
+        shell: bash
+        run: |
+          python - <<'PY'
+          import tomllib
+          with open("pyproject.toml", "rb") as f:
+              package = tomllib.load(f)
+          names = set(package["tool"]["poetry"]["dependencies"])
+          assert not names.intersection({"elevenlabs", "google-cloud-texttospeech",
+              "speechrecognition", "whisper", "faster-whisper", "pyttsx3"})
+          PY

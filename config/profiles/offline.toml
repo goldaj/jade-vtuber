@@ -1,0 +1,19 @@
+# Explicit opt-in: JADE_PROFILE=offline. Non-secret keys ONLY.
+[settings]
+JADE_LLM_MODEL = "gpt-4.1-mini"
+JADE_STT_MODEL = "gpt-4o-mini-transcribe"
+JADE_TTS_MODEL = "gpt-4o-mini-tts"
+JADE_TTS_VOICE = "coral"
+JADE_API_TIMEOUT = 20
+JADE_AUDIO_OUTPUT = "none"
+JADE_HISTORY_LIMIT = 24
+JADE_QUEUE_LIMIT = 64
+JADE_RANDOM_REPLY_RATE = 0.0
+JADE_TWITCH_ENABLED = false
+JADE_TWITCH_SEND = false
+JADE_DISCORD_ENABLED = false
+JADE_DISCORD_SEND = false
+JADE_DISCORD_VOICE_ENABLED = false
+JADE_VTS_ENABLED = false
+JADE_HTTP_ENABLED = false
+JADE_HTTP_PORT = 8765

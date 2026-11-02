@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=jade_r21_builder
+X-Python-2-Compatible=false
+Name=Jade r21 Source Builder
+Comment=Versioned Live2D art-source construction for Jade r21
+

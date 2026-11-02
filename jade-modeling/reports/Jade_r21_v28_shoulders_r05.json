@@ -1,0 +1,13 @@
+{
+  "status": "candidate_requires_native_gate",
+  "source_sha256": "37722EC3752392669D3FBE4DA63A309F35A8DCBC93208C7BAEA20549901663DA",
+  "output_sha256": "6AA8B90E0B9C992421DD07A2823F27AD34937E34481CEBC49782EFB549D568B5",
+  "master_png": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\Jade_r21_master_v3_canvas_3840x4160.png",
+  "master_sha256": "011B9D9C06190CE044120BA7640FEB575A0A76A10F620575BD90F2A20CBB3275",
+  "changed_meshes": [
+    "JAD_R21_HAIR_FRONT_PAINTED_TIP_L",
+    "JAD_R21_HAIR_FRONT_PAINTED_TIP_R"
+  ],
+  "bitmap_bytes_unchanged": true,
+  "diagnosis": "Both segmented disk LOCK assets also have alpha=0 over white tips; master RGBA has alpha=255. Native probe confirmed no broken texture binding."
+}

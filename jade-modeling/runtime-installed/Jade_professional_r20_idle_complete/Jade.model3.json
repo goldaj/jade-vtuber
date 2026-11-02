@@ -1,0 +1,59 @@
+{
+  "Version": 3,
+  "FileReferences": {
+    "Moc": "Jade.moc3",
+    "Textures": [
+      "Jade.4096/texture_00.png",
+      "Jade.4096/texture_01.png"
+    ],
+    "DisplayInfo": "Jade.cdi3.json",
+    "Expressions": [
+      {
+        "Name": "Smile",
+        "File": "expressions/Smile.exp3.json"
+      },
+      {
+        "Name": "Sad",
+        "File": "expressions/Sad.exp3.json"
+      },
+      {
+        "Name": "Angry",
+        "File": "expressions/Angry.exp3.json"
+      },
+      {
+        "Name": "Surprised",
+        "File": "expressions/Surprised.exp3.json"
+      },
+      {
+        "Name": "Blink",
+        "File": "expressions/Blink.exp3.json"
+      },
+      {
+        "Name": "WinkL",
+        "File": "expressions/WinkL.exp3.json"
+      },
+      {
+        "Name": "WinkR",
+        "File": "expressions/WinkR.exp3.json"
+      }
+    ],
+    "Physics": "Jade.physics3.json"
+  },
+  "Groups": [
+    {
+      "Target": "Parameter",
+      "Name": "EyeBlink",
+      "Ids": [
+        "ParamEyeLOpen",
+        "ParamEyeROpen"
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Name": "LipSync",
+      "Ids": [
+        "ParamMouthOpenY"
+      ]
+    }
+  ]
+}

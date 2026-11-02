@@ -1,0 +1,65 @@
+{
+  "schema": "jade.r21.chroma-master-assets.v1",
+  "status": "ok",
+  "source": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\Jade_r21_professional_master_v4_artifact_cleanup_chroma.png",
+  "key": {
+    "source_foreground_bbox": [
+      235,
+      39,
+      814,
+      1475
+    ],
+    "background_sample_count": 983223,
+    "fully_transparent_pixels": 985756,
+    "soft_edge_pixels": 14890
+  },
+  "mapping": {
+    "scale": 2.402506963788301,
+    "mapped_size": [
+      1391,
+      3450
+    ],
+    "mapped_offset": [
+      1224,
+      90
+    ],
+    "canvas": [
+      3840,
+      4160
+    ]
+  },
+  "semantic_pixel_counts": {
+    "hair": 737026,
+    "ears": 124809,
+    "skin": 403580,
+    "eye_l": 14115,
+    "eye_r": 13306,
+    "brow_l": 5026,
+    "brow_r": 2792,
+    "mouth": 5647,
+    "dress": 2119106,
+    "residual": 40358
+  },
+  "outputs": {
+    "transparent": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\Jade_r21_master_v3_transparent.png",
+    "canvas": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\Jade_r21_master_v3_canvas_3840x4160.png",
+    "semantic_preview": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\Jade_r21_master_v3_semantic_preview.png",
+    "report": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\Jade_r21_master_v3_asset_build.json"
+  },
+  "layers": {
+    "hair": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\layers_v1\\JAD_R21_HAIR.png",
+    "ears": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\layers_v1\\JAD_R21_EARS.png",
+    "skin": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\layers_v1\\JAD_R21_SKIN.png",
+    "eye_l": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\layers_v1\\JAD_R21_EYE_L.png",
+    "eye_r": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\layers_v1\\JAD_R21_EYE_R.png",
+    "brow_l": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\layers_v1\\JAD_R21_BROW_L.png",
+    "brow_r": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\layers_v1\\JAD_R21_BROW_R.png",
+    "mouth": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\layers_v1\\JAD_R21_MOUTH.png",
+    "dress": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\layers_v1\\JAD_R21_DRESS.png",
+    "residual": "C:\\Users\\<utilisateur>\\Documents\\Jade AI Streamer Project\\assets\\live2d\\r21_professional_art\\master_v4_assets_v1\\layers_v1\\JAD_R21_RESIDUAL.png"
+  },
+  "notes": [
+    "These are lossless semantic working layers from the approved master.",
+    "Hidden roots/overlaps and final Live2D lock partitioning remain a later art pass."
+  ]
+}

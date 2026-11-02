@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "jade-ai-vtuber"
+version = "0.1.0"
+description = "Jade VTuber runtime, OpenAI speech, Twitch, Discord and VTube Studio"
+authors = ["Jade contributors"]
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.14"
+openai = ">=1.100,<4"
+python-decouple = ">=3.8,<4"
+python-dotenv = ">=1,<2"
+requests = ">=2.32,<3"
+# Only transport / capture integrations, NOT alternative STT or TTS:
+discord-py = {version = ">=2.4,<3", optional = true}
+websockets = {version = ">=13,<17", optional = true}
+sounddevice = {version = ">=0.5,<1", optional = true}
+discord-ext-voice-recv = {version = ">=0.5,<1", optional = true}
+pynacl = {version = ">=1.5,<2", optional = true}
+
+[tool.poetry.extras]
+discord = ["discord-py"]
+vts = ["websockets"]
+mic = ["sounddevice"]
+discord-voice = ["discord-py", "discord-ext-voice-recv", "pynacl"]
+all = ["discord-py", "websockets", "sounddevice", "discord-ext-voice-recv", "pynacl"]
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8,<10"
+ruff = ">=0.7,<1"
+
+[build-system]
+requires = ["poetry-core>=2,<3"]
+build-backend = "poetry.core.masonry.api"

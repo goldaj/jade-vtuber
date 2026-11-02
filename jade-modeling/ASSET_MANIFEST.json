@@ -1,0 +1,1618 @@
+[
+  {
+    "path": "jade-modeling/CONTINUATION.md",
+    "source_group": "current-documentation",
+    "bytes": 4673,
+    "sha256": "74e2c22e0e4b5de136ec49cfafeacdd4f49d61f35a740417794cb6f09325aa47",
+    "storage": "git",
+    "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
+  },
+  {
+    "path": "jade-modeling/PLAN_MODELE_JADE.md",
+    "source_group": "current-documentation",
+    "bytes": 5532,
+    "sha256": "07eab620d2b95951caacc24d4ba71d120ac3d8ff295d4d63eb04c6cbe45615e7",
+    "storage": "git",
+    "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/Jade_r21_expression_sheet_v1.png",
+    "source_group": "current-art-input",
+    "bytes": 2042558,
+    "sha256": "73bbd5b7adb597dc8af2ccabcfbd7c8ae6a16f6d73d6019f5b84e4ee0cf18be2",
+    "storage": "git-lfs",
+    "selection_reason": "Current original art input for the native model or provenance of that input"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/Jade_r21_fullbody_restoration_chroma_v2.png",
+    "source_group": "current-art-input",
+    "bytes": 1367324,
+    "sha256": "91ead076350b191f8e1beec1012de96391e0b14c3cca957068ded7f20c80bc1a",
+    "storage": "git-lfs",
+    "selection_reason": "Current original art input for the native model or provenance of that input"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/Jade_r21_fullbody_restoration_v1.md",
+    "source_group": "current-art-input",
+    "bytes": 1839,
+    "sha256": "fd0422b76d951c3a961d397ed516c0403f308f7f06521b061d92e752abc84a58",
+    "storage": "git",
+    "selection_reason": "Current original art input for the native model or provenance of that input"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/Jade_r21_lowerbody_parts_v3.png",
+    "source_group": "current-art-input",
+    "bytes": 930469,
+    "sha256": "671ededd904dbcf6acb924233d501f632b2ccc1e090886464e3a7e4904ffa08c",
+    "storage": "git-lfs",
+    "selection_reason": "Current original art input for the native model or provenance of that input"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/Jade_r21_professional_master_v3_closed_eyes_v1_chroma.png",
+    "source_group": "current-art-input",
+    "bytes": 1597110,
+    "sha256": "1d102224fdd9f1dce52982991a3393fc45cf454ec0db94711c81650075b74b8f",
+    "storage": "git-lfs",
+    "selection_reason": "Current original art input for the native model or provenance of that input"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/Jade_r21_professional_master_v3_mouth_open_ah_v2_chroma.png",
+    "source_group": "current-art-input",
+    "bytes": 1707549,
+    "sha256": "a88d0a5c008bd5d349692bc8096bca06ca3674ea596fd744eecdd67c42dd357e",
+    "storage": "git-lfs",
+    "selection_reason": "Current original art input for the native model or provenance of that input"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/Jade_r21_professional_master_v4_artifact_cleanup_chroma.png",
+    "source_group": "current-art-input",
+    "bytes": 1646355,
+    "sha256": "87bb53d8afb65d6415ae16d83ed8847e86a93f664c08daadce62325736623059",
+    "storage": "git-lfs",
+    "selection_reason": "Current original art input for the native model or provenance of that input"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/Jade_r21_shoulders_underpaint_v1.png",
+    "source_group": "current-art-input",
+    "bytes": 1362475,
+    "sha256": "ab082edbe4b6638639ff06055fbeb2a4effef85812acd60858624ad0453460fe",
+    "storage": "git-lfs",
+    "selection_reason": "Current original art input for the native model or provenance of that input"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/Jade_r21_master_v3_asset_build.json",
+    "source_group": "current-art-components",
+    "bytes": 3592,
+    "sha256": "b6ee797f934bb8eb0fb114befde1bb67af94fb66cba38c30af39cb055af37a38",
+    "storage": "git",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/Jade_r21_master_v3_canvas_3840x4160.png",
+    "source_group": "current-art-components",
+    "bytes": 3761479,
+    "sha256": "6669cb4df63854b369869f69cab0892fc3e7660a90e1d35dc456264c0c02f345",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/Jade_r21_master_v3_semantic_preview.png",
+    "source_group": "current-art-components",
+    "bytes": 888096,
+    "sha256": "13a2112ef7ab2a0da99bf5573782b36759f4c4bbd6f03bea58293aab437d3477",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/Jade_r21_master_v3_transparent.png",
+    "source_group": "current-art-components",
+    "bytes": 975882,
+    "sha256": "26e9ccdc3dcf6ab2d486707b2b530d33e05d400ea3fbd8e7ce13d8623cc01c8a",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/layers_v1/JAD_R21_BROW_L.png",
+    "source_group": "current-art-components",
+    "bytes": 3681580,
+    "sha256": "7b20c200f55ccce82e653739ddebafa1ca9f1a1152c1a61daf0df94f50cd5620",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/layers_v1/JAD_R21_BROW_R.png",
+    "source_group": "current-art-components",
+    "bytes": 3680822,
+    "sha256": "0741578d4bdf251cd40f718c65ec93b76ed6f6d66f5038f3f71b442b21a6355d",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/layers_v1/JAD_R21_DRESS.png",
+    "source_group": "current-art-components",
+    "bytes": 3772842,
+    "sha256": "4ad745287b0f5a7a2dd82b1e597931963df9a37590a8170734e36d7fd54f5ff5",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/layers_v1/JAD_R21_EARS.png",
+    "source_group": "current-art-components",
+    "bytes": 3703344,
+    "sha256": "4f40f02d5d27192afec03758acc1aa572116525ddea97b18226b726b596d9da9",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/layers_v1/JAD_R21_EYE_L.png",
+    "source_group": "current-art-components",
+    "bytes": 3681515,
+    "sha256": "530393151a510c2cdd4ce27e326c987edbe550e6b88081a111cdcbf8f698f501",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/layers_v1/JAD_R21_EYE_R.png",
+    "source_group": "current-art-components",
+    "bytes": 3681524,
+    "sha256": "e082c46e7edab42e19e9a659602dce9f512413ef99f687ff16f7c507797b8ad8",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/layers_v1/JAD_R21_HAIR.png",
+    "source_group": "current-art-components",
+    "bytes": 3779684,
+    "sha256": "9667e1e612a7e602cc3b5672fdfdb0dcedd107623153c9835f1731686d80bfd5",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/layers_v1/JAD_R21_MOUTH.png",
+    "source_group": "current-art-components",
+    "bytes": 3678765,
+    "sha256": "77166f891a9d85fb51ab7c304df54c98a6729946995c5cfd21600196c866efeb",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/layers_v1/JAD_R21_RESIDUAL.png",
+    "source_group": "current-art-components",
+    "bytes": 3695732,
+    "sha256": "a4cd9421ae0fd7f39d5d4d6522686b127084e5e726a438f948994aed9e68ad48",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/closed_eyes_v1_assets/layers_v1/JAD_R21_SKIN.png",
+    "source_group": "current-art-components",
+    "bytes": 3736582,
+    "sha256": "291b683c58578eb0d736fc90528dca2a11988e5f949ac447333cefd21749a6e1",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/eye_endpoints_v7/JAD_R21_EYE_L_CLOSED_TRUE.png",
+    "source_group": "current-art-components",
+    "bytes": 11132,
+    "sha256": "642ce5f922ffd214b80203c50e6b4e641ed72c85c0f1e110451953de52b3b90b",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/eye_endpoints_v7/JAD_R21_EYE_L_SOCKET_SKIN.png",
+    "source_group": "current-art-components",
+    "bytes": 56546,
+    "sha256": "6ab9a2473065f819808b2d1999d890951bd2726a109553d808504a646b2f0970",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/eye_endpoints_v7/JAD_R21_EYE_R_CLOSED_TRUE.png",
+    "source_group": "current-art-components",
+    "bytes": 12154,
+    "sha256": "952acbfba9a1878daab4540996a2cdce21fcb74d47d1a109162ed8cb3ed01238",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/eye_endpoints_v7/JAD_R21_EYE_R_SOCKET_SKIN.png",
+    "source_group": "current-art-components",
+    "bytes": 58528,
+    "sha256": "65d9a131628018f31a4500dd665ee84edf2fce7b685d5bf682e294e2c29e808f",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/eye_endpoints_v7/Jade_r21_eye_endpoints_closed_preview.png",
+    "source_group": "current-art-components",
+    "bytes": 3707747,
+    "sha256": "98e904a293317f4c72c11776a4c3f9e624e7d3bdb797b88508b367ff1ebe4b23",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/eye_endpoints_v7/Jade_r21_eye_endpoints_v1_manifest.json",
+    "source_group": "current-art-components",
+    "bytes": 2740,
+    "sha256": "f98b36f172630a1416493818fc7bf749be7814f08fdabb5221b3279ea20264b0",
+    "storage": "git",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/Jade_r21_master_v3_asset_build.json",
+    "source_group": "current-art-components",
+    "bytes": 3568,
+    "sha256": "6ce2f767e79fc24b4f97da18655247539c8112d3c57d245fbac11a21e839a616",
+    "storage": "git",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/Jade_r21_master_v3_canvas_3840x4160.png",
+    "source_group": "current-art-components",
+    "bytes": 3812604,
+    "sha256": "011b9d9c06190ce044120ba7640feb575a0a76a10f620575bd90f2a20cbb3275",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/Jade_r21_master_v3_semantic_preview.png",
+    "source_group": "current-art-components",
+    "bytes": 915856,
+    "sha256": "968c028bd51dbb36ff16074af32a722e0dccbd3297a6ae10c074b5fc4aa35241",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/Jade_r21_master_v3_transparent.png",
+    "source_group": "current-art-components",
+    "bytes": 985385,
+    "sha256": "ed724cae8b6e31552440cc5b6a6e3ae3d52c1b52179da0ec5dc1bd54ffc46d28",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/layers_v1/JAD_R21_BROW_L.png",
+    "source_group": "current-art-components",
+    "bytes": 3733322,
+    "sha256": "65541b2167fa7560de578c8ae6fbfa62e0045ed1093d7807460b234e09cf9ea1",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/layers_v1/JAD_R21_BROW_R.png",
+    "source_group": "current-art-components",
+    "bytes": 3730571,
+    "sha256": "10e309678293c4127fcec373cac8dfed04c5ba77d10cc1500137f6582d67be11",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/layers_v1/JAD_R21_DRESS.png",
+    "source_group": "current-art-components",
+    "bytes": 3825018,
+    "sha256": "01f4acfb9864f42815ace888cbfd93d9e1384e5a2f7b822192f207e8218700eb",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/layers_v1/JAD_R21_EARS.png",
+    "source_group": "current-art-components",
+    "bytes": 3751744,
+    "sha256": "967d5a6c9fb939d2da18fcd7411c818793c15331a226efd441e0a6f835e315f1",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/layers_v1/JAD_R21_EYE_L.png",
+    "source_group": "current-art-components",
+    "bytes": 3735115,
+    "sha256": "a1db1d4ca9b7471f5fba796e62b844bd79c6a249850fb560cb88bec726bd7e59",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/layers_v1/JAD_R21_EYE_R.png",
+    "source_group": "current-art-components",
+    "bytes": 3734662,
+    "sha256": "fc5b7503a86a0559e975f849082db006c5ef2840728f8147283b5a8e1bd5746c",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/layers_v1/JAD_R21_HAIR.png",
+    "source_group": "current-art-components",
+    "bytes": 3830720,
+    "sha256": "e8282f409368f4d98fbac7f298d483f6d4829962f0f485b40810f481f3fd40ae",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/layers_v1/JAD_R21_MOUTH.png",
+    "source_group": "current-art-components",
+    "bytes": 3727652,
+    "sha256": "8dc690e0d0a29476d99aee3b8f206112c409b4b6ccb488ef87aa922d6e9e2673",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/layers_v1/JAD_R21_RESIDUAL.png",
+    "source_group": "current-art-components",
+    "bytes": 3750224,
+    "sha256": "f91a79f777038cc23464fdb631c908189965c1f547944425678e83f4a57d3a67",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/layers_v1/JAD_R21_SKIN.png",
+    "source_group": "current-art-components",
+    "bytes": 3791795,
+    "sha256": "00b53e09b7582ddf5a4be68c955a32ea2320da4248f197533952a72f8ba6a512",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/Jade_r21_rig_layers_v1_manifest.json",
+    "source_group": "current-art-components",
+    "bytes": 21090,
+    "sha256": "8c324adaeafcad56d5a88be0aa9c287747d4d5182cdbfba8f4fcd78fecdb99cd",
+    "storage": "git",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/Jade_r21_rig_layers_v1_neutral_preview.png",
+    "source_group": "current-art-components",
+    "bytes": 3774913,
+    "sha256": "318fb629009ea11549efc10d357243d2c1f97190c8b577ada79f329190f9140d",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_ARM_L_FOREARM.png",
+    "source_group": "current-art-components",
+    "bytes": 103749,
+    "sha256": "241dd34a056dbdba44a778c1e00d642802c6f0fda54c3385aa8c00b892e4a3bd",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_ARM_L_UPPER.png",
+    "source_group": "current-art-components",
+    "bytes": 48147,
+    "sha256": "df3d2d0c584b2b37bd628adcec9c3f1b273a8e96f3373b92543d5cfab43bc7e1",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_ARM_R_FOREARM.png",
+    "source_group": "current-art-components",
+    "bytes": 104059,
+    "sha256": "614f72102323ba090bc85e73adbfae95f1427b295a9db302c6d637892dec2b55",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_ARM_R_UPPER.png",
+    "source_group": "current-art-components",
+    "bytes": 50207,
+    "sha256": "437a62d72b8d2eac051da64f0b8f8ddaf909ff9dd23f4e29ac550025163b8b41",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_BROW_L_MASTER.png",
+    "source_group": "current-art-components",
+    "bytes": 41551,
+    "sha256": "bb8a80bb31b4395ec2360fcf4977b12a4b83a5e55a1cc59785b8c1b3f2acb5b7",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_BROW_R_MASTER.png",
+    "source_group": "current-art-components",
+    "bytes": 37924,
+    "sha256": "19eab9a704e7a93dd23ba76728249327116ec90a0dbf364bd3ad286d50a80b00",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_DRESS_BELT.png",
+    "source_group": "current-art-components",
+    "bytes": 185979,
+    "sha256": "189aa0afdb333d01e07483d9d717768b19ad4fc2512a25290e53e380a1937cbc",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_DRESS_BODICE.png",
+    "source_group": "current-art-components",
+    "bytes": 1958000,
+    "sha256": "f0c1baf69dee02c4ceb800b7495b28a33426071657e301d3d90a0cf882f70cd4",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_DRESS_SLEEVE_L.png",
+    "source_group": "current-art-components",
+    "bytes": 183349,
+    "sha256": "8232d8cc7a7c0c8090078566019e3b7c84889533aaee63b6282750e3b08dce94",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_DRESS_SLEEVE_R.png",
+    "source_group": "current-art-components",
+    "bytes": 211281,
+    "sha256": "12c82754e36ef68e8fa8edd29320b1e2c89c487fc2bf4e0496a36737aa0f57bf",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_EAR_L_NORMAL.png",
+    "source_group": "current-art-components",
+    "bytes": 120808,
+    "sha256": "7706087098c4004c62a58c72ccf914725a263bfcebea72f0f1b155bc893b5c1f",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_EAR_R_NORMAL.png",
+    "source_group": "current-art-components",
+    "bytes": 136606,
+    "sha256": "80e6604ccd5529c688e1f5975149497a3463ebada8ce5f5518a7d69222370016",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_EYE_L_OPEN_MASTER.png",
+    "source_group": "current-art-components",
+    "bytes": 75030,
+    "sha256": "b0590e61049648796c81686616871bd6dc90fe854ad1d8c6759b3f5232197f87",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_EYE_R_OPEN_MASTER.png",
+    "source_group": "current-art-components",
+    "bytes": 74230,
+    "sha256": "94c7ef03fdd03c865df258419dcf71d5c5f40e279db7a18fb3553127a17d5de4",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_FACE_SKIN.png",
+    "source_group": "current-art-components",
+    "bytes": 482773,
+    "sha256": "d68d0630dbeafbaa1ae661e9a84ff5b06003935acc196bcee4539895407a9332",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_AHOGE.png",
+    "source_group": "current-art-components",
+    "bytes": 86377,
+    "sha256": "cc73e35d78f9d02c657c9c5a3d0bf8465327cc4c131990c884d83a2ad3ac62cd",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_BACK_L_LOWER.png",
+    "source_group": "current-art-components",
+    "bytes": 48330,
+    "sha256": "32a5f626c53fa985a7b987f961d3b4073fd60256893abc5fdb5f90c02dcc9345",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_BACK_L_MID_INNER.png",
+    "source_group": "current-art-components",
+    "bytes": 33207,
+    "sha256": "3a50552500f6eb0f5117d754e9592336a8b476ae31f5f97e2c796a549c07a294",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_BACK_L_MID_OUTER.png",
+    "source_group": "current-art-components",
+    "bytes": 100281,
+    "sha256": "753b0fd161333c739b549d3c9d00cf346b1df312f388501777f6e6fdd0dcf59d",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_BACK_L_OUTER.png",
+    "source_group": "current-art-components",
+    "bytes": 94491,
+    "sha256": "b79e6c97c48c41373f3d61a2298cbcc5c7b10e6583fb082e8bc1de5fb46ec9df",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_BACK_R_LOWER.png",
+    "source_group": "current-art-components",
+    "bytes": 80122,
+    "sha256": "269fe6c37599e6588a66305553c7126c1f9f1c6f3b1d1acebb5cc820b5f49431",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_BACK_R_MID_INNER.png",
+    "source_group": "current-art-components",
+    "bytes": 45286,
+    "sha256": "4b89aaeab76363b2971f342a57dc53be4791e6612a900858522a7f71d246c6a5",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_BACK_R_MID_OUTER.png",
+    "source_group": "current-art-components",
+    "bytes": 164239,
+    "sha256": "5ad5fd847648da76cf4722de0a47c89c5e3f99804cc1692e4d94ba6af1d4ac81",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_BACK_R_OUTER.png",
+    "source_group": "current-art-components",
+    "bytes": 160586,
+    "sha256": "9513395b47248158fafc8c863004cfc6d6e21fa02e70fb9d3d07c7774fd59b5d",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_DEPTH_UNDERLAY.png",
+    "source_group": "current-art-components",
+    "bytes": 1688988,
+    "sha256": "ac814b4bb20a69b9bba1d68ae01bd90d049e20ef6feebbcdd0038421b9219c42",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_FRONT_BANG_CENTER_L.png",
+    "source_group": "current-art-components",
+    "bytes": 61214,
+    "sha256": "0ce836f4662d4c0010098cc2913b30ced2bd86d4a1822bf02ed7c455af35ff87",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_FRONT_BANG_CENTER_R.png",
+    "source_group": "current-art-components",
+    "bytes": 59907,
+    "sha256": "d5af4588107b503b404d648eb26a59049f45bdf9b4f2c4415a46ebccef75192e",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_FRONT_BANG_L_INNER.png",
+    "source_group": "current-art-components",
+    "bytes": 189432,
+    "sha256": "cefee3ac0c028a1eb3a23902e849afd48b2cdd263ff672bebc78b754dd439f8d",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_FRONT_BANG_L_OUTER.png",
+    "source_group": "current-art-components",
+    "bytes": 227997,
+    "sha256": "b5612b8414df21bf403a24060b7c3045c4905b042ed60646123b605c4d040fff",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_FRONT_BANG_R_INNER.png",
+    "source_group": "current-art-components",
+    "bytes": 182248,
+    "sha256": "c163837a0c1ce0480305d21ba7ebb46ec8ac5410997f4d0f1488b5c6eafffefa",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_FRONT_BANG_R_OUTER.png",
+    "source_group": "current-art-components",
+    "bytes": 256559,
+    "sha256": "7a1e48382866266d731916f56fd40d046015a1bff15e41487bd0fddb741e3930",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_FRONT_LOCK_L.png",
+    "source_group": "current-art-components",
+    "bytes": 277143,
+    "sha256": "c7cc21d5e5f5219cf2b5d402694195c8caee2803943d318e4367be61dcd25ab3",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_FRONT_LOCK_R.png",
+    "source_group": "current-art-components",
+    "bytes": 272088,
+    "sha256": "52efb41a35e8f1220dd9a251c72b1cb42c88d337c9b139d7927d32d5d9f7c224",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_FRONT_TEMPLE_L.png",
+    "source_group": "current-art-components",
+    "bytes": 286069,
+    "sha256": "97f81169f9d6fbec6f7279f4ea7a1d93ce154ea57ab7665208b940260d84104d",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAIR_FRONT_TEMPLE_R.png",
+    "source_group": "current-art-components",
+    "bytes": 326724,
+    "sha256": "26bb6d77dc92481a69b84f26c16e64cf40dc939e2274da2496ae73ba9f145dec",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAND_L.png",
+    "source_group": "current-art-components",
+    "bytes": 46074,
+    "sha256": "ad5ca8b0e5dc48231cc9b8436bf02802479e583b8215f232a1f4b13e40aea16e",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_HAND_R.png",
+    "source_group": "current-art-components",
+    "bytes": 44351,
+    "sha256": "7b55c5f63ac71cb3b50e82eec4c72847f55ee758edb924e2d295eafd1a05a4dc",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_MOUTH_NEUTRAL_MASTER.png",
+    "source_group": "current-art-components",
+    "bytes": 13763,
+    "sha256": "72faa8c2eb650e67a3f127e37c0eeab0b3d625c095585852dbc05f0ec184dd04",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_NECK_SKIN.png",
+    "source_group": "current-art-components",
+    "bytes": 61875,
+    "sha256": "1b678abdb3de89830d234298b1986d7c1c13ab0be9ba2b8e14e8e7308724097a",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_RESIDUAL_UNDERLAY.png",
+    "source_group": "current-art-components",
+    "bytes": 744839,
+    "sha256": "e6f679203bda98546eb1362f2636e8ed6ae295188330216edfcd5cdbb882a605",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_SKIRT_PANEL_01_L_OUTER.png",
+    "source_group": "current-art-components",
+    "bytes": 421044,
+    "sha256": "71fcd8c337a14a4973d291a5eb86879e976f0b4ef2382d02670a458721b54566",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_SKIRT_PANEL_02_L.png",
+    "source_group": "current-art-components",
+    "bytes": 374970,
+    "sha256": "f8b8ef1cb0a6cf48913f84958d4a2d46eb5759d6ec40f9e03b0bcea5aa275e69",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_SKIRT_PANEL_03_L_INNER.png",
+    "source_group": "current-art-components",
+    "bytes": 263287,
+    "sha256": "62765c5111374dfd2588b12424bfd7b7bea20da7a49ecbe409c2e0039d56cbca",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_SKIRT_PANEL_04_CENTER.png",
+    "source_group": "current-art-components",
+    "bytes": 219576,
+    "sha256": "f6fede90ffb55c2601423551e11b8ceb846a008b0c5dda20df870c4137d70859",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_SKIRT_PANEL_05_R_INNER.png",
+    "source_group": "current-art-components",
+    "bytes": 286095,
+    "sha256": "f6ac23a2b5636b9d9516534697fa435c61da7d93ff2703f235af255a65c4745c",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_SKIRT_PANEL_06_R.png",
+    "source_group": "current-art-components",
+    "bytes": 397324,
+    "sha256": "f77b752d41a9c9d658a83b54db6c295c98864f17e3f1aac0a7668dc0ab76ffe6",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/master_v4_rig_layers_v1/layers/JAD_R21_SKIRT_PANEL_07_R_OUTER.png",
+    "source_group": "current-art-components",
+    "bytes": 424577,
+    "sha256": "97ef61aca4152e1394d7ca25cdb743e044da71d6f7d0107233cd3c37687b7d40",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/mouth_endpoints_v13/JAD_R21_MOUTH_NEUTRAL_CLEAN.png",
+    "source_group": "current-art-components",
+    "bytes": 5207,
+    "sha256": "5d07d8fdb4fa54ec56aa49ce14b2d0b6c3e99470474f9b5c6087694ae33d6f7b",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/mouth_endpoints_v13/JAD_R21_MOUTH_OPEN_INTERIOR.png",
+    "source_group": "current-art-components",
+    "bytes": 5851,
+    "sha256": "e472b8cc53e24edc6ffc375051e6288926123abe8eae059d5f80033f7ab01695",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/mouth_endpoints_v13/JAD_R21_MOUTH_OPEN_OUTLINE.png",
+    "source_group": "current-art-components",
+    "bytes": 7317,
+    "sha256": "5ff90cc98bd749fe617de06d86f8351b06191fa5880f07c17d0d3950b357ef69",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/mouth_endpoints_v13/JAD_R21_MOUTH_OPEN_TEETH_UPPER.png",
+    "source_group": "current-art-components",
+    "bytes": 3550,
+    "sha256": "ccb9a103e32700ac327d3bc55fa066f47cb869d1d60897924c147f261facda08",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/mouth_endpoints_v13/JAD_R21_MOUTH_OPEN_TONGUE.png",
+    "source_group": "current-art-components",
+    "bytes": 8373,
+    "sha256": "8de7eeddf79557f8eacb035cdbd6b2e8b7636bb043d6000e3b2c478c4d84a74a",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/mouth_endpoints_v13/JAD_R21_MOUTH_SOCKET_SKIN.png",
+    "source_group": "current-art-components",
+    "bytes": 18144,
+    "sha256": "3e6a86722286d43ae71462380e7566f6008117a3015e3865874cf6907cdcd88a",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/mouth_endpoints_v13/Jade_r21_mouth_endpoints_v1_manifest.json",
+    "source_group": "current-art-components",
+    "bytes": 3654,
+    "sha256": "f901beb0808ab848c943ea4ec2c86ec27fb3b83a6e2b6a724c4b130cf0f6219d",
+    "storage": "git",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/mouth_endpoints_v13/Jade_r21_mouth_open_ah_preview.png",
+    "source_group": "current-art-components",
+    "bytes": 3784777,
+    "sha256": "3df907e5a9d39a79a1bfe1006dd29b9076a7838a8b0c5b3e0f658a3c8d65c2e0",
+    "storage": "git-lfs",
+    "selection_reason": "Latest component set or original closed-eye source used by the current art"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/working_v005/jade_art_v005_r21_master_v4_semantic_v1.kra",
+    "source_group": "current-editable-source",
+    "bytes": 92237258,
+    "sha256": "0a216084cfe992a8263bacd921d72d5208202d0922b946ac0f191d3ef294f6cb",
+    "storage": "git-lfs",
+    "selection_reason": "Latest native baseline/current candidate or latest editable art source"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/working_v005/jade_art_v005_r21_rig_art_v2_face_complete_v9.kra",
+    "source_group": "current-editable-source",
+    "bytes": 123082129,
+    "sha256": "8e5d93125929ea92bad9dec6f55a7330dd504ae8f63eb044feed42517653b1a7",
+    "storage": "git-lfs",
+    "selection_reason": "Latest native baseline/current candidate or latest editable art source"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_back_hair_restore_v30.cmo3",
+    "source_group": "current-editable-source",
+    "bytes": 29785986,
+    "sha256": "2afc3c21f451626156b138733d0bc792ceb3463e086fa21334307ffc8b73a1ee",
+    "storage": "git-lfs",
+    "selection_reason": "Latest native baseline/current candidate or latest editable art source"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_rig_only_v2.psd",
+    "source_group": "current-editable-source",
+    "bytes": 35344441,
+    "sha256": "35fc3f714f1bb4907fff4a09046e48c7c644ff03b173f4a6a940d6c0d7434133",
+    "storage": "git-lfs",
+    "selection_reason": "Latest native baseline/current candidate or latest editable art source"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_v30.TEST_hair_leaves_r02.cmo3",
+    "source_group": "current-editable-source",
+    "bytes": 29822991,
+    "sha256": "68617d558a59593e54c2582ab7845ffa317d8a7e0676e25d5b5514b083c95f62",
+    "storage": "git-lfs",
+    "selection_reason": "Latest native baseline/current candidate or latest editable art source"
+  },
+  {
+    "path": "jade-modeling/reports/Jade_API_DIRECT_PROOF_QA_PROTOCOL.md",
+    "source_group": "current-documentation",
+    "bytes": 1557,
+    "sha256": "30dbd1c4cee7519336caf783ba3fe59039495445985015937f2590bc50ca2aae",
+    "storage": "git",
+    "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
+  },
+  {
+    "path": "jade-modeling/reports/Jade_POSE_QA_PROTOCOL.md",
+    "source_group": "current-documentation",
+    "bytes": 1340,
+    "sha256": "0adf7bfcd1c22115861a3a2d7c1220b0c24f6827ed0e87762ade89762f131141",
+    "storage": "git",
+    "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
+  },
+  {
+    "path": "jade-modeling/reports/Jade_r21_v28_shoulders_r05.json",
+    "source_group": "current-documentation",
+    "bytes": 793,
+    "sha256": "4c85a5417a9d72c6dfd463fe6326b899142b6cf4faa872f23c77e893ca00996c",
+    "storage": "git",
+    "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
+  },
+  {
+    "path": "jade-modeling/reports/Jade_r21_v29_back_hair_r01.json",
+    "source_group": "current-documentation",
+    "bytes": 2666,
+    "sha256": "8b46280016df75dc62f35db03a4dc9103171463908716344dab90181c8cab73c",
+    "storage": "git",
+    "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
+  },
+  {
+    "path": "jade-modeling/reports/Jade_r21_v29_shoulders_headZ.md",
+    "source_group": "current-documentation",
+    "bytes": 5492,
+    "sha256": "9926b16dd8984f8301bfb56ae0f8559fad090b69955477a9082c06c1b552f350",
+    "storage": "git",
+    "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
+  },
+  {
+    "path": "jade-modeling/reports/Jade_r21_v30_hair_leaves_r02.json",
+    "source_group": "current-documentation",
+    "bytes": 65426,
+    "sha256": "5b2855681d43bb313f886302c96ee137c082f4cafa5a7538392aa7fa45a0b98d",
+    "storage": "git",
+    "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade.4096/texture_00.png",
+    "source_group": "current-runtime",
+    "bytes": 2207510,
+    "sha256": "6b24debdf3820eac99089c7835859326110f4694fea1e96b0f86a66c7dc769f5",
+    "storage": "git-lfs",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade.4096/texture_01.png",
+    "source_group": "current-runtime",
+    "bytes": 345773,
+    "sha256": "6f8545f24256f16a7f6ab656f002b2b14d8f6f492ee3fef8f5c9f68f7eca6adb",
+    "storage": "git-lfs",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade.cdi3.json",
+    "source_group": "current-runtime",
+    "bytes": 8115,
+    "sha256": "050e4147397d3e0000e754e72b11a49f93c36a7bfec53891bc02aedd6d5cc26f",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade.moc3",
+    "source_group": "current-runtime",
+    "bytes": 367296,
+    "sha256": "4434f98f03e304760f57335a6b221cb3bdee630304740836063eae089b64565d",
+    "storage": "git-lfs",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade.model3.json",
+    "source_group": "current-runtime",
+    "bytes": 1156,
+    "sha256": "19a83065502cbf6c8c6e480fd13b5d32b3b0fb49097149fa36f087b8da1a4657",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade.physics3.json",
+    "source_group": "current-runtime",
+    "bytes": 32011,
+    "sha256": "905d8551fec6a2fc3023ac429bf917ba106974c511848d87f2576e4ba159ed0b",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade.vtube.json",
+    "source_group": "current-runtime",
+    "bytes": 46580,
+    "sha256": "658e63b930ae2107f37c38416eb92c1fe1a95f4337f7ca06acc48063d9f1b594",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade_idle.motion3.json",
+    "source_group": "current-runtime",
+    "bytes": 12475,
+    "sha256": "fec97167b9e027dd0a3f14f8a39e12b98be23a237b80774cbe065dcb3e2ce7b8",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade_proof.motion3.json",
+    "source_group": "current-runtime",
+    "bytes": 10289,
+    "sha256": "6765b7b3277431d21bb569ec299e38af0f57b593270fca8dba24554c313ee6c7",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade_tracking_lost.motion3.json",
+    "source_group": "current-runtime",
+    "bytes": 12514,
+    "sha256": "d5388e241561b03f3c95dc609b0b1077c91b28c8b255fe1d881639557752debb",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/expressions/Angry.exp3.json",
+    "source_group": "current-runtime",
+    "bytes": 1492,
+    "sha256": "2c4d795b4980b32cf4b3207da96f39274f6e79fbb3b5189cc98e229f93a60503",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/expressions/Blink.exp3.json",
+    "source_group": "current-runtime",
+    "bytes": 276,
+    "sha256": "369a68b68b2d869795d8413dbce1e7098a2f44acf4298ac714d6799ecc489bfb",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/expressions/Sad.exp3.json",
+    "source_group": "current-runtime",
+    "bytes": 1325,
+    "sha256": "8e5c7952455530644aef7298562c3147a67d863ec630845d6f596b05641f1923",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/expressions/Smile.exp3.json",
+    "source_group": "current-runtime",
+    "bytes": 969,
+    "sha256": "c95038ea54eb5da19a36322290b68163152d12868812cf5cb16bee5659ec4b0c",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/expressions/Surprised.exp3.json",
+    "source_group": "current-runtime",
+    "bytes": 1054,
+    "sha256": "2d8ae52392522eb56f739fcbad430dfffc926ca77c8a37cff9ecd42eb324692c",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/expressions/WinkL.exp3.json",
+    "source_group": "current-runtime",
+    "bytes": 188,
+    "sha256": "11c0b0a0b903c03c7d3fdd7dc9d36acc64188d39ad47b374052ee3914a1be04d",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/expressions/WinkR.exp3.json",
+    "source_group": "current-runtime",
+    "bytes": 188,
+    "sha256": "a2e3b720f68226c9f90e39d63ab6164db47b919bfa3d1f07f0750f1a3b802013",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/icon.jpg",
+    "source_group": "current-runtime",
+    "bytes": 87943,
+    "sha256": "07cb38178ea5fb6e71fa0cfa3b3c8ced85378de6ff69d1644bcb652a416f4d98",
+    "storage": "git-lfs",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/items_pinned_to_model.json",
+    "source_group": "current-runtime",
+    "bytes": 456,
+    "sha256": "100d2123fd5e573c68d333f08193fa42437f8f1cb925d2ad8d02678d920e84ca",
+    "storage": "git",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/preview.png",
+    "source_group": "current-runtime",
+    "bytes": 233245,
+    "sha256": "4beece03691edc35ba603fe808e01741a9ca6876e64a44a0630fafda1e028f07",
+    "storage": "git-lfs",
+    "selection_reason": "Most recent installed animated runtime package; complete directory preserved"
+  },
+  {
+    "path": "jade-modeling/tools/CubismExportRunner.java",
+    "source_group": "current-tools",
+    "bytes": 15320,
+    "sha256": "de891ca46006a6e6f1ab0387651d68bd50cfd6103f0319d58a6cd49c75260a32",
+    "storage": "git",
+    "selection_reason": "Source/launcher required to export a current Cubism model"
+  },
+  {
+    "path": "jade-modeling/tools/CubismRuntimeExport.java",
+    "source_group": "current-tools",
+    "bytes": 5652,
+    "sha256": "41963c7d59243147ee4ae32f344c9d6d3488ec8a4c694bd4d561deb90fbe1586",
+    "storage": "git",
+    "selection_reason": "Source/launcher required to export a current Cubism model"
+  },
+  {
+    "path": "jade-modeling/tools/audit_jade_runtime_motion.py",
+    "source_group": "current-tools",
+    "bytes": 11348,
+    "sha256": "fac8475a8b7a833c9efe03bb14668c53170e917d5d141b29347e6254539e4a11",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/build_jade_expressions.py",
+    "source_group": "current-tools",
+    "bytes": 19510,
+    "sha256": "ec1e4aa5593cd1ce168a89cfdc8163f9e83541921f87a484278c9c0c849df2f8",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/build_jade_physics_professional.py",
+    "source_group": "current-tools",
+    "bytes": 8927,
+    "sha256": "7a65e202798ad2eeda5afd78c61615fad98e22540a32597fdebbe59d43c0e415",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/build_jade_professional_motions.py",
+    "source_group": "current-tools",
+    "bytes": 23180,
+    "sha256": "6ccd1ff1396db7bff6642ce59cccdec9be4ec963b6c5b78538c16fef6dde874b",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/build_jade_professional_motions_r20.py",
+    "source_group": "current-tools",
+    "bytes": 11290,
+    "sha256": "f86adb81437077462fc0cded08a564e5a9f8e19ccdb6c691c76c33c69a71f68c",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/build_jade_vts_package_r20.py",
+    "source_group": "current-tools",
+    "bytes": 11557,
+    "sha256": "d1d5341c3622de0f1b48b574b7145ca75b912b2bfe6711b5fed5a0616274c881",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_body_breath_functional.py",
+    "source_group": "current-tools",
+    "bytes": 54009,
+    "sha256": "5289590acc152b04ad2cf8c6ef058c573f272f24ff917a590fd87c80f420568b",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_caff_rebuild.py",
+    "source_group": "current-tools",
+    "bytes": 16287,
+    "sha256": "37b695ed93f2a014fa8f4c4b3e0681c2173c69ccd03ece18140dbcdcccbf0837",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_create_deformer_experiment.py",
+    "source_group": "current-tools",
+    "bytes": 67729,
+    "sha256": "7d81cc278fe2e09850bbf46a48df427ba79fb7993ecf22d3f61fde28b41d4c65",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_ear_lateral_motion_professional.py",
+    "source_group": "current-tools",
+    "bytes": 22846,
+    "sha256": "b1b63a7d7356f13f22390da715d09a9d7c07470b37a69e304904b0dc73af163f",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_ears_hair_professional_r04.py",
+    "source_group": "current-tools",
+    "bytes": 30654,
+    "sha256": "17422702e75a200e4fcca6ebc884badc014d0f86ca1ecd14f0cc013c350b5962",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_eye_closure_professional.py",
+    "source_group": "current-tools",
+    "bytes": 37611,
+    "sha256": "502392b86eb50f4f87f27b0c8b45bd98718a892fb91e165c57352e6b3038115e",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_eye_l_functional.py",
+    "source_group": "current-tools",
+    "bytes": 32377,
+    "sha256": "c7c070829c64802deeb6a4280129dbad92532c8d2f152ed2cfeca9d101823687",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_eye_l_gaze_functional.py",
+    "source_group": "current-tools",
+    "bytes": 20668,
+    "sha256": "878c9ed6f3c04f558086a9aab994248d85ee88b06f0bcd04a30abaad2f8cd83e",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_eye_l_open_shell.py",
+    "source_group": "current-tools",
+    "bytes": 67208,
+    "sha256": "3be8e5afe47ec6653a419ce6e1bb5838d7c2ddbe80968506e451c56714f1a565",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_eye_r_functional.py",
+    "source_group": "current-tools",
+    "bytes": 41205,
+    "sha256": "a22dc886a70ba040a64c4383f34e806afe2351a6f2ce7ef6903b767751a44e33",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_face_fx_scaffold.py",
+    "source_group": "current-tools",
+    "bytes": 55790,
+    "sha256": "9a49b9ff4dd3e07b4b1551121b67162b49da6a2b5247c9219a36bfdbd69fd2eb",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_hair_art_partition_r16.py",
+    "source_group": "current-tools",
+    "bytes": 27505,
+    "sha256": "94d0ecad66646cf719baf032cea7a464a685fa221f385dc2301dce2ccba90aa5",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_hair_back_functional.py",
+    "source_group": "current-tools",
+    "bytes": 31947,
+    "sha256": "b42d7234055084bac8dc1c27868899b8afd5f69142a574086c51c81f5ae6c183",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_hair_motion_professional_r13.py",
+    "source_group": "current-tools",
+    "bytes": 29092,
+    "sha256": "c4fe83b4d8d49ac0f68048b762737aaeef9629a5804da819e79f3102bddf0a20",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_head_branch_masters.py",
+    "source_group": "current-tools",
+    "bytes": 85339,
+    "sha256": "33d5ebc6b0c3a0779193b2136b3a2c46e2d0a5f745e480f48df0a8a17348155b",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_head_wrapper_scaffold.py",
+    "source_group": "current-tools",
+    "bytes": 46014,
+    "sha256": "6adb42dfcbb22491d9278e34d1b42d6b327418b3c7d43bbeb3049dddc6c71519",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_head_xy_functional.py",
+    "source_group": "current-tools",
+    "bytes": 35060,
+    "sha256": "d4faadcb5aac05720a0ecfd80bcb7f67df1f7877ef541c5e95e09ec0f2d624d9",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_head_z_functional.py",
+    "source_group": "current-tools",
+    "bytes": 15697,
+    "sha256": "7121a7f0ccec820975a3c63651cf126afe63e567eb8c7d249b9e514ceec4f6fe",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_inventory.py",
+    "source_group": "current-tools",
+    "bytes": 23998,
+    "sha256": "9cba62cfcebbfe249f0f0785ea480a3963fd610f95d356ec5d36fcbdca201083",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_mesh_topology.py",
+    "source_group": "current-tools",
+    "bytes": 8508,
+    "sha256": "737c62fb40d3f359894a9e4fe1b718238afed92d61b7cee36323910ea8e7390f",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_add_model_image.py",
+    "source_group": "current-tools",
+    "bytes": 13011,
+    "sha256": "2892ef66e3b2fad81137bfce566b531480d2db55b5188f9d4507d42bf9e867f1",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_back_hair_master_restore.py",
+    "source_group": "current-tools",
+    "bytes": 7226,
+    "sha256": "a1e687059add3c4e7fa4283f21c30910deca6041c252c0ae4a7c17ec62423fa3",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_body_secondary.py",
+    "source_group": "current-tools",
+    "bytes": 12294,
+    "sha256": "7da4947af0850f7e0d7e8b3fd93a4b9f04fca5ab628a3c35efe90316e854c09d",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_body_weight_shift.py",
+    "source_group": "current-tools",
+    "bytes": 11868,
+    "sha256": "f6782a9793c82abec3184f390941fd88840ef94371c06c4f4bbf9441dbaf2b9c",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_clone_artmesh.py",
+    "source_group": "current-tools",
+    "bytes": 10341,
+    "sha256": "d316137a68a224fc75e17c9b06bf9fdc47e591865e4469836ebf176024942cfd",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_face_roots_to_head.py",
+    "source_group": "current-tools",
+    "bytes": 6696,
+    "sha256": "c0f6e4f8c9fdaca5d419f587ee8e8d817699eaba919d66c7466c1ff12fa59c3b",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_fullbody_first_assembly.py",
+    "source_group": "current-tools",
+    "bytes": 12042,
+    "sha256": "594558d6088f0f03747e10875412e64d20aeff55d493b6ac99442e2c8319bf63",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_hair_independent_leaves.py",
+    "source_group": "current-tools",
+    "bytes": 12018,
+    "sha256": "f59c744bd05c605a4be75f0ae1cefefc136de8c8fef34df2ca4497786a08746d",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_hair_seam_roots.py",
+    "source_group": "current-tools",
+    "bytes": 11106,
+    "sha256": "a7985fcd5d4ebfa49b96a35bc83f4c9e3891d2a7cdfe6a13886d3d8643d1a9e5",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_hair_shoulder_cleanup.py",
+    "source_group": "current-tools",
+    "bytes": 10494,
+    "sha256": "c5579d53e95460be1025ae3e3a23ea84933d648cec8e506b65f7ed02ca7c31a5",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_head_z.py",
+    "source_group": "current-tools",
+    "bytes": 6826,
+    "sha256": "ee5baf45223035f62f301ee249ba9877a35d791a47c22fef856ffa11469b80d7",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_head_z_v28.py",
+    "source_group": "current-tools",
+    "bytes": 13271,
+    "sha256": "e1a1eb081c42adca623575f178988d392cd14d68bbff78aec5990d617f90687c",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_iris_occlusion.py",
+    "source_group": "current-tools",
+    "bytes": 14567,
+    "sha256": "ad475a531fecfaef2873f7879f99f52a0512ed816ec0052c406fb3f3c8e463a5",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_lowerbody_hierarchy.py",
+    "source_group": "current-tools",
+    "bytes": 16533,
+    "sha256": "9f4d30ca5cc719b8785747b7cf90d86a6b1c85bbc6d7da0bf6cb6e80dc9b6c70",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_mesh_polygon_trim.py",
+    "source_group": "current-tools",
+    "bytes": 10732,
+    "sha256": "824722ef736bb6f6a87c95409e7234d440a7a0863dede2fd81701dfaad4cacb7",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_mouth_form_first_rig.py",
+    "source_group": "current-tools",
+    "bytes": 19919,
+    "sha256": "ef277149ba07d04f3cb4c83d71faacdd748d8878dda6ab184496c805ece9105d",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_mouth_open_first_rig.py",
+    "source_group": "current-tools",
+    "bytes": 13915,
+    "sha256": "681d93706891dd4f2322d38b5557dd6e6427f6450f1d438bcbfff700289a05e7",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_restore_eye_r_finite.py",
+    "source_group": "current-tools",
+    "bytes": 10311,
+    "sha256": "990784c3f301de8631b41ac320ec2e70dfa16551851384fc6b4ea717619e42b7",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_restore_sleeve_r_local.py",
+    "source_group": "current-tools",
+    "bytes": 10507,
+    "sha256": "5c0b3b1a817771f0cf7ed88d75d6f779498384be269cfd0eb910a5f885e1e64c",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_tips_master_texture.py",
+    "source_group": "current-tools",
+    "bytes": 4271,
+    "sha256": "2569c9659fec1c52ff5f5dd351911d6615f0eeedeebfef6f99548f330d645753",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_true_closed_blink.py",
+    "source_group": "current-tools",
+    "bytes": 15119,
+    "sha256": "a2a34d9e21617fd75e55c15d8675c87774cf012c93cd5ea6c75d9365a24ffa0d",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_underpaint_clone.py",
+    "source_group": "current-tools",
+    "bytes": 6212,
+    "sha256": "26a5f92c9c20fe7b5e949e957097052a445e8b3e7b27639e737c3ab11ba571e6",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_reparent_preserve_canvas.py",
+    "source_group": "current-tools",
+    "bytes": 57866,
+    "sha256": "4e191b07ebd2f15064197429b5adfd57ee25b5c7252e34f458ec999fa003a38a",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_safe_roundtrip.py",
+    "source_group": "current-tools",
+    "bytes": 90411,
+    "sha256": "ab9e67b350e6d42aa4b471b5359cfb45b8a09ff02489ccff447d65a59b00ac5e",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_secondary_professional.py",
+    "source_group": "current-tools",
+    "bytes": 48052,
+    "sha256": "d015eb0fe9882e52f3af227111a823a9ecd6185c3f22097ed2dfb3a031463f5c",
+    "storage": "git",
+    "selection_reason": "Local dependency of a current workflow tool"
+  },
+  {
+    "path": "jade-modeling/tools/configure_jade_vts_professional.py",
+    "source_group": "current-tools",
+    "bytes": 12667,
+    "sha256": "25c35e7336f113c81b99545ea6c8a8ba305743e68660d8963e10d5b197f3e640",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cubism_window_driver.py",
+    "source_group": "current-tools",
+    "bytes": 12850,
+    "sha256": "15773e1a2328172b97d9ae9d0f9075078ca25650a11223867651834c9a71bac4",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/inspect_jade_moc3_runtime.py",
+    "source_group": "current-tools",
+    "bytes": 6929,
+    "sha256": "0def5083a650cf7166e8270463285d344509dd0e46b8f806d860dac1e5192157",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/jab_focus.cpp",
+    "source_group": "current-tools",
+    "bytes": 5801,
+    "sha256": "64250ec1c47643c54d0362f43c6e0b58b9a7d6b3fde7e5e70369f63ee5b6bdef",
+    "storage": "git",
+    "selection_reason": "Native source for current window/capture helpers; compiled executables excluded"
+  },
+  {
+    "path": "jade-modeling/tools/jab_focus_tree.cpp",
+    "source_group": "current-tools",
+    "bytes": 9383,
+    "sha256": "e787847dcab7796d3a53cd74b40343d0d34a4de5b4d82d54da04f5b60bab7581",
+    "storage": "git",
+    "selection_reason": "Native source for current window/capture helpers; compiled executables excluded"
+  },
+  {
+    "path": "jade-modeling/tools/jab_tree.cpp",
+    "source_group": "current-tools",
+    "bytes": 19885,
+    "sha256": "2aaaa8a6a6fa00f1aefbfb7f56c6ed1f50afc20e23e9927886ca6424220badab",
+    "storage": "git",
+    "selection_reason": "Native source for current window/capture helpers; compiled executables excluded"
+  },
+  {
+    "path": "jade-modeling/tools/krita_r21_builder/jade_r21_builder.desktop",
+    "source_group": "current-tools",
+    "bytes": 212,
+    "sha256": "a215dafa2f20716e68712aef2c8b225a78c7d0882bfd21991d498b2ad62d14d6",
+    "storage": "git",
+    "selection_reason": "Current Krita r21 plugin source"
+  },
+  {
+    "path": "jade-modeling/tools/krita_r21_builder/jade_r21_builder/__init__.py",
+    "source_group": "current-tools",
+    "bytes": 163,
+    "sha256": "957ec9d8042562a7e9a05f96ef399649584e807033322770039d656d987a08f0",
+    "storage": "git",
+    "selection_reason": "Current Krita r21 plugin source"
+  },
+  {
+    "path": "jade-modeling/tools/krita_r21_builder/jade_r21_builder/jade_r21_builder.py",
+    "source_group": "current-tools",
+    "bytes": 40794,
+    "sha256": "8df40aced73afacf6e300517cf48b23678446b8b4d7f56abfacc294df048361c",
+    "storage": "git",
+    "selection_reason": "Current Krita r21 plugin source"
+  },
+  {
+    "path": "jade-modeling/tools/run_cubism_runtime_export.ps1",
+    "source_group": "current-tools",
+    "bytes": 1927,
+    "sha256": "0ccfaac114efbcfe7a9120f72ec0ad322c228525ed10e3ca267159120919198e",
+    "storage": "git",
+    "selection_reason": "Source/launcher required to export a current Cubism model"
+  },
+  {
+    "path": "jade-modeling/tools/validate_jade_professional_vts_package.py",
+    "source_group": "current-tools",
+    "bytes": 44398,
+    "sha256": "2e5aca33f6586ec890423f404ab337812b80646e114b273de891c61c4b0cf810",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/validate_jade_vts_package.py",
+    "source_group": "current-tools",
+    "bytes": 9973,
+    "sha256": "eacabc6a6cf65e327d239362ac81bc21b4f1c671f5458989771138c45b026827",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/vts_direct_proof_driver.py",
+    "source_group": "current-tools",
+    "bytes": 15481,
+    "sha256": "d7788c7ac0f83aff49ee8752998e286237dac573e498162a4bc53ea5a2ad8c1f",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/vts_final_showcase_r20.py",
+    "source_group": "current-tools",
+    "bytes": 8974,
+    "sha256": "38129a914f221bee111c0db1f68fa4f106b65da140d90c655ad82e0b124ba932",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/vts_idle_observe_r20.py",
+    "source_group": "current-tools",
+    "bytes": 8433,
+    "sha256": "35abd26706da667d902676b1b0ff8d23c6c0703ed9d0b05a7da68b805d075d90",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/vts_model_switch.py",
+    "source_group": "current-tools",
+    "bytes": 10496,
+    "sha256": "3b0fb6b0efc5a766d666cc2c0db4f4c8994e1a27efa824c044e58bec6b387ecd",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/vts_toggle_matrix_r20.py",
+    "source_group": "current-tools",
+    "bytes": 11717,
+    "sha256": "56c47f1cb06603ba0e02cf4738bcd98323861bccf315eebf48f42332551eca85",
+    "storage": "git",
+    "selection_reason": "Current workflow entry point"
+  }
+]

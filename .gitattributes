@@ -1,0 +1,18 @@
+# Preserve the verified source bytes recorded in SOURCE_MANIFEST.json.
+jade-modeling/** -text
+jade-modeling/**/*.cmo3 filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.moc3 filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.kra filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.kra~ filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.psd filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.psd~ filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.ora filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.blend filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.fbx filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.png filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.gif filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.wav filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.mp3 filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.ogg filter=lfs diff=lfs merge=lfs -text

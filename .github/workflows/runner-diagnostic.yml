@@ -1,0 +1,14 @@
+name: Private runner diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'research/gpt6-jade-publication-readiness-20261028'
+permissions:
+  contents: read
+jobs:
+  availability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: echo "Jade runner provisioning works"
