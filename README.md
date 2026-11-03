@@ -37,6 +37,10 @@ le backend OpenAI et le backend de démonstration sont fournis actuellement.
 
 ## Essayer la démo sans clé API
 
+Une démo graphique Windows distribuable en ZIP est également décrite dans
+[sa notice de construction](demo/windows/README.md). Elle montre le portrait
+statique et un dialogue simulé ; elle ne lance pas l'IA ni l'animation Live2D.
+
 Prérequis : Python 3.11 et Poetry 2.2.1. Depuis la racine de cette copie :
 
 ```bash
@@ -65,8 +69,8 @@ installées, la démo et les tests n’appellent pas de service IA distant.
 | --- | --- |
 | Console, file de messages et historique | Tests automatisés hors ligne ; démo locale disponible |
 | Texte OpenAI | Un essai réel court a réussi ; ce n’est pas une mesure de performance généralisable |
-| Chaîne micro → STT → dialogue → TTS | Testée avec audio synthétique et services simulés ; micro et API vocales réels à vérifier |
-| Twitch, Discord et Discord vocal | Connecteurs et tests simulés ; comptes, permissions et audio réel à vérifier. Discord vocal est expérimental |
+| Chaîne micro → STT → dialogue → TTS | Services simulés et courts essais STT/TTS OpenAI sur audio synthétique ; micro réel non testé |
+| Twitch, Discord et Discord vocal | Authentification Twitch et connexion Discord vérifiées sans message ; vocal Discord réel non testé et expérimental |
 | Sous-titres et VTube Studio | Interfaces et tests simulés ; configuration OBS et interactions VTube Studio réelles à vérifier |
 | Personnage 2D | Sources et portrait inclus ; intégration et animation en cours |
 

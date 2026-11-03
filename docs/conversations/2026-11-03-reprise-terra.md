@@ -65,3 +65,11 @@ afficher la valeur, et la copie privée locale correspond au fichier actif.
 ## Assistant — verbatim
 
 > Je termine d’abord les changements en cours et leurs vérifications. Ensuite je préparerai une démo Windows en ZIP, avec un lancement simple, les ressources de Jade et une notice claire sur ce que la démo montre réellement.
+
+## Assistant — résultat, résumé fidèle
+
+Le lot courant a été testé hors ligne et une archive Windows de démonstration
+a été construite. Le binaire extrait a passé son autotest ; la capture de la
+fenêtre a expiré. Le portrait et le dialogue sont statique et simulé, le modèle
+r20 est fourni séparément et l'animation VTube Studio n'a pas été recettée.
+Les limites du vocal Discord et les étapes restantes sont décrites dans le plan.

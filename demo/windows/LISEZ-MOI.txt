@@ -1,0 +1,21 @@
+JADE — DÉMONSTRATION WINDOWS HORS LIGNE
+
+1. Extrayez entièrement le ZIP dans un dossier.
+2. Ouvrez ce dossier, puis double-cliquez sur Jade-demo.exe.
+3. Écrivez un message et appuyez sur Entrée ou sur Envoyer.
+
+La fenêtre affiche une illustration statique de Jade (r21). Le texte est une
+simulation : la réponse répète votre message, sans appel à une IA. La démo ne
+requiert ni Python, ni compte, ni connexion Internet, ni clé, ni microphone.
+Elle n'active ni voix, ni Twitch, ni Discord, ni animation Live2D.
+
+Un modèle Live2D antérieur r20 est également fourni dans modele-r20. C'est une
+sauvegarde distincte, pas l'export final du portrait r21. Pour l'essayer en
+animation, installez séparément VTube Studio, fermez-le, puis copiez tout le
+dossier modele-r20 dans VTube Studio_Data/StreamingAssets/Live2DModels et
+sélectionnez le modèle après redémarrage. Le fonctionnement visuel, les
+expressions et les réglages doivent être vérifiés dans VTube Studio. Cette
+application n'est pas fournie et n'est pas nécessaire pour la démo statique.
+
+Le dossier licences contient les licences des composants redistribués. Le
+fichier SHA256SUMS.txt permet de vérifier l'intégrité des fichiers du paquet.

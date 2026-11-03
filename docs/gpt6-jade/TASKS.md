@@ -3,6 +3,14 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## Démo Windows autonome — 3 novembre 2026
+- Archive locale avec exécutable Windows, portrait statique r21 et ressources
+  du modèle r20. Dialogue simulé hors ligne : aucune IA, voix ou animation.
+- Exécutable extrait testé avec PATH minimal, sommes du paquet vérifiées, scans
+  ciblés sans alerte ; 203 tests locaux et compilation réussis.
+- Capture visuelle de la fenêtre expirée ; rendu visuel et VTube Studio non
+  recettés. Documentation et empreinte dans [la notice](../../demo/windows/README.md).
+
 ## MVP Discord — D0, 3 novembre 2026
 - Base `bb44d7a` installée depuis le lock sur Windows dans un environnement isolé
   avec Python 3.11.1, Poetry 2.2.1 et extras Discord vocal/VTS ; `pip check`,
