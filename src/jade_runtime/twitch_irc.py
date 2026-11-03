@@ -12,6 +12,7 @@ from collections.abc import Awaitable, Callable
 from .messages import Incoming
 
 LOG = logging.getLogger("jade.twitch")
+CLOSE_TIMEOUT = 1.0
 PRIVMSG = re.compile(
     r"^(?:@(?P<tags>[^ ]+) )?:(?P<author>[^! ]+)!\S+ PRIVMSG #"
     r"(?P<channel>[^ ]+) :(?P<text>.*)$")
@@ -39,7 +40,7 @@ class TwitchIRC:
         if (not re.fullmatch(r"[A-Za-z0-9_]{2,25}", login)
                 or not re.fullmatch(r"[A-Za-z0-9_]{2,25}", channel)):
             raise ValueError("invalid Twitch bot login or channel name")
-        cleaned = token.removeprefix("oauth:")
+        cleaned = token[6:] if token.lower().startswith("oauth:") else token
         if not cleaned or any(char.isspace() for char in cleaned):
             raise ValueError("Twitch access token required")
         self.login = login.lower()
@@ -70,7 +71,10 @@ class TwitchIRC:
             await self._write("CAP REQ :twitch.tv/tags twitch.tv/commands")
             await self._write("JOIN #" + self.channel)
             while True:
-                data = await asyncio.wait_for(reader.readline(), timeout=300)
+                # wait_for can swallow task cancellation on Python 3.11 when a
+                # read finishes in the same event-loop turn as shutdown.
+                async with asyncio.timeout(300):
+                    data = await reader.readline()
                 if not data:
                     raise ConnectionError("Twitch IRC disconnected")
                 line = data.decode("utf-8", "replace").rstrip("\r\n")
@@ -91,8 +95,15 @@ class TwitchIRC:
                             self.dropped += 1
         finally:
             self.writer = None
-            writer.close()
-            await writer.wait_closed()
+            try:
+                writer.close()
+                # In particular, TLS shutdown may not complete if the peer
+                # disconnects during cancellation.  Never let its transport
+                # errors mask the cancellation that initiated the shutdown.
+                async with asyncio.timeout(CLOSE_TIMEOUT):
+                    await writer.wait_closed()
+            except (OSError, TimeoutError):
+                pass
 
     async def connect_forever(self):
         delay = 2

@@ -2,6 +2,7 @@
 import asyncio
 import unittest
 from types import SimpleNamespace
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import main
@@ -10,6 +11,51 @@ from src.jade_runtime.messages import Incoming
 
 
 class MainSafetyTests(unittest.IsolatedAsyncioTestCase):
+    async def test_twitch_automatic_mode_uses_managed_connector(self):
+        config = Settings(api_key="test", twitch_enabled=True, twitch_oauth="test",
+                          channel="test", twitch_auto_refresh=True)
+        state = SimpleNamespace(login="derived", access_token="synthetic-access", backup_pending=False)
+        manager = SimpleNamespace(check=lambda: state, login="")
+        built = []
+        class Connector:
+            def __init__(self, **kwargs):
+                built.append(kwargs)
+        async def managed(connector, supplied_manager):
+            self.assertIs(supplied_manager, manager)
+            raise RuntimeError("synthetic stop")
+        client = SimpleNamespace(close=AsyncMock())
+        with patch.object(main.Settings, "load", return_value=config), \
+             patch.object(main, "OpenAIServices", return_value=SimpleNamespace(client=client)), \
+             patch("src.utility.private_config.secrets_file", return_value=Path("unused")), \
+             patch("src.jade_runtime.twitch_rotation.TwitchTokenManager", return_value=manager), \
+             patch("src.jade_runtime.twitch_irc.TwitchIRC", Connector), \
+             patch("src.jade_runtime.twitch_managed.run_managed_twitch", side_effect=managed):
+            with self.assertRaisesRegex(RuntimeError, "synthetic stop"):
+                await main.console(live=True, twitch=True)
+        self.assertEqual(built[0]["login"], "derived")
+        self.assertEqual(built[0]["token"], "synthetic-access")
+        self.assertEqual(manager.login, "derived")
+        client.close.assert_awaited_once()
+
+    async def test_twitch_derives_login_from_verified_token_before_connecting(self):
+        config = Settings(api_key="test", twitch_enabled=True, twitch_oauth="test", channel="test")
+        seen = []
+        class Connector:
+            def __init__(self, **kwargs):
+                seen.append(kwargs["login"])
+            async def connect_forever(self):
+                raise RuntimeError("synthetic stop")
+        client = SimpleNamespace(close=AsyncMock())
+        with patch.object(main.Settings, "load", return_value=config), \
+             patch.object(main, "OpenAIServices", return_value=SimpleNamespace(client=client)), \
+             patch.object(main, "validate_twitch_token", return_value=SimpleNamespace(login="derived")) as validate, \
+             patch("src.jade_runtime.twitch_irc.TwitchIRC", Connector):
+            with self.assertRaisesRegex(RuntimeError, "synthetic stop"):
+                await main.console(live=True, twitch=True)
+        self.assertEqual(seen, ["derived"])
+        validate.assert_called_once_with("test", login="", send_enabled=False)
+        client.close.assert_awaited_once()
+
     async def test_twitch_reply_survives_failed_voice_output(self):
         config = Settings(api_key="test", twitch_enabled=True, twitch_login="jade",
                           twitch_oauth="test", channel="test", audio_output="ffplay")
@@ -34,6 +80,7 @@ class MainSafetyTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(main.Settings, 'load', return_value=config), \
              patch.object(main, 'OpenAIServices', return_value=service), \
              patch.object(main, 'SpeechOutput', BrokenSpeech), \
+             patch.object(main, 'validate_twitch_token', return_value=SimpleNamespace(login='jade')), \
              patch('src.jade_runtime.twitch_irc.TwitchIRC', Connector):
             task = asyncio.create_task(main.console(live=True, twitch=True, voice=True))
             await asyncio.wait_for(spoken.wait(), 2)
@@ -71,6 +118,7 @@ class MainSafetyTests(unittest.IsolatedAsyncioTestCase):
                     cleaned.set()
         with patch.object(main.Settings, "load", return_value=config), \
              patch.object(main, "OpenAIServices", return_value=SimpleNamespace(client=client)), \
+             patch.object(main, "validate_twitch_token", return_value=SimpleNamespace(login="jade")), \
              patch("src.jade_runtime.twitch_irc.TwitchIRC", Connector):
             task = asyncio.create_task(main.console(live=True, twitch=True))
             await asyncio.wait_for(started.wait(), 2)

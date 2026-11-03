@@ -12,6 +12,7 @@ from src.jade_runtime.messages import Incoming
 from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.orchestrator import Runtime
 from src.jade_runtime.output import AudioOutput, SpeechOutput
+from src.jade_runtime.twitch_token import validate_twitch_token
 from src.jade_runtime.voice_pipeline import VoiceInput
 
 LOG = logging.getLogger("jade.main")
@@ -49,6 +50,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     else:
         audio_gate = None
     twitch_client = None
+    twitch_manager = None
     discord_client = None
     vts_client = None
     discord_voice_bridge = None
@@ -63,7 +65,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                             max_messages=config.max_history_messages,
                             random_reply_rate=config.reply_probability)
         speech = (SpeechOutput(chat, AudioOutput(config.audio_output),
-                               config.subtitle_path, audio_gate=audio_gate) if voice else None)
+                               config.subtitle_path, audio_gate=audio_gate,
+                               secondary_broadcast=config.discord_voice_broadcast) if voice else None)
         if vts:
             from src.jade_runtime.vtube_studio import VTubeStudio
             vts_client = await scopes.enter_async_context(VTubeStudio(
@@ -116,8 +119,25 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         try:
             if twitch:
                 from src.jade_runtime.twitch_irc import TwitchIRC
+                if config.twitch_auto_refresh:
+                    from src.jade_runtime.private_backup import sync_private_backup
+                    from src.jade_runtime.twitch_rotation import TwitchTokenManager
+                    from src.utility.private_config import secrets_file
+                    twitch_manager = TwitchTokenManager(
+                        secrets_file(), sync_backup=sync_private_backup,
+                        login=config.twitch_login, send_enabled=config.twitch_send)
+                    identity = await asyncio.to_thread(twitch_manager.check)
+                    if identity.backup_pending:
+                        LOG.error("Sauvegarde privée Twitch non synchronisée ; intervention nécessaire")
+                    token = identity.access_token
+                    twitch_manager.login = identity.login
+                else:
+                    identity = await asyncio.to_thread(
+                        validate_twitch_token, config.twitch_oauth,
+                        login=config.twitch_login, send_enabled=config.twitch_send)
+                    token = config.twitch_oauth
                 twitch_client = TwitchIRC(
-                    login=config.twitch_login, token=config.twitch_oauth,
+                    login=identity.login, token=token,
                     channel=config.channel, on_message=accept,
                     send_enabled=config.twitch_send)
             if discord:
@@ -131,7 +151,11 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 tasks = []
                 try:
                     if twitch_client is not None:
-                        tasks.append(asyncio.create_task(twitch_client.connect_forever()))
+                        if twitch_manager is not None:
+                            from src.jade_runtime.twitch_managed import run_managed_twitch
+                            tasks.append(asyncio.create_task(run_managed_twitch(twitch_client, twitch_manager)))
+                        else:
+                            tasks.append(asyncio.create_task(twitch_client.connect_forever()))
                     if discord_client is not None:
                         tasks.append(asyncio.create_task(discord_client.connect_forever()))
                     if mic:

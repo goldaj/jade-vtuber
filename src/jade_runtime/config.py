@@ -26,10 +26,12 @@ class Settings:
     twitch_login: str = ""
     twitch_enabled: bool = False
     twitch_send: bool = False
+    twitch_auto_refresh: bool = False
     discord_token: str = ""
     discord_enabled: bool = False
     discord_send: bool = False
     discord_voice_enabled: bool = False
+    discord_voice_broadcast: bool = False
     discord_voice_channel: int = 0
     vts_enabled: bool = False
     vts_token: str = ""
@@ -60,10 +62,12 @@ class Settings:
             twitch_login=str(environ("TWITCH_BOT_LOGIN", "")),
             twitch_enabled=_enabled(str(environ("JADE_TWITCH_ENABLED", "0")).lower()),
             twitch_send=_enabled(str(environ("JADE_TWITCH_SEND", "0")).lower()),
+            twitch_auto_refresh=_enabled(str(environ("JADE_TWITCH_AUTO_REFRESH", "0")).lower()),
             discord_token=str(environ("DISCORD_TOKEN", "")),
             discord_enabled=_enabled(str(environ("JADE_DISCORD_ENABLED", "0")).lower()),
             discord_send=_enabled(str(environ("JADE_DISCORD_SEND", "0")).lower()),
             discord_voice_enabled=_enabled(str(environ("JADE_DISCORD_VOICE_ENABLED", "0")).lower()),
+            discord_voice_broadcast=_enabled(str(environ("JADE_DISCORD_VOICE_BROADCAST", "0")).lower()),
             discord_voice_channel=int(environ("DISCORD_VOICE_CHANNEL", "0") or 0),
             vts_enabled=_enabled(str(environ("JADE_VTS_ENABLED", "0")).lower()),
             vts_token=str(environ("JADE_VTS_TOKEN", "")),
@@ -97,13 +101,15 @@ class Settings:
             raise ValueError("HTTP API requires an independent 32+ character token")
         if self.audio_output not in ("none", "ffplay"):
             raise ValueError("audio output must be 'none' or 'ffplay'")
-        if self.twitch_enabled and not (self.channel and self.twitch_oauth and self.twitch_login):
+        if self.twitch_enabled and not (self.channel and self.twitch_oauth):
             raise ValueError("Twitch explicitly enabled but credentials missing")
         if self.twitch_send and not self.twitch_enabled:
             raise ValueError("Twitch output requires explicitly enabled connector")
         if self.discord_voice_enabled and (
                 not self.discord_enabled or self.discord_voice_channel <= 0):
             raise ValueError("Discord voice needs explicit Discord and channel activation")
+        if self.discord_voice_broadcast and not self.discord_voice_enabled:
+            raise ValueError("Discord voice broadcast requires explicit Discord voice activation")
         if self.discord_send and not self.discord_enabled:
             raise ValueError("Discord output requires explicitly enabled connector")
         if self.vts_enabled and not self.vts_token:

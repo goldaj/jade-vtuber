@@ -87,6 +87,15 @@ l’interface HTTP s’activent séparément par leurs options ; l’envoi vers 
 chats Twitch/Discord demande en plus son réglage dédié. Les extras Poetry
 disponibles sont `mic`, `discord`, `discord-voice` et `vts`.
 
+Pour Twitch, un jeton utilisateur valide et le canal sont requis ; le nom du
+bot est déduit du jeton si `TWITCH_BOT_LOGIN` est vide. La procédure pour obtenir
+un jeton sans exposer les secrets est décrite dans [l'aide Twitch](docs/gpt6-jade/TWITCH-AUTH.md).
+Le renouvellement automatique est facultatif et exige une sauvegarde GitHub
+privée configurée ; ses garanties et limites sont détaillées dans cette aide.
+Pour Discord vocal, `JADE_DISCORD_VOICE_BROADCAST=1` autorise explicitement les
+réponses d'autres sources à être diffusées dans le salon vocal configuré ; par
+défaut, seules les réponses aux demandes vocales Discord y sont envoyées.
+
 La lecture locale nécessite ffplay. Avant un essai vocal, vérifier les appareils
 et avertir les participants : les segments vocaux destinés à la transcription
 sont envoyés au fournisseur. L’interface HTTP reste liée à `127.0.0.1` ; un accès

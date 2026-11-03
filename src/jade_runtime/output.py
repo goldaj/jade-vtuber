@@ -66,13 +66,15 @@ class AudioOutput:
 class SpeechOutput:
     """Only one spoken response at a time; clear subtitles even on failure."""
     def __init__(self, services: OpenAIServices, player: AudioOutput,
-                 subtitle_path: Path, secondary_player=None, audio_gate=None):
+                 subtitle_path: Path, secondary_player=None, audio_gate=None,
+                 secondary_broadcast=False):
         self.services = services
         self.player = player
         self.subtitle_path = Path(subtitle_path)
         self.lock = asyncio.Lock()
         self.secondary_player = secondary_player
         self.audio_gate = audio_gate
+        self.secondary_broadcast = secondary_broadcast
 
     async def speak(self, reply: Reply):
         async with self.lock:
@@ -90,7 +92,8 @@ class SpeechOutput:
                 if self.audio_gate is not None:
                     await self.audio_gate.begin_speech()
                     gated = True
-                if self.secondary_player is not None and reply.source.platform == "discord_voice":
+                if self.secondary_player is not None and (
+                        reply.source.platform == "discord_voice" or self.secondary_broadcast):
                     async with asyncio.TaskGroup() as players:
                         players.create_task(self.player.play(wav))
                         players.create_task(self.secondary_player.play(wav))

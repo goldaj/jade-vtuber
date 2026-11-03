@@ -79,8 +79,8 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
     if twitch:
         checks.append(Check(
             "Twitch activé", settings.twitch_enabled
-            and all((settings.twitch_login, settings.twitch_oauth, settings.channel)),
-            "Configuration présente, OAuth et IRC non testés"))
+            and all((settings.twitch_oauth, settings.channel)),
+            "Jeton et canal présents ; login déduit si absent, OAuth et IRC non testés"))
     if discord:
         checks.append(Check(
             "Discord activé", settings.discord_enabled and bool(settings.discord_token),

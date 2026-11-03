@@ -26,6 +26,7 @@ PUBLIC_TOOLS = frozenset({
     "tools/jade_publication_audit.py",
     "tools/jade_publication_export.py",
     "tools/jade_ci_preflight.py",
+    "tools/jade_twitch_authorize.py",
 })
 PUBLIC_TEMPLATES = frozenset({
     "docs/publication/README_PUBLIC_TEMPLATE.md",

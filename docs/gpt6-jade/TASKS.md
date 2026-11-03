@@ -3,6 +3,33 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## Reprise Terra — connexions et sécurité, 3 novembre 2026
+- Twitch : six anciens jetons distincts refusés par la validation distante. Sur
+  accord explicite du propriétaire, nouveau jeton obtenu et validé avec lecture
+  et autorisation d'écriture ; aucune écriture dans le chat. Le connecteur
+  `TwitchIRC` s'est authentifié et a rejoint le canal configuré en lecture.
+  L'ancienne configuration est préservée et la nouvelle configuration complète
+  est sauvegardée dans le dépôt privé, avec intégrité vérifiée.
+- Discord : le jeton bot a été reconnu ; appartenance au serveur, accès et
+  permissions du salon vocal vérifiés par API. Le connecteur Discord du projet a
+  atteint l'état prêt sur la passerelle, en présence invisible, puis s'est fermé
+  proprement. Aucun message n'a été envoyé et aucun salon vocal n'a été rejoint.
+- La diffusion Discord élargie est une option explicite désactivée par défaut.
+  Le transport vocal réel, l'envoi réel de chat et les interactions complètes
+  avec les participants restent à recetter séparément.
+- Un contrôle spécialisé des secrets sur les pushes et PR, avec historique
+  récupéré et autotest synthétique, complète la CI. Les octets Git LFS ne sont
+  pas couverts par le scan Git ; voir `docs/gpt6-jade/SECRET_SCANNING.md`.
+- À la demande du propriétaire, le renouvellement automatique du nouveau jeton
+  est activé dans la configuration privée ; la sauvegarde distante initiale est
+  confirmée. Rotation, conflits et pannes sont testés avec des doubles ; aucun
+  renouvellement réel du nouveau jeton n'a été déclenché pendant cette recette.
+- Les connexions Twitch et Discord sont autorisées dans la configuration privée,
+  mais leur démarrage et l'envoi de messages exigent toujours leurs options
+  explicites. Les 134 tests locaux réussissent. Une course d'arrêt Twitch est
+  couverte par des tests ; le démarrage et l'arrêt immédiat réels ont été vérifiés
+  sans message ni appel payant.
+
 ## Contre-revue Astra finale — 2 novembre 2026
 - Conservation vérifiée des 324 chemins suivis de la version intégrée et des 103
   objets LFS ; aucun changement runtime/configuration/tests/dépendances dû à la
