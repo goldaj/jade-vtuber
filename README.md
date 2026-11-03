@@ -92,9 +92,12 @@ bot est déduit du jeton si `TWITCH_BOT_LOGIN` est vide. La procédure pour obte
 un jeton sans exposer les secrets est décrite dans [l'aide Twitch](docs/gpt6-jade/TWITCH-AUTH.md).
 Le renouvellement automatique est facultatif et exige une sauvegarde GitHub
 privée configurée ; ses garanties et limites sont détaillées dans cette aide.
-Pour Discord vocal, `JADE_DISCORD_VOICE_BROADCAST=1` autorise explicitement les
-réponses d'autres sources à être diffusées dans le salon vocal configuré ; par
-défaut, seules les réponses aux demandes vocales Discord y sont envoyées.
+Pour Discord vocal, seules les réponses de la session vocale courante peuvent
+être envoyées dans le salon. La rediffusion d'autres sources est suspendue tant
+qu'un routage explicite par source et session n'est pas disponible.
+L'écoute vocale demande aussi une liste privée d'identifiants de participants
+autorisés et un consentement explicite ; sans ces deux réglages, Jade ne rejoint
+pas le salon vocal et n'envoie aucun audio à la transcription.
 
 La lecture locale nécessite ffplay. Avant un essai vocal, vérifier les appareils
 et avertir les participants : les segments vocaux destinés à la transcription

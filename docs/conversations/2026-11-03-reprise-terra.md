@@ -37,6 +37,10 @@ a répondu : « Oui, préparer le renouvellement automatique » avec mise à jou
 la sauvegarde privée. Cette décision concerne le nouveau fonctionnement ; les
 anciennes configurations restent archivées.
 
+Après expiration du nouveau jeton, le gestionnaire l'a effectivement renouvelé
+et a synchronisé la sauvegarde privée. Le jeton renouvelé a été validé sans en
+afficher la valeur, et la copie privée locale correspond au fichier actif.
+
 ## Utilisateur — suite, verbatim
 
 > continue et termine ce que tu faisais. Ensuite, tu remarqueras que gpt-6 a rajouté des instructions et peut être même une branche, on partira sur ça une fois que t'as fini ce qui était prévu à l'origine.
@@ -52,3 +56,12 @@ anciennes configurations restent archivées.
 ## Assistant — verbatim
 
 > Bien noté. Je m’appuierai sur les mêmes contrôles exécutés localement si Actions est bloqué ; le dernier échec observé venait du test synthétique lui-même, que je viens de faire corriger. Je ne présenterai pas une CI indisponible comme réussie.
+
+## Utilisateur — verbatim, démo distribuable
+
+> Continue.
+> Quand tu auras fini, je veux que tu te lances sur un zip contenant un executable, les assets du model et tout le nécessaire pour lancer une démo du projet rapidement pour quelqu'un qui veut juste voir ce que c'est. Et tu documenteras ça proprement.
+
+## Assistant — verbatim
+
+> Je termine d’abord les changements en cours et leurs vérifications. Ensuite je préparerai une démo Windows en ZIP, avec un lancement simple, les ressources de Jade et une notice claire sur ce que la démo montre réellement.

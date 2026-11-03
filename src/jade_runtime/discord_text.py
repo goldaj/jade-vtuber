@@ -62,6 +62,17 @@ class DiscordText:
                     except (asyncio.QueueFull, RuntimeError):
                         parent.dropped += 1
 
+            async def on_voice_state_update(self, member, before, after):
+                if parent.voice_bridge is not None:
+                    own_user = getattr(self, "user", None)
+                    await parent.voice_bridge.voice_state_changed(
+                        member, before, after, own_bot_id=getattr(own_user, "id", None))
+
+            async def on_disconnect(self):
+                if parent.voice_bridge is not None:
+                    parent.voice_bridge.set_session([], consent_confirmed=False)
+                    await parent.voice_bridge.close()
+
         self.client = JadeClient(intents=intents, allowed_mentions=discord.AllowedMentions.none())
         try:
             await self.client.start(self.token)

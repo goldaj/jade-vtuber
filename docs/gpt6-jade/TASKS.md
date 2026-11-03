@@ -3,6 +3,47 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## MVP Discord — D0, 3 novembre 2026
+- Base `bb44d7a` installée depuis le lock sur Windows dans un environnement isolé
+  avec Python 3.11.1, Poetry 2.2.1 et extras Discord vocal/VTS ; `pip check`,
+  135 tests, compilation, démo, préflight et contrôles LFS réussis.
+- CI GitHub tests Windows/Linux et scan des secrets réussis sur ce même SHA.
+  Le faux secret utilisé par l'autotest est devenu déterministe après un échec
+  intermittent ; il ne constitue pas une clé réelle.
+- FFmpeg, ffplay et ffprobe ont été copiés vers D: et leurs empreintes vérifiées.
+  Le [plan d'exécution](PLAN-EXECUTION-MVP-20261103.md) précise l'installation,
+  les gates suivants et les recettes physiques non encore réalisées.
+
+## MVP Discord — début D1, 3 novembre 2026
+- Un appel TTS et un appel STT OpenAI réels, sans microphone et sans relance,
+  ont réussi sur une phrase synthétique ; audio effectif 2,41 s. Durées d'appel
+  observées 3,47 s et 2,63 s. Le montant exact n'a pas été relevé.
+- Un appel STT supplémentaire sur le même WAV a aussi validé le modèle recommandé
+  `gpt-transcribe` (1,25 s et mots attendus). Aucun audio humain n'a été capturé.
+- La taille déclarée dans l'en-tête WAV reçu était indéterminée ; la durée a été
+  calculée sur les octets PCM effectifs. Aucune écoute ni capture humaine réelle.
+- Les modèles de dialogue, TTS et STT actuellement configurés sont annoncés comme
+  retirés en 2027. Dates, sources officielles et adaptation nécessaire sont dans
+  le [plan](PLAN-EXECUTION-MVP-20261103.md) ; ne pas changer seulement les noms
+  de modèles sans vérifier leurs interfaces.
+
+## MVP Discord — premières protections vocales, 3 novembre 2026
+- Validation locale de ce lot : 201 tests hors ligne et compilation réussis ;
+  scan des modifications préparées sans alerte. Des essais synthétiques couvrent
+  notamment la révocation avant et pendant la sortie locale/OBS. L’arrêt effectif
+  reste soumis à l’ordonnancement et aux lecteurs ; aucune garantie temps réel.
+- Le vocal exige désormais une liste privée de participants autorisés et un
+  consentement explicite. Une session distincte est révoquée en cas de changement
+  des participants ou de déconnexion ; les travaux et lectures en cours sont
+  annulés. Les membres introuvables dans le cache et les bots tiers sont refusés.
+- Une réponse vocale est liée à son locuteur, son salon et sa session. La
+  rediffusion globale d'autres sources précédemment ajoutée est suspendue en
+  attendant un routage autorisé par source et destination, afin d'éviter une
+  fuite entre conversations.
+- Des briques autonomes de segmentation PCM et de pertinence sans mot d'activation
+  sont testées hors réseau mais pas encore raccordées au bridge. Aucun vocal réel
+  n'a été testé ; la recette avec les participants informés reste indispensable.
+
 ## Reprise Terra — connexions et sécurité, 3 novembre 2026
 - Twitch : six anciens jetons distincts refusés par la validation distante. Sur
   accord explicite du propriétaire, nouveau jeton obtenu et validé avec lecture
@@ -14,8 +55,9 @@ sans présenter les mocks comme des tests d'API réels.
   permissions du salon vocal vérifiés par API. Le connecteur Discord du projet a
   atteint l'état prêt sur la passerelle, en présence invisible, puis s'est fermé
   proprement. Aucun message n'a été envoyé et aucun salon vocal n'a été rejoint.
-- La diffusion Discord élargie est une option explicite désactivée par défaut.
-  Le transport vocal réel, l'envoi réel de chat et les interactions complètes
+- La diffusion Discord élargie, initialement prévue comme option, a ensuite été
+  suspendue : le routage entre sources et sessions doit être sécurisé avant son
+  activation. Le transport vocal réel, l'envoi réel de chat et les interactions
   avec les participants restent à recetter séparément.
 - Un contrôle spécialisé des secrets sur les pushes et PR, avec historique
   récupéré et autotest synthétique, complète la CI. Les octets Git LFS ne sont
@@ -23,7 +65,10 @@ sans présenter les mocks comme des tests d'API réels.
 - À la demande du propriétaire, le renouvellement automatique du nouveau jeton
   est activé dans la configuration privée ; la sauvegarde distante initiale est
   confirmée. Rotation, conflits et pannes sont testés avec des doubles ; aucun
-  renouvellement réel du nouveau jeton n'a été déclenché pendant cette recette.
+  renouvellement réel du nouveau jeton n'a été déclenché pendant la première
+  recette. Après expiration, un renouvellement réel a ensuite réussi : nouveau
+  jeton revalidé, sauvegarde distante privée synchronisée et copie locale de
+  sauvegarde vérifiée. Aucun message de chat n'a été envoyé.
 - Les connexions Twitch et Discord sont autorisées dans la configuration privée,
   mais leur démarrage et l'envoi de messages exigent toujours leurs options
   explicites. Les 134 tests locaux réussissent. Une course d'arrêt Twitch est

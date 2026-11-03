@@ -68,6 +68,8 @@ class SpeechOutput:
     def __init__(self, services: OpenAIServices, player: AudioOutput,
                  subtitle_path: Path, secondary_player=None, audio_gate=None,
                  secondary_broadcast=False):
+        if secondary_broadcast:
+            raise ValueError("Cross-source Discord voice broadcast is not yet available")
         self.services = services
         self.player = player
         self.subtitle_path = Path(subtitle_path)
@@ -78,28 +80,68 @@ class SpeechOutput:
 
     async def speak(self, reply: Reply):
         async with self.lock:
+            discord_voice = reply.source.platform == "discord_voice"
+
+            def require_session():
+                # Discord voice is a private, revocable session.  Fail closed
+                # even for local audio and OBS, before exposing its response.
+                authorize = getattr(self.secondary_player, "reply_authorized", None)
+                if not callable(authorize) or not authorize(reply.source):
+                    raise PermissionError("Discord voice reply session is not authorized")
+
+            if discord_voice:
+                require_session()
             wav = await self.services.synthesize_wav(reply.text)
+            if discord_voice:
+                require_session()
             # OBS text source shows the whole phrase while the WAV plays.
             # Not character-accurate alignment: OpenAI speech WAV returns no
             # guaranteed per-character timing. Never fake precision.
             path = self.subtitle_path
-            path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_name(path.name + ".tmp")
-            tmp.write_text(reply.text, encoding="utf-8")
-            tmp.replace(path)
             gated = False
+            subtitle_written = False
             try:
                 if self.audio_gate is not None:
                     await self.audio_gate.begin_speech()
                     gated = True
-                if self.secondary_player is not None and (
-                        reply.source.platform == "discord_voice" or self.secondary_broadcast):
-                    async with asyncio.TaskGroup() as players:
-                        players.create_task(self.player.play(wav))
-                        players.create_task(self.secondary_player.play(wav))
+                if discord_voice:
+                    require_session()
+                path.parent.mkdir(parents=True, exist_ok=True)
+                tmp = path.with_name(path.name + ".tmp")
+                tmp.write_text(reply.text, encoding="utf-8")
+                tmp.replace(path)
+                subtitle_written = True
+                if discord_voice:
+                    require_session()
+                    finished = asyncio.Event()
+
+                    async def play_local():
+                        require_session()
+                        await self.player.play(wav)
+
+                    async def play_both():
+                        try:
+                            async with asyncio.TaskGroup() as players:
+                                players.create_task(play_local())
+                                players.create_task(self.secondary_player.play_for_reply(wav, reply.source))
+                        finally:
+                            finished.set()
+
+                    async def watch_session():
+                        while not finished.is_set():
+                            require_session()
+                            try:
+                                await asyncio.wait_for(finished.wait(), timeout=0.05)
+                            except TimeoutError:
+                                continue
+
+                    async with asyncio.TaskGroup() as tasks:
+                        tasks.create_task(play_both())
+                        tasks.create_task(watch_session())
                 else:
                     await self.player.play(wav)
             finally:
                 if gated:
                     await self.audio_gate.end_speech()
-                path.write_text("", encoding="utf-8")
+                if subtitle_written:
+                    path.write_text("", encoding="utf-8")

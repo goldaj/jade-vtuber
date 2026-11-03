@@ -9,6 +9,15 @@ from src.jade_runtime.discord_voice import (
     DiscordVoiceBridge, PCM_CHUNK_BYTES, pcm_48k_stereo_wav)
 
 
+def attach_voice_session(bridge, user_ids):
+    channel = types.SimpleNamespace(id=45, members=[
+        types.SimpleNamespace(id=uid, bot=False) for uid in user_ids])
+    channel.voice_states = {uid: types.SimpleNamespace(channel=channel) for uid in user_ids}
+    bridge.connection = types.SimpleNamespace(channel=channel, stop=Mock(),
+                                               stop_listening=Mock(), disconnect=AsyncMock())
+    bridge.own_bot_id = 100
+
+
 class DiscordVoiceTests(unittest.IsolatedAsyncioTestCase):
     async def test_pcm_is_bounded_filtered_and_openai_only(self):
         records = []
@@ -18,7 +27,8 @@ class DiscordVoiceTests(unittest.IsolatedAsyncioTestCase):
         runtime.submit.side_effect = save
         services = AsyncMock()
         services.transcribe_wav.return_value = "Bonjour Jade"
-        bridge = DiscordVoiceBridge(services, runtime, 45)
+        bridge = DiscordVoiceBridge(services, runtime, 45, authorized_user_ids=[12], consent_confirmed=True)
+        attach_voice_session(bridge, [12])
         bridge.loop = asyncio.get_running_loop()
         bridge.worker = asyncio.create_task(bridge._consume())
         silent = bytes(PCM_CHUNK_BYTES)
@@ -41,7 +51,9 @@ class DiscordVoiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(pcm_48k_stereo_wav(bytes(4))[:4], b"RIFF")
 
     async def test_completed_and_stale_partial_users_release_slots(self):
-        bridge = DiscordVoiceBridge(AsyncMock(), AsyncMock(), 45)
+        bridge = DiscordVoiceBridge(AsyncMock(), AsyncMock(), 45,
+                                    authorized_user_ids=range(1, 14), consent_confirmed=True)
+        attach_voice_session(bridge, range(1, 14))
         with patch('src.jade_runtime.discord_voice.time.monotonic', return_value=0):
             for uid in range(1, 13):
                 bridge.receive_pcm(uid, str(uid), bytes(4))
@@ -60,9 +72,13 @@ class DiscordVoiceTests(unittest.IsolatedAsyncioTestCase):
         modules = {'discord': discord, 'discord.ext': ext, 'discord.ext.voice_recv': recv}
         connection = types.SimpleNamespace(listen=Mock(side_effect=ValueError('failed')),
             disconnect=AsyncMock(), stop_listening=Mock())
-        channel = types.SimpleNamespace(connect=AsyncMock(return_value=connection))
-        client = types.SimpleNamespace(get_channel=lambda _: channel)
-        bridge = DiscordVoiceBridge(AsyncMock(), AsyncMock(), 45)
+        channel = types.SimpleNamespace(id=45, connect=AsyncMock(return_value=connection),
+                                        members=[types.SimpleNamespace(id=12, bot=False)])
+        channel.voice_states = {12: types.SimpleNamespace(channel=channel)}
+        client = types.SimpleNamespace(get_channel=lambda _: channel,
+                                       user=types.SimpleNamespace(id=100, bot=True))
+        bridge = DiscordVoiceBridge(AsyncMock(), AsyncMock(), 45,
+                                    authorized_user_ids=[12], consent_confirmed=True)
         with patch.dict('sys.modules', modules):
             with self.assertRaises(ValueError):
                 await bridge.connect(client)
@@ -70,6 +86,7 @@ class DiscordVoiceTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(bridge.connection)
             connection.disconnect.assert_awaited_once()
             connection.listen.side_effect = None
+            bridge.set_session([12], consent_confirmed=True)
             await asyncio.gather(bridge.connect(client), bridge.connect(client))
             self.assertEqual(channel.connect.await_count, 2)
             await bridge.close()
@@ -84,9 +101,12 @@ class DiscordVoiceTests(unittest.IsolatedAsyncioTestCase):
             started.set()
             await asyncio.Event().wait()
         services.transcribe_wav.side_effect = blocked
-        bridge = DiscordVoiceBridge(services, AsyncMock(), 45)
+        bridge = DiscordVoiceBridge(services, AsyncMock(), 45,
+                                    authorized_user_ids=[12], consent_confirmed=True)
+        attach_voice_session(bridge, [12])
+        bridge.loop = asyncio.get_running_loop()
         bridge.worker = asyncio.create_task(bridge._consume())
-        bridge.pending.put_nowait(('test', bytes(4)))
+        bridge.receive_pcm(12, 'test', array('h', [1500] * (PCM_CHUNK_BYTES // 2)).tobytes())
         await asyncio.wait_for(started.wait(), 1)
         await asyncio.wait_for(bridge.close(), 1)
         await asyncio.wait_for(bridge.pending.join(), 1)
@@ -95,11 +115,15 @@ class DiscordVoiceTests(unittest.IsolatedAsyncioTestCase):
         source = types.SimpleNamespace(cleanup=Mock())
         discord = types.SimpleNamespace(FFmpegPCMAudio=lambda _: source)
         started = asyncio.Event()
-        connection = types.SimpleNamespace(is_playing=lambda: False, stop=Mock())
+        channel = types.SimpleNamespace(id=45, members=[types.SimpleNamespace(id=12, bot=False)])
+        channel.voice_states = {12: types.SimpleNamespace(channel=channel)}
+        connection = types.SimpleNamespace(is_playing=lambda: False, stop=Mock(), channel=channel)
         def play(src, *, after):
             started.set()
         connection.play = play
-        bridge = DiscordVoiceBridge(AsyncMock(), AsyncMock(), 45)
+        bridge = DiscordVoiceBridge(AsyncMock(), AsyncMock(), 45,
+                                    authorized_user_ids=[12], consent_confirmed=True)
+        bridge.own_bot_id = 100
         bridge.connection = connection
         with patch.dict('sys.modules', {'discord': discord}):
             task = asyncio.create_task(bridge.play(b'fake-wav'))

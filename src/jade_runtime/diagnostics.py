@@ -91,8 +91,9 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
         checks.append(Check(
             "Discord vocal autorisé",
             discord and voice and settings.discord_voice_enabled
-            and settings.discord_voice_channel > 0,
-            "Canal et autorisations préconfigurés ; consentement nécessaire"))
+            and settings.discord_voice_channel > 0 and settings.discord_voice_consent
+            and bool(settings.discord_voice_allowed_users),
+            "Canal, participants autorisés et consentement déclarés ; accès réel non testé"))
         checks.append(Check("Transport vocal Discord", _installed("discord.ext.voice_recv")
                             and _installed("nacl"),
                             "PCM/codec installés, périphériques non testés"))

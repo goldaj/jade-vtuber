@@ -110,7 +110,9 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         if discord_voice:
             from src.jade_runtime.discord_voice import DiscordVoiceBridge
             discord_voice_bridge = DiscordVoiceBridge(
-                chat, runtime, config.discord_voice_channel)
+                chat, runtime, config.discord_voice_channel,
+                authorized_user_ids=config.discord_voice_allowed_users,
+                consent_confirmed=config.discord_voice_consent)
             speech.secondary_player = discord_voice_bridge
 
         async def accept(message):

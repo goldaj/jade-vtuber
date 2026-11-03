@@ -35,10 +35,17 @@ class OpenAIServices:
         # An in-memory WAV avoids exposing recorded user audio to a public file.
         memory = BytesIO(audio)
         memory.name = "speech.wav"
+        # gpt-transcribe uses the plural languages field; older models use
+        # the singular language field. extra_body also supports older SDKs.
+        language = (
+            {"extra_body": {"languages": ["fr"]}}
+            if self.settings.stt_model == "gpt-transcribe"
+            else {"language": "fr"}
+        )
         result = await self.client.audio.transcriptions.create(
             model=self.settings.stt_model,
             file=memory,
-            language="fr",
+            **language,
         )
         value = result.text
         if not isinstance(value, str):

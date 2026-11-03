@@ -147,7 +147,9 @@ class AudioSafetyTests(unittest.IsolatedAsyncioTestCase):
                 finally:
                     cleaned.set()
         class Fails:
-            async def play(self, wav):
+            def reply_authorized(self, source):
+                return True
+            async def play_for_reply(self, wav, source):
                 await started.wait()
                 raise RuntimeError("synthetic failure")
         services = type("Services", (), {"synthesize_wav": AsyncMock(return_value=b"wav")})()

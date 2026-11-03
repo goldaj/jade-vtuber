@@ -1,5 +1,5 @@
 """Strict, private, fail-closed runtime settings. No network on import."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from src.utility.private_config import environ
@@ -11,6 +11,19 @@ def _enabled(value: str) -> bool:
     if value in ("0", "false", "no", ""):
         return False
     raise ValueError("boolean settings must be 0/1 or true/false")
+
+
+def _voice_users(value: str) -> tuple[int, ...]:
+    if not value.strip():
+        return ()
+    parts = value.split(",")
+    if (len(parts) > 32 or any(not part.strip().isascii() or not part.strip().isdigit()
+                               for part in parts)):
+        raise ValueError("invalid Discord voice authorization list")
+    values = tuple(int(part.strip()) for part in parts)
+    if any(not 0 < value < 2**64 for value in values) or len(set(values)) != len(values):
+        raise ValueError("invalid Discord voice authorization list")
+    return values
 
 
 @dataclass(frozen=True)
@@ -32,6 +45,8 @@ class Settings:
     discord_send: bool = False
     discord_voice_enabled: bool = False
     discord_voice_broadcast: bool = False
+    discord_voice_consent: bool = False
+    discord_voice_allowed_users: tuple[int, ...] = field(default=(), repr=False)
     discord_voice_channel: int = 0
     vts_enabled: bool = False
     vts_token: str = ""
@@ -68,6 +83,8 @@ class Settings:
             discord_send=_enabled(str(environ("JADE_DISCORD_SEND", "0")).lower()),
             discord_voice_enabled=_enabled(str(environ("JADE_DISCORD_VOICE_ENABLED", "0")).lower()),
             discord_voice_broadcast=_enabled(str(environ("JADE_DISCORD_VOICE_BROADCAST", "0")).lower()),
+            discord_voice_consent=_enabled(str(environ("JADE_DISCORD_VOICE_CONSENT", "0")).lower()),
+            discord_voice_allowed_users=_voice_users(str(environ("JADE_DISCORD_VOICE_ALLOWED_USERS", ""))),
             discord_voice_channel=int(environ("DISCORD_VOICE_CHANNEL", "0") or 0),
             vts_enabled=_enabled(str(environ("JADE_VTS_ENABLED", "0")).lower()),
             vts_token=str(environ("JADE_VTS_TOKEN", "")),
@@ -105,11 +122,18 @@ class Settings:
             raise ValueError("Twitch explicitly enabled but credentials missing")
         if self.twitch_send and not self.twitch_enabled:
             raise ValueError("Twitch output requires explicitly enabled connector")
+        if (type(self.discord_voice_consent) is not bool
+                or not isinstance(self.discord_voice_allowed_users, tuple)
+                or len(self.discord_voice_allowed_users) > 32
+                or any(type(uid) is not int or not 0 < uid < 2**64 for uid in self.discord_voice_allowed_users)
+                or len(set(self.discord_voice_allowed_users)) != len(self.discord_voice_allowed_users)):
+            raise ValueError("invalid Discord voice authorization")
         if self.discord_voice_enabled and (
-                not self.discord_enabled or self.discord_voice_channel <= 0):
-            raise ValueError("Discord voice needs explicit Discord and channel activation")
-        if self.discord_voice_broadcast and not self.discord_voice_enabled:
-            raise ValueError("Discord voice broadcast requires explicit Discord voice activation")
+                not self.discord_enabled or self.discord_voice_channel <= 0
+                or not self.discord_voice_consent or not self.discord_voice_allowed_users):
+            raise ValueError("Discord voice needs a channel, authorized users and explicit consent")
+        if self.discord_voice_broadcast:
+            raise ValueError("Cross-source Discord voice broadcast requires session-specific routing, not yet available")
         if self.discord_send and not self.discord_enabled:
             raise ValueError("Discord output requires explicitly enabled connector")
         if self.vts_enabled and not self.vts_token:
