@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import time
 import uuid
 from contextlib import contextmanager
 from urllib.error import HTTPError, URLError
@@ -25,6 +26,7 @@ from .twitch_token import TwitchTokenExpired, validate_twitch_token
 
 ROOT = Path(__file__).resolve().parents[2]
 TOKEN_URL = "https://id.twitch.tv/oauth2/token"
+MAX_VALIDATION_INTERVAL = 3000  # 50 minutes leaves a margin below Twitch's hourly limit.
 _TOKEN = re.compile(r"[A-Za-z0-9._~+%=/\-]{10,512}\Z")
 
 
@@ -259,19 +261,30 @@ class TwitchTokenManager:
             return TwitchCredentialState(access, identity.login, rotated=True, backup_pending=pending)
 
 
+async def _periodic_checks(check, interval, *, clock=None, sleep=None):
+    """Schedule from each check's start, avoiding cumulative duration drift."""
+    clock = clock or time.monotonic
+    sleep = sleep or asyncio.sleep
+    await sleep(interval)
+    while True:
+        started = clock()
+        await check()
+        await sleep(max(0, interval - (clock() - started)))
+
+
 async def watch_twitch_token(manager: TwitchTokenManager, on_rotation, on_backup_pending,
-                             *, interval: float = 3600):
+                             *, interval: float = MAX_VALIDATION_INTERVAL):
     """Revalidate at least hourly; caller owns connector shutdown/reconnection.
 
     Both callbacks are coroutines. Failure propagates so the caller can stop
     the Twitch session rather than silently maintaining an invalid token.
     """
-    if not 0 < interval <= 3600:
-        raise ValueError("Twitch validation interval must be at most one hour")
-    while True:
-        await asyncio.sleep(interval)
+    if not 0 < interval <= MAX_VALIDATION_INTERVAL:
+        raise ValueError("Twitch validation interval must be at most 50 minutes")
+    async def check():
         state = await asyncio.to_thread(manager.check)
         if state.backup_pending:
             await on_backup_pending()
         if state.rotated:
             await on_rotation(state)
+    await _periodic_checks(check, interval)

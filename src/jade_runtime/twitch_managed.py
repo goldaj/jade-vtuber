@@ -4,19 +4,20 @@ from __future__ import annotations
 import asyncio
 import logging
 import threading
+from .twitch_rotation import MAX_VALIDATION_INTERVAL, _periodic_checks
 
 LOG = logging.getLogger("jade.twitch.managed")
 
 
-async def run_managed_twitch(client, manager, *, interval: float = 3600):
+async def run_managed_twitch(client, manager, *, interval: float = MAX_VALIDATION_INTERVAL):
     """Run IRC and revalidation together until cancellation or failure.
 
     The caller supplies a client initialized from a validated manager state.
     A new token is swapped before closing the old socket, forcing a reconnect.
     Credential values and provider exception details are never logged here.
     """
-    if not 0 < interval <= 3600:
-        raise ValueError("Twitch validation interval must be at most one hour")
+    if not 0 < interval <= MAX_VALIDATION_INTERVAL:
+        raise ValueError("Twitch validation interval must be at most 50 minutes")
 
     thread_lock = threading.Lock()
     queue_lock = asyncio.Lock()
@@ -75,9 +76,9 @@ async def run_managed_twitch(client, manager, *, interval: float = 3600):
             raise ConnectionError("Twitch connector stopped unexpectedly")
 
     async def watch():
-        while True:
-            await asyncio.sleep(interval)
+        async def check_and_apply():
             apply(await check())
+        await _periodic_checks(check_and_apply, interval)
 
     tasks = (asyncio.create_task(connect(), name="jade-twitch-connection"),
              asyncio.create_task(watch(), name="jade-twitch-validation"))

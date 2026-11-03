@@ -167,14 +167,29 @@ class TwitchWatchTests(unittest.IsolatedAsyncioTestCase):
             async def stop(value): raise asyncio.CancelledError()
             on_rotation.side_effect = stop
             with self.assertRaises(asyncio.CancelledError):
-                await watch_twitch_token(manager, on_rotation, on_pending, interval=3600)
-            sleep.assert_awaited_once_with(3600)
+                await watch_twitch_token(manager, on_rotation, on_pending, interval=3000)
+            sleep.assert_awaited_once_with(3000)
             on_pending.assert_awaited_once()
             on_rotation.assert_awaited_once_with(state)
 
     async def test_interval_over_one_hour_is_rejected(self):
         with self.assertRaises(ValueError):
-            await watch_twitch_token(None, None, None, interval=3601)
+            await watch_twitch_token(None, None, None, interval=3001)
+
+    async def test_slow_check_does_not_add_its_duration_to_interval(self):
+        from src.jade_runtime.twitch_rotation import _periodic_checks
+        now = [0.0]
+        delays = []
+        async def sleep(delay):
+            delays.append(delay)
+            now[0] += delay
+            if len(delays) == 2:
+                raise asyncio.CancelledError()
+        async def slow_check():
+            now[0] += 120
+        with self.assertRaises(asyncio.CancelledError):
+            await _periodic_checks(slow_check, 3000, clock=lambda: now[0], sleep=sleep)
+        self.assertEqual(delays, [3000, 2880])
 
 
 if __name__ == "__main__":

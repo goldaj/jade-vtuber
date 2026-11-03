@@ -155,7 +155,7 @@ class ManagedTwitchTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_validation_interval_is_bounded(self):
         with self.assertRaises(ValueError):
-            await run_managed_twitch(None, None, interval=3601)
+            await run_managed_twitch(None, None, interval=3001)
 
     async def test_shutdown_waits_for_inflight_credential_check(self):
         entered, release = threading.Event(), threading.Event()
