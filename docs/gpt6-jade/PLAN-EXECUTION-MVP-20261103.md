@@ -58,6 +58,7 @@ de ce document public.
 4. **D3–D5** : valider VTube Studio, la visibilité par partage manuel Discord,
    puis stabiliser et documenter. L'avatar et le téléphone exigent une recette
    physique ; leur bon fonctionnement ne découle pas des tests automatisés.
+   Voir la [préparation et recette D3–D4](PREPARATION-D3-D4-HORS-LIGNE.md).
 5. **P0–P6** : ne commencer le produit mobile sans Discord qu'après validation du
    MVP Discord par le propriétaire.
 
@@ -76,11 +77,21 @@ sous réserve de l’ordonnancement et du comportement des lecteurs. Ces protect
 ne prouvent pas le consentement réel des personnes et le cache/les événements Discord ne constituent pas un instantané
 réseau atomique. Aucune session vocale réelle n'a été engagée pour ce lot.
 
-Deux composants indépendants sont également préparés et testés hors réseau :
-une segmentation PCM bornée et une décision de pertinence sans mot d'activation.
-Ils ne sont **pas encore raccordés** au bridge : la segmentation existante et la
-règle de réponse historique restent actives jusqu'à leur intégration et leurs
-tests de bout en bout. En particulier, le MVP sans nom n'est pas encore livré.
+La segmentation PCM bornée et la décision de pertinence sont raccordées au
+bridge et testées avec de l'audio synthétique et des services simulés. En salon
+privé avec une seule personne, un tour terminé et intelligible peut déclencher
+une réponse sans prononcer le nom. Les sources texte conservent leurs règles.
+En groupe, aucun signal fiable d'adresse directe n'est encore disponible : la
+politique actuelle reste silencieuse plutôt que de deviner le destinataire.
+
+Les participants présents sont figés pour la session et chaque contrôle de
+capture et de sortie revérifie le snapshot ; une modification détectée révoque
+la session. Les durées, buffers et files sont bornés ; le demi-duplex suspend la
+capture pendant la lecture. Il ne permet donc pas d'interrompre Jade oralement
+pendant qu'elle parle. Les seuils énergétiques sont expérimentaux et le cache
+Discord n'est pas atomique. Une recette vocale humaine, l'écoute physique, les
+mesures de latence et la validation des cas de groupe restent nécessaires avant
+de considérer le MVP comme validé.
 
 ## D1 — premiers appels et migration OpenAI à prévoir
 

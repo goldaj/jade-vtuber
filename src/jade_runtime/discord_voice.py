@@ -1,8 +1,8 @@
 """Experimental opt-in Discord PCM transport. STT/TTS remain **OpenAI only**.
 
 Uses discord-ext-voice-recv as an audio *transport*, NOT a recognition engine.
-Captures two-second chunks (unoptimized for turn boundaries) and ignores
-silent PCM. Explicit informed consent of people in the channel is required
+Segments audio with experimental energy-based turn detection. Explicit
+informed consent of people in the channel is required
 before enabling recording. Never stores received audio to disk.
 """
 import asyncio
@@ -16,13 +16,16 @@ import time
 import secrets
 import wave
 
-from .microphone import is_speech_loud_enough
 from .messages import Incoming
 from .orchestrator import Work
+from .voice_turns import PcmTurnSegmenter
+from .voice_decision import ConversationTurnDecider
 
 PCM_CHUNK_BYTES = 48000 * 2 * 2 * 2  # 2 sec × stereo × signed 16-bit
 MAX_PENDING_USERS = 12
-BUFFER_IDLE_SECONDS = 15
+MAX_TURN_BYTES = 48000 * 4 * 20
+MAX_ASSEMBLY_BYTES = 48000 * 4 * 40
+MAX_ASSEMBLY_SECONDS = 25
 
 
 @dataclass(frozen=True, repr=False)
@@ -69,15 +72,24 @@ class DiscordVoiceBridge:
         self.consent_confirmed = False
         self.session_id = None
         self.own_bot_id = None
+        self._participants = None
         self._transcribing = None
         self._transcribing_generation = None
         self._submitted = []
         self._playback_active = False
         self._audio_epoch = 0
+        self._segmenter = PcmTurnSegmenter(max_users=MAX_PENDING_USERS, rms_threshold=threshold)
+        self._decider = ConversationTurnDecider()
+        self._assemblies = {}
+        self._discard_turns = set()
+        self._authors = {}
+        self._turn_ids = {}
+        self._poller = None
+        self._scheduled = 0
         if authorized_user_ids or consent_confirmed:
             self.set_session(authorized_user_ids, consent_confirmed=consent_confirmed)
 
-    def set_session(self, authorized_user_ids, *, consent_confirmed):
+    def set_session(self, authorized_user_ids, *, consent_confirmed, _expected=None):
         """Replace the authorized participants; revoke the prior session immediately.
 
         The caller must obtain informed consent outside this method. Identity
@@ -93,11 +105,19 @@ class DiscordVoiceBridge:
         if len(ids) > 100 or any(type(uid) is not int or uid <= 0 for uid in ids):
             raise ValueError("invalid Discord voice user IDs")
         allowed = frozenset(ids) if consent_confirmed else frozenset()
-        if allowed and self.connection is not None and not self._snapshot_allowed(
-                getattr(self.connection, "channel", None), allowed, self.own_bot_id):
-            self.set_session([], consent_confirmed=False)
-            raise ValueError("Discord voice participants are not authorized")
+        participants = None
+        if allowed and self.connection is not None:
+            participants = self._snapshot_humans(
+                getattr(self.connection, "channel", None), allowed, self.own_bot_id)
+            if participants is None:
+                self.set_session([], consent_confirmed=False)
+                raise ValueError("Discord voice participants are not authorized")
         with self.buffers_lock:
+            if _expected is not None and (self.generation, self.session_id) != _expected:
+                return False
+            if self.session_id:
+                self._decider.revoke(self.session_id)
+            self._clear_turns_locked()
             self.generation += 1
             generation = self.generation
             self.buffers.clear()
@@ -105,6 +125,7 @@ class DiscordVoiceBridge:
             self.authorized_user_ids = allowed
             self.consent_confirmed = consent_confirmed and bool(allowed)
             self.session_id = secrets.token_hex(16) if self.consent_confirmed else None
+            self._participants = participants
             loop = self.loop
             connection = self.connection
         # The prior session is invalidated synchronously. Stop its current audio
@@ -128,6 +149,7 @@ class DiscordVoiceBridge:
                     loop.call_soon_threadsafe(self._close_revoked, generation)
             except RuntimeError:
                 pass  # A closed loop cannot process more audio.
+        return True
 
     @staticmethod
     def _stop_playback(connection):
@@ -140,15 +162,20 @@ class DiscordVoiceBridge:
                 logging.getLogger("jade.discord.voice").warning("Discord voice playback stop failed")
 
     def _close_revoked(self, generation):
-        with self.buffers_lock:
-            should_close = generation == self.generation and not self.consent_confirmed
-        if should_close and self.connection is not None:
-            task = asyncio.create_task(self.close())
-            def finish(result):
-                if not result.cancelled() and result.exception() is not None:
-                    import logging
-                    logging.getLogger("jade.discord.voice").warning("Discord voice revocation cleanup failed")
-            task.add_done_callback(finish)
+        task = asyncio.create_task(self._close_if_revoked(generation))
+        def finish(result):
+            if not result.cancelled() and result.exception() is not None:
+                import logging
+                logging.getLogger("jade.discord.voice").warning("Discord voice revocation cleanup failed")
+        task.add_done_callback(finish)
+
+    async def _close_if_revoked(self, generation):
+        async with self.lifecycle_lock:
+            with self.buffers_lock:
+                should_close = (generation == self.generation and not self.consent_confirmed
+                                and self.connection is not None)
+            if should_close:
+                await self._close_locked()
 
     def _allowed(self, user_id, generation, session_id):
         with self.buffers_lock:
@@ -203,6 +230,19 @@ class DiscordVoiceBridge:
             own_bot_id = self.own_bot_id
         return bool(allowed) and self._snapshot_allowed(channel, allowed, own_bot_id)
 
+    @staticmethod
+    def _snapshot_humans(channel, allowed, own_bot_id):
+        if not DiscordVoiceBridge._snapshot_allowed(channel, allowed, own_bot_id):
+            return None
+        try:
+            humans = frozenset(member.id for member in channel.members if not member.bot)
+            if (not DiscordVoiceBridge._snapshot_allowed(channel, allowed, own_bot_id)
+                    or humans != frozenset(member.id for member in channel.members if not member.bot)):
+                return None
+            return humans
+        except Exception:
+            return None
+
     def _capture_authorized(self, user_id, generation=None, session_id=None, audio_epoch=None):
         """Recheck the entire channel before buffering, queuing and STT.
 
@@ -221,25 +261,27 @@ class DiscordVoiceBridge:
             connection = self.connection
             allowed = self.authorized_user_ids
             own_bot_id = self.own_bot_id
+            participants = self._participants
         try:
-            valid = (connection is not None and self._snapshot_allowed(
-                getattr(connection, "channel", None), allowed, own_bot_id))
+            humans = (self._snapshot_humans(getattr(connection, "channel", None), allowed, own_bot_id)
+                      if connection is not None else None)
+            valid = (humans is not None and user_id in humans
+                     and (participants is None or participants == humans))
         except Exception:
             valid = False
         if not valid:
-            with self.buffers_lock:
-                still_current = (self.generation == observed_generation
-                                 and self.session_id == observed_session
-                                 and self.connection is connection)
-            if still_current:
-                self.set_session([], consent_confirmed=False)
+            self.set_session([], consent_confirmed=False,
+                             _expected=(observed_generation, observed_session))
             return False
         with self.buffers_lock:
+            if (self._participants is None and self.generation == observed_generation
+                    and self.session_id == observed_session and self.connection is connection):
+                self._participants = humans
             return (self.consent_confirmed and not self._playback_active
                     and (audio_epoch is None or audio_epoch == self._audio_epoch)
                     and self.generation == observed_generation
                     and self.session_id == observed_session and self.connection is connection
-                    and user_id in self.authorized_user_ids)
+                    and user_id in self.authorized_user_ids and self._participants == humans)
 
     def _playback_authorized(self, connection, generation, session_id):
         with self.buffers_lock:
@@ -248,21 +290,28 @@ class DiscordVoiceBridge:
                 return False
             allowed = self.authorized_user_ids
             own_bot_id = self.own_bot_id
-        if not allowed or not self._snapshot_allowed(getattr(connection, "channel", None), allowed, own_bot_id):
+            participants = self._participants
+        humans = self._snapshot_humans(getattr(connection, "channel", None), allowed, own_bot_id)
+        if not allowed or humans is None or (participants is not None and participants != humans):
+            self.set_session([], consent_confirmed=False, _expected=(generation, session_id))
             return False
         with self.buffers_lock:
+            if (self._participants is None and self.generation == generation
+                    and self.session_id == session_id and self.connection is connection):
+                self._participants = humans
             return (self.consent_confirmed and self.generation == generation
-                    and self.session_id == session_id and self.connection is connection)
+                    and self.session_id == session_id and self.connection is connection
+                    and self._participants == humans)
 
     async def _require_playback_authorization(self, connection, generation, session_id):
         if not self._playback_authorized(connection, generation, session_id):
-            with self.buffers_lock:
-                same_session = (self.generation == generation and self.session_id == session_id
-                                and self.connection is connection)
-            # A stale response must not revoke a newer valid session.
-            if same_session:
-                self.set_session([], consent_confirmed=False)
-                await self.close()
+            self.set_session([], consent_confirmed=False, _expected=(generation, session_id))
+            async with self.lifecycle_lock:
+                with self.buffers_lock:
+                    revoked = (self.generation == generation + 1 and not self.consent_confirmed
+                               and self.session_id is None and self.connection is connection)
+                if revoked:
+                    await self._close_locked()
             raise PermissionError("Discord voice playback authorization is no longer valid")
 
     async def voice_state_changed(self, member, before, after, *, own_bot_id=None):
@@ -307,6 +356,71 @@ class DiscordVoiceBridge:
             for item in retained:
                 self.pending.put_nowait(item)
 
+    def _clear_turns_locked(self):
+        self._segmenter.revoke()
+        self._assemblies.clear()
+        self._discard_turns.clear()
+        self._authors.clear()
+        self._turn_ids.clear()
+
+    def _collect_turns_locked(self, turns, now):
+        """Join partials under fixed per-turn, aggregate and time limits."""
+        ready = []
+        for turn in turns:
+            uid = int(turn.user_id)
+            if uid in self._discard_turns:
+                if not turn.partial:
+                    self._discard_turns.discard(uid)
+                continue
+            previous = self._assemblies.get(uid)
+            if previous is None:
+                started, data = now, bytearray()
+            else:
+                started, data = previous
+            used = sum(len(value[1]) for value in self._assemblies.values())
+            if (now - started > MAX_ASSEMBLY_SECONDS
+                    or len(data) + len(turn.pcm) > MAX_TURN_BYTES
+                    or used + len(turn.pcm) > MAX_ASSEMBLY_BYTES):
+                self._assemblies.pop(uid, None)
+                if turn.partial:
+                    self._discard_turns.add(uid)
+                continue
+            data.extend(turn.pcm)
+            if turn.partial:
+                self._assemblies[uid] = (started, data)
+            else:
+                self._assemblies.pop(uid, None)
+                author = self._authors.get(uid)
+                if data and author:
+                    ready.append(_VoiceChunk(uid, author, bytes(data), self.generation,
+                                             self.session_id, self._audio_epoch))
+        for turn in turns:
+            uid = int(turn.user_id)
+            if (turn.user_id not in self._segmenter._users and uid not in self._assemblies
+                    and uid not in self._discard_turns):
+                self._authors.pop(uid, None)
+        return ready
+
+    async def _poll_turns(self):
+        while True:
+            await asyncio.sleep(.1)
+            with self.buffers_lock:
+                users = list(self._segmenter._users)
+                generation, session_id, epoch = self.generation, self.session_id, self._audio_epoch
+            if not users or not all(self._capture_authorized(int(uid), generation, session_id, epoch)
+                                    for uid in users):
+                continue
+            with self.buffers_lock:
+                if (self.generation != generation or self.session_id != session_id
+                        or self._audio_epoch != epoch or self._playback_active):
+                    continue
+                ready = self._collect_turns_locked(self._segmenter.poll(), time.monotonic())
+                for uid in users:
+                    if uid not in self._segmenter._users and int(uid) not in self._assemblies:
+                        self._authors.pop(int(uid), None)
+            for item in ready:
+                self._accept(item)
+
     def _accept(self, item):
         if (not self._capture_authorized(item.user_id, item.generation, item.session_id, item.audio_epoch)
                 or self.worker is None or self.worker.done()):
@@ -320,6 +434,13 @@ class DiscordVoiceBridge:
             if self.pending.full():
                 return  # Bound memory; drop overload rather than block receiver.
             self.pending.put_nowait(item)
+
+    def _accept_scheduled(self, item):
+        try:
+            self._accept(item)
+        finally:
+            with self.buffers_lock:
+                self._scheduled -= 1
 
     def receive_pcm(self, user_id: int, author: str, pcm: bytes):
         """Called by the voice receive thread, never blocks on OpenAI/network."""
@@ -341,30 +462,27 @@ class DiscordVoiceBridge:
                     or user_id not in self.authorized_user_ids):
                 return
             now = time.monotonic()
-            expired = [uid for uid, seen in self.buffer_updated.items()
-                       if now - seen >= BUFFER_IDLE_SECONDS]
-            for uid in expired:
-                self.buffers.pop(uid, None)
-                self.buffer_updated.pop(uid, None)
-            if user_id not in self.buffers and len(self.buffers) >= MAX_PENDING_USERS:
+            self._authors[user_id] = author
+            try:
+                turns = self._segmenter.feed(str(user_id), pcm[:PCM_CHUNK_BYTES], now=now)
+            except ValueError:
+                self._authors.pop(user_id, None)
                 return
-            data = self.buffers.setdefault(user_id, bytearray())
-            self.buffer_updated[user_id] = now
-            # Never store indefinitely in memory if a stream is continuous.
-            data.extend(pcm[:PCM_CHUNK_BYTES])
-            if len(data) < PCM_CHUNK_BYTES:
-                return
-            samples = bytes(data[:PCM_CHUNK_BYTES])
-            del data[:PCM_CHUNK_BYTES]
-            if not data:
-                self.buffers.pop(user_id, None)
-                self.buffer_updated.pop(user_id, None)
-            loop, generation, session_id, audio_epoch = self.loop, self.generation, self.session_id, self._audio_epoch
-        if not is_speech_loud_enough(samples, threshold=self.threshold):
-            return
+            ready = self._collect_turns_locked(turns, now)
+            if str(user_id) not in self._segmenter._users and user_id not in self._assemblies:
+                self._authors.pop(user_id, None)
+            loop = self.loop
         if loop is not None:
-            loop.call_soon_threadsafe(self._accept, _VoiceChunk(
-                user_id, author, samples, generation, session_id, audio_epoch))
+            for item in ready:
+                with self.buffers_lock:
+                    if self._scheduled >= 8:
+                        continue
+                    self._scheduled += 1
+                try:
+                    loop.call_soon_threadsafe(self._accept_scheduled, item)
+                except RuntimeError:
+                    with self.buffers_lock:
+                        self._scheduled -= 1
 
     async def _transcribe_authorized(self, item):
         # Recheck when the task actually begins: session revocation can run
@@ -395,11 +513,49 @@ class DiscordVoiceBridge:
                     self._transcribing = None
                     self._transcribing_generation = None
                 if value and self._capture_authorized(item.user_id, item.generation, item.session_id, item.audio_epoch):
+                    channel = getattr(self.connection, 'channel', None)
+                    try:
+                        humans = frozenset(member.id for member in channel.members if not member.bot)
+                    except Exception:
+                        continue
+                    if not self._capture_authorized(item.user_id, item.generation,
+                                                    item.session_id, item.audio_epoch):
+                        continue
+                    try:
+                        if humans != frozenset(member.id for member in channel.members if not member.bot):
+                            continue
+                    except Exception:
+                        continue
+                    with self.buffers_lock:
+                        if (not self.consent_confirmed or self._playback_active
+                                or item.generation != self.generation or item.session_id != self.session_id
+                                or item.audio_epoch != self._audio_epoch):
+                            continue
+                        decision = self._decider.decide(
+                            item.session_id, item.user_id, value, authorized=True,
+                            consent_confirmed=True, participant_count=len(humans))
+                    if not decision.should_reply:
+                        if decision.reason == 'muted':
+                            for _, work in self._submitted:
+                                self.runtime.cancel_work(work)
+                            self._submitted.clear()
+                            with self.buffers_lock:
+                                self._turn_ids.clear()
+                        continue
                     self.seq += 1
+                    message_id = f"discord-voice-{self.seq}"
+                    with self.buffers_lock:
+                        if (not self.consent_confirmed or self._playback_active
+                                or item.generation != self.generation or item.session_id != self.session_id
+                                or item.audio_epoch != self._audio_epoch):
+                            continue
+                        if len(self._turn_ids) >= 8:
+                            self._turn_ids.pop(next(iter(self._turn_ids)))
+                        self._turn_ids[message_id] = (item.session_id, item.user_id, decision.turn_id)
                     work = await self.runtime.submit(Incoming(
                         "discord_voice", item.author, value,
                         channel=str(self.channel_id),
-                        message_id=f"discord-voice-{self.seq}",
+                        message_id=message_id, force_reply=True,
                         speaker_id=item.user_id, voice_session_id=item.session_id))
                     if isinstance(work, Work):
                         self._submitted = [(generation, previous) for generation, previous in self._submitted
@@ -438,13 +594,20 @@ class DiscordVoiceBridge:
         channel = client.get_channel(self.channel_id)
         if channel is None or not hasattr(channel, "connect"):
             raise ValueError("configured Discord voice channel not available")
-        if not self._members_authorized(channel):
+        with self.buffers_lock:
+            allowed, own_bot_id = self.authorized_user_ids, self.own_bot_id
+        participants = self._snapshot_humans(channel, allowed, own_bot_id)
+        if participants is None:
             raise ValueError("Discord voice participants are not authorized")
+        with self.buffers_lock:
+            if self.generation != generation or not self.consent_confirmed:
+                raise ValueError("Discord voice authorization changed during connection")
+            self._participants = participants
         connection = await channel.connect(cls=voice_recv.VoiceRecvClient)
         with self.buffers_lock:
             valid = (self.generation == generation and self.consent_confirmed
                      and bool(self.authorized_user_ids) and self.session_id is not None)
-        if not valid or not self._members_authorized(channel):
+        if (not valid or self._snapshot_humans(channel, allowed, own_bot_id) != participants):
             await asyncio.wait_for(connection.disconnect(), timeout=2)
             raise ValueError("Discord voice authorization changed during connection")
         self.loop = asyncio.get_running_loop()
@@ -465,6 +628,7 @@ class DiscordVoiceBridge:
 
         try:
             self.worker = asyncio.create_task(self._consume(), name="jade-discord-voice")
+            self._poller = asyncio.create_task(self._poll_turns(), name="jade-discord-turn-poll")
             self.connection = connection
             connection.listen(Sink())
         except BaseException:
@@ -482,9 +646,14 @@ class DiscordVoiceBridge:
         with self.buffers_lock:
             connection, generation = self.connection, self.generation
             if (connection is None or self.session_id != session_id
-                    or speaker_id not in self.authorized_user_ids):
+                    or speaker_id not in self.authorized_user_ids
+                    or (self._participants is not None and speaker_id not in self._participants)):
                 return False
-        return self._playback_authorized(connection, generation, session_id)
+        if not self._playback_authorized(connection, generation, session_id):
+            return False
+        with self.buffers_lock:
+            return (self.generation == generation and self.session_id == session_id
+                    and self._participants is not None and speaker_id in self._participants)
 
     async def play_for_reply(self, wav: bytes, source):
         """Play only a reply from an authorized speaker in the active session."""
@@ -493,6 +662,18 @@ class DiscordVoiceBridge:
         if not self.reply_authorized(source):
             raise PermissionError("Discord voice reply source is not authorized")
         return await self.play(wav, expected_session=session_id, expected_speaker=speaker_id)
+
+    def mark_voice_reply_played(self, source):
+        """Acknowledge a successfully played reply in its still-valid session."""
+        if not self.reply_authorized(source):
+            return False
+        with self.buffers_lock:
+            entry = self._turn_ids.pop(getattr(source, 'message_id', ''), None)
+            if (entry is None or entry[0] != self.session_id
+                    or entry[0] != getattr(source, 'voice_session_id', None)
+                    or entry[1] != getattr(source, 'speaker_id', None)):
+                return False
+            return self._decider.mark_replied(entry[0], entry[2])
 
     def _begin_playback(self, connection, generation, session_id):
         """Invalidate buffered input before starting a half-duplex response."""
@@ -506,6 +687,10 @@ class DiscordVoiceBridge:
             self._audio_epoch += 1
             self.buffers.clear()
             self.buffer_updated.clear()
+            self._segmenter.revoke()
+            self._assemblies.clear()
+            self._discard_turns.clear()
+            self._authors.clear()
         if self._transcribing is not None:
             self._transcribing.cancel()
         while True:
@@ -525,7 +710,7 @@ class DiscordVoiceBridge:
         """Optional playback of OpenAI-generated WAV, never a TTS engine."""
         connection = self.connection
         if connection is None:
-            return
+            return False
         with self.buffers_lock:
             generation, session_id = self.generation, self.session_id
             if (expected_session is not None and
@@ -542,7 +727,7 @@ class DiscordVoiceBridge:
                 path = Path(fp.name)
             if connection.is_playing():
                 # Caller serializes Jade voice; refuse overlapping attempts.
-                return
+                return False
             source = discord.FFmpegPCMAudio(str(path))
             done = asyncio.Event()
             failure = []
@@ -557,6 +742,8 @@ class DiscordVoiceBridge:
             await asyncio.wait_for(done.wait(), timeout=120)
             if failure:
                 raise RuntimeError("Discord audio playback failed")
+            await self._require_playback_authorization(connection, generation, session_id)
+            return True
         finally:
             try:
                 if source is not None:
@@ -576,22 +763,36 @@ class DiscordVoiceBridge:
             await self._close_locked()
 
     async def _close_locked(self):
-        connection, self.connection = self.connection, None
-        if connection is not None:
-            self._stop_playback(connection)
+        poller, self._poller = self._poller, None
         worker, self.worker = self.worker, None
         with self.buffers_lock:
+            connection, self.connection = self.connection, None
+            if self.session_id:
+                self._decider.revoke(self.session_id)
+            self._clear_turns_locked()
             self.generation += 1
             self.loop = None
             self.authorized_user_ids = frozenset()
             self.consent_confirmed = False
             self.session_id = None
             self.own_bot_id = None
+            self._participants = None
+        if connection is not None:
+            self._stop_playback(connection)
+            try:
+                connection.stop_listening()
+            except Exception:
+                import logging
+                logging.getLogger("jade.discord.voice").warning("Discord listener cleanup failed")
         for _, work in self._submitted:
             self.runtime.cancel_work(work)
         self._submitted.clear()
         if worker is not None:
             worker.cancel()
+        if poller is not None:
+            poller.cancel()
+            await asyncio.gather(poller, return_exceptions=True)
+        if worker is not None:
             try:
                 await asyncio.wait_for(asyncio.gather(worker, return_exceptions=True), timeout=2)
             except TimeoutError:
@@ -607,11 +808,4 @@ class DiscordVoiceBridge:
             self.buffers.clear()
             self.buffer_updated.clear()
         if connection is not None:
-            try:
-                connection.stop_listening()
-            except Exception:
-                # A partially initialized listener may never have started.
-                import logging
-                logging.getLogger("jade.discord.voice").warning("Discord listener cleanup failed")
-            finally:
-                await asyncio.wait_for(connection.disconnect(), timeout=2)
+            await asyncio.wait_for(connection.disconnect(), timeout=2)

@@ -35,7 +35,7 @@ class DiscordVoiceTests(unittest.IsolatedAsyncioTestCase):
         bridge.receive_pcm(12, "Alpha", silent)
         await asyncio.sleep(0)
         services.transcribe_wav.assert_not_awaited()
-        loud = array("h", [1500] * (PCM_CHUNK_BYTES // 2)).tobytes()
+        loud = array("h", [1500] * (48000 * 2)).tobytes() + bytes(48000 * 4)
         bridge.receive_pcm(12, "Alpha", loud)
         await asyncio.sleep(.01)
         await bridge.pending.join()
@@ -54,14 +54,13 @@ class DiscordVoiceTests(unittest.IsolatedAsyncioTestCase):
         bridge = DiscordVoiceBridge(AsyncMock(), AsyncMock(), 45,
                                     authorized_user_ids=range(1, 14), consent_confirmed=True)
         attach_voice_session(bridge, range(1, 14))
-        with patch('src.jade_runtime.discord_voice.time.monotonic', return_value=0):
-            for uid in range(1, 13):
-                bridge.receive_pcm(uid, str(uid), bytes(4))
-        with patch('src.jade_runtime.discord_voice.time.monotonic', return_value=16):
-            bridge.receive_pcm(13, 'new', bytes(4))
-            self.assertEqual(set(bridge.buffers), {13})
-            bridge.receive_pcm(13, 'new', bytes(PCM_CHUNK_BYTES - 4))
-        self.assertEqual(bridge.buffers, {})
+        for uid in range(1, 13):
+            bridge.receive_pcm(uid, str(uid), bytes(4))
+        self.assertEqual(bridge._segmenter._users, {})
+        bridge.receive_pcm(13, 'new', array('h', [1500] * 19200).tobytes())
+        self.assertEqual(set(bridge._segmenter._users), {'13'})
+        bridge.set_session([], consent_confirmed=False)
+        self.assertEqual(bridge._segmenter._users, {})
 
     async def test_failed_and_concurrent_connect_cleanup(self):
         recv = types.ModuleType('discord.ext.voice_recv')
@@ -106,7 +105,7 @@ class DiscordVoiceTests(unittest.IsolatedAsyncioTestCase):
         attach_voice_session(bridge, [12])
         bridge.loop = asyncio.get_running_loop()
         bridge.worker = asyncio.create_task(bridge._consume())
-        bridge.receive_pcm(12, 'test', array('h', [1500] * (PCM_CHUNK_BYTES // 2)).tobytes())
+        bridge.receive_pcm(12, 'test', array('h', [1500] * (48000 * 2)).tobytes() + bytes(48000 * 4))
         await asyncio.wait_for(started.wait(), 1)
         await asyncio.wait_for(bridge.close(), 1)
         await asyncio.wait_for(bridge.pending.join(), 1)

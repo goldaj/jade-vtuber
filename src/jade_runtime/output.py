@@ -100,6 +100,7 @@ class SpeechOutput:
             path = self.subtitle_path
             gated = False
             subtitle_written = False
+            discord_played = False
             try:
                 if self.audio_gate is not None:
                     await self.audio_gate.begin_speech()
@@ -120,10 +121,15 @@ class SpeechOutput:
                         await self.player.play(wav)
 
                     async def play_both():
+                        nonlocal discord_played
                         try:
                             async with asyncio.TaskGroup() as players:
                                 players.create_task(play_local())
-                                players.create_task(self.secondary_player.play_for_reply(wav, reply.source))
+                                discord_task = players.create_task(
+                                    self.secondary_player.play_for_reply(wav, reply.source))
+                            # Only the bridge can attest that Discord actually
+                            # completed playback; a missing/false result is not success.
+                            discord_played = discord_task.result() is True
                         finally:
                             finished.set()
 
@@ -141,7 +147,16 @@ class SpeechOutput:
                 else:
                     await self.player.play(wav)
             finally:
-                if gated:
-                    await self.audio_gate.end_speech()
-                if subtitle_written:
-                    path.write_text("", encoding="utf-8")
+                try:
+                    if gated:
+                        await self.audio_gate.end_speech()
+                finally:
+                    if subtitle_written:
+                        path.write_text("", encoding="utf-8")
+            if discord_voice and discord_played:
+                # The session may have been revoked during playback or while
+                # releasing the local audio gate. The bridge checks it again.
+                require_session()
+                acknowledge = getattr(self.secondary_player, "mark_voice_reply_played", None)
+                if callable(acknowledge):
+                    acknowledge(reply.source)

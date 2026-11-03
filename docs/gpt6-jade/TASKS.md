@@ -35,6 +35,17 @@ sans présenter les mocks comme des tests d'API réels.
   le [plan](PLAN-EXECUTION-MVP-20261103.md) ; ne pas changer seulement les noms
   de modèles sans vérifier leurs interfaces.
 
+## MVP Discord — raccordement vocal D2, 3 novembre 2026
+- Le bridge regroupe les tours, applique la pertinence en session privée et
+  transmet seulement les tours acceptés. Les participants réels sont figés ;
+  une incohérence de snapshot révoque la session, y compris pendant la sortie.
+- Revue indépendante : correction des courses de changement de participants,
+  d'arrêt, de sortie et de nettoyage des sous-titres ; files, tailles et
+  demi-duplex contrôlés. 219 tests hors ligne et compilation réussis.
+- Pas de validation audio humaine, Discord vocal réel ni caméra ou téléphone.
+  Seuils acoustiques expérimentaux ; groupe silencieux et pas de barge-in oral.
+  Le cache Discord et l'arrêt des lecteurs ne sont pas atomiques ou temps réel.
+
 ## MVP Discord — premières protections vocales, 3 novembre 2026
 - Validation locale de ce lot : 201 tests hors ligne et compilation réussis ;
   scan des modifications préparées sans alerte. Des essais synthétiques couvrent
@@ -48,9 +59,12 @@ sans présenter les mocks comme des tests d'API réels.
   rediffusion globale d'autres sources précédemment ajoutée est suspendue en
   attendant un routage autorisé par source et destination, afin d'éviter une
   fuite entre conversations.
-- Des briques autonomes de segmentation PCM et de pertinence sans mot d'activation
-  sont testées hors réseau mais pas encore raccordées au bridge. Aucun vocal réel
-  n'a été testé ; la recette avec les participants informés reste indispensable.
+- La segmentation PCM et la pertinence sans mot d'activation sont désormais
+  raccordées au bridge et testées sur audio synthétique. En tête-à-tête une
+  phrase pertinente peut recevoir une réponse sans nom ; en groupe, faute de
+  signal fiable d'adresse directe, le mode reste silencieux. Le demi-duplex ne
+  permet pas l'interruption orale pendant la réponse. Aucun vocal réel n'a été
+  testé ; la recette avec les participants informés reste indispensable.
 
 ## Reprise Terra — connexions et sécurité, 3 novembre 2026
 - Twitch : six anciens jetons distincts refusés par la validation distante. Sur

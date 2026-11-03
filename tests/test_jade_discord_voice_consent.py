@@ -15,7 +15,7 @@ from src.jade_runtime.messages import Incoming
 
 
 def loud():
-    return array("h", [1500] * (PCM_CHUNK_BYTES // 2)).tobytes()
+    return array("h", [1500] * (48000 * 2)).tobytes() + bytes(48000 * 4)
 
 
 def channel_with_members(members, connect=None):
@@ -492,17 +492,17 @@ class DiscordVoiceConsentTests(unittest.IsolatedAsyncioTestCase):
         bridge.connection.play = Mock(side_effect=play)
         bridge.connection.stop = Mock(side_effect=stop)
         bridge.connection.is_playing = lambda: False
-        bridge.receive_pcm(12, "Participant", bytes(4))
-        self.assertTrue(bridge.buffers)
+        bridge.receive_pcm(12, "Participant", array('h', [1500] * 19200).tobytes())
+        self.assertTrue(bridge._segmenter._users)
         source_file = SimpleNamespace(cleanup=Mock())
         with patch.dict(sys.modules, {"discord": SimpleNamespace(FFmpegPCMAudio=lambda _: source_file)}):
             playback = asyncio.create_task(bridge.play(b"synthetic-wav"))
             await asyncio.wait_for(playing.wait(), 1)
-            self.assertFalse(bridge.buffers)
+            self.assertFalse(bridge._segmenter._users)
             bridge.receive_pcm(12, "Participant", loud())
             await asyncio.sleep(0)
             services.transcribe_wav.assert_not_awaited()
-            self.assertFalse(bridge.buffers)
+            self.assertFalse(bridge._segmenter._users)
             bridge.connection.stop()
             await asyncio.wait_for(playback, 1)
         bridge.receive_pcm(12, "Participant", loud())
@@ -607,7 +607,8 @@ class DiscordVoiceConsentTests(unittest.IsolatedAsyncioTestCase):
             bridge.set_session([], consent_confirmed=False)
             connection.stop.assert_called()
             self.assertFalse(release.is_set())
-            await asyncio.wait_for(playback, 1)
+            with self.assertRaises(PermissionError):
+                await asyncio.wait_for(playback, 1)
             self.assertFalse(release.is_set())
             release.set()
             await bridge.close()

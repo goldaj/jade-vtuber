@@ -185,6 +185,78 @@ class DiscordVoiceRoutingTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(local.played, [])
             self.assertEqual(discord.played, [])
 
+    async def test_acknowledges_only_successful_discord_playback(self):
+        for result in (True, False, None):
+            with self.subTest(result=result), tempfile.TemporaryDirectory() as directory:
+                discord = _Player()
+                discord.play_for_reply = AsyncMock(return_value=result)
+                discord.mark_voice_reply_played = unittest.mock.Mock()
+                output = SpeechOutput(_Services(), _Player(), Path(directory) / "subtitle.txt",
+                                      secondary_player=discord)
+                source = Incoming("discord_voice", "test", "question", channel="123",
+                                  speaker_id=1, voice_session_id="a" * 32)
+                await output.speak(Reply(source, "answer"))
+                if result is True:
+                    discord.mark_voice_reply_played.assert_called_once_with(source)
+                else:
+                    discord.mark_voice_reply_played.assert_not_called()
+
+    async def test_no_acknowledgement_if_session_revoked_during_gate_cleanup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            discord = _Player()
+            discord.play_for_reply = AsyncMock(return_value=True)
+            discord.mark_voice_reply_played = unittest.mock.Mock()
+            class Gate:
+                async def begin_speech(self):
+                    pass
+                async def end_speech(self):
+                    discord.reply_authorized = lambda _source: False
+            subtitle = Path(directory) / "subtitle.txt"
+            output = SpeechOutput(_Services(), _Player(), subtitle,
+                                  secondary_player=discord, audio_gate=Gate())
+            source = Incoming("discord_voice", "test", "question", channel="123",
+                              speaker_id=1, voice_session_id="a" * 32)
+            with self.assertRaises(PermissionError):
+                await output.speak(Reply(source, "answer"))
+            discord.mark_voice_reply_played.assert_not_called()
+            self.assertEqual(subtitle.read_text(encoding="utf-8"), "")
+
+    async def test_no_acknowledgement_if_local_playback_fails(self):
+        with tempfile.TemporaryDirectory() as directory:
+            discord = _Player()
+            discord.play_for_reply = AsyncMock(return_value=True)
+            discord.mark_voice_reply_played = unittest.mock.Mock()
+            class FailingLocal:
+                async def play(self, _wav):
+                    raise RuntimeError("synthetic player failure")
+            output = SpeechOutput(_Services(), FailingLocal(), Path(directory) / "subtitle.txt",
+                                  secondary_player=discord)
+            source = Incoming("discord_voice", "test", "question", channel="123",
+                              speaker_id=1, voice_session_id="a" * 32)
+            with self.assertRaises(ExceptionGroup):
+                await output.speak(Reply(source, "answer"))
+            discord.mark_voice_reply_played.assert_not_called()
+
+    async def test_gate_cleanup_failure_still_clears_subtitle(self):
+        with tempfile.TemporaryDirectory() as directory:
+            discord = _Player()
+            discord.play_for_reply = AsyncMock(return_value=True)
+            discord.mark_voice_reply_played = unittest.mock.Mock()
+            class Gate:
+                async def begin_speech(self):
+                    pass
+                async def end_speech(self):
+                    raise RuntimeError("synthetic cleanup failure")
+            subtitle = Path(directory) / "subtitle.txt"
+            output = SpeechOutput(_Services(), _Player(), subtitle,
+                                  secondary_player=discord, audio_gate=Gate())
+            source = Incoming("discord_voice", "test", "question", channel="123",
+                              speaker_id=1, voice_session_id="a" * 32)
+            with self.assertRaises(RuntimeError):
+                await output.speak(Reply(source, "answer"))
+            self.assertEqual(subtitle.read_text(encoding="utf-8"), "")
+            discord.mark_voice_reply_played.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

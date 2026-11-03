@@ -73,3 +73,11 @@ a été construite. Le binaire extrait a passé son autotest ; la capture de la
 fenêtre a expiré. Le portrait et le dialogue sont statique et simulé, le modèle
 r20 est fourni séparément et l'animation VTube Studio n'a pas été recettée.
 Les limites du vocal Discord et les étapes restantes sont décrites dans le plan.
+
+## Assistant — suite, résumé fidèle
+
+Le raccordement vocal sans nom a été poursuivi sur la base de la feuille de
+route, puis testé hors ligne et relu indépendamment. Les changements de
+participants, l'arrêt et les sorties ont reçu des corrections supplémentaires.
+Les limites du groupe, du demi-duplex et des tests sans voix réelle sont
+consignées dans le plan ; une notice prépare la recette visuelle et téléphone.
