@@ -44,3 +44,11 @@ anciennes configurations restent archivées.
 ## Assistant — verbatim
 
 > Je termine d’abord la connexion et le renouvellement Twitch avec sa sauvegarde, comme prévu. Ensuite je regarderai les nouvelles instructions et branches ajoutées par GPT-6 avant de reprendre ce chantier.
+
+## Utilisateur — verbatim, CI
+
+> Ah oui et github actions a peut être atteint son côté pour aujourd'hui, il faudra faire sans et contourner si nécessaire (ou attendre demain si on n'arrive pas à contourner). Il risque de ne pas passer pour le moment en tout cas.
+
+## Assistant — verbatim
+
+> Bien noté. Je m’appuierai sur les mêmes contrôles exécutés localement si Actions est bloqué ; le dernier échec observé venait du test synthétique lui-même, que je viens de faire corriger. Je ne présenterai pas une CI indisponible comme réussie.

@@ -4,7 +4,6 @@ from __future__ import annotations
 import os
 import json
 from pathlib import Path
-import secrets
 import subprocess
 import tempfile
 
@@ -13,7 +12,11 @@ def main() -> int:
     binary = os.environ.get("GITLEAKS_BIN", "gitleaks")
     with tempfile.TemporaryDirectory(prefix="jade-scan-selftest-") as tmp:
         repo = Path(tmp)
-        secret = "sk-proj-" + secrets.token_urlsafe(36)
+        # Use a deterministic synthetic value matching Gitleaks' twitch-api-token
+        # rule. Random values can accidentally contain generic-rule allowlisted
+        # words, making an otherwise working scanner fail this test intermittently.
+        alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
+        secret = "".join(alphabet[(index * 7 + 3) % len(alphabet)] for index in range(30))
 
         def git(*args: str) -> None:
             subprocess.run(["git", *args], cwd=repo, check=True,
@@ -34,7 +37,7 @@ def main() -> int:
             return 1
         path = repo / "docs" / "archives" / "fixture.md"
         path.parent.mkdir(parents=True)
-        path.write_text("OPENAI_API_KEY=" + secret + "\n", encoding="utf-8")
+        path.write_text("TWITCH_TOKEN=" + secret + "\n", encoding="utf-8")
         git("add", "docs/archives/fixture.md")
         git("-c", "core.hooksPath=", "commit", "-q", "-m", "synthetic fixture")
         path.write_text("Credential removed.\n", encoding="utf-8")
@@ -54,7 +57,8 @@ def main() -> int:
             return 1
         if (result.returncode != 1 or secret in result.stdout or secret in result.stderr
                 or secret in report_text or not any(
-                    item.get("File", "").replace("\\", "/") == "docs/archives/fixture.md"
+                    item.get("RuleID") == "twitch-api-token"
+                    and item.get("File", "").replace("\\", "/") == "docs/archives/fixture.md"
                     for item in findings)):
             print("BLOCKED: synthetic history scan failed or did not redact output.")
             return 1
