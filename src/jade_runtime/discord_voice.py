@@ -326,9 +326,12 @@ class DiscordVoiceBridge:
             return  # This bot joining is the expected completion of connect().
         with self.buffers_lock:
             active = self.consent_confirmed
+            generation, session_id = self.generation, self.session_id
         if active:
-            self.set_session([], consent_confirmed=False)
-            await self.close()
+            revoked = self.set_session([], consent_confirmed=False,
+                                       _expected=(generation, session_id))
+            if revoked:
+                await self._close_if_revoked(generation + 1)
 
     def _purge_stale(self, generation):
         """Drop revoked queued audio and cancel any no-longer-authorized STT."""

@@ -170,6 +170,47 @@ class TurnIntegrationTests(unittest.IsolatedAsyncioTestCase):
         release.set()
         await asyncio.wait_for(closing, 1)
 
+    async def test_stale_voice_event_cannot_close_a_new_session(self):
+        bridge, _, _ = await self.setup_bridge()
+        channel = bridge.connection.channel
+        connection = bridge.connection
+        member = channel.members[0]
+        await bridge.lifecycle_lock.acquire()
+        try:
+            old_event = asyncio.create_task(bridge.voice_state_changed(
+                member, types.SimpleNamespace(channel=channel),
+                types.SimpleNamespace(channel=None), own_bot_id=100))
+            await asyncio.sleep(0)
+            self.assertFalse(bridge.consent_confirmed)
+            bridge.set_session([12], consent_confirmed=True)
+            new_session = bridge.session_id
+        finally:
+            bridge.lifecycle_lock.release()
+        await asyncio.wait_for(old_event, 1)
+        await asyncio.sleep(0)  # Also allow scheduled revocation cleanup to run.
+        self.assertTrue(bridge.consent_confirmed)
+        self.assertEqual(bridge.session_id, new_session)
+        self.assertIs(bridge.connection, connection)
+        connection.disconnect.assert_not_awaited()
+
+    async def test_stale_voice_event_cannot_revoke_replacement_session(self):
+        bridge, _, _ = await self.setup_bridge()
+        channel = bridge.connection.channel
+        old_session = bridge.session_id
+        original_set = bridge.set_session
+
+        def replace_before_revoke(*args, **kwargs):
+            if kwargs.get('_expected') is not None:
+                original_set([12], consent_confirmed=True)
+            return original_set(*args, **kwargs)
+
+        with patch.object(bridge, 'set_session', side_effect=replace_before_revoke):
+            await bridge.voice_state_changed(
+                channel.members[0], types.SimpleNamespace(channel=channel),
+                types.SimpleNamespace(channel=None), own_bot_id=100)
+        self.assertTrue(bridge.consent_confirmed)
+        self.assertNotEqual(bridge.session_id, old_session)
+
     async def test_revocation_drops_pending_audio_before_timer(self):
         bridge, services, runtime = await self.setup_bridge()
         bridge.receive_pcm(12, 'A', pcm(.2, 1500))

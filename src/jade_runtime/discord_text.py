@@ -69,9 +69,14 @@ class DiscordText:
                         member, before, after, own_bot_id=getattr(own_user, "id", None))
 
             async def on_disconnect(self):
-                if parent.voice_bridge is not None:
-                    parent.voice_bridge.set_session([], consent_confirmed=False)
-                    await parent.voice_bridge.close()
+                bridge = parent.voice_bridge
+                if bridge is not None:
+                    # Revoke immediately, but never let cleanup from this
+                    # disconnect close a session established in the meantime.
+                    with bridge.buffers_lock:
+                        expected = (bridge.generation, bridge.session_id)
+                    if bridge.set_session([], consent_confirmed=False, _expected=expected):
+                        await bridge._close_if_revoked(expected[0] + 1)
 
         self.client = JadeClient(intents=intents, allowed_mentions=discord.AllowedMentions.none())
         try:

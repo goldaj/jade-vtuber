@@ -81,3 +81,18 @@ route, puis testé hors ligne et relu indépendamment. Les changements de
 participants, l'arrêt et les sorties ont reçu des corrections supplémentaires.
 Les limites du groupe, du demi-duplex et des tests sans voix réelle sont
 consignées dans le plan ; une notice prépare la recette visuelle et téléphone.
+
+## Utilisateur — précision sur la démo, verbatim
+
+> Non mais attends on veut que la démo soit complète en réel avec l'animation du model et tout et tout. Il faut un installateur pour être sûr que le poste a tout le nécessaire et un tuto. Mais on veut que tout fonctionne. L'animation du model est une grosse partie du projet
+
+## Assistant — verbatim
+
+> Tu as raison : le ZIP que j’ai livré ne répond pas à cette demande, puisqu’il montre un portrait statique et un dialogue simulé. Je reprends la démo pour viser le vrai fonctionnement de Jade, avec son modèle animé, un installateur et un tutoriel ; je vais d’abord vérifier les possibilités réelles du modèle et les dépendances à intégrer.
+
+## Assistant — question et utilisateur — réponse, résumé fidèle
+
+Pour permettre le dialogue IA réel sur le poste du recruteur, deux options ont
+été proposées : sa propre clé OpenAI ou un modèle local. L'utilisateur a choisi
+que le recruteur renseigne sa propre clé OpenAI, avec facturation sur son compte.
+Aucune clé n'est reproduite dans ce journal.

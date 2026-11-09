@@ -2,6 +2,7 @@
 import asyncio
 from array import array
 import sys
+import threading
 import types
 from types import SimpleNamespace
 import unittest
@@ -734,11 +735,53 @@ class DiscordVoiceConsentTests(unittest.IsolatedAsyncioTestCase):
             Intents=SimpleNamespace(default=lambda: SimpleNamespace()),
             AllowedMentions=SimpleNamespace(none=lambda: object()))
         async def close(): calls.append("close")
-        bridge = SimpleNamespace(set_session=lambda *args, **kwargs: calls.append("revoke"), close=close)
+        async def close_revoked(generation): calls.append("close")
+        def revoke(*args, **kwargs):
+            calls.append("revoke")
+            return True
+        bridge = SimpleNamespace(set_session=revoke, close=close,
+                                 _close_if_revoked=close_revoked,
+                                 buffers_lock=threading.Lock(), generation=1, session_id="old")
         discord = DiscordText("synthetic", AsyncMock(), voice_bridge=bridge)
         with patch.dict(sys.modules, {"discord": fake}):
             await discord.connect_forever()
         self.assertEqual(calls[:2], ["revoke", "close"])
+
+    async def test_gateway_disconnect_does_not_close_replacement_session(self):
+        # Hold cleanup on the lifecycle lock, install fresh consent, and then
+        # release the old disconnect. The stale callback must not close it.
+        started, disconnected, finish = asyncio.Event(), asyncio.Event(), asyncio.Event()
+        class Client:
+            def __init__(self, **kwargs): pass
+            async def start(self, token):
+                started.set()
+                await self.on_disconnect()
+                disconnected.set()
+                await finish.wait()
+            async def close(self): pass
+        fake = SimpleNamespace(Client=Client,
+            Intents=SimpleNamespace(default=lambda: SimpleNamespace()),
+            AllowedMentions=SimpleNamespace(none=lambda: object()))
+        bridge = DiscordVoiceBridge(AsyncMock(), AsyncMock(), 45,
+                                    authorized_user_ids=[12], consent_confirmed=True)
+        attach_connection(bridge)
+        discord = DiscordText("synthetic", AsyncMock(), voice_bridge=bridge)
+        with patch.dict(sys.modules, {"discord": fake}):
+            await bridge.lifecycle_lock.acquire()
+            task = asyncio.create_task(discord.connect_forever())
+            try:
+                await asyncio.wait_for(started.wait(), timeout=1)
+                self.assertFalse(bridge.consent_confirmed)
+                bridge.set_session([12], consent_confirmed=True)
+                replacement = bridge.session_id
+            finally:
+                bridge.lifecycle_lock.release()
+            await asyncio.wait_for(disconnected.wait(), timeout=1)
+            self.assertTrue(bridge.consent_confirmed)
+            self.assertEqual(bridge.session_id, replacement)
+            self.assertIsNotNone(bridge.connection)
+            finish.set()
+            await asyncio.wait_for(task, timeout=2)
 
     async def test_gateway_reconnect_does_not_reuse_previous_consent(self):
         class Client:
