@@ -2,6 +2,8 @@
 
 La [feuille de route produit](ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md) fait foi :
 MVP Discord d'abord, puis produit mobile autonome après validation du MVP.
+Le [découpage pratique en quatre étapes](PLAN-4-ETAPES-20261110.md) précise
+l'ordre de réalisation et les critères de passage.
 Développement sur `develop`, sans fusion automatique vers `main`. Aucun nom
 d'activation n'est obligatoire dans une session vocale autorisée ; les règles
 des transports texte ne changent pas implicitement.
