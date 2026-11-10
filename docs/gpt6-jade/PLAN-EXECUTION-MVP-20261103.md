@@ -118,7 +118,7 @@ L'en-tête WAV de cet essai indiquait une taille indéterminée disproportionné
 mesurer la durée à partir des échantillons effectivement reçus, pas uniquement du
 nombre de trames déclaré. Garder cet écart à l'esprit pour l'instrumentation A/V.
 
-Les modèles actuellement configurés sont annoncés comme retirés :
+Avant la migration de l'étape 1, les anciens modèles étaient annoncés retirés :
 
 - `gpt-4o-mini-tts` : 6 janvier 2027 ; le remplacement recommandé utilise
   Realtime et ne fonctionne pas comme simple nom sur `/v1/audio/speech`.
@@ -130,5 +130,5 @@ Les modèles actuellement configurés sont annoncés comme retirés :
 Sources officielles : [retraits OpenAI](https://developers.openai.com/api/docs/deprecations),
 [synthèse vocale](https://developers.openai.com/api/docs/guides/text-to-speech),
 [transcription de fichiers](https://developers.openai.com/api/docs/guides/speech-to-text).
-Ces échéances imposent une migration testée avant retrait, pas une substitution
-aveugle des noms. Conserver STT/TTS exclusivement chez OpenAI.
+L'étape 1 a remplacé les valeurs par défaut et testé le transport Realtime ; les
+anciennes valeurs explicites restent configurables. Conserver STT/TTS chez OpenAI.

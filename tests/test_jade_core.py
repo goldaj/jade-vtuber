@@ -80,7 +80,8 @@ class CoreTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_openai_audio_uses_only_openai_models_and_stays_mocked(self):
         import types
-        cfg = Settings()
+        # Explicitly configured legacy models keep their old API contract.
+        cfg = Settings(stt_model="gpt-4o-mini-transcribe", tts_model="gpt-4o-mini-tts")
         speech = AsyncMock()
         speech.content = b"RIFFmocked-data"
         client = types.SimpleNamespace(

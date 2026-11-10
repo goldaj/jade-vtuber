@@ -10,6 +10,9 @@ décision remplace les consignes contraires dans les documents historiques.
 
 ## 1. Mettre à jour le moteur principal
 
+**Réalisé :** modèles, transport partagé, tests hors ligne et essai réel court
+sur audio synthétique réussis ; résultats dans [TASKS](TASKS.md).
+
 1. Reprendre les modèles et le TTS Realtime de la démo ; adapter les interfaces
    du moteur principal, le retour WAV, les erreurs et l'annulation. Une simple
    substitution du nom TTS sur l'ancien endpoint ne suffit pas.
@@ -27,8 +30,8 @@ et que les erreurs ne déclenchent pas de requêtes payantes répétées en sile
    privé de Jade. Toute personne présente peut participer, sans liste individuelle
    ni étape supplémentaire de consentement.
 2. Tester et corriger la fin de tour, les suivis sans nom d'activation, le
-   silence, l'anti-écho et l'arrêt. Le tête-à-tête est déjà simulé ; en groupe,
-   Jade reste silencieuse tant que l'adresse à Jade n'est pas fiable.
+   silence, l'anti-écho et l'arrêt. Le tête-à-tête est déjà simulé ; le groupe
+   actuellement silencieux doit pouvoir interagir dans le salon dédié à Jade.
 3. Vérifier que le son et la réponse restent dans leur session, et que sortie,
    changement de participants ou déconnexion annulent les travaux périmés.
 

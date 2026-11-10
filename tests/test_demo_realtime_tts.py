@@ -6,12 +6,7 @@ import unittest
 from unittest.mock import AsyncMock, patch
 import wave
 
-try:
-    from demo.reelle.realtime_tts import RealtimeTTS, RealtimeTTSError
-except ModuleNotFoundError as exc:
-    if exc.name not in {"demo", "demo.reelle", "demo.reelle.realtime_tts"}:
-        raise
-    RealtimeTTS = None
+from src.jade_runtime.realtime_tts import RealtimeTTS, RealtimeTTSError
 
 
 def event(kind, **fields):
@@ -95,7 +90,6 @@ class FakeClient:
         self.realtime.connect = connect
 
 
-@unittest.skipIf(RealtimeTTS is None, "real demo omitted from this preview")
 class RealtimeTTSTests(unittest.IsolatedAsyncioTestCase):
     async def test_completed_wav_and_request_contract(self):
         client = FakeClient([event("session.created"), configured(), created(), delta(),

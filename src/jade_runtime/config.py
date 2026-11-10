@@ -28,9 +28,9 @@ def _voice_users(value: str) -> tuple[int, ...]:
 
 @dataclass(frozen=True)
 class Settings:
-    model: str = "gpt-4.1-mini"
-    stt_model: str = "gpt-4o-mini-transcribe"
-    tts_model: str = "gpt-4o-mini-tts"
+    model: str = "gpt-6-luna"
+    stt_model: str = "gpt-transcribe"
+    tts_model: str = "gpt-realtime-2.1-mini"
     voice: str = "coral"
     api_key: str = ""
     channel: str = ""
@@ -66,9 +66,9 @@ class Settings:
     def load(cls) -> "Settings":
         """The project-private dotenv is preferred over a tracked file."""
         cfg = cls(
-            model=str(environ("JADE_LLM_MODEL", "gpt-4.1-mini")),
-            stt_model=str(environ("JADE_STT_MODEL", "gpt-4o-mini-transcribe")),
-            tts_model=str(environ("JADE_TTS_MODEL", "gpt-4o-mini-tts")),
+            model=str(environ("JADE_LLM_MODEL", "gpt-6-luna")),
+            stt_model=str(environ("JADE_STT_MODEL", "gpt-transcribe")),
+            tts_model=str(environ("JADE_TTS_MODEL", "gpt-realtime-2.1-mini")),
             voice=str(environ("JADE_TTS_VOICE", "coral")),
             api_key=str(environ("OPENAI_API_KEY", "")),
             channel=str(environ("TWITCH_CHANNEL", "")),

@@ -3,6 +3,17 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## MVP Discord — étape 1 : moteur OpenAI
+- Moteur principal : dialogue `gpt-6-luna`, STT `gpt-transcribe` et TTS Realtime
+  `gpt-realtime-2.1-mini` par défaut. Anciennes configurations explicites conservées ;
+  code vocal partagé avec la démo, client isolé et relances automatiques coupées.
+- Suite complète : 289 tests hors ligne réussis. Installation neuve sur D: issue
+  du lock : OpenAI 3.42.1 et WebSockets 15.0.1, sans extra VTS. Essai réel court
+  sur ce lock : texte 2,20 s, voix 4,80 s, transcription synthétique 0,83 s.
+  Trois appels ; coût exact non mesuré. Aucun micro humain ni haut-parleur utilisé.
+- Clés et fichier privé inchangés. Les réglages de modèle étaient absents du
+  fichier privé et de l'environnement vérifiés : les nouveaux défauts s'appliquent.
+
 ## Démo Windows animée — 9 et 10 novembre 2026
 - Démo en préparation avec exécutable, installateur par utilisateur et guide :
   modèle Live2D r20, mouvement d'attente, sept expressions, retour neutre et

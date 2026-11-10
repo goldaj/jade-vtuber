@@ -2,6 +2,8 @@
 from io import BytesIO
 
 from .config import Settings
+from .openai_client import isolated_openai_client
+from .realtime_tts import RealtimeTTS, SpokenAudio
 
 
 class OpenAIServices:
@@ -10,12 +12,7 @@ class OpenAIServices:
         self.settings = settings
         if client is None:
             settings.require_openai()
-            from openai import AsyncOpenAI
-            client = AsyncOpenAI(
-                api_key=settings.api_key,
-                timeout=settings.timeout_seconds,
-                max_retries=1,
-            )
+            client = isolated_openai_client(settings)
         self.client = client
 
     async def complete(self, messages: list[dict[str, str]]) -> str:
@@ -52,9 +49,15 @@ class OpenAIServices:
             raise ValueError("OpenAI STT returned no text")
         return value.strip()
 
-    async def synthesize_wav(self, text: str) -> bytes:
+    async def synthesize_speech(self, text: str) -> SpokenAudio:
+        """Return the audio and spoken text without issuing a second request."""
         if not isinstance(text, str) or not 1 <= len(text) <= 4096:
             raise ValueError("invalid OpenAI TTS length")
+        if self.settings.tts_model.startswith(("gpt-realtime", "gpt-4o-realtime")):
+            return await RealtimeTTS(
+                self.client, model=self.settings.tts_model, voice=self.settings.voice,
+                timeout_seconds=self.settings.timeout_seconds, verify_transcript=False,
+            ).synthesize(text)
         # WAV output permits decoding/playing with no additional TTS engine.
         response = await self.client.audio.speech.create(
             model=self.settings.tts_model,
@@ -66,4 +69,9 @@ class OpenAIServices:
         data = response.content
         if not isinstance(data, bytes) or not data:
             raise ValueError("OpenAI TTS returned no audio")
-        return data
+        # The legacy Speech API does not return a separate spoken transcript.
+        return SpokenAudio(data, text)
+
+    async def synthesize_wav(self, text: str) -> bytes:
+        """Compatibility for callers that only need the WAV."""
+        return (await self.synthesize_speech(text)).audio

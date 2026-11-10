@@ -8,7 +8,7 @@ packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.14"
-openai = ">=1.100,<4"
+openai = {version = "3.42.1", extras = ["realtime"]}
 python-decouple = ">=3.8,<4"
 python-dotenv = ">=1,<2"
 requests = ">=2.32,<3"

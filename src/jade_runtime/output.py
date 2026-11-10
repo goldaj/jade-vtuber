@@ -91,7 +91,15 @@ class SpeechOutput:
 
             if discord_voice:
                 require_session()
-            wav = await self.services.synthesize_wav(reply.text)
+            # New adapters can report the words actually spoken; legacy service
+            # doubles still provide synthesize_wav only.
+            rich_synthesis = getattr(type(self.services), "synthesize_speech", None)
+            if callable(rich_synthesis):
+                spoken = await rich_synthesis(self.services, reply.text)
+                wav, spoken_text = spoken.audio, spoken.transcript
+            else:
+                wav = await self.services.synthesize_wav(reply.text)
+                spoken_text = reply.text
             if discord_voice:
                 require_session()
             # OBS text source shows the whole phrase while the WAV plays.
@@ -109,7 +117,7 @@ class SpeechOutput:
                     require_session()
                 path.parent.mkdir(parents=True, exist_ok=True)
                 tmp = path.with_name(path.name + ".tmp")
-                tmp.write_text(reply.text, encoding="utf-8")
+                tmp.write_text(spoken_text, encoding="utf-8")
                 tmp.replace(path)
                 subtitle_written = True
                 if discord_voice:

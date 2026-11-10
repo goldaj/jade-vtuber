@@ -1,8 +1,8 @@
 # Speed-oriented example, no live connectors automatically enabled.
 [settings]
-JADE_LLM_MODEL = "gpt-4.1-mini"
-JADE_STT_MODEL = "gpt-4o-mini-transcribe"
-JADE_TTS_MODEL = "gpt-4o-mini-tts"
+JADE_LLM_MODEL = "gpt-6-luna"
+JADE_STT_MODEL = "gpt-transcribe"
+JADE_TTS_MODEL = "gpt-realtime-2.1-mini"
 JADE_API_TIMEOUT = 12
 JADE_HISTORY_LIMIT = 16
 JADE_QUEUE_LIMIT = 32

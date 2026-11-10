@@ -77,11 +77,11 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 local_api.deliver(reply)
             print("Jade:", reply.text)
 
-            async def optional(label, action):
+            async def optional(label, action, *, timeout=20):
                 if not runtime.current_valid():
                     return
                 try:
-                    await asyncio.wait_for(action(), timeout=20)
+                    await asyncio.wait_for(action(), timeout=timeout)
                 except asyncio.CancelledError:
                     raise
                 except Exception:
@@ -94,7 +94,10 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             if vts_client is not None and config.vts_speak_hotkey:
                 await optional("vts", lambda: vts_client.trigger_hotkey(config.vts_speak_hotkey))
             if speech is not None:
-                await optional("voice", lambda: speech.speak(reply))
+                # TTS and the ensuing playback share this deadline. The old
+                # 20-second total could cut off an otherwise valid answer.
+                await optional("voice", lambda: speech.speak(reply),
+                               timeout=min(180, config.timeout_seconds + 120))
 
         runtime = Runtime(dialogue, on_reply, config.max_queue)
         await runtime.start()

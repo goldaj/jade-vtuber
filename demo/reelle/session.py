@@ -19,6 +19,7 @@ from src.jade_runtime.config import Settings
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming
 from src.jade_runtime.microphone import capture_wav
+from src.jade_runtime.openai_client import isolated_openai_client as _isolated_openai_client
 from src.jade_runtime.openai_services import OpenAIServices
 from demo.reelle.realtime_tts import RealtimeTTS, _words
 
@@ -85,41 +86,6 @@ def play_wav(audio: bytes, stop: threading.Event, notify: Callable[[DemoEvent], 
                 stream.write(chunk)
     finally:
         notify(DemoEvent("audio_level", 0.0))
-
-
-def _isolated_openai_client(settings: Settings, *, http_client=None):
-    """Create a client that cannot inherit arbitrary SDK environment headers.
-
-    The SDK accepts OPENAI_CUSTOM_HEADERS in addition to explicit headers. A
-    caller-supplied Authorization alone is insufficient: unknown environment
-    headers can contain private identifiers or change request behavior. Both
-    REST and Realtime use this fixed public header property; authentication still
-    comes from the supplied key through the SDK's bearer-auth mechanism.
-    """
-    from openai import AsyncOpenAI
-
-    class DemoOpenAI(AsyncOpenAI):
-        @property
-        def default_headers(self):
-            return {
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "User-Agent": self.user_agent,
-            }
-
-    options = {
-        "api_key": settings.api_key,
-        "timeout": settings.timeout_seconds,
-        "max_retries": 0,
-        "base_url": "https://api.openai.com/v1",
-        "organization": "",
-        "project": "",
-        "admin_api_key": "",
-        "webhook_secret": "",
-    }
-    if http_client is not None:
-        options["http_client"] = http_client
-    return DemoOpenAI(**options)
 
 
 class DemoSession:
