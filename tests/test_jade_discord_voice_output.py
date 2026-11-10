@@ -1,4 +1,4 @@
-"""Opt-in routing of synthesized replies to the Discord voice bridge."""
+"""Routing synthesized replies to the currently connected Discord voice bridge."""
 import asyncio
 import tempfile
 import unittest
@@ -30,9 +30,19 @@ class _Player:
     def reply_authorized(self, source):
         return True
 
+    def delivery_context(self):
+        return self
+
+    def delivery_context_valid(self, context):
+        return context is self
+
+    async def play_for_context(self, data, context):
+        self.played.append(data)
+        return True
+
 
 class DiscordVoiceRoutingTests(unittest.IsolatedAsyncioTestCase):
-    async def test_default_only_sends_discord_voice_replies_to_discord(self):
+    async def test_default_sends_all_spoken_replies_once_to_connected_voice(self):
         with tempfile.TemporaryDirectory() as directory:
             local, discord = _Player(), _Player()
             output = SpeechOutput(_Services(), local, Path(directory) / "subtitle.txt",
@@ -40,40 +50,142 @@ class DiscordVoiceRoutingTests(unittest.IsolatedAsyncioTestCase):
             for source in ("discord_voice", "discord", "twitch", "console", "http"):
                 await output.speak(Reply(Incoming(source, "test", "question"), "answer"))
             self.assertEqual(len(local.played), 5)
-            self.assertEqual(len(discord.played), 1)
+            self.assertEqual(len(discord.played), 5)
 
-    async def test_cross_source_broadcast_is_rejected_until_session_routing_exists(self):
+    async def test_legacy_broadcast_flag_has_no_effect(self):
+        for legacy in (True, False):
+            with self.subTest(legacy=legacy), tempfile.TemporaryDirectory() as directory:
+                local, discord = _Player(), _Player()
+                output = SpeechOutput(_Services(), local, Path(directory) / "subtitle.txt",
+                                      secondary_player=discord, secondary_broadcast=legacy)
+                await output.speak(Reply(Incoming("twitch", "test", "question"), "answer"))
+                self.assertEqual(discord.played, [b"synthetic wav"])
+
+    def test_legacy_broadcast_value_does_not_gate_configuration(self):
+        Settings(discord_voice_broadcast=True).validate()
+        Settings(discord_voice_broadcast=False).validate()
+
+    def test_old_private_broadcast_value_is_not_loaded(self):
+        values = {"JADE_DISCORD_VOICE_BROADCAST": "not-a-boolean"}
+        with patch("src.jade_runtime.config.environ", side_effect=lambda name, default: values.get(name, default)):
+            Settings.load()
+
+    async def test_no_connection_leaves_local_output_intact(self):
         with tempfile.TemporaryDirectory() as directory:
             local, discord = _Player(), _Player()
-            with self.assertRaises(ValueError):
-                SpeechOutput(_Services(), local, Path(directory) / "subtitle.txt",
-                             secondary_player=discord, secondary_broadcast=True)
+            discord.delivery_context = lambda: None
+            output = SpeechOutput(_Services(), local, Path(directory) / "subtitle.txt",
+                                  secondary_player=discord)
+            await output.speak(Reply(Incoming("http", "test", "question"), "answer"))
+            self.assertEqual(local.played, [b"synthetic wav"])
+            self.assertEqual(discord.played, [])
 
-    def test_broadcast_requires_explicit_voice_setup(self):
-        with self.assertRaises(ValueError):
-            Settings(discord_voice_broadcast=True).validate()
-        settings = Settings(discord_enabled=True, discord_token="test",
-                            discord_voice_enabled=True, discord_voice_channel=123,
-                            discord_voice_consent=True, discord_voice_allowed_users=(1,),
-                            discord_voice_broadcast=True)
-        with self.assertRaises(ValueError):
-            settings.validate()
+    async def test_changed_destination_during_synthesis_does_not_receive_stale_audio(self):
+        with tempfile.TemporaryDirectory() as directory:
+            local, discord = _Player(), _Player()
+            valid = True
+            discord.delivery_context_valid = lambda _context: valid
+            async def synthesize(_text):
+                nonlocal valid
+                valid = False
+                return b"wav"
+            services = SimpleNamespace(synthesize_wav=synthesize)
+            output = SpeechOutput(services, local, Path(directory) / "subtitle.txt",
+                                  secondary_player=discord)
+            await output.speak(Reply(Incoming("twitch", "test", "question"), "answer"))
+            self.assertEqual(local.played, [b"wav"])
+            self.assertEqual(discord.played, [])
 
-    def test_setting_is_loaded_and_defaults_off(self):
-        with patch("src.jade_runtime.config.environ", side_effect=lambda name, default: {
-            "JADE_DISCORD_ENABLED": "1", "DISCORD_TOKEN": "test",
-            "JADE_DISCORD_VOICE_ENABLED": "1", "DISCORD_VOICE_CHANNEL": "123",
-            "JADE_DISCORD_VOICE_CONSENT": "1", "JADE_DISCORD_VOICE_ALLOWED_USERS": "1",
-        }.get(name, default)):
-            self.assertFalse(Settings.load().discord_voice_broadcast)
-        with patch("src.jade_runtime.config.environ", side_effect=lambda name, default: {
-            "JADE_DISCORD_ENABLED": "1", "DISCORD_TOKEN": "test",
-            "JADE_DISCORD_VOICE_ENABLED": "1", "DISCORD_VOICE_CHANNEL": "123",
-            "JADE_DISCORD_VOICE_CONSENT": "1", "JADE_DISCORD_VOICE_ALLOWED_USERS": "1",
-            "JADE_DISCORD_VOICE_BROADCAST": "1",
-        }.get(name, default)):
-            with self.assertRaises(ValueError):
-                Settings.load()
+    async def test_changed_destination_stops_discord_but_not_local_playback(self):
+        with tempfile.TemporaryDirectory() as directory:
+            started, stopped, local_started, local_release = (asyncio.Event() for _ in range(4))
+            class Local:
+                cancelled = False
+                async def play(self, _wav):
+                    local_started.set()
+                    try:
+                        await local_release.wait()
+                    except asyncio.CancelledError:
+                        self.cancelled = True
+                        raise
+            class Discord(_Player):
+                valid = True
+                def delivery_context_valid(self, context):
+                    return context is self and self.valid
+                async def play_for_context(self, _wav, _context):
+                    started.set()
+                    try:
+                        await asyncio.Event().wait()
+                    finally:
+                        stopped.set()
+            local, discord = Local(), Discord()
+            subtitle = Path(directory) / "subtitle.txt"
+            output = SpeechOutput(_Services(), local, subtitle, secondary_player=discord)
+            task = asyncio.create_task(output.speak(Reply(Incoming("discord", "test", "q"), "answer")))
+            await asyncio.wait_for(started.wait(), 1)
+            await asyncio.wait_for(local_started.wait(), 1)
+            discord.valid = False
+            await asyncio.wait_for(stopped.wait(), 1)
+            self.assertFalse(local.cancelled)
+            self.assertFalse(task.done())
+            local_release.set()
+            await asyncio.wait_for(task, 1)
+            self.assertEqual(subtitle.read_text(encoding="utf-8"), "")
+
+    async def test_discord_failure_does_not_interrupt_local_playback(self):
+        with tempfile.TemporaryDirectory() as directory:
+            local, discord = _Player(), _Player()
+            discord.play_for_context = AsyncMock(side_effect=RuntimeError("synthetic"))
+            output = SpeechOutput(_Services(), local, Path(directory) / "subtitle.txt",
+                                  secondary_player=discord)
+            await output.speak(Reply(Incoming("console", "test", "q"), "answer"))
+            self.assertEqual(local.played, [b"synthetic wav"])
+            discord.play_for_context.assert_awaited_once()
+
+    async def test_cross_source_uses_real_bridge_context_contract(self):
+        from src.jade_runtime.discord_voice import OpenVoiceBridge
+        with tempfile.TemporaryDirectory() as directory:
+            local = _Player()
+            bridge = OpenVoiceBridge(None, None, 123)
+            bridge.connection = SimpleNamespace(channel=SimpleNamespace(id=123))
+            bridge.consent_confirmed = True  # internal active-connection state
+            bridge.own_bot_id = 42
+            bridge.session_id = "a" * 32
+            bridge.play = AsyncMock(return_value=True)
+            output = SpeechOutput(_Services(), local, Path(directory) / "subtitle.txt",
+                                  secondary_player=bridge)
+            await output.speak(Reply(Incoming("twitch", "test", "q"), "answer"))
+            self.assertEqual(local.played, [b"synthetic wav"])
+            bridge.play.assert_awaited_once_with(b"synthetic wav", expected_session="a" * 32)
+
+    async def test_cancellation_stops_both_players_and_clears_subtitle(self):
+        with tempfile.TemporaryDirectory() as directory:
+            started_local, started_discord = asyncio.Event(), asyncio.Event()
+            stopped_local, stopped_discord = asyncio.Event(), asyncio.Event()
+            class Local:
+                async def play(self, _wav):
+                    started_local.set()
+                    try:
+                        await asyncio.Event().wait()
+                    finally:
+                        stopped_local.set()
+            class Discord(_Player):
+                async def play_for_context(self, _wav, _context):
+                    started_discord.set()
+                    try:
+                        await asyncio.Event().wait()
+                    finally:
+                        stopped_discord.set()
+            subtitle = Path(directory) / "subtitle.txt"
+            output = SpeechOutput(_Services(), Local(), subtitle, secondary_player=Discord())
+            task = asyncio.create_task(output.speak(Reply(Incoming("http", "test", "q"), "answer")))
+            await asyncio.wait_for(asyncio.gather(started_local.wait(), started_discord.wait()), 1)
+            task.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await task
+            self.assertTrue(stopped_local.is_set())
+            self.assertTrue(stopped_discord.is_set())
+            self.assertEqual(subtitle.read_text(encoding="utf-8"), "")
 
     async def test_main_routes_voice_reply_through_session_aware_bridge(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -112,7 +224,7 @@ class DiscordVoiceRoutingTests(unittest.IsolatedAsyncioTestCase):
 
             with patch.object(main.Settings, "load", return_value=config), \
                  patch.object(main, "OpenAIServices", return_value=service), \
-                 patch("src.jade_runtime.discord_voice.DiscordVoiceBridge", Bridge), \
+                 patch("src.jade_runtime.discord_voice.OpenVoiceBridge", Bridge), \
                  patch("src.jade_runtime.discord_text.DiscordText", Connector):
                 task = asyncio.create_task(main.console(live=True, voice=True,
                                                          discord=True, discord_voice=True))

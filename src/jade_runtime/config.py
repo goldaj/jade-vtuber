@@ -41,9 +41,11 @@ class Settings:
     twitch_send: bool = False
     twitch_auto_refresh: bool = False
     discord_token: str = ""
+    # Legacy switches remain readable for old callers but are ignored by CLI.
     discord_enabled: bool = False
     discord_send: bool = False
     discord_voice_enabled: bool = False
+    # Legacy compatibility fields. The active open Discord bridge ignores them.
     discord_voice_broadcast: bool = False
     discord_voice_consent: bool = False
     discord_voice_allowed_users: tuple[int, ...] = field(default=(), repr=False)
@@ -79,12 +81,8 @@ class Settings:
             twitch_send=_enabled(str(environ("JADE_TWITCH_SEND", "0")).lower()),
             twitch_auto_refresh=_enabled(str(environ("JADE_TWITCH_AUTO_REFRESH", "0")).lower()),
             discord_token=str(environ("DISCORD_TOKEN", "")),
-            discord_enabled=_enabled(str(environ("JADE_DISCORD_ENABLED", "0")).lower()),
-            discord_send=_enabled(str(environ("JADE_DISCORD_SEND", "0")).lower()),
-            discord_voice_enabled=_enabled(str(environ("JADE_DISCORD_VOICE_ENABLED", "0")).lower()),
-            discord_voice_broadcast=_enabled(str(environ("JADE_DISCORD_VOICE_BROADCAST", "0")).lower()),
-            discord_voice_consent=_enabled(str(environ("JADE_DISCORD_VOICE_CONSENT", "0")).lower()),
-            discord_voice_allowed_users=_voice_users(str(environ("JADE_DISCORD_VOICE_ALLOWED_USERS", ""))),
+            # Obsolete Discord activation/broadcast/list/confirmation values are not
+            # loaded: existing private files are preserved but have no effect.
             discord_voice_channel=int(environ("DISCORD_VOICE_CHANNEL", "0") or 0),
             vts_enabled=_enabled(str(environ("JADE_VTS_ENABLED", "0")).lower()),
             vts_token=str(environ("JADE_VTS_TOKEN", "")),
@@ -122,24 +120,8 @@ class Settings:
             raise ValueError("Twitch explicitly enabled but credentials missing")
         if self.twitch_send and not self.twitch_enabled:
             raise ValueError("Twitch output requires explicitly enabled connector")
-        if (type(self.discord_voice_consent) is not bool
-                or not isinstance(self.discord_voice_allowed_users, tuple)
-                or len(self.discord_voice_allowed_users) > 32
-                or any(type(uid) is not int or not 0 < uid < 2**64 for uid in self.discord_voice_allowed_users)
-                or len(set(self.discord_voice_allowed_users)) != len(self.discord_voice_allowed_users)):
-            raise ValueError("invalid Discord voice authorization")
-        if self.discord_voice_enabled and (
-                not self.discord_enabled or self.discord_voice_channel <= 0
-                or not self.discord_voice_consent or not self.discord_voice_allowed_users):
-            raise ValueError("Discord voice needs a channel, authorized users and explicit consent")
-        if self.discord_voice_broadcast:
-            raise ValueError("Cross-source Discord voice broadcast requires session-specific routing, not yet available")
-        if self.discord_send and not self.discord_enabled:
-            raise ValueError("Discord output requires explicitly enabled connector")
         if self.vts_enabled and not self.vts_token:
             raise ValueError("VTube Studio enabled but local API token missing")
-        if self.discord_enabled and not self.discord_token:
-            raise ValueError("Discord explicitly enabled but token missing")
 
     def require_openai(self):
         if not self.api_key or self.api_key.strip() == "example":

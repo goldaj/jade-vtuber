@@ -3,10 +3,11 @@
 Plan de travail sur `develop`, à exécuter dans l'ordre. La démo est considérée
 comme terminée. Référence : [feuille de route](ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md).
 
-**Décision ultérieure du propriétaire :** le salon vocal est celui du serveur
-privé dédié à Jade ; toute personne présente peut interagir avec elle. Aucune
-liste individuelle ni confirmation de consentement ne sont demandées. Cette
-décision remplace les consignes contraires dans les documents historiques.
+**Décision ultérieure du propriétaire :** le serveur privé est dédié à Jade ;
+elle peut interagir avec les personnes et les autres bots, dans tous ses salons,
+sans liste individuelle ni validation supplémentaire. Cette décision remplace
+les consignes contraires dans les documents historiques. La propre voix de Jade
+est ignorée pour éviter qu'elle se réponde en boucle.
 
 ## 1. Mettre à jour le moteur principal
 
@@ -26,9 +27,10 @@ et que les erreurs ne déclenchent pas de requêtes payantes répétées en sile
 
 ## 2. Finaliser le vocal Discord
 
-1. Reprendre les connecteurs existants et configurer le salon vocal du serveur
-   privé de Jade. Toute personne présente peut participer, sans liste individuelle
-   ni étape supplémentaire de consentement.
+1. Reprendre les connecteurs : ne pas filtrer les salons ou les autres bots par
+   autorisation interne ; accepter toute personne ou bot présent dans le salon
+   vocal rejoint. Discord permet le déplacement entre salons ; une connexion
+   vocale ne couvre pas simultanément tous les salons d'un même serveur.
 2. Tester et corriger la fin de tour, les suivis sans nom d'activation, le
    silence, l'anti-écho et l'arrêt. Le tête-à-tête est déjà simulé ; le groupe
    actuellement silencieux doit pouvoir interagir dans le salon dédié à Jade.

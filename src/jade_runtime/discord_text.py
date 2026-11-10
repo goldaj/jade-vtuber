@@ -1,7 +1,7 @@
 """Optional Discord text connector using *one* supported discord.py stack.
 
-Discord voice reception requires a separate consent/PCM transport; text
-support alone never joins voice channels or records other users.
+Discord voice reception requires a separate PCM transport; text support
+alone never joins voice channels or records other users.
 """
 import asyncio
 import logging
@@ -13,9 +13,7 @@ LOG = logging.getLogger("jade.discord")
 
 def parse_discord_message(message, *, own_user_id=None) -> Incoming | None:
     author = message.author
-    if getattr(author, "bot", False) or getattr(author, "id", None) == own_user_id:
-        return None
-    if not getattr(message, "guild", None):  # no private DMs by default
+    if own_user_id is not None and getattr(author, "id", None) == own_user_id:
         return None
     text = getattr(message, "content", "")
     if not isinstance(text, str) or not text.strip() or len(text) > 4000:
@@ -50,6 +48,11 @@ class DiscordText:
 
         class JadeClient(discord.Client):
             async def on_ready(self):
+                if parent.voice_bridge is not None:
+                    await parent.voice_bridge.connect(self)
+
+            async def on_resumed(self):
+                # A resumed Gateway session does not emit on_ready again.
                 if parent.voice_bridge is not None:
                     await parent.voice_bridge.connect(self)
 

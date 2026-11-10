@@ -31,13 +31,13 @@ class VoiceSessionTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             Incoming("twitch", "user", "hi", voice_session_id="a" * 32)
 
-    def test_voice_requires_explicit_consent_and_private_allowlist(self):
+    def test_obsolete_participation_fields_do_not_gate_voice(self):
         common = dict(discord_enabled=True, discord_token="test",
                       discord_voice_enabled=True, discord_voice_channel=1)
         for values in ({}, {"discord_voice_consent": True},
-                       {"discord_voice_allowed_users": (123,)}):
-            with self.assertRaises(ValueError):
-                Settings(**common, **values).validate()
+                       {"discord_voice_allowed_users": (123,)},
+                       {"discord_voice_consent": False, "discord_voice_allowed_users": ()}):
+            Settings(**common, **values).validate()
         settings = Settings(**common, discord_voice_consent=True,
                             discord_voice_allowed_users=(123,))
         settings.validate()
@@ -46,6 +46,14 @@ class VoiceSessionTests(unittest.IsolatedAsyncioTestCase):
         for invalid in ("1,1", "-1", "0", "1,,2"):
             with self.assertRaises(ValueError):
                 _voice_users(invalid)
+
+    def test_loading_ignores_even_malformed_legacy_discord_values(self):
+        from unittest.mock import patch
+        values = {"JADE_DISCORD_ENABLED": "bad", "JADE_DISCORD_SEND": "bad",
+                  "JADE_DISCORD_VOICE_ENABLED": "bad", "JADE_DISCORD_VOICE_BROADCAST": "bad",
+                  "JADE_DISCORD_VOICE_CONSENT": "bad", "JADE_DISCORD_VOICE_ALLOWED_USERS": "not-a-list"}
+        with patch("src.jade_runtime.config.environ", side_effect=lambda name, default: values.get(name, default)):
+            Settings.load().validate()
 
 
 if __name__ == "__main__":

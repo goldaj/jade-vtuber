@@ -1,10 +1,9 @@
 # Jade — plan d'exécution du MVP Discord
 
 > **Décision du propriétaire du 10 novembre 2026 :** le serveur privé est dédié
-> à Jade ; toute personne présente dans son salon peut participer. Les anciennes
-> exigences de liste individuelle et de confirmation de consentement ci-dessous
-> sont remplacées par cette décision ; le [plan à jour](PLAN-4-ETAPES-20261110.md)
-> fait foi pour leur suppression.
+> à Jade ; elle peut interagir avec les personnes et les autres bots dans tous
+> ses salons, sans validation ou liste individuelle. Les anciennes restrictions
+> contraires ci-dessous sont remplacées par le [plan à jour](PLAN-4-ETAPES-20261110.md).
 
 La [feuille de route produit](ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md) fait foi :
 MVP Discord d'abord, puis produit mobile autonome après validation du MVP.

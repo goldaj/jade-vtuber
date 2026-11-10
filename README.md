@@ -91,8 +91,9 @@ du projet est inclus dans ce dépôt.
 
 Le passage en mode réel exige explicitement `--live`, une configuration valide
 et peut générer des frais. Le microphone, Twitch, Discord, VTube Studio et
-l’interface HTTP s’activent séparément par leurs options ; l’envoi vers les
-chats Twitch/Discord demande en plus son réglage dédié. Les extras Poetry
+l’interface HTTP s’activent séparément par leurs options ; l’envoi vers le
+chat Twitch demande son réglage dédié. `--discord` active l'envoi Discord.
+Les extras Poetry
 disponibles sont `mic`, `discord`, `discord-voice` et `vts`.
 
 Pour Twitch, un jeton utilisateur valide et le canal sont requis ; le nom du
@@ -100,15 +101,17 @@ bot est déduit du jeton si `TWITCH_BOT_LOGIN` est vide. La procédure pour obte
 un jeton sans exposer les secrets est décrite dans [l'aide Twitch](docs/gpt6-jade/TWITCH-AUTH.md).
 Le renouvellement automatique est facultatif et exige une sauvegarde GitHub
 privée configurée ; ses garanties et limites sont détaillées dans cette aide.
-Pour Discord vocal, seules les réponses de la session vocale courante peuvent
-être envoyées dans le salon. La rediffusion d'autres sources est suspendue tant
-qu'un routage explicite par source et session n'est pas disponible.
-L'écoute vocale demande aussi une liste privée d'identifiants de participants
-autorisés et un consentement explicite ; sans ces deux réglages, Jade ne rejoint
-pas le salon vocal et n'envoie aucun audio à la transcription.
+Lorsque Discord vocal est connecté, les réponses vocales de Jade, y compris
+celles issues d'autres sources, peuvent être diffusées dans le salon actif.
+Le vocal ne demande ni liste de participants ni confirmation supplémentaire :
+toute source entendue peut interagir, y compris un autre bot. Jade ignore sa
+propre voix pour limiter les boucles. Le canal indiqué sert au raccordement
+initial ; Jade peut être déplacée vers un autre salon. Une connexion vocale
+Discord ne couvre qu'un salon à la fois par serveur. En texte, Jade traite
+les messages reçus d'autres bots et de tous les salons, y compris les messages
+privés ; elle ignore ses propres messages.
 
-La lecture locale nécessite ffplay. Avant un essai vocal, vérifier les appareils
-et avertir les participants : les segments vocaux destinés à la transcription
+La lecture locale nécessite ffplay. Les segments vocaux destinés à la transcription
 sont envoyés au fournisseur. L’interface HTTP reste liée à `127.0.0.1` ; un accès
 depuis un autre appareil nécessite une solution sécurisée distincte.
 

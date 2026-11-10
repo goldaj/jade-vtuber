@@ -112,7 +112,6 @@ class DiscordVoiceTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_cancel_play_stops_and_cleans_source(self):
         source = types.SimpleNamespace(cleanup=Mock())
-        discord = types.SimpleNamespace(FFmpegPCMAudio=lambda _: source)
         started = asyncio.Event()
         channel = types.SimpleNamespace(id=45, members=[types.SimpleNamespace(id=12, bot=False)])
         channel.voice_states = {12: types.SimpleNamespace(channel=channel)}
@@ -124,7 +123,7 @@ class DiscordVoiceTests(unittest.IsolatedAsyncioTestCase):
                                     authorized_user_ids=[12], consent_confirmed=True)
         bridge.own_bot_id = 100
         bridge.connection = connection
-        with patch.dict('sys.modules', {'discord': discord}):
+        with patch('src.jade_runtime.discord_voice._ffmpeg_source', return_value=source):
             task = asyncio.create_task(bridge.play(b'fake-wav'))
             await asyncio.wait_for(started.wait(), 1)
             task.cancel()

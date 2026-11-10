@@ -359,3 +359,18 @@ sans présenter les mocks comme des tests d'API réels.
 - Suite complète locale : **81 tests OK**. Un essai texte via le runtime puis un diagnostic direct ont été refusés par OpenAI : HTTP 429 `credit_balance_exhausted`. La lecture des métadonnées de modèle ne prouve pas que le compte peut payer une génération ; aucune réponse texte réelle n’a été obtenue.
 - Le propriétaire recharge son compte et préviendra pour reprendre. Ne pas répéter l’appel facturé avant son message ; ensuite retester le texte, vérifier CI et SHA puis fusionner la PR conformément à sa demande. La recette micro simulée est acceptée comme incomplète ; ne pas annoncer une validation physique.
 - Après confirmation du propriétaire, une seule génération texte réelle via `gpt-4.1-mini` et le runtime Jade a réussi : réponse correcte en 1,72 s. La requête était synthétique, sans micro ni transcription réelle. Le propriétaire autorise la fusion après cette recette incomplète ; vérifier les checks du SHA final et conserver les limites de la simulation.
+
+## S18 — Moteur et préparation du vocal Discord (2026-11-10)
+
+- Le moteur principal utilise les modèles et le transport TTS Realtime partagés avec la démo ; dialogue, synthèse et transcription ont été essayés séparément avec un signal synthétique et un budget minimal. Aucun microphone physique n'a été utilisé.
+- Le parcours vocal Discord accepte les personnes et les autres bots sans liste ni confirmation ; seule la propre voix de Jade est ignorée. Il suit son déplacement dans un autre salon, une connexion vocale à la fois. Les réponses issues d'autres sources peuvent aussi être diffusées dans le salon actif.
+- La réception prend en charge le chiffrement DAVE avec les versions verrouillées du transport. Des essais synthétiques couvrent notamment les déplacements, les reconnexions et la continuité de l'écoute après une réponse. Une connexion vocale réelle puis une déconnexion propre ont réussi, sans écoute, émission ni appel OpenAI. La réception audio DAVE réelle et la conversation humaine restent à recetter.
+- Travail sur `develop` uniquement ; `main` reste inchangée. Ne pas confondre ces vérifications avec une validation du téléphone, de l'audio physique ou de la synchronisation de l'avatar.
+- Validation hors ligne de cette étape : 319 tests réussis et compilation Python réussie. Le scan de secrets du contenu préparé a réussi ; ces contrôles ne remplacent pas une recette audio réelle.
+
+## S19 — Avatar r20 pour le MVP Discord (2026-11-10)
+
+- Option `--avatar` : fenêtre Live2D r20 existante et mouvement de bouche approximatif lié au volume pendant la lecture locale ou Discord, arrêt au repos ; pas de synchronisation phonétique revendiquée. Le processus graphique ne reçoit ni clé, ni transcription, ni audio.
+- Le modèle s'est lancé lors d'un essai graphique local caché. Installation neuve sur D: des extras verrouillés Discord vocal et avatar, imports et `pip check` réussis ; 37 tests ciblés de transport et d'avatar réussis dans cet environnement.
+- Procédure et partage manuel de fenêtre : [utilisation de l'avatar Discord](UTILISATION-AVATAR-DISCORD.md). La perception de la synchronisation, le partage réel, le téléphone et la conversation vocale bout en bout restent à recetter ; r21 demeure distinct.
+- Validation globale de l'état préparé : **328 tests hors ligne**, compilation, contrôle LFS et 202 fichiers du manifeste réussis. Préflight complet avec la configuration privée réussi sans appel ; connexion Discord réelle et intent des messages vérifiés séparément sans capture ni message envoyé. Scan Gitleaks et comparaison ciblée aux valeurs privées connues : aucune fuite détectée dans les modifications préparées. Une recherche ne garantit pas l'absence absolue de secrets.

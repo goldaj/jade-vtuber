@@ -1,8 +1,8 @@
 """Bounded, offline voice-turn decisions; no audio or transcript is retained.
 
-This is a conservative policy primitive, not a classifier or a consent gate.
-The transport must reject unauthorized PCM before transcription, call this only
-for completed turns, and discard a session on participant change or revocation.
+This is a bounded policy primitive, not a classifier or a consent gate. The
+active open transport calls it for completed turns and discards session state
+when its voice connection changes; it does not inspect participant membership.
 """
 from __future__ import annotations
 
@@ -52,7 +52,8 @@ class ConversationTurnDecider:
     """Decide from trusted session metadata and one completed transcription.
 
     `direct_address` is a trusted upstream signal, not an automatic inference
-    from a name or question mark. `participant_count` counts authorized humans.
+    from a name or question mark. `participant_count` may be None when all
+    audible sources participate without inspecting channel membership.
     A completed response must be acknowledged with `mark_replied` before a
     same-speaker group follow-up can use the short context window.
     """
@@ -87,14 +88,16 @@ class ConversationTurnDecider:
         return state
 
     def decide(self, session_id: str, speaker_id: int, text: str, *,
-               authorized: bool, consent_confirmed: bool, participant_count: int,
+               authorized: bool, consent_confirmed: bool, participant_count: int | None,
                direct_address: bool = False, is_bot: bool = False) -> TurnDecision:
         # Explicit authorization must already have been enforced before STT.
         if authorized is not True or consent_confirmed is not True or is_bot is not False:
             return TurnDecision(False, "not_authorized")
         if (not isinstance(session_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}", session_id)
                 or type(speaker_id) is not int or speaker_id <= 0
-                or type(participant_count) is not int or not 1 <= participant_count <= 32
+                or (participant_count is None and direct_address is not True)
+                or (participant_count is not None and
+                    (type(participant_count) is not int or not 1 <= participant_count <= 32))
                 or type(direct_address) is not bool or not isinstance(text, str) or len(text) > 4000):
             return TurnDecision(False, "invalid_turn")
         normalized = _words(text)

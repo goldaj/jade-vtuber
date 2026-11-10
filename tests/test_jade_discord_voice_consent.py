@@ -424,7 +424,7 @@ class DiscordVoiceConsentTests(unittest.IsolatedAsyncioTestCase):
         def create(_):
             channel.voice_states[13] = SimpleNamespace(channel=channel)
             return source
-        with patch.dict(sys.modules, {"discord": SimpleNamespace(FFmpegPCMAudio=create)}):
+        with patch("src.jade_runtime.discord_voice._ffmpeg_source", side_effect=create):
             with self.assertRaisesRegex(PermissionError, "authorization"):
                 await bridge.play(b"synthetic-wav")
         connection.play.assert_not_called()
@@ -471,7 +471,7 @@ class DiscordVoiceConsentTests(unittest.IsolatedAsyncioTestCase):
         bridge.own_bot_id = 100
         source = Incoming("discord_voice", "speaker", "hello", channel="45", speaker_id=12,
                           voice_session_id=bridge.session_id)
-        with patch.dict(sys.modules, {"discord": SimpleNamespace(FFmpegPCMAudio=lambda _: source_file)}):
+        with patch("src.jade_runtime.discord_voice._ffmpeg_source", return_value=source_file):
             await asyncio.wait_for(bridge.play_for_reply(b"synthetic-wav", source), 1)
         connection.play.assert_called_once()
         source_file.cleanup.assert_called_once()
@@ -496,7 +496,7 @@ class DiscordVoiceConsentTests(unittest.IsolatedAsyncioTestCase):
         bridge.receive_pcm(12, "Participant", array('h', [1500] * 19200).tobytes())
         self.assertTrue(bridge._segmenter._users)
         source_file = SimpleNamespace(cleanup=Mock())
-        with patch.dict(sys.modules, {"discord": SimpleNamespace(FFmpegPCMAudio=lambda _: source_file)}):
+        with patch("src.jade_runtime.discord_voice._ffmpeg_source", return_value=source_file):
             playback = asyncio.create_task(bridge.play(b"synthetic-wav"))
             await asyncio.wait_for(playing.wait(), 1)
             self.assertFalse(bridge._segmenter._users)
@@ -535,7 +535,7 @@ class DiscordVoiceConsentTests(unittest.IsolatedAsyncioTestCase):
         bridge.connection.play = Mock(side_effect=play)
         bridge.connection.stop = Mock(side_effect=stop)
         bridge.connection.is_playing = lambda: False
-        with patch.dict(sys.modules, {"discord": SimpleNamespace(FFmpegPCMAudio=lambda _: SimpleNamespace(cleanup=Mock()))}):
+        with patch("src.jade_runtime.discord_voice._ffmpeg_source", return_value=SimpleNamespace(cleanup=Mock())):
             playback = asyncio.create_task(bridge.play(b"synthetic-wav"))
             await asyncio.wait_for(playing.wait(), 1)
             await asyncio.wait_for(cancelled.wait(), 1)
@@ -560,7 +560,7 @@ class DiscordVoiceConsentTests(unittest.IsolatedAsyncioTestCase):
             def create(_):
                 if failure: raise RuntimeError("synthetic")
                 return SimpleNamespace(cleanup=Mock())
-            with patch.dict(sys.modules, {"discord": SimpleNamespace(FFmpegPCMAudio=create)}):
+            with patch("src.jade_runtime.discord_voice._ffmpeg_source", side_effect=create):
                 playback = asyncio.create_task(bridge.play(b"synthetic-wav"))
                 if failure:
                     with self.assertRaisesRegex(RuntimeError, "synthetic"): await playback
@@ -600,7 +600,7 @@ class DiscordVoiceConsentTests(unittest.IsolatedAsyncioTestCase):
         bridge.loop = asyncio.get_running_loop()
         bridge.worker = asyncio.create_task(bridge._consume())
         source = SimpleNamespace(cleanup=Mock())
-        with patch.dict(sys.modules, {"discord": SimpleNamespace(FFmpegPCMAudio=lambda _: source)}):
+        with patch("src.jade_runtime.discord_voice._ffmpeg_source", return_value=source):
             bridge.receive_pcm(12, "Participant", loud())
             await asyncio.wait_for(started.wait(), 1)
             playback = asyncio.create_task(bridge.play(b"synthetic-wav"))

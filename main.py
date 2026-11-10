@@ -24,7 +24,7 @@ class DemoChat:
 
 
 async def console(*, live=False, voice=False, mic=False, twitch=False,
-                  discord=False, vts=False, discord_voice=False, http=False):
+                  discord=False, vts=False, discord_voice=False, http=False, avatar=False):
     config = Settings.load()
     config.validate()
     if (voice or mic or twitch or discord or vts or discord_voice or http) and not live:
@@ -35,10 +35,10 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         raise ValueError("set JADE_AUDIO_OUTPUT=ffplay before enabling billed TTS")
     if twitch and not config.twitch_enabled:
         raise ValueError("set JADE_TWITCH_ENABLED=1 to allow Twitch connection")
-    if discord and not config.discord_enabled:
-        raise ValueError("set JADE_DISCORD_ENABLED=1 to allow Discord connection")
-    if discord_voice and not (discord and voice and config.discord_voice_enabled):
-        raise ValueError("voice receive requires --discord --voice and explicit voice config")
+    if discord and (not config.discord_token or config.discord_token == "example"):
+        raise ValueError("Discord token required")
+    if discord_voice and not (discord and voice and config.discord_voice_channel > 0):
+        raise ValueError("voice receive requires --discord --voice and an initial voice channel")
     if http and not config.http_enabled:
         raise ValueError("set JADE_HTTP_ENABLED=1 and private JADE_HTTP_TOKEN")
     if vts and not config.vts_enabled:
@@ -64,9 +64,16 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         dialogue = Dialogue(chat, prompt, bot_name=config.bot_name,
                             max_messages=config.max_history_messages,
                             random_reply_rate=config.reply_probability)
-        speech = (SpeechOutput(chat, AudioOutput(config.audio_output),
-                               config.subtitle_path, audio_gate=audio_gate,
-                               secondary_broadcast=config.discord_voice_broadcast) if voice else None)
+        avatar_client = None
+        if avatar:
+            from src.jade_runtime.avatar import Avatar
+            avatar_client = await Avatar().start()
+            scopes.push_async_callback(avatar_client.close)
+        player = AudioOutput(config.audio_output)
+        if avatar_client is not None:
+            player.playback_observer = avatar_client.observer("local")
+        speech = (SpeechOutput(chat, player,
+                               config.subtitle_path, audio_gate=audio_gate) if voice else None)
         if vts:
             from src.jade_runtime.vtube_studio import VTubeStudio
             vts_client = await scopes.enter_async_context(VTubeStudio(
@@ -111,12 +118,11 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             local_api = LocalHTTP(runtime, token=config.http_token,
                                   port=config.http_port)
         if discord_voice:
-            from src.jade_runtime.discord_voice import DiscordVoiceBridge
-            discord_voice_bridge = DiscordVoiceBridge(
-                chat, runtime, config.discord_voice_channel,
-                authorized_user_ids=config.discord_voice_allowed_users,
-                consent_confirmed=config.discord_voice_consent)
+            from src.jade_runtime.discord_voice import OpenVoiceBridge
+            discord_voice_bridge = OpenVoiceBridge(chat, runtime, config.discord_voice_channel)
             speech.secondary_player = discord_voice_bridge
+            if avatar_client is not None:
+                discord_voice_bridge.playback_observer = avatar_client.observer("discord")
 
         async def accept(message):
             await runtime.submit(message)
@@ -148,7 +154,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             if discord:
                 from src.jade_runtime.discord_text import DiscordText
                 discord_client = DiscordText(
-                    config.discord_token, accept, send_enabled=config.discord_send,
+                    config.discord_token, accept, send_enabled=True,
                     voice_bridge=discord_voice_bridge)
 
             if twitch or discord or mic or http:
@@ -220,6 +226,8 @@ def main():
                         help="Authenticated loopback-only text API")
     parser.add_argument("--discord-voice", action="store_true",
                         help="Explicitly receive Discord voice and send audio to OpenAI STT")
+    parser.add_argument("--avatar", action="store_true",
+                        help="Display the animated Live2D r20 avatar")
     parser.add_argument("--preflight", action="store_true",
                         help="Check settings and local dependencies with zero provider/network calls")
     args = vars(parser.parse_args())

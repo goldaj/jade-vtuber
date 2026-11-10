@@ -1,9 +1,11 @@
 """Ordered audio output and OBS subtitles; no third-party speech engine."""
 import asyncio
 import logging
+import os
 from pathlib import Path
 import tempfile
 
+from .avatar import child_environment
 from .messages import Reply
 from .openai_services import OpenAIServices
 
@@ -15,6 +17,14 @@ class AudioOutput:
         if mode not in ("none", "ffplay"):
             raise ValueError("unsupported WAV output mode")
         self.mode = mode
+        self.playback_observer = None
+
+    def _observe(self, observer, event, data):
+        if observer is not None:
+            try:
+                observer(event, data)
+            except Exception:
+                LOG.warning("Audio playback observer failed")
 
     async def play(self, data: bytes):
         if self.mode == "none":
@@ -24,13 +34,17 @@ class AudioOutput:
             path = Path(fp.name)
         process = None
         spawn = None
+        observer = self.playback_observer
+        started = False
         try:
             spawn = asyncio.create_task(asyncio.create_subprocess_exec(
                 "ffplay", "-nodisp", "-autoexit", "-loglevel", "error",
                 str(path), stdin=asyncio.subprocess.DEVNULL,
                 stdout=asyncio.subprocess.DEVNULL,
-                stderr=asyncio.subprocess.DEVNULL))
+                stderr=asyncio.subprocess.DEVNULL, env=child_environment(os.environ)))
             process = await asyncio.shield(spawn)
+            started = True
+            self._observe(observer, "start", data)
             status = await process.wait()
             if status:
                 raise RuntimeError("ffplay could not play the supplied WAV")
@@ -58,6 +72,8 @@ class AudioOutput:
                         raise RuntimeError("ffplay could not be stopped") from exc
             raise
         finally:
+            if started:
+                self._observe(observer, "end", data)
             # Windows may still have the WAV open if the process refused to stop.
             if process is None or process.returncode is not None:
                 path.unlink(missing_ok=True)
@@ -68,19 +84,64 @@ class SpeechOutput:
     def __init__(self, services: OpenAIServices, player: AudioOutput,
                  subtitle_path: Path, secondary_player=None, audio_gate=None,
                  secondary_broadcast=False):
-        if secondary_broadcast:
-            raise ValueError("Cross-source Discord voice broadcast is not yet available")
         self.services = services
         self.player = player
         self.subtitle_path = Path(subtitle_path)
         self.lock = asyncio.Lock()
         self.secondary_player = secondary_player
         self.audio_gate = audio_gate
-        self.secondary_broadcast = secondary_broadcast
+        # Kept only for callers of the former opt-in API. The owner has chosen
+        # to broadcast spoken responses whenever a voice bridge is connected.
+        self.secondary_broadcast = True
+
+    def _delivery_context(self):
+        """Take a playback snapshot; an absent bridge leaves local output intact."""
+        get_context = getattr(self.secondary_player, "delivery_context", None)
+        if not callable(get_context):
+            return None
+        try:
+            return get_context()
+        except Exception:
+            LOG.warning("Discord voice delivery unavailable")
+            return None
+
+    async def _play_other_source(self, wav, context):
+        """Cancel stale Discord playback without interrupting the local player."""
+        if context is None:
+            return
+        valid = getattr(self.secondary_player, "delivery_context_valid", None)
+        play = getattr(self.secondary_player, "play_for_context", None)
+        if not callable(valid) or not callable(play):
+            return
+        task = None
+        try:
+            if not valid(context):
+                return
+            task = asyncio.create_task(play(wav, context))
+            while not task.done():
+                if not valid(context):
+                    task.cancel()
+                    await asyncio.gather(task, return_exceptions=True)
+                    return
+                await asyncio.wait({task}, timeout=0.05)
+            if task.cancelled():
+                return
+            await task
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # A Discord disconnect must not prevent a local or text reply.
+            LOG.warning("Discord voice delivery failed")
+        finally:
+            if task is not None and not task.done():
+                task.cancel()
+            if task is not None:
+                await asyncio.gather(task, return_exceptions=True)
 
     async def speak(self, reply: Reply):
         async with self.lock:
             discord_voice = reply.source.platform == "discord_voice"
+            context = None if discord_voice else self._delivery_context()
 
             def require_session():
                 # Discord voice is a private, revocable session.  Fail closed
@@ -153,7 +214,12 @@ class SpeechOutput:
                         tasks.create_task(play_both())
                         tasks.create_task(watch_session())
                 else:
-                    await self.player.play(wav)
+                    if context is None:
+                        await self.player.play(wav)
+                    else:
+                        async with asyncio.TaskGroup() as players:
+                            players.create_task(self.player.play(wav))
+                            players.create_task(self._play_other_source(wav, context))
             finally:
                 try:
                     if gated:

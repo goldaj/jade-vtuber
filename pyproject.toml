@@ -13,18 +13,23 @@ python-decouple = ">=3.8,<4"
 python-dotenv = ">=1,<2"
 requests = ">=2.32,<3"
 # Only transport / capture integrations, NOT alternative STT or TTS:
-discord-py = {version = ">=2.4,<3", optional = true}
+discord-py = {version = ">=2.7.1,<2.8", optional = true}
 websockets = {version = ">=13,<17", optional = true}
 sounddevice = {version = ">=0.5,<1", optional = true}
-discord-ext-voice-recv = {version = ">=0.5,<1", optional = true}
+discord-ext-voice-recv = {version = "0.5.2a179", optional = true}
 pynacl = {version = ">=1.5,<2", optional = true}
+davey = {version = "0.2.0", optional = true}
+live2d-py = {version = "1.0.0", optional = true}
+pygame = {version = "2.6.1", optional = true}
+PyOpenGL = {version = "3.1.10", optional = true}
 
 [tool.poetry.extras]
 discord = ["discord-py"]
 vts = ["websockets"]
 mic = ["sounddevice"]
-discord-voice = ["discord-py", "discord-ext-voice-recv", "pynacl"]
-all = ["discord-py", "websockets", "sounddevice", "discord-ext-voice-recv", "pynacl"]
+discord-voice = ["discord-py", "discord-ext-voice-recv", "pynacl", "davey"]
+avatar = ["live2d-py", "pygame", "PyOpenGL"]
+all = ["discord-py", "websockets", "sounddevice", "discord-ext-voice-recv", "pynacl", "davey", "live2d-py", "pygame", "PyOpenGL"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8,<10"
