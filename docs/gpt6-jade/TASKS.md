@@ -3,6 +3,34 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## Démo Windows animée — 9 et 10 novembre 2026
+- Démo en préparation avec exécutable, installateur par utilisateur et guide :
+  modèle Live2D r20, mouvement d'attente, sept expressions, retour neutre et
+  ouverture de bouche liée au niveau audio. La clé OpenAI du visiteur reste en
+  mémoire ; aucune clé n'est fournie. Le r21 n'est pas un export final validé.
+- Le 9 novembre, courts essais réels `gpt-6-luna` et `gpt-realtime-2.1-mini`,
+  puis chemin intégré texte→dialogue→voix WAV réussis sur entrée synthétique ;
+  le coût exact n'a pas été relevé. Le même jour, une sortie audio silencieuse
+  a été écrite vers PortAudio. Pas de micro, d'écoute humaine ou de transcription
+  réelle de voix humaine. `gpt-transcribe` avait été essayé sur audio synthétique.
+- Le 10 novembre, 282 tests hors ligne et compilation réussis. Le rendu OpenGL
+  hors écran du modèle r20 a affiché sept images d'expression distinctes ; des
+  paramètres de visage contrôlés sont revenus à leur valeur initiale après remise
+  au neutre. Ces contrôles ne constituent pas une recette visuelle ou audio humaine.
+- Le 10 novembre, l'installateur a été installé puis désinstallé dans un dossier
+  de recette isolé sur D:. Les 2 705 fichiers installés correspondent au stage ;
+  imports, interface, première frame et renderer fonctionnent avec un PATH
+  Windows minimal. Les commandes des sept expressions, du neutre et de la bouche
+  ont été acceptées par le renderer installé. La capture de fenêtre a expiré :
+  le contrôle visuel humain et la recette sur un autre PC restent ouverts.
+- Scan Gitleaks sans alerte sur le stage ; aucune des neuf valeurs privées connues
+  ni des variantes de chemin recherchées dans les fichiers et modules PyInstaller
+  décompressés en mémoire. Ce contrôle ne garantit pas l'absence de secrets inconnus.
+  ZIP : SHA-256 `e1d09bb0a48d5dc7a2017bfe5a7c08f8adbb79cc41aaa9b1192863fc9bece0e0`.
+  L'installateur n'est pas signé numériquement.
+- La démo ne configure pas Twitch ou Discord ; les modèles du runtime principal
+  restent à migrer indépendamment de ceux de la démo.
+
 ## Démo Windows autonome — 3 novembre 2026
 - Archive locale avec exécutable Windows, portrait statique r21 et ressources
   du modèle r20. Dialogue simulé hors ligne : aucune IA, voix ou animation.

@@ -37,9 +37,13 @@ le backend OpenAI et le backend de démonstration sont fournis actuellement.
 
 ## Essayer la démo sans clé API
 
-Une démo graphique Windows distribuable en ZIP est également décrite dans
-[sa notice de construction](demo/windows/README.md). Elle montre le portrait
-statique et un dialogue simulé ; elle ne lance pas l'IA ni l'animation Live2D.
+Une démo Windows animée est préparée avec le modèle Live2D r20, dialogue et
+voix OpenAI : consultez son [guide](demo/reelle/GUIDE-DEMO.md) et sa
+[notice de construction](demo/reelle/README-BUILD.md). Elle demande une clé
+OpenAI personnelle et une connexion Internet pour les échanges réels.
+
+Une [ancienne démo statique hors ligne](demo/windows/README.md) reste disponible :
+elle utilise un portrait et un dialogue simulé, sans IA ni animation Live2D.
 
 Prérequis : Python 3.11 et Poetry 2.2.1. Depuis la racine de cette copie :
 
