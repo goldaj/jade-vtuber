@@ -142,6 +142,10 @@ class SpeechOutput:
         async with self.lock:
             discord_voice = reply.source.platform == "discord_voice"
             context = None if discord_voice else self._delivery_context()
+            muted = getattr(self.secondary_player, "voice_muted", None)
+            if (not discord_voice and context is None and getattr(self.player, "mode", None) == "none"
+                    and callable(muted) and muted()):
+                return  # Discord is muted and there is no local audible output.
 
             def require_session():
                 # Discord voice is a private, revocable session.  Fail closed

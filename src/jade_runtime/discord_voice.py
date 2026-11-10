@@ -49,6 +49,7 @@ class _VoiceChunk:
     generation: int
     session_id: str
     audio_epoch: int = 0
+    during_playback: bool = False
 
 
 @dataclass(frozen=True, repr=False)
@@ -286,7 +287,7 @@ class DiscordVoiceBridge:
         no provider or cache exception is exposed.
         """
         with self.buffers_lock:
-            if (not self.consent_confirmed or self._playback_active
+            if (not self.consent_confirmed or (self._playback_active and not self._open_voice)
                     or (generation is not None and generation != self.generation)
                     or (session_id is not None and session_id != self.session_id)
                     or (audio_epoch is not None and audio_epoch != self._audio_epoch)):
@@ -431,7 +432,7 @@ class DiscordVoiceBridge:
                 author = self._authors.get(uid)
                 if data and author:
                     ready.append(_VoiceChunk(uid, author, bytes(data), self.generation,
-                                             self.session_id, self._audio_epoch))
+                                             self.session_id, self._audio_epoch, self._playback_active))
         for turn in turns:
             uid = int(turn.user_id)
             if (turn.user_id not in self._segmenter._users and uid not in self._assemblies
@@ -450,7 +451,7 @@ class DiscordVoiceBridge:
                 continue
             with self.buffers_lock:
                 if (self.generation != generation or self.session_id != session_id
-                        or self._audio_epoch != epoch or self._playback_active):
+                        or self._audio_epoch != epoch or (self._playback_active and not self._open_voice)):
                     continue
                 ready = self._collect_turns_locked(self._segmenter.poll(), time.monotonic())
                 for uid in users:
@@ -464,7 +465,7 @@ class DiscordVoiceBridge:
                 or self.worker is None or self.worker.done()):
             return
         with self.buffers_lock:
-            if (not self.consent_confirmed or self._playback_active
+            if (not self.consent_confirmed or (self._playback_active and not self._open_voice)
                     or item.generation != self.generation or item.session_id != self.session_id
                     or item.audio_epoch != self._audio_epoch
                     or not self._speaker_allowed_locked(item.user_id)):
@@ -493,7 +494,7 @@ class DiscordVoiceBridge:
                                         observed_session, observed_audio_epoch):
             return
         with self.buffers_lock:
-            if (not self.consent_confirmed or self._playback_active
+            if (not self.consent_confirmed or (self._playback_active and not self._open_voice)
                     or self.generation != observed_generation
                     or self.session_id != observed_session
                     or self._audio_epoch != observed_audio_epoch
@@ -550,7 +551,8 @@ class DiscordVoiceBridge:
                 finally:
                     self._transcribing = None
                     self._transcribing_generation = None
-                if value and self._capture_authorized(item.user_id, item.generation, item.session_id, item.audio_epoch):
+                epoch = None if item.during_playback else item.audio_epoch
+                if value and self._capture_authorized(item.user_id, item.generation, item.session_id, epoch):
                     if self._open_voice:
                         # Everyone audible in the active connection participates;
                         # this mode does not inspect or classify room membership.
@@ -570,10 +572,14 @@ class DiscordVoiceBridge:
                         except Exception:
                             continue
                         participant_count = len(humans)
+                    # During playback, transcribe only to detect an interruption.
+                    # Other audible speech is never sent to the dialogue.
+                    if item.during_playback and not self._decider.is_stop_command(value):
+                        continue
                     with self.buffers_lock:
-                        if (not self.consent_confirmed or self._playback_active
+                        if (not self.consent_confirmed or (self._playback_active and not self._open_voice)
                                 or item.generation != self.generation or item.session_id != self.session_id
-                                or item.audio_epoch != self._audio_epoch):
+                                or (not item.during_playback and item.audio_epoch != self._audio_epoch)):
                             continue
                         decision = self._decider.decide(
                             item.session_id, item.user_id, value, authorized=True,
@@ -581,6 +587,7 @@ class DiscordVoiceBridge:
                             direct_address=self._open_voice)
                     if not decision.should_reply:
                         if decision.reason == 'muted':
+                            self._stop_playback(self.connection)
                             for _, work in self._submitted:
                                 self.runtime.cancel_work(work)
                             self._submitted.clear()
@@ -590,7 +597,7 @@ class DiscordVoiceBridge:
                     self.seq += 1
                     message_id = f"discord-voice-{self.seq}"
                     with self.buffers_lock:
-                        if (not self.consent_confirmed or self._playback_active
+                        if (not self.consent_confirmed or (self._playback_active and not self._open_voice)
                                 or item.generation != self.generation or item.session_id != self.session_id
                                 or item.audio_epoch != self._audio_epoch):
                             continue
@@ -750,6 +757,11 @@ class DiscordVoiceBridge:
         with self.buffers_lock:
             self._audio_epoch += 1
             self._playback_active = False
+            # Never treat the tail of playback-time speech as a new normal turn.
+            self._segmenter.revoke()
+            self._assemblies.clear()
+            self._discard_turns.clear()
+            self._authors.clear()
 
     def _notify_playback(self, observer, event, wav):
         if observer is not None:
@@ -894,6 +906,10 @@ class OpenVoiceBridge(DiscordVoiceBridge):
         # None denotes a reply originating outside the Discord voice input.
         return user_id is None or self._speaker_allowed_locked(user_id)
 
+    def voice_muted(self):
+        with self.buffers_lock:
+            return self._decider.is_muted(self.session_id)
+
     def delivery_context(self):
         """Bind an output to this connection; None means no active destination."""
         with self.buffers_lock:
@@ -1029,7 +1045,7 @@ class OpenVoiceBridge(DiscordVoiceBridge):
 
     def _capture_authorized(self, user_id, generation=None, session_id=None, audio_epoch=None):
         with self.buffers_lock:
-            if (not self.consent_confirmed or self._playback_active
+            if (not self.consent_confirmed or (self._playback_active and not self._open_voice)
                     or (generation is not None and generation != self.generation)
                     or (session_id is not None and session_id != self.session_id)
                     or (audio_epoch is not None and audio_epoch != self._audio_epoch)
@@ -1040,7 +1056,7 @@ class OpenVoiceBridge(DiscordVoiceBridge):
         if connection is None or not self._transport_current(connection, expected):
             return False
         with self.buffers_lock:
-            return (self.consent_confirmed and not self._playback_active
+            return (self.consent_confirmed
                     and (self.generation, self.session_id) == expected
                     and self.connection is connection
                     and (audio_epoch is None or audio_epoch == self._audio_epoch)
@@ -1052,7 +1068,12 @@ class OpenVoiceBridge(DiscordVoiceBridge):
             return False
         with self.buffers_lock:
             return (self.consent_confirmed and (self.generation, self.session_id) == expected
-                    and self.connection is connection)
+                    and self.connection is connection and not self._decider.is_muted(session_id))
+
+    async def _require_playback_authorization(self, connection, generation, session_id):
+        # A muted session remains connected to hear the resume command.
+        if not self._playback_authorized(connection, generation, session_id):
+            raise PermissionError("Discord voice destination unavailable")
 
     def reply_authorized(self, source):
         speaker_id = getattr(source, "speaker_id", None)

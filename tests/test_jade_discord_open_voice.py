@@ -59,6 +59,42 @@ class OpenVoiceTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(.04)
         await self.bridge.pending.join()
 
+    async def test_interrupt_while_playing_and_resume_cross_source(self):
+        bridge = self.bridge
+        bridge._begin_playback(self.connection, bridge.generation, bridge.session_id)
+        await self.utterance(12, "parole ordinaire")
+        self.assertEqual(self.runtime.submit.await_count, 0)
+        await self.utterance(12, "silence")
+        self.assertTrue(bridge._decider.is_muted(bridge.session_id))
+        self.connection.stop_playing.assert_called()
+        self.assertIsNone(bridge.delivery_context())
+        with self.assertRaises(PermissionError):
+            await bridge._require_playback_authorization(self.connection, bridge.generation, bridge.session_id)
+        self.assertIs(bridge.connection, self.connection)
+        bridge._end_playback()
+        await self.utterance(12, "reprends")
+        self.assertFalse(bridge._decider.is_muted(bridge.session_id))
+        self.assertIsNotNone(bridge.delivery_context())
+        await self.utterance(12, "Comment vas-tu ?")
+        self.assertEqual(self.runtime.submit.await_count, 1)
+
+    async def test_interrupt_transcription_finishes_after_playback(self):
+        bridge = self.bridge
+        started, release = asyncio.Event(), asyncio.Event()
+        async def transcribe(_):
+            started.set()
+            await release.wait()
+            return "silence"
+        self.services.transcribe_wav.side_effect = transcribe
+        bridge._begin_playback(self.connection, bridge.generation, bridge.session_id)
+        bridge.receive_pcm(12, "Visiteur", pcm(.25, 1800) + pcm(.8, 0))
+        await asyncio.wait_for(started.wait(), 1)
+        bridge._end_playback()
+        release.set()
+        await asyncio.sleep(.04)
+        await bridge.pending.join()
+        self.assertTrue(bridge._decider.is_muted(bridge.session_id))
+
     async def test_no_membership_check_and_group_speaks_without_name(self):
         self.channel.connect.assert_awaited_once_with(cls=self.dave_class)
         await self.utterance(12, "Comment vas-tu ?")

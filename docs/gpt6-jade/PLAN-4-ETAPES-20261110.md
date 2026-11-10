@@ -3,9 +3,10 @@
 Plan de travail sur `develop`, à exécuter dans l'ordre. La démo est considérée
 comme terminée. Référence : [feuille de route](ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md).
 
-**Revue Astra terminée :** les étapes de préparation ont été livrées, mais deux
-défauts de silence vocal restent à corriger avant la recette réelle. Reprendre
-sous Terra avec [le relais ciblé](ASTRA-REVUE-MVP-20261110.md).
+**Reprise Terra :** les deux défauts de silence signalés dans le
+[relais Astra](ASTRA-REVUE-MVP-20261110.md) sont corrigés et testés hors ligne.
+La recette vocale réelle sur téléphone et le partage de l'avatar restent à
+effectuer avec le propriétaire ; voir [TASKS](TASKS.md).
 
 **Décision ultérieure du propriétaire :** le serveur privé est dédié à Jade ;
 elle peut interagir avec les personnes et les autres bots, dans tous ses salons,

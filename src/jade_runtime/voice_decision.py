@@ -69,6 +69,14 @@ class ConversationTurnDecider:
         self.clock = clock
         self._sessions: OrderedDict[str, _Session] = OrderedDict()
 
+    @staticmethod
+    def is_stop_command(text: str) -> bool:
+        return isinstance(text, str) and _words(text) in _MUTE
+
+    def is_muted(self, session_id: str) -> bool:
+        state = self._sessions.get(session_id)
+        return bool(state and state.muted)
+
     def _session(self, session_id: str, now: float) -> _Session | None:
         for key, state in list(self._sessions.items()):
             if not state.muted and now - state.touched >= self.ttl:
