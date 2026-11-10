@@ -3,6 +3,11 @@
 Plan de travail sur `develop`, à exécuter dans l'ordre. La démo est considérée
 comme terminée. Référence : [feuille de route](ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md).
 
+**Décision ultérieure du propriétaire :** le salon vocal est celui du serveur
+privé dédié à Jade ; toute personne présente peut interagir avec elle. Aucune
+liste individuelle ni confirmation de consentement ne sont demandées. Cette
+décision remplace les consignes contraires dans les documents historiques.
+
 ## 1. Mettre à jour le moteur principal
 
 1. Reprendre les modèles et le TTS Realtime de la démo ; adapter les interfaces
@@ -18,8 +23,9 @@ et que les erreurs ne déclenchent pas de requêtes payantes répétées en sile
 
 ## 2. Finaliser le vocal Discord
 
-1. Reprendre les connecteurs existants ; vérifier les permissions et configurer
-   un salon privé, les participants autorisés et leur consentement.
+1. Reprendre les connecteurs existants et configurer le salon vocal du serveur
+   privé de Jade. Toute personne présente peut participer, sans liste individuelle
+   ni étape supplémentaire de consentement.
 2. Tester et corriger la fin de tour, les suivis sans nom d'activation, le
    silence, l'anti-écho et l'arrêt. Le tête-à-tête est déjà simulé ; en groupe,
    Jade reste silencieuse tant que l'adresse à Jade n'est pas fiable.
@@ -46,7 +52,7 @@ que son lancement est documenté. Le r21 reste un chantier distinct.
 
 1. Exécuter les tests, le scan de secrets et les vérifications d'installation ;
    traiter les erreurs de connexion, permissions, quota, arrêt et reconnexion.
-2. Avec le propriétaire et les participants informés, tester depuis le téléphone
+2. Avec le propriétaire et les personnes présentes, tester depuis le téléphone
    au moins dix tours variés, sans nom obligatoire : suivis, silence, arrêt et
    panne ; vérifier image, bouche, son unique, latence et coût observés.
 3. Corriger les défauts constatés, fournir les étapes de démarrage et dépannage,

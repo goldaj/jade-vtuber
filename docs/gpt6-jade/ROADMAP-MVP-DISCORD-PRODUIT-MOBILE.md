@@ -1,5 +1,11 @@
 # Jade : MVP Discord puis compagnon audio et visuel sur téléphone
 
+> **Mise à jour du propriétaire — 10 novembre 2026 :** le serveur privé est
+> dédié à Jade. Toute personne présente dans son salon peut participer, sans
+> liste individuelle ni confirmation de consentement. Cette décision remplace
+> les anciennes exigences contraires ci-dessous ; le reste de la feuille de route
+> et la limitation au salon prévu restent applicables.
+
 **Statut : spécification produit et technique pour Codex, non implémentée.**  
 **Date : 3 novembre 2026.**  
 **Dépôt officiel :** https://github.com/goldaj/jade-vtuber (public).  
