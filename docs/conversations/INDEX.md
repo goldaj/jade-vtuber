@@ -15,6 +15,7 @@ Cet index est créé le 2 novembre 2026, avant les modifications documentaires d
 | [Reprise Terra du 3 novembre](2026-11-03-reprise-terra.md) | Demande de reprise, connexions Twitch/Discord et sécurité CI | Heures individuelles non fournies ; résultats consignés après vérification |
 | [Reprise de la démo du 9 novembre](2026-11-09-reprise-demo.md) | Reprise de la démo animée et demande d'explication préalable | Échanges accessibles uniquement ; heures individuelles non fournies |
 | [Plan MVP du 10 novembre](2026-11-10-plan-mvp.md) | Acceptation de la démo et demande de plan par métiers | Échanges accessibles uniquement ; heures individuelles non fournies |
+| [Revue Astra MVP du 10 novembre](2026-11-10-astra-mvp.md) | Demande de revue essentielle et relais Terra | Verbatim utilisateur et résumé assistant ; heures individuelles non fournies |
 | Documents supplémentaires de `develop` | Audits du 30 octobre et pistes migrées du 1er novembre : à conserver lors de l’intégration | Ces documents sont encore sur la branche cible ; leur provenance est décrite dans le dossier de migration |
 
 Le chat antérieur « Analyser le projet AI VTuber » a été retrouvé. Seule une page récente a été consultée : elle concerne la modélisation 2D, hors périmètre de cette intervention. Son historique complet n’a pas été récupéré ni recopié. Les échanges ChatGPT ayant produit la refonte ne sont disponibles ici qu’à travers les documents du dépôt et les descriptions de PR ; aucune transcription supplémentaire n’est inventée.

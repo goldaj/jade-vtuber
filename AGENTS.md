@@ -23,6 +23,11 @@ Sous Windows, privilégier `D:\Codex` pour les outils, caches, temporaires et no
 
 ## Runtime
 
+La revue MVP du 10 novembre et le relais courant sont dans
+[ASTRA-REVUE-MVP-20261110.md](docs/gpt6-jade/ASTRA-REVUE-MVP-20261110.md).
+Cette revue est terminée. Le propriétaire demande de faire les corrections sous
+Terra ; en cas de simple relance sous Astra, demander le passage sous Terra.
+
 Python ; STT et TTS OpenAI uniquement ; dialogue interchangeable. Par défaut, la démo et les tests restent hors ligne. La validation repose sur `python -m unittest discover -s tests -v` et `python -m compileall -q src main.py`. Distinguer les tests simulés des essais réels. Consigner les résultats observés et leurs limites dans `docs/gpt6-jade/TASKS.md`.
 
 ## Ressources 2D
