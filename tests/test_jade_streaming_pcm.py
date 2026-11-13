@@ -220,7 +220,7 @@ class StreamOutputTests(unittest.IsolatedAsyncioTestCase):
             async def play(self, wav):
                 raise AssertionError("No local WAV player must run")
         source = Incoming("discord_voice", "A", "bonjour", channel="45",
-                          voice_session_id="abc", speaker_id=12, force_reply=True)
+                          voice_session_id="a" * 32, speaker_id=12, force_reply=True)
         with tempfile.TemporaryDirectory() as directory:
             service = Services()
             bridge = Bridge()
