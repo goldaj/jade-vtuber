@@ -12,6 +12,7 @@ from src.jade_runtime.messages import Incoming
 from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.orchestrator import Runtime
 from src.jade_runtime.output import AudioOutput, SpeechOutput
+from src.jade_runtime.twitch_token import validate_twitch_token
 from src.jade_runtime.voice_pipeline import VoiceInput
 
 LOG = logging.getLogger("jade.main")
@@ -23,7 +24,7 @@ class DemoChat:
 
 
 async def console(*, live=False, voice=False, mic=False, twitch=False,
-                  discord=False, vts=False, discord_voice=False, http=False):
+                  discord=False, vts=False, discord_voice=False, http=False, avatar=False):
     config = Settings.load()
     config.validate()
     if (voice or mic or twitch or discord or vts or discord_voice or http) and not live:
@@ -34,10 +35,10 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         raise ValueError("set JADE_AUDIO_OUTPUT=ffplay before enabling billed TTS")
     if twitch and not config.twitch_enabled:
         raise ValueError("set JADE_TWITCH_ENABLED=1 to allow Twitch connection")
-    if discord and not config.discord_enabled:
-        raise ValueError("set JADE_DISCORD_ENABLED=1 to allow Discord connection")
-    if discord_voice and not (discord and voice and config.discord_voice_enabled):
-        raise ValueError("voice receive requires --discord --voice and explicit voice config")
+    if discord and (not config.discord_token or config.discord_token == "example"):
+        raise ValueError("Discord token required")
+    if discord_voice and not (discord and voice and config.discord_voice_channel > 0):
+        raise ValueError("voice receive requires --discord --voice and an initial voice channel")
     if http and not config.http_enabled:
         raise ValueError("set JADE_HTTP_ENABLED=1 and private JADE_HTTP_TOKEN")
     if vts and not config.vts_enabled:
@@ -49,6 +50,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     else:
         audio_gate = None
     twitch_client = None
+    twitch_manager = None
     discord_client = None
     vts_client = None
     discord_voice_bridge = None
@@ -58,12 +60,22 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     async with AsyncExitStack() as scopes:
         chat = OpenAIServices(config) if live else DemoChat()
         if live:
-            scopes.push_async_callback(chat.client.close)
+            scopes.push_async_callback(chat.close if callable(getattr(chat, 'close', None))
+                                       else chat.client.close)
         dialogue = Dialogue(chat, prompt, bot_name=config.bot_name,
                             max_messages=config.max_history_messages,
                             random_reply_rate=config.reply_probability)
-        speech = (SpeechOutput(chat, AudioOutput(config.audio_output),
-                               config.subtitle_path, audio_gate=audio_gate) if voice else None)
+        avatar_client = None
+        if avatar:
+            from src.jade_runtime.avatar import Avatar
+            avatar_client = await Avatar().start()
+            scopes.push_async_callback(avatar_client.close)
+        player = AudioOutput(config.audio_output)
+        if avatar_client is not None:
+            player.playback_observer = avatar_client.observer("local")
+        speech = (SpeechOutput(chat, player,
+                               config.subtitle_path, audio_gate=audio_gate,
+                               early_timeout_seconds=min(180, config.timeout_seconds + 120)) if voice else None)
         if vts:
             from src.jade_runtime.vtube_studio import VTubeStudio
             vts_client = await scopes.enter_async_context(VTubeStudio(
@@ -74,11 +86,11 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 local_api.deliver(reply)
             print("Jade:", reply.text)
 
-            async def optional(label, action):
+            async def optional(label, action, *, timeout=20):
                 if not runtime.current_valid():
                     return
                 try:
-                    await asyncio.wait_for(action(), timeout=20)
+                    await asyncio.wait_for(action(), timeout=timeout)
                 except asyncio.CancelledError:
                     raise
                 except Exception:
@@ -87,13 +99,34 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             if reply.source.platform == "twitch" and twitch_client is not None:
                 await optional("twitch", lambda: twitch_client.send_chat(reply.text))
             if reply.source.platform == "discord" and discord_client is not None:
-                await optional("discord", lambda: discord_client.send_chat(reply.source.channel, reply.text))
-            if vts_client is not None and config.vts_speak_hotkey:
+                await optional("discord", lambda: discord_client.send_chat(
+                    reply.source.channel, reply.text,
+                    source_message_id=reply.source.message_id))
+            if vts_client is not None and config.vts_speak_hotkey and not reply.spoken:
                 await optional("vts", lambda: vts_client.trigger_hotkey(config.vts_speak_hotkey))
-            if speech is not None:
-                await optional("voice", lambda: speech.speak(reply))
+            if speech is not None and not reply.spoken:
+                # TTS and the ensuing playback share this deadline. The old
+                # 20-second total could cut off an otherwise valid answer.
+                await optional("voice", lambda: speech.speak(reply),
+                               timeout=min(180, config.timeout_seconds + 120))
 
-        runtime = Runtime(dialogue, on_reply, config.max_queue)
+        def start_early_voice(source):
+            turn = speech.start_early(source)
+            if turn is not None and vts_client is not None and config.vts_speak_hotkey:
+                async def trigger_vts():
+                    try:
+                        await asyncio.wait_for(vts_client.trigger_hotkey(config.vts_speak_hotkey), timeout=20)
+                    except asyncio.CancelledError:
+                        raise
+                    except Exception:
+                        LOG.warning("Jade optional output failed: vts")
+
+                # The turn invokes this once, concurrently with its first audio.
+                turn.on_first_sentence = trigger_vts
+            return turn
+
+        runtime = Runtime(dialogue, on_reply, config.max_queue,
+                          on_stream_start=(start_early_voice if speech and config.early_voice else None))
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(
@@ -105,10 +138,11 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             local_api = LocalHTTP(runtime, token=config.http_token,
                                   port=config.http_port)
         if discord_voice:
-            from src.jade_runtime.discord_voice import DiscordVoiceBridge
-            discord_voice_bridge = DiscordVoiceBridge(
-                chat, runtime, config.discord_voice_channel)
+            from src.jade_runtime.discord_voice import OpenVoiceBridge
+            discord_voice_bridge = OpenVoiceBridge(chat, runtime, config.discord_voice_channel)
             speech.secondary_player = discord_voice_bridge
+            if avatar_client is not None:
+                discord_voice_bridge.playback_observer = avatar_client.observer("discord")
 
         async def accept(message):
             await runtime.submit(message)
@@ -116,22 +150,45 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         try:
             if twitch:
                 from src.jade_runtime.twitch_irc import TwitchIRC
+                if config.twitch_auto_refresh:
+                    from src.jade_runtime.private_backup import sync_private_backup
+                    from src.jade_runtime.twitch_rotation import TwitchTokenManager
+                    from src.utility.private_config import secrets_file
+                    twitch_manager = TwitchTokenManager(
+                        secrets_file(), sync_backup=sync_private_backup,
+                        login=config.twitch_login, send_enabled=config.twitch_send)
+                    identity = await asyncio.to_thread(twitch_manager.check)
+                    if identity.backup_pending:
+                        LOG.error("Sauvegarde privée Twitch non synchronisée ; intervention nécessaire")
+                    token = identity.access_token
+                    twitch_manager.login = identity.login
+                else:
+                    identity = await asyncio.to_thread(
+                        validate_twitch_token, config.twitch_oauth,
+                        login=config.twitch_login, send_enabled=config.twitch_send)
+                    token = config.twitch_oauth
                 twitch_client = TwitchIRC(
-                    login=config.twitch_login, token=config.twitch_oauth,
+                    login=identity.login, token=token,
                     channel=config.channel, on_message=accept,
                     send_enabled=config.twitch_send)
             if discord:
                 from src.jade_runtime.discord_text import DiscordText
                 discord_client = DiscordText(
-                    config.discord_token, accept, send_enabled=config.discord_send,
-                    voice_bridge=discord_voice_bridge)
+                    config.discord_token, accept, send_enabled=True,
+                    voice_bridge=discord_voice_bridge, bot_name=config.bot_name,
+                    auto_rate=config.discord_text_auto_rate,
+                    cooldown_seconds=config.discord_text_cooldown_seconds)
 
             if twitch or discord or mic or http:
                 print("Jade connecteurs activés. Quitter avec Ctrl+C.")
                 tasks = []
                 try:
                     if twitch_client is not None:
-                        tasks.append(asyncio.create_task(twitch_client.connect_forever()))
+                        if twitch_manager is not None:
+                            from src.jade_runtime.twitch_managed import run_managed_twitch
+                            tasks.append(asyncio.create_task(run_managed_twitch(twitch_client, twitch_manager)))
+                        else:
+                            tasks.append(asyncio.create_task(twitch_client.connect_forever()))
                     if discord_client is not None:
                         tasks.append(asyncio.create_task(discord_client.connect_forever()))
                     if mic:
@@ -191,6 +248,8 @@ def main():
                         help="Authenticated loopback-only text API")
     parser.add_argument("--discord-voice", action="store_true",
                         help="Explicitly receive Discord voice and send audio to OpenAI STT")
+    parser.add_argument("--avatar", action="store_true",
+                        help="Display the animated Live2D r20 avatar")
     parser.add_argument("--preflight", action="store_true",
                         help="Check settings and local dependencies with zero provider/network calls")
     args = vars(parser.parse_args())

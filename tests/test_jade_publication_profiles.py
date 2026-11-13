@@ -31,6 +31,15 @@ class PublicProfilesTests(unittest.TestCase):
         os.environ["JADE_LLM_MODEL"] = "process-model"
         self.assertEqual(environ("JADE_LLM_MODEL"), "process-model")
 
+    def test_speed_profile_and_process_override(self):
+        self.profile.write_text('[settings]\nJADE_TTS_SPEED=1.25\n', encoding="utf-8")
+        self.assertEqual(Settings.load().tts_speed, 1.25)
+        os.environ["JADE_TTS_SPEED"] = "1.0"
+        self.assertEqual(Settings.load().tts_speed, 1.0)
+        os.environ["JADE_TTS_SPEED"] = "1.6"
+        with self.assertRaises(ValueError):
+            Settings.load()
+
     def test_secrets_and_identity_must_not_be_in_public_profile(self):
         for key in ("OPENAI_API_KEY", "TWITCH_TOKEN", "DISCORD_TOKEN",
                     "JADE_VTS_TOKEN", "BOT_NAME", "TWITCH_CHANNEL"):

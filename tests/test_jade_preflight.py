@@ -50,7 +50,7 @@ class DiagnosticsTests(unittest.TestCase):
                                         live=True, twitch=True, vts=True, discord=True)
         self.assertTrue(any(c.name == "Twitch activé" and not c.ok for c in items))
         self.assertTrue(any(c.name == "VTube Studio autorisé" and not c.ok for c in items))
-        self.assertTrue(any(c.name == "Discord activé" and not c.ok for c in items))
+        self.assertTrue(any(c.name == "Discord configuré" and not c.ok for c in items))
 
     def test_cli_demo_preflight_never_needs_openai_account(self):
         # Fix both ends of the pipe: a UTF-8 test runner can spawn a child

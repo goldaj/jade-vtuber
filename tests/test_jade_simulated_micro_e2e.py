@@ -1,5 +1,6 @@
 """Offline integration harness: synthetic PCM, mocked SDK, no device or network."""
 import asyncio
+from io import BytesIO
 import sys
 import tempfile
 import unittest
@@ -16,10 +17,11 @@ from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.orchestrator import Runtime
 from src.jade_runtime.output import SpeechOutput
 from src.jade_runtime.voice_pipeline import VoiceInput
+from tests.test_demo_realtime_tts import FakeClient, configured, created, delta, transcript, done
 
 
 class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
-    async def exercise(self, level):
+    async def exercise(self, level, *, legacy=False):
         pcm = array('h', [level] * 8000)
         output_wav = pcm_to_wav(array('h', [1600] * 400).tobytes())
 
@@ -40,10 +42,12 @@ class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
         stt = AsyncMock(side_effect=transcribe)
         chat = AsyncMock(return_value=SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content='Bonjour !'))]))
         tts = AsyncMock(return_value=SimpleNamespace(content=output_wav))
-        sdk = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=stt),
-                                                    speech=SimpleNamespace(create=tts)),
-                              chat=SimpleNamespace(completions=SimpleNamespace(create=chat)))
-        services = OpenAIServices(Settings(), client=sdk)
+        sdk = FakeClient([configured(1.5), created(), delta(), transcript('Bonjour !'), done()])
+        sdk.audio = SimpleNamespace(transcriptions=SimpleNamespace(create=stt),
+                                    speech=SimpleNamespace(create=tts))
+        sdk.chat = SimpleNamespace(completions=SimpleNamespace(create=chat))
+        settings = Settings(tts_model='gpt-4o-mini-tts') if legacy else Settings()
+        services = OpenAIServices(settings, client=sdk)
         gate = AudioCoordinator()
         player = SimpleNamespace(play=AsyncMock())
         with tempfile.TemporaryDirectory() as directory:
@@ -62,8 +66,16 @@ class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
                     self.assertTrue(result)
                     stt.assert_awaited_once()
                     chat.assert_awaited_once()
-                    tts.assert_awaited_once()
-                    player.play.assert_awaited_once_with(output_wav)
+                    player.play.assert_awaited_once()
+                    if legacy:
+                        tts.assert_awaited_once()
+                        self.assertEqual(player.play.await_args.args[0], output_wav)
+                        self.assertEqual(sdk.calls, [])
+                    else:
+                        tts.assert_not_awaited()
+                        sdk.connection.response.create.assert_awaited_once()
+                        with wave.open(BytesIO(player.play.await_args.args[0]), 'rb') as wav:
+                            self.assertEqual((wav.getnchannels(), wav.getframerate()), (1, 24000))
                     self.assertEqual(subtitle.read_text(), '')
                     self.assertEqual(len(dialogue.history[('microphone', 'mic')]), 2)
                 else:
@@ -71,6 +83,7 @@ class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
                     stt.assert_not_awaited()
                     chat.assert_not_awaited()
                     tts.assert_not_awaited()
+                    self.assertEqual(sdk.calls, [])
                     player.play.assert_not_awaited()
             finally:
                 await gate.close()
@@ -81,6 +94,9 @@ class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
 
     async def test_silence_does_not_call_providers(self):
         await self.exercise(0)
+
+    async def test_explicit_legacy_speech_pipeline_remains_supported(self):
+        await self.exercise(1500, legacy=True)
 
 
 if __name__ == '__main__':

@@ -37,7 +37,7 @@ def _discord_stack_ok():
 
 def inspect_environment(settings, *, live=False, voice=False, mic=False,
                         twitch=False, discord=False, vts=False,
-                        discord_voice=False, http=False):
+                        discord_voice=False, http=False, avatar=False):
     """Return explicit diagnostics without connecting to any external service.
 
     Checks of installed packages, configured flags and presence of secrets are
@@ -48,6 +48,11 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
     if selected and not live:
         checks.append(Check("Mode live", False,
                             "Les connecteurs nécessitent --live"))
+    if avatar:
+        from .avatar import MODEL, SCRIPT
+        checks.append(Check("Avatar r20", SCRIPT.is_file() and MODEL.is_dir()
+                            and all(_installed(name) for name in ("live2d", "pygame", "OpenGL")),
+                            "Modèle et dépendances installés ; affichage non testé"))
     if live:
         checks.append(Check(
             "OpenAI API", bool(settings.api_key.strip())
@@ -79,20 +84,19 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
     if twitch:
         checks.append(Check(
             "Twitch activé", settings.twitch_enabled
-            and all((settings.twitch_login, settings.twitch_oauth, settings.channel)),
-            "Configuration présente, OAuth et IRC non testés"))
+            and all((settings.twitch_oauth, settings.channel)),
+            "Jeton et canal présents ; login déduit si absent, OAuth et IRC non testés"))
     if discord:
         checks.append(Check(
-            "Discord activé", settings.discord_enabled and bool(settings.discord_token),
+            "Discord configuré", bool(settings.discord_token) and settings.discord_token != "example",
             "Jeton présent, permissions et serveur non testés"))
         checks.append(Check("SDK Discord", _discord_stack_ok(),
                             "discord.py installé sans pile Discord concurrente, connexion non tentée"))
     if discord_voice:
         checks.append(Check(
-            "Discord vocal autorisé",
-            discord and voice and settings.discord_voice_enabled
-            and settings.discord_voice_channel > 0,
-            "Canal et autorisations préconfigurés ; consentement nécessaire"))
+            "Discord vocal configuré",
+            discord and voice and settings.discord_voice_channel > 0,
+            "Canal initial configuré ; accès réel non testé"))
         checks.append(Check("Transport vocal Discord", _installed("discord.ext.voice_recv")
                             and _installed("nacl"),
                             "PCM/codec installés, périphériques non testés"))

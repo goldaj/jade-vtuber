@@ -37,3 +37,12 @@ Les intentions ci-dessus ne valent pas constat de réalisation : l’état effec
 > Fait ça maintenant ! Ton erreur grossière nous a fait perdre beaucoup de tokens.
 >
 > Si tu dois recommencer et re-re-créer un tout nouveau repo pour qu'il soit propre, fait ça. Bref, fait ce qu'il faut maintenant.
+
+## Utilisateur — organisation des travaux, verbatim
+
+> ok maintenant tout ce qui continue hors production devra être sur le develop de ce repo public. Ok ?
+> De plus, est-ce que tu as bien créé le repo privé qui mets en ligne les clés et mots de passe de jade ?
+
+## Assistant — verbatim, début de vérification
+
+> Oui. Je vais créer `develop` à partir de `main` et configurer le clone pour que les prochains travaux s’y fassent. Je vérifie aussi que la sauvegarde des clés existe bien sur GitHub et qu’elle est privée.

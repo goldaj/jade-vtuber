@@ -42,7 +42,7 @@ class ConnectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("PONG :tmi.twitch.tv", "".join(output))
         self.assertNotIn("fake-token", repr(replies))
 
-    def test_discord_skips_bots_dm_and_preserves_channel(self):
+    def test_discord_accepts_other_bots_and_dm_but_skips_own_messages(self):
         message = types.SimpleNamespace(
             id=101, author=types.SimpleNamespace(id=9, bot=False,
                     display_name="Émilie"),
@@ -51,18 +51,18 @@ class ConnectionTests(unittest.IsolatedAsyncioTestCase):
             content="Salut Jade")
         self.assertEqual(parse_discord_message(message).channel, "70")
         message.author.bot = True
-        self.assertIsNone(parse_discord_message(message))
-        message.author.bot = False
+        self.assertEqual(parse_discord_message(message, own_user_id=42).channel, "70")
         message.guild = None
-        self.assertIsNone(parse_discord_message(message))
+        self.assertEqual(parse_discord_message(message, own_user_id=42).channel, "70")
+        self.assertIsNone(parse_discord_message(message, own_user_id=9))
 
     def test_extra_connector_flags_are_safe_by_default(self):
         self.assertFalse(Settings().twitch_enabled)
         self.assertFalse(Settings().discord_enabled)
         with self.assertRaises(ValueError):
             Settings(twitch_send=True).validate()
-        with self.assertRaises(ValueError):
-            Settings(discord_send=True).validate()
+        # The old Discord send flag no longer gates a CLI-selected connector.
+        Settings(discord_send=True).validate()
 
     async def test_twitch_queue_full_does_not_stop_pong(self):
         reader = asyncio.StreamReader()
@@ -95,7 +95,7 @@ class ConnectionTests(unittest.IsolatedAsyncioTestCase):
         sentinel = object()
         message = types.SimpleNamespace(id=1,
             author=types.SimpleNamespace(id=2, bot=False, display_name='User'),
-            guild=object(), channel=types.SimpleNamespace(id=3), content='Hello')
+            guild=object(), channel=types.SimpleNamespace(id=3), content='Salut Jade')
         class Client:
             def __init__(self, **kwargs):
                 self.user = types.SimpleNamespace(id=10)

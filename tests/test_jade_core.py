@@ -3,7 +3,7 @@ import asyncio
 import unittest
 from tempfile import TemporaryDirectory
 from pathlib import Path
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 from src.jade_runtime.config import Settings
 from src.jade_runtime.dialogue import Dialogue
@@ -80,7 +80,8 @@ class CoreTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_openai_audio_uses_only_openai_models_and_stays_mocked(self):
         import types
-        cfg = Settings()
+        # Explicitly configured legacy models keep their old API contract.
+        cfg = Settings(stt_model="gpt-4o-mini-transcribe", tts_model="gpt-4o-mini-tts")
         speech = AsyncMock()
         speech.content = b"RIFFmocked-data"
         client = types.SimpleNamespace(
@@ -117,10 +118,15 @@ class CoreTests(unittest.IsolatedAsyncioTestCase):
     def test_credentials_and_permissions_fail_closed(self):
         with self.assertRaises(ValueError):
             Settings(twitch_enabled=True).validate()
-        with self.assertRaises(ValueError):
-            Settings(discord_enabled=True).validate()
+        Settings(discord_enabled=True).validate()  # Legacy flag has no effect.
         with self.assertRaises(ValueError):
             Settings().require_openai()
+
+    async def test_discord_cli_still_requires_token(self):
+        from main import console
+        with patch("main.Settings.load", return_value=Settings(api_key="test")):
+            with self.assertRaisesRegex(ValueError, "Discord token required"):
+                await console(live=True, discord=True)
 
 
 if __name__ == "__main__":
