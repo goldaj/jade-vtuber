@@ -37,5 +37,5 @@ individuelle du message n'est pas inscrite ici.
 ## Résumé de l'évolution
 
 - Réglage par défaut du mode spontané de Discord écrit à 30 %.
-- Ajout de la relation père/fille dans le prompt de personnage et le chargement des prompts externes, sans altérer le comportement vocal.
+- Ajout de la relation père/fille dans le prompt de personnage standard uniquement ; un prompt privé explicitement sélectionné n'est pas altéré et doit intégrer ces règles séparément, sans toucher au vocal.
 - Demande de fusion sur `develop` puis de redéploiement. La fusion Git et le redémarrage du processus Jade local sont deux opérations distinctes. Les résultats effectivement obtenus sont à vérifier avant de déclarer la fonction active.
