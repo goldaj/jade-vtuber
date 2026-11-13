@@ -3,9 +3,17 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## Pitch +2 demi-tons Étincelle (13 novembre 2026, complément)
+
+- **Implémenté sur `develop` :** `JADE_TTS_PITCH_SEMITONES=2.0` par défaut, validé entre -6 et +6 ; `0` désactive. Transformation locale du PCM 24 kHz par FFmpeg Rubber Band avec `tempo=1` et `formant=preserved` ; aucun service externe ajouté.
+- Sorties : WAV, Discord PCM progressif, early speech (un seul processus DSP par tour). **FFmpeg sans `rubberband` = voix native inchangée** avec avertissement. L'allowlist du profil `fast-openai` a été complétée pour autoriser le réglage.
+- Tests : `tests/test_jade_pitch_shift.py`, `test_jade_publication_profiles.py`, `test_jade_early_speech.py` ; cas réels de filtre conditionnellement ignorés en CI si le runner n'a pas Rubber Band.
+- [Passation exhaustive Codex/Terra](PITCH-SHIFT-ETINCELLE-20261113.md) : détection FFmpeg sur le PC, expérience A/B pitch 0/+2, CPU, latence, intentions, coupure et retour arrière.
+- **Non réalisé** : écoute réelle de la voix, mesure Discord/téléphone et redémarrage du PC. Ne pas considérer la sortie audio comme validée par la seule CI ; vérifier la CI du dernier commit.
+
 ## Voix Étincelle + moteur d'intentions (13 novembre 2026, dernière intervention)
 
-- Livré sur **`develop`** : voix publique par défaut `shimmer` à **1,25×** ; profils alternatifs Friponne et Rosée conservés. `gpt-transcribe` et `gpt-realtime-2.1-mini` inchangés ; **pitch non implémenté**.
+- Livré sur **`develop`** : voix publique par défaut `shimmer` à **1,25×** ; profils alternatifs Friponne et Rosée conservés. `gpt-transcribe` et `gpt-realtime-2.1-mini` inchangés ; le pitch +2 demi-tons est depuis implémenté comme **post-traitement FFmpeg facultatif** (voir lot de suivi ci-dessus).
 - LLM : préfixe `[INTENT:label]` ; 7 labels statiques contrôlés par `src/jade_runtime/intent_engine.py`. Préfixe supprimé **avant** tout texte public, historique et TTS ; un label par réponse, repli `neutral`, suppression des tags répétés ; le streaming utilise un parseur dédié.
 - Relais détaillé pour Codex : [HANDOFF-CODEX-VOICE-INTENTS-20261113.md](HANDOFF-CODEX-VOICE-INTENTS-20261113.md), [spécification des trois profils](VOICE-PROFILES-20261113.md), [audit PO et QA](REVIEW-INTENT-ETINCELLE-20261113.md).
 - **Validation constatée sur le lot** : GitHub Actions [Windows + Ubuntu](https://github.com/goldaj/jade-vtuber/actions/runs/43486194055) réussi, **422 tests dont 2 ignorés** sur Ubuntu ; [scan des secrets](https://github.com/goldaj/jade-vtuber/actions/runs/43486194147) réussi. Les documents d'index/relais ajoutés après ce SHA doivent être contrôlés indépendamment sur leur SHA final.
