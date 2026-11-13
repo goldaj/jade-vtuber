@@ -171,6 +171,11 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
 
 
 class ConfigTests(unittest.TestCase):
+    def test_default_spontaneous_participation_is_thirty_percent(self):
+        self.assertEqual(Settings().discord_text_auto_rate, 0.30)
+        self.assertEqual(DiscordTextPolicy().auto_rate, 0.30)
+        self.assertEqual(DiscordText("test", AsyncMock()).policy.auto_rate, 0.30)
+
     def test_discord_text_bounds(self):
         Settings(discord_text_auto_rate=0, discord_text_cooldown_seconds=30).validate()
         with self.assertRaises(ValueError):
