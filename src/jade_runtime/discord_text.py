@@ -28,7 +28,7 @@ def parse_discord_message(message, *, own_user_id=None) -> Incoming | None:
 
 class DiscordText:
     def __init__(self, token: str, on_message, *, send_enabled=False,
-                 voice_bridge=None, bot_name="Jade", auto_rate=0.15,
+                 voice_bridge=None, bot_name="Jade", auto_rate=0.30,
                  cooldown_seconds=180):
         if not token or token == "example":
             raise ValueError("Discord token required")
