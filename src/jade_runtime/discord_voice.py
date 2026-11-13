@@ -148,6 +148,7 @@ class DiscordVoiceBridge:
                 self._decider.revoke(self.session_id)
             self._clear_turns_locked()
             self.generation += 1
+            self.last_pcm_metrics = None  # Old session statistics are no longer current.
             generation = self.generation
             self.buffers.clear()
             self.buffer_updated.clear()
@@ -1126,6 +1127,7 @@ class OpenVoiceBridge(DiscordVoiceBridge):
                 self._decider.revoke(self.session_id)
             self._clear_turns_locked()
             self.generation += 1
+            self.last_pcm_metrics = None  # Never carry channel metrics into the new session.
             generation = self.generation
             self.session_id = secrets.token_hex(16)
             self.channel_id = channel_id

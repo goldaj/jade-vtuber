@@ -278,6 +278,17 @@ class StreamBridgeTests(unittest.IsolatedAsyncioTestCase):
             await asyncio.wait_for(task, 2)
         self.assertIsNone(self.bridge.last_pcm_metrics)
 
+    async def test_revocation_discards_previous_session_metrics(self):
+        self.bridge.last_pcm_metrics = object()
+        self.assertTrue(self.bridge.set_session([], consent_confirmed=False))
+        self.assertIsNone(self.bridge.last_pcm_metrics)
+
+    async def test_channel_move_discards_previous_session_metrics(self):
+        self.bridge.last_pcm_metrics = object()
+        expected = (self.bridge.generation, self.bridge.session_id)
+        self.assertTrue(self.bridge._rotate_transport(46, expected))
+        self.assertIsNone(self.bridge.last_pcm_metrics)
+
     async def test_provider_error_stops_reader_and_never_replays(self):
         async def producer():
             yield b"\x11\x00" * 480

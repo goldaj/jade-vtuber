@@ -117,3 +117,10 @@ Les mesures internes ne disent **pas** quand le téléphone a effectivement rend
 - Une erreur après les premières trames ne peut retirer les mots déjà entendus : aucune relance automatique ne doit les répéter.
 - Les checks synthétiques ne certifient ni le transport DAVE réel ni la performance perçue sur téléphone.
 - Aucun merge et aucun déploiement automatiques. Terra décide de l'intégration.
+
+## Dernière revue de cohérence (13 novembre, reprise)
+
+- **Métriques par session** : remise à zéro de `last_pcm_metrics` lors d'une révocation explicite de session et d'une rotation de canal. Le contrôle de génération à la fin d'une lecture reste en place ; ainsi l'ancienne session ne peut pas exposer ses mesures à la nouvelle.
+- **Sous-titres OBS** : toutes les phrases du mode vocal anticipé sont maintenant publiées via un fichier temporaire puis un remplacement atomique, pas seulement la première. Le parcours PCM normal et le nettoyage final restent inchangés.
+- **Régressions ciblées** : remplacement de session, déplacement de canal, et mise à jour complète du sous-titre pour chaque segment. Pas de nouveau drapeau ni dépendance externe.
+- **Validation** : consulter les checks du dernier commit de la PR avant la fusion ; les validations hors ligne ne remplacent pas l'essai Discord sur téléphone.

@@ -81,7 +81,11 @@ class EarlySpeechTurn:
                 sentence = first
                 while sentence is not None:
                     require_session()
-                    path.write_text(sentence, encoding="utf-8")
+                    # OBS may read this file from another process at any time.
+                    # Publish complete subtitle replacements, never partial writes.
+                    subtitle_tmp = path.with_name(path.name + ".tmp")
+                    subtitle_tmp.write_text(sentence, encoding="utf-8")
+                    subtitle_tmp.replace(path)
                     stream = output.services.stream_speech_pcm(sentence)
                     if stream is None:
                         raise RuntimeError("early speech requires Realtime TTS")

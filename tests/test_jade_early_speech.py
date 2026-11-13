@@ -3,6 +3,7 @@ import asyncio
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
+from unittest.mock import patch
 import unittest
 
 from src.jade_runtime.dialogue import Dialogue
@@ -106,6 +107,50 @@ class EarlySpeechTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(bridge.marked, 1)
             self.assertEqual(len(dialogue.history[source.session]), 2)
             self.assertEqual((Path(folder) / "subtitle.txt").read_text(encoding="utf-8"), "")
+
+    async def test_each_incremental_subtitle_uses_atomic_replace(self):
+        class Services:
+            settings = SimpleNamespace(tts_model="gpt-realtime-2.1-mini")
+
+            def stream_speech_pcm(self, text):
+                async def generate():
+                    yield b"\x01\x00" * 480
+                return generate()
+
+        class Bridge:
+            def reply_authorized(self, source):
+                return True
+
+            async def play_pcm_stream_for_reply(self, chunks, source):
+                async for _ in chunks:
+                    pass
+                return True
+
+        class Silent:
+            mode = "none"
+
+        source = Incoming("discord_voice", "A", "Question", voice_session_id="a" * 32,
+                          speaker_id=12, force_reply=True)
+        with TemporaryDirectory() as folder:
+            path = Path(folder) / "subtitle.txt"
+            output = SpeechOutput(Services(), Silent(), path, secondary_player=Bridge())
+            observed = []
+            original = Path.write_text
+
+            def capture(target, data, **kwargs):
+                observed.append((target.name, data))
+                return original(target, data, **kwargs)
+
+            with patch.object(Path, "write_text", capture):
+                turn = output.start_early(source)
+                await turn.emit("Première phrase.")
+                await turn.emit("Deuxième phrase.")
+                await turn.finish_input()
+                self.assertTrue(await turn.wait())
+            updates = [name for name, value in observed if value]
+            self.assertGreaterEqual(len(updates), 3)
+            self.assertTrue(all(name.endswith(".tmp") for name in updates))
+            self.assertEqual(path.read_text(encoding="utf-8"), "")
 
     async def test_runtime_legacy_path_remains_unchanged_when_stream_not_enabled(self):
         class Chat:
