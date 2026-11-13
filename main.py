@@ -102,7 +102,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 await optional("discord", lambda: discord_client.send_chat(
                     reply.source.channel, reply.text,
                     source_message_id=reply.source.message_id))
-            if vts_client is not None and config.vts_speak_hotkey and not reply.spoken:
+            if (vts_client is not None and config.vts_speak_hotkey and not reply.spoken
+                    and reply.source.platform != "discord"):
                 await optional("vts", lambda: vts_client.trigger_hotkey(config.vts_speak_hotkey))
             # A written Discord turn stays written; do not speak it into voice.
             if speech is not None and not reply.spoken and reply.source.platform != "discord":
