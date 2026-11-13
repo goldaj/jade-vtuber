@@ -1,7 +1,7 @@
 """Bounded message queue with explicit cancellation and shutdown."""
 import asyncio
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from collections.abc import Awaitable, Callable
 from .dialogue import Dialogue
 from .messages import Incoming, Reply
@@ -22,10 +22,11 @@ class Work:
 
 class Runtime:
     def __init__(self, dialogue: Dialogue, on_reply: Callable[[Reply], Awaitable[None]],
-                 max_queue: int = 64):
+                 max_queue: int = 64, on_stream_start=None):
         if not 1 <= max_queue <= 1024:
             raise ValueError("invalid queue limit")
         self.dialogue, self.on_reply = dialogue, on_reply
+        self.on_stream_start = on_stream_start
         self.queue = asyncio.Queue(maxsize=max_queue)
         self.worker = None
         self.active = None
@@ -132,16 +133,35 @@ class Runtime:
     async def _execute(self, item):
         if not item.valid():
             raise TimeoutError("message expired")
-        reply = await self.dialogue.respond(item.message, valid=item.valid)
-        if not item.valid():
-            raise TimeoutError("message expired")
-        if item.result is not None and not item.result.done():
-            if reply is None:
-                item.result.set_exception(RuntimeError("message not accepted"))
+        turn = None
+        try:
+            if self.on_stream_start is not None and item.message.platform == "discord_voice":
+                turn = self.on_stream_start(item.message)
+            if turn is None:
+                reply = await self.dialogue.respond(item.message, valid=item.valid)
             else:
-                item.result.set_result(reply.text)
-        if reply is not None and item.valid():
-            await self.on_reply(reply)
+                reply = await self.dialogue.respond(
+                    item.message, valid=item.valid, on_sentence=turn.emit)
+            if not item.valid():
+                raise TimeoutError("message expired")
+            if reply is None and turn is not None:
+                await turn.abort()
+                turn = None
+            if turn is not None:
+                await turn.finish_input()
+            if item.result is not None and not item.result.done():
+                if reply is None:
+                    item.result.set_exception(RuntimeError("message not accepted"))
+                else:
+                    item.result.set_result(reply.text)
+            if reply is not None and item.valid():
+                await self.on_reply(replace(reply, spoken=True) if turn is not None else reply)
+            if turn is not None:
+                await turn.wait()
+        except BaseException:
+            if turn is not None:
+                await turn.abort()
+            raise
 
     async def _process(self):
         while True:
