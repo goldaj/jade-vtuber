@@ -3,6 +3,18 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## Évolution demandée le 13 novembre — texte Discord et personnalité
+
+- Participation spontanée rehaussée de **15 % à 30 %**, délai minimal
+  conservé de trois minutes par salon, sans appel LLM pour la lecture passive.
+- Le prompt standard de Jade présente Goldaj comme son père dans l'univers du
+  personnage et autorise des marques d'affection timides et rares ainsi que
+  l'appellation « papa » ponctuelle, exclusivement pour Goldaj. Le chargement
+  du prompt externe préserve cette relation sans écraser le prompt privé.
+- Tests de cohérence ajoutés. Les résultats CI du **dernier commit** doivent
+  être vérifiés avant fusion ; aucune preuve de fonctionnement Discord réel
+  ou de relance du processus PC n'est établie par la fusion GitHub.
+
 ## Chantier isolé — participation écrite Discord (13 novembre 2026)
 
 - Branche `feat/discord-text-contextual-20261113` depuis `develop` après
