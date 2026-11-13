@@ -173,6 +173,11 @@ async def shift_wav(audio: bytes, semitones: float) -> bytes:
         return audio
     if not isinstance(audio, bytes) or len(audio) > MAX_PCM + 4096:
         raise ValueError("invalid synthesized WAV size")
+    if not await supports_pitch_shift():
+        # With no optional FFmpeg filter, preserve original audio bytes, WAV
+        # metadata and timing exactly. Never turn a voice feature into an outage.
+        LOG.warning("FFmpeg Rubber Band unavailable; Jade pitch unchanged")
+        return audio
     try:
         with wave.open(BytesIO(audio), "rb") as reader:
             if (reader.getnchannels(), reader.getsampwidth(), reader.getframerate(),
