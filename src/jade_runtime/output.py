@@ -83,13 +83,16 @@ class SpeechOutput:
     """Only one spoken response at a time; clear subtitles even on failure."""
     def __init__(self, services: OpenAIServices, player: AudioOutput,
                  subtitle_path: Path, secondary_player=None, audio_gate=None,
-                 secondary_broadcast=False):
+                 secondary_broadcast=False, early_timeout_seconds=180):
         self.services = services
         self.player = player
         self.subtitle_path = Path(subtitle_path)
         self.lock = asyncio.Lock()
         self.secondary_player = secondary_player
         self.audio_gate = audio_gate
+        if not 1 <= early_timeout_seconds <= 180:
+            raise ValueError("invalid early voice deadline")
+        self.early_timeout_seconds = early_timeout_seconds
         # Kept only for callers of the former opt-in API. The owner has chosen
         # to broadcast spoken responses whenever a voice bridge is connected.
         self.secondary_broadcast = True
@@ -150,7 +153,7 @@ class SpeechOutput:
         if not model.startswith(("gpt-realtime", "gpt-4o-realtime")):
             return None
         from .early_speech import EarlySpeechTurn
-        return EarlySpeechTurn(self, source)
+        return EarlySpeechTurn(self, source, max_seconds=self.early_timeout_seconds)
 
     async def _speak_progressive(self, reply, context, require_session, *, discord_voice):
         """Use streaming only for Discord with no simultaneous local WAV player.
@@ -198,12 +201,6 @@ class SpeechOutput:
                 if not callable(valid) or not valid(context):
                     return True  # Destination revoked; do not synthesize.
                 played = await bridge_method(stream, context)
-            if discord_voice and played is True:
-                require_session()
-                acknowledge = getattr(self.secondary_player, "mark_voice_reply_played", None)
-                if callable(acknowledge):
-                    acknowledge(reply.source)
-            return True
         finally:
             # The bridge normally closes its iterator. Also close it if the
             # gate/subtitle preparation failed before playback started.
@@ -219,6 +216,12 @@ class SpeechOutput:
             finally:
                 if written:
                     path.write_text("", encoding="utf-8")
+        if discord_voice and played is True:
+            require_session()
+            acknowledge = getattr(self.secondary_player, "mark_voice_reply_played", None)
+            if callable(acknowledge):
+                acknowledge(reply.source)
+        return True
 
     async def speak(self, reply: Reply):
         async with self.lock:
