@@ -1,8 +1,8 @@
 # Jade — trois profils vocaux à évaluer (propositions, non implémentées)
 
 **Date :** 13 novembre 2026  
-**Statut :** étude / hypothèses de design vocal ; **aucun profil validé, codé ou activé**.  
-**Branche documentaire :** `develop` ; **aucune modification du runtime ni des valeurs en production**.
+**Statut au 13 novembre (dernière décision) :** Étincelle sélectionnée en configuration **publique par défaut** ; moteur d'intention implémenté ; rendu réel non validé sur téléphone, et configuration privée potentiellement prioritaire. Friponne et Rosée conservées.  
+**Branche de travail :** `develop` ; code et défauts publics modifiés, **aucun déploiement du PC ni changement garanti de la configuration privée**.
 
 ## 1. Contexte et objectif produit
 
@@ -96,9 +96,9 @@ Elle permet de comparer successivement **taquinerie, énergie, changement d'inte
 - Consentement / droits requis pour toute voix personnalisée dérivée d'un enregistrement ; une voix textuellement conçue dans GPT-Live n'est **pas** interchangeablement accessible dans Realtime mini.
 - Les voix synthétiques doivent rester identifiables comme telles pour les auditeurs.
 
-## 5. Décision à ce jour
+## 5. Décision initiale (historique, remplacée par la section 7)
 
-**Aucun choix vocal définitif.** Ordre de préférence **à tester** : Étincelle, Friponne, Rosée. Conserver `gpt-transcribe` et `gpt-realtime-2.1-mini`. Aucune modification de code ou de configuration ne découle de cette note.
+La première étude ne retenait aucune voix. **La décision a évolué depuis : voir la section 7**, qui choisit Étincelle à titre provisoire et définit le moteur d'intention. Conserver `gpt-transcribe` et `gpt-realtime-2.1-mini`.
 
 **Extraits audio :** à produire lorsque l'accès à une API TTS authentique et autorisée est disponible ; un simple texte de spécification ne constitue pas un fichier MP3. Après génération, déposer trois échantillons identifiables avec leur provenance (modèle, voix, vitesse, pitch ou `aucun`) et faire valider l'écoute sur téléphone avant mise en production.
 
