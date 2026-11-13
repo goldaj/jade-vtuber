@@ -1,5 +1,6 @@
 """Strict, private, fail-closed runtime settings. No network on import."""
 from dataclasses import dataclass, field
+import math
 from pathlib import Path
 
 from src.utility.private_config import environ
@@ -33,6 +34,7 @@ class Settings:
     tts_model: str = "gpt-realtime-2.1-mini"
     voice: str = "shimmer"
     tts_speed: float = 1.25
+    tts_pitch_semitones: float = 2.0  # Étincelle: DSP, not an OpenAI API parameter.
     api_key: str = ""
     channel: str = ""
     bot_name: str = "Jade"
@@ -77,6 +79,7 @@ class Settings:
             tts_model=str(environ("JADE_TTS_MODEL", "gpt-realtime-2.1-mini")),
             voice=str(environ("JADE_TTS_VOICE", "shimmer")),
             tts_speed=float(environ("JADE_TTS_SPEED", "1.25")),
+            tts_pitch_semitones=float(environ("JADE_TTS_PITCH_SEMITONES", "2.0")),
             api_key=str(environ("OPENAI_API_KEY", "")),
             channel=str(environ("TWITCH_CHANNEL", "")),
             bot_name=str(environ("BOT_NAME", "Jade")),
@@ -116,6 +119,11 @@ class Settings:
         if (isinstance(self.tts_speed, bool) or not isinstance(self.tts_speed, (int, float))
                 or not 0.25 <= self.tts_speed <= 1.5):
             raise ValueError("TTS speed must be between 0.25 and 1.5")
+        if (isinstance(self.tts_pitch_semitones, bool)
+                or not isinstance(self.tts_pitch_semitones, (float, int))
+                or not math.isfinite(self.tts_pitch_semitones)
+                or not -6 <= self.tts_pitch_semitones <= 6):
+            raise ValueError("pitch semitones must be between -6 and 6")
         if (self.max_history_messages < 2 or self.max_history_messages > 100
                 or not 1 <= self.max_queue <= 1024
                 or not 0 <= self.reply_probability <= 1
