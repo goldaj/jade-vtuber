@@ -9,8 +9,8 @@ sans présenter les mocks comme des tests d'API réels.
   conservé de trois minutes par salon, sans appel LLM pour la lecture passive.
 - Le prompt standard de Jade présente Goldaj comme son père dans l'univers du
   personnage et autorise des marques d'affection timides et rares ainsi que
-  l'appellation « papa » ponctuelle, exclusivement pour Goldaj. Le chargement
-  du prompt externe préserve cette relation sans écraser le prompt privé.
+  l'appellation « papa » ponctuelle, exclusivement pour Goldaj. Un prompt privé explicitement configuré via
+  `JADE_PROMPT_FILE` reste prioritaire et devra être ajusté séparément si utilisé.
 - Tests de cohérence ajoutés. Les résultats CI du **dernier commit** doivent
   être vérifiés avant fusion ; aucune preuve de fonctionnement Discord réel
   ou de relance du processus PC n'est établie par la fusion GitHub.
