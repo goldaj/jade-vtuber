@@ -60,7 +60,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     async with AsyncExitStack() as scopes:
         chat = OpenAIServices(config) if live else DemoChat()
         if live:
-            scopes.push_async_callback(chat.client.close)
+            scopes.push_async_callback(chat.close if callable(getattr(chat, 'close', None))
+                                       else chat.client.close)
         dialogue = Dialogue(chat, prompt, bot_name=config.bot_name,
                             max_messages=config.max_history_messages,
                             random_reply_rate=config.reply_probability)
