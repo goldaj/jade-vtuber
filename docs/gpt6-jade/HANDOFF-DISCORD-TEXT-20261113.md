@@ -18,8 +18,9 @@ Aucune modification de production ou des fichiers privés.
 - `prompt_chat.txt` : Goldaj est le père de Jade dans son univers de VTuber.
   Affection occasionnelle, timide et discrète. « papa » peut être utilisé
   parfois, sans répétition et seulement pour Goldaj.
-- `load_prompt` garde la même caractérisation avec un fichier de prompt
-  externe, sans remplacer les consignes personnalisées de ce fichier.
+- Le chargement d'un prompt externe via `JADE_PROMPT_FILE` ou
+  `JADE_ASSETS_ROOT` reste prioritaire et inchangé. Si Jade utilise un tel
+  fichier privé, y reporter la même relation pour qu'elle soit active.
 
 ## Comportement développé
 
