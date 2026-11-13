@@ -132,7 +132,11 @@ class RealtimeTTS:
         if self.verify_transcript and not _words(text):
             raise ValueError("speech text contains no comparable words")
         try:
-            async with asyncio.timeout(self.timeout_seconds):
+            # Progressive consumers may play slower than the provider produces.
+            # Do not count bounded output backpressure as a stalled API call.
+            # Per-recv timeout below still limits real provider inactivity.
+            output_seconds = self.max_audio_bytes / (24000 * 2) if on_chunk is not None else 0
+            async with asyncio.timeout(self.timeout_seconds + output_seconds + (10 if on_chunk else 0)):
                 async with self.client.realtime.connect(
                     model=self.model, max_retries=0, max_queue_size=64,
                     websocket_connection_options={"max_size": 1_048_576},
@@ -172,7 +176,7 @@ class RealtimeTTS:
                 event_count += 1
                 if event_count > 10_000:
                     raise RealtimeTTSError("Too many realtime events")
-                event = await connection.recv()
+                event = await asyncio.wait_for(connection.recv(), timeout=self.timeout_seconds)
                 kind = _field(event, "type")
                 if kind == "error":
                     raise RealtimeTTSError("Realtime session rejected")
@@ -203,7 +207,7 @@ class RealtimeTTS:
                 event_count += 1
                 if event_count > 10_000:
                     raise RealtimeTTSError("Too many realtime events")
-                event = await connection.recv()
+                event = await asyncio.wait_for(connection.recv(), timeout=self.timeout_seconds)
                 kind = _field(event, "type")
                 if kind == "error":
                     raise RealtimeTTSError("Realtime response rejected")
