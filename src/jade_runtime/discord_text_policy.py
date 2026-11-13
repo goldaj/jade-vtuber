@@ -29,7 +29,7 @@ class _Channel:
 class DiscordTextPolicy:
     """Channel-isolated context, direct addressing and measured participation."""
 
-    def __init__(self, *, bot_name="Jade", auto_rate=0.15, cooldown_seconds=180,
+    def __init__(self, *, bot_name="Jade", auto_rate=0.30, cooldown_seconds=180,
                  followup_seconds=90, max_channels=128, clock=time.monotonic, rng=None):
         if (not isinstance(bot_name, str) or not bot_name.strip()
                 or not 0 <= auto_rate <= 1
