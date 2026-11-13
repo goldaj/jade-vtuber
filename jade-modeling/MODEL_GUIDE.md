@@ -1,5 +1,7 @@
 # Jade — reprendre le modèle et les animations
 
+Le [plan professionnel du 13 novembre](PLAN_QUALITE_PRO_20261113.md) complète ce guide et le plan initial pour les prochaines étapes, y compris l'intégration de l'avatar à Jade.
+
 ## Sources actuelles
 
 Tous les chemins ci-dessous sont relatifs à ce dossier. Les fichiers binaires se
