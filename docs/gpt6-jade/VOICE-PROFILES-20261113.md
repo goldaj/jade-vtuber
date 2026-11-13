@@ -12,9 +12,9 @@ Jade est un personnage virtuel de VTuber IA francophone, créé par Goldaj. Le p
 
 **Demande produit :** trouver une **voix féminine de jeune adulte, aiguë, dynamique**, naturelle en **français de France**, capable de passer de la malice à une douceur brève, et adaptée au streaming Discord avec une latence et un coût raisonnables.
 
-## 2. Configuration technique constatée
+## 2. Configuration technique historique (avant sélection Étincelle)
 
-Dans [`src/jade_runtime/config.py`](../../src/jade_runtime/config.py), la configuration publique par défaut prévoit :
+Avant la décision du 13 novembre, [`src/jade_runtime/config.py`](../../src/jade_runtime/config.py) avait ces valeurs publiques. **Cet encadré est historique, et non la configuration de la branche actuelle** (voir section 7) :
 
 - STT : `gpt-transcribe` ; TTS : `gpt-realtime-2.1-mini`.
 - Voix : `coral` ; vitesse : `1.5`.
@@ -68,7 +68,7 @@ Toutes les valeurs restent **provisoires**, sujettes à disponibilité effective
 
 **Hypothèse :** attachante et crédible dans les moments personnels. **Risque :** atténuation de la petite arrogance présente dans le prompt.
 
-## 4. Protocole A/B/C : ce qui permettra de décider
+## 4. Protocole A/B/C : pour valider ou ajuster le choix Étincelle
 
 ### Phrase commune, identique pour les trois rendus
 
@@ -83,7 +83,7 @@ Elle permet de comparer successivement **taquinerie, énergie, changement d'inte
 3. Ne tester le pitch (+2 / +1 / +1,5 demi-tons) que dans un second passage, après validation d'un algorithme **préservant au mieux les formants**, avec CPU, latence et artefacts mesurés.
 4. À volume d'écoute comparable, noter **naturalité**, **jeunesse perçue**, **aigu**, **dynamisme**, **malice**, **tendresse discrète**, **prononciation française**, **fatigue auditive**, **intelligibilité sur téléphone** et **latence perçue** (échelle 1–5).
 5. Enregistrer pour chaque essai le modèle exact, l'identifiant de voix, la vitesse, la transformation appliquée, la durée audible, le délai premier son et le coût API constaté. Les appréciations restent humaines et subjectives.
-6. Choisir une voix gagnante puis valider sur plusieurs textes et émotions, sans ajouter d'interjections, avant toute activation par défaut.
+6. Reconfirmer ou réviser le choix provisoire d'Étincelle après comparaison ; valider sur plusieurs textes et émotions, sans ajouter d'interjections, avant tout déploiement local.
 
 ### Points d'attention d'implémentation future
 
@@ -183,5 +183,13 @@ Pour chaque future intention : (1) justification métier ; (2) libellé stable ;
 - À l'écoute, tester le registre sur le même texte et les mêmes conditions, puis couper/fusionner toute intention qui reste acoustiquement indistincte.
 - Le passage en `develop` **ne déploie pas automatiquement** le processus Jade exécuté localement par Terra ; vérifier le chargement des valeurs privées `JADE_TTS_VOICE` / `JADE_TTS_SPEED`.
 - Faire confirmer par Goldaj la qualité générale et la justesse du jeu d'acteur avant d'augmenter encore le pitch ou le débit.
+
+### 7.6 Validation automatisée observée
+
+- Commit applicatif testé : `758fff9072d7e97045bde9d839c933a9c3617c8e`.
+- [GitHub Actions, Jade rebuild offline tests](https://github.com/goldaj/jade-vtuber/actions/runs/43483132687) : **Windows et Ubuntu réussis**, le 13 novembre 2026.
+- Journal Ubuntu : **416 tests, 2 ignorés** ; compilation Python et smoke test hors ligne réussis.
+- Le scan des secrets sur ce même SHA a également réussi.
+- **Limite explicite :** la CI ne vérifie ni l'effet émotionnel audible de `shimmer`, ni le rendu réel sur Discord/téléphone, ni les profils privés ni le filtre pitch (+2 demi-tons) qui n'existe pas. Pas d'API OpenAI payante appelée par ces tests.
 
 **Documentation OpenAI :** [Realtime prompting](https://developers.openai.com/api/docs/guides/voice-prompting?voice-api=realtime), [Realtime sessions](https://developers.openai.com/api/reference/resources/realtime/subresources/sessions/methods/create).
