@@ -202,20 +202,19 @@ class SpeechOutput:
                     return True  # Destination revoked; do not synthesize.
                 played = await bridge_method(stream, context)
         finally:
-            # The bridge normally closes its iterator. Also close it if the
-            # gate/subtitle preparation failed before playback started.
-            close = getattr(stream, "aclose", None)
-            if callable(close):
-                try:
-                    await close()
-                except Exception:
-                    pass
+            # A cancellation during aclose must not leave the microphone gate
+            # or OBS text hanging; always run the remaining cleanup.
             try:
-                if gated:
-                    await self.audio_gate.end_speech()
+                close = getattr(stream, "aclose", None)
+                if callable(close):
+                    await close()
             finally:
-                if written:
-                    path.write_text("", encoding="utf-8")
+                try:
+                    if gated:
+                        await self.audio_gate.end_speech()
+                finally:
+                    if written:
+                        path.write_text("", encoding="utf-8")
         if discord_voice and played is True:
             require_session()
             acknowledge = getattr(self.secondary_player, "mark_voice_reply_played", None)
