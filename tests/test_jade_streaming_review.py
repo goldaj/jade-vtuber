@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, patch
 
 from src.jade_runtime.config import Settings
 from src.jade_runtime.discord_voice import OpenVoiceBridge
+from src.jade_runtime.discord_pcm import DiscordPCMBuffer, FRAME_BYTES
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.early_speech import EarlySpeechTurn
 from src.jade_runtime.messages import Incoming, Reply
@@ -94,6 +95,21 @@ class SentenceCostTests(unittest.TestCase):
     def test_invalid_billing_cap_is_rejected(self):
         with self.assertRaises(ValueError):
             SentenceAccumulator(max_segments=0)
+
+
+class SilenceAnimationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_prebuffer_and_live_underrun_report_zero_level_to_avatar(self):
+        frames = []
+        buffer = DiscordPCMBuffer(on_frame=frames.append)
+        self.assertEqual(buffer.read(), b"\x00" * FRAME_BYTES)
+        await buffer.feed(b"\x10\x00" * 480)
+        self.assertNotEqual(buffer.read(), b"\x00" * FRAME_BYTES)
+        self.assertEqual(buffer.read(), b"\x00" * FRAME_BYTES)
+        self.assertEqual(len(frames), 3)
+        self.assertEqual(frames[0], b"\x00" * FRAME_BYTES)
+        self.assertTrue(any(frames[1]))
+        self.assertEqual(frames[2], b"\x00" * FRAME_BYTES)
+        buffer.abort()
 
 
 class GateFailureTests(unittest.IsolatedAsyncioTestCase):
