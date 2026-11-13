@@ -5,7 +5,7 @@
 Base de départ : branche develop, SHA f1750f4da77fc8bdc0f7f85bd5bf5d7a55275b08.
 Branche isolée : feat/tts-streaming-discord-parallel-20261113. Aucune écriture sur develop ou main.
 
-Ce lot commence la diffusion audio Discord avant la fin du TTS Realtime, avec une synthèse OpenAI unique, un tampon borné et un arrêt possible à tout moment. Il ne modifie pas les travaux locaux de Terra et doit être intégré par lui. Les lots A/A bis (mesure, vitesse x1,5, voix Aube) restent sous sa responsabilité.
+Ce lot commence la diffusion audio Discord avant la fin du TTS Realtime, avec un tampon borné et un arrêt possible à tout moment. Le parcours normal utilise une seule synthèse pour la réponse complète ; le mode optionnel par phrases utilise une synthèse par phrase, avec un canal de lecture unique. Il ne modifie pas les travaux locaux de Terra et doit être intégré par lui. Les lots A/A bis (mesure, vitesse x1,5, voix Aube) restent sous sa responsabilité.
 
 ## Livré
 
@@ -15,7 +15,9 @@ Ce lot commence la diffusion audio Discord avant la fin du TTS Realtime, avec un
 4. src/jade_runtime/discord_voice.py : consommation progressive, vérification de génération, session, canal et mute pendant l'attente de PCM, arrêt du lecteur en cas d'annulation, déconnexion ou erreur tardive. Chemins distincts réponse vocale / autre source.
 5. src/jade_runtime/output.py : active ce flux quand le Discord vocal est présent, que le modèle est Realtime et que la sortie locale est none. Sinon, la synthèse et la lecture WAV originales restent actives. Les sous-titres sont toujours nettoyés.
 6. src/jade_runtime/avatar.py : nouveaux événements pcm_start, pcm_level et pcm_end provenant des trames réellement consommées, sans anticiper l'audio non encore émis.
-7. tests/test_jade_streaming_pcm.py : tests synthétiques de chunks avant réponse finale, annulation, échec tardif, backpressure, trames et routage.
+7. realtime_tts.py : RealtimeConnectionPool garde la connexion WebSocket après un tour réussi et la ferme après une erreur, annulation ou shutdown. OpenAIServices.close et main.py prennent en charge la fermeture dans l'ordre.
+8. src/jade_runtime/sentence_stream.py, dialogue.py, early_speech.py, orchestrator.py et main.py : pipeline LLM par phrases facultatif, tampon de deux phrases, audio de la première avant la fin du texte complet, historique final écrit une fois, réponse texte publiée une seule fois. L'activer uniquement avec JADE_EARLY_VOICE=1 après essais réels ; valeur par défaut 0.
+9. tests/test_jade_streaming_pcm.py et tests/test_jade_early_speech.py : tests synthétiques du transport, de la connexion conservée et de la première phrase avant la fin LLM.
 
 ## Contraintes inchangées
 
@@ -23,11 +25,12 @@ Ce lot commence la diffusion audio Discord avant la fin du TTS Realtime, avec un
 - Pas de nouveau filtre Discord sur participants ou salons ; Jade ignore sa propre voix.
 - Pour le téléphone, conserver JADE_AUDIO_OUTPUT=none. Le chemin progressif n'ajoute pas une seconde synthèse.
 - La démo Windows, la sortie locale et la diffusion double restent en mode WAV.
-- Aucune preuve d'écoute, de gain réel de latence, de mouvement réel ni d'appel API effectué dans cette branche.
+- Aucune preuve d'écoute, de gain réel de latence, de mouvement réel ni d'appel API effectué dans cette branche. Les tests CI peuvent vérifier des contrats synthétiques uniquement.
 
 ## Validation à effectuer sur la branche et après merge
 
     python -m unittest tests.test_jade_streaming_pcm -v
+    python -m unittest tests.test_jade_early_speech -v
     python -m unittest discover -s tests -v
     python -m compileall -q src main.py
 
@@ -38,12 +41,12 @@ Consulter les contrôles CI associés au SHA final, et non les anciens résultat
 1. Résoudre les éventuels conflits entre le paramétrage x1,5 / voix du lot A bis et les modifications dans realtime_tts.py et openai_services.py, sans ouvrir deux connexions ni doubler les frais.
 2. Vérifier la compatibilité du merge sur son Windows/Python 3.11 et exécuter les tests réels convenus avec le propriétaire : première syllabe, fin de réponse, silence, reprends, changement de canal, reconnexion et synchronisation bouche.
 3. Comparer la latence fin de parole → premier PCM Discord avant/après avec quelques mêmes phrases, distinguer sortie vers Discord de l'audition réelle sur téléphone et mesurer les trous de lecture ; ajuster si nécessaire le prébuffer (50 trames max) et les délais.
-4. Lot D non implémenté dans ce jalon : déclencher le TTS dès la première phrase du LLM, sans casser historique, réponse complète unique ni comportement HTTP. Le code actuel attend encore la réponse textuelle complète avant la première synthèse. Décider du contrat des paroles interrompues.
-5. Lot E après mesures : éventuel seuil de silence plus court, réponses orales plus brèves, et opportunité d'une session TTS persistante. Ne pas ajouter ces optimisations sans observation.
+4. Lot D implémenté sous drapeau expérimental JADE_EARLY_VOICE=1, désactivé par défaut : recetter le début audio avant texte final, la cohérence des sous-titres, les voix entre phrases, le surcoût de plusieurs synthèses et les paroles interrompues. Ne l'activer en pratique qu'après validation réelle. Les autres sources et HTTP gardent l'ancien parcours.
+5. Lot E après mesures : éventuel seuil de silence plus court et réponses orales plus brèves. La connexion Realtime est déjà réutilisée entre tours ; contrôler sa tenue en cas de coupure réseau.
 
 ## Limites et risques
 
-- Les queues bornées appliquent une backpressure au fournisseur. Le timeout TTS actuel inclut l'attente de consommation, qui peut nécessiter adaptation en fonction de la longueur réelle des réponses.
+- Les queues bornées appliquent une backpressure au fournisseur. Le timeout de réception fournisseur est distinct du budget global qui autorise la backpressure normale ; confirmer les limites en conditions réelles.
 - La conversion PCM est une interpolation linéaire pure Python : qualité audio à comparer en conditions réelles (notamment x1,5).
 - Une erreur après les premières trames ne peut retirer les mots déjà entendus : aucune relance automatique ne doit les répéter.
 - Les checks synthétiques ne certifient ni le transport DAVE réel ni la performance perçue sur téléphone.
