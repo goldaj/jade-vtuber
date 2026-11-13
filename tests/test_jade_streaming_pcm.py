@@ -12,7 +12,7 @@ from src.jade_runtime.discord_pcm import DiscordPCMBuffer, FRAME_BYTES
 from src.jade_runtime.discord_voice import OpenVoiceBridge
 from src.jade_runtime.messages import Incoming, Reply
 from src.jade_runtime.output import SpeechOutput
-from src.jade_runtime.realtime_tts import RealtimeTTS, RealtimeTTSError
+from src.jade_runtime.realtime_tts import RealtimeTTS, RealtimeTTSError, RealtimeConnectionPool
 from tests.test_demo_realtime_tts import FakeClient, configured, created, delta, transcript, done
 
 
@@ -107,6 +107,32 @@ class TTSStreamTests(unittest.IsolatedAsyncioTestCase):
             await asyncio.wait_for(anext(stream), 1)
         self.assertNotIn("private", str(caught.exception))
         self.assertEqual(len(client.calls), 1)
+
+
+class RealtimePoolTests(unittest.IsolatedAsyncioTestCase):
+    async def test_successful_turns_reuse_socket_without_repeating_requests(self):
+        client = FakeClient([configured(), created(), delta(), transcript(), done(),
+                             configured(), created(), delta(), transcript(), done()])
+        pool = RealtimeConnectionPool(client)
+        adapter = RealtimeTTS(client, connection_pool=pool)
+        first = await adapter.synthesize("Bonjour Jade.")
+        second = await adapter.synthesize("Bonjour Jade.")
+        self.assertEqual(first.audio, second.audio)
+        self.assertEqual(len(client.calls), 1)
+        self.assertEqual(client.connection.response.create.await_count, 2)
+        self.assertFalse(client.manager.closed)
+        await pool.close()
+        self.assertTrue(client.manager.closed)
+
+    async def test_failed_turn_drops_pool_and_never_retries(self):
+        client = FakeClient([configured(), created(), delta(),
+                             {"type": "error", "error": {"message": "private"}}])
+        pool = RealtimeConnectionPool(client)
+        with self.assertRaises(RealtimeTTSError):
+            await RealtimeTTS(client, connection_pool=pool).synthesize("Bonjour Jade.")
+        self.assertTrue(client.manager.closed)
+        self.assertEqual(len(client.calls), 1)
+        await pool.close()
 
 
 class FakeConnection:
