@@ -23,6 +23,8 @@ Priorité précisée par l'utilisateur : poursuivre vers un modèle complet util
 
 Export en cours : la copie v31 avant atlas montre bien jambes et chaussures. Deux essais automatiques d'atlas 4096 (par Mesh puis Model Image) font disparaître le bas du corps : les coordonnées UV des pièces concernées sortent de [0,1]. Ces essais locaux sont non valides ; conserver v31 intact et corriger le remappage avant tout paquet VTS. La physique r20 comporte 37 sorties absentes de r21 ; ne pas la recopier sans adaptation.
 
+Essais suivants : restaurer les UV rétablit le plein pied en mode source mais pas l'atlas ; modifier l'affine optionnelle ne corrige pas le paquet. Une copie avec sept images distinctes affiche le plein pied en source et fait réapparaître les jambes dans l'atlas, mais les textures se mélangent : essai non sauvegardé et non utilisable. Prochaine piste : recadrer les images par pièce et recalculer UV et affines avant nouvel atlas. Sept calques source candidats et une physique initiale des neuf mèches ont été générés localement ; rien n'est encore intégré ou calibré. **Arrêter les opérations gourmandes : C: n'avait plus qu'environ 19 Mo libres lors de l'alerte Windows du 14 novembre ; demander de libérer de la place avant reprise.**
+
 # Fichiers importants
 
 - tools/cmo3_r21_hair_independent_leaves.py (--seam-roots) et cmo3_r21_hair_seam_roots.py ; reports/Jade_r21_v30_hair_leaves_r02.json.
