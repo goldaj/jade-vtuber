@@ -38,15 +38,26 @@ class OpenAIServices:
             model=self.settings.model, messages=messages,
             max_completion_tokens=160, stream=True,
         )
+        completed = False
         try:
             async for chunk in stream:
                 for choice in getattr(chunk, "choices", ()):
+                    if getattr(choice, "index", 0) != 0:
+                        continue
                     reason = getattr(choice, "finish_reason", None)
                     if reason not in (None, "stop"):
                         raise ValueError("OpenAI dialogue stream ended incompletely")
+                    if reason == "stop":
+                        completed = True
                     delta = getattr(getattr(choice, "delta", None), "content", None)
                     if isinstance(delta, str) and delta:
+                        if completed:
+                            raise ValueError("OpenAI dialogue text after completion")
                         yield delta
+            if not completed:
+                # An EOF without finish_reason=stop can follow a broken
+                # connection after some text was already sent to the speaker.
+                raise ValueError("OpenAI dialogue stream ended without completion")
         finally:
             close = getattr(stream, "close", None)
             if callable(close):
