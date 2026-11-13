@@ -135,7 +135,8 @@ class Runtime:
             raise TimeoutError("message expired")
         turn = None
         try:
-            if self.on_stream_start is not None and item.message.platform == "discord_voice":
+            if (self.on_stream_start is not None and item.message.platform == "discord_voice"
+                    and callable(getattr(self.dialogue.backend, "complete_stream", None))):
                 turn = self.on_stream_start(item.message)
             if turn is None:
                 reply = await self.dialogue.respond(item.message, valid=item.valid)
