@@ -22,6 +22,12 @@ Cet index est créé le 2 novembre 2026, avant les modifications documentaires d
 | [Plan professionnel du modèle du 13 novembre](2026-11-13-modele-plan-pro.md) | Nouvelle direction, recherche et feuille de route modèle et utilisation | Résumé des échanges accessibles ; vidéo non transcrite intégralement |
 | Documents supplémentaires de `develop` | Audits du 30 octobre et pistes migrées du 1er novembre : à conserver lors de l’intégration | Ces documents sont encore sur la branche cible ; leur provenance est décrite dans le dossier de migration |
 
+## Relais technique en cours — voix et intentions
+
+Pour le chantier du **13 novembre 2026**, le [relais opérationnel Codex](../gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md) récapitule les décisions d'Étincelle, les fichiers modifiés, le contrat de métadonnées d'intention, les tests, leurs limites et les étapes de recette réelle. Lire également la [spécification des voix](../gpt6-jade/VOICE-PROFILES-20261113.md) et l'[audit PO/architecture/QA](../gpt6-jade/REVIEW-INTENT-ETINCELLE-20261113.md).
+
+Il s'agit de documents de passation **synthétiques**, pas d'une transcription verbatim des échanges ; les notes précédentes restent historiques. `develop` est la branche concernée ; `main` n'a pas reçu ce lot.
+
 Le chat antérieur « Analyser le projet AI VTuber » a été retrouvé. Seule une page récente a été consultée : elle concerne la modélisation 2D, hors périmètre de cette intervention. Son historique complet n’a pas été récupéré ni recopié. Les échanges ChatGPT ayant produit la refonte ne sont disponibles ici qu’à travers les documents du dépôt et les descriptions de PR ; aucune transcription supplémentaire n’est inventée.
 
 Les journaux conservent les décisions successives, même contradictoires. La synthèse des instructions actuelles est dans [le dossier de migration](../migration/2026-11-02/README.md) et ne réécrit pas les sources historiques. Les contenus privés, secrets, identifiants de compte, raisonnements internes, instructions système/développeur et sorties brutes d’outils sont exclus.
