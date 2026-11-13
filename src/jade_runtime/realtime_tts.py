@@ -1,7 +1,8 @@
 """Shared OpenAI Realtime text-to-speech transport for Jade.
 
-Each synthesis uses an isolated, short-lived session, requests PCM 24 kHz, waits for a successful final
-response, and returns an in-memory WAV. No audio, text, key or provider error is
+Synthesis requests PCM 24 kHz and verifies the terminal response. The legacy
+adapter produces an in-memory WAV; the progressive adapter yields PCM chunks.
+The streaming path can reuse one healthy session across successive responses. No audio, text, key or provider error is
 logged. Real speech fidelity, latency, account access and cost are unverified.
 
 OpenAI references:
