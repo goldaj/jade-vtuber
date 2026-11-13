@@ -7,6 +7,7 @@ No extra speech AI, external process, private audio storage or dependency.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 import asyncio
 from queue import Empty, Full, Queue
 import struct
@@ -16,6 +17,19 @@ import time
 
 FRAME_BYTES = 3840
 _SILENCE = b"\x00" * FRAME_BYTES
+
+
+@dataclass(frozen=True)
+class PCMPlaybackMetrics:
+    """Content-free local transport metrics, not proof of audible phone output."""
+
+    first_nonzero_read_ms: int | None
+    frames_read: int
+    prebuffer_silence_frames: int
+    underrun_silence_frames: int
+    max_queued_frames: int
+
+
 
 
 class DiscordPCMBuffer:
@@ -44,11 +58,18 @@ class DiscordPCMBuffer:
         self._received = 0
         self._prebuffer_frames = prebuffer_frames
         self._started = False
+        self._created_at = time.monotonic()
+        self._first_nonzero_at = None
+        self._frames_read = 0
+        self._prebuffer_silence = 0
+        self._underrun_silence = 0
+        self._peak_frames = 0
 
     async def _offer(self, frame: bytes):
         while not self._aborted.is_set():
             try:
                 self._frames.put_nowait(frame)
+                self._peak_frames = max(self._peak_frames, self._frames.qsize())
                 self._last_progress = time.monotonic()
                 return
             except Full:
@@ -63,18 +84,25 @@ class DiscordPCMBuffer:
         self._received += len(pcm)
         if self._received > 4_800_000:
             raise ValueError("Discord PCM limit exceeded")
-        converted = bytearray()
         previous = self._previous
-        for (sample,) in struct.iter_unpack("<h", pcm):
-            first = sample if previous is None else (previous + sample) // 2
-            converted.extend(struct.pack("<hhhh", first, first, sample, sample))
-            previous = sample
-        self._previous = previous
-        self._tail.extend(converted)
-        while len(self._tail) >= FRAME_BYTES:
-            frame = bytes(self._tail[:FRAME_BYTES])
-            del self._tail[:FRAME_BYTES]
-            await self._offer(frame)
+        # One 20-ms source slice at a time. Never expand an entire provider
+        # delta into a large bytearray before a slow Discord reader can drain it.
+        for offset in range(0, len(pcm), 960):
+            converted = bytearray()
+            for (sample,) in struct.iter_unpack("<h", pcm[offset:offset + 960]):
+                first = sample if previous is None else (previous + sample) // 2
+                converted.extend(struct.pack("<hhhh", first, first, sample, sample))
+                previous = sample
+            self._previous = previous
+            self._tail.extend(converted)
+            while len(self._tail) >= FRAME_BYTES:
+                frame = bytes(self._tail[:FRAME_BYTES])
+                del self._tail[:FRAME_BYTES]
+                await self._offer(frame)
+            # Very large caller-provided input must not monopolize the event
+            # loop, even if Discord drains faster than it is produced.
+            if offset and offset % 48_000 == 0:
+                await asyncio.sleep(0)
 
     async def finish(self):
         if self._done.is_set():
@@ -87,9 +115,13 @@ class DiscordPCMBuffer:
             await self._offer(frame)
         self._done.set()
 
-    def _silence(self) -> bytes:
-        # Playback-time silence is just as important as audible PCM for
-        # animation: explicitly close the mouth during an underrun.
+    def _silence(self, *, prebuffer=False) -> bytes:
+        # Playback-time silence closes the mouth and counts real underruns.
+        self._frames_read += 1
+        if prebuffer:
+            self._prebuffer_silence += 1
+        else:
+            self._underrun_silence += 1
         if self._on_frame is not None:
             try:
                 self._on_frame(_SILENCE)
@@ -106,7 +138,7 @@ class DiscordPCMBuffer:
                 if time.monotonic() - self._last_progress > self._idle_timeout:
                     self.abort()
                     return b""
-                return self._silence()
+                return self._silence(prebuffer=True)
             self._started = True
         try:
             frame = self._frames.get_nowait()
@@ -118,6 +150,9 @@ class DiscordPCMBuffer:
                 return b""
             return self._silence()
         self._last_progress = time.monotonic()
+        self._frames_read += 1
+        if self._first_nonzero_at is None and any(frame):
+            self._first_nonzero_at = self._last_progress
         if self._on_frame is not None:
             try:
                 self._on_frame(frame)
@@ -134,6 +169,14 @@ class DiscordPCMBuffer:
                 self._frames.get_nowait()
             except Empty:
                 break
+
+    def metrics(self) -> PCMPlaybackMetrics:
+        """Snapshot numeric PCM reads; contains no user content or audio."""
+        first_ms = (None if self._first_nonzero_at is None else
+                    round((self._first_nonzero_at - self._created_at) * 1000))
+        return PCMPlaybackMetrics(
+            first_ms, self._frames_read, self._prebuffer_silence,
+            self._underrun_silence, self._peak_frames)
 
     @property
     def aborted(self):
