@@ -44,7 +44,11 @@ class Reply:
     source: Incoming
     text: str
     spoken: bool = False  # Voice already delivered by early pipeline.
+    intent: str = "neutral"  # Trusted metadata, not part of visible/speakable text.
 
     def __post_init__(self):
         if not isinstance(self.text, str) or not self.text.strip():
             raise ValueError("empty reply")
+        from .intent_engine import INTENTS
+        if self.intent not in INTENTS:
+            raise ValueError("invalid reply intention")
