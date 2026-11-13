@@ -867,9 +867,12 @@ class DiscordVoiceBridge:
             return True
         finally:
             buffer.abort()
-            # First non-zero frame means consumed by Discord's audio player,
-            # not sound confirmed at the remote user's phone.
-            self.last_pcm_metrics = buffer.metrics()
+            # Never attribute metrics from a revoked channel/session to its
+            # replacement. No text or PCM is retained in these counters.
+            with self.buffers_lock:
+                if (self.connection is connection and self.generation == generation
+                        and self.session_id == session_id):
+                    self.last_pcm_metrics = buffer.metrics()
             try:
                 if iterator is not None:
                     close = getattr(iterator, "aclose", None)
@@ -955,6 +958,7 @@ class DiscordVoiceBridge:
         worker, self.worker = self.worker, None
         with self.buffers_lock:
             connection, self.connection = self.connection, None
+            self.last_pcm_metrics = None
             if self.session_id:
                 self._decider.revoke(self.session_id)
             self._clear_turns_locked()
