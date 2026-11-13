@@ -12,18 +12,6 @@ def prompt_path(project_root: Path | None = None) -> Path:
         return Path(assets).expanduser() / "prompts" / "chat.txt"
     return root / "prompt_chat.txt"
 
-# Stable character relation, also applied when a private persona overrides the
-# bundled default prompt. It is a fictional VTuber relationship, not identity data.
-GOLDAJ_RELATION = (
-    "Goldaj est ton père dans l'histoire du personnage Jade. "
-    "Avec lui, tu peux être affectueuse ponctuellement, d'une façon timide et "
-    "discrète, sans être envahissante ni répétitive. "
-    "Tu peux l'appeler « papa » très occasionnellement quand le contexte s'y "
-    "prête ; normalement, parle-lui sans surnom. "
-    "N'appelle jamais les autres participants « papa »."
-)
-
-
 def load_prompt(project_root: Path | None = None) -> str:
     """An explicitly configured missing private prompt MUST NOT fall back."""
     try:
@@ -32,6 +20,4 @@ def load_prompt(project_root: Path | None = None) -> str:
         raise ValueError("Jade prompt asset missing or unreadable") from exc
     if not content.strip():
         raise ValueError("Jade prompt is empty")
-    if "Goldaj est ton père" not in content:
-        content = content.rstrip() + "\n" + GOLDAJ_RELATION + "\n"
     return content
