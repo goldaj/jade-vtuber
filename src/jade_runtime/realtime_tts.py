@@ -228,15 +228,15 @@ class RealtimeTTS:
         try:
             try:
                 await connection.session.update(session={
-                "type": "realtime",
-                "output_modalities": ["audio"],
-                "instructions": (
-                    "Read the user's text aloud exactly as provided. "
-                    "Do not add, omit, answer, translate, or explain anything."
-                ),
-                "audio": {"input": {"turn_detection": None},
-                          "output": {"format": {"type": "audio/pcm", "rate": 24000},
-                                     "voice": self.voice}},
+                    "type": "realtime",
+                    "output_modalities": ["audio"],
+                    "instructions": (
+                        "Read the user's text aloud exactly as provided. "
+                        "Do not add, omit, answer, translate, or explain anything."
+                    ),
+                    "audio": {"input": {"turn_detection": None},
+                              "output": {"format": {"type": "audio/pcm", "rate": 24000},
+                                         "voice": self.voice}},
                 })
             except asyncio.CancelledError:
                 raise
