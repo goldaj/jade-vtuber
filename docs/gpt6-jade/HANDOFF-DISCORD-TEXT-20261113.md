@@ -10,6 +10,17 @@ Le 13 novembre, la PR #1 du streaming vocal était fusionnée dans `develop`, pa
 dans `main`. La nouvelle branche part du commit `4cd82a0` de `develop`.
 Aucune modification de production ou des fichiers privés.
 
+## Ajustements demandés ensuite
+
+- Probabilité de participation spontanée portée à **30 %**. L'ancien
+  pourcentage de 15 % ne s'applique plus, sauf si un fichier privé définit
+  explicitement `JADE_DISCORD_TEXT_AUTO_RATE` avec une autre valeur.
+- `prompt_chat.txt` : Goldaj est le père de Jade dans son univers de VTuber.
+  Affection occasionnelle, timide et discrète. « papa » peut être utilisé
+  parfois, sans répétition et seulement pour Goldaj.
+- `load_prompt` garde la même caractérisation avec un fichier de prompt
+  externe, sans remplacer les consignes personnalisées de ce fichier.
+
 ## Comportement développé
 
 - Le connecteur `--discord` reste le point d'entrée unique : un seul `discord.py`
