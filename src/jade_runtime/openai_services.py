@@ -72,6 +72,21 @@ class OpenAIServices:
         # The legacy Speech API does not return a separate spoken transcript.
         return SpokenAudio(data, text)
 
+    def stream_speech_pcm(self, text: str):
+        """Return a single-request async PCM iterator for realtime TTS.
+
+        Callers consume and close this stream within the active voice session.
+        Legacy Speech API models deliberately retain the buffered WAV path.
+        """
+        if not isinstance(text, str) or not 1 <= len(text) <= 4096:
+            raise ValueError("invalid OpenAI TTS length")
+        if not self.settings.tts_model.startswith(("gpt-realtime", "gpt-4o-realtime")):
+            return None
+        return RealtimeTTS(
+            self.client, model=self.settings.tts_model, voice=self.settings.voice,
+            timeout_seconds=self.settings.timeout_seconds, verify_transcript=False,
+        ).stream_pcm(text)
+
     async def synthesize_wav(self, text: str) -> bytes:
         """Compatibility for callers that only need the WAV."""
         return (await self.synthesize_speech(text)).audio
