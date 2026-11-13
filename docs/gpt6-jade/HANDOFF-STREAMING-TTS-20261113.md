@@ -58,6 +58,33 @@ Consulter les contrôles CI associés au SHA final, et non les anciens résultat
 
 Les fins de ligne CRLF des fichiers existants ont été restaurées dans un commit de finition pour limiter les conflits et les changements purement cosmétiques. Comparaison directe de cette branche avec develop : aucun commit à récupérer depuis develop au contrôle, PR fusionnable dans son état GitHub du 13 novembre. Cette information peut changer si Terra pousse de nouveaux commits sur develop. Les sources Jade, les modèles et les assets LFS restent intacts.
 
+## Revue de recul PO et technique (13 novembre, seconde passe)
+
+### Décision de livraison
+
+- **Parcours recommandé par défaut :** conserver le PCM progressif pour Discord avec JADE_AUDIO_OUTPUT=none. La réponse LLM complète reste produite en une seule requête, et un seul appel TTS est utilisé.
+- **Parcours expérimental :** JADE_EARLY_VOICE=1 reste **désactivé**. Les segments vocaux sont désormais limités à six synthèses maximum par réponse, fin comprise. Plusieurs segments peuvent augmenter les frais et produire des jonctions sonores perceptibles ; le gain de latence doit être comparé au mode PCM simple avant activation.
+- **Définition du terminé :** codes et tests hors ligne verts, PR lisible et fusionnable, sans mélange avec les changements locaux de Terra. **Ne signifie pas** audio sur téléphone validé ou déploiement terminé.
+
+### Anomalies trouvées et corrigées
+
+1. **Critique, interruption :** un stream LLM abandonné parce que la voix échoue ou qu'une session expire ne se fermait pas explicitement. Son générateur est maintenant fermé immédiatement pour éviter un flux réseau et des dépenses inutiles.
+2. **Critique, nettoyage :** une annulation pendant la fermeture d'un flux pouvait éviter le rétablissement du gate micro, l'effacement des sous-titres ou la remise à zéro de l'état de lecture Discord. Nettoyage garanti par des finally imbriqués.
+3. **Majeur, cohérence conversationnelle :** une réponse LLM streamée dont la connexion s'arrêtait sans signal terminal pouvait être considérée complète. Le marqueur finish_reason=stop est désormais obligatoire ; un arrêt length/refus n'est pas enregistré comme réponse normale.
+4. **Majeur, ordonnanceur :** la chaîne vocale anticipée n'avait pas de délai global. Elle utilise maintenant une borne (20 à 180 s selon la configuration ; maximum 180 s) afin de ne pas immobiliser les messages suivants indéfiniment.
+5. **Majeur, accusé Discord :** un tour pouvait être marqué « prononcé » avant la fin du nettoyage micro/OBS. L'accusé est émis seulement après le nettoyage réussi et un nouveau contrôle d'autorisation.
+6. **PO, coûts :** le fractionnement naïf pouvait envoyer de nombreuses micro-phrases à OpenAI. Cap de six segments, conservation du reliquat, traitement spécifique de certaines abréviations françaises et nombres décimaux.
+7. **UX, animation :** pendant un manque de trames fournisseur, la source Discord lisait des silences mais ne notifiait pas le modèle ; des niveaux de bouche non nuls pouvaient rester affichés. Les trames de silence informent désormais l'avatar d'un niveau zéro.
+
+### Critères de recette à réaliser par Terra après merge
+
+- Comparer **sur les mêmes phrases et dans les mêmes conditions Discord/téléphone** le temps fin de prise de parole → première trame audible, médiane et cas lent, entre le mode WAV historique, PCM progressif et mode anticipé par phrases. Ne pas annoncer de pourcentage tant que la mesure n'est pas faite.
+- Vérifier une réponse simple et une réponse longue, interruptions « silence »/« reprends », perte réseau, sortie de canal et reconnexion, sans reprise de paroles déjà émises ni synthèse facturée en double.
+- Pendant une pause audio, vérifier bouche fermée ; après arrêt, vérifier micro disponible, sous-titres vides et session prête à la réponse suivante.
+- Comparer les **coûts API réels** par réponse complète. Le nombre d'appels TTS du mode anticipé n'est plus illimité mais peut rester supérieur au mode simple.
+- Ne pas activer JADE_EARLY_VOICE dans la configuration partagée avant validation explicite des résultats ; conserver le retour instantané possible au mode simple via le drapeau.
+- Relancer la CI sur le **commit de merge** plutôt que d'interpréter les checks de cette PR comme une recette de l'assemblage local de Terra.
+
 ## Limites et risques
 
 - Les queues bornées appliquent une backpressure au fournisseur. Le timeout de réception fournisseur est distinct du budget global qui autorise la backpressure normale ; confirmer les limites en conditions réelles.
