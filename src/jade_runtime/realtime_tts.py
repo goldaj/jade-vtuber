@@ -28,6 +28,10 @@ class RealtimeTTSError(RuntimeError):
     """Sanitized error; never includes transmitted text or provider details."""
 
 
+class _PreflightTransportFailure(RealtimeTTSError):
+    """Connection failed before response.create: safe to reconnect exactly once."""
+
+
 @dataclass(frozen=True, repr=False)
 class SpokenAudio:
     """WAV and provider transcript, both kept in memory by the caller."""
@@ -190,11 +194,19 @@ class RealtimeTTS:
             output_seconds = self.max_audio_bytes / (24000 * 2) if on_chunk is not None else 0
             async with asyncio.timeout(self.timeout_seconds + output_seconds + (10 if on_chunk else 0)):
                 transport = self.connection_pool if self.connection_pool is not None else self.client.realtime
-                async with transport.connect(
-                    model=self.model, max_retries=0, max_queue_size=64,
-                    websocket_connection_options={"max_size": 1_048_576},
-                ) as connection:
-                    return await self._request(connection, text, on_chunk=on_chunk)
+                attempts = 2 if self.connection_pool is not None else 1
+                for attempt in range(attempts):
+                    try:
+                        async with transport.connect(
+                            model=self.model, max_retries=0, max_queue_size=64,
+                            websocket_connection_options={"max_size": 1_048_576},
+                        ) as connection:
+                            return await self._request(connection, text, on_chunk=on_chunk)
+                    except _PreflightTransportFailure:
+                        if attempt == attempts - 1:
+                            raise
+                        # No response.create was called. A stale pooled socket
+                        # can be replaced without repeating billable speech.
         except asyncio.CancelledError:
             raise
         except TimeoutError:
@@ -214,7 +226,8 @@ class RealtimeTTS:
         content_identity = None
         event_count = 0
         try:
-            await connection.session.update(session={
+            try:
+                await connection.session.update(session={
                 "type": "realtime",
                 "output_modalities": ["audio"],
                 "instructions": (
@@ -224,12 +237,21 @@ class RealtimeTTS:
                 "audio": {"input": {"turn_detection": None},
                           "output": {"format": {"type": "audio/pcm", "rate": 24000},
                                      "voice": self.voice}},
-            })
+                })
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                raise _PreflightTransportFailure("Realtime preflight failed") from None
             while True:
                 event_count += 1
                 if event_count > 10_000:
                     raise RealtimeTTSError("Too many realtime events")
-                event = await asyncio.wait_for(connection.recv(), timeout=self.timeout_seconds)
+                try:
+                    event = await asyncio.wait_for(connection.recv(), timeout=self.timeout_seconds)
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    raise _PreflightTransportFailure("Realtime preflight failed") from None
                 kind = _field(event, "type")
                 if kind == "error":
                     raise RealtimeTTSError("Realtime session rejected")
@@ -246,8 +268,9 @@ class RealtimeTTS:
                         raise RealtimeTTSError("Realtime audio settings not confirmed")
                     break
 
-            # A fresh connection and out-of-band response avoid carrying history.
-            # Retry/reconnect are disabled so a failure cannot repeat a paid turn.
+            # Out-of-band response avoids carrying dialogue history. Only the
+            # handshake can be retried; nothing after response.create is retried
+            # because the remote end may already have billed or spoken audio.
             await connection.response.create(response={
                 "conversation": "none", "output_modalities": ["audio"],
                 "max_output_tokens": 4096,
