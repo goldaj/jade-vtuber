@@ -13,10 +13,10 @@ def event(kind, **fields):
     return {"type": kind, **fields}
 
 
-def configured(speed=1.0):
+def configured(speed=1.0, voice="coral"):
     return event("session.updated", session={"type": "realtime", "output_modalities": ["audio"],
                  "audio": {"output": {"format": {"type": "audio/pcm", "rate": 24000},
-                                      "voice": "coral", "speed": speed}}})
+                                      "voice": voice, "speed": speed}}})
 
 
 def created():
