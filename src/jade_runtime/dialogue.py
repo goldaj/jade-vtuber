@@ -88,12 +88,21 @@ class Dialogue:
                 if on_sentence is not None and callable(getattr(self.backend, "complete_stream", None)):
                     sentence_buffer = SentenceAccumulator()
                     answer_parts = []
-                    async for fragment in self.backend.complete_stream(messages):
-                        if not valid():
-                            raise TimeoutError("message expired")
-                        answer_parts.append(fragment)
-                        for sentence in sentence_buffer.feed(fragment):
-                            await on_sentence(sentence)
+                    stream = self.backend.complete_stream(messages)
+                    try:
+                        async for fragment in stream:
+                            if not valid():
+                                raise TimeoutError("message expired")
+                            answer_parts.append(fragment)
+                            for sentence in sentence_buffer.feed(fragment):
+                                await on_sentence(sentence)
+                    finally:
+                        # Breaking out because Discord disconnected or the
+                        # speech consumer failed must close the LLM response
+                        # immediately, not wait for generator finalization.
+                        close = getattr(stream, "aclose", None)
+                        if callable(close):
+                            await close()
                     for sentence in sentence_buffer.finish():
                         await on_sentence(sentence)
                     answer = "".join(answer_parts)
