@@ -3,6 +3,14 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## Voix Étincelle + moteur d'intentions (13 novembre 2026, dernière intervention)
+
+- Livré sur **`develop`** : voix publique par défaut `shimmer` à **1,25×** ; profils alternatifs Friponne et Rosée conservés. `gpt-transcribe` et `gpt-realtime-2.1-mini` inchangés ; **pitch non implémenté**.
+- LLM : préfixe `[INTENT:label]` ; 7 labels statiques contrôlés par `src/jade_runtime/intent_engine.py`. Préfixe supprimé **avant** tout texte public, historique et TTS ; un label par réponse, repli `neutral`, suppression des tags répétés ; le streaming utilise un parseur dédié.
+- Relais détaillé pour Codex : [HANDOFF-CODEX-VOICE-INTENTS-20261113.md](HANDOFF-CODEX-VOICE-INTENTS-20261113.md), [spécification des trois profils](VOICE-PROFILES-20261113.md), [audit PO et QA](REVIEW-INTENT-ETINCELLE-20261113.md).
+- **Validation constatée sur le lot** : GitHub Actions [Windows + Ubuntu](https://github.com/goldaj/jade-vtuber/actions/runs/43486194055) réussi, **422 tests dont 2 ignorés** sur Ubuntu ; [scan des secrets](https://github.com/goldaj/jade-vtuber/actions/runs/43486194147) réussi. Les documents d'index/relais ajoutés après ce SHA doivent être contrôlés indépendamment sur leur SHA final.
+- **Limites :** aucune écoute réelle des sept émotions en français, aucune mesure de la latence ou de la facturation sur ce nouveau profil, aucun contrôle des valeurs privées actives, pas de redémarrage du processus PC et **pas de merge `main`**. Les sept émotions ne sont pas des capacités certifiées de `shimmer`, seulement des directions vocales demandées.
+
 ## Évolution demandée le 13 novembre — texte Discord et personnalité
 
 - Correction de compatibilité : une réponse issue d'un texte Discord est
