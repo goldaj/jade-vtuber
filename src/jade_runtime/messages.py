@@ -38,6 +38,7 @@ class Incoming:
 class Reply:
     source: Incoming
     text: str
+    spoken: bool = False  # Voice already delivered by early pipeline.
 
     def __post_init__(self):
         if not isinstance(self.text, str) or not self.text.strip():
