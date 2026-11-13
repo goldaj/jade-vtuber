@@ -92,6 +92,7 @@ class IntentStreamParser:
         self.intent = "neutral"
         self.resolved = False
         self._head = ""
+        self._trim_next = False
 
     def feed(self, chunk: str) -> str:
         if not isinstance(chunk, str):
@@ -99,6 +100,10 @@ class IntentStreamParser:
         if not chunk:
             return ""
         if self.resolved:
+            if self._trim_next:
+                chunk = chunk.lstrip()
+                if chunk:
+                    self._trim_next = False
             return chunk
         self._head += chunk
         trimmed = self._head.lstrip()
@@ -127,6 +132,7 @@ class IntentStreamParser:
             match = _PREFIX.fullmatch(prefix)
             self.intent = normalize_intent(match.group(1) if match else "")
             result = suffix.lstrip()
+            self._trim_next = not bool(result)
         else:
             result = self._head
         self._head = ""
