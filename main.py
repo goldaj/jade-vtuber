@@ -74,7 +74,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         if avatar_client is not None:
             player.playback_observer = avatar_client.observer("local")
         speech = (SpeechOutput(chat, player,
-                               config.subtitle_path, audio_gate=audio_gate) if voice else None)
+                               config.subtitle_path, audio_gate=audio_gate,
+                               early_timeout_seconds=min(180, config.timeout_seconds + 120)) if voice else None)
         if vts:
             from src.jade_runtime.vtube_studio import VTubeStudio
             vts_client = await scopes.enter_async_context(VTubeStudio(
