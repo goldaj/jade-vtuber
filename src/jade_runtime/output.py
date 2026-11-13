@@ -138,6 +138,74 @@ class SpeechOutput:
             if task is not None:
                 await asyncio.gather(task, return_exceptions=True)
 
+    async def _speak_progressive(self, reply, context, require_session, *, discord_voice):
+        """Use streaming only for Discord with no simultaneous local WAV player.
+
+        The offline demo and local/dual output keep the original WAV adapter.
+        One PCM iterator feeds exactly one Discord player and is cancelled
+        whenever that player stops or its voice session is revoked.
+        """
+        if getattr(self.player, "mode", None) != "none":
+            return False
+        stream_factory = getattr(self.services, "stream_speech_pcm", None)
+        method_name = ("play_pcm_stream_for_reply" if discord_voice
+                       else "play_pcm_stream_for_context")
+        bridge_method = getattr(self.secondary_player, method_name, None)
+        if not callable(stream_factory) or not callable(bridge_method):
+            return False
+        if not discord_voice and context is None:
+            return False
+        stream = stream_factory(reply.text)
+        if stream is None:
+            return False
+
+        gated = False
+        written = False
+        played = False
+        path = self.subtitle_path
+        try:
+            if discord_voice:
+                require_session()
+            if self.audio_gate is not None:
+                await self.audio_gate.begin_speech()
+                gated = True
+            if discord_voice:
+                require_session()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_name(path.name + ".tmp")
+            tmp.write_text(reply.text, encoding="utf-8")
+            tmp.replace(path)
+            written = True
+            if discord_voice:
+                require_session()
+                played = await bridge_method(stream, reply.source)
+            else:
+                valid = getattr(self.secondary_player, "delivery_context_valid", None)
+                if not callable(valid) or not valid(context):
+                    return True  # Destination revoked; do not synthesize.
+                played = await bridge_method(stream, context)
+            if discord_voice and played is True:
+                require_session()
+                acknowledge = getattr(self.secondary_player, "mark_voice_reply_played", None)
+                if callable(acknowledge):
+                    acknowledge(reply.source)
+            return True
+        finally:
+            # The bridge normally closes its iterator. Also close it if the
+            # gate/subtitle preparation failed before playback started.
+            close = getattr(stream, "aclose", None)
+            if callable(close):
+                try:
+                    await close()
+                except Exception:
+                    pass
+            try:
+                if gated:
+                    await self.audio_gate.end_speech()
+            finally:
+                if written:
+                    path.write_text("", encoding="utf-8")
+
     async def speak(self, reply: Reply):
         async with self.lock:
             discord_voice = reply.source.platform == "discord_voice"
@@ -156,6 +224,9 @@ class SpeechOutput:
 
             if discord_voice:
                 require_session()
+            if await self._speak_progressive(
+                    reply, context, require_session, discord_voice=discord_voice):
+                return
             # New adapters can report the words actually spoken; legacy service
             # doubles still provide synthesize_wav only.
             rich_synthesis = getattr(type(self.services), "synthesize_speech", None)
