@@ -17,7 +17,9 @@ Cheveux A/B : candidat natif `assets/live2d/r21_professional_art/working_v005/ja
 
 # Prochaine action exacte
 
-Suivre [le plan professionnel actualisé](PLAN_QUALITE_PRO_20261113.md) : terminer l'étape 2 par la scène de référence visage et VTS ; étape 3, isoler et intégrer les deux sous-calques à une copie KRA/PSD, avec raccords et réimport contrôlé. Observer les mouvements de frange et les combinaisons avant validation. Ne pas régénérer les anciens filtres PSD.
+Scène visage : les essais locaux `blink_handoff_r01/r02` et `blink_align_r01` sont non validés. Les deux premiers produisent respectivement cils gris et double contour ; le troisième rapproche cadre et masque sans inversion de triangles mais conserve un double contour vers 0,04–0,06. Le sprite fermé ne peut pas simplement être translaté hors de son déformeur : tentative refusée avant écriture. Dans Cubism, reprendre l'alignement manuel des keyforms et du déformeur des vrais yeux fermés, sur une copie versionnée ; préserver l'iris géométriquement fixe et vérifier le mouvement continu avant promotion. Cubism est ouvert sur l'essai local d'alignement.
+
+Suivre ensuite [le plan professionnel actualisé](PLAN_QUALITE_PRO_20261113.md) : terminer la scène visage/VTS ; isoler et intégrer les sous-calques dans des copies KRA/PSD, puis poursuivre raccords, rig, physiques et export. Le modèle Huohuo a servi uniquement de référence structurelle : physiques distinctes pour frange, côtés, arrière, épi et oreilles ; pas de copie de ses fichiers. Ne pas régénérer les anciens filtres PSD.
 
 # Fichiers importants
 
@@ -47,4 +49,4 @@ Suivre [le plan professionnel actualisé](PLAN_QUALITE_PRO_20261113.md) : termin
 - Vrais sprites fermés et iris stable au blink ; oreilles normales en Surprise ; plein pied obligatoire.
 - Objectif NON terminé : raccords/art, tête/regard, cheveux souples, oreilles, physiques, idle, expressions/toggles, sync source, export/mapping VTS et contrôle final restent.
 - ScreenToGif uniquement final. Aucun code applicatif modifié.
-- Relance continuer-jade-r21-toutes-les-5-h-10 ACTIVE (310 min), ne pas dupliquer ; désactiver à achèvement réel. Aucun crédit/reset.
+- État actuel de la relance automatique non revérifié ; ne pas dupliquer, désactiver à achèvement réel. Aucun crédit/reset.
