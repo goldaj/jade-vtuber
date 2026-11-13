@@ -20,7 +20,7 @@ Aucune modification de production ou des fichiers privés.
   à un message de Jade, messages privés et commandes `!response`/`!rsp`.
 - Après une réponse effectivement envoyée, relance du **même auteur** pendant
   90 secondes pour ses questions ou enchaînements textuels évidents.
-- Participation spontanée sur une question publique : **15 % de chance**,
+- Participation spontanée sur une question publique : **30 % de chance**,
   maximum une sélection non sollicitée par salon toutes les 180 secondes.
   Pour supprimer complètement les interventions spontanées : définir
   `JADE_DISCORD_TEXT_AUTO_RATE=0`. Les bots ne déclenchent pas ce mode.
@@ -40,7 +40,7 @@ La limite de coût et le rythme des interventions sont configurables.
 
 ```dotenv
 DISCORD_TOKEN=...                          # déjà configuré en privé
-JADE_DISCORD_TEXT_AUTO_RATE=0.15          # 0 = réponses uniquement sollicitées
+JADE_DISCORD_TEXT_AUTO_RATE=0.30          # 0 = réponses uniquement sollicitées
 JADE_DISCORD_TEXT_COOLDOWN_SECONDS=180   # entre 30 et 3600
 ```
 
