@@ -11,12 +11,23 @@ import asyncio
 
 
 class EarlySpeechTurn:
-    def __init__(self, output, source):
+    def __init__(self, output, source, *, max_seconds=180):
+        if not 1 <= max_seconds <= 180:
+            raise ValueError("invalid early speech deadline")
+        self.max_seconds = max_seconds
         self.output = output
         self.source = source
         self._phrases = asyncio.Queue(maxsize=2)
         self._ended = False
-        self._task = asyncio.create_task(self._run(), name="jade-early-speech")
+        self._task = asyncio.create_task(
+            self._run_bounded(), name="jade-early-speech")
+
+    async def _run_bounded(self):
+        # Total turn limit: LLM may emit phrases faster than Discord can play.
+        # Without a deadline, an interrupted or slow stream blocks the runtime
+        # worker indefinitely, even though text delivery has already finished.
+        async with asyncio.timeout(self.max_seconds):
+            return await self._run()
 
     async def _offer(self, text):
         while self._phrases.full():
@@ -95,12 +106,6 @@ class EarlySpeechTurn:
                 tmp.replace(path)
                 written = True
                 played = await bridge.play_pcm_stream_for_reply(audio(), source)
-                if played is True:
-                    require_session()
-                    mark = getattr(bridge, "mark_voice_reply_played", None)
-                    if callable(mark):
-                        mark(source)
-                return played is True
             finally:
                 try:
                     if gated:
@@ -108,3 +113,9 @@ class EarlySpeechTurn:
                 finally:
                     if written:
                         path.write_text("", encoding="utf-8")
+            if played is True:
+                require_session()
+                mark = getattr(bridge, "mark_voice_reply_played", None)
+                if callable(mark):
+                    mark(source)
+            return played is True
