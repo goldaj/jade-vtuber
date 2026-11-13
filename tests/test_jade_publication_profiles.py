@@ -41,7 +41,7 @@ class PublicProfilesTests(unittest.TestCase):
             Settings.load()
 
     def test_pitch_profile_loading_and_private_override(self):
-        self.profile.write_text('[settings]\\nJADE_TTS_PITCH_SEMITONES=2.0\\n', encoding="utf-8")
+        self.profile.write_text('[settings]\nJADE_TTS_PITCH_SEMITONES=2.0\n', encoding="utf-8")
         self.assertEqual(Settings.load().tts_pitch_semitones, 2.0)
         os.environ["JADE_TTS_PITCH_SEMITONES"] = "0"
         self.assertEqual(Settings.load().tts_pitch_semitones, 0.0)
