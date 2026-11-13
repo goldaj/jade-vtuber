@@ -1,5 +1,7 @@
 # Revue croisée PO / architecture / QA / audio — Étincelle et moteur d'intentions
 
+> **Addendum ultérieur :** cette revue décrit l'état **avant** l'intégration du pitch. Le filtre +2 demi-tons est désormais codé sur `develop` sous réserve de FFmpeg Rubber Band ; les tests et les prérequis sont consignés dans [PITCH-SHIFT-ETINCELLE-20261113.md](PITCH-SHIFT-ETINCELLE-20261113.md). Aucun rendu vocal réel n'a été validé ; conserver les conclusions de recette ouverte.
+
 **Date :** 13 novembre 2026  
 **Branche :** `develop` uniquement, pas de déploiement local.  
 **Référence fonctionnelle :** [VOICE-PROFILES-20261113.md](VOICE-PROFILES-20261113.md).
