@@ -11,12 +11,14 @@ Terminer Jade r21 professionnel, plein pied et fonctionnel dans VTube Studio. Mo
 
 # Étape en cours
 
+Étape 1 : v30, r02, KRA, PSD et maître comparés aux objets LFS ; `python jade-modeling/verify_assets.py` réussit après correction de l'empreinte du présent suivi dans le manifeste. Package r20 présent et 23 références vérifiées ; rendu VTube Studio non recetté.
+
 Cheveux A/B : candidat v30.TEST_hair_leaves_r02 créé (SHA68617D558A59593E54C2582AB7845FFA317D8A7E0676E25D5B5514B083C95F62), pas encore natif. Neuf feuilles, neuf paramètres indépendants et 45 poses ; deux LOWER reconnectés, deux bandes TEMPLE arrière ajoutées. VTS inchangé.
 Le 13 novembre, r02 a été chargé dans Cubism 5.2.03 PRO et observé au neutre et à HeadZ ±30 ; les ouvertures/décrochés aux épaules restent visibles aux extrêmes. r01 avait été testé LockL ±1 précédemment. Aucun v31 enregistré ; ne pas écraser v30 ni r01/r02.
 
 # Prochaine action exacte
 
-Suivre [le plan professionnel actualisé](PLAN_QUALITE_PRO_20261113.md) : identifier les sources et travaux concurrents, puis corriger la matière cachée et les raccords d'épaules sur copie avant d'amplifier le rig. Examiner une pose de frange et les combinaisons requises avant de promouvoir un nouveau checkpoint natif ; v31 n'est pas acquis.
+Suivre [le plan professionnel actualisé](PLAN_QUALITE_PRO_20261113.md) : étape 2, comparer les défauts observés à la copie d'art arrière `assets/live2d/r21_professional_art/Jade_r21_rear_hair_underpaint_candidate_v1.png` du poste modèle, qui n'est pas encore intégrée ni suivie dans ce dépôt. Créer ensuite deux sous-calques derrière les épaules dans une copie, vérifier leur raccord en mouvement, puis seulement les intégrer au CMO3. Examiner une pose de frange et les combinaisons avant de promouvoir un checkpoint ; v31 n'est pas acquis.
 
 # Fichiers importants
 

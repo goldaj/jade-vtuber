@@ -5,3 +5,7 @@ Couverture partielle : échanges disponibles dans la tâche modèle ; heures ind
 **Utilisateur — résumé :** poursuivre le travail, documenter et pousser les éléments utiles sans polluer le dépôt par toutes les versions ; examiner et intégrer les branches pertinentes. Étudier la vidéo de Mari Yume et approfondir ses sujets ; proposer un plan détaillé, intégré aux plans existants, pour un modèle et une utilisation de Jade professionnels. L'exécution du nouveau plan est destinée à une reprise sous Terra. Le dépôt local et GitHub ont changé.
 
 **Assistant — résumé :** repérage du dépôt officiel `goldaj/jade-vtuber` et de sa branche `develop`, distincts de l'ancien chemin modèle sans remote. Préparation du plan [modèle et utilisation](../../jade-modeling/PLAN_QUALITE_PRO_20261113.md), basé sur la description et les chapitres accessibles de la vidéo et des sources officielles ; la transcription complète n'était pas accessible. Les défauts visuels encore présents et l'absence de validation finale restent signalés.
+
+**Utilisateur — résumé :** exécuter le plan sans s'arrêter et annoncer le début et la fin de chaque étape et sous-étape.
+
+**Assistant — résumé :** vérification des sources et références du paquet r20, correction d'une empreinte documentaire obsolète ; création d'un essai local d'art arrière, non intégré ni validé. Les zones de cheveux cachées aux épaules demandent encore une correction sur copie et une vérification dans Cubism.
