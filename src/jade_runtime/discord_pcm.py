@@ -87,6 +87,16 @@ class DiscordPCMBuffer:
             await self._offer(frame)
         self._done.set()
 
+    def _silence(self) -> bytes:
+        # Playback-time silence is just as important as audible PCM for
+        # animation: explicitly close the mouth during an underrun.
+        if self._on_frame is not None:
+            try:
+                self._on_frame(_SILENCE)
+            except Exception:
+                pass
+        return _SILENCE
+
     def read(self) -> bytes:
         """Called by Discord voice player's independent thread every 20 ms."""
         if self._aborted.is_set():
@@ -96,7 +106,7 @@ class DiscordPCMBuffer:
                 if time.monotonic() - self._last_progress > self._idle_timeout:
                     self.abort()
                     return b""
-                return _SILENCE
+                return self._silence()
             self._started = True
         try:
             frame = self._frames.get_nowait()
@@ -106,7 +116,7 @@ class DiscordPCMBuffer:
             if time.monotonic() - self._last_progress > self._idle_timeout:
                 self.abort()
                 return b""
-            return _SILENCE
+            return self._silence()
         self._last_progress = time.monotonic()
         if self._on_frame is not None:
             try:
