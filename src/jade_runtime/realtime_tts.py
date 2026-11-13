@@ -88,6 +88,45 @@ class RealtimeTTS:
         return (await self.synthesize(text)).audio
 
     async def synthesize(self, text: str) -> SpokenAudio:
+        return await self._synthesize(text)
+
+    async def stream_pcm(self, text: str):
+        """Yield 24 kHz mono signed PCM before response.done, with one billable turn.
+
+        No text, keys or PCM are persisted. The queue bounds transport-to-consumer
+        buffering; closing the generator cancels the upstream response. A provider
+        error after audio emission propagates without retrying the spoken portion.
+        """
+        queue = asyncio.Queue(maxsize=16)  # at most 16 x 9,600-byte fragments
+        async def offer(chunk):
+            for offset in range(0, len(chunk), 9600):
+                await queue.put(chunk[offset:offset + 9600])
+
+        task = asyncio.create_task(self._synthesize(text, on_chunk=offer))
+        try:
+            while True:
+                if task.done() and queue.empty():
+                    await task  # propagate terminal validation errors
+                    return
+                pull = asyncio.create_task(queue.get())
+                try:
+                    done, _ = await asyncio.wait((pull, task),
+                                                 return_when=asyncio.FIRST_COMPLETED)
+                    if pull in done:
+                        yield pull.result()
+                    elif task.done() and queue.empty():
+                        await task
+                        return
+                finally:
+                    if not pull.done():
+                        pull.cancel()
+                    await asyncio.gather(pull, return_exceptions=True)
+        finally:
+            if not task.done():
+                task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+    async def _synthesize(self, text: str, *, on_chunk=None) -> SpokenAudio:
         if not isinstance(text, str) or not text.strip() or len(text) > 4096:
             raise ValueError("invalid speech text")
         if self.verify_transcript and not _words(text):
@@ -98,7 +137,7 @@ class RealtimeTTS:
                     model=self.model, max_retries=0, max_queue_size=64,
                     websocket_connection_options={"max_size": 1_048_576},
                 ) as connection:
-                    return await self._request(connection, text)
+                    return await self._request(connection, text, on_chunk=on_chunk)
         except asyncio.CancelledError:
             raise
         except TimeoutError:
@@ -108,11 +147,12 @@ class RealtimeTTS:
         except Exception:
             raise RealtimeTTSError("Realtime synthesis failed") from None
 
-    async def _request(self, connection, text: str) -> SpokenAudio:
+    async def _request(self, connection, text: str, *, on_chunk=None) -> SpokenAudio:
         response_requested = False
         response_finished = False
         response_id = None
         pcm = bytearray()
+        audio_bytes = 0
         transcript = None
         content_identity = None
         event_count = 0
@@ -188,15 +228,21 @@ class RealtimeTTS:
                     content_identity = identity
                     delta = _field(event, "delta")
                     if (not isinstance(delta, str)
-                            or len(delta) > ((self.max_audio_bytes - len(pcm) + 2) // 3) * 4):
+                            or len(delta) > ((self.max_audio_bytes - audio_bytes + 2) // 3) * 4):
                         raise RealtimeTTSError("Synthesized audio exceeds local limit")
                     try:
                         chunk = base64.b64decode(delta, validate=True)
                     except (ValueError, binascii.Error):
                         raise RealtimeTTSError("Invalid synthesized audio") from None
-                    if len(pcm) + len(chunk) > self.max_audio_bytes:
+                    if audio_bytes + len(chunk) > self.max_audio_bytes:
                         raise RealtimeTTSError("Synthesized audio exceeds local limit")
-                    pcm.extend(chunk)
+                    if len(chunk) % 2:
+                        raise RealtimeTTSError("Invalid synthesized audio")
+                    audio_bytes += len(chunk)
+                    if on_chunk is None:
+                        pcm.extend(chunk)
+                    elif chunk:
+                        await on_chunk(chunk)
                 elif kind == "response.output_audio_transcript.done":
                     if not response_id or _field(event, "response_id") != response_id:
                         raise RealtimeTTSError("Unexpected audio transcript")
@@ -222,7 +268,9 @@ class RealtimeTTS:
                         raise RealtimeTTSError("Synthesized audio transcript missing")
                     if self.verify_transcript and _words(transcript) != _words(text):
                         raise RealtimeTTSError("Synthesized wording differs from the text")
-                    return SpokenAudio(_wav(bytes(pcm)), transcript)
+                    if not audio_bytes:
+                        raise RealtimeTTSError("Invalid synthesized audio")
+                    return SpokenAudio(_wav(bytes(pcm)) if on_chunk is None else b"", transcript)
         finally:
             if response_requested and not response_finished:
                 try:
