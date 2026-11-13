@@ -27,7 +27,7 @@ class SentenceTests(unittest.TestCase):
         self.assertEqual(stream.finish(), [])
 
     def test_bounded_untrusted_fragments(self):
-        stream = SentenceAccumulator(max_total=100)
+        stream = SentenceAccumulator(max_pending=80, max_total=100)
         with self.assertRaises(ValueError):
             stream.feed("x" * 101)
 
