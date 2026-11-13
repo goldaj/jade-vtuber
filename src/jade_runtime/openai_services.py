@@ -1,5 +1,6 @@
 """The **only** speech/voice AI provider: OpenAI. Lazy SDK initialization."""
 from io import BytesIO
+import inspect
 
 from .config import Settings
 from .openai_client import isolated_openai_client
@@ -30,6 +31,28 @@ class OpenAIServices:
         if not value:
             raise ValueError("OpenAI returned no dialogue text")
         return value
+
+    async def complete_stream(self, messages: list[dict[str, str]]):
+        """Yield OpenAI chat token fragments; do not retry on partial output."""
+        stream = await self.client.chat.completions.create(
+            model=self.settings.model, messages=messages,
+            max_completion_tokens=160, stream=True,
+        )
+        try:
+            async for chunk in stream:
+                for choice in getattr(chunk, "choices", ()):
+                    reason = getattr(choice, "finish_reason", None)
+                    if reason not in (None, "stop"):
+                        raise ValueError("OpenAI dialogue stream ended incompletely")
+                    delta = getattr(getattr(choice, "delta", None), "content", None)
+                    if isinstance(delta, str) and delta:
+                        yield delta
+        finally:
+            close = getattr(stream, "close", None)
+            if callable(close):
+                closing = close()
+                if inspect.isawaitable(closing):
+                    await closing
 
     async def transcribe_wav(self, audio: bytes) -> str:
         if not isinstance(audio, bytes) or not 44 <= len(audio) <= 20_000_000:
