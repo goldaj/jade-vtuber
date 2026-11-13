@@ -50,6 +50,34 @@ class PCMBufferTests(unittest.IsolatedAsyncioTestCase):
             await asyncio.wait_for(task, 1)
         self.assertEqual(buffer.read(), b"")
 
+    async def test_metrics_separate_initial_silence_from_live_underruns(self):
+        buffer = DiscordPCMBuffer(prebuffer_frames=2)
+        self.assertEqual(buffer.read(), b"\x00" * FRAME_BYTES)
+        await buffer.feed(b"\x12\x00" * (480 * 2))
+        self.assertTrue(any(buffer.read()))
+        self.assertTrue(any(buffer.read()))
+        self.assertEqual(buffer.read(), b"\x00" * FRAME_BYTES)
+        stats = buffer.metrics()
+        self.assertEqual(stats.frames_read, 4)
+        self.assertEqual(stats.prebuffer_silence_frames, 1)
+        self.assertEqual(stats.underrun_silence_frames, 1)
+        self.assertEqual(stats.max_queued_frames, 2)
+        self.assertIsNotNone(stats.first_nonzero_read_ms)
+        self.assertGreaterEqual(stats.first_nonzero_read_ms, 0)
+        self.assertNotIn("pcm", repr(stats).lower())
+        buffer.abort()
+
+    async def test_large_pcm_input_never_buffers_full_expansion(self):
+        buffer = DiscordPCMBuffer(max_frames=5)
+        task = asyncio.create_task(buffer.feed(b"\x11\x00" * (480 * 200)))
+        await asyncio.sleep(0.03)
+        self.assertFalse(task.done())
+        self.assertLessEqual(len(buffer._tail), FRAME_BYTES)
+        self.assertLessEqual(buffer.metrics().max_queued_frames, 5)
+        buffer.abort()
+        with self.assertRaises(RuntimeError):
+            await asyncio.wait_for(task, 1)
+
     async def test_invalid_pcm_never_becomes_audio(self):
         buffer = DiscordPCMBuffer()
         with self.assertRaises(ValueError):
@@ -202,6 +230,10 @@ class StreamBridgeTests(unittest.IsolatedAsyncioTestCase):
         release.set()
         self.assertTrue(await asyncio.wait_for(task, 2))
         self.assertTrue(any(event == "pcm_level" for event, _ in events))
+        stats = self.bridge.last_pcm_metrics
+        self.assertIsNotNone(stats)
+        self.assertIsNotNone(stats.first_nonzero_read_ms)
+        self.assertGreater(stats.frames_read, 0)
         self.assertEqual([event for event, _ in events if event in ("pcm_start", "pcm_end")],
                          ["pcm_start", "pcm_end"])
         self.assertGreater(self.connection.stops, 0)
