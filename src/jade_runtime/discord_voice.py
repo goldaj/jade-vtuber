@@ -14,9 +14,11 @@ import tempfile
 import threading
 import time
 import secrets
+import struct
 import wave
 
 from .messages import Incoming
+from .discord_pcm import DiscordPCMBuffer, make_discord_source
 from .orchestrator import Work
 from .voice_turns import PcmTurnSegmenter
 from .voice_decision import ConversationTurnDecider
@@ -715,6 +717,14 @@ class DiscordVoiceBridge:
             raise PermissionError("Discord voice reply source is not authorized")
         return await self.play(wav, expected_session=session_id, expected_speaker=speaker_id)
 
+    async def play_pcm_stream_for_reply(self, chunks, source):
+        """Session-bound progressive audio; no second OpenAI request."""
+        if not self.reply_authorized(source):
+            raise PermissionError("Discord voice reply source is not authorized")
+        return await self.play_pcm_stream(
+            chunks, expected_session=source.voice_session_id,
+            expected_speaker=source.speaker_id)
+
     def mark_voice_reply_played(self, source):
         """Acknowledge a successfully played reply in its still-valid session."""
         if not self.reply_authorized(source):
@@ -770,6 +780,106 @@ class DiscordVoiceBridge:
             except Exception:
                 import logging
                 logging.getLogger("jade.discord.voice").warning("Playback observer failed")
+
+    async def play_pcm_stream(self, chunks, *, expected_session=None, expected_speaker=None):
+        """Play 24 kHz mono PCM incrementally as 20 ms Discord PCM frames.
+
+        Transport snapshots, mute and generation checks remain authoritative.
+        No WAV temp file, FFmpeg process or duplicate TTS invocation. A stream
+        error after first playback stops the voice, never replays a full answer.
+        """
+        connection = self.connection
+        if connection is None:
+            return False
+        with self.buffers_lock:
+            generation, session_id = self.generation, self.session_id
+            if (expected_session is not None and
+                    (session_id != expected_session
+                     or not self._playback_speaker_valid_locked(expected_speaker))):
+                raise PermissionError("Discord voice reply is from another session")
+        await self._require_playback_authorization(connection, generation, session_id)
+        if connection.is_playing():
+            return False
+        self._begin_playback(connection, generation, session_id)
+        observer = self.playback_observer
+        loop = asyncio.get_running_loop()
+        done = asyncio.Event()
+        failure = []
+        source = None
+        iterator = None
+        started = False
+
+        def observed_frame(frame):
+            # The audio thread reports actual consumed frames, not future TTS.
+            samples = struct.iter_unpack("<h", frame)
+            power = sum(value * value for (value,) in samples) / (len(frame) // 2)
+            level = min(1.0, (power ** 0.5) / 10000.0)
+            try:
+                loop.call_soon_threadsafe(self._notify_playback, observer, "pcm_level", level)
+            except RuntimeError:
+                pass
+
+        buffer = DiscordPCMBuffer(on_frame=observed_frame)
+        def after(err):
+            if err is not None:
+                failure.append(True)  # Do not log Discord's exception text.
+            buffer.abort()
+            try:
+                loop.call_soon_threadsafe(done.set)
+            except RuntimeError:
+                pass
+
+        try:
+            source = make_discord_source(buffer)
+            await self._require_playback_authorization(connection, generation, session_id)
+            connection.play(source, after=after)
+            started = True
+            self._notify_playback(observer, "pcm_start", None)
+            iterator = chunks.__aiter__()
+            while True:
+                pending = asyncio.create_task(iterator.__anext__())
+                try:
+                    while not pending.done():
+                        if done.is_set() or buffer.aborted:
+                            raise RuntimeError("Discord PCM playback ended before TTS")
+                        await self._require_playback_authorization(
+                            connection, generation, session_id)
+                        await asyncio.wait({pending}, timeout=0.05)
+                    try:
+                        chunk = pending.result()
+                    except StopAsyncIteration:
+                        break
+                finally:
+                    if not pending.done():
+                        pending.cancel()
+                    await asyncio.gather(pending, return_exceptions=True)
+                if done.is_set() or buffer.aborted:
+                    raise RuntimeError("Discord PCM playback ended before TTS")
+                await self._require_playback_authorization(connection, generation, session_id)
+                await buffer.feed(chunk)
+            await buffer.finish()
+            await asyncio.wait_for(done.wait(), timeout=120)
+            if failure:
+                raise RuntimeError("Discord PCM playback failed")
+            await self._require_playback_authorization(connection, generation, session_id)
+            return True
+        finally:
+            buffer.abort()
+            if iterator is not None:
+                close = getattr(iterator, "aclose", None)
+                if callable(close):
+                    try:
+                        await close()
+                    except Exception:
+                        pass
+            if started:
+                self._notify_playback(observer, "pcm_end", None)
+            if source is not None:
+                try:
+                    self._stop_playback(connection)
+                finally:
+                    source.cleanup()
+            self._end_playback()
 
     async def play(self, wav: bytes, *, expected_session=None, expected_speaker=None):
         """Optional playback of OpenAI-generated WAV, never a TTS engine."""
@@ -932,6 +1042,11 @@ class OpenVoiceBridge(DiscordVoiceBridge):
         if not self.delivery_context_valid(context):
             raise PermissionError("Discord voice destination changed")
         return await self.play(wav, expected_session=context.session_id)
+
+    async def play_pcm_stream_for_context(self, chunks, context):
+        if not self.delivery_context_valid(context):
+            raise PermissionError("Discord voice destination changed")
+        return await self.play_pcm_stream(chunks, expected_session=context.session_id)
 
     async def _connect_locked(self, client):
         if self.connection is not None:
