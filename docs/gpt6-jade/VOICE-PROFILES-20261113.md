@@ -1,7 +1,7 @@
-# Jade — trois profils vocaux à évaluer (propositions, non implémentées)
+# Jade — Étincelle sélectionnée, intentions et pitch +2 optionnel
 
 **Date :** 13 novembre 2026  
-**Statut au 13 novembre (dernière décision) :** Étincelle sélectionnée en configuration **publique par défaut** ; moteur d'intention implémenté ; rendu réel non validé sur téléphone, et configuration privée potentiellement prioritaire. Friponne et Rosée conservées.  
+**Statut au 13 novembre (dernière décision) :** Étincelle sélectionnée en configuration **publique par défaut** ; moteur d'intention implémenté ; filtre de pitch local +2 demi-tons désormais codé mais dépendant de FFmpeg Rubber Band ; rendu réel non validé sur téléphone, et configuration privée potentiellement prioritaire. Friponne et Rosée conservées.  
 **Branche de travail :** `develop` ; code et défauts publics modifiés, **aucun déploiement du PC ni changement garanti de la configuration privée**.
 
 ## 1. Contexte et objectif produit
@@ -22,7 +22,7 @@ Avant la décision du 13 novembre, [`src/jade_runtime/config.py`](../../src/jade
 
 La configuration réellement chargée au lancement **peut différer** à cause des variables d'environnement, du fichier de secrets externe ou des profils locaux. Ne pas déduire du Git public la voix actuellement audible sur le PC de Goldaj.
 
-**Limitation API :** `voice` et `speed` sont des réglages Realtime. **Aucun réglage numérique natif `pitch` n'est exposé**. Les valeurs de pitch ci-dessous sont des **objectifs exploratoires de post-traitement** (en demi-tons) nécessitant une étude de faisabilité, de qualité des formants, de latence et de coût CPU. Elles ne sont pas des valeurs d'environnement existantes, ne doivent pas être transmises comme paramètres au modèle, et ne garantissent pas l'âge perçu. Le moteur actuel impose 0,25 à 1,5 pour la vitesse.
+**Limitation API :** `voice` et `speed` sont des réglages Realtime. **Aucun réglage numérique natif `pitch` n'est exposé** : la hauteur est ajustée localement depuis la décision ultérieure via [le filtre DSP optionnel](PITCH-SHIFT-ETINCELLE-20261113.md). Les valeurs de pitch ci-dessous sont des **objectifs exploratoires de post-traitement** (en demi-tons) nécessitant une étude de faisabilité, de qualité des formants, de latence et de coût CPU. Elles ne sont pas des valeurs d'environnement existantes, ne doivent pas être transmises comme paramètres au modèle, et ne garantissent pas l'âge perçu. Le moteur actuel impose 0,25 à 1,5 pour la vitesse.
 
 Le système actuel demande au TTS de lire exactement le texte, sans ajouter, omettre ni expliquer. Une future direction vocale doit conserver cette fidélité et ne pas transformer le moteur TTS en second auteur de réponses.
 
@@ -36,7 +36,7 @@ Toutes les valeurs restent **provisoires**, sujettes à disponibilité effective
 | **Friponne** | Impertinente et assurée | `coral` | **1,20×** | **+1 demi-ton** | Taquineries complices ; ironie légère ; diction précise |
 | **Rosée** | Douce, joueuse et pudique | `marin` | **1,15×** | **+1,5 demi-ton** | Mélodie légère ; timidité perceptible uniquement aux moments tendres |
 
-*Pitch : expérimentation de post-traitement **non implémentée** ; première comparaison à effectuer aussi **sans modification de pitch** pour ne pas confondre effet du moteur et artefact de traitement.*
+*Pitch : Étincelle (+2 demi-tons) dispose désormais d'un post-traitement local optionnel [documenté ici](PITCH-SHIFT-ETINCELLE-20261113.md) ; il nécessite FFmpeg avec Rubber Band et reste à valider à l'écoute. Les valeurs Friponne/Rosée restent des propositions non activées. Comparer toujours avec le timbre natif (pitch 0).*
 
 ### A. Étincelle — piste recommandée pour le premier test
 
@@ -121,7 +121,7 @@ La première étude ne retenait aucune voix. **La décision a évolué depuis : 
 
 - Valeurs publiques de défaut : `JADE_TTS_VOICE=shimmer`, `JADE_TTS_SPEED=1.25`; `gpt-transcribe` et `gpt-realtime-2.1-mini` **inchangés**.
 - **Ne pas confondre défaut Git et instance en cours** : le profil privé local, le fichier de secrets ou les variables d'environnement peuvent imposer d'autres paramètres ; aucun déploiement/restart sur le PC n'est garanti par ce commit.
-- **Pitch +2 demi-tons non implémenté**, car ni paramètre natif Realtime ni filtre PCM préservant les formants / la faible latence n'ont été validés. Le profil Étincelle désigne pour le moment la voix native `shimmer` avec une diction orientée jeune adulte vive.
+- **Pitch +2 demi-tons implémenté depuis** via le filtre PCM optionnel FFmpeg Rubber Band (`JADE_TTS_PITCH_SEMITONES=2.0`). L'API OpenAI n'expose pas ce paramètre ; si FFmpeg ne possède pas le filtre, Jade conserve le son natif. **Le rendu réel et la latence restent non validés sur le PC**. Voir [la passation du filtre](PITCH-SHIFT-ETINCELLE-20261113.md).
 - Les deux autres profils restent des pistes **conservées**, pas des profils effacés. Pas de changement du prompt de personnalité de Goldaj.
 
 ### 7.1 Contrat de données de l'inférence
@@ -190,6 +190,6 @@ Pour chaque future intention : (1) justification métier ; (2) libellé stable ;
 - [GitHub Actions, Jade rebuild offline tests](https://github.com/goldaj/jade-vtuber/actions/runs/43483132687) : **Windows et Ubuntu réussis**, le 13 novembre 2026.
 - Journal Ubuntu : **416 tests, 2 ignorés** ; compilation Python et smoke test hors ligne réussis.
 - Le scan des secrets sur ce même SHA a également réussi.
-- **Limite explicite :** la CI ne vérifie ni l'effet émotionnel audible de `shimmer`, ni le rendu réel sur Discord/téléphone, ni les profils privés ni le filtre pitch (+2 demi-tons) qui n'existe pas. Pas d'API OpenAI payante appelée par ces tests.
+- **Limite explicite :** la CI ne vérifie ni l'effet émotionnel audible de `shimmer`, ni le rendu réel sur Discord/téléphone, ni les profils privés ni le filtre pitch (+2 demi-tons), ajouté dans une phase postérieure à cette exécution CI. Pas d'API OpenAI payante appelée par ces tests.
 
 **Documentation OpenAI :** [Realtime prompting](https://developers.openai.com/api/docs/guides/voice-prompting?voice-api=realtime), [Realtime sessions](https://developers.openai.com/api/reference/resources/realtime/subresources/sessions/methods/create).
