@@ -101,13 +101,14 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 await optional("discord", lambda: discord_client.send_chat(reply.source.channel, reply.text))
             if vts_client is not None and config.vts_speak_hotkey:
                 await optional("vts", lambda: vts_client.trigger_hotkey(config.vts_speak_hotkey))
-            if speech is not None:
+            if speech is not None and not reply.spoken:
                 # TTS and the ensuing playback share this deadline. The old
                 # 20-second total could cut off an otherwise valid answer.
                 await optional("voice", lambda: speech.speak(reply),
                                timeout=min(180, config.timeout_seconds + 120))
 
-        runtime = Runtime(dialogue, on_reply, config.max_queue)
+        runtime = Runtime(dialogue, on_reply, config.max_queue,
+                          on_stream_start=(speech.start_early if speech and config.early_voice else None))
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(
