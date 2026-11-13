@@ -12,6 +12,12 @@ sans présenter les mocks comme des tests d'API réels.
 - Validation locale de cette correction : **405 tests hors ligne réussis** et
   compilation Python réussie. La CI Windows/Linux et le scan de secrets du
   commit GPT-6 `6727019` ont réussi ; la CI de tout commit ultérieur est distincte.
+- Après mise à jour locale et redéploiement du code `98126e9`, le processus
+  Jade est actif, le bot est connecté au vocal Discord et la fenêtre animée r20
+  est présente. Les paramètres du lancement conservent le débit ×1,5 et le mode
+  vocal progressif. Le prompt standard est actif ; aucun prompt privé configuré
+  ne le remplace. L'écoute réelle, la nouvelle participation écrite et le partage
+  vidéo restent à vérifier par le propriétaire.
 - Participation spontanée rehaussée de **15 % à 30 %**, délai minimal
   conservé de trois minutes par salon, sans appel LLM pour la lecture passive.
 - Le prompt standard de Jade présente Goldaj comme son père dans l'univers du
