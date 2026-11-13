@@ -3,7 +3,7 @@ from io import BytesIO
 
 from .config import Settings
 from .openai_client import isolated_openai_client
-from .realtime_tts import RealtimeTTS, SpokenAudio
+from .realtime_tts import RealtimeTTS, SpokenAudio, RealtimeConnectionPool
 
 
 class OpenAIServices:
@@ -14,6 +14,11 @@ class OpenAIServices:
             settings.require_openai()
             client = isolated_openai_client(settings)
         self.client = client
+        self._stream_pool = RealtimeConnectionPool(client)
+
+    async def close(self):
+        await self._stream_pool.close()
+        await self.client.close()
 
     async def complete(self, messages: list[dict[str, str]]) -> str:
         response = await self.client.chat.completions.create(
@@ -85,6 +90,7 @@ class OpenAIServices:
         return RealtimeTTS(
             self.client, model=self.settings.tts_model, voice=self.settings.voice,
             timeout_seconds=self.settings.timeout_seconds, verify_transcript=False,
+            connection_pool=self._stream_pool,
         ).stream_pcm(text)
 
     async def synthesize_wav(self, text: str) -> bytes:
