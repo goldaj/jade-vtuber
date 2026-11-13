@@ -3,6 +3,21 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## Chantier isolé — participation écrite Discord (13 novembre 2026)
+
+- Branche `feat/discord-text-contextual-20261113` depuis `develop` après
+  confirmation de la fusion de la PR #1 (streaming vocal).
+- Lecture passive en mémoire bornée par salon ; mentions directes et fils de
+  réponse, relances du même auteur après envoi réussi, questions spontanées
+  limitées par probabilité et cooldown. La voix existante reste distincte.
+- Paramètres : `JADE_DISCORD_TEXT_AUTO_RATE=0.15` (0 pour désactiver
+  l'initiative) et `JADE_DISCORD_TEXT_COOLDOWN_SECONDS=180`.
+- Tests unitaires hors ligne ajoutés ; le résultat CI du dernier SHA doit
+  être vérifié avant toute fusion. Pas de recette Discord réelle ni d'appel
+  facturé dans cette intervention.
+- Passation complète : [Discord texte](HANDOFF-DISCORD-TEXT-20261113.md).
+  `develop` et `main` restent inchangées.
+
 ## Intégration Terra / GPT-6 — streaming vocal (13 novembre 2026)
 
 - Fusion du chantier parallèle : PCM Discord par blocs, connexion TTS Realtime
