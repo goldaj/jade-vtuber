@@ -162,21 +162,16 @@ class RealtimeTTS:
         try:
             while True:
                 if task.done() and queue.empty():
-                    await task  # propagate terminal validation errors
+                    await task  # terminal provider error is never swallowed
                     return
-                pull = asyncio.create_task(queue.get())
                 try:
-                    done, _ = await asyncio.wait((pull, task),
-                                                 return_when=asyncio.FIRST_COMPLETED)
-                    if pull in done:
-                        yield pull.result()
-                    elif task.done() and queue.empty():
-                        await task
-                        return
-                finally:
-                    if not pull.done():
-                        pull.cancel()
-                    await asyncio.gather(pull, return_exceptions=True)
+                    # queue.get wakes immediately for PCM. The short timeout
+                    # only lets us observe a producer that finished with zero
+                    # further chunks; it avoids a completed-task busy loop.
+                    chunk = await asyncio.wait_for(queue.get(), timeout=0.05)
+                except TimeoutError:
+                    continue
+                yield chunk
         finally:
             if not task.done():
                 task.cancel()
