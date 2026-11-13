@@ -105,6 +105,7 @@ class DiscordVoiceBridge:
         self._playback_active = False
         # Optional non-blocking observer for downstream avatar animation.
         self.playback_observer = None
+        self.last_pcm_metrics = None  # Last turn only; numeric, no user/audio data.
         self._audio_epoch = 0
         self._segmenter = PcmTurnSegmenter(max_users=MAX_PENDING_USERS, rms_threshold=threshold)
         self._decider = ConversationTurnDecider()
@@ -801,6 +802,7 @@ class DiscordVoiceBridge:
         if connection.is_playing():
             return False
         self._begin_playback(connection, generation, session_id)
+        self.last_pcm_metrics = None
         observer = self.playback_observer
         loop = asyncio.get_running_loop()
         done = asyncio.Event()
@@ -865,6 +867,9 @@ class DiscordVoiceBridge:
             return True
         finally:
             buffer.abort()
+            # First non-zero frame means consumed by Discord's audio player,
+            # not sound confirmed at the remote user's phone.
+            self.last_pcm_metrics = buffer.metrics()
             try:
                 if iterator is not None:
                     close = getattr(iterator, "aclose", None)
