@@ -18,7 +18,8 @@ websockets = {version = ">=13,<17", optional = true}
 sounddevice = {version = ">=0.5,<1", optional = true}
 discord-ext-voice-recv = {version = "0.5.2a179", optional = true}
 pynacl = {version = ">=1.5,<2", optional = true}
-davey = {version = "0.2.0", optional = true}
+# discord.py 2.7.1 uses the pre-0.2 MLS transition API; upgrade both together.
+davey = {version = "0.1.7", optional = true}
 live2d-py = {version = "1.0.0", optional = true}
 pygame = {version = "2.6.1", optional = true}
 PyOpenGL = {version = "3.1.10", optional = true}

@@ -13,9 +13,8 @@ validés de `develop` vers `main` selon les instructions du propriétaire.
 
 La contre-revue Astra du dépôt public est consignée dans le
 [rapport de reprise Terra](docs/migration/2026-11-02/08-ASTRA-CONTROLE-DEPOT-PUBLIC.md).
-Pour cette reprise, le propriétaire demande de terminer la revue puis de laisser
-Terra exécuter la suite. Si le chat est relancé alors qu'il est encore sous Astra,
-demander simplement le passage à Terra avant de poursuivre les travaux.
+Les consignes de relais de cette revue sont historiques ; appliquer les
+instructions courantes du paragraphe Runtime ci-dessous pour la reprise actuelle.
 
 Ne jamais committer de secrets, fichiers de configuration privés, enregistrements ni transcriptions. La configuration privée est externe au dépôt et peut être sélectionnée avec `JADE_SECRETS_FILE`. Ne pas divulguer son contenu. Ne pas activer de connecteur, microphone ou appel payant sans demande explicite.
 
@@ -25,8 +24,12 @@ Sous Windows, privilégier `D:\Codex` pour les outils, caches, temporaires et no
 
 La revue MVP du 10 novembre et le relais courant sont dans
 [ASTRA-REVUE-MVP-20261110.md](docs/gpt6-jade/ASTRA-REVUE-MVP-20261110.md).
-Cette revue est terminée. Le propriétaire demande de faire les corrections sous
-Terra ; en cas de simple relance sous Astra, demander le passage sous Terra.
+Cette revue est terminée. Le propriétaire a ensuite autorisé Astra à résoudre
+la panne DAVE et confirmé la réponse vocale réelle. Le relais courant est le
+[plan de réduction de latence](docs/gpt6-jade/PLAN-LATENCE-20261110.md) : documentation
+terminée, développements à attendre sous Terra. Jusque-là, répondre seulement
+« doc latence ok » aux simples relances. Le partage vidéo sur téléphone reste
+différé à la disponibilité du propriétaire ; ne pas le déclarer validé.
 
 Python ; STT et TTS OpenAI uniquement ; dialogue interchangeable. Par défaut, la démo et les tests restent hors ligne. La validation repose sur `python -m unittest discover -s tests -v` et `python -m compileall -q src main.py`. Distinguer les tests simulés des essais réels. Consigner les résultats observés et leurs limites dans `docs/gpt6-jade/TASKS.md`.
 

@@ -3,6 +3,34 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## État courant — voix rétablie et relais latence (10 novembre 2026)
+
+- Panne réelle DAVE corrigée par le verrou `davey==0.1.7` avec `discord.py==2.7.1` :
+  la version 0.2.0 exige des transitions de clés absentes de ce consommateur.
+  Le propriétaire confirme maintenant que Jade répond depuis son téléphone.
+- Validation après changement de dépendance : **330 tests hors ligne réussis**,
+  compilation, cohérence du lock Poetry et `pip check` réussis. Les résultats CI
+  antérieurs ne sont pas attribués au nouveau commit ; consulter ses checks GitHub.
+- Nouveau [portrait r21](../../assets/branding/README.md) appliqué au profil du bot
+  Discord, puis confirmé par relecture API. Sources artistiques préservées.
+- Le propriétaire a vu le modèle bouger en local. Le rendu essayé est r20 dans
+  sa fenêtre autonome ; VTube Studio est installé mais son connecteur n'est pas
+  configuré dans l'environnement actif. Partage vidéo téléphone différé, dernière
+  session Discord PC contrôlée encore à reconnecter. Procédure et limites dans
+  le [guide avatar](UTILISATION-AVATAR-DISCORD.md).
+- Au contrôle de clôture, aucun processus temporaire Jade de diagnostic encore
+  actif ; pas de nouvelle écoute ni appel OpenAI lancé pour cette documentation.
+  VTube Studio et les services sans rapport sont laissés dans leur état.
+- [Plan de réduction de latence](PLAN-LATENCE-20261110.md) prêt : mesures simples,
+  PCM progressif, connexion TTS durable, puis texte par phrases. Développement
+  à attendre sous Terra. Confiance élevée sur le tamponnement observé dans le
+  code ; gain chiffré, coût final et synchronisation téléphone non mesurés.
+- Complément du 13 novembre : demande de voix française Aube et vitesse ×1,5
+  intégrée au lot A bis du plan. Aube est documentée dans ChatGPT, sans identifiant
+  API confirmé pour Jade ; Brise appartient à l'API Live, sans équivalence
+  démontrée. ×1,5 est pris en charge par Realtime mais reste à implémenter sous
+  Terra. Aucun changement de voix/vitesse ni appel vocal effectué pour ce complément.
+
 ## MVP Discord — étape 1 : moteur OpenAI
 - Moteur principal : dialogue `gpt-6-luna`, STT `gpt-transcribe` et TTS Realtime
   `gpt-realtime-2.1-mini` par défaut. Anciennes configurations explicites conservées ;

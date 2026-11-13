@@ -5,8 +5,11 @@ comme terminée. Référence : [feuille de route](ROADMAP-MVP-DISCORD-PRODUIT-MO
 
 **Reprise Terra :** les deux défauts de silence signalés dans le
 [relais Astra](ASTRA-REVUE-MVP-20261110.md) sont corrigés et testés hors ligne.
-La recette vocale réelle sur téléphone et le partage de l'avatar restent à
-effectuer avec le propriétaire ; voir [TASKS](TASKS.md).
+Après correction de la compatibilité DAVE, le propriétaire confirme la réponse
+vocale depuis le téléphone et le mouvement local du modèle. Le partage vidéo
+et les autres scénarios de recette restent à vérifier avec lui ; voir
+[TASKS](TASKS.md). La suite documentaire est le [plan latence](PLAN-LATENCE-20261110.md),
+à développer sous Terra après ce relais.
 
 **Décision ultérieure du propriétaire :** le serveur privé est dédié à Jade ;
 elle peut interagir avec les personnes et les autres bots, dans tous ses salons,
