@@ -11,6 +11,9 @@ from src.jade_runtime.intent_engine import (
 from src.jade_runtime.messages import Incoming, Reply
 from src.jade_runtime.config import Settings
 from src.jade_runtime.openai_services import OpenAIServices
+from tests.test_demo_realtime_tts import (
+    FakeClient, configured, created, delta, transcript, done,
+)
 
 
 class IntentParsingTests(unittest.TestCase):
@@ -47,6 +50,39 @@ class IntentParsingTests(unittest.TestCase):
         self.assertEqual(parse_reply("[INTENT=excited] Bonjour.").intent, "neutral")
         self.assertEqual(parse_reply("[une annotation normale] Bonjour.").text,
                          "[une annotation normale] Bonjour.")
+
+    def test_second_tag_never_reaches_visible_or_spoken_text(self):
+        raw = "[INTENT:playful] Salut ! [INTENT:tender] Bravo."
+        wanted = parse_reply(raw)
+        self.assertEqual(wanted.intent, "playful")
+        self.assertNotIn("INTENT", wanted.text)
+        for chunk_size in (1, 2, 3, 5, 11, 128):
+            with self.subTest(chunk_size=chunk_size):
+                parser = IntentStreamParser()
+                fragments = [parser.feed(raw[i:i + chunk_size])
+                             for i in range(0, len(raw), chunk_size)]
+                fragments.append(parser.finish())
+                self.assertEqual("".join(fragments), wanted.text)
+                self.assertEqual(parser.intent, "playful")
+                self.assertNotIn("INTENT", "".join(fragments))
+
+    def test_second_tag_invalid_label_is_removed_without_changing_intent(self):
+        raw = "[INTENT:serious] Voici [INTENT:notreal] la réponse."
+        clean = parse_reply(raw)
+        self.assertEqual(clean.intent, "serious")
+        self.assertNotIn("INTENT", clean.text)
+        self.assertIn("la réponse", clean.text)
+
+    def test_later_incomplete_tag_fails_closed(self):
+        for raw in ("Bonjour [INTENT:playful", "[INTENT:neutral] Oui. [INTENT:"):
+            with self.subTest(raw=raw), self.assertRaises(ValueError):
+                parse_reply(raw)
+
+    def test_literal_brackets_are_preserved_in_stream(self):
+        raw = "[INTENT:neutral] Un exemple [entre crochets], rien de plus."
+        parser = IntentStreamParser()
+        spoken = "".join(parser.feed(char) for char in raw) + parser.finish()
+        self.assertEqual(spoken, "Un exemple [entre crochets], rien de plus.")
 
     def test_incomplete_intent_never_leaks_even_in_stream(self):
         for raw in ("[INTENT:playful", "[INTENT", " [intent:curious "):
@@ -137,6 +173,21 @@ class IntentServiceTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(spoken.transcript, "Salut.")
             self.assertEqual(adapter.call_args.kwargs["intent"], "playful")
             adapter.return_value.synthesize.assert_awaited_once_with("Salut.")
+
+    async def test_actual_realtime_session_receives_static_mood_not_tag(self):
+        client = FakeClient([configured(speed=1.25, voice="shimmer"), created(),
+                             delta(), transcript(), done()])
+        service = OpenAIServices(Settings(), client=client)
+        result = await service.synthesize_speech("Bonjour Jade.", intent="playful")
+        self.assertTrue(result.audio)
+        session = client.connection.session.update.await_args.kwargs["session"]
+        self.assertEqual(session["audio"]["output"]["voice"], "shimmer")
+        self.assertEqual(session["audio"]["output"]["speed"], 1.25)
+        self.assertIn("mischievous", session["instructions"])
+        self.assertNotIn("[INTENT", session["instructions"])
+        request = client.connection.response.create.await_args.kwargs["response"]
+        self.assertEqual(request["input"][0]["content"][0]["text"], "Bonjour Jade.")
+        self.assertEqual(client.connection.response.create.await_count, 1)
 
     async def test_realtime_stream_adapter_receives_same_intent(self):
         with patch("src.jade_runtime.openai_services.RealtimeTTS") as adapter:
