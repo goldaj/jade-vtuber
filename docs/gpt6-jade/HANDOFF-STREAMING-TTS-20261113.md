@@ -85,6 +85,31 @@ Les fins de ligne CRLF des fichiers existants ont été restaurées dans un comm
 - Ne pas activer JADE_EARLY_VOICE dans la configuration partagée avant validation explicite des résultats ; conserver le retour instantané possible au mode simple via le drapeau.
 - Relancer la CI sur le **commit de merge** plutôt que d'interpréter les checks de cette PR comme une recette de l'assemblage local de Terra.
 
+## Revue complémentaire : qualité opérationnelle et observabilité (13 novembre)
+
+### Décisions PO
+
+- Le mode **PCM progressif sans fractionnement du texte** reste la valeur par défaut pour Discord : un appel TTS par réponse, compatibilité inchangée avec les sorties locales et les mocks.
+- `JADE_EARLY_VOICE=1` reste une **expérimentation à activer manuellement**, et non un changement de production imposé. Jusqu'à six appels TTS par réponse peuvent augmenter le coût et introduire des pauses entre phrases.
+- **Critère d'acceptation utilisateur** : Jade répond à une seule sollicitation sans doublon, reprend correctement après « silence »/« reprends », n'émet plus de son après un changement de canal, libère le micro et ferme la bouche à l'arrêt. Le temps perçu sur téléphone et le coût réel doivent être mesurés en situation, pas extrapolés de tests.
+
+### Corrections techniques supplémentaires
+
+1. **Mémoire et fluidité** : la conversion 24 kHz mono → 48 kHz stéréo traite désormais des tranches d'au plus 20 ms. Elle ne transforme plus un gros paquet complet en mémoire avant de pouvoir appliquer la backpressure Discord. Les entrées exceptionnellement longues cèdent régulièrement la main à la boucle asynchrone.
+2. **Mesures vérifiables** : `OpenVoiceBridge.last_pcm_metrics` expose seulement des compteurs numériques de la **dernière lecture PCM de la session toujours valide** :
+   - `first_nonzero_read_ms` : délai entre création du lecteur et première trame non nulle **consommée par le thread Discord** ;
+   - `prebuffer_silence_frames` : trames de silence volontaires du prébuffer initial ;
+   - `underrun_silence_frames` : trames de silence forcées faute de données après démarrage. Multiplier par 20 ms pour obtenir la durée de sous-alimentation ;
+   - `max_queued_frames` : profondeur maximale observée de la file, bornée par sa configuration ;
+   - `frames_read` : trames effectivement remises au lecteur, y compris les silences.
+   Aucun texte, audio, identifiant de salon ou transcript n'est stocké dans ces statistiques. Elles sont effacées à la fermeture et ignorées après révocation ou déplacement de session.
+3. **Résilience sans duplication facturable** : une connexion WebSocket Realtime devenue inactive peut être remplacée une fois **si le problème survient lors de la configuration avant `response.create`**. Aucune répétition de requête après `response.create`, quand le fournisseur a potentiellement déjà généré ou facturé de l'audio. Ce cas est couvert par un test hors ligne.
+4. **Régression de transfert** : tests pour mémoire bornée sur bloc PCM volumineux, métriques prébuffer/sous-alimentation, connexion WebSocket inactive et impossibilité de réattribuer les métriques d'une session révoquée à une nouvelle session.
+
+### Limites de l'observabilité
+
+Les mesures internes ne disent **pas** quand le téléphone a effectivement rendu le son, ni quand l'utilisateur a fini de parler. Elles ne démontrent donc pas seules un gain sur le délai fin de parole → audition. Terra devra comparer à l'écoute et, si nécessaire, instrumenter aussi la chaîne STT/LLM de bout en bout. La qualité du rééchantillonnage linéaire, les pauses entre plusieurs appels TTS et la stabilité DAVE doivent être testées sur le matériel réel.
+
 ## Limites et risques
 
 - Les queues bornées appliquent une backpressure au fournisseur. Le timeout de réception fournisseur est distinct du budget global qui autorise la backpressure normale ; confirmer les limites en conditions réelles.
