@@ -26,9 +26,11 @@ class DiscordPCMBuffer:
     frame; only finish+drain yields b'', so a temporary gap is not an EOF.
     """
 
-    def __init__(self, *, max_frames=50, on_frame=None, idle_timeout=30.0):
+    def __init__(self, *, max_frames=50, prebuffer_frames=1, on_frame=None, idle_timeout=30.0):
         if not isinstance(max_frames, int) or isinstance(max_frames, bool) or not 5 <= max_frames <= 150:
             raise ValueError("invalid PCM queue capacity")
+        if not isinstance(prebuffer_frames, int) or not 1 <= prebuffer_frames <= max_frames:
+            raise ValueError("invalid prebuffer length")
         if not 1 <= idle_timeout <= 120:
             raise ValueError("invalid PCM idle timeout")
         self._frames = Queue(maxsize=max_frames)
@@ -40,6 +42,8 @@ class DiscordPCMBuffer:
         self._last_progress = time.monotonic()
         self._idle_timeout = idle_timeout
         self._received = 0
+        self._prebuffer_frames = prebuffer_frames
+        self._started = False
 
     async def _offer(self, frame: bytes):
         while not self._aborted.is_set():
@@ -87,6 +91,13 @@ class DiscordPCMBuffer:
         """Called by Discord voice player's independent thread every 20 ms."""
         if self._aborted.is_set():
             return b""
+        if not self._started:
+            if not self._done.is_set() and self._frames.qsize() < self._prebuffer_frames:
+                if time.monotonic() - self._last_progress > self._idle_timeout:
+                    self.abort()
+                    return b""
+                return _SILENCE
+            self._started = True
         try:
             frame = self._frames.get_nowait()
         except Empty:
