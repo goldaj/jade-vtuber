@@ -1,8 +1,8 @@
 # Passation Codex — Jade Étincelle et moteur d'intentions vocales (13 novembre 2026)
 
-**État : travail implémenté sur `develop`, pas sur `main` ; code testé hors ligne, écoute et déploiement local NON validés.**
+**État : moteur d'intentions et pitch PCM local optionnel implémentés sur `develop`, pas sur `main` ; tests hors ligne, écoute et déploiement local NON validés.**
 
-**À lire en priorité :** [spécification des trois voix et contrat détaillé](VOICE-PROFILES-20261113.md), [audit PO/architecture/QA/audio](REVIEW-INTENT-ETINCELLE-20261113.md). Ce document est le **point de reprise opérationnel**. Les fichiers de migration et les anciens HANDOFF/TASKS conservent des états **historiques** : ils ne prévalent pas sur cette passation pour ce chantier.
+**À lire en priorité :** [spécification des trois voix et contrat détaillé](VOICE-PROFILES-20261113.md), [audit PO/architecture/QA/audio](REVIEW-INTENT-ETINCELLE-20261113.md), [passation DSP pitch et prérequis FFmpeg](PITCH-SHIFT-ETINCELLE-20261113.md). Ce document est le **point de reprise opérationnel**. Les fichiers de migration et les anciens HANDOFF/TASKS conservent des états **historiques** : ils ne prévalent pas sur cette passation pour ce chantier.
 
 ## Pourquoi ce chantier existe
 
@@ -53,7 +53,7 @@ Le mode `JADE_EARLY_VOICE` est **désactivé par défaut**. S'il est activé loc
 1. **L'audibilité réelle des émotions** : Realtime TTS accepte des instructions textuelles, mais aucun catalogue officiel ne garantit que la voix `shimmer` distingue les sept intentions. Tester chacune en français, sur Discord/téléphone, et retirer ou fusionner les étiquettes non distinguables.
 2. **Qualité de la diction et fidélité des mots parlés** : les instructions de lecture fidèle ne sont pas une garantie fournisseur. Écouter une réponse naturelle, taquine, sérieuse et brièvement tendre, sans infantilisation.
 3. **Latence/cout réels** : mesurer fin de parole → premier son, coût par tour, nombre de requêtes TTS, notamment avec `JADE_EARLY_VOICE=1`. Le tag ajoute des tokens de sortie et une attente de préfixe.
-4. **Pitch +2 demi-tons** : non codé. Aucun réglage numérique natif du pitch dans cette configuration. Un traitement PCM futur pourrait ajouter des artefacts et de la latence ; ne pas l'activer sans décision et recette.
+4. **Pitch +2 demi-tons** : **implémenté depuis comme traitement PCM local optionnel** dans `src/jade_runtime/pitch_shift.py`, activé par défaut si FFmpeg dispose du filtre `rubberband`. À défaut, repli vers l'audio natif ; **pas de mesure audible réelle sur le PC**. Voir [passation pitch](PITCH-SHIFT-ETINCELLE-20261113.md) et ne pas confondre support logiciel et validation produit.
 5. **Configuration et redémarrage du PC** : pas réalisés par ce chantier. GitHub vert n'est PAS équivalent à un nouveau processus Jade exécutant le code.
 6. **Intention par phrase** : pas prise en charge. Le choix d'une intention par réponse est une contrainte assumée ; concevoir un protocole versionné si le besoin évolue.
 
