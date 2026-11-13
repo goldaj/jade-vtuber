@@ -819,7 +819,7 @@ class DiscordVoiceBridge:
             except RuntimeError:
                 pass
 
-        buffer = DiscordPCMBuffer(on_frame=observed_frame)
+        buffer = DiscordPCMBuffer(on_frame=observed_frame, prebuffer_frames=5)
         def after(err):
             if err is not None:
                 failure.append(True)  # Do not log Discord's exception text.
