@@ -83,5 +83,5 @@ intégrant la participation textuelle. Le code `98126e9` est sur `develop` ;
 405 tests hors ligne et la compilation ont réussi. Jade a été relancée sur le
 PC : son processus, la connexion au vocal Discord et la fenêtre r20 ont été
 constatés. La recette humaine, les réponses écrites réelles et le partage
-d'écran ne sont pas déduits de cette observation. La fusion `main` demandée
-reste à effectuer après les vérifications Git correspondantes.
+d'écran ne sont pas déduits de cette observation. À ce stade du journal, la
+fusion `main` demandée n'avait pas encore été effectuée.
