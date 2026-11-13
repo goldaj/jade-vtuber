@@ -54,6 +54,10 @@ Consulter les contrôles CI associés au SHA final, et non les anciens résultat
 4. Lot D implémenté sous drapeau expérimental JADE_EARLY_VOICE=1, désactivé par défaut : recetter le début audio avant texte final, la cohérence des sous-titres, les voix entre phrases, le surcoût de plusieurs synthèses et les paroles interrompues. Ne l'activer en pratique qu'après validation réelle. Les autres sources et HTTP gardent l'ancien parcours.
 5. Lot E après mesures : éventuel seuil de silence plus court et réponses orales plus brèves. La connexion Realtime est déjà réutilisée entre tours ; contrôler sa tenue en cas de coupure réseau.
 
+## Préparation du merge (qualité du diff)
+
+Les fins de ligne CRLF des fichiers existants ont été restaurées dans un commit de finition pour limiter les conflits et les changements purement cosmétiques. Comparaison directe de cette branche avec develop : aucun commit à récupérer depuis develop au contrôle, PR fusionnable dans son état GitHub du 13 novembre. Cette information peut changer si Terra pousse de nouveaux commits sur develop. Les sources Jade, les modèles et les assets LFS restent intacts.
+
 ## Limites et risques
 
 - Les queues bornées appliquent une backpressure au fournisseur. Le timeout de réception fournisseur est distinct du budget global qui autorise la backpressure normale ; confirmer les limites en conditions réelles.
