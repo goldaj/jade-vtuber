@@ -261,6 +261,23 @@ class StreamBridgeTests(unittest.IsolatedAsyncioTestCase):
                          ["pcm_start", "pcm_end"])
         self.assertGreater(self.connection.stops, 0)
 
+    async def test_revoked_session_cannot_publish_stale_pcm_metrics(self):
+        release = asyncio.Event()
+
+        async def producer():
+            yield b"\x11\x00" * (480 * 5)
+            await release.wait()
+            yield b"\x22\x00" * 480
+
+        task = asyncio.create_task(self.bridge.play_pcm_stream(producer()))
+        await asyncio.wait_for(self.connection.started_audio.wait(), 1)
+        with self.bridge.buffers_lock:
+            self.bridge.generation += 1
+            self.bridge.session_id = "b" * 32
+        with self.assertRaises((PermissionError, RuntimeError)):
+            await asyncio.wait_for(task, 2)
+        self.assertIsNone(self.bridge.last_pcm_metrics)
+
     async def test_provider_error_stops_reader_and_never_replays(self):
         async def producer():
             yield b"\x11\x00" * 480
