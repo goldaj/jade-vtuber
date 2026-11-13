@@ -27,6 +27,16 @@ Ce lot commence la diffusion audio Discord avant la fin du TTS Realtime, avec un
 - La démo Windows, la sortie locale et la diffusion double restent en mode WAV.
 - Aucune preuve d'écoute, de gain réel de latence, de mouvement réel ni d'appel API effectué dans cette branche. Les tests CI peuvent vérifier des contrats synthétiques uniquement.
 
+## Preuves de CI déjà observées (code applicatif)
+
+Sur le commit applicatif `8343b64dda09ffc46f68efdcbdc776172a80bf77` :
+- GitHub Actions « Jade rebuild offline tests » : Windows **success** et Ubuntu **success** ;
+- 347 tests de la suite Linux, 2 ignorés ; tests du streaming et du mode phrases réussis ;
+- scan de secrets (history) **success** ;
+- contrôle d'hygiène de publication (hygiene) **success**.
+
+Ces résultats prouvent la compilation et les scénarios logiciels hors ligne, **pas** la qualité audio, la latence perçue, l'écoute sur téléphone ni le coût réel. Après ce commit documentaire et, surtout, après le merge avec les travaux locaux de Terra, lire la CI de **la nouvelle tête**, et ne pas réutiliser cette preuve comme résultat du merge.
+
 ## Validation à effectuer sur la branche et après merge
 
     python -m unittest tests.test_jade_streaming_pcm -v
@@ -40,7 +50,7 @@ Consulter les contrôles CI associés au SHA final, et non les anciens résultat
 
 1. Résoudre les éventuels conflits entre le paramétrage x1,5 / voix du lot A bis et les modifications dans realtime_tts.py et openai_services.py, sans ouvrir deux connexions ni doubler les frais.
 2. Vérifier la compatibilité du merge sur son Windows/Python 3.11 et exécuter les tests réels convenus avec le propriétaire : première syllabe, fin de réponse, silence, reprends, changement de canal, reconnexion et synchronisation bouche.
-3. Comparer la latence fin de parole → premier PCM Discord avant/après avec quelques mêmes phrases, distinguer sortie vers Discord de l'audition réelle sur téléphone et mesurer les trous de lecture ; ajuster si nécessaire le prébuffer (50 trames max) et les délais.
+3. Comparer la latence fin de parole → premier PCM Discord avant/après avec quelques mêmes phrases, distinguer sortie vers Discord de l'audition réelle sur téléphone et mesurer les trous de lecture ; ajuster si nécessaire le prébuffer de 5 trames (100 ms) et file maximale de 50 trames et les délais.
 4. Lot D implémenté sous drapeau expérimental JADE_EARLY_VOICE=1, désactivé par défaut : recetter le début audio avant texte final, la cohérence des sous-titres, les voix entre phrases, le surcoût de plusieurs synthèses et les paroles interrompues. Ne l'activer en pratique qu'après validation réelle. Les autres sources et HTTP gardent l'ancien parcours.
 5. Lot E après mesures : éventuel seuil de silence plus court et réponses orales plus brèves. La connexion Realtime est déjà réutilisée entre tours ; contrôler sa tenue en cas de coupure réseau.
 
