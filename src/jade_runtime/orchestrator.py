@@ -1,8 +1,9 @@
 """Bounded message queue with explicit cancellation and shutdown."""
 import asyncio
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from collections.abc import Awaitable, Callable
+import time
 from .dialogue import Dialogue
 from .messages import Incoming, Reply
 
@@ -14,6 +15,9 @@ class Work:
     result: asyncio.Future | None = None
     cancelled: bool = False
     task: asyncio.Task | None = None
+    streamed: bool = False
+    turn: int = 0
+    queued_at: float = field(default_factory=time.monotonic)
 
     def valid(self):
         return not self.cancelled and (self.deadline is None or
@@ -22,16 +26,19 @@ class Work:
 
 class Runtime:
     def __init__(self, dialogue: Dialogue, on_reply: Callable[[Reply], Awaitable[None]],
-                 max_queue: int = 64):
+                 max_queue: int = 64, *, on_sentence=None):
         if not 1 <= max_queue <= 1024:
             raise ValueError("invalid queue limit")
         self.dialogue, self.on_reply = dialogue, on_reply
+        self.on_sentence = on_sentence
         self.queue = asyncio.Queue(maxsize=max_queue)
         self.worker = None
         self.active = None
         self.state = "STOPPED"
         self._abort = False
         self.log = logging.getLogger("jade.runtime")
+        self.latency_log = logging.getLogger("jade.latency")
+        self._turn_sequence = 0
         self.errors = 0
         self._stop_lock = asyncio.Lock()
 
@@ -45,7 +52,8 @@ class Runtime:
     async def submit(self, message: Incoming, *, deadline=None, result=None):
         if self.state != "RUNNING" or self.worker is None or self.worker.done():
             raise RuntimeError("runtime is not running")
-        item = Work(message, deadline, result)
+        self._turn_sequence += 1
+        item = Work(message, deadline, result, turn=self._turn_sequence)
         self.queue.put_nowait(item)
         return item
 
@@ -96,6 +104,18 @@ class Runtime:
     def current_valid(self):
         return not self._abort and self.active is not None and self.active.valid()
 
+    def current_streamed(self):
+        """Whether the active reply already sent its voice in sentence chunks."""
+        return self.active is not None and self.active.streamed
+
+    def mark_timing(self, stage):
+        """Optional local timing: no message content or participant identity."""
+        item = self.active
+        if (item is not None and item.message.platform == "discord_voice"
+                and self.latency_log.isEnabledFor(logging.INFO)):
+            self.latency_log.info("turn=%d stage=%s since_queue_ms=%.1f",
+                                  item.turn, stage, (time.monotonic() - item.queued_at) * 1000)
+
     async def stop(self, *, graceful=True, timeout=5.0):
         async with self._stop_lock:
             if self.worker is None:
@@ -132,7 +152,20 @@ class Runtime:
     async def _execute(self, item):
         if not item.valid():
             raise TimeoutError("message expired")
-        reply = await self.dialogue.respond(item.message, valid=item.valid)
+        streaming = (item.message.platform == "discord_voice" and self.on_sentence is not None
+                     and callable(getattr(type(self.dialogue.backend), "stream_complete", None)))
+        self.mark_timing("queue_start")
+        timing = self.mark_timing if isinstance(self.dialogue, Dialogue) else None
+        if streaming:
+            item.streamed = True
+            reply = await self.dialogue.respond(item.message, valid=item.valid,
+                                                on_sentence=self.on_sentence,
+                                                on_timing=timing)
+        elif timing is not None:
+            reply = await self.dialogue.respond(item.message, valid=item.valid,
+                                                on_timing=timing)
+        else:
+            reply = await self.dialogue.respond(item.message, valid=item.valid)
         if not item.valid():
             raise TimeoutError("message expired")
         if item.result is not None and not item.result.done():

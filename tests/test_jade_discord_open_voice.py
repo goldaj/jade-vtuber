@@ -28,6 +28,81 @@ class Channel:
 
 
 class OpenVoiceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_stream_starts_before_synthesis_finishes_and_stops_avatar(self):
+        self.connection.is_playing = Mock(return_value=False)
+        heard, release = asyncio.Event(), asyncio.Event()
+        events = []
+        self.bridge.playback_observer = lambda kind, _: events.append(kind)
+        reader = None
+
+        def source_factory(buffer, on_frame):
+            def read():
+                frame = buffer.read()
+                if frame:
+                    on_frame(frame)
+                    if any(frame):
+                        heard.set()
+                return frame
+            return types.SimpleNamespace(read=read, cleanup=buffer.close)
+
+        def play(source, after):
+            nonlocal reader
+            async def consume():
+                while source.read():
+                    await asyncio.sleep(.002)
+                after(None)
+            reader = asyncio.create_task(consume())
+
+        self.connection.play = Mock(side_effect=play)
+        async def produce(feed):
+            await feed(struct.pack("<h", 1000) * 3000)
+            await release.wait()
+            await feed(struct.pack("<h", 500) * 300)
+
+        with patch("src.jade_runtime.discord_voice._stream_source", side_effect=source_factory):
+            task = asyncio.create_task(self.bridge.play_stream_for_context(produce, self.bridge.delivery_context()))
+            await asyncio.wait_for(heard.wait(), 1)
+            self.assertFalse(task.done())
+            release.set()
+            self.assertTrue(await asyncio.wait_for(task, 2))
+            await reader
+        self.assertEqual(events[0], "stream_start")
+        self.assertIn("stream_pcm", events)
+        self.assertEqual(events[-1], "stream_end")
+        self.assertFalse(self.bridge._playback_active)
+        self.connection.stop_listening.assert_not_called()
+
+    async def test_failed_partial_stream_is_not_replayed(self):
+        self.connection.is_playing = Mock(return_value=False)
+        heard = asyncio.Event()
+        reads = []
+        def source_factory(buffer, on_frame):
+            def read():
+                frame = buffer.read()
+                if frame:
+                    on_frame(frame)
+                    if any(frame):
+                        heard.set()
+                return frame
+            return types.SimpleNamespace(read=read, cleanup=buffer.close)
+        def play(source, after):
+            async def consume():
+                while source.read():
+                    await asyncio.sleep(.002)
+                after(None)
+            reads.append(asyncio.create_task(consume()))
+        self.connection.play = Mock(side_effect=play)
+        async def produce(feed):
+            await feed(struct.pack("<h", 1000) * 3000)
+            await heard.wait()
+            raise RuntimeError("synthetic failure")
+        with patch("src.jade_runtime.discord_voice._stream_source", side_effect=source_factory):
+            with self.assertRaisesRegex(RuntimeError, "synthetic failure"):
+                await asyncio.wait_for(self.bridge.play_stream_for_context(produce, self.bridge.delivery_context()), 2)
+        await asyncio.gather(*reads)
+        self.connection.play.assert_called_once()
+        self.assertFalse(self.bridge._playback_active)
+
     async def asyncSetUp(self):
         recv = types.ModuleType("discord.ext.voice_recv")
         recv.VoiceRecvClient = object
@@ -90,10 +165,13 @@ class OpenVoiceTests(unittest.IsolatedAsyncioTestCase):
         bridge.receive_pcm(12, "Visiteur", pcm(.25, 1800) + pcm(.8, 0))
         await asyncio.wait_for(started.wait(), 1)
         bridge._end_playback()
+        # Streaming sentences can begin a new playback before this STT returns.
+        bridge._begin_playback(self.connection, bridge.generation, bridge.session_id)
         release.set()
         await asyncio.sleep(.04)
         await bridge.pending.join()
         self.assertTrue(bridge._decider.is_muted(bridge.session_id))
+        bridge._end_playback()
 
     async def test_no_membership_check_and_group_speaks_without_name(self):
         self.channel.connect.assert_awaited_once_with(cls=self.dave_class)

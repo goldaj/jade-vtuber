@@ -56,6 +56,7 @@ class Avatar:
         self._animation = None
         self._pending = asyncio.Queue(maxsize=1)
         self._active = {}
+        self._streaming = set()
 
     async def start(self):
         if not SCRIPT.is_file() or not MODEL.is_dir():
@@ -102,7 +103,21 @@ class Avatar:
 
     def observer(self, source):
         def notify(event, wav):
-            if event == "start":
+            if event == "stream_start":
+                self._streaming.add(source)
+                self._offer(0.0)
+            elif event == "stream_pcm":
+                if source in self._streaming and (source == "discord" or "discord" not in self._streaming):
+                    raw = wav[:len(wav) // 2 * 2]
+                    if raw:
+                        samples = struct.unpack(f"<{len(raw) // 2}h", raw)
+                        rms = math.sqrt(sum(s * s for s in samples) / len(samples))
+                        self._offer(min(1.0, rms / 10000))
+            elif event == "stream_end":
+                self._streaming.discard(source)
+                if not self._streaming:
+                    self._offer(0.0)
+            elif event == "start":
                 self._active[source] = (asyncio.get_running_loop().time(), wav)
                 if self._animation is None or self._animation.done():
                     self._animation = asyncio.create_task(self._animate())
@@ -116,6 +131,9 @@ class Avatar:
         cache = {}
         try:
             while self._active:
+                if "discord" in self._streaming:
+                    await asyncio.sleep(0.04)
+                    continue
                 source = "discord" if "discord" in self._active else next(iter(self._active))
                 started, wav = self._active[source]
                 key = (source, started)
@@ -132,6 +150,7 @@ class Avatar:
 
     async def close(self):
         self._active.clear()
+        self._streaming.clear()
         for task in (self._animation, self._writer):
             if task:
                 task.cancel()

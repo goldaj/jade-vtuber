@@ -32,6 +32,7 @@ class Settings:
     stt_model: str = "gpt-transcribe"
     tts_model: str = "gpt-realtime-2.1-mini"
     voice: str = "coral"
+    tts_speed: float = 1.5
     api_key: str = ""
     channel: str = ""
     bot_name: str = "Jade"
@@ -72,6 +73,7 @@ class Settings:
             stt_model=str(environ("JADE_STT_MODEL", "gpt-transcribe")),
             tts_model=str(environ("JADE_TTS_MODEL", "gpt-realtime-2.1-mini")),
             voice=str(environ("JADE_TTS_VOICE", "coral")),
+            tts_speed=float(environ("JADE_TTS_SPEED", "1.5")),
             api_key=str(environ("OPENAI_API_KEY", "")),
             channel=str(environ("TWITCH_CHANNEL", "")),
             bot_name=str(environ("BOT_NAME", "Jade")),
@@ -105,6 +107,9 @@ class Settings:
         if (not self.model or not self.stt_model or not self.tts_model or not self.voice
                 or not self.bot_name.strip()):
             raise ValueError("model names and Jade name must not be blank")
+        if (isinstance(self.tts_speed, bool) or not isinstance(self.tts_speed, (int, float))
+                or not 0.25 <= self.tts_speed <= 1.5):
+            raise ValueError("TTS speed must be between 0.25 and 1.5")
         if (self.max_history_messages < 2 or self.max_history_messages > 100
                 or not 1 <= self.max_queue <= 1024
                 or not 0 <= self.reply_probability <= 1

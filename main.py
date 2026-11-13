@@ -60,7 +60,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     async with AsyncExitStack() as scopes:
         chat = OpenAIServices(config) if live else DemoChat()
         if live:
-            scopes.push_async_callback(chat.client.close)
+            close_chat = getattr(chat, "aclose", None)
+            scopes.push_async_callback(close_chat if callable(close_chat) else chat.client.close)
         dialogue = Dialogue(chat, prompt, bot_name=config.bot_name,
                             max_messages=config.max_history_messages,
                             random_reply_rate=config.reply_probability)
@@ -98,15 +99,53 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 await optional("twitch", lambda: twitch_client.send_chat(reply.text))
             if reply.source.platform == "discord" and discord_client is not None:
                 await optional("discord", lambda: discord_client.send_chat(reply.source.channel, reply.text))
-            if vts_client is not None and config.vts_speak_hotkey:
+            if (vts_client is not None and config.vts_speak_hotkey
+                    and not runtime.current_streamed()):
                 await optional("vts", lambda: vts_client.trigger_hotkey(config.vts_speak_hotkey))
-            if speech is not None:
+            if speech is not None and not runtime.current_streamed():
                 # TTS and the ensuing playback share this deadline. The old
                 # 20-second total could cut off an otherwise valid answer.
                 await optional("voice", lambda: speech.speak(reply),
                                timeout=min(180, config.timeout_seconds + 120))
 
-        runtime = Runtime(dialogue, on_reply, config.max_queue)
+        last_vts_turn = 0
+
+        async def on_sentence(reply):
+            nonlocal last_vts_turn
+            if speech is None or not runtime.current_valid():
+                return False
+            hotkey_task = None
+            if (vts_client is not None and config.vts_speak_hotkey
+                    and runtime.active.turn != last_vts_turn):
+                last_vts_turn = runtime.active.turn
+
+                async def trigger_vts():
+                    try:
+                        await asyncio.wait_for(vts_client.trigger_hotkey(config.vts_speak_hotkey), timeout=20)
+                    except asyncio.CancelledError:
+                        raise
+                    except Exception:
+                        LOG.warning("Jade optional output failed: vts")
+
+                # Do not make the first audible frame wait for VTS.
+                hotkey_task = asyncio.create_task(trigger_vts())
+            try:
+                return await asyncio.wait_for(
+                    speech.speak(reply), timeout=min(180, config.timeout_seconds + 120))
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                # The response may already have begun playing: never replay it.
+                LOG.warning("Jade optional output failed: voice")
+                return False
+            finally:
+                if hotkey_task is not None:
+                    if not hotkey_task.done():
+                        hotkey_task.cancel()
+                    await asyncio.gather(hotkey_task, return_exceptions=True)
+
+        runtime = Runtime(dialogue, on_reply, config.max_queue,
+                          on_sentence=on_sentence if speech is not None else None)
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(

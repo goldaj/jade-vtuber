@@ -13,10 +13,10 @@ def event(kind, **fields):
     return {"type": kind, **fields}
 
 
-def configured():
+def configured(speed=1.0):
     return event("session.updated", session={"type": "realtime", "output_modalities": ["audio"],
                  "audio": {"output": {"format": {"type": "audio/pcm", "rate": 24000},
-                                      "voice": "coral"}}})
+                                      "voice": "coral", "speed": speed}}})
 
 
 def created():
@@ -91,6 +91,83 @@ class FakeClient:
 
 
 class RealtimeTTSTests(unittest.IsolatedAsyncioTestCase):
+    async def test_stream_delivers_pcm_before_response_done(self):
+        client = FakeClient([configured(1.5), created(), delta(), transcript(), done()])
+        delivered, release = asyncio.Event(), asyncio.Event()
+        chunks = []
+        async def consume(chunk):
+            chunks.append(chunk)
+            delivered.set()
+            await release.wait()
+        adapter = RealtimeTTS(client, speed=1.5, verify_transcript=False)
+        task = asyncio.create_task(adapter.synthesize_stream("Bonjour Jade.", consume))
+        await asyncio.wait_for(delivered.wait(), 1)
+        self.assertFalse(task.done())
+        self.assertEqual(chunks, [b"\x00\x00\x01\x00"])
+        self.assertEqual(client.connection.session.update.await_args.kwargs["session"]
+                         ["audio"]["output"]["speed"], 1.5)
+        release.set()
+        result = await task
+        self.assertEqual(result.transcript, "Bonjour Jade.")
+        self.assertFalse(client.manager.closed)
+        await adapter.close()
+        self.assertTrue(client.manager.closed)
+
+    async def test_stream_reuses_session_and_closes_after_failure(self):
+        first = FakeConnection([configured(), created(), delta(), transcript(), done(),
+                                created(), delta(), transcript(), done()])
+        second = FakeConnection([configured(), created(), delta(), transcript(), done()])
+        managers = [FakeManager(first), FakeManager(second)]
+        class Client:
+            def __init__(self):
+                self.calls = []
+                self.realtime = type("Realtime", (), {})()
+                self.realtime.connect = self.connect
+            def connect(self, **kwargs):
+                self.calls.append(kwargs)
+                return managers[len(self.calls) - 1]
+        client = Client()
+        tts = RealtimeTTS(client, verify_transcript=False)
+        chunks = []
+        async def consume(chunk):
+            chunks.append(chunk)
+        await tts.synthesize_stream("Bonjour Jade.", consume)
+        await tts.synthesize_stream("Bonjour Jade.", consume)
+        self.assertEqual(len(client.calls), 1)
+        self.assertEqual(first.session.update.await_count, 1)
+        self.assertEqual(first.response.create.await_count, 2)
+        self.assertEqual(len(chunks), 2)
+        await tts.close()
+        self.assertTrue(managers[0].closed)
+        await tts.synthesize_stream("Bonjour Jade.", consume)
+        self.assertEqual(len(client.calls), 2)
+        await tts.close()
+        self.assertTrue(managers[1].closed)
+
+    async def test_stream_failure_closes_session_and_does_not_retry(self):
+        client = FakeClient([configured(), created(), delta(), transcript(), done("failed")])
+        chunks = []
+        async def consume(chunk):
+            chunks.append(chunk)
+        tts = RealtimeTTS(client, verify_transcript=False)
+        with self.assertRaises(RealtimeTTSError):
+            await tts.synthesize_stream("Bonjour Jade.", consume)
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual(len(client.calls), 1)
+        self.assertTrue(client.manager.closed)
+        await tts.close()
+
+    async def test_stream_cannot_bypass_strict_transcript_and_rejects_bad_speed(self):
+        client = FakeClient([])
+        with self.assertRaises(ValueError):
+            await RealtimeTTS(client).synthesize_stream("Bonjour", AsyncMock())
+        for speed in (0, 1.51, float("nan"), True):
+            with self.subTest(speed=speed), self.assertRaises(ValueError):
+                RealtimeTTS(client, speed=speed)
+        client = FakeClient([configured(1.0)])
+        with self.assertRaises(RealtimeTTSError):
+            await RealtimeTTS(client, speed=1.5).synthesize("Bonjour")
+        client.connection.response.create.assert_not_awaited()
     async def test_completed_wav_and_request_contract(self):
         client = FakeClient([event("session.created"), configured(), created(), delta(),
                              transcript("bonjour, Jade !"), done()])

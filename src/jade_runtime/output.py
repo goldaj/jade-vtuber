@@ -156,6 +156,53 @@ class SpeechOutput:
 
             if discord_voice:
                 require_session()
+            stream_supported = getattr(self.services, "supports_synthesis_stream", False) is True
+            stream_method = getattr(self.secondary_player,
+                                    "play_stream_for_reply" if discord_voice else "play_stream_for_context", None)
+            if (stream_supported and self.player.mode == "none" and callable(stream_method)
+                    and (discord_voice or context is not None)):
+                gated = False
+                subtitle_written = False
+                path = self.subtitle_path
+                try:
+                    if self.audio_gate is not None:
+                        await self.audio_gate.begin_speech()
+                        gated = True
+                    if discord_voice:
+                        require_session()
+                    # The final TTS transcript arrives later. Mark this as provisional.
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    tmp = path.with_name(path.name + ".tmp")
+                    tmp.write_text("[Texte provisoire] " + reply.text, encoding="utf-8")
+                    tmp.replace(path)
+                    subtitle_written = True
+
+                    async def produce(on_audio):
+                        return await self.services.synthesize_stream(reply.text, on_audio)
+
+                    destination = reply.source if discord_voice else context
+                    try:
+                        played = await stream_method(produce, destination)
+                    except asyncio.CancelledError:
+                        raise
+                    except Exception:
+                        if discord_voice:
+                            raise
+                        LOG.warning("Discord streaming voice delivery failed")
+                        return False
+                    if discord_voice and played:
+                        require_session()
+                        acknowledge = getattr(self.secondary_player, "mark_voice_reply_played", None)
+                        if callable(acknowledge):
+                            acknowledge(reply.source)
+                    return played is True
+                finally:
+                    try:
+                        if gated:
+                            await self.audio_gate.end_speech()
+                    finally:
+                        if subtitle_written:
+                            path.write_text("", encoding="utf-8")
             # New adapters can report the words actually spoken; legacy service
             # doubles still provide synthesize_wav only.
             rich_synthesis = getattr(type(self.services), "synthesize_speech", None)
@@ -238,3 +285,4 @@ class SpeechOutput:
                 acknowledge = getattr(self.secondary_player, "mark_voice_reply_played", None)
                 if callable(acknowledge):
                     acknowledge(reply.source)
+            return discord_played if discord_voice else True

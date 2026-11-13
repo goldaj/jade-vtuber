@@ -68,37 +68,86 @@ class RealtimeTTS:
 
     def __init__(self, client, *, model="gpt-realtime-2.1-mini", voice="coral",
                  timeout_seconds=60.0, max_audio_bytes=4_800_000,
-                 verify_transcript=True):
+                 verify_transcript=True, speed=1.0):
         if (not isinstance(model, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,100}", model)
                 or not isinstance(voice, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", voice)
                 or isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (float, int))
                 or not math.isfinite(timeout_seconds) or not 1 <= timeout_seconds <= 180
+                or isinstance(speed, bool) or not isinstance(speed, (float, int))
+                or not math.isfinite(speed) or not 0.25 <= speed <= 1.5
                 or type(max_audio_bytes) is not int or not 2 <= max_audio_bytes <= 10_000_000
                 or type(verify_transcript) is not bool):
             raise ValueError("invalid realtime synthesis settings")
         self.client = client
         self.model = model
         self.voice = voice
+        self.speed = float(speed)
         self.timeout_seconds = float(timeout_seconds)
         self.max_audio_bytes = max_audio_bytes
         self.verify_transcript = verify_transcript
+        self._stream_lock = asyncio.Lock()
+        self._stream_scope = None
+        self._stream_connection = None
 
     async def synthesize_wav(self, text: str) -> bytes:
         """Compatibility wrapper when the provider transcript is not needed."""
         return (await self.synthesize(text)).audio
 
     async def synthesize(self, text: str) -> SpokenAudio:
+        return await self._synthesize(text, None)
+
+    async def synthesize_stream(self, text: str, on_audio) -> SpokenAudio:
+        """Send PCM deltas while generating, and return the final validated result.
+
+        Strict word-for-word verification cannot precede already played audio;
+        callers requiring it must use synthesize() instead.
+        """
+        if self.verify_transcript or not callable(on_audio):
+            raise ValueError("streaming requires an audio callback and non-strict transcript")
+        return await self._synthesize(text, on_audio)
+
+    async def _synthesize(self, text, on_audio):
         if not isinstance(text, str) or not text.strip() or len(text) > 4096:
             raise ValueError("invalid speech text")
         if self.verify_transcript and not _words(text):
             raise ValueError("speech text contains no comparable words")
         try:
-            async with asyncio.timeout(self.timeout_seconds):
-                async with self.client.realtime.connect(
-                    model=self.model, max_retries=0, max_queue_size=64,
-                    websocket_connection_options={"max_size": 1_048_576},
-                ) as connection:
-                    return await self._request(connection, text)
+            async with asyncio.timeout(self.timeout_seconds) as service_timeout:
+                async def deliver(chunk):
+                    # Backpressure is playback time, not provider wait time.
+                    loop = asyncio.get_running_loop()
+                    started = loop.time()
+                    deadline = service_timeout.when()
+                    service_timeout.reschedule(None)
+                    try:
+                        await asyncio.wait_for(on_audio(chunk), timeout=120)
+                    finally:
+                        if deadline is not None:
+                            service_timeout.reschedule(deadline + loop.time() - started)
+                if on_audio is None:
+                    async with self.client.realtime.connect(
+                        model=self.model, max_retries=0, max_queue_size=64,
+                        websocket_connection_options={"max_size": 1_048_576},
+                    ) as connection:
+                        return await self._request(connection, text)
+                async with self._stream_lock:
+                    fresh = self._stream_connection is None
+                    try:
+                        if fresh:
+                            scope = self.client.realtime.connect(
+                                model=self.model, max_retries=0, max_queue_size=64,
+                                websocket_connection_options={"max_size": 1_048_576},
+                            )
+                            self._stream_scope = scope
+                            connection = await scope.__aenter__()
+                            self._stream_connection = connection
+                        return await self._request(self._stream_connection, text, deliver,
+                                                   configure=fresh)
+                    except BaseException:
+                        # After cancellation or protocol failure, discard all
+                        # potentially late events. Never replay a paid turn.
+                        await self._close_stream()
+                        raise
         except asyncio.CancelledError:
             raise
         except TimeoutError:
@@ -108,7 +157,52 @@ class RealtimeTTS:
         except Exception:
             raise RealtimeTTSError("Realtime synthesis failed") from None
 
-    async def _request(self, connection, text: str) -> SpokenAudio:
+    async def _close_stream(self):
+        scope, self._stream_scope, self._stream_connection = self._stream_scope, None, None
+        if scope is not None:
+            try:
+                await asyncio.wait_for(scope.__aexit__(None, None, None), timeout=2)
+            except (Exception, asyncio.CancelledError):
+                pass
+
+    async def close(self):
+        """Close the persistent streaming session after outstanding audio."""
+        async with self._stream_lock:
+            await self._close_stream()
+
+    async def _configure(self, connection):
+        await connection.session.update(session={
+            "type": "realtime",
+            "output_modalities": ["audio"],
+            "instructions": (
+                "Read the user's text aloud exactly as provided. "
+                "Do not add, omit, answer, translate, or explain anything."
+            ),
+            "audio": {"input": {"turn_detection": None},
+                      "output": {"format": {"type": "audio/pcm", "rate": 24000},
+                                 "voice": self.voice, "speed": self.speed}},
+        })
+        for _ in range(10_000):
+            event = await connection.recv()
+            kind = _field(event, "type")
+            if kind == "error":
+                raise RealtimeTTSError("Realtime session rejected")
+            if kind == "session.updated":
+                session = _field(event, "session")
+                audio = _field(session, "audio")
+                output = _field(audio, "output")
+                fmt = _field(output, "format")
+                if (_field(session, "type") != "realtime"
+                        or _field(session, "output_modalities") != ["audio"]
+                        or _field(fmt, "type") != "audio/pcm"
+                        or _field(fmt, "rate") != 24000
+                        or _field(output, "voice") != self.voice
+                        or _field(output, "speed") != self.speed):
+                    raise RealtimeTTSError("Realtime audio settings not confirmed")
+                return
+        raise RealtimeTTSError("Too many realtime events")
+
+    async def _request(self, connection, text: str, on_audio=None, *, configure=True) -> SpokenAudio:
         response_requested = False
         response_finished = False
         response_id = None
@@ -117,40 +211,11 @@ class RealtimeTTS:
         content_identity = None
         event_count = 0
         try:
-            await connection.session.update(session={
-                "type": "realtime",
-                "output_modalities": ["audio"],
-                "instructions": (
-                    "Read the user's text aloud exactly as provided. "
-                    "Do not add, omit, answer, translate, or explain anything."
-                ),
-                "audio": {"input": {"turn_detection": None},
-                          "output": {"format": {"type": "audio/pcm", "rate": 24000},
-                                     "voice": self.voice}},
-            })
-            while True:
-                event_count += 1
-                if event_count > 10_000:
-                    raise RealtimeTTSError("Too many realtime events")
-                event = await connection.recv()
-                kind = _field(event, "type")
-                if kind == "error":
-                    raise RealtimeTTSError("Realtime session rejected")
-                if kind == "session.updated":
-                    session = _field(event, "session")
-                    audio = _field(session, "audio")
-                    output = _field(audio, "output")
-                    fmt = _field(output, "format")
-                    if (_field(session, "type") != "realtime"
-                            or _field(session, "output_modalities") != ["audio"]
-                            or _field(fmt, "type") != "audio/pcm"
-                            or _field(fmt, "rate") != 24000
-                            or _field(output, "voice") != self.voice):
-                        raise RealtimeTTSError("Realtime audio settings not confirmed")
-                    break
+            if configure:
+                await self._configure(connection)
 
-            # A fresh connection and out-of-band response avoid carrying history.
-            # Retry/reconnect are disabled so a failure cannot repeat a paid turn.
+            # Out-of-band responses avoid carrying history across spoken chunks.
+            # Retry is disabled so a failure cannot repeat a paid turn.
             await connection.response.create(response={
                 "conversation": "none", "output_modalities": ["audio"],
                 "max_output_tokens": 4096,
@@ -197,6 +262,8 @@ class RealtimeTTS:
                     if len(pcm) + len(chunk) > self.max_audio_bytes:
                         raise RealtimeTTSError("Synthesized audio exceeds local limit")
                     pcm.extend(chunk)
+                    if chunk and on_audio is not None:
+                        await on_audio(chunk)
                 elif kind == "response.output_audio_transcript.done":
                     if not response_id or _field(event, "response_id") != response_id:
                         raise RealtimeTTSError("Unexpected audio transcript")

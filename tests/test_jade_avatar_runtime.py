@@ -19,6 +19,16 @@ def wav(value=12000, duration=0.2):
 
 
 class AvatarTests(unittest.IsolatedAsyncioTestCase):
+    async def test_stream_pcm_moves_mouth_only_while_playback_active(self):
+        avatar = Avatar()
+        callback = avatar.observer("discord")
+        callback("stream_start", b"")
+        callback("stream_pcm", struct.pack("<h", 12000) * 1920)
+        self.assertEqual(avatar._pending.get_nowait(), 1.0)
+        callback("stream_end", b"")
+        callback("stream_pcm", struct.pack("<h", 12000) * 1920)
+        self.assertEqual(avatar._pending.get_nowait(), 0.0)
+        await avatar.close()
     def test_environment_allowlist_excludes_secrets(self):
         env = child_environment({"PATH": "bin", "SYSTEMROOT": "system", "OPENAI_API_KEY": "secret", "JADE_TOKEN": "secret", "PYTHONPATH": "secret", "HTTP_PROXY": "secret", "UNEXPECTED_SECRET": "secret"})
         self.assertEqual(env, {"PATH": "bin", "SYSTEMROOT": "system"})
