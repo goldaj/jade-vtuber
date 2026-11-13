@@ -106,7 +106,15 @@ class Avatar:
                 self._active[source] = (asyncio.get_running_loop().time(), wav)
                 if self._animation is None or self._animation.done():
                     self._animation = asyncio.create_task(self._animate())
-            elif event == "end":
+            elif event == "pcm_start":
+                # Streaming mouth motion is driven by actual PCM frames consumed
+                # by Discord's audio thread, not by a guessed time offset.
+                self._active[source] = ("pcm", None)
+                self._offer(0.0)
+            elif event == "pcm_level":
+                if source in self._active and self._active[source][0] == "pcm":
+                    self._offer(max(0.0, min(1.0, float(wav))))
+            elif event in ("end", "pcm_end"):
                 self._active.pop(source, None)
                 if not self._active:
                     self._offer(0.0)
@@ -118,6 +126,9 @@ class Avatar:
             while self._active:
                 source = "discord" if "discord" in self._active else next(iter(self._active))
                 started, wav = self._active[source]
+                if started == "pcm":
+                    await asyncio.sleep(0.04)
+                    continue
                 key = (source, started)
                 if key not in cache:
                     cache[key] = await asyncio.to_thread(levels, wav)
