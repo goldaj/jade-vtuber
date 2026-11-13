@@ -10,7 +10,7 @@ sans présenter les mocks comme des tests d'API réels.
 - Lecture passive en mémoire bornée par salon ; mentions directes et fils de
   réponse, relances du même auteur après envoi réussi, questions spontanées
   limitées par probabilité et cooldown. La voix existante reste distincte.
-- Paramètres : `JADE_DISCORD_TEXT_AUTO_RATE=0.15` (0 pour désactiver
+- Paramètres : `JADE_DISCORD_TEXT_AUTO_RATE=0.30` (0 pour désactiver
   l'initiative) et `JADE_DISCORD_TEXT_COOLDOWN_SECONDS=180`.
 - Tests unitaires hors ligne ajoutés ; le résultat CI du dernier SHA doit
   être vérifié avant toute fusion. Pas de recette Discord réelle ni d'appel
