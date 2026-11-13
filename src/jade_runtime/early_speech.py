@@ -1,0 +1,110 @@
+"""Optional one-turn LLM-to-TTS sentence pipeline for Discord voice.
+
+The full reply is returned once by Dialogue/Runtime; a bounded sentence queue
+lets earlier phrases speak while the LLM finishes later text. This mode uses
+one TTS call per segment, never duplicates the whole answer, and leaves the
+legacy full-text WAV route untouched unless explicitly enabled.
+"""
+from __future__ import annotations
+
+import asyncio
+
+
+class EarlySpeechTurn:
+    def __init__(self, output, source):
+        self.output = output
+        self.source = source
+        self._phrases = asyncio.Queue(maxsize=2)
+        self._ended = False
+        self._task = asyncio.create_task(self._run(), name="jade-early-speech")
+
+    async def _offer(self, text):
+        while self._phrases.full():
+            if self._task.done():
+                await self._task
+            await asyncio.sleep(0.01)
+        if self._task.done():
+            await self._task
+        self._phrases.put_nowait(text)
+
+    async def emit(self, sentence: str):
+        if self._ended:
+            raise RuntimeError("early speech input is closed")
+        if not isinstance(sentence, str) or not sentence.strip():
+            raise ValueError("invalid speech segment")
+        await self._offer(sentence.strip())
+
+    async def finish_input(self):
+        if not self._ended:
+            self._ended = True
+            await self._offer(None)
+
+    async def wait(self):
+        return await self._task
+
+    async def abort(self):
+        self._ended = True
+        if not self._task.done():
+            self._task.cancel()
+        await asyncio.gather(self._task, return_exceptions=True)
+
+    async def _run(self):
+        output = self.output
+        source = self.source
+        first = await self._phrases.get()
+        if first is None:
+            return False
+        bridge = output.secondary_player
+
+        def require_session():
+            if not callable(getattr(bridge, "reply_authorized", None)) or not bridge.reply_authorized(source):
+                raise PermissionError("early speech voice session expired")
+
+        async with output.lock:
+            require_session()
+            gated = False
+            written = False
+            path = output.subtitle_path
+
+            async def audio():
+                sentence = first
+                while sentence is not None:
+                    require_session()
+                    path.write_text(sentence, encoding="utf-8")
+                    stream = output.services.stream_speech_pcm(sentence)
+                    if stream is None:
+                        raise RuntimeError("early speech requires Realtime TTS")
+                    try:
+                        async for chunk in stream:
+                            require_session()
+                            yield chunk
+                    finally:
+                        close = getattr(stream, "aclose", None)
+                        if callable(close):
+                            await close()
+                    sentence = await self._phrases.get()
+
+            try:
+                if output.audio_gate is not None:
+                    await output.audio_gate.begin_speech()
+                    gated = True
+                require_session()
+                path.parent.mkdir(parents=True, exist_ok=True)
+                tmp = path.with_name(path.name + ".tmp")
+                tmp.write_text(first, encoding="utf-8")
+                tmp.replace(path)
+                written = True
+                played = await bridge.play_pcm_stream_for_reply(audio(), source)
+                if played is True:
+                    require_session()
+                    mark = getattr(bridge, "mark_voice_reply_played", None)
+                    if callable(mark):
+                        mark(source)
+                return played is True
+            finally:
+                try:
+                    if gated:
+                        await output.audio_gate.end_speech()
+                finally:
+                    if written:
+                        path.write_text("", encoding="utf-8")
