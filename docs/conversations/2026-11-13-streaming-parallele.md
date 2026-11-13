@@ -39,3 +39,21 @@ Le document [HANDOFF-STREAMING-TTS-20261113.md](../gpt6-jade/HANDOFF-STREAMING-T
 ## Limites
 
 Les détails des modifications locales non poussées par Terra ne sont pas visibles dans ce contexte. Les tests CI sont hors ligne et ne constituent pas une démonstration de vitesse, de coût ou de rendu audio réel. Le coût de plusieurs synthèses dans le mode phrases doit être comparé avant activation.
+
+## Relecture supplémentaire demandée par l'utilisateur
+
+**Utilisateur, verbatim :**
+> Refais une passe avec prise de recul technique et PO. Corrige ce que tu trouves à corriger
+
+**Utilisateur, verbatim (reprise après interruption) :**
+> T'as crash, reprends
+
+**Assistant, résumé factuel de cette intervention :**
+- Relecture du code actuel de la branche après les correctifs de la seconde passe. La PR #1 était encore en brouillon et fusionnable avec develop ; les vérifications précédentes étaient vertes.
+- Nouveau traitement mémoire borné dans `discord_pcm.py` pour ne pas créer un grand tampon lors d'une entrée PCM exceptionnelle.
+- Ajout de compteurs numériques de lecture audio sur le pont Discord, sans collecte de contenu ni promesse de mesure de latence perçue sur téléphone.
+- Récupération au maximum une fois d'une session Realtime inactive pendant la configuration **avant** toute demande `response.create`. Aucun retry possible après envoi d'une réponse facturable.
+- Protection de l'attribution des métriques lors d'un changement de session.
+- Nouveaux tests hors ligne de volumétrie PCM, mesures, connexion inactive et invalidation de session.
+- Les modifications sont sur la branche de la PR, sans fusion ni déploiement. Les éventuels changements locaux non poussés de Terra restent hors de portée de la relecture.
+
