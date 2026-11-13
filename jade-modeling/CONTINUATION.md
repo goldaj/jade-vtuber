@@ -12,11 +12,11 @@ Terminer Jade r21 professionnel, plein pied et fonctionnel dans VTube Studio. Mo
 # Étape en cours
 
 Cheveux A/B : candidat v30.TEST_hair_leaves_r02 créé (SHA68617D558A59593E54C2582AB7845FFA317D8A7E0676E25D5B5514B083C95F62), pas encore natif. Neuf feuilles, neuf paramètres indépendants et 45 poses ; deux LOWER reconnectés, deux bandes TEMPLE arrière ajoutées. VTS inchangé.
-Cubism 5.2.03 PRO même session ; r01 testé LockL ±1 puis fermé ; r02 en cours de chargement. Ne pas écraser v30 ni r01/r02.
+Le 13 novembre, r02 a été chargé dans Cubism 5.2.03 PRO et observé au neutre et à HeadZ ±30 ; les ouvertures/décrochés aux épaules restent visibles aux extrêmes. r01 avait été testé LockL ±1 précédemment. Aucun v31 enregistré ; ne pas écraser v30 ni r01/r02.
 
 # Prochaine action exacte
 
-Terminer le jalon natif r02 : observer raccords, une pose de frange et HeadZ±30, revenir au neutre puis Save As jade_cubism_v005_r21_hair_leaves_v31.cmo3. Ensuite feuilles arrière et physiques ; ne pas refaire LockL±1 déjà observé sur r01 (formes inchangées dans r02).
+Suivre [le plan professionnel actualisé](PLAN_QUALITE_PRO_20261113.md) : identifier les sources et travaux concurrents, puis corriger la matière cachée et les raccords d'épaules sur copie avant d'amplifier le rig. Examiner une pose de frange et les combinaisons requises avant de promouvoir un nouveau checkpoint natif ; v31 n'est pas acquis.
 
 # Fichiers importants
 
