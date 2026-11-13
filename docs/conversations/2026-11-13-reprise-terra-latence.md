@@ -53,3 +53,25 @@ du bot au vocal et l'existence de la fenêtre r20 ont été constatées. La capt
 de la fenêtre Discord a expiré ; le partage d'écran n'a donc pas été commencé.
 La réponse vocale et la vidéo de cette nouvelle version restent à vérifier par
 le propriétaire sur son téléphone.
+
+## Utilisateur — demande de nouvelle reprise, verbatim
+
+> Gpt 6 a push de la nouveauté sur develop. Contrôle si c'est ok pour toi. Push ce que t'as en local si t'as du local, dès que t'es prêt tu mets tout sur develop et tu redeploie Jade sur mon poste sur sa nouvelle version
+
+## Assistant — contrôle de la reprise
+
+Le dépôt local était propre ; `develop` distante contenait l'évolution de
+participation écrite Discord et la personnalité demandées dans le
+[journal dédié](2026-11-13-discord-text.md). La branche de travail distante
+présente le même contenu que le squash déjà sur `develop`. L'ancienne instance
+Jade a été arrêtée proprement avant la mise à jour locale ; aucune autre
+application ou service n'a été arrêté. Le redémarrage et la recette sont à
+consigner après leur constat réel.
+
+## Utilisateur — décision sur les branches, verbatim
+
+> Ah et j'ai confiance à cette branche develop une fois que tu auras fini ça. Donc on mergera develop dans main, pour le mettre à jour. On continuera quand même de travailler sur develop par la suite. On ne mergera dans main que quand je te le dis à chaque fois
+
+Le propriétaire autorise la fusion actuelle après vérification et redéploiement ;
+cette autorisation ne vaut pas pour les fusions ultérieures. Préserver les
+commits propres à `main` lors de la fusion et rester sur `develop` localement.

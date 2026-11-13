@@ -102,11 +102,9 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 await optional("discord", lambda: discord_client.send_chat(
                     reply.source.channel, reply.text,
                     source_message_id=reply.source.message_id))
-            if (vts_client is not None and config.vts_speak_hotkey and not reply.spoken
-                    and reply.source.platform != "discord"):
+            if vts_client is not None and config.vts_speak_hotkey and not reply.spoken:
                 await optional("vts", lambda: vts_client.trigger_hotkey(config.vts_speak_hotkey))
-            # A written Discord turn stays written; do not speak it into voice.
-            if speech is not None and not reply.spoken and reply.source.platform != "discord":
+            if speech is not None and not reply.spoken:
                 # TTS and the ensuing playback share this deadline. The old
                 # 20-second total could cut off an otherwise valid answer.
                 await optional("voice", lambda: speech.speak(reply),

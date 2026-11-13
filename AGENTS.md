@@ -8,8 +8,10 @@ Ce dépôt rassemble le moteur et les sources de Jade. Respecter les branches et
 
 Les travaux hors production se font sur `develop` dans ce dépôt public. `main`
 reste la branche destinée aux versions de production ; son existence ne signifie
-pas qu’une production est déjà active. Intégrer ultérieurement les changements
-validés de `develop` vers `main` selon les instructions du propriétaire.
+pas qu’une production est déjà active. Les changements validés de `develop` ne
+sont fusionnés dans `main` que sur demande explicite du propriétaire, à renouveler
+pour chaque fusion. Il a demandé la fusion après la présente vérification et le
+redéploiement ; les prochains travaux se poursuivront sur `develop`.
 
 La contre-revue Astra du dépôt public est consignée dans le
 [rapport de reprise Terra](docs/migration/2026-11-02/08-ASTRA-CONTROLE-DEPOT-PUBLIC.md).

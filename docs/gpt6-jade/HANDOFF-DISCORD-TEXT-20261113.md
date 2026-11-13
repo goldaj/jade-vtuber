@@ -39,8 +39,10 @@ Aucune modification de production ou des fichiers privés.
 - Contexte passif en mémoire **uniquement**, six extraits courts au maximum,
   isolés par salon, supprimés après inactivité ou redémarrage. Aucun appel OpenAI
   pour les messages ignorés ; aucun enregistrement des discussions sur disque.
-- Les réponses à un message écrit restent **écrites**. Le flux Discord vocal,
-  son PCM, ses sous-titres et ses interruptions ne sont pas modifiés.
+- Les réponses à un message écrit sont envoyées **par écrit**. La correction
+  Terra conserve également la diffusion vocale antérieure lorsque la voix et un
+  salon vocal sont actifs ; la hotkey VTube Studio configurée est conservée.
+  Sans destination vocale active, la réponse écrite reste disponible.
 - Envoi Discord avec mentions désactivées, fractionnement des textes longs
   (jusqu'à quatre messages) et abandon propre si le canal n'est pas en cache.
 - Les messages de plus de 1 200 caractères ne déclenchent pas de génération.
@@ -72,7 +74,8 @@ code. Ne pas copier de jeton réel dans ce dépôt public.
 
 1. Une discussion normale sans adresse à Jade n'entraîne pas une réponse à
    chaque message.
-2. `@Jade, tu peux expliquer ?` répond par écrit, sans parler dans le vocal.
+2. `@Jade, tu peux expliquer ?` répond par écrit ; si la diffusion vocale est
+   active, vérifier qu'elle peut aussi être entendue dans le salon vocal.
 3. Une réponse à un message écrit de Jade est reconnue, y compris sans son nom.
 4. Une relance du même auteur fonctionne pendant 90 s après un envoi réussi ;
    une relance d'un autre auteur n'hérite pas de cette fenêtre.

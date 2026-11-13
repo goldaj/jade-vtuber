@@ -130,15 +130,29 @@ class MainSafetyTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(any(t.get_name() == "jade-consumer" and not t.done()
                              for t in asyncio.all_tasks()))
 
-    async def test_discord_text_reply_does_not_speak_when_voice_is_enabled(self):
+    async def test_discord_text_reply_is_written_and_spoken_when_voice_is_enabled(self):
         config = Settings(api_key="test", discord_token="synthetic-discord",
-                          audio_output="ffplay")
-        sent = asyncio.Event()
+                          audio_output="ffplay", vts_enabled=True,
+                          vts_token="synthetic-vts", vts_speak_hotkey="speak")
+        sent, spoken = asyncio.Event(), asyncio.Event()
         outputs = []
-        speech = SimpleNamespace(speak=AsyncMock())
+        async def speak(reply):
+            spoken.set()
+        speech = SimpleNamespace(speak=AsyncMock(side_effect=speak))
+        vts = SimpleNamespace(trigger_hotkey=AsyncMock())
         service = SimpleNamespace(
-            complete=AsyncMock(return_value="Réponse uniquement écrite"),
+            complete=AsyncMock(return_value="Réponse écrite et vocale"),
             close=AsyncMock())
+
+        class VTSScope:
+            def __init__(self, *_args, **_kwargs):
+                pass
+
+            async def __aenter__(self):
+                return vts
+
+            async def __aexit__(self, *_args):
+                pass
 
         class Connector:
             def __init__(self, token, on_message, **kwargs):
@@ -158,15 +172,18 @@ class MainSafetyTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(main.Settings, "load", return_value=config), \
              patch.object(main, "OpenAIServices", return_value=service), \
              patch.object(main, "SpeechOutput", return_value=speech), \
-             patch("src.jade_runtime.discord_text.DiscordText", Connector):
+             patch("src.jade_runtime.discord_text.DiscordText", Connector), \
+             patch("src.jade_runtime.vtube_studio.VTubeStudio", VTSScope):
             running = asyncio.create_task(main.console(
-                live=True, discord=True, voice=True))
+                live=True, discord=True, voice=True, vts=True))
             try:
                 await asyncio.wait_for(sent.wait(), 2)
+                await asyncio.wait_for(spoken.wait(), 2)
             finally:
                 running.cancel()
                 with self.assertRaises(asyncio.CancelledError):
                     await running
-        self.assertEqual(outputs, [("10", "Réponse uniquement écrite", "100")])
-        speech.speak.assert_not_awaited()
+        self.assertEqual(outputs, [("10", "Réponse écrite et vocale", "100")])
+        speech.speak.assert_awaited_once()
+        vts.trigger_hotkey.assert_awaited_once_with("speak")
         service.close.assert_awaited_once()

@@ -5,6 +5,13 @@ sans présenter les mocks comme des tests d'API réels.
 
 ## Évolution demandée le 13 novembre — texte Discord et personnalité
 
+- Correction de compatibilité : une réponse issue d'un texte Discord est
+  envoyée par écrit et conserve la diffusion vocale et la hotkey VTube Studio
+  antérieures lorsqu'elles sont activées. La sélection des messages écrits
+  reste inchangée. La recette réelle reste à réaliser.
+- Validation locale de cette correction : **405 tests hors ligne réussis** et
+  compilation Python réussie. La CI Windows/Linux et le scan de secrets du
+  commit GPT-6 `6727019` ont réussi ; la CI de tout commit ultérieur est distincte.
 - Participation spontanée rehaussée de **15 % à 30 %**, délai minimal
   conservé de trois minutes par salon, sans appel LLM pour la lecture passive.
 - Le prompt standard de Jade présente Goldaj comme son père dans l'univers du
