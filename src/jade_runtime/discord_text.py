@@ -7,6 +7,7 @@ import asyncio
 import logging
 
 from .messages import Incoming
+from .discord_text_policy import DiscordTextPolicy
 
 LOG = logging.getLogger("jade.discord")
 
@@ -27,7 +28,8 @@ def parse_discord_message(message, *, own_user_id=None) -> Incoming | None:
 
 class DiscordText:
     def __init__(self, token: str, on_message, *, send_enabled=False,
-                 voice_bridge=None):
+                 voice_bridge=None, bot_name="Jade", auto_rate=0.15,
+                 cooldown_seconds=180):
         if not token or token == "example":
             raise ValueError("Discord token required")
         self.token = token
@@ -36,6 +38,8 @@ class DiscordText:
         self.client = None
         self.voice_bridge = voice_bridge
         self.dropped = 0
+        self.policy = DiscordTextPolicy(bot_name=bot_name, auto_rate=auto_rate,
+                                        cooldown_seconds=cooldown_seconds)
 
     async def connect_forever(self):
         try:
@@ -60,10 +64,14 @@ class DiscordText:
                 incoming = parse_discord_message(
                     message, own_user_id=self.user.id if self.user else None)
                 if incoming is not None:
-                    try:
-                        await parent.on_message(incoming)
-                    except (asyncio.QueueFull, RuntimeError):
-                        parent.dropped += 1
+                    selected = parent.policy.observe(
+                        message, incoming, own_user_id=self.user.id if self.user else None)
+                    if selected is not None:
+                        try:
+                            await parent.on_message(selected)
+                        except (asyncio.QueueFull, RuntimeError):
+                            parent.dropped += 1
+                            parent.policy.forget_pending(selected.channel, selected.message_id)
 
             async def on_voice_state_update(self, member, before, after):
                 if parent.voice_bridge is not None:
@@ -91,7 +99,8 @@ class DiscordText:
             finally:
                 await self.client.close()
 
-    async def send_chat(self, channel: str, text: str) -> bool:
+    async def send_chat(self, channel: str, text: str, *,
+                        source_message_id: str = "") -> bool:
         if not self.send_enabled or self.client is None or not text.strip():
             return False
         try:
@@ -100,7 +109,29 @@ class DiscordText:
             return False
         target = self.client.get_channel(channel_id)
         if target is None:
-            return False  # Never guess a destination/channel or fetch unknown IDs.
+            return False  # Never guess a destination or fetch unknown IDs.
         import discord
-        await target.send(text[:1500], allowed_mentions=discord.AllowedMentions.none())
-        return True
+        remaining = text.strip()
+        parts = []
+        # Keep full answers where possible within Discord's message limit.
+        while remaining and len(parts) < 4:
+            if len(remaining) <= 1800:
+                parts.append(remaining)
+                remaining = ""
+                break
+            cut = max(remaining.rfind("\n", 0, 1800),
+                      remaining.rfind(" ", 0, 1800))
+            if cut < 500:
+                cut = 1800
+            parts.append(remaining[:cut].strip())
+            remaining = remaining[cut:].lstrip()
+        if remaining:
+            parts[-1] = parts[-1][:1775] + " … [suite tronquée]"
+        first_sent = False
+        for part in parts:
+            sent = await target.send(part, allowed_mentions=discord.AllowedMentions.none())
+            if not first_sent:
+                self.policy.note_sent(channel, source_message_id=source_message_id,
+                                      sent_message_id=getattr(sent, "id", None))
+                first_sent = True
+        return first_sent
