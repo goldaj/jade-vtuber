@@ -165,7 +165,7 @@ class StreamBridgeTests(unittest.IsolatedAsyncioTestCase):
         self.bridge.playback_observer = lambda event, value: events.append((event, value))
 
         async def producer():
-            yield b"\x11\x00" * 480
+            yield b"\x11\x00" * (480 * 5)
             await release.wait()
             yield b"\x22\x00" * 480
 
