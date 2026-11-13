@@ -12,6 +12,7 @@ import logging
 
 from .intent_engine import normalize_intent
 from .openai_services import OpenAIServices
+from .pitch_shift import shift_pcm
 
 
 class EarlySpeechTurn:
@@ -130,6 +131,8 @@ class EarlySpeechTurn:
                               else output.services.stream_speech_pcm(sentence))
                     if stream is None:
                         raise RuntimeError("early speech requires Realtime TTS")
+                    if output.pitch_semitones:
+                        stream = shift_pcm(stream, output.pitch_semitones)
                     try:
                         async for chunk in stream:
                             require_session()
