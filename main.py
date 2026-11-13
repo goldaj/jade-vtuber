@@ -99,10 +99,14 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             if reply.source.platform == "twitch" and twitch_client is not None:
                 await optional("twitch", lambda: twitch_client.send_chat(reply.text))
             if reply.source.platform == "discord" and discord_client is not None:
-                await optional("discord", lambda: discord_client.send_chat(reply.source.channel, reply.text))
-            if vts_client is not None and config.vts_speak_hotkey and not reply.spoken:
+                await optional("discord", lambda: discord_client.send_chat(
+                    reply.source.channel, reply.text,
+                    source_message_id=reply.source.message_id))
+            if (vts_client is not None and config.vts_speak_hotkey and not reply.spoken
+                    and reply.source.platform != "discord"):
                 await optional("vts", lambda: vts_client.trigger_hotkey(config.vts_speak_hotkey))
-            if speech is not None and not reply.spoken:
+            # A written Discord turn stays written; do not speak it into voice.
+            if speech is not None and not reply.spoken and reply.source.platform != "discord":
                 # TTS and the ensuing playback share this deadline. The old
                 # 20-second total could cut off an otherwise valid answer.
                 await optional("voice", lambda: speech.speak(reply),
@@ -173,7 +177,9 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 from src.jade_runtime.discord_text import DiscordText
                 discord_client = DiscordText(
                     config.discord_token, accept, send_enabled=True,
-                    voice_bridge=discord_voice_bridge)
+                    voice_bridge=discord_voice_bridge, bot_name=config.bot_name,
+                    auto_rate=config.discord_text_auto_rate,
+                    cooldown_seconds=config.discord_text_cooldown_seconds)
 
             if twitch or discord or mic or http:
                 print("Jade connecteurs activés. Quitter avec Ctrl+C.")

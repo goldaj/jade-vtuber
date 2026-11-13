@@ -95,7 +95,7 @@ class ConnectionTests(unittest.IsolatedAsyncioTestCase):
         sentinel = object()
         message = types.SimpleNamespace(id=1,
             author=types.SimpleNamespace(id=2, bot=False, display_name='User'),
-            guild=object(), channel=types.SimpleNamespace(id=3), content='Hello')
+            guild=object(), channel=types.SimpleNamespace(id=3), content='Salut Jade')
         class Client:
             def __init__(self, **kwargs):
                 self.user = types.SimpleNamespace(id=10)

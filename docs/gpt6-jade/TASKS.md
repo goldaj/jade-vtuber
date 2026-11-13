@@ -3,6 +3,33 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## Évolution demandée le 13 novembre — texte Discord et personnalité
+
+- Participation spontanée rehaussée de **15 % à 30 %**, délai minimal
+  conservé de trois minutes par salon, sans appel LLM pour la lecture passive.
+- Le prompt standard de Jade présente Goldaj comme son père dans l'univers du
+  personnage et autorise des marques d'affection timides et rares ainsi que
+  l'appellation « papa » ponctuelle, exclusivement pour Goldaj. Un prompt privé explicitement configuré via
+  `JADE_PROMPT_FILE` reste prioritaire et devra être ajusté séparément si utilisé.
+- Tests de cohérence ajoutés. Les résultats CI du **dernier commit** doivent
+  être vérifiés avant fusion ; aucune preuve de fonctionnement Discord réel
+  ou de relance du processus PC n'est établie par la fusion GitHub.
+
+## Chantier isolé — participation écrite Discord (13 novembre 2026)
+
+- Branche `feat/discord-text-contextual-20261113` depuis `develop` après
+  confirmation de la fusion de la PR #1 (streaming vocal).
+- Lecture passive en mémoire bornée par salon ; mentions directes et fils de
+  réponse, relances du même auteur après envoi réussi, questions spontanées
+  limitées par probabilité et cooldown. La voix existante reste distincte.
+- Paramètres : `JADE_DISCORD_TEXT_AUTO_RATE=0.30` (0 pour désactiver
+  l'initiative) et `JADE_DISCORD_TEXT_COOLDOWN_SECONDS=180`.
+- Tests unitaires hors ligne ajoutés ; le résultat CI du dernier SHA doit
+  être vérifié avant toute fusion. Pas de recette Discord réelle ni d'appel
+  facturé dans cette intervention.
+- Passation complète : [Discord texte](HANDOFF-DISCORD-TEXT-20261113.md).
+  `develop` et `main` restent inchangées.
+
 ## Intégration Terra / GPT-6 — streaming vocal (13 novembre 2026)
 
 - Fusion du chantier parallèle : PCM Discord par blocs, connexion TTS Realtime

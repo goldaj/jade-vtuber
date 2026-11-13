@@ -129,3 +129,44 @@ class MainSafetyTests(unittest.IsolatedAsyncioTestCase):
         client.close.assert_awaited_once()
         self.assertFalse(any(t.get_name() == "jade-consumer" and not t.done()
                              for t in asyncio.all_tasks()))
+
+    async def test_discord_text_reply_does_not_speak_when_voice_is_enabled(self):
+        config = Settings(api_key="test", discord_token="synthetic-discord",
+                          audio_output="ffplay")
+        sent = asyncio.Event()
+        outputs = []
+        speech = SimpleNamespace(speak=AsyncMock())
+        service = SimpleNamespace(
+            complete=AsyncMock(return_value="Réponse uniquement écrite"),
+            close=AsyncMock())
+
+        class Connector:
+            def __init__(self, token, on_message, **kwargs):
+                self.on_message = on_message
+
+            async def connect_forever(self):
+                await self.on_message(Incoming(
+                    "discord", "Alice", "Jade, bonjour", channel="10",
+                    message_id="100", force_reply=True))
+                await asyncio.Event().wait()
+
+            async def send_chat(self, channel, text, *, source_message_id=""):
+                outputs.append((channel, text, source_message_id))
+                sent.set()
+                return True
+
+        with patch.object(main.Settings, "load", return_value=config), \
+             patch.object(main, "OpenAIServices", return_value=service), \
+             patch.object(main, "SpeechOutput", return_value=speech), \
+             patch("src.jade_runtime.discord_text.DiscordText", Connector):
+            running = asyncio.create_task(main.console(
+                live=True, discord=True, voice=True))
+            try:
+                await asyncio.wait_for(sent.wait(), 2)
+            finally:
+                running.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await running
+        self.assertEqual(outputs, [("10", "Réponse uniquement écrite", "100")])
+        speech.speak.assert_not_awaited()
+        service.close.assert_awaited_once()

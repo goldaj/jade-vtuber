@@ -51,6 +51,8 @@ class Settings:
     discord_voice_consent: bool = False
     discord_voice_allowed_users: tuple[int, ...] = field(default=(), repr=False)
     discord_voice_channel: int = 0
+    discord_text_auto_rate: float = 0.30
+    discord_text_cooldown_seconds: int = 180
     vts_enabled: bool = False
     vts_token: str = ""
     vts_url: str = "ws://127.0.0.1:8001"
@@ -87,6 +89,8 @@ class Settings:
             # Obsolete Discord activation/broadcast/list/confirmation values are not
             # loaded: existing private files are preserved but have no effect.
             discord_voice_channel=int(environ("DISCORD_VOICE_CHANNEL", "0") or 0),
+            discord_text_auto_rate=float(environ("JADE_DISCORD_TEXT_AUTO_RATE", "0.30")),
+            discord_text_cooldown_seconds=int(environ("JADE_DISCORD_TEXT_COOLDOWN_SECONDS", "180")),
             vts_enabled=_enabled(str(environ("JADE_VTS_ENABLED", "0")).lower()),
             vts_token=str(environ("JADE_VTS_TOKEN", "")),
             vts_url=str(environ("JADE_VTS_URL", "ws://127.0.0.1:8001")),
@@ -117,6 +121,9 @@ class Settings:
                 or not 0 <= self.reply_probability <= 1
                 or not 1 <= self.timeout_seconds <= 120):
             raise ValueError("invalid runtime safety bounds")
+        if (not 0 <= self.discord_text_auto_rate <= 1
+                or not 30 <= self.discord_text_cooldown_seconds <= 3600):
+            raise ValueError("invalid Discord text participation limits")
         if not 1024 <= self.http_port <= 65535:
             raise ValueError("invalid local API port")
         if self.http_enabled and len(self.http_token) < 32:
