@@ -15,6 +15,7 @@ import asyncio
 import base64
 import binascii
 from dataclasses import dataclass
+from contextlib import asynccontextmanager
 from io import BytesIO
 import math
 import re
@@ -57,6 +58,60 @@ def _wav(pcm: bytes) -> bytes:
     return out.getvalue()
 
 
+class RealtimeConnectionPool:
+    """Reuse a healthy Realtime WebSocket for successive voice turns.
+
+    Only one synthesis may own the connection at a time. Any failed or cancelled
+    turn discards the socket, without retrying a potentially billable response.
+    Explicit close is required when shutting down the owning OpenAIServices.
+    """
+
+    def __init__(self, client):
+        self.client = client
+        self._lock = asyncio.Lock()
+        self._manager = None
+        self._connection = None
+        self._signature = None
+
+    async def _discard(self):
+        manager, self._manager = self._manager, None
+        self._connection = None
+        self._signature = None
+        if manager is not None:
+            try:
+                await manager.__aexit__(None, None, None)
+            except Exception:
+                pass
+
+    @asynccontextmanager
+    async def connect(self, **kwargs):
+        async with self._lock:
+            if self._connection is not None and kwargs != self._signature:
+                await self._discard()
+            if self._connection is None:
+                manager = self.client.realtime.connect(**kwargs)
+                try:
+                    connection = await manager.__aenter__()
+                except BaseException:
+                    try:
+                        await manager.__aexit__(None, None, None)
+                    except Exception:
+                        pass
+                    raise
+                self._manager = manager
+                self._connection = connection
+                self._signature = dict(kwargs)
+            try:
+                yield self._connection
+            except BaseException:
+                await self._discard()
+                raise
+
+    async def close(self):
+        async with self._lock:
+            await self._discard()
+
+
 class RealtimeTTS:
     """Synthesize one response at a time on a caller-owned AsyncOpenAI client.
 
@@ -68,7 +123,7 @@ class RealtimeTTS:
 
     def __init__(self, client, *, model="gpt-realtime-2.1-mini", voice="coral",
                  timeout_seconds=60.0, max_audio_bytes=4_800_000,
-                 verify_transcript=True):
+                 verify_transcript=True, connection_pool=None):
         if (not isinstance(model, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,100}", model)
                 or not isinstance(voice, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", voice)
                 or isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (float, int))
@@ -82,6 +137,7 @@ class RealtimeTTS:
         self.timeout_seconds = float(timeout_seconds)
         self.max_audio_bytes = max_audio_bytes
         self.verify_transcript = verify_transcript
+        self.connection_pool = connection_pool
 
     async def synthesize_wav(self, text: str) -> bytes:
         """Compatibility wrapper when the provider transcript is not needed."""
@@ -137,7 +193,8 @@ class RealtimeTTS:
             # Per-recv timeout below still limits real provider inactivity.
             output_seconds = self.max_audio_bytes / (24000 * 2) if on_chunk is not None else 0
             async with asyncio.timeout(self.timeout_seconds + output_seconds + (10 if on_chunk else 0)):
-                async with self.client.realtime.connect(
+                transport = self.connection_pool if self.connection_pool is not None else self.client.realtime
+                async with transport.connect(
                     model=self.model, max_retries=0, max_queue_size=64,
                     websocket_connection_options={"max_size": 1_048_576},
                 ) as connection:
