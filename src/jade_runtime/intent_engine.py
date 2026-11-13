@@ -93,6 +93,40 @@ class IntentStreamParser:
         self.resolved = False
         self._head = ""
         self._trim_next = False
+        self._body_pending = ""
+
+    def _visible_body(self, chunk: str, *, final=False) -> str:
+        """Remove accidental later INTENT metadata without changing the mood.
+
+        A second tag is not allowed by the output contract. Never publish it,
+        even if it arrives split across streaming fragments. Unrelated brackets
+        remain ordinary literal reply text.
+        """
+        pending = self._body_pending + chunk
+        self._body_pending = ""
+        visible = []
+        while pending:
+            start = pending.find("[")
+            if start < 0:
+                visible.append(pending)
+                break
+            visible.append(pending[:start])
+            pending = pending[start:]
+            close = pending.find("]")
+            if close < 0:
+                if _SUSPECT.match(pending):
+                    if final or len(pending) > _MAX_HEAD:
+                        raise ValueError("unfinished inline intent metadata")
+                if not final and len(pending) <= _MAX_HEAD:
+                    self._body_pending = pending
+                else:
+                    visible.append(pending)
+                break
+            candidate = pending[:close + 1]
+            if not _SUSPECT.match(candidate):
+                visible.append(candidate)
+            pending = pending[close + 1:]
+        return "".join(visible)
 
     def feed(self, chunk: str) -> str:
         if not isinstance(chunk, str):
@@ -104,19 +138,19 @@ class IntentStreamParser:
                 chunk = chunk.lstrip()
                 if chunk:
                     self._trim_next = False
-            return chunk
+            return self._visible_body(chunk)
         self._head += chunk
         trimmed = self._head.lstrip()
         if not trimmed:
             if len(self._head) > _MAX_HEAD:
                 self.resolved = True
                 result, self._head = self._head, ""
-                return result
+                return self._visible_body(result)
             return ""
         if not trimmed.startswith("["):
             self.resolved = True
             result, self._head = self._head, ""
-            return result
+            return self._visible_body(result)
         end = trimmed.find("]")
         if end < 0:
             if len(self._head) > _MAX_HEAD:
@@ -124,7 +158,7 @@ class IntentStreamParser:
                     raise ValueError("unfinished intent metadata")
                 self.resolved = True
                 result, self._head = self._head, ""
-                return result
+                return self._visible_body(result)
             return ""
         prefix = trimmed[:end + 1]
         suffix = trimmed[end + 1:]
@@ -137,11 +171,11 @@ class IntentStreamParser:
             result = self._head
         self._head = ""
         self.resolved = True
-        return result
+        return self._visible_body(result)
 
     def finish(self) -> str:
         if self.resolved:
-            return ""
+            return self._visible_body("", final=True)
         trailing = self._head
         self._head = ""
         self.resolved = True
