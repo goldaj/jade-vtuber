@@ -7,14 +7,16 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 from src.jade_runtime.config import Settings
+from src.jade_runtime.discord_voice import OpenVoiceBridge
 from src.jade_runtime.early_speech import EarlySpeechTurn
 from src.jade_runtime.messages import Incoming, Reply
 from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.output import SpeechOutput
 from src.jade_runtime.sentence_stream import SentenceAccumulator
+from tests.test_jade_streaming_pcm import FakeConnection
 
 
 def chunk(text=None, finish=None):
@@ -166,6 +168,82 @@ class GateFailureTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(TimeoutError):
                 await asyncio.wait_for(turn.wait(), 2)
             self.assertEqual(bridge.ack, 0)
+            self.assertEqual(path.read_text(encoding="utf-8"), "")
+
+
+class CancellationCleanupTests(unittest.IsolatedAsyncioTestCase):
+    async def test_discord_playback_state_is_released_if_stream_aclose_cancels(self):
+        class BadStream:
+            def __init__(self):
+                self.sent = False
+
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                if self.sent:
+                    raise RuntimeError("synthetic provider error")
+                self.sent = True
+                return b"\x01\x00" * 480
+
+            async def aclose(self):
+                raise asyncio.CancelledError()
+
+        bridge = OpenVoiceBridge(None, None, 45)
+        connection = FakeConnection()
+        bridge.connection = connection
+        bridge.consent_confirmed = True
+        bridge.own_bot_id = 100
+        bridge.session_id = "a" * 32
+        with patch.dict("sys.modules", {"discord": SimpleNamespace(AudioSource=object)}):
+            with self.assertRaises(asyncio.CancelledError):
+                await bridge.play_pcm_stream(BadStream())
+        self.assertFalse(bridge._playback_active)
+        self.assertGreater(connection.stops, 0)
+
+    async def test_subtitles_and_mic_release_even_when_stream_aclose_cancels(self):
+        class BadStream:
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                raise StopAsyncIteration()
+
+            async def aclose(self):
+                raise asyncio.CancelledError()
+
+        class Services:
+            def stream_speech_pcm(self, text):
+                return BadStream()
+
+        class Gate:
+            def __init__(self):
+                self.started = 0
+                self.ended = 0
+
+            async def begin_speech(self):
+                self.started += 1
+
+            async def end_speech(self):
+                self.ended += 1
+
+        class Bridge:
+            def reply_authorized(self, source):
+                return True
+
+            async def play_pcm_stream_for_reply(self, stream, source):
+                return True
+
+        source = Incoming("discord_voice", "Visiteur", "bonjour", channel="45",
+                          speaker_id=12, voice_session_id="a" * 32, force_reply=True)
+        with TemporaryDirectory() as folder:
+            gate = Gate()
+            path = Path(folder) / "subtitle.txt"
+            output = SpeechOutput(Services(), GateFailureTests.SilentPlayer(), path,
+                                  secondary_player=Bridge(), audio_gate=gate)
+            with self.assertRaises(asyncio.CancelledError):
+                await output.speak(Reply(source, "Bonjour."))
+            self.assertEqual((gate.started, gate.ended), (1, 1))
             self.assertEqual(path.read_text(encoding="utf-8"), "")
 
 
