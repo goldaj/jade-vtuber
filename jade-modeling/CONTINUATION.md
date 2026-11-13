@@ -13,16 +13,16 @@ Terminer Jade r21 professionnel, plein pied et fonctionnel dans VTube Studio. Mo
 
 Étape 1 : v30, r02, KRA, PSD et maître comparés aux objets LFS ; `python jade-modeling/verify_assets.py` réussit après correction de l'empreinte du présent suivi dans le manifeste. Package r20 présent et 23 références vérifiées ; rendu VTube Studio non recetté.
 
-Cheveux A/B : candidat v30.TEST_hair_leaves_r02 créé (SHA68617D558A59593E54C2582AB7845FFA317D8A7E0676E25D5B5514B083C95F62), pas encore natif. Neuf feuilles, neuf paramètres indépendants et 45 poses ; deux LOWER reconnectés, deux bandes TEMPLE arrière ajoutées. VTS inchangé.
-Le 13 novembre, r02 a été chargé dans Cubism 5.2.03 PRO et observé au neutre et à HeadZ ±30 ; les ouvertures/décrochés aux épaules restent visibles aux extrêmes. r01 avait été testé LockL ±1 précédemment. Aucun v31 enregistré ; ne pas écraser v30 ni r01/r02.
+Cheveux A/B : candidat natif `assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_shoulder_underpaint_v31_candidate.cmo3`, 31 143 973 octets, SHA256 39C00ECC82468B70004590E6E8EC549C7C16150A03341A322CB5A223A7CEBA8C. Il dérive de r02, conserve ses neuf feuilles et ajoute deux sous-peintures effilées derrière les épaules. Neutre et HeadZ ±30 observés : les larges ouvertures sont réduites ; raccords fins et mouvements combinés encore à vérifier. Ce candidat n'est pas une validation professionnelle ni un export VTS. Les sources KRA/PSD ne sont pas synchronisées.
 
 # Prochaine action exacte
 
-Suivre [le plan professionnel actualisé](PLAN_QUALITE_PRO_20261113.md) : étape 2, comparer les défauts observés à la copie d'art arrière `assets/live2d/r21_professional_art/Jade_r21_rear_hair_underpaint_candidate_v1.png` du poste modèle, qui n'est pas encore intégrée ni suivie dans ce dépôt. Créer ensuite deux sous-calques derrière les épaules dans une copie, vérifier leur raccord en mouvement, puis seulement les intégrer au CMO3. Examiner une pose de frange et les combinaisons avant de promouvoir un checkpoint ; v31 n'est pas acquis.
+Suivre [le plan professionnel actualisé](PLAN_QUALITE_PRO_20261113.md) : terminer l'étape 2 par la scène de référence visage et VTS ; étape 3, isoler et intégrer les deux sous-calques à une copie KRA/PSD, avec raccords et réimport contrôlé. Observer les mouvements de frange et les combinaisons avant validation. Ne pas régénérer les anciens filtres PSD.
 
 # Fichiers importants
 
 - tools/cmo3_r21_hair_independent_leaves.py (--seam-roots) et cmo3_r21_hair_seam_roots.py ; reports/Jade_r21_v30_hair_leaves_r02.json.
+- `tools/cmo3_r21_shoulder_hair_underpaint.py` et `assets/live2d/r21_professional_art/Jade_r21_rear_hair_underpaint_candidate_v1.png` : image générée à partir du maître et bandes ajoutées au candidat ; détail dans [le rapport de travail](reports/Jade_r21_v31_epaules.md). La bitmap n'est pas la source KRA/PSD synchronisée.
 - select_hair(xml,{token:valeur}) fournit un miroir géométrique pour les neuf feuilles ; ne jamais le sérialiser en livrable. Feuilles parentes de HeadZ, compensées au neutre (anciens parents trop étroits pour l'amplitude).
 - tools/cmo3_r21_back_hair_master_restore.py ; reports/Jade_r21_v29_back_hair_r01.json : restauration v30, rasters intacts.
 - tools/cmo3_r21_tips_master_texture.py : r04→r05, utilise le maître intact pour les deux PAINTED_TIP ; audit reports/Jade_r21_v28_shoulders_r05.json.

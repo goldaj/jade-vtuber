@@ -2,10 +2,34 @@
   {
     "path": "jade-modeling/CONTINUATION.md",
     "source_group": "current-documentation",
-    "bytes": 5377,
-    "sha256": "5280450939a52b64f3ddc2054b3a5665ce4319a917456ec164977458eab2c28c",
+    "bytes": 5553,
+    "sha256": "304c4e482b3623017d4d392d54efb58455c3b604e53287147fdff95fc5a84dba",
     "storage": "git",
     "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_shoulder_underpaint_v31_candidate.cmo3",
+    "source_group": "current-model-candidate",
+    "bytes": 31143973,
+    "sha256": "39c00ecc82468b70004590e6e8ec549c7c16150a03341a322cb5a223a7ceba8c",
+    "storage": "git-lfs",
+    "selection_reason": "Native checkpoint candidate with shoulder underpainting, incomplete and not yet finally validated"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/Jade_r21_rear_hair_underpaint_candidate_v1.png",
+    "source_group": "current-art-input",
+    "bytes": 1321342,
+    "sha256": "3a402867e3cb697cf1b2581f4f5481b9eeb669ef3e447a1ac64bfdf362b0ea93",
+    "storage": "git-lfs",
+    "selection_reason": "Generated underpainting source for the shoulder checkpoint candidate"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_shoulder_hair_underpaint.py",
+    "source_group": "current-model-tool",
+    "bytes": 6054,
+    "sha256": "6a734b80b6046625c57111de184bb3e495625e14e29d03d11ce479db78f300b4",
+    "storage": "git",
+    "selection_reason": "Reproducible builder for the underpainting candidate"
   },
   {
     "path": "jade-modeling/PLAN_MODELE_JADE.md",

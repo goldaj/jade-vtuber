@@ -1,7 +1,7 @@
 {
   "selection_policy": "Only the most recent relevant editable sources, current candidate/native baseline, latest valid installed runtime, current documentation and required tool dependencies. Original local archives are unchanged.",
-  "selected_files": 202,
-  "selected_bytes": 435192199,
+  "selected_files": 205,
+  "selected_bytes": 467664448,
   "excluded_duplicate_files": 3186,
   "excluded_duplicate_bytes": 4588117944,
   "removed_from_current_git_tree": 367,

@@ -10,6 +10,7 @@ récupèrent avec `git lfs pull` ; `git lfs fsck` vérifie les objets locaux.
 | Usage | Fichier ou dossier |
 | --- | --- |
 | Dernier jalon natif r21, v30 | `assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_back_hair_restore_v30.cmo3` |
+| Candidat natif v31, raccords épaules partiels | `assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_shoulder_underpaint_v31_candidate.cmo3` |
 | Candidat cheveux, pas encore validé comme jalon natif | `assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_v30.TEST_hair_leaves_r02.cmo3` |
 | Dernière source Krita conservée du rig artistique | `assets/live2d/r21_professional_art/working_v005/jade_art_v005_r21_rig_art_v2_face_complete_v9.kra` |
 | PSD d'interchange du rig | `assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_rig_only_v2.psd` |
@@ -22,8 +23,9 @@ plein pied et cheveux du CMO3 r21. Ne pas réimporter aveuglément le PSD dans l
 dernier CMO3 : cela risquerait de réintroduire des éléments anciens. Les fichiers
 `CONTINUATION.md` et `PLAN_MODELE_JADE.md` décrivent les limites et la suite exacte.
 
-Les deux CMO3 ont des rôles distincts : v30 est le dernier jalon enregistré dans
-Cubism ; r02 est le candidat courant qui doit encore être validé dans l'application.
+Les CMO3 ont des rôles distincts : v30 est le jalon précédent ; r02 conserve les
+feuilles de cheveux ; v31 est le candidat natif aux épaules partiellement corrigées,
+encore à terminer et à tester en poses combinées.
 Les composants source les plus récents du bas du corps, des épaules, des yeux et
 de la bouche sont également conservés. Les versions intermédiaires restent locales.
 
