@@ -13,7 +13,8 @@ from src.jade_runtime.discord_voice import OpenVoiceBridge
 from src.jade_runtime.messages import Incoming, Reply
 from src.jade_runtime.output import SpeechOutput
 from src.jade_runtime.realtime_tts import RealtimeTTS, RealtimeTTSError, RealtimeConnectionPool
-from tests.test_demo_realtime_tts import FakeClient, configured, created, delta, transcript, done
+from tests.test_demo_realtime_tts import (FakeClient, FakeManager, FakeConnection as FakeRealtimeConnection,
+                                         configured, created, delta, transcript, done)
 
 
 class PCMBufferTests(unittest.IsolatedAsyncioTestCase):
@@ -151,6 +152,28 @@ class RealtimePoolTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(client.manager.closed)
         await pool.close()
         self.assertTrue(client.manager.closed)
+
+    async def test_stale_pooled_socket_reconnects_only_before_paid_request(self):
+        first = FakeRealtimeConnection([configured(), created(), delta(), transcript(), done()])
+        first.session.update = AsyncMock(side_effect=[None, OSError("stale websocket")])
+        second = FakeRealtimeConnection([configured(), created(), delta(), transcript(), done()])
+        managers = [FakeManager(first), FakeManager(second)]
+        client = FakeClient([])
+        calls = []
+        def connect(**kwargs):
+            calls.append(kwargs)
+            return managers[len(calls) - 1]
+        client.realtime.connect = connect
+        pool = RealtimeConnectionPool(client)
+        tts = RealtimeTTS(client, connection_pool=pool)
+        self.assertTrue((await tts.synthesize("Bonjour Jade.")).audio)
+        self.assertTrue((await tts.synthesize("Bonjour Jade.")).audio)
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(first.response.create.await_count, 1)
+        second.response.create.assert_awaited_once()
+        self.assertTrue(managers[0].closed)
+        await pool.close()
+        self.assertTrue(managers[1].closed)
 
     async def test_failed_turn_drops_pool_and_never_retries(self):
         client = FakeClient([configured(), created(), delta(),
