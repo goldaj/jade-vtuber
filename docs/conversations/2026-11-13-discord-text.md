@@ -24,3 +24,18 @@ individuelle du message n'est pas inscrite ici.
   [HANDOFF-DISCORD-TEXT-20261113.md](../gpt6-jade/HANDOFF-DISCORD-TEXT-20261113.md).
 - Les essais serveur réels, la validation téléphone et le merge sont laissés
   au propriétaire / à Terra. La PR n'implique pas une mise en production.
+
+## Complément utilisateur — verbatim accessible
+
+> Je propose 30% d'intervention au lieu de 15%.
+> Aussi, si tu as fait un module à part qui ne casse rien, tu peux l'envoyer sur develop et redéployer l'ensemble. Ça me permettra de tester quand même en attendant codex, sans risque de dégrader l'existant
+
+> Rajoute aussi dans le prompt de Jade que Goldaj (moi) est son père et que
+> * Elle peut montrer l'affection d'une fille ponctuellement, mais pas trop. De façon timide.
+> * Elle peut m'appeler papa ponctuellement, mais avec parcimonie.
+
+## Résumé de l'évolution
+
+- Réglage par défaut du mode spontané de Discord écrit à 30 %.
+- Ajout de la relation père/fille dans le prompt de personnage et le chargement des prompts externes, sans altérer le comportement vocal.
+- Demande de fusion sur `develop` puis de redéploiement. La fusion Git et le redémarrage du processus Jade local sont deux opérations distinctes. Les résultats effectivement obtenus sont à vérifier avant de déclarer la fonction active.
