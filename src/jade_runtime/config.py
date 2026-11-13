@@ -58,6 +58,7 @@ class Settings:
     http_token: str = ""
     http_port: int = 8765
     audio_output: str = "none"
+    early_voice: bool = False
     subtitle_path: Path = Path("subtitle.txt")
     max_history_messages: int = 24
     max_queue: int = 64
@@ -92,6 +93,7 @@ class Settings:
             http_token=str(environ("JADE_HTTP_TOKEN", "")),
             http_port=int(environ("JADE_HTTP_PORT", "8765")),
             audio_output=str(environ("JADE_AUDIO_OUTPUT", "none")),
+            early_voice=_enabled(str(environ("JADE_EARLY_VOICE", "0")).lower()),
             subtitle_path=Path(str(environ("JADE_SUBTITLE_PATH", "subtitle.txt"))),
             max_history_messages=int(environ("JADE_HISTORY_LIMIT", "24")),
             max_queue=int(environ("JADE_QUEUE_LIMIT", "64")),
