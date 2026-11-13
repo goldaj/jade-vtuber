@@ -17,9 +17,11 @@ Cheveux A/B : candidat natif `assets/live2d/r21_professional_art/working_v005/ja
 
 # Prochaine action exacte
 
-Scène visage : les essais locaux `blink_handoff_r01/r02` et `blink_align_r01` sont non validés. Les deux premiers produisent respectivement cils gris et double contour ; le troisième rapproche cadre et masque sans inversion de triangles mais conserve un double contour vers 0,04–0,06. Le sprite fermé ne peut pas simplement être translaté hors de son déformeur : tentative refusée avant écriture. Dans Cubism, reprendre l'alignement manuel des keyforms et du déformeur des vrais yeux fermés, sur une copie versionnée ; préserver l'iris géométriquement fixe et vérifier le mouvement continu avant promotion. Cubism est ouvert sur l'essai local d'alignement.
+Scène visage : après quatre essais non validés de fondu et d'alignement, le clignement conserve des cils gris, contours doubles ou un filet d'iris selon la variante. Le détail et les pistes sont consignés dans le [relais Astra](reports/Jade_r21_relais_Astra_yeux.md). Ne pas promouvoir ces essais ni déclarer le clignement validé.
 
-Suivre ensuite [le plan professionnel actualisé](PLAN_QUALITE_PRO_20261113.md) : terminer la scène visage/VTS ; isoler et intégrer les sous-calques dans des copies KRA/PSD, puis poursuivre raccords, rig, physiques et export. Le modèle Huohuo a servi uniquement de référence structurelle : physiques distinctes pour frange, côtés, arrière, épi et oreilles ; pas de copie de ses fichiers. Ne pas régénérer les anciens filtres PSD.
+Priorité précisée par l'utilisateur : poursuivre vers un modèle complet utilisable même imparfait, sans rester bloqué sur les yeux. Partir du checkpoint natif v31, préparer un export candidat Cubism/VTS et ses physiques, avec défaut visuel explicitement signalé ; aucune validation finale. Suivre [le plan professionnel actualisé](PLAN_QUALITE_PRO_20261113.md), notamment synchronisation des sous-calques dans des copies KRA/PSD, rig, physiques et retour ultérieur sur les yeux. Le modèle Huohuo a servi uniquement de référence structurelle ; pas de copie de ses fichiers. Ne pas régénérer les anciens filtres PSD.
+
+Export en cours : la copie v31 avant atlas montre bien jambes et chaussures. Deux essais automatiques d'atlas 4096 (par Mesh puis Model Image) font disparaître le bas du corps : les coordonnées UV des pièces concernées sortent de [0,1]. Ces essais locaux sont non valides ; conserver v31 intact et corriger le remappage avant tout paquet VTS. La physique r20 comporte 37 sorties absentes de r21 ; ne pas la recopier sans adaptation.
 
 # Fichiers importants
 

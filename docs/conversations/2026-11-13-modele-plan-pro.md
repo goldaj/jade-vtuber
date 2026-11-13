@@ -9,3 +9,7 @@ Couverture partielle : échanges disponibles dans la tâche modèle ; heures ind
 **Utilisateur — résumé :** exécuter le plan sans s'arrêter et annoncer le début et la fin de chaque étape et sous-étape.
 
 **Assistant — résumé :** vérification des sources et références du paquet r20, correction d'une empreinte documentaire obsolète ; création d'un essai local d'art arrière, non intégré ni validé. Les zones de cheveux cachées aux épaules demandent encore une correction sur copie et une vérification dans Cubism.
+
+**Utilisateur — résumé :** autorise le modèle Huohuo local comme référence de mouvement et de physique, sans imposer l'utilisation de ses ressources ; autorise à reprendre le contrôle du poste. Précise ensuite de documenter pour Astra les sous-étapes restant bloquées après plusieurs essais et de continuer vers un modèle complet utilisable, même imparfait par endroits.
+
+**Assistant — résumé :** intégration locale sur copie de deux sous-peintures d'épaules au candidat v31, publié sur `develop` ; quatre essais de fermeture des yeux n'ont pas atteint une qualité satisfaisante et restent locaux. Relais détaillé dans [Jade_r21_relais_Astra_yeux.md](../../jade-modeling/reports/Jade_r21_relais_Astra_yeux.md). Préparation d'un atlas de textures sur copie pour un premier export VTube Studio non final.
