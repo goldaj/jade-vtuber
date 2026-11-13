@@ -189,6 +189,32 @@ class IntentServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(request["input"][0]["content"][0]["text"], "Bonjour Jade.")
         self.assertEqual(client.connection.response.create.await_count, 1)
 
+    async def test_pooled_realtime_session_updates_intention_without_reconnect(self):
+        events = [
+            configured(speed=1.25, voice="shimmer"), created(), delta(),
+            transcript(), done(),
+            configured(speed=1.25, voice="shimmer"), created(), delta(),
+            transcript(), done(),
+        ]
+        client = FakeClient(events)
+        service = OpenAIServices(Settings(), client=client)
+        try:
+            first = [chunk async for chunk in service.stream_speech_pcm(
+                "Bonjour Jade.", intent="playful")]
+            second = [chunk async for chunk in service.stream_speech_pcm(
+                "Bonjour Jade.", intent="tender")]
+            self.assertEqual(len(first), 1)
+            self.assertEqual(len(second), 1)
+            self.assertEqual(len(client.calls), 1)  # shared WebSocket
+            self.assertEqual(client.connection.response.create.await_count, 2)
+            sessions = [call.kwargs["session"]
+                        for call in client.connection.session.update.await_args_list]
+            self.assertEqual(len(sessions), 2)
+            self.assertIn("mischievous", sessions[0]["instructions"])
+            self.assertIn("slightly shy", sessions[1]["instructions"])
+        finally:
+            await service._stream_pool.close()
+
     async def test_realtime_stream_adapter_receives_same_intent(self):
         with patch("src.jade_runtime.openai_services.RealtimeTTS") as adapter:
             service = OpenAIServices(Settings(), client=object())
