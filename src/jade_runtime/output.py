@@ -8,6 +8,7 @@ import tempfile
 from .avatar import child_environment
 from .messages import Reply
 from .openai_services import OpenAIServices
+from .pitch_shift import shift_pcm, shift_wav
 
 LOG = logging.getLogger("jade.output")
 
@@ -85,6 +86,9 @@ class SpeechOutput:
                  subtitle_path: Path, secondary_player=None, audio_gate=None,
                  secondary_broadcast=False, early_timeout_seconds=180):
         self.services = services
+        # Real OpenAI services only; testing doubles retain existing semantics.
+        self.pitch_semitones = (services.settings.tts_pitch_semitones
+                                if isinstance(services, OpenAIServices) else 0.0)
         self.player = player
         self.subtitle_path = Path(subtitle_path)
         self.lock = asyncio.Lock()
@@ -172,9 +176,13 @@ class SpeechOutput:
             return False
         if not discord_voice and context is None:
             return False
-        stream = stream_factory(reply.text)
+        stream = (stream_factory(reply.text, intent=reply.intent)
+                  if isinstance(self.services, OpenAIServices)
+                  else stream_factory(reply.text))
         if stream is None:
             return False
+        if self.pitch_semitones:
+            stream = shift_pcm(stream, self.pitch_semitones)
 
         gated = False
         written = False
@@ -247,11 +255,17 @@ class SpeechOutput:
             # doubles still provide synthesize_wav only.
             rich_synthesis = getattr(type(self.services), "synthesize_speech", None)
             if callable(rich_synthesis):
-                spoken = await rich_synthesis(self.services, reply.text)
+                spoken = await rich_synthesis(
+                    self.services, reply.text, intent=reply.intent
+                ) if isinstance(self.services, OpenAIServices) else await rich_synthesis(
+                    self.services, reply.text
+                )
                 wav, spoken_text = spoken.audio, spoken.transcript
             else:
                 wav = await self.services.synthesize_wav(reply.text)
                 spoken_text = reply.text
+            if self.pitch_semitones:
+                wav = await shift_wav(wav, self.pitch_semitones)
             if discord_voice:
                 require_session()
             # OBS text source shows the whole phrase while the WAV plays.

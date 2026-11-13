@@ -36,6 +36,14 @@ partir des seuls tests simulés.
 
 Python ; STT et TTS OpenAI uniquement ; dialogue interchangeable. Par défaut, la démo et les tests restent hors ligne. La validation repose sur `python -m unittest discover -s tests -v` et `python -m compileall -q src main.py`. Distinguer les tests simulés des essais réels. Consigner les résultats observés et leurs limites dans `docs/gpt6-jade/TASKS.md`.
 
+## Passation actuelle voix Étincelle et moteur d'intentions (13 novembre 2026)
+
+**Codex/Terra : lire avant toute retouche du dialogue, du TTS, de Discord vocal ou de la configuration de voix** : [HANDOFF-CODEX-VOICE-INTENTS-20261113.md](docs/gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), puis [spécification](docs/gpt6-jade/VOICE-PROFILES-20261113.md) et [audit PO/architecture/QA/audio](docs/gpt6-jade/REVIEW-INTENT-ETINCELLE-20261113.md). Ces trois documents priment sur les anciennes valeurs vocales historiques figurant dans HANDOFF.md / TASKS.md / ROADMAP.
+
+Sur `develop`, Étincelle est le **défaut public** (`shimmer`, 1,25×), Friponne et Rosée restent des alternatives documentées. Le LLM produit un seul préfixe strict `[INTENT:label]` ; le module `src/jade_runtime/intent_engine.py` le supprime du texte affiché, lu et mémorisé et fournit une direction vocale **statique autorisée**. Les sept intentions sont **candidates à valider à l'écoute** ; ne pas les qualifier de capacités acoustiques garanties par OpenAI. Le filtre PCM de pitch +2 demi-tons est désormais intégré **sous réserve que FFmpeg dispose de rubberband** ; vérifier sa présence et sa latence selon [la passation DSP](docs/gpt6-jade/PITCH-SHIFT-ETINCELLE-20261113.md). Les variables privées/locales peuvent remplacer les défauts Git.
+
+CI Windows/Linux réussie en simulation : la **recette réelle** voix/Discord/téléphone, les coûts et la latence restent à confirmer. Ne pas toucher à `main` ni écraser les travaux locaux Terra pour « synchroniser » le dépôt.
+
 ## Ressources 2D
 
 Conserver les sources et les objets Git LFS. Lire `jade-modeling/MODEL_GUIDE.md`, `jade-modeling/CONTINUATION.md` et les documents de coordination 2D avant de les modifier. Exécuter `python jade-modeling/verify_assets.py` après récupération des objets LFS. Le propriétaire décide du périmètre des travaux visuels et des revues Astra.

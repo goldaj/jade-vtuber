@@ -90,15 +90,18 @@ class OpenAIServices:
             raise ValueError("OpenAI STT returned no text")
         return value.strip()
 
-    async def synthesize_speech(self, text: str) -> SpokenAudio:
+    async def synthesize_speech(self, text: str, *, intent="neutral") -> SpokenAudio:
         """Return the audio and spoken text without issuing a second request."""
         if not isinstance(text, str) or not 1 <= len(text) <= 4096:
             raise ValueError("invalid OpenAI TTS length")
         if self.settings.tts_model.startswith(("gpt-realtime", "gpt-4o-realtime")):
+            # Preserve legacy mock/caller behavior when intent is neutral.
+            intent_options = {"intent": intent} if intent != "neutral" else {}
             return await RealtimeTTS(
                 self.client, model=self.settings.tts_model, voice=self.settings.voice,
                 speed=self.settings.tts_speed,
                 timeout_seconds=self.settings.timeout_seconds, verify_transcript=False,
+                **intent_options,
             ).synthesize(text)
         # WAV output permits decoding/playing with no additional TTS engine.
         response = await self.client.audio.speech.create(
@@ -114,7 +117,7 @@ class OpenAIServices:
         # The legacy Speech API does not return a separate spoken transcript.
         return SpokenAudio(data, text)
 
-    def stream_speech_pcm(self, text: str):
+    def stream_speech_pcm(self, text: str, *, intent="neutral"):
         """Return a single-request async PCM iterator for realtime TTS.
 
         Callers consume and close this stream within the active voice session.
@@ -124,11 +127,12 @@ class OpenAIServices:
             raise ValueError("invalid OpenAI TTS length")
         if not self.settings.tts_model.startswith(("gpt-realtime", "gpt-4o-realtime")):
             return None
+        intent_options = {"intent": intent} if intent != "neutral" else {}
         return RealtimeTTS(
             self.client, model=self.settings.tts_model, voice=self.settings.voice,
             speed=self.settings.tts_speed,
             timeout_seconds=self.settings.timeout_seconds, verify_transcript=False,
-            connection_pool=self._stream_pool,
+            connection_pool=self._stream_pool, **intent_options,
         ).stream_pcm(text)
 
     async def synthesize_wav(self, text: str) -> bytes:

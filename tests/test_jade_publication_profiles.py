@@ -40,6 +40,23 @@ class PublicProfilesTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             Settings.load()
 
+    def test_pitch_profile_loading_and_private_override(self):
+        self.profile.write_text('[settings]\nJADE_TTS_PITCH_SEMITONES=2.0\n', encoding="utf-8")
+        self.assertEqual(Settings.load().tts_pitch_semitones, 2.0)
+        os.environ["JADE_TTS_PITCH_SEMITONES"] = "0"
+        self.assertEqual(Settings.load().tts_pitch_semitones, 0.0)
+        os.environ["JADE_TTS_PITCH_SEMITONES"] = "7"
+        with self.assertRaises(ValueError):
+            Settings.load()
+
+    def test_shipped_fast_openai_profile_accepts_new_pitch(self):
+        from src.utility.public_profile import PROFILE_ROOT
+        os.environ["JADE_PROFILE_FILE"] = str(PROFILE_ROOT / "fast-openai.toml")
+        loaded = load_profile()
+        self.assertEqual(loaded["JADE_TTS_VOICE"], "shimmer")
+        self.assertEqual(loaded["JADE_TTS_PITCH_SEMITONES"], "2.0")
+        self.assertEqual(Settings.load().tts_pitch_semitones, 2.0)
+
     def test_secrets_and_identity_must_not_be_in_public_profile(self):
         for key in ("OPENAI_API_KEY", "TWITCH_TOKEN", "DISCORD_TOKEN",
                     "JADE_VTS_TOKEN", "BOT_NAME", "TWITCH_CHANNEL"):

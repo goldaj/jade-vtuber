@@ -38,7 +38,7 @@ class RuntimeRealtimeTests(unittest.IsolatedAsyncioTestCase):
             service = OpenAIServices(settings, client=client)
             self.assertIs(await service.synthesize_speech("Il y a 3 chats."), response)
             adapter.assert_called_once_with(client, model=settings.tts_model, voice=settings.voice,
-                                            speed=1.5,
+                                            speed=1.25,
                                             timeout_seconds=settings.timeout_seconds,
                                             verify_transcript=False)
             adapter.return_value.synthesize.assert_awaited_once_with("Il y a 3 chats.")

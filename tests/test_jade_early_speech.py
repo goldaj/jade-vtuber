@@ -196,6 +196,45 @@ class EarlySpeechTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(all(name.endswith(".tmp") for name in updates))
             self.assertEqual(path.read_text(encoding="utf-8"), "")
 
+    async def test_etincelle_pitch_uses_one_filter_for_entire_early_turn(self):
+        class Services:
+            settings = SimpleNamespace(tts_model="gpt-realtime-2.1-mini")
+            def stream_speech_pcm(self, text):
+                async def generate():
+                    yield b"\\x01\\x00" * 480
+                return generate()
+
+        class Bridge:
+            def reply_authorized(self, source):
+                return True
+            async def play_pcm_stream_for_reply(self, stream, source):
+                self.chunks = [part async for part in stream]
+                return True
+
+        class Silent:
+            mode = "none"
+
+        source = Incoming("discord_voice", "A", "Question", force_reply=True,
+                          voice_session_id="a" * 32, speaker_id=12)
+        with TemporaryDirectory() as folder:
+            bridge = Bridge()
+            output = SpeechOutput(Services(), Silent(), Path(folder) / "subtitle.txt",
+                                  secondary_player=bridge)
+            output.pitch_semitones = 2.0  # mock the public Etincelle default
+            transformed = []
+            def identity_filter(stream, semitones):
+                transformed.append(semitones)
+                return stream
+            with patch("src.jade_runtime.early_speech.shift_pcm",
+                       side_effect=identity_filter):
+                turn = output.start_early(source)
+                await turn.emit("Première phrase.")
+                await turn.emit("Deuxième phrase.")
+                await turn.finish_input()
+                self.assertTrue(await asyncio.wait_for(turn.wait(), 2))
+            self.assertEqual(transformed, [2.0])
+            self.assertEqual(len(bridge.chunks), 2)
+
     async def test_runtime_legacy_path_remains_unchanged_when_stream_not_enabled(self):
         class Chat:
             async def complete(self, messages):

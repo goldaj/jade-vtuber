@@ -163,7 +163,8 @@ class Runtime:
             else:
                 reply = await self.dialogue.respond(
                     item.message, valid=item.valid, on_sentence=turn.emit,
-                    on_timing=self.mark_timing, defer_history=True)
+                    on_timing=self.mark_timing, defer_history=True,
+                    on_intent=getattr(turn, "set_intent", None))
             if not item.valid():
                 raise TimeoutError("message expired")
             if reply is None and turn is not None:
