@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, patch
 
 from src.jade_runtime.config import Settings
 from src.jade_runtime.discord_voice import OpenVoiceBridge
+from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.early_speech import EarlySpeechTurn
 from src.jade_runtime.messages import Incoming, Reply
 from src.jade_runtime.openai_services import OpenAIServices
@@ -58,6 +59,13 @@ class TruncatedLLMTests(unittest.IsolatedAsyncioTestCase):
         services = OpenAIServices(Settings(), client=provider)
         with self.assertRaisesRegex(ValueError, "incompletely"):
             _ = [x async for x in services.complete_stream([{"role": "user", "content": "Test"}])]
+        self.assertEqual(len(provider.calls), 1)
+
+    async def test_last_text_and_stop_marker_can_share_one_chunk(self):
+        provider = MockChat(chunk("Bonjour ", finish=None), chunk("Jade.", finish="stop"))
+        services = OpenAIServices(Settings(), client=provider)
+        result = [x async for x in services.complete_stream([{"role": "user", "content": "Test"}])]
+        self.assertEqual(result, ["Bonjour ", "Jade."])
         self.assertEqual(len(provider.calls), 1)
 
     async def test_successful_llm_stream_is_delivered_once(self):
@@ -169,6 +177,32 @@ class GateFailureTests(unittest.IsolatedAsyncioTestCase):
                 await asyncio.wait_for(turn.wait(), 2)
             self.assertEqual(bridge.ack, 0)
             self.assertEqual(path.read_text(encoding="utf-8"), "")
+
+
+class LLMStreamDisposalTests(unittest.IsolatedAsyncioTestCase):
+    async def test_failed_voice_consumer_closes_llm_stream_and_leaves_history_clean(self):
+        class Backend:
+            closed = False
+
+            async def complete_stream(self, messages):
+                try:
+                    yield "Bonjour."
+                    await asyncio.Event().wait()
+                finally:
+                    self.closed = True
+
+        backend = Backend()
+        dialogue = Dialogue(backend, "Jade test")
+        source = Incoming("discord_voice", "Visiteur", "Salut", channel="45",
+                          voice_session_id="a" * 32, speaker_id=12, force_reply=True)
+
+        async def consumer(_sentence):
+            raise RuntimeError("voice destination unavailable")
+
+        with self.assertRaisesRegex(RuntimeError, "voice destination unavailable"):
+            await dialogue.respond(source, on_sentence=consumer)
+        self.assertTrue(backend.closed)
+        self.assertEqual(len(dialogue.history[source.session]), 0)
 
 
 class CancellationCleanupTests(unittest.IsolatedAsyncioTestCase):
