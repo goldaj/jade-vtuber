@@ -102,7 +102,7 @@ class EarlySpeechTurn:
             written = False
             path = output.subtitle_path
 
-            async def audio():
+            async def unshifted_audio():
                 sentence = first
                 first_sentence = True
                 while sentence is not None:
@@ -131,8 +131,6 @@ class EarlySpeechTurn:
                               else output.services.stream_speech_pcm(sentence))
                     if stream is None:
                         raise RuntimeError("early speech requires Realtime TTS")
-                    if output.pitch_semitones:
-                        stream = shift_pcm(stream, output.pitch_semitones)
                     try:
                         async for chunk in stream:
                             require_session()
@@ -153,7 +151,13 @@ class EarlySpeechTurn:
                 tmp.write_text(first, encoding="utf-8")
                 tmp.replace(path)
                 written = True
-                played = await bridge.play_pcm_stream_for_reply(audio(), source)
+                # One DSP process for the whole reply, not a new process for
+                # every sentence. This also preserves audio continuity across
+                # early-speech segments and avoids repeated startup latency.
+                stream = unshifted_audio()
+                if output.pitch_semitones:
+                    stream = shift_pcm(stream, output.pitch_semitones)
+                played = await bridge.play_pcm_stream_for_reply(stream, source)
             finally:
                 try:
                     if gated:
