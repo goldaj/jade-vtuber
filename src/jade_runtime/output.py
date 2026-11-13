@@ -172,7 +172,9 @@ class SpeechOutput:
             return False
         if not discord_voice and context is None:
             return False
-        stream = stream_factory(reply.text)
+        stream = (stream_factory(reply.text, intent=reply.intent)
+                  if isinstance(self.services, OpenAIServices)
+                  else stream_factory(reply.text))
         if stream is None:
             return False
 
@@ -247,7 +249,11 @@ class SpeechOutput:
             # doubles still provide synthesize_wav only.
             rich_synthesis = getattr(type(self.services), "synthesize_speech", None)
             if callable(rich_synthesis):
-                spoken = await rich_synthesis(self.services, reply.text)
+                spoken = await rich_synthesis(
+                    self.services, reply.text, intent=reply.intent
+                ) if isinstance(self.services, OpenAIServices) else await rich_synthesis(
+                    self.services, reply.text
+                )
                 wav, spoken_text = spoken.audio, spoken.transcript
             else:
                 wav = await self.services.synthesize_wav(reply.text)
