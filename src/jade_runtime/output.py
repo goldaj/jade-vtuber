@@ -138,6 +138,20 @@ class SpeechOutput:
             if task is not None:
                 await asyncio.gather(task, return_exceptions=True)
 
+    def start_early(self, source):
+        """Create an opt-in early voice turn if the runtime can actually stream."""
+        if (source.platform != "discord_voice"
+                or getattr(self.player, "mode", None) != "none"
+                or self.secondary_player is None
+                or not callable(getattr(self.secondary_player, "play_pcm_stream_for_reply", None))
+                or not callable(getattr(self.services, "stream_speech_pcm", None))):
+            return None
+        model = getattr(getattr(self.services, "settings", None), "tts_model", "")
+        if not model.startswith(("gpt-realtime", "gpt-4o-realtime")):
+            return None
+        from .early_speech import EarlySpeechTurn
+        return EarlySpeechTurn(self, source)
+
     async def _speak_progressive(self, reply, context, require_session, *, discord_voice):
         """Use streaming only for Discord with no simultaneous local WAV player.
 
