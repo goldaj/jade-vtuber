@@ -47,13 +47,13 @@ class OpenAIServices:
                     reason = getattr(choice, "finish_reason", None)
                     if reason not in (None, "stop"):
                         raise ValueError("OpenAI dialogue stream ended incompletely")
-                    if reason == "stop":
-                        completed = True
                     delta = getattr(getattr(choice, "delta", None), "content", None)
                     if isinstance(delta, str) and delta:
                         if completed:
                             raise ValueError("OpenAI dialogue text after completion")
                         yield delta
+                    if reason == "stop":
+                        completed = True
             if not completed:
                 # An EOF without finish_reason=stop can follow a broken
                 # connection after some text was already sent to the speaker.
