@@ -6,6 +6,7 @@ import time
 from typing import Protocol
 
 from .messages import Incoming, Reply
+from .sentence_stream import SentenceAccumulator
 
 
 class ChatBackend(Protocol):
@@ -64,7 +65,8 @@ class Dialogue:
             return True
         return self.rng.random() < self.random_reply_rate
 
-    async def respond(self, incoming: Incoming, *, valid=lambda: True) -> Reply | None:
+    async def respond(self, incoming: Incoming, *, valid=lambda: True,
+                      on_sentence=None) -> Reply | None:
         # Reject stale duplicates by transport ID, not by repeated message text.
         if len(incoming.text) > 1200 or not self.should_reply(incoming):
             return None
@@ -83,7 +85,20 @@ class Dialogue:
                     f"{incoming.author} ({incoming.platform}): {incoming.text}")}
                 messages = [{"role": "system", "content": self.prompt}, *history, user]
                 # Failed LLM calls must not corrupt memory or mark a message handled.
-                answer = await self.backend.complete(messages)
+                if on_sentence is not None and callable(getattr(self.backend, "complete_stream", None)):
+                    sentence_buffer = SentenceAccumulator()
+                    answer_parts = []
+                    async for fragment in self.backend.complete_stream(messages):
+                        if not valid():
+                            raise TimeoutError("message expired")
+                        answer_parts.append(fragment)
+                        for sentence in sentence_buffer.feed(fragment):
+                            await on_sentence(sentence)
+                    for sentence in sentence_buffer.finish():
+                        await on_sentence(sentence)
+                    answer = "".join(answer_parts)
+                else:
+                    answer = await self.backend.complete(messages)
                 if not valid():
                     raise TimeoutError("message expired")
                 if not isinstance(answer, str) or not answer.strip():
