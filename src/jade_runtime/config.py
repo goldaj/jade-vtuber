@@ -31,8 +31,8 @@ class Settings:
     model: str = "gpt-6-luna"
     stt_model: str = "gpt-transcribe"
     tts_model: str = "gpt-realtime-2.1-mini"
-    voice: str = "coral"
-    tts_speed: float = 1.5
+    voice: str = "shimmer"
+    tts_speed: float = 1.25
     api_key: str = ""
     channel: str = ""
     bot_name: str = "Jade"
@@ -75,8 +75,8 @@ class Settings:
             model=str(environ("JADE_LLM_MODEL", "gpt-6-luna")),
             stt_model=str(environ("JADE_STT_MODEL", "gpt-transcribe")),
             tts_model=str(environ("JADE_TTS_MODEL", "gpt-realtime-2.1-mini")),
-            voice=str(environ("JADE_TTS_VOICE", "coral")),
-            tts_speed=float(environ("JADE_TTS_SPEED", "1.5")),
+            voice=str(environ("JADE_TTS_VOICE", "shimmer")),
+            tts_speed=float(environ("JADE_TTS_SPEED", "1.25")),
             api_key=str(environ("OPENAI_API_KEY", "")),
             channel=str(environ("TWITCH_CHANNEL", "")),
             bot_name=str(environ("BOT_NAME", "Jade")),
