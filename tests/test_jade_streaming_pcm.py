@@ -64,7 +64,7 @@ class PCMBufferTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stats.max_queued_frames, 2)
         self.assertIsNotNone(stats.first_nonzero_read_ms)
         self.assertGreaterEqual(stats.first_nonzero_read_ms, 0)
-        self.assertNotIn("pcm", repr(stats).lower())
+        self.assertNotIn("audio", repr(stats).lower())
         buffer.abort()
 
     async def test_large_pcm_input_never_buffers_full_expansion(self):
