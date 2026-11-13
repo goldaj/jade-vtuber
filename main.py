@@ -100,7 +100,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 await optional("twitch", lambda: twitch_client.send_chat(reply.text))
             if reply.source.platform == "discord" and discord_client is not None:
                 await optional("discord", lambda: discord_client.send_chat(reply.source.channel, reply.text))
-            if vts_client is not None and config.vts_speak_hotkey:
+            if vts_client is not None and config.vts_speak_hotkey and not reply.spoken:
                 await optional("vts", lambda: vts_client.trigger_hotkey(config.vts_speak_hotkey))
             if speech is not None and not reply.spoken:
                 # TTS and the ensuing playback share this deadline. The old
@@ -108,8 +108,23 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 await optional("voice", lambda: speech.speak(reply),
                                timeout=min(180, config.timeout_seconds + 120))
 
+        def start_early_voice(source):
+            turn = speech.start_early(source)
+            if turn is not None and vts_client is not None and config.vts_speak_hotkey:
+                async def trigger_vts():
+                    try:
+                        await asyncio.wait_for(vts_client.trigger_hotkey(config.vts_speak_hotkey), timeout=20)
+                    except asyncio.CancelledError:
+                        raise
+                    except Exception:
+                        LOG.warning("Jade optional output failed: vts")
+
+                # The turn invokes this once, concurrently with its first audio.
+                turn.on_first_sentence = trigger_vts
+            return turn
+
         runtime = Runtime(dialogue, on_reply, config.max_queue,
-                          on_stream_start=(speech.start_early if speech and config.early_voice else None))
+                          on_stream_start=(start_early_voice if speech and config.early_voice else None))
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(

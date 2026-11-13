@@ -325,3 +325,4 @@ class SpeechOutput:
                 acknowledge = getattr(self.secondary_player, "mark_voice_reply_played", None)
                 if callable(acknowledge):
                     acknowledge(reply.source)
+            return discord_played if discord_voice else True

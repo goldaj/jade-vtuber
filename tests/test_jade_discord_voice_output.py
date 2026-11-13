@@ -235,6 +235,115 @@ class DiscordVoiceRoutingTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(asyncio.CancelledError):
                         await task
 
+    async def test_main_vts_hotkey_starts_with_first_streamed_sentence_once_per_turn(self):
+        with tempfile.TemporaryDirectory() as directory:
+            submitted, hotkey_started = asyncio.Event(), asyncio.Event()
+            speech_calls, runtimes = [], []
+            config = Settings(api_key="test", discord_token="test", discord_voice_channel=123,
+                              vts_enabled=True, vts_token="test", vts_speak_hotkey="speak",
+                              early_voice=True,
+                              subtitle_path=Path(directory) / "subtitle.txt")
+
+            class Services:
+                def __init__(self):
+                    self.client = SimpleNamespace(close=AsyncMock())
+                    self.close = AsyncMock()
+
+                async def complete_stream(self, _messages):
+                    yield "Cette première phrase est assez longue pour être prononcée. "
+                    yield "Cette seconde phrase doit aussi être prononcée normalement. "
+
+            class Speech:
+                secondary_player = None
+
+                def start_early(self, _source):
+                    class Turn:
+                        on_first_sentence = None
+                        hotkey_task = None
+                        has_submitted = False
+
+                        async def emit(self, sentence):
+                            self.has_submitted = True
+                            if not speech_calls and self.on_first_sentence:
+                                self.hotkey_task = asyncio.create_task(self.on_first_sentence())
+                            speech_calls.append(sentence)
+                            if len(speech_calls) == 1:
+                                await asyncio.wait_for(hotkey_started.wait(), timeout=3)
+
+                        async def finish_input(self):
+                            pass
+
+                        async def wait(self):
+                            await self.abort()
+                            return True
+
+                        async def abort(self):
+                            if self.hotkey_task is not None:
+                                self.hotkey_task.cancel()
+                                await asyncio.gather(self.hotkey_task, return_exceptions=True)
+
+                    return Turn()
+
+                async def speak(self, reply):
+                    raise AssertionError("streamed voice must not be synthesized twice")
+
+            async def trigger(_hotkey):
+                hotkey_started.set()
+                await asyncio.Event().wait()
+
+            vts = SimpleNamespace(trigger_hotkey=AsyncMock(side_effect=trigger))
+
+            class VTSScope:
+                def __init__(self, *_args, **_kwargs):
+                    pass
+
+                async def __aenter__(self):
+                    return vts
+
+                async def __aexit__(self, *_args):
+                    pass
+
+            class Bridge:
+                def __init__(self, *_args, **_kwargs):
+                    pass
+
+            class Connector:
+                def __init__(self, _token, on_message, **_kwargs):
+                    self.on_message = on_message
+
+                async def connect_forever(self):
+                    await self.on_message(Incoming("discord_voice", "test", "question",
+                                                   channel="123", speaker_id=1,
+                                                   voice_session_id="a" * 32,
+                                                   force_reply=True))
+                    submitted.set()
+                    await asyncio.Event().wait()
+
+            class ObservedRuntime(main.Runtime):
+                def __init__(self, *args, **kwargs):
+                    super().__init__(*args, **kwargs)
+                    runtimes.append(self)
+
+            with patch.object(main.Settings, "load", return_value=config), \
+                 patch.object(main, "OpenAIServices", return_value=Services()), \
+                 patch.object(main, "SpeechOutput", return_value=Speech()), \
+                 patch.object(main, "Runtime", ObservedRuntime), \
+                 patch("src.jade_runtime.discord_voice.OpenVoiceBridge", Bridge), \
+                 patch("src.jade_runtime.discord_text.DiscordText", Connector), \
+                 patch("src.jade_runtime.vtube_studio.VTubeStudio", VTSScope):
+                task = asyncio.create_task(main.console(live=True, voice=True, vts=True,
+                                                         discord=True, discord_voice=True))
+                try:
+                    await asyncio.wait_for(submitted.wait(), timeout=3)
+                    await asyncio.wait_for(runtimes[0].idle(), timeout=3)
+                    self.assertEqual(len(speech_calls), 2)
+                    vts.trigger_hotkey.assert_awaited_once_with("speak")
+                    self.assertTrue(hotkey_started.is_set())
+                finally:
+                    task.cancel()
+                    with self.assertRaises(asyncio.CancelledError):
+                        await task
+
     async def test_revoked_session_rejected_before_synthesis_or_outputs(self):
         with tempfile.TemporaryDirectory() as directory:
             local, discord = _Player(), _Player()

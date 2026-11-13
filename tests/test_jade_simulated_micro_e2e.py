@@ -42,7 +42,7 @@ class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
         stt = AsyncMock(side_effect=transcribe)
         chat = AsyncMock(return_value=SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content='Bonjour !'))]))
         tts = AsyncMock(return_value=SimpleNamespace(content=output_wav))
-        sdk = FakeClient([configured(), created(), delta(), transcript('Bonjour !'), done()])
+        sdk = FakeClient([configured(1.5), created(), delta(), transcript('Bonjour !'), done()])
         sdk.audio = SimpleNamespace(transcriptions=SimpleNamespace(create=stt),
                                     speech=SimpleNamespace(create=tts))
         sdk.chat = SimpleNamespace(completions=SimpleNamespace(create=chat))

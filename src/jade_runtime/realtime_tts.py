@@ -78,15 +78,22 @@ class RealtimeConnectionPool:
         self._connection = None
         self._signature = None
 
+    @staticmethod
+    async def _close_manager(manager):
+        try:
+            async with asyncio.timeout(2):
+                await manager.__aexit__(None, None, None)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            pass
+
     async def _discard(self):
         manager, self._manager = self._manager, None
         self._connection = None
         self._signature = None
         if manager is not None:
-            try:
-                await manager.__aexit__(None, None, None)
-            except Exception:
-                pass
+            await self._close_manager(manager)
 
     @asynccontextmanager
     async def connect(self, **kwargs):
@@ -98,10 +105,7 @@ class RealtimeConnectionPool:
                 try:
                     connection = await manager.__aenter__()
                 except BaseException:
-                    try:
-                        await manager.__aexit__(None, None, None)
-                    except Exception:
-                        pass
+                    await self._close_manager(manager)
                     raise
                 self._manager = manager
                 self._connection = connection
@@ -128,17 +132,20 @@ class RealtimeTTS:
 
     def __init__(self, client, *, model="gpt-realtime-2.1-mini", voice="coral",
                  timeout_seconds=60.0, max_audio_bytes=4_800_000,
-                 verify_transcript=True, connection_pool=None):
+                 verify_transcript=True, connection_pool=None, speed=1.0):
         if (not isinstance(model, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,100}", model)
                 or not isinstance(voice, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", voice)
                 or isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (float, int))
                 or not math.isfinite(timeout_seconds) or not 1 <= timeout_seconds <= 180
+                or isinstance(speed, bool) or not isinstance(speed, (float, int))
+                or not math.isfinite(speed) or not 0.25 <= speed <= 1.5
                 or type(max_audio_bytes) is not int or not 2 <= max_audio_bytes <= 10_000_000
                 or type(verify_transcript) is not bool):
             raise ValueError("invalid realtime synthesis settings")
         self.client = client
         self.model = model
         self.voice = voice
+        self.speed = float(speed)
         self.timeout_seconds = float(timeout_seconds)
         self.max_audio_bytes = max_audio_bytes
         self.verify_transcript = verify_transcript
@@ -158,6 +165,8 @@ class RealtimeTTS:
         buffering; closing the generator cancels the upstream response. A provider
         error after audio emission propagates without retrying the spoken portion.
         """
+        if self.verify_transcript:
+            raise ValueError("streaming cannot verify the transcript before playback")
         queue = asyncio.Queue(maxsize=16)  # at most 16 x 9,600-byte fragments
         async def offer(chunk):
             for offset in range(0, len(chunk), 9600):
@@ -236,7 +245,7 @@ class RealtimeTTS:
                     ),
                     "audio": {"input": {"turn_detection": None},
                               "output": {"format": {"type": "audio/pcm", "rate": 24000},
-                                         "voice": self.voice}},
+                                         "voice": self.voice, "speed": self.speed}},
                 })
             except asyncio.CancelledError:
                 raise
@@ -247,7 +256,8 @@ class RealtimeTTS:
                 if event_count > 10_000:
                     raise RealtimeTTSError("Too many realtime events")
                 try:
-                    event = await asyncio.wait_for(connection.recv(), timeout=self.timeout_seconds)
+                    async with asyncio.timeout(self.timeout_seconds):
+                        event = await connection.recv()
                 except asyncio.CancelledError:
                     raise
                 except Exception:
@@ -264,7 +274,8 @@ class RealtimeTTS:
                             or _field(session, "output_modalities") != ["audio"]
                             or _field(fmt, "type") != "audio/pcm"
                             or _field(fmt, "rate") != 24000
-                            or _field(output, "voice") != self.voice):
+                            or _field(output, "voice") != self.voice
+                            or _field(output, "speed") != self.speed):
                         raise RealtimeTTSError("Realtime audio settings not confirmed")
                     break
 
@@ -283,7 +294,8 @@ class RealtimeTTS:
                 event_count += 1
                 if event_count > 10_000:
                     raise RealtimeTTSError("Too many realtime events")
-                event = await asyncio.wait_for(connection.recv(), timeout=self.timeout_seconds)
+                async with asyncio.timeout(self.timeout_seconds):
+                    event = await connection.recv()
                 kind = _field(event, "type")
                 if kind == "error":
                     raise RealtimeTTSError("Realtime response rejected")
@@ -316,8 +328,6 @@ class RealtimeTTS:
                         raise RealtimeTTSError("Invalid synthesized audio") from None
                     if audio_bytes + len(chunk) > self.max_audio_bytes:
                         raise RealtimeTTSError("Synthesized audio exceeds local limit")
-                    if len(chunk) % 2:
-                        raise RealtimeTTSError("Invalid synthesized audio")
                     audio_bytes += len(chunk)
                     if on_chunk is None:
                         pcm.extend(chunk)
@@ -348,7 +358,7 @@ class RealtimeTTS:
                         raise RealtimeTTSError("Synthesized audio transcript missing")
                     if self.verify_transcript and _words(transcript) != _words(text):
                         raise RealtimeTTSError("Synthesized wording differs from the text")
-                    if not audio_bytes:
+                    if not audio_bytes or audio_bytes % 2:
                         raise RealtimeTTSError("Invalid synthesized audio")
                     return SpokenAudio(_wav(bytes(pcm)) if on_chunk is None else b"", transcript)
         finally:

@@ -8,6 +8,7 @@ legacy full-text WAV route untouched unless explicitly enabled.
 from __future__ import annotations
 
 import asyncio
+import logging
 
 
 class EarlySpeechTurn:
@@ -19,6 +20,9 @@ class EarlySpeechTurn:
         self.source = source
         self._phrases = asyncio.Queue(maxsize=2)
         self._ended = False
+        self.has_submitted = False
+        self.on_first_sentence = None
+        self._first_callback_task = None
         self._task = asyncio.create_task(
             self._run_bounded(), name="jade-early-speech")
 
@@ -26,16 +30,25 @@ class EarlySpeechTurn:
         # Total turn limit: LLM may emit phrases faster than Discord can play.
         # Without a deadline, an interrupted or slow stream blocks the runtime
         # worker indefinitely, even though text delivery has already finished.
-        async with asyncio.timeout(self.max_seconds):
-            return await self._run()
+        try:
+            async with asyncio.timeout(self.max_seconds):
+                return await self._run()
+        finally:
+            callback = self._first_callback_task
+            if callback is not None:
+                if not callback.done():
+                    callback.cancel()
+                await asyncio.gather(callback, return_exceptions=True)
 
     async def _offer(self, text):
         while self._phrases.full():
             if self._task.done():
                 await self._task
+                raise RuntimeError("early speech stopped before input finished")
             await asyncio.sleep(0.01)
         if self._task.done():
             await self._task
+            raise RuntimeError("early speech stopped before input finished")
         self._phrases.put_nowait(text)
 
     async def emit(self, sentence: str):
@@ -44,6 +57,7 @@ class EarlySpeechTurn:
         if not isinstance(sentence, str) or not sentence.strip():
             raise ValueError("invalid speech segment")
         await self._offer(sentence.strip())
+        self.has_submitted = True
 
     async def finish_input(self):
         if not self._ended:
@@ -79,8 +93,23 @@ class EarlySpeechTurn:
 
             async def audio():
                 sentence = first
+                first_sentence = True
                 while sentence is not None:
                     require_session()
+                    if first_sentence:
+                        first_sentence = False
+                        callback = self.on_first_sentence
+                        if callable(callback):
+                            async def invoke():
+                                try:
+                                    await callback()
+                                except asyncio.CancelledError:
+                                    raise
+                                except Exception:
+                                    logging.getLogger("jade.output").warning(
+                                        "Early speech first-sentence callback failed")
+                            self._first_callback_task = asyncio.create_task(invoke())
+                            await asyncio.sleep(0)  # Start, but do not wait for the hotkey.
                     # OBS may read this file from another process at any time.
                     # Publish complete subtitle replacements, never partial writes.
                     subtitle_tmp = path.with_name(path.name + ".tmp")

@@ -18,8 +18,10 @@ class OpenAIServices:
         self._stream_pool = RealtimeConnectionPool(client)
 
     async def close(self):
-        await self._stream_pool.close()
-        await self.client.close()
+        try:
+            await self._stream_pool.close()
+        finally:
+            await self.client.close()
 
     async def complete(self, messages: list[dict[str, str]]) -> str:
         response = await self.client.chat.completions.create(
@@ -95,6 +97,7 @@ class OpenAIServices:
         if self.settings.tts_model.startswith(("gpt-realtime", "gpt-4o-realtime")):
             return await RealtimeTTS(
                 self.client, model=self.settings.tts_model, voice=self.settings.voice,
+                speed=self.settings.tts_speed,
                 timeout_seconds=self.settings.timeout_seconds, verify_transcript=False,
             ).synthesize(text)
         # WAV output permits decoding/playing with no additional TTS engine.
@@ -103,7 +106,7 @@ class OpenAIServices:
             voice=self.settings.voice,
             input=text,
             response_format="wav",
-            speed=1.1,
+            speed=self.settings.tts_speed,
         )
         data = response.content
         if not isinstance(data, bytes) or not data:
@@ -123,6 +126,7 @@ class OpenAIServices:
             return None
         return RealtimeTTS(
             self.client, model=self.settings.tts_model, voice=self.settings.voice,
+            speed=self.settings.tts_speed,
             timeout_seconds=self.settings.timeout_seconds, verify_transcript=False,
             connection_pool=self._stream_pool,
         ).stream_pcm(text)

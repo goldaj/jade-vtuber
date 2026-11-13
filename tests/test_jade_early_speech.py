@@ -34,6 +34,50 @@ class SentenceTests(unittest.TestCase):
 
 
 class EarlySpeechTests(unittest.IsolatedAsyncioTestCase):
+    async def test_first_sentence_callback_is_once_and_does_not_block_audio(self):
+        class Services:
+            settings = SimpleNamespace(tts_model="gpt-realtime-2.1-mini")
+            def stream_speech_pcm(self, text):
+                async def generate():
+                    yield b"\x01\x00" * 480
+                return generate()
+
+        class Bridge:
+            def reply_authorized(self, source):
+                return True
+            async def play_pcm_stream_for_reply(self, chunks, source):
+                async for _ in chunks:
+                    pass
+                return True
+
+        class Silent:
+            mode = "none"
+
+        started, cancelled = asyncio.Event(), asyncio.Event()
+        called = []
+        async def hotkey():
+            called.append(1)
+            started.set()
+            try:
+                await asyncio.Event().wait()
+            finally:
+                cancelled.set()
+
+        source = Incoming("discord_voice", "A", "Question", voice_session_id="a" * 32,
+                          speaker_id=12, force_reply=True)
+        with TemporaryDirectory() as folder:
+            output = SpeechOutput(Services(), Silent(), Path(folder) / "subtitle.txt",
+                                  secondary_player=Bridge())
+            turn = output.start_early(source)
+            turn.on_first_sentence = hotkey
+            await turn.emit("Première phrase.")
+            await turn.emit("Deuxième phrase.")
+            await turn.finish_input()
+            self.assertTrue(await asyncio.wait_for(turn.wait(), 1))
+            self.assertTrue(started.is_set())
+            self.assertTrue(cancelled.is_set())
+            self.assertEqual(called, [1])
+
     async def test_first_audio_arrives_before_llm_finishes_and_reply_is_delivered_once(self):
         llm_release = asyncio.Event()
         first_audio = asyncio.Event()

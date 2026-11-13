@@ -100,7 +100,7 @@ class DemoSession:
 
     def __init__(self, api_key: str, prompt: str, on_event: Callable[[DemoEvent], None],
                  *, model="gpt-6-luna", stt_model="gpt-transcribe",
-                 tts_model="gpt-realtime-2.1-mini", voice="coral", services=None,
+                 tts_model="gpt-realtime-2.1-mini", voice="coral", speed=1.5, services=None,
                  synthesizer=None,
                  player=play_wav, capture=capture_wav):
         if (not isinstance(api_key, str) or not api_key.strip() or len(api_key) > 4096
@@ -110,11 +110,15 @@ class DemoSession:
             raise ValueError("prompt required")
         if not callable(on_event) or not callable(player) or not callable(capture):
             raise ValueError("demo callbacks required")
+        if (isinstance(speed, bool) or not isinstance(speed, (int, float))
+                or not 0.25 <= speed <= 1.5):
+            raise ValueError("TTS speed must be between 0.25 and 1.5")
         if services is None:
             # Do not read the host's private configuration or inherit a retry
             # policy that could unexpectedly repeat a billable request.
             settings = Settings(api_key=api_key.strip(), model=model,
-                                stt_model=stt_model, tts_model=tts_model, voice=voice)
+                                stt_model=stt_model, tts_model=tts_model, voice=voice,
+                                tts_speed=speed)
             settings.validate()
             settings.require_openai()
             client = _isolated_openai_client(settings)
@@ -122,7 +126,7 @@ class DemoSession:
             if synthesizer is None:
                 # Realtime is a different endpoint: changing a Speech API model
                 # string alone cannot produce speech with this replacement.
-                synthesizer = RealtimeTTS(client, model=tts_model, voice=voice,
+                synthesizer = RealtimeTTS(client, model=tts_model, voice=voice, speed=speed,
                                           verify_transcript=False)
         self._services = services
         # Injectable doubles implement the same synthesize() contract. There is

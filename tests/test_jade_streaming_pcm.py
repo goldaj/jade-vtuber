@@ -22,8 +22,9 @@ class PCMBufferTests(unittest.IsolatedAsyncioTestCase):
         pcm = struct.pack("<" + "h" * 480, *([1000, -1000] * 240))
         buffer = DiscordPCMBuffer()
         self.assertEqual(buffer.read(), b"\x00" * FRAME_BYTES)
-        await buffer.feed(pcm[:64])
-        await buffer.feed(pcm[64:])
+        await buffer.feed(pcm[:63])
+        await buffer.feed(pcm[63:65])
+        await buffer.feed(pcm[65:])
         frame = buffer.read()
         self.assertEqual(len(frame), FRAME_BYTES)
         self.assertEqual(struct.unpack_from("<hhhhhhhh", frame),
@@ -82,10 +83,11 @@ class PCMBufferTests(unittest.IsolatedAsyncioTestCase):
     async def test_invalid_pcm_never_becomes_audio(self):
         buffer = DiscordPCMBuffer()
         with self.assertRaises(ValueError):
-            await buffer.feed(b"\x00")
-        with self.assertRaises(ValueError):
             await buffer.feed(b"")
         with self.assertRaises(ValueError):
+            await buffer.finish()
+        await buffer.feed(b"\x00")
+        with self.assertRaisesRegex(ValueError, "incomplete"):
             await buffer.finish()
 
 
@@ -107,7 +109,7 @@ class TTSStreamTests(unittest.IsolatedAsyncioTestCase):
             return await original()
 
         client.connection.recv = recv
-        stream = RealtimeTTS(client).stream_pcm("Bonjour Jade.")
+        stream = RealtimeTTS(client, verify_transcript=False).stream_pcm("Bonjour Jade.")
         first = await asyncio.wait_for(anext(stream), 1)
         self.assertEqual(first, b"\x04\x00" * 20)
         await asyncio.wait_for(waiting.wait(), 1)
@@ -121,7 +123,7 @@ class TTSStreamTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_closing_stream_cancels_provider_without_replay(self):
         client = FakeClient([configured(), created(), delta(b"\x01\x00" * 20)])
-        stream = RealtimeTTS(client).stream_pcm("Bonjour Jade.")
+        stream = RealtimeTTS(client, verify_transcript=False).stream_pcm("Bonjour Jade.")
         self.assertEqual(len(await asyncio.wait_for(anext(stream), 1)), 40)
         await asyncio.wait_for(stream.aclose(), 1)
         self.assertTrue(client.manager.closed)
@@ -130,7 +132,7 @@ class TTSStreamTests(unittest.IsolatedAsyncioTestCase):
     async def test_failure_after_emission_propagates_with_no_second_request(self):
         client = FakeClient([configured(), created(), delta(b"\x01\x00" * 20),
                              {"type": "error", "error": {"message": "private"}}])
-        stream = RealtimeTTS(client).stream_pcm("Bonjour Jade.")
+        stream = RealtimeTTS(client, verify_transcript=False).stream_pcm("Bonjour Jade.")
         self.assertTrue(await asyncio.wait_for(anext(stream), 1))
         with self.assertRaises(RealtimeTTSError) as caught:
             await asyncio.wait_for(anext(stream), 1)

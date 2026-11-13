@@ -195,6 +195,8 @@ class DemoSessionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(session._services.settings.model, "gpt-6-luna")
             self.assertEqual(session._services.settings.stt_model, "gpt-transcribe")
             self.assertEqual(session._synthesizer.model, "gpt-realtime-2.1-mini")
+            self.assertEqual(session._services.settings.tts_speed, 1.5)
+            self.assertEqual(session._synthesizer.speed, 1.5)
             self.assertFalse(session._synthesizer.verify_transcript)
             await session.close()
             factory.return_value.close.assert_awaited_once()

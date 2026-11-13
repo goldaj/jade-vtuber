@@ -3,6 +3,33 @@
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 
+## Intégration Terra / GPT-6 — streaming vocal (13 novembre 2026)
+
+- Fusion du chantier parallèle : PCM Discord par blocs, connexion TTS Realtime
+  réutilisée et mode optionnel de réponse par phrases. Le flux de phrases garde
+  une seule lecture Discord continue, avec un maximum de six segments par réponse.
+  Le réglage de débit `JADE_TTS_SPEED` vaut 1,5 par défaut et accepte 0,25–1,5.
+- Corrections de l'intégration : maintien des commandes « silence » chevauchant
+  la fin de lecture, données PCM découpées sur un octet, file de phrases qui ne
+  boucle pas si la lecture s'arrête, annulation et fermeture bornée du WebSocket,
+  historique prudent après interruption, hotkey VTS déclenchée avec la première
+  phrase sans attendre la réponse entière.
+- Essai API réel court, hors Discord et sans microphone : génération de texte par
+  flux réussie ; deux synthèses PCM ont confirmé le réglage ×1,5 et la réutilisation
+  du même WebSocket. Premier PCM observé après 3,28 s à froid puis 0,88 s pour
+  l'appel suivant. Exemples isolés, pas une comparaison avant/après ni une
+  mesure de la latence entendue sur téléphone. Coût exact non mesuré.
+- Sur le code d'intégration : **391 tests hors ligne réussis** et compilation
+  Python réussie sous Windows. La CI du nouveau commit doit être consultée
+  séparément ; les vérifications du commit GPT-6 seul ne sont pas celles du merge.
+- Aube reste la voix souhaitée : aucun identifiant API Realtime compatible n'a
+  été confirmé dans les sources officielles consultées. Le timbre existant est
+  conservé ; Brise est une voix de l'API Live distincte, sans équivalence établie.
+  Voir le [plan initial](PLAN-LATENCE-20261110.md).
+- La recette téléphone, le résultat du partage d'écran et le gain perçu sont à
+  constater avec le propriétaire ; le mode phrases peut être désactivé avec
+  `JADE_EARLY_VOICE=0` si besoin.
+
 ## État courant — voix rétablie et relais latence (10 novembre 2026)
 
 - Panne réelle DAVE corrigée par le verrou `davey==0.1.7` avec `discord.py==2.7.1` :

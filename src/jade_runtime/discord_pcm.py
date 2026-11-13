@@ -49,6 +49,7 @@ class DiscordPCMBuffer:
             raise ValueError("invalid PCM idle timeout")
         self._frames = Queue(maxsize=max_frames)
         self._tail = bytearray()
+        self._pending_byte = b""
         self._previous = None
         self._done = threading.Event()
         self._aborted = threading.Event()
@@ -79,11 +80,16 @@ class DiscordPCMBuffer:
     async def feed(self, pcm: bytes):
         if self._done.is_set() or self._aborted.is_set():
             raise RuntimeError("Discord PCM playback not accepting audio")
-        if not isinstance(pcm, bytes) or not pcm or len(pcm) % 2:
+        if not isinstance(pcm, bytes) or not pcm:
             raise ValueError("invalid 24 kHz mono PCM chunk")
         self._received += len(pcm)
         if self._received > 4_800_000:
             raise ValueError("Discord PCM limit exceeded")
+        # A transport delta can end between the bytes of a 16-bit sample.
+        # Keep at most one byte until the next delta; do not pad or drop it.
+        pcm = self._pending_byte + pcm
+        self._pending_byte = pcm[-1:] if len(pcm) % 2 else b""
+        pcm = memoryview(pcm)[:len(pcm) - len(self._pending_byte)]
         previous = self._previous
         # One 20-ms source slice at a time. Never expand an entire provider
         # delta into a large bytearray before a slow Discord reader can drain it.
@@ -109,6 +115,8 @@ class DiscordPCMBuffer:
             return
         if self._received == 0:
             raise ValueError("empty synthesized PCM stream")
+        if self._pending_byte:
+            raise ValueError("incomplete synthesized PCM sample")
         if self._tail:
             frame = bytes(self._tail).ljust(FRAME_BYTES, b"\x00")
             self._tail.clear()
@@ -163,6 +171,7 @@ class DiscordPCMBuffer:
     def abort(self):
         self._aborted.set()
         self._done.set()
+        self._pending_byte = b""
         self._tail.clear()
         while True:
             try:

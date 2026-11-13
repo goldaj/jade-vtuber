@@ -90,10 +90,64 @@ class OpenVoiceTests(unittest.IsolatedAsyncioTestCase):
         bridge.receive_pcm(12, "Visiteur", pcm(.25, 1800) + pcm(.8, 0))
         await asyncio.wait_for(started.wait(), 1)
         bridge._end_playback()
+        # Streaming sentences can begin a new playback before this STT returns.
+        bridge._begin_playback(self.connection, bridge.generation, bridge.session_id)
         release.set()
         await asyncio.sleep(.04)
         await bridge.pending.join()
         self.assertTrue(bridge._decider.is_muted(bridge.session_id))
+        bridge._end_playback()
+
+    async def test_stop_turn_crosses_end_of_playback(self):
+        bridge = self.bridge
+        self.services.transcribe_wav.return_value = "silence"
+        bridge._begin_playback(self.connection, bridge.generation, bridge.session_id)
+        bridge.receive_pcm(12, "Visiteur", pcm(.25, 1800))
+        bridge._end_playback()
+        bridge.receive_pcm(12, "Visiteur", pcm(.8, 0))
+        await asyncio.sleep(.04)
+        await bridge.pending.join()
+        self.assertTrue(bridge._decider.is_muted(bridge.session_id))
+        self.runtime.submit.assert_not_awaited()
+
+    async def test_ordinary_turn_crossing_end_is_not_sent_to_dialogue(self):
+        bridge = self.bridge
+        self.services.transcribe_wav.return_value = "parole ordinaire"
+        bridge._begin_playback(self.connection, bridge.generation, bridge.session_id)
+        bridge.receive_pcm(12, "Visiteur", pcm(.25, 1800))
+        bridge._end_playback()
+        bridge.receive_pcm(12, "Visiteur", pcm(.8, 0))
+        await asyncio.sleep(.04)
+        await bridge.pending.join()
+        self.services.transcribe_wav.assert_awaited_once()
+        self.runtime.submit.assert_not_awaited()
+
+    async def test_queued_stop_survives_end_of_playback(self):
+        bridge = self.bridge
+        started, release = asyncio.Event(), asyncio.Event()
+        calls = 0
+
+        async def transcribe(_):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                started.set()
+                await release.wait()
+                return "parole ordinaire"
+            return "silence"
+
+        self.services.transcribe_wav.side_effect = transcribe
+        bridge._begin_playback(self.connection, bridge.generation, bridge.session_id)
+        bridge.receive_pcm(12, "Visiteur", pcm(.25, 1800) + pcm(.8, 0))
+        await asyncio.wait_for(started.wait(), 1)
+        bridge.receive_pcm(13, "Visiteur", pcm(.25, 1800) + pcm(.8, 0))
+        await asyncio.sleep(.04)
+        self.assertEqual(bridge.pending.qsize(), 1)
+        bridge._end_playback()
+        release.set()
+        await asyncio.wait_for(bridge.pending.join(), 1)
+        self.assertTrue(bridge._decider.is_muted(bridge.session_id))
+        self.runtime.submit.assert_not_awaited()
 
     async def test_no_membership_check_and_group_speaks_without_name(self):
         self.channel.connect.assert_awaited_once_with(cls=self.dave_class)

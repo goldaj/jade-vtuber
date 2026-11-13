@@ -66,7 +66,7 @@ class Dialogue:
         return self.rng.random() < self.random_reply_rate
 
     async def respond(self, incoming: Incoming, *, valid=lambda: True,
-                      on_sentence=None) -> Reply | None:
+                      on_sentence=None, on_timing=None, defer_history=False) -> Reply | None:
         # Reject stale duplicates by transport ID, not by repeated message text.
         if len(incoming.text) > 1200 or not self.should_reply(incoming):
             return None
@@ -84,15 +84,22 @@ class Dialogue:
                 user = {"role": "user", "content": (
                     f"{incoming.author} ({incoming.platform}): {incoming.text}")}
                 messages = [{"role": "system", "content": self.prompt}, *history, user]
+                if on_timing is not None:
+                    on_timing("llm_start")
                 # Failed LLM calls must not corrupt memory or mark a message handled.
                 if on_sentence is not None and callable(getattr(self.backend, "complete_stream", None)):
                     sentence_buffer = SentenceAccumulator()
                     answer_parts = []
                     stream = self.backend.complete_stream(messages)
+                    first_fragment = True
                     try:
                         async for fragment in stream:
                             if not valid():
                                 raise TimeoutError("message expired")
+                            if first_fragment and fragment:
+                                first_fragment = False
+                                if on_timing is not None:
+                                    on_timing("llm_first_token")
                             answer_parts.append(fragment)
                             for sentence in sentence_buffer.feed(fragment):
                                 await on_sentence(sentence)
@@ -108,15 +115,38 @@ class Dialogue:
                     answer = "".join(answer_parts)
                 else:
                     answer = await self.backend.complete(messages)
+                if on_timing is not None:
+                    on_timing("llm_end")
                 if not valid():
                     raise TimeoutError("message expired")
                 if not isinstance(answer, str) or not answer.strip():
                     raise ValueError("chat backend returned an empty response")
                 result = Reply(incoming, answer.strip())
-                history.extend((user, {"role": "assistant", "content": result.text}))
+                if not defer_history:
+                    history.extend((user, {"role": "assistant", "content": result.text}))
+                    if incoming.message_id:
+                        used.append(incoming.message_id)
+                return result
+        finally:
+            self._users[key] -= 1
+            self._last_used[key] = time.monotonic()
+
+    async def commit_stream_response(self, incoming: Incoming, text: str | None):
+        """Commit after playback; None denotes interruption without word alignment."""
+        key = incoming.session
+        lock = self._acquire_session(key)
+        try:
+            async with lock:
+                used = self.seen.setdefault(key, deque(maxlen=512))
+                if incoming.message_id and incoming.message_id in used:
+                    return
+                history = self.history.setdefault(key, deque(maxlen=self.max_messages))
+                user = {"role": "user", "content": (
+                    f"{incoming.author} ({incoming.platform}): {incoming.text}")}
+                content = text if text is not None else "[réponse vocale interrompue ou non diffusée]"
+                history.extend((user, {"role": "assistant", "content": content}))
                 if incoming.message_id:
                     used.append(incoming.message_id)
-                return result
         finally:
             self._users[key] -= 1
             self._last_used[key] = time.monotonic()
