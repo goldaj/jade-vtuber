@@ -865,21 +865,24 @@ class DiscordVoiceBridge:
             return True
         finally:
             buffer.abort()
-            if iterator is not None:
-                close = getattr(iterator, "aclose", None)
-                if callable(close):
-                    try:
+            try:
+                if iterator is not None:
+                    close = getattr(iterator, "aclose", None)
+                    if callable(close):
                         await close()
-                    except Exception:
-                        pass
-            if started:
-                self._notify_playback(observer, "pcm_end", None)
-            if source is not None:
+            finally:
                 try:
-                    self._stop_playback(connection)
+                    if started:
+                        self._notify_playback(observer, "pcm_end", None)
+                    if source is not None:
+                        try:
+                            self._stop_playback(connection)
+                        finally:
+                            source.cleanup()
                 finally:
-                    source.cleanup()
-            self._end_playback()
+                    # Always clear playback state, even if stream finalization
+                    # or Discord's own cleanup raises during cancellation.
+                    self._end_playback()
 
     async def play(self, wav: bytes, *, expected_session=None, expected_speaker=None):
         """Optional playback of OpenAI-generated WAV, never a TTS engine."""
