@@ -45,3 +45,11 @@ correspondance API documentée d'Aube n'a été trouvée ; la voix précédente 
 utilisée. Le lancement et le partage Discord sont à constater séparément.
 La suite complète de l'intégration compte 391 tests hors ligne réussis sous
 Windows, ainsi qu'une compilation réussie ; cela ne remplace pas la recette réelle.
+
+Le merge `4ee1879` est sur `develop` : CI Windows/Linux et scan de secrets
+réussis. La branche GPT-6 et le checkpoint local ont été supprimés après contrôle
+de leur présence dans l'historique. Le processus Jade a été lancé, la connexion
+du bot au vocal et l'existence de la fenêtre r20 ont été constatées. La capture
+de la fenêtre Discord a expiré ; le partage d'écran n'a donc pas été commencé.
+La réponse vocale et la vidéo de cette nouvelle version restent à vérifier par
+le propriétaire sur son téléphone.

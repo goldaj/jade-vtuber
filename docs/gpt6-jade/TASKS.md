@@ -20,8 +20,10 @@ sans présenter les mocks comme des tests d'API réels.
   l'appel suivant. Exemples isolés, pas une comparaison avant/après ni une
   mesure de la latence entendue sur téléphone. Coût exact non mesuré.
 - Sur le code d'intégration : **391 tests hors ligne réussis** et compilation
-  Python réussie sous Windows. La CI du nouveau commit doit être consultée
-  séparément ; les vérifications du commit GPT-6 seul ne sont pas celles du merge.
+  Python réussie sous Windows. Sur le merge `4ee1879`, les vérifications
+  [Windows/Linux](https://github.com/goldaj/jade-vtuber/actions/runs/43415450313)
+  et le [scan de secrets](https://github.com/goldaj/jade-vtuber/actions/runs/43415450337)
+  ont réussi. Ces résultats ne sont pas attribués à un autre commit.
 - Aube reste la voix souhaitée : aucun identifiant API Realtime compatible n'a
   été confirmé dans les sources officielles consultées. Le timbre existant est
   conservé ; Brise est une voix de l'API Live distincte, sans équivalence établie.
@@ -29,6 +31,16 @@ sans présenter les mocks comme des tests d'API réels.
 - La recette téléphone, le résultat du partage d'écran et le gain perçu sont à
   constater avec le propriétaire ; le mode phrases peut être désactivé avec
   `JADE_EARLY_VOICE=0` si besoin.
+- Le travail GPT-6 et le checkpoint Terra sont présents dans l'historique de
+  `develop` ; la branche distante GPT-6 et la branche locale temporaire ont été
+  supprimées après vérification de leur intégration. `main` n'a pas été fusionnée.
+- Lors du lancement demandé, le processus Jade est actif, le bot est connecté au
+  vocal Discord et une fenêtre « Jade — modèle animé r20 » est présente. Ce
+  lancement utilise le mode phrases et le débit 1,5. Le partage automatique n'a
+  pas été engagé : la capture de la fenêtre Discord a expiré après nouvelle
+  sélection. Le compte PC était connecté ; partager manuellement la fenêtre
+  Jade depuis Discord pour l'essai téléphone. La présence d'une fenêtre ne prouve
+  ni son contenu visible ni une transmission vidéo réussie.
 
 ## État courant — voix rétablie et relais latence (10 novembre 2026)
 
