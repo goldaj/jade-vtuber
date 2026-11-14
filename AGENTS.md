@@ -20,7 +20,7 @@ instructions courantes du paragraphe Runtime ci-dessous pour la reprise actuelle
 
 Ne jamais committer de secrets, fichiers de configuration privés, enregistrements ni transcriptions. La configuration privée est externe au dépôt et peut être sélectionnée avec `JADE_SECRETS_FILE`. Ne pas divulguer son contenu. Ne pas activer de connecteur, microphone ou appel payant sans demande explicite.
 
-Sous Windows, privilégier `D:\Codex` pour les outils, caches, temporaires et nouveaux espaces de travail ; respecter les chemins établis et jonctions de compatibilité. Ne pas perturber d’autres services.
+Pour Jade, l'utilisateur demande désormais de travailler intégralement sur `D:` : dépôt Git local, fichiers de travail, modèles, outils, caches et temporaires. Ne pas utiliser `C:` comme espace de travail ni maintenir son ancien chemin comme référence ; migrer uniquement les éléments utiles qui ne sont pas déjà sur `D:`, après vérification. Préserver les données uniques, les checkpoints utiles, les autres services et tout travail simultané. Cette consigne actualise la préférence historique de compatibilité `C:` figurant dans les anciens journaux.
 
 ## Runtime
 
