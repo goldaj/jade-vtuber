@@ -25,6 +25,8 @@ Export en cours : la copie v31 avant atlas montre bien jambes et chaussures. Deu
 
 Essais suivants : restaurer les UV rétablit le plein pied en mode source mais pas l'atlas ; modifier l'affine optionnelle ne corrige pas le paquet. Une copie avec sept images distinctes affiche le plein pied en source et fait réapparaître les jambes dans l'atlas, mais les textures se mélangent : essai non sauvegardé et non utilisable. Prochaine piste : recadrer les images par pièce et recalculer UV et affines avant nouvel atlas. Sept calques source candidats et une physique initiale des neuf mèches ont été générés localement ; rien n'est encore intégré ou calibré. **Arrêter les opérations gourmandes : C: n'avait plus qu'environ 19 Mo libres lors de l'alerte Windows du 14 novembre ; demander de libérer de la place avant reprise.**
 
+Le 14 novembre, l'utilisateur demande de travailler sur D:, de conserver les seules versions utiles et de faire évoluer le modèle existant. `assets/` et `reports/` étaient déjà des jonctions vers D:. Les 85 sauvegardes Cubism (418 065 341 octets) ont été copiées sur D: et leurs SHA-256 comparés sans différence ; le chemin `backup` est désormais une jonction vers cette copie. Les anciennes copies C: renommées `backup_pre_migration_20261114` sont toujours présentes : leur suppression a été refusée par le système. C: reste à 0 octet ; libérer de l'espace avant relance. Ne pas supprimer les jalons v30/v31, ni redéplacer les jonctions existantes. Utiliser une copie de travail évolutive et réserver les nouveaux checkpoints aux jalons utiles.
+
 # Fichiers importants
 
 - tools/cmo3_r21_hair_independent_leaves.py (--seam-roots) et cmo3_r21_hair_seam_roots.py ; reports/Jade_r21_v30_hair_leaves_r02.json.
