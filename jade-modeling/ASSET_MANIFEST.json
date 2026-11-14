@@ -2,8 +2,8 @@
   {
     "path": "jade-modeling/CONTINUATION.md",
     "source_group": "current-documentation",
-    "bytes": 8247,
-    "sha256": "27362aa6530c26c97ea4374d252f01d3fd464754fff5b2685ce62b2c78066428",
+    "bytes": 8848,
+    "sha256": "a2a353b66e7ba1e2965969b0aa7b1009463fdc263d2f921d7a094a1f1add3610",
     "storage": "git",
     "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
   },
@@ -1630,6 +1630,22 @@
     "sha256": "3b0fb6b0efc5a766d666cc2c0db4f4c8994e1a27efa824c044e58bec6b387ecd",
     "storage": "git",
     "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_split_model_images_v31.py",
+    "source_group": "current-tools",
+    "bytes": 8320,
+    "sha256": "1b1a463755f2130556e242df719ad30c2f94fd546378afd6b034118ca917f3da",
+    "storage": "git",
+    "selection_reason": "Dependency of current cropped-atlas working model builder"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_atlas_crop_working.py",
+    "source_group": "current-tools",
+    "bytes": 6561,
+    "sha256": "d8999c4818a3cef5834e150dd2c3e5729584337b6653e021c6853807ed40892d",
+    "storage": "git",
+    "selection_reason": "Current unvalidated working-model builder for per-part atlas crops"
   },
   {
     "path": "jade-modeling/tools/vts_toggle_matrix_r20.py",
