@@ -30,7 +30,7 @@ class VoiceInput:
             return False
         self.segment += 1
         await self.runtime.submit(Incoming(
-            platform="microphone", author="local",
+            platform="microphone", author="Goldaj",
             channel="mic", message_id=f"mic-{self.segment}",
             text=text, force_reply=True))
         # Wait for playback to stop before listening again.

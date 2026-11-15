@@ -120,6 +120,58 @@ class DiscordVoiceBridge:
         if authorized_user_ids or consent_confirmed:
             self.set_session(authorized_user_ids, consent_confirmed=consent_confirmed)
 
+    def voice_conversation_id(self, user_id, session_id):
+        """Route an already-authorized vocal turn to a per-person history."""
+        from .discord_conversation import conversation_id
+        with self.buffers_lock:
+            if (not self.consent_confirmed or not session_id
+                    or self.session_id != session_id or self.connection is None
+                    or not self._speaker_allowed_locked(user_id)):
+                return None
+            channel = getattr(self.connection, "channel", None)
+            voice_id = getattr(channel, "id", None)
+            guild_id = getattr(getattr(channel, "guild", None), "id", None)
+        return conversation_id(guild_id, voice_id, session_id, user_id)
+
+    def linked_text_conversation_id(self, guild_id, text_channel_id, user_id):
+        """Only native text chat *inside the same voice channel* can share history.
+
+        No DM, unrelated guild channel or user outside the voice call is
+        promoted to the voice context. This key never grants audio access.
+        """
+        from .discord_conversation import conversation_id
+        if not all(type(x) is int and x > 0 for x in
+                   (guild_id, text_channel_id, user_id)):
+            return None
+        with self.buffers_lock:
+            if (not self.consent_confirmed or not self.session_id
+                    or self.connection is None or not self._speaker_allowed_locked(user_id)):
+                return None
+            connection = self.connection
+            session_id = self.session_id
+            generation = self.generation
+            channel = getattr(connection, "channel", None)
+            if (getattr(channel, "id", None) != text_channel_id
+                    or getattr(getattr(channel, "guild", None), "id", None) != guild_id):
+                return None
+        try:
+            members = getattr(channel, "members", None)
+            if not isinstance(members, (list, tuple)):
+                return None
+            matches = [m for m in members if getattr(m, "id", None) == user_id
+                       and getattr(m, "bot", True) is False]
+            if len(matches) != 1:
+                return None
+            if not self._open_voice and not self._members_authorized(channel):
+                return None
+        except Exception:
+            return None
+        with self.buffers_lock:
+            if (self.connection is not connection or self.session_id != session_id
+                    or self.generation != generation or not self.consent_confirmed):
+                return None
+        return conversation_id(guild_id, text_channel_id, session_id, user_id)
+
     def set_session(self, authorized_user_ids, *, consent_confirmed, _expected=None):
         """Replace the authorized participants; revoke the prior session immediately.
 
@@ -627,7 +679,9 @@ class DiscordVoiceBridge:
                         "discord_voice", item.author, value,
                         channel=str(self.channel_id),
                         message_id=message_id, force_reply=True,
-                        speaker_id=item.user_id, voice_session_id=item.session_id))
+                        speaker_id=item.user_id, voice_session_id=item.session_id,
+                        conversation_id=(self.voice_conversation_id(
+                            item.user_id, item.session_id) or "")))
                     if isinstance(work, Work):
                         self._submitted = [(generation, previous) for generation, previous in self._submitted
                                            if not previous.cancelled and (previous.task is None or not previous.task.done())]

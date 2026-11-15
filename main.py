@@ -25,11 +25,12 @@ class DemoChat:
 
 
 async def console(*, live=False, voice=False, mic=False, twitch=False,
-                  discord=False, vts=False, discord_voice=False, http=False, avatar=False):
+                  discord=False, vts=False, discord_voice=False, http=False,
+                  avatar=False, mobile=False):
     config = Settings.load()
     config.validate()
     enable_console_logs()
-    if (voice or mic or twitch or discord or vts or discord_voice or http) and not live:
+    if (voice or mic or twitch or discord or vts or discord_voice or http or mobile) and not live:
         raise ValueError("external services require --live; demo never bills OpenAI")
     if live:
         config.require_openai()
@@ -43,6 +44,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         raise ValueError("voice receive requires --discord --voice and an initial voice channel")
     if http and not config.http_enabled:
         raise ValueError("set JADE_HTTP_ENABLED=1 and private JADE_HTTP_TOKEN")
+    if mobile and not config.mobile_enabled:
+        raise ValueError("set JADE_MOBILE_ENABLED=1 and private JADE_MOBILE_TOKEN")
     if vts and not config.vts_enabled:
         raise ValueError("set JADE_VTS_ENABLED=1 and provide the local token")
     prompt = load_prompt(Path(__file__).parent)
@@ -57,6 +60,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     vts_client = None
     discord_voice_bridge = None
     local_api = None
+    mobile_gateway = None
     shutdown_deadline = None
 
     async with AsyncExitStack() as scopes:
@@ -67,6 +71,17 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         dialogue = Dialogue(chat, prompt, bot_name=config.bot_name,
                             max_messages=config.max_history_messages,
                             random_reply_rate=config.reply_probability)
+        memory = None
+        if config.memory_enabled:
+            from src.jade_runtime.memory_store import MemoryStore
+            from src.jade_runtime.memory_service import MemoryService
+            store = MemoryStore(Path(config.memory_db_path))
+            if mic or mobile:
+                # Private microphone and authenticated mobile gateway are Goldaj.
+                await asyncio.to_thread(store.enable, ("microphone", "goldaj"))
+            memory = MemoryService(store, chat,
+                                   curator_enabled=bool(config.memory_curator_enabled and live))
+            scopes.push_async_callback(memory.close)
         avatar_client = None
         if avatar:
             from src.jade_runtime.avatar import Avatar
@@ -86,7 +101,12 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         async def on_reply(reply):
             if local_api is not None:
                 local_api.deliver(reply)
-            print("Jade:", reply.text)
+            if mobile_gateway is not None:
+                mobile_gateway.deliver(reply)
+            # Mobile replies contain owner-only conversations. Do not echo
+            # their full text to stdout; responses are delivered to the app.
+            if reply.source.platform != "mobile":
+                print("Jade:", reply.text)
 
             async def optional(label, action, *, timeout=20):
                 if not runtime.current_valid():
@@ -104,9 +124,10 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 await optional("discord", lambda: discord_client.send_chat(
                     reply.source.channel, reply.text,
                     source_message_id=reply.source.message_id))
-            if vts_client is not None and config.vts_speak_hotkey and not reply.spoken:
+            if (vts_client is not None and config.vts_speak_hotkey
+                    and not reply.spoken and reply.source.platform != "mobile"):
                 await optional("vts", lambda: vts_client.trigger_hotkey(config.vts_speak_hotkey))
-            if speech is not None and not reply.spoken:
+            if speech is not None and not reply.spoken and reply.source.platform != "mobile":
                 # TTS and the ensuing playback share this deadline. The old
                 # 20-second total could cut off an otherwise valid answer.
                 await optional("voice", lambda: speech.speak(reply),
@@ -134,11 +155,13 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 discord_voice=discord_voice_bridge is not None,
                 twitch_text=twitch_client is not None and config.twitch_send,
                 discord_text=discord_client is not None,
-                local_http=local_api is not None)
+                local_http=local_api is not None,
+                mobile=mobile_gateway is not None)
 
         runtime = Runtime(dialogue, on_reply, config.max_queue,
                           on_stream_start=(start_early_voice if speech and config.early_voice else None),
-                          delivery_plan=describe_delivery)
+                          delivery_plan=describe_delivery,
+                          memory_service=memory)
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(
@@ -149,6 +172,14 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             from src.jade_runtime.local_http import LocalHTTP
             local_api = LocalHTTP(runtime, token=config.http_token,
                                   port=config.http_port)
+        if mobile:
+            from src.jade_runtime.mobile_gateway import MobileGateway
+            mobile_gateway = MobileGateway(
+                runtime, chat, token=config.mobile_token, port=config.mobile_port,
+                owner_login=config.mobile_owner_login,
+                public_origin=config.mobile_public_origin,
+                vendor_dir=Path(config.mobile_vendor_dir) if config.mobile_vendor_dir else None,
+                model_dir=Path(config.mobile_model_dir) if config.mobile_model_dir else None)
         if discord_voice:
             from src.jade_runtime.discord_voice import OpenVoiceBridge
             discord_voice_bridge = OpenVoiceBridge(chat, runtime, config.discord_voice_channel)
@@ -191,7 +222,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     auto_rate=config.discord_text_auto_rate,
                     cooldown_seconds=config.discord_text_cooldown_seconds)
 
-            if twitch or discord or mic or http:
+            if twitch or discord or mic or http or mobile:
                 print("Jade connecteurs activés. Quitter avec Ctrl+C.")
                 tasks = []
                 try:
@@ -208,6 +239,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                         tasks.append(asyncio.create_task(VoiceInput(chat, runtime, audio_gate=audio_gate).loop()))
                     if local_api is not None:
                         tasks.append(asyncio.create_task(local_api.serve_forever()))
+                    if mobile_gateway is not None:
+                        tasks.append(asyncio.create_task(mobile_gateway.serve_forever()))
                     done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
                     for task in done:
                         task.result()
@@ -262,6 +295,8 @@ def main():
                         help="Explicitly receive Discord voice and send audio to OpenAI STT")
     parser.add_argument("--avatar", action="store_true",
                         help="Display the animated Live2D r20 avatar")
+    parser.add_argument("--mobile", action="store_true",
+                        help="Start the owner-only mobile PWA on localhost")
     parser.add_argument("--preflight", action="store_true",
                         help="Check settings and local dependencies with zero provider/network calls")
     args = vars(parser.parse_args())

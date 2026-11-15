@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 import math
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from src.utility.private_config import environ
 
@@ -69,6 +70,18 @@ class Settings:
     max_queue: int = 64
     reply_probability: float = 0.0
     timeout_seconds: float = 20.0
+    # Optional, private persistent SQLite data; disabled unless explicitly enabled.
+    memory_enabled: bool = False
+    memory_curator_enabled: bool = False
+    memory_db_path: str = ""
+    # Private PWA, opt-in via Tailscale Serve; separate HTTP secret from chat.
+    mobile_enabled: bool = False
+    mobile_token: str = field(default="", repr=False)
+    mobile_owner_login: str = ""
+    mobile_public_origin: str = ""
+    mobile_port: int = 8766
+    mobile_vendor_dir: str = ""
+    mobile_model_dir: str = ""
 
     @classmethod
     def load(cls) -> "Settings":
@@ -108,6 +121,16 @@ class Settings:
             max_queue=int(environ("JADE_QUEUE_LIMIT", "64")),
             reply_probability=float(environ("JADE_RANDOM_REPLY_RATE", "0")),
             timeout_seconds=float(environ("JADE_API_TIMEOUT", "20")),
+            memory_enabled=_enabled(str(environ("JADE_MEMORY_ENABLED", "0")).lower()),
+            memory_curator_enabled=_enabled(str(environ("JADE_MEMORY_CURATOR_ENABLED", "0")).lower()),
+            memory_db_path=str(environ("JADE_MEMORY_DB_PATH", "")),
+            mobile_enabled=_enabled(str(environ("JADE_MOBILE_ENABLED", "0")).lower()),
+            mobile_token=str(environ("JADE_MOBILE_TOKEN", "")),
+            mobile_owner_login=str(environ("JADE_MOBILE_OWNER_LOGIN", "")).strip(),
+            mobile_public_origin=str(environ("JADE_MOBILE_PUBLIC_ORIGIN", "")).strip(),
+            mobile_port=int(environ("JADE_MOBILE_PORT", "8766")),
+            mobile_vendor_dir=str(environ("JADE_MOBILE_VENDOR_DIR", "")),
+            mobile_model_dir=str(environ("JADE_MOBILE_MODEL_DIR", "")),
         )
         cfg.validate()
         return cfg
@@ -134,10 +157,39 @@ class Settings:
             raise ValueError("invalid Discord text participation limits")
         if not 1024 <= self.http_port <= 65535:
             raise ValueError("invalid local API port")
+        if not 1024 <= self.mobile_port <= 65535:
+            raise ValueError("invalid mobile port")
+        if self.mobile_enabled and not 32 <= len(self.mobile_token) <= 256:
+            raise ValueError("mobile app requires a separate 32+ character token")
+        if self.mobile_enabled and not (3 <= len(self.mobile_owner_login) <= 256
+                                        and "\r" not in self.mobile_owner_login
+                                        and "\n" not in self.mobile_owner_login
+                                        and self.mobile_owner_login.isascii()):
+            raise ValueError("mobile app requires JADE_MOBILE_OWNER_LOGIN (Tailscale identity)")
+        if self.mobile_enabled:
+            origin = urlsplit(self.mobile_public_origin)
+            if (origin.scheme != "https" or not origin.hostname
+                    or not origin.hostname.endswith(".ts.net") or origin.path
+                    or origin.query or origin.fragment or origin.username
+                    or origin.password or self.mobile_public_origin.endswith("/")):
+                raise ValueError("mobile requires exact HTTPS .ts.net JADE_MOBILE_PUBLIC_ORIGIN")
+            try:
+                if origin.port is not None and not 1024 <= origin.port <= 65535:
+                    raise ValueError("invalid mobile HTTPS public port")
+            except ValueError as exc:
+                raise ValueError("invalid mobile HTTPS origin port") from exc
+        if self.mobile_enabled and self.http_enabled and self.mobile_port == self.http_port:
+            raise ValueError("mobile and legacy HTTP cannot share one port")
         if self.http_enabled and len(self.http_token) < 32:
             raise ValueError("HTTP API requires an independent 32+ character token")
         if self.audio_output not in ("none", "ffplay"):
             raise ValueError("audio output must be 'none' or 'ffplay'")
+        if self.memory_curator_enabled and not self.memory_enabled:
+            raise ValueError("memory curator needs JADE_MEMORY_ENABLED=1")
+        if self.memory_enabled and (not self.memory_db_path
+                                    or not Path(self.memory_db_path).is_absolute()
+                                    or not self.memory_db_path.endswith(".sqlite3")):
+            raise ValueError("memory requires absolute private JADE_MEMORY_DB_PATH (.sqlite3)")
         if self.twitch_enabled and not (self.channel and self.twitch_oauth):
             raise ValueError("Twitch explicitly enabled but credentials missing")
         if self.twitch_send and not self.twitch_enabled:

@@ -48,6 +48,16 @@ CI Windows/Linux réussie en simulation : la **recette réelle** voix/Discord/t�
 
 **Cadrage uniquement, non codé :** [plan mémoire et relations](docs/gpt6-jade/PLAN-MEMOIRE-PERSISTANTE-IDENTITES-CORE-20261115.md). Le propriétaire souhaite que Jade reconnaisse les personnes à l'aide des identifiants de plateformes et décide elle-même quand un événement devient une Core Memory. Les Core de Jade et les Core relationnelles ne subissent aucune purge automatique ; les droits de correction, de déliaison et de suppression sur demande restent obligatoires. Avant de développer ce chantier, lire le plan, vérifier les changements des autres branches, préserver le prompt et les contrats d'intention et ne pas écrire de données privées dans le dépôt public.
 
+## PR en cours : développement de la mémoire persistante (15 novembre 2026)
+
+**À lire en priorité pour Codex :** [passation du code SQLite, activation et migration de PC](docs/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md). La branche `feat/jade-persistent-memory-core-20261115` est une PR séparée vers `develop` ; ne pas la confondre avec la spécification initiale non codée. Le développement inclut l'identité stable, le micro local attribué à Goldaj, des Core Memories non purgées, une mémoire opt-in et des exports/imports SQLite. Aucun poste local ni compte réel testé. **Conversation Discord écrite et vocale en parallèle : spécification Codex uniquement**, pas de fusion des historiques dans cette PR ; voir [idée de conversation unifiée](docs/gpt6-jade/IDEE-CONVERSATION-UNIFIEE-20261115.md). Ne pas modifier main automatiquement.
+
+## Développement en PR : appli mobile privée Jade (15 novembre 2026)
+
+**Codex/Terra :** [passation mobile du 15 novembre](docs/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md). Branche `feat/jade-private-mobile-pwa-20261115`, PR indépendante vers `develop`, ni déployée sur le PC ni fusionnée en production. Le client PWA réservé à Goldaj (créateur/père) utilise `--mobile` et `127.0.0.1:8766` derrière Tailscale Serve **sur le PC**, sans changement des services VPS Hyperliquid. Deux entrées `mobile/text` et `mobile/voice` partagent un historique de session ; le SDK Cubism Core propriétaire et les bundles Pixi sont installés **sur D: hors Git** après vérification de licence. **Le rendu Live2D, le micro mobile et les coûts réels nécessitent la recette Android/Windows.** Le rapprochement avec la mémoire personnelle de la PR #6 reste à faire après fusion consciente des branches.
+
+**Contre-audit du 15 novembre :** [contre-audit mobile + mémoire, correctifs et gates réels](docs/gpt6-jade/AUDIT-REVUE-MOBILE-MEMOIRE-20261115.md). Le backend vérifie maintenant `JADE_MOBILE_OWNER_LOGIN` dans l'en-tête de Tailscale Serve pour toutes les routes, les captures sont abandonnées en arrière-plan, et une voix mobile coupée ne facture pas de TTS. Le code n'est pas recetté sur Android : SDK Cubism 3/4 versus 5 à contrôler, fusion PR #6/#7 manuelle obligatoire.
+
 ## Ressources 2D
 
 Conserver les sources et les objets Git LFS. Lire `jade-modeling/MODEL_GUIDE.md`, `jade-modeling/CONTINUATION.md` et les documents de coordination 2D avant de les modifier. Exécuter `python jade-modeling/verify_assets.py` après récupération des objets LFS. Le propriétaire décide du périmètre des travaux visuels et des revues Astra.
@@ -55,3 +65,8 @@ Conserver les sources et les objets Git LFS. Lire `jade-modeling/MODEL_GUIDE.md`
 ## Feuille de route voix et téléphone (3 novembre 2026)
 
 La spécification courante pour l'usage oral naturel de Jade **sans obligation de prononcer son nom**, le MVP Discord avec avatar visible et le futur client mobile audio/vidéo est dans [ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md](docs/gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md). Codex doit la lire avant tout travail sur Discord vocal, la pertinence conversationnelle, VTube Studio, la sortie audiovisuelle ou l'interface mobile. Elle distingue les fonctions déjà codées de celles qui restent à développer et à recetter ; aucune fusion main automatique.
+
+
+## Contre-audit transverse des branches Jade (15 novembre 2026)
+
+Après les PR #6 (mémoire), #8 (Discord unifié), #9 (autobiographie) et #7 (PWA mobile), consulter **[AUDIT-TRANSVERSE-20261115.md](docs/gpt6-jade/AUDIT-TRANSVERSE-20261115.md)** avant toute reprise. La branche d'intégration `review/jade-mobile-memory-integration-20261115` vérifie les quatre lots sans déploiement. Protéger le contenu privé des logs, ne pas divulguer de DM dans le vocal, conserver les garde-fous de suppression des souvenirs et comparer les SHA des PR avant fusion. Les tests GitHub n'équivalent pas aux essais matériels. Ne pas toucher au VPS Hyperliquid ni à `main` sans nouvelle autorisation du propriétaire.

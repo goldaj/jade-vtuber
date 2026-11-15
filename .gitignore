@@ -32,3 +32,9 @@ secrets/
 *.private.toml
 *.secret.toml
 *.env.backup
+
+# Jade persistent local memories, migration archives and SQLite WAL
+*.sqlite3
+*.sqlite3-*
+*.jade-memory.zip
+jade-memory-backup*.zip

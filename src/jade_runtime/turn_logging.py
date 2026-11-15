@@ -7,8 +7,8 @@ import sys
 
 LOG = logging.getLogger("jade.conversation")
 _VOICE_INPUTS = frozenset(("discord_voice", "microphone"))
-_VOICE_OUTPUTS = frozenset(("discord_voice", "local_audio"))
-_TEXT_OUTPUTS = frozenset(("twitch_text", "discord_text", "local_http_text", "console_text"))
+_VOICE_OUTPUTS = frozenset(("discord_voice", "local_audio", "mobile_audio"))
+_TEXT_OUTPUTS = frozenset(("twitch_text", "discord_text", "local_http_text", "mobile_text", "console_text"))
 
 
 def enable_console_logs() -> None:
@@ -31,7 +31,8 @@ def record_input(turn: int, incoming) -> None:
     _write({
         "event": "input_selected", "turn": turn,
         "source_platform": incoming.platform,
-        "source_modality": "voice" if incoming.platform in _VOICE_INPUTS else "text",
+        "source_modality": "voice" if incoming.platform in _VOICE_INPUTS or (
+            incoming.platform == "mobile" and incoming.input_modality == "voice") else "text",
         "source_channel": incoming.channel,
         "source_author": incoming.author,
         "source_message_id": incoming.message_id,
@@ -41,7 +42,7 @@ def record_input(turn: int, incoming) -> None:
 
 def planned_destinations(reply, *, has_speech=False, audio_output="none",
                          discord_voice=False, twitch_text=False,
-                         discord_text=False, local_http=False) -> tuple[str, ...]:
+                         discord_text=False, local_http=False, mobile=False) -> tuple[str, ...]:
     """Classify intended external delivery, not an actual send receipt."""
     destinations = []
     platform = reply.source.platform
@@ -51,14 +52,20 @@ def planned_destinations(reply, *, has_speech=False, audio_output="none",
         destinations.append("discord_text")
     if platform == "local_http" and local_http:
         destinations.append("local_http_text")
-    if has_speech:
+    if platform == "mobile" and mobile:
+        destinations.append("mobile_text")
+        if reply.source.requested_speech:
+            destinations.append("mobile_audio")
+    if has_speech and platform != "mobile":
         if reply.spoken:
-            if discord_voice:
+            if discord_voice and not (
+                    platform == "discord" and getattr(reply.source, "private_channel", False)):
                 destinations.append("discord_voice")
         else:
             if audio_output == "ffplay":
                 destinations.append("local_audio")
-            if discord_voice:
+            if discord_voice and not (
+                    platform == "discord" and getattr(reply.source, "private_channel", False)):
                 destinations.append("discord_voice")
     if not destinations:
         destinations.append("console_text")

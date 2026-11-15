@@ -78,9 +78,13 @@ class DiscordTextPolicy:
         ref_author = getattr(getattr(resolved, "author", None), "id", None)
         reply_to_jade = (own_user_id is not None and ref_author == own_user_id
                          or getattr(ref, "message_id", None) in state.sent_ids)
-        named = bool(re.search(r"(?<!\w)" + re.escape(self.bot_name) + r"(?!\w)",
-                               text, flags=re.IGNORECASE))
-        command = text.casefold().startswith(("!response", "!rsp"))
+        named = (not text.casefold().startswith("!jade-memoire")
+                 and bool(re.search(r"(?<!\w)" + re.escape(self.bot_name) + r"(?!\w)",
+                                    text, flags=re.IGNORECASE)))
+        command = (text.casefold().startswith(("!response", "!rsp"))
+                   or bool(re.fullmatch(
+                       r"!jade-memoire(?:\s+(?:activer|oublier|etat))?\s*",
+                       text, flags=re.IGNORECASE)))
         dm = getattr(message, "guild", None) is None
         direct = bool(ping or reply_to_jade or named or command or dm)
         question = text.rstrip().endswith(("?", "？"))

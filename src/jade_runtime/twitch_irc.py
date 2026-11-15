@@ -25,12 +25,16 @@ def parse_message(line: str) -> Incoming | None:
     tags = found.group("tags") or ""
     message_id = next((item[3:] for item in tags.split(";")
                        if item.startswith("id=")), "")
+    user_id = next((item[8:] for item in tags.split(";")
+                    if item.startswith("user-id=")), "")
     text = found.group("text")
     if not text.strip() or len(text) > 4000:
         return None
     return Incoming("twitch", found.group("author"), text,
                     channel=found.group("channel"),
-                    message_id=message_id)
+                    message_id=message_id,
+                    account_id=(user_id if user_id.isascii() and user_id.isdecimal()
+                                and int(user_id) > 0 else ""))
 
 
 class TwitchIRC:

@@ -101,8 +101,11 @@ class SpeechOutput:
         # to broadcast spoken responses whenever a voice bridge is connected.
         self.secondary_broadcast = True
 
-    def _delivery_context(self):
-        """Take a playback snapshot; an absent bridge leaves local output intact."""
+    def _delivery_context(self, source=None):
+        """Take a playback snapshot, never promoting a private Discord DM to voice."""
+        if (getattr(source, "platform", None) == "discord"
+                and getattr(source, "private_channel", False)):
+            return None
         get_context = getattr(self.secondary_player, "delivery_context", None)
         if not callable(get_context):
             return None
@@ -233,7 +236,13 @@ class SpeechOutput:
     async def speak(self, reply: Reply):
         async with self.lock:
             discord_voice = reply.source.platform == "discord_voice"
-            context = None if discord_voice else self._delivery_context()
+            context = None if discord_voice else self._delivery_context(reply.source)
+            # A Discord DM may be answered in text (and locally if configured),
+            # but never broadcast into a potentially unrelated public voice call.
+            if (reply.source.platform == "discord"
+                    and reply.source.private_channel and context is None
+                    and getattr(self.player, "mode", None) == "none"):
+                return  # Do not pay for speech that has no permitted destination.
             muted = getattr(self.secondary_player, "voice_muted", None)
             if (not discord_voice and context is None and getattr(self.player, "mode", None) == "none"
                     and callable(muted) and muted()):

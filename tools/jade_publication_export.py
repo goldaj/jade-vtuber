@@ -22,6 +22,17 @@ PUBLIC_FILES = frozenset({
     ".editorconfig", ".flake8", "mypy.ini",
 })
 PUBLIC_PREFIXES = ("src/", "tests/", "config/profiles/")
+# Only these reviewed, source-text mobile UI files enter the PRIVATE preview.
+# Never include SDK vendor binaries, LFS model art or private configuration.
+MOBILE_WEB_PUBLIC = frozenset({
+    "src/jade_runtime/mobile_web/index.html",
+    "src/jade_runtime/mobile_web/styles.css",
+    "src/jade_runtime/mobile_web/avatar.js",
+    "src/jade_runtime/mobile_web/app.js",
+    "src/jade_runtime/mobile_web/manifest.webmanifest",
+    "src/jade_runtime/mobile_web/sw.js",
+    "src/jade_runtime/mobile_web/icon.svg",
+})
 PUBLIC_TOOLS = frozenset({
     "tools/jade_publication_audit.py",
     "tools/jade_publication_export.py",
@@ -45,7 +56,8 @@ WARNING = ("UNAPPROVED PRIVATE PREVIEW. NOT RELEASE-CLEARED.\n"
 
 def selected_paths(paths: list[str]) -> list[str]:
     """Explicit allowlist; the optional portrait is handled separately."""
-    return sorted(p for p in paths if p in PUBLIC_FILES or p in PUBLIC_TOOLS or p in PUBLIC_TEMPLATES
+    return sorted(p for p in paths if p in PUBLIC_FILES or p in PUBLIC_TOOLS
+                  or p in PUBLIC_TEMPLATES or p in MOBILE_WEB_PUBLIC
                   or (p.startswith(PUBLIC_PREFIXES) and p.endswith(".py"))
                   or (p.startswith("config/profiles/") and p.endswith(".toml")))
 
