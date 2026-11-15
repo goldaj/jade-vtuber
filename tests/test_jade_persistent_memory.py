@@ -36,6 +36,9 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertIsNone(identity_of(Incoming("discord", "Alice", "Salut")))
         self.assertEqual(identity_of(Incoming("microphone", "Goldaj", "Salut")),
                          ("microphone", "goldaj"))
+        self.assertEqual(identity_of(Incoming("mobile", "Goldaj", "Salut")),
+                         ("microphone", "goldaj"))
+        self.assertIsNone(identity_of(Incoming("discord", "Goldaj", "Salut")))
         self.assertIsNone(identity_of(Incoming("twitch", "Goldaj", "Je suis Goldaj")))
 
     def test_connector_parsers_expose_account_ids_without_spoofing_names(self):
@@ -82,6 +85,17 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertEqual(self.store.prune_ordinary(), 1)
         self.assertEqual(len(self.store.recall(self.alice, "discord:10")), 1)
         self.assertEqual(len(MemoryStore(self.path).recall(self.alice, "discord:10")), 1)
+
+    def test_owner_memory_is_shared_between_local_mic_and_mobile(self):
+        local = identity_of(Incoming("microphone", "Goldaj", "Salut"))
+        mobile = identity_of(Incoming("mobile", "Goldaj", "Salut"))
+        self.assertEqual(local, mobile)
+        self.store.enable(local)
+        self.assertTrue(self.store.put(
+            local, kind="core_relationship", scope="person",
+            summary="Goldaj a terminé son projet avec Jade."))
+        self.assertEqual(len(self.store.recall(mobile, "person")), 1)
+        self.assertEqual(len(self.store.list_for_account(mobile)), 1)
 
     def test_cross_platform_link_unlink_and_explicit_erasure(self):
         twitch = ("twitch", "6001")
