@@ -1,5 +1,7 @@
 # Contrat et passation permanente pour les agents IA : develop
 
+**Cartographie de référence :** consulter les [deux schémas visuels](../architecture/README.md) avant d'analyser les flux ou de déplacer des composants. Ils servent d'orientation, jamais de preuve à eux seuls : examiner `main.py`, la configuration, les adaptateurs et les sorties. Lorsqu'une modification rend une flèche ou une fonction obsolète, mettre à jour les images et cette documentation dans la même branche.
+
 ## Instruction impérative : documentation synchronisée avec le code
 
 **Après CHAQUE modification de code, test, configuration, outil, dépendance, route infra, interface, API ou ressource, un agent IA doit revoir et mettre à jour TOUS les documents de la branche modifiée dans la même PR**, même si certains se contentent de signaler « vérifié, sans changement de comportement ». Une action ne doit pas finir avec seulement un commit de code et un message de chat.

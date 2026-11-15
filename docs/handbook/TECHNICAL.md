@@ -1,5 +1,7 @@
 # Guide technique : architecture, infrastructure et algorithmes de Jade sur develop
 
+**Références visuelles :** voir les [deux schémas d'architecture](../architecture/README.md), l'un sur les appels et leur chronologie, l'autre sur les postes, services et responsabilités. Ces vues sont datées ; le code exécuté et les réglages de cette branche ont priorité sur les illustrations.
+
 ## 1. Portée et architecture globale
 
 Jade est un **runtime Python 3.11 asynchrone** à plusieurs transports entrants, une file de travail partagée, un moteur de dialogue configurable, des capacités de mémoire et des sorties adaptées à chaque demande. La branche `develop` est plus avancée que `main`. Les appels OpenAI existent uniquement en mode réel autorisé ; la démo console et la Démo Express restent hors ligne.

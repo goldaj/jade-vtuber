@@ -1,5 +1,9 @@
 # Instructions du projet Jade
 
+## Références visuelles de l’architecture (develop)
+
+Les [deux schémas de Jade](docs/architecture/README.md) documentent le flux d’appels et la répartition des composants entre le PC de Jade, Android, les connecteurs et les services externes. **Les consulter avant un changement d’architecture**, puis vérifier les liaisons dans le code effectif de la branche : les schémas datés sont indicatifs, le code prime. Toute modification qui rend ces illustrations inexactes implique leur mise à jour ainsi que celle des guides.
+
 ## Maintenance documentaire systématique (règle prioritaire sur develop)
 
 Pour **tout changement de code, dépendance, test, configuration, interface, script ou infrastructure** de cette branche, réviser dans le même commit/PR **chaque guide** : `docs/handbook/INSTALLATION.md`, `DEMO.md`, `USER_GUIDE.md`, `TECHNICAL.md`, `AI_HANDOFF.md`, `BRANCH_STATE.md`, `BRANCH_MAINTENANCE.md`. Mettre également à jour `AGENTS.md`, l'index et les passations spécialisées pertinentes. Le contrôle `scripts/check_docs.py` bloque les PR sans mise à jour. **Ces documents décrivent develop, pas main.** Ne pas recopier des capacités inexistantes sur une branche antérieure. Voir [la règle agents détaillée](docs/handbook/AI_HANDOFF.md), [le manuel](docs/handbook/README.md) et [le nettoyage des branches intégrées](docs/handbook/BRANCH_MAINTENANCE.md). La Démo Express est uniquement simulée, sans OpenAI, micro ni Live2D.
