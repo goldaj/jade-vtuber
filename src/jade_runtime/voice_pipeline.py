@@ -33,8 +33,9 @@ class VoiceInput:
             platform="microphone", author="Goldaj",
             channel="mic", message_id=f"mic-{self.segment}",
             text=text, force_reply=True))
-        # Wait for playback to stop before listening again.
-        await self.runtime.idle()
+        # Keep listening while other independent channels are queued. The
+        # audio gate controls feedback during local playback; waiting for the
+        # entire global queue would starve the PC microphone under load.
         return True
 
     async def loop(self, duration=3.0):
