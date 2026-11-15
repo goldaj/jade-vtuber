@@ -67,6 +67,17 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         dialogue = Dialogue(chat, prompt, bot_name=config.bot_name,
                             max_messages=config.max_history_messages,
                             random_reply_rate=config.reply_probability)
+        memory = None
+        if config.memory_enabled:
+            from src.jade_runtime.memory_store import MemoryStore
+            from src.jade_runtime.memory_service import MemoryService
+            store = MemoryStore(Path(config.memory_db_path))
+            if mic:
+                # The owner confirmed that only Goldaj uses the local microphone.
+                await asyncio.to_thread(store.enable, ("microphone", "goldaj"))
+            memory = MemoryService(store, chat,
+                                   curator_enabled=bool(config.memory_curator_enabled and live))
+            scopes.push_async_callback(memory.close)
         avatar_client = None
         if avatar:
             from src.jade_runtime.avatar import Avatar
@@ -138,7 +149,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
 
         runtime = Runtime(dialogue, on_reply, config.max_queue,
                           on_stream_start=(start_early_voice if speech and config.early_voice else None),
-                          delivery_plan=describe_delivery)
+                          delivery_plan=describe_delivery,
+                          memory_service=memory)
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(
