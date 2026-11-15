@@ -72,6 +72,7 @@ class Settings:
     # Mobile PWA is opt-in, served on local loopback only.
     mobile_enabled: bool = False
     mobile_token: str = field(default="", repr=False)
+    mobile_owner_login: str = ""  # Tailscale Serve trusted identity header
     mobile_port: int = 8766
     mobile_vendor_dir: str = ""
     mobile_model_dir: str = ""
@@ -116,6 +117,7 @@ class Settings:
             timeout_seconds=float(environ("JADE_API_TIMEOUT", "20")),
             mobile_enabled=_enabled(str(environ("JADE_MOBILE_ENABLED", "0")).lower()),
             mobile_token=str(environ("JADE_MOBILE_TOKEN", "")),
+            mobile_owner_login=str(environ("JADE_MOBILE_OWNER_LOGIN", "")).strip(),
             mobile_port=int(environ("JADE_MOBILE_PORT", "8766")),
             mobile_vendor_dir=str(environ("JADE_MOBILE_VENDOR_DIR", "")),
             mobile_model_dir=str(environ("JADE_MOBILE_MODEL_DIR", "")),
@@ -149,6 +151,10 @@ class Settings:
             raise ValueError("invalid mobile port")
         if self.mobile_enabled and not 32 <= len(self.mobile_token) <= 256:
             raise ValueError("mobile app requires a separate 32+ character token")
+        if self.mobile_enabled and not (3 <= len(self.mobile_owner_login) <= 256
+                                        and "\r" not in self.mobile_owner_login
+                                        and "\n" not in self.mobile_owner_login):
+            raise ValueError("mobile app requires JADE_MOBILE_OWNER_LOGIN (Tailscale identity)")
         if self.mobile_enabled and self.http_enabled and self.mobile_port == self.http_port:
             raise ValueError("mobile and legacy HTTP cannot share one port")
         if self.http_enabled and len(self.http_token) < 32:
