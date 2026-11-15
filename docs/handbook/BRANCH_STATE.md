@@ -28,3 +28,9 @@
 ## Addendum du 15/11/2026 : réactions émotionnelles 2D
 
 La branche dédiée `feat/live2d-intent-expression-sync-20261115` a été créée depuis `develop` pour ajouter le toggle `JADE_AVATAR_INTENT_ENABLED`, la table unique de deux expressions r20 et deux libellés textuels pour chacune des sept intentions, et le pilotage de l'avatar PC / PWA. **Ce sont des expressions, pas des animations corporelles propres**. Avant intégration effective de cette branche dans `develop`, considérer ces capacités comme proposées, non disponibles sur `develop` ; vérifier la PR et son statut. Le SDK Android, le retour au neutre Web, les 14 véritables animations et le modèle en pied r21 restent non validés ou absents. Voir [passation Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+
+## Évolution de develop : 2026-11-15, prompt approuvé et dialogue
+
+**Implémenté dans le code :** `prompt_chat.txt` remplacé exactement par la version validée par Goldaj ; `Settings` + `OpenAIServices` utilisent Low et 320 tokens de complétion par défaut, y compris en streaming ; `MemoryStore` v3 conserve les tours complets des identités opt-in, sans résumé, et le runtime restaure jusqu'à 48 messages récents ; le micro a des IDs uniques par démarrage ; la participation texte Discord/Twitch et vocale Discord distingue le tête-à-tête (100 % des tours admissibles) du groupe (30 % de sélection spontanée, direct traité à part).
+
+**À ne pas surévaluer :** valeurs des fichiers privés du PC inconnues ; le nombre des spectateurs silencieux Twitch n'est pas observable par le connecteur IRC ; les cooldowns, limites de taille, déconnexions et préemptions audio demeurent. Les tests ciblés Python ont été ajoutés mais **pas exécutés ni certifiés sur le PC Jade** via ce connecteur. Les 14 variantes futures (2 par intention) sont documentées, pas animées. Voir [la passation](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md).
