@@ -1,6 +1,8 @@
 # Jade — un personnage virtuel capable de dialoguer
 
-![Portrait de Jade](jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/Jade_r21_master_v3_canvas_3840x4160.png)
+![Jade en pied, avec jambes et chaussures](jade-modeling/assets/live2d/r21_professional_art/Jade_r21_fullbody_restoration_chroma_v2.png)
+
+*Référence artistique r21 en pied (fond magenta de détourage). Le rig Live2D r21 animé n'est pas encore validé comme modèle final.*
 
 **Guides à jour pour cette branche :** [installation depuis un poste neuf](docs/handbook/INSTALLATION.md), [Démo Express sans prérequis](docs/handbook/DEMO.md), [guide utilisateur de toutes les fonctions](docs/handbook/USER_GUIDE.md), [architecture et algorithmes](docs/handbook/TECHNICAL.md), [passation agents IA](docs/handbook/AI_HANDOFF.md), [état exact de main](docs/handbook/BRANCH_STATE.md).
 
