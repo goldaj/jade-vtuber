@@ -16,3 +16,7 @@ Documentation **spécifique au code de develop**, actualisée après les intégr
 **Produit visé :** une seule instance Jade active simultanément sur **Discord texte et vocal, Twitch, micro Windows, HTTP local et PWA Android privée**, avec avatar et voix. Pas de classement de plateformes ; Jade peut arbitrer dynamiquement les prochains messages en attente. Le launcher Windows ne propose **pas de profil de démarrage**. Un connecteur obligatoire manquant empêche le lancement complet.
 
 Pour les manipulations concrètes sur le PC déjà utilisé par le propriétaire, Codex doit aussi suivre [le guide de passation PC/Android](../gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), sans toucher au VPS Hyperliquid. Pour une **démo qui fonctionne sans ces services**, utiliser la [Démo Express](DEMO.md), une interface Windows purement simulée. Les tests Linux/Windows GitHub sont hors ligne ; les connexions et le rendu mobile doivent encore être recettés sur le matériel réel.
+
+## Synchronisation expressions Live2D des intentions (15/11/2026)
+
+Le chantier de synchronisation du modèle 2D PC/PWA avec `Reply.intent`, les deux variantes textuelles/faciales de chaque intention et le toggle `JADE_AVATAR_INTENT_ENABLED` est décrit dans la [passation dédiée pour Codex](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md). **Attention : les 14 véritables animations propres restent à produire et à recetter.** Les visages r20 actuels ne sont que des substituts et le rig final en pied n'est pas branché. Voir les guides d'installation, utilisateur et technique de cette branche.
