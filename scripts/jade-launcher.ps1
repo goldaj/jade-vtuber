@@ -152,23 +152,23 @@ $refreshButton.Add_Click({
 
 function Mode-Flags([string]$mode) {
     switch ($mode) {
-        'Discord vocal + texte + avatar' { return ,@('--live','--discord','--voice','--discord-voice','--avatar') }
-        'Discord texte seulement'       { return ,@('--live','--discord') }
-        'Micro local + avatar'           { return ,@('--live','--mic','--voice','--avatar') }
-        'Application mobile privee'      { return ,@('--live','--mobile') }
-        'Discord vocal + avatar + mobile' { return ,@('--live','--discord','--voice','--discord-voice','--avatar','--mobile') }
-        'Demo hors ligne'                { return ,@() }
+        'Discord vocal + texte + avatar' { return @('--live','--discord','--voice','--discord-voice','--avatar') }
+        'Discord texte seulement'       { return @('--live','--discord') }
+        'Micro local + avatar'           { return @('--live','--mic','--voice','--avatar') }
+        'Application mobile privee'      { return @('--live','--mobile') }
+        'Discord vocal + avatar + mobile' { return @('--live','--discord','--voice','--discord-voice','--avatar','--mobile') }
+        'Demo hors ligne'                { return @() }
     }
     throw 'Profil de lancement inconnu.'
 }
 function Mode-Extras([string]$mode) {
     switch ($mode) {
-        'Discord vocal + texte + avatar' { return ,@('-E','discord-voice','-E','avatar') }
-        'Discord texte seulement'       { return ,@('-E','discord') }
-        'Micro local + avatar'           { return ,@('-E','mic','-E','avatar') }
-        'Application mobile privee'      { return ,@() }
-        'Discord vocal + avatar + mobile' { return ,@('-E','discord-voice','-E','avatar') }
-        'Demo hors ligne'                { return ,@() }
+        'Discord vocal + texte + avatar' { return @('-E','discord-voice','-E','avatar') }
+        'Discord texte seulement'       { return @('-E','discord') }
+        'Micro local + avatar'           { return @('-E','mic','-E','avatar') }
+        'Application mobile privee'      { return @() }
+        'Discord vocal + avatar + mobile' { return @('-E','discord-voice','-E','avatar') }
+        'Demo hors ligne'                { return @() }
     }
     throw 'Profil de dependances inconnu.'
 }
@@ -226,7 +226,7 @@ $launchButton.Add_Click({
             if ($privatePath) { $env:JADE_SECRETS_FILE = $privatePath }
             Info 'Preflight local, sans connexion ni facturation...'
             $checks = Invoke-Local 'poetry' (@('run','python','main.py','--preflight') + $flags)
-            Info ($checks -split '\r?\n' | Select-Object -Last 2 | Out-String).Trim()
+            Info ((($checks -split '\r?\n') | Select-Object -Last 2 | Out-String).Trim())
         } finally {
             [Environment]::SetEnvironmentVariable('JADE_SECRETS_FILE',$previousSecrets,'Process')
         }
