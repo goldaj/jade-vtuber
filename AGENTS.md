@@ -48,6 +48,10 @@ CI Windows/Linux réussie en simulation : la **recette réelle** voix/Discord/t�
 
 **Cadrage uniquement, non codé :** [plan mémoire et relations](docs/gpt6-jade/PLAN-MEMOIRE-PERSISTANTE-IDENTITES-CORE-20261115.md). Le propriétaire souhaite que Jade reconnaisse les personnes à l'aide des identifiants de plateformes et décide elle-même quand un événement devient une Core Memory. Les Core de Jade et les Core relationnelles ne subissent aucune purge automatique ; les droits de correction, de déliaison et de suppression sur demande restent obligatoires. Avant de développer ce chantier, lire le plan, vérifier les changements des autres branches, préserver le prompt et les contrats d'intention et ne pas écrire de données privées dans le dépôt public.
 
+## Développement en PR : appli mobile privée Jade (15 novembre 2026)
+
+**Codex/Terra :** [passation mobile du 15 novembre](docs/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md). Branche `feat/jade-private-mobile-pwa-20261115`, PR indépendante vers `develop`, ni déployée sur le PC ni fusionnée en production. Le client PWA réservé à Goldaj (créateur/père) utilise `--mobile` et `127.0.0.1:8766` derrière Tailscale Serve **sur le PC**, sans changement des services VPS Hyperliquid. Deux entrées `mobile/text` et `mobile/voice` partagent un historique de session ; le SDK Cubism Core propriétaire et les bundles Pixi sont installés **sur D: hors Git** après vérification de licence. **Le rendu Live2D, le micro mobile et les coûts réels nécessitent la recette Android/Windows.** Le rapprochement avec la mémoire personnelle de la PR #6 reste à faire après fusion consciente des branches.
+
 ## Ressources 2D
 
 Conserver les sources et les objets Git LFS. Lire `jade-modeling/MODEL_GUIDE.md`, `jade-modeling/CONTINUATION.md` et les documents de coordination 2D avant de les modifier. Exécuter `python jade-modeling/verify_assets.py` après récupération des objets LFS. Le propriétaire décide du périmètre des travaux visuels et des revues Astra.
