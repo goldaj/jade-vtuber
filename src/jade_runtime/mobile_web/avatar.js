@@ -1,37 +1,85 @@
-/* Live2D Web adapter. Requires locally installed, licensed Cubism Web Core
- * plus PIXI 6.x and pixi-live2d-display Cubism 4 bundle.
- * None of those SDK binaries are redistributed by this repository.
+/* Private Live2D Web renderer. Canonical palette is loaded from Jade's
+ * Python-backed /assets/intent-visuals.json; no duplicate hardcoded mapping.
+ * Only existing r20 facial expressions are triggered. New motion assets must
+ * be validated before their controls are connected.
  */
 "use strict";
 (() => {
   const target = document.getElementById("avatar-container");
   const fallback = document.getElementById("avatar-fallback");
   const status = document.getElementById("avatar-state");
+  const mood = document.getElementById("mood-line");
   let model = null;
   let pixi = null;
   let mouth = 0;
-  let lastExpression = "neutral";
+  let palette = null;
+  let pendingIntent = "neutral";
+  let activeChoice = null;
   let observer = null;
+  let resetTimer = null;
+  let speaking = false;
+  const counts = Object.create(null);
+
+  function applyExpression(expression) {
+    if (!model) return;
+    try {
+      if (expression === "Neutral") {
+        // pixi-live2d-display expression API differs between SDK versions.
+        // Only use a supported reset method; never pass a fictional exp3 ID.
+        const manager = model.internalModel?.motionManager?.expressionManager;
+        if (manager && typeof manager.resetExpression === "function") {
+          manager.resetExpression();
+        }
+        return;
+      }
+      if (typeof model.expression === "function") {
+        const operation = model.expression(expression);
+        if (operation && typeof operation.catch === "function") operation.catch(() => {});
+      }
+    } catch (_) {
+      // A missing expression/SDK is optional: chat and voice must keep working.
+    }
+  }
+
+  function clearTimer() {
+    if (resetTimer !== null) clearTimeout(resetTimer);
+    resetTimer = null;
+  }
+
+  function returnToIdle() {
+    clearTimer();
+    pendingIntent = "neutral";
+    activeChoice = null;
+    mood.textContent = "Jade est attentive.";
+    applyExpression("Neutral");
+  }
 
   const avatar = {
     get ready() { return Boolean(model); },
     setMouth(value) {
       mouth = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
     },
-    setIntent(intent) {
-      lastExpression = intent;
-      if (!model || typeof model.expression !== "function") return;
-      const expressions = {
-        playful: "WinkR", excited: "Smile", curious: "Surprised",
-        tender: "Smile", reassuring: "Smile", serious: "Sad"
-      };
-      try {
-        // A missing expression must not interrupt the conversation.
-        if (expressions[intent]) {
-          const action = model.expression(expressions[intent]);
-          if (action && typeof action.catch === "function") action.catch(() => {});
-        }
-      } catch (_) {}
+    setSpeaking(value) {
+      speaking = Boolean(value);
+      if (!speaking && pendingIntent !== "neutral") returnToIdle();
+    },
+    resetIntent() { returnToIdle(); },
+    setIntent(label) {
+      pendingIntent = label;
+      if (!palette?.enabled) return;
+      const key = Object.hasOwn(palette.intents, label) ? label : "neutral";
+      const reactions = palette.intents[key];
+      if (!Array.isArray(reactions) || !reactions.length) return;
+      const index = counts[key] || 0;
+      counts[key] = index + 1;
+      const choice = reactions[index % reactions.length];
+      if (!choice || typeof choice.text !== "string") return;
+      activeChoice = choice;
+      mood.textContent = choice.text;
+      applyExpression(choice.expression);
+      clearTimer();
+      // Text-only replies return to idle. Long audio waits for onended.
+      resetTimer = setTimeout(() => { if (!speaking) returnToIdle(); }, 12000);
     },
   };
   window.JadeAvatar = avatar;
@@ -49,6 +97,19 @@
   }
 
   async function load() {
+    try {
+      const response = await fetch("/assets/intent-visuals.json", {
+        mode: "same-origin", credentials: "omit", cache: "no-store"
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.version === 1 && data.intents && typeof data.enabled === "boolean") {
+          palette = data;
+        }
+      }
+    } catch (_) {
+      // Optional palette; a failed request must never break the conversation.
+    }
     const PIXI = window.PIXI;
     if (!PIXI || !PIXI.live2d || !PIXI.live2d.Live2DModel ||
         !window.Live2DCubismCore) {
@@ -71,8 +132,6 @@
       observer = new ResizeObserver(resize);
       observer.observe(target);
       fallback.classList.add("hidden");
-      // No green screen/chroma key. WebGL keeps the model alpha transparent
-      // and the CSS room is the actual background.
       pixi.ticker.add(() => {
         try {
           const core = model?.internalModel?.coreModel;
@@ -81,13 +140,15 @@
           }
         } catch (_) {}
       }, undefined, PIXI.UPDATE_PRIORITY?.LOW ?? -50);
-      avatar.setIntent(lastExpression);
       if (typeof model.motion === "function") {
         try {
           const animation = model.motion("Idle", 0);
           if (animation && animation.catch) animation.catch(() => {});
         } catch (_) {}
       }
+      // Reapply the SAME chosen reaction after slow SDK loading, not the
+      // next variant. One reply must never count as two emotional turns.
+      if (activeChoice && palette?.enabled) applyExpression(activeChoice.expression);
     } catch (_) {
       if (observer) observer.disconnect();
       if (pixi) { try { pixi.destroy(true, {children: true}); } catch (_) {} }

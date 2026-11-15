@@ -38,3 +38,7 @@ Le chat antérieur « Analyser le projet AI VTuber » a été retrouvé. Seule u
 Les journaux conservent les décisions successives, même contradictoires. La synthèse des instructions actuelles est dans [le dossier de migration](../migration/2026-11-02/README.md) et ne réécrit pas les sources historiques. Les contenus privés, secrets, identifiants de compte, raisonnements internes, instructions système/développeur et sorties brutes d’outils sont exclus.
 
 Après toute nouvelle intervention, ajouter les échanges effectivement accessibles, avec leur rôle et leur fidélité. Utiliser les heures réelles seulement lorsqu’elles sont attestées ; ne pas dater rétroactivement un propos à partir de l’heure d’une commande.
+
+## Décisions du 15 novembre 2026 : modèle 2D et intentions
+
+Le propriétaire a corrigé l'interprétation « modèle 3D » : Jade utilise bien un **modèle 2D Live2D**. Il autorise le branchement intention → modèle avec un toggle, demande une approche professionnelle multi-rôles et exige **deux réactions graphiques et deux représentations textuelles par intention**, puis **14 animations réellement différentes** une fois créées. Le lot de base sur la branche `feat/live2d-intent-expression-sync-20261115` utilise des expressions r20 existantes, et réserve les nouvelles motions à Codex jusqu'à validation complète. Cette synthèse ne prétend pas être le verbatim ni contenir des heures individuelles. Voir [passation Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).

@@ -56,6 +56,7 @@ class Settings:
     discord_voice_channel: int = 0
     discord_text_auto_rate: float = 0.30
     discord_text_cooldown_seconds: int = 180
+    avatar_intent_enabled: bool = True  # Facial/text reactions, not voice intent metadata.
     vts_enabled: bool = False
     vts_token: str = ""
     vts_url: str = "ws://127.0.0.1:8001"
@@ -107,6 +108,7 @@ class Settings:
             discord_voice_channel=int(environ("DISCORD_VOICE_CHANNEL", "0") or 0),
             discord_text_auto_rate=float(environ("JADE_DISCORD_TEXT_AUTO_RATE", "0.30")),
             discord_text_cooldown_seconds=int(environ("JADE_DISCORD_TEXT_COOLDOWN_SECONDS", "180")),
+            avatar_intent_enabled=_enabled(str(environ("JADE_AVATAR_INTENT_ENABLED", "1")).lower()),
             vts_enabled=_enabled(str(environ("JADE_VTS_ENABLED", "0")).lower()),
             vts_token=str(environ("JADE_VTS_TOKEN", "")),
             vts_url=str(environ("JADE_VTS_URL", "ws://127.0.0.1:8001")),

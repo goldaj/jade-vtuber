@@ -59,3 +59,7 @@ Le connecteur GitHub de cette session ne dispose pas d'action de suppression de 
 - [ ] L'isolation mobile/micro et la confidentialité OBS/Discord/Twitch restent testées
 - [ ] Test automatique Windows/Linux et scan secrets, et limites de recette matérielle détaillées
 - [ ] Aucun changement de `main` ou VPS non demandé
+
+## Addendum obligatoire : 14 réactions propres par intention (15/11/2026)
+
+Le propriétaire demande maintenant **deux animations Live2D réellement différentes ET deux représentations textuelles par chacune des sept intentions**, sur un modèle **2D**, pas 3D. Sur cette branche, seules deux expressions faciales de substitution et deux libellés PWA ont été codés par intention, avec toggle global et synchronisation PC/mobile. Les **14 motion assets dédiés** et le rig en pied validé ne sont PAS livrés. Codex doit lire la [passation Live2D explicite et sa matrice de statuts](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), réaliser le travail artistique/technique qui manque sur une branche indépendante, ne brancher aucun motion ID fictif ou SDK incompatible, effectuer une recette réelle PC + Android, et synchroniser **toutes** les documentations de la branche. Ne pas afficher de didascalies sur les canaux publics ni modifier `main` sans accord.

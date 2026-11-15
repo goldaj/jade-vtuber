@@ -107,3 +107,7 @@ Tester Wi-Fi et données mobiles, échange écrit/voix « appuyer pour parler »
 | Voix muette sur PC | `JADE_AUDIO_OUTPUT=ffplay`, `ffplay`, pilote et micro/permissions |
 
 Pour une **intervention sur le PC réel avec Codex**, suivre impérativement [la procédure complète de passation](../gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md) : inventaire d'abord, aucune destruction des données existantes, détails d'authentification et recette humaine. **Aucune installation matérielle ne peut être déduite d'une CI verte**.
+
+## Mise à jour du rendu émotionnel Live2D (15/11/2026)
+
+Dans le fichier privé `JADE_SECRETS_FILE`, le réglage `JADE_AVATAR_INTENT_ENABLED=1` (valeur par défaut) autorise l'avatar Windows et la PWA Android à réagir à `Reply.intent`. `0` désactive uniquement les réactions visuelles/textuelles émotionnelles ; la voix, la bouche et l'Idle continuent. **Redémarrer Jade et recharger la PWA** après changement. Vérifier que `/assets/intent-visuals.json` est servi sur l'URL Tailscale privée ; sa propriété `enabled` reflète le réglage. Le contrat JSON public ne contient aucun secret. Ne jamais désactiver les contrôles d'accès de la PWA pour le diagnostiquer. Les expressions viennent de r20 installé par Git LFS et dépendent des SDK et GPU. Aucun nouveau fichier d'animation corporelle n'est livré. Recette concrète et suite obligatoire : [passation Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).

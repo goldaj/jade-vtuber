@@ -66,3 +66,7 @@ Le mode `JADE_EARLY_VOICE` est **désactivé par défaut**. S'il est activé loc
 5. En cas d'écart, corriger la cause dans le module isolé et compléter les tests ciblés, sans ajouter une couche de classification ou plusieurs synthèses par défaut.
 
 **Règle d'exploitation :** la CI prouve la cohérence logicielle simulée ; **elle ne certifie ni l'intonation, ni la qualité sonore, ni Discord en conditions réelles.** Documenter toute observation réelle séparément.
+
+## Addendum 15/11/2026 : effet de l'intention sur le modèle 2D
+
+Le préfixe `[INTENT:...]` est toujours filtré et les directions TTS restent indépendantes des réactions du modèle Live2D. Sur le chantier du 15/11/2026, `Reply.intent` alimente aussi le catalogue commun `src/jade_runtime/mobile_web/intent-visuals.json` pour deux variantes faciales et textuelles par intention, synchronisées PC/PWA via `JADE_AVATAR_INTENT_ENABLED`. Le toggle n'affecte PAS la voix. Attention à ne pas confondre ce premier câblage et les **14 animations réellement distinctes encore absentes** : [passation Codex dédiée](LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md). Les résultats CI de 2026-11-13 décrits plus haut ne valident pas ce nouvel ajout.

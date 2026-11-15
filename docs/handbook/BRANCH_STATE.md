@@ -24,3 +24,7 @@
 ## Différence avec main et gestion des branches
 
 `main` au moment du contrôle est encore sur son moteur modulaire **avec canaux opt-in et file FIFO**, sans launcher tout-en-un, PWA ni mémoire SQLite. Ne pas synchroniser par simple copier-coller ses guides. Les branches historiques intégrées sont recensées dans [BRANCH_MAINTENANCE.md](BRANCH_MAINTENANCE.md) ; leur suppression doit être effectuée par Codex après vérification de l'ascendance, faute d'outil de suppression dans le connecteur de cette intervention. Trois références divergentes nécessitent une revue.
+
+## Addendum du 15/11/2026 : réactions émotionnelles 2D
+
+La branche dédiée `feat/live2d-intent-expression-sync-20261115` a été créée depuis `develop` pour ajouter le toggle `JADE_AVATAR_INTENT_ENABLED`, la table unique de deux expressions r20 et deux libellés textuels pour chacune des sept intentions, et le pilotage de l'avatar PC / PWA. **Ce sont des expressions, pas des animations corporelles propres**. Avant intégration effective de cette branche dans `develop`, considérer ces capacités comme proposées, non disponibles sur `develop` ; vérifier la PR et son statut. Le SDK Android, le retour au neutre Web, les 14 véritables animations et le modèle en pied r21 restent non validés ou absents. Voir [passation Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).

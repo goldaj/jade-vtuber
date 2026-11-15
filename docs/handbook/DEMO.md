@@ -21,3 +21,7 @@ Avec Python 3.11 et Poetry 2.2.1, `poetry sync --only main` puis `poetry run pyt
 Le parcours utilisateur normal de `develop` est `main.py --all-channels` via le launcher Windows. Il exige tous les connecteurs et ne doit pas être appelé « démo sans prérequis ». Pour tester un système complet, suivre [INSTALLATION.md](INSTALLATION.md) puis [USER_GUIDE.md](USER_GUIDE.md). Un préflight réussi prouve seulement la configuration locale, pas un fonctionnement réel sur le téléphone, Discord ou Twitch.
 
 La Démo Express permet donc la découverte immédiate **sans contourner la décision produit « tous les supports toujours actifs » dans la vraie Jade**.
+
+## Différence entre démos et rendu d'intention (15/11/2026)
+
+Le moteur réel sur `develop` sait choisir parmi deux réactions faciales et textuelles par intention avec un toggle global. La **Démo Express hors ligne** reste volontairement une simulation sans avatar Live2D et ne prétend donc pas démontrer ce comportement. La démo animée séparée `demo/reelle/` possède déjà un renderer acceptant des commandes `expression` ; ce chantier route les intentions depuis le **runtime principal** et la PWA, sans modifier la politique de facturation ni garantir une démonstration matérielle. Voir [passation et exigences des 14 motions futures](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).

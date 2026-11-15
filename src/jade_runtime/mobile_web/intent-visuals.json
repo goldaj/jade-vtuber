@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "intents": {
+    "neutral": [
+      {
+        "expression": "Neutral",
+        "text": "Repos paisible"
+      },
+      {
+        "expression": "Blink",
+        "text": "Un instant de calme"
+      }
+    ],
+    "playful": [
+      {
+        "expression": "WinkR",
+        "text": "Petite malice"
+      },
+      {
+        "expression": "WinkL",
+        "text": "Clin d’œil complice"
+      }
+    ],
+    "excited": [
+      {
+        "expression": "Smile",
+        "text": "Joie pétillante"
+      },
+      {
+        "expression": "Surprised",
+        "text": "Élan enthousiaste"
+      }
+    ],
+    "curious": [
+      {
+        "expression": "Surprised",
+        "text": "Attention intriguée"
+      },
+      {
+        "expression": "Blink",
+        "text": "Réflexion en cours"
+      }
+    ],
+    "tender": [
+      {
+        "expression": "WinkL",
+        "text": "Douceur timide"
+      },
+      {
+        "expression": "Smile",
+        "text": "Sourire affectueux"
+      }
+    ],
+    "reassuring": [
+      {
+        "expression": "Blink",
+        "text": "Présence apaisante"
+      },
+      {
+        "expression": "Smile",
+        "text": "Sourire rassurant"
+      }
+    ],
+    "serious": [
+      {
+        "expression": "Sad",
+        "text": "Regard grave"
+      },
+      {
+        "expression": "Neutral",
+        "text": "Concentration tranquille"
+      }
+    ]
+  }
+}
