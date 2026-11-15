@@ -170,6 +170,24 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
                      "Tailscale-User-Login":"creator@example.test"})
         self.assertEqual(status, 200)
 
+    async def test_tailscale_proxy_rewrites_host_but_browser_origin_is_public(self):
+        self.mobile.owner_login = "creator@example.test"
+        self.mobile.public_origin = "https://jade-pc.tail123.ts.net"
+        payload = json.dumps({"text":"Jade, tu m'entends ?", "session":"m-123456789012",
+                              "speak":False}).encode()
+        # Host is the Go reverse-proxy backend (localhost), not the HTTPS
+        # host seen by Chrome Android. Both owner and bearer are still required.
+        status, body, _ = await self.request("POST", "/api/chat", body=payload,
+            headers={**self.headers("application/json"),
+                     "Tailscale-User-Login":"creator@example.test",
+                     "Origin":"https://jade-pc.tail123.ts.net"})
+        self.assertEqual(status, 200, body)
+        status, _, _ = await self.request("POST", "/api/chat", body=payload,
+            headers={**self.headers("application/json"),
+                     "Tailscale-User-Login":"creator@example.test",
+                     "Origin":"https://attacker.example"})
+        self.assertEqual(status, 403)
+
     async def test_muted_voice_does_not_spend_tts(self):
         status, body, _ = await self.request(
             "POST", "/api/voice", body=wav16(),
@@ -265,8 +283,12 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
     async def test_invalid_token_and_missing_flags(self):
         with self.assertRaises(ValueError):
             Settings(mobile_enabled=True, mobile_token="x" * 40).validate()
+        with self.assertRaises(ValueError):
+            Settings(mobile_enabled=True, mobile_token="x" * 40,
+                     mobile_owner_login="creator@example.test").validate()
         Settings(mobile_enabled=True, mobile_token="x" * 40,
-                 mobile_owner_login="creator@example.test").validate()
+                 mobile_owner_login="creator@example.test",
+                 mobile_public_origin="https://jade-pc.tail123.ts.net").validate()
         with self.assertRaises(ValueError):
             MobileGateway(self.runtime, self.fake, token="short")
         with self.assertRaises(ValueError):
