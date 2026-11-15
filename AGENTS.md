@@ -1,5 +1,11 @@
 # Instructions du projet Jade
 
+## Contrat documentaire de la branche feat/turn-conversation-logs-20261115
+
+**Chaque modification du code, des tests, de l'infrastructure, des scripts ou du paramétrage doit actualiser l'ensemble des guides `docs/handbook/` et ce fichier dans la même PR.** Voir [AI_HANDOFF.md](docs/handbook/AI_HANDOFF.md) et `scripts/check_docs.py`. Ne pas attribuer à cette branche les fonctions `--all-channels`, PWA ou mémoire SQLite de develop. Branche divergente : ne pas la supprimer sans revue des dix commits propres et de leurs logs/tests. La Démo Express reste une simulation hors ligne.
+
+
+
 Avant toute modification, lire [l’index des conversations](docs/conversations/INDEX.md), puis les instructions de cette page et les documents liés au domaine concerné. Le journal est partiel : conserver les décisions successives, distinguer verbatim et résumé et ne jamais y copier de secrets, identifiants privés ou sorties brutes d’outils.
 
 ## Dépôt et configuration
