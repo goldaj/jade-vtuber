@@ -68,7 +68,7 @@ class Dialogue:
 
     async def respond(self, incoming: Incoming, *, valid=lambda: True,
                       on_sentence=None, on_timing=None, defer_history=False,
-                      on_intent=None, memory_context="") -> Reply | None:
+                      on_intent=None, memory_context="", history_messages=None) -> Reply | None:
         # Reject stale duplicates by transport ID, not by repeated message text.
         if len(incoming.text) > 1200 or not self.should_reply(incoming):
             return None
@@ -82,8 +82,9 @@ class Dialogue:
                 dedup_id = (incoming.platform, incoming.channel, incoming.message_id)
                 if incoming.message_id and dedup_id in used:
                     return None
-                history = self.history.setdefault(
-                    key, deque(maxlen=self.max_messages))
+                if key not in self.history:
+                    self.history[key] = deque(history_messages or (), maxlen=self.max_messages)
+                history = self.history[key]
                 user = {"role": "user", "content": (
                     f"{incoming.author} ({incoming.platform}): {incoming.text}")}
                 # Prior channel messages are untrusted conversation context, not
