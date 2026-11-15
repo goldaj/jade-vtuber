@@ -1,5 +1,10 @@
 # Instructions du projet Jade
 
+## Contrat documentaire prioritaire de cette branche
+
+**Sur `docs/jade-persistent-memory-identity-20261115`, chaque changement (code, tests, config, ressources, infrastructure ou démo) doit mettre à jour TOUS les guides dans `docs/handbook/` et le présent AGENTS.md.** Le suivi est décrit dans [AI_HANDOFF.md](docs/handbook/AI_HANDOFF.md) et contrôlé par `scripts/check_docs.py`. Ne pas prétendre que `--all-channels`, l'application mobile privée ou la mémoire SQLite existent sur ce code : ces fonctions appartiennent à `develop`. La Démo Express est une simulation Windows autonome. **Branche divergente : ne pas la supprimer avant examen des commits propres.** Voir [BRANCH_MAINTENANCE.md](docs/handbook/BRANCH_MAINTENANCE.md).
+
+
 Avant toute modification, lire [l’index des conversations](docs/conversations/INDEX.md), puis les instructions de cette page et les documents liés au domaine concerné. Le journal est partiel : conserver les décisions successives, distinguer verbatim et résumé et ne jamais y copier de secrets, identifiants privés ou sorties brutes d’outils.
 
 ## Dépôt et configuration

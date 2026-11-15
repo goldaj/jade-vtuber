@@ -1,5 +1,11 @@
 # Jade — un personnage virtuel capable de dialoguer
 
+**Manuel spécifique à `docs/jade-persistent-memory-identity-20261115` :** [installation](docs/handbook/INSTALLATION.md), [Démo Express](docs/handbook/DEMO.md), [guide utilisateur](docs/handbook/USER_GUIDE.md), [architecture](docs/handbook/TECHNICAL.md), [consignes des agents](docs/handbook/AI_HANDOFF.md), [état précis](docs/handbook/BRANCH_STATE.md).
+
+**Attention : branche historique divergente de develop.** Elle n'a ni le launcher tout-en-un ni l'application Android de develop. Pour une démonstration Windows sans Python ni clé API, lancer `Installer-Demo-Express.cmd` ou `Lancer-Demo-Express.cmd`. La démo simule des réponses : ce n'est pas la vraie IA.
+
+
+
 ![Portrait de Jade](jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/Jade_r21_master_v3_canvas_3840x4160.png)
 
 Jade est un projet expérimental de VTuber IA : un personnage 2D conçu pour
