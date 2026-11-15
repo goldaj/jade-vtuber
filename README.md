@@ -144,3 +144,11 @@ Un [launcher Windows personnel](docs/gpt6-jade/LAUNCHER-WINDOWS-20261115.md) per
 ## Réactions émotionnelles du modèle 2D sur develop
 
 Le moteur d'intentions pilote désormais (sur le chantier [Live2D réactions](docs/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), à intégrer et tester) des expressions faciales r20 de substitution et une ligne d'humeur textuelle dans la PWA : **deux variantes par intention** parmi les sept labels autorisés. L'avatar autonome Windows reçoit également les expressions. Le réglage privé `JADE_AVATAR_INTENT_ENABLED=1` (défaut) permet de les couper à `0` sans couper la prosodie TTS ni le lip-sync. Le **vrai objectif restant** est de créer et de valider **14 animations distinctes** du modèle 2D en pied (deux par intention) sur PC et Android, puis seulement de les connecter. Les tests hors ligne ne garantissent pas le rendu matériel.
+
+## Décisions dialogue et personnalité du 15 novembre 2026
+
+Sur `develop`, `prompt_chat.txt` contient le texte **exact** validé par Goldaj (espièglerie, opinions nuancées, lien père/fille, réponses variées). Le contrat `[INTENT:...]` est inchangé. Par défaut, le dialogue `gpt-6-luna` emploie explicitement `low` et **320 tokens de complétion** pour les appels non-streaming et streaming, sauf surcharge par configuration privée.
+
+La mémoire opt-in conserve maintenant en SQLite des **échanges complets, sans résumé** après livraison des réponses ; jusqu'à 48 messages récents sont restaurés dans le contexte au redémarrage. L'historique n'est pas automatiquement activé pour des comptes publics. Micro et mobile personnel répondent toujours ; Discord texte/vocal et Twitch passent à 100 % en tête-à-tête observé, avec 30 % d'échantillonnage en groupe (interpellations directes privilégiées, gardes techniques conservés). Les spectateurs Twitch silencieux ne sont pas détectables par IRC.
+
+Deux réactions par intention, soit **14 variantes conceptuelles**, sont prévues pour le futur ; aucune nouvelle animation 2D n'a été fabriquée ni branchée dans ce chantier. Documentation détaillée et limites : [dialogue Low/320, historique et participation](docs/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md). Tests de régression : `tests/test_personality_runtime_20261115.py` (à exécuter par CI/PC).
