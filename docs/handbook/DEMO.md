@@ -29,3 +29,7 @@ Le moteur réel sur `develop` sait choisir parmi deux réactions faciales et tex
 ## Comportement dialogue réel et limites de la démo (2026-11-15)
 
 La Démo Express simulée ne permet **pas** de conclure que les réglages `low/320`, le nouveau prompt approuvé, le journal SQLite ou les taux d'intervention ont été testés contre OpenAI/Discord/Twitch. Ces fonctions existent dans le runtime `develop`, pas nécessairement dans les simulateurs. Les animations futures à deux réactions par intention sont un chantier documentaire, non un ajout d'assets. Voir [passation dialogue](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md).
+
+## Vérifications CI et produit (15/11/2026)
+
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). La Démo Express hors ligne confirme uniquement son parcours simulé. Ni une démo réussie, ni un scan de secrets vert ne valident les connexions Twitch/Discord, la mémoire SQLite, la PWA ou le moteur de voix réel. Pour l'usage complet, attendre une suite Ubuntu/Windows verte au commit de déploiement et une recette matérielle spécifique.
