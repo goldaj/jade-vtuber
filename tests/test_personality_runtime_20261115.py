@@ -11,6 +11,7 @@ from src.jade_runtime.discord_text_policy import DiscordTextPolicy
 from src.jade_runtime.memory_store import MemoryStore
 from src.jade_runtime.messages import Incoming
 from src.jade_runtime.openai_services import OpenAIServices
+from src.jade_runtime.twitch_irc import TwitchIRC
 from src.jade_runtime.voice_decision import ConversationTurnDecider
 
 
@@ -115,6 +116,21 @@ class TestJadeRuntime20261115(unittest.TestCase):
             return policy.observe(message, incoming, own_user_id=999)
         self.assertIsNotNone(observe(1, 1))
         self.assertIsNone(observe(2, 2))
+
+    def test_twitch_solo_forced_but_group_is_sampled_by_dialogue(self):
+        seen = []
+        async def callback(msg):
+            seen.append(msg)
+            return None
+        bridge = TwitchIRC(login="jadebot", token="not-a-real-token",
+                           channel="example", on_message=callback)
+        bridge.participants["person1"] = 1.0
+        incoming = Incoming("twitch", "person1", "Salut", channel="example")
+        asyncio.run(bridge._offer_message(incoming))
+        self.assertTrue(seen[-1].force_reply)
+        bridge.participants["person2"] = 2.0
+        asyncio.run(bridge._offer_message(incoming))
+        self.assertFalse(seen[-1].force_reply)
 
     def test_discord_voice_solo_always_group_sampled(self):
         decider = ConversationTurnDecider(
