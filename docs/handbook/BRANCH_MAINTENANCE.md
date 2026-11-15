@@ -45,3 +45,12 @@ Pour chacune, comparer les changements et vérifier les PR associées. Si les ch
 ## Documentation des branches actives
 
 Une branche encore utilisée doit posséder **ses propres** fichiers `docs/handbook/`, pas des liens qui prétendent que `main` et `develop` ont le même runtime. Après la suppression des branches intégrées, concentrer la maintenance sur `main`, `develop` et les branches divergentes encore utiles. Les PR de documentation elles-mêmes, une fois fusionnées, deviennent candidates au nettoyage après validation d'ascendance.
+
+## Branches temporaires de cette mise à jour documentaire
+
+Deux branches de travail documentaires ont aussi été **fusionnées** et leurs pointes sont désormais des ancêtres vérifiés de leurs cibles respectives :
+
+- `docs/handbook-demo-express-main-20261115` : ancêtre de `main`, via PR #16.
+- `docs/handbook-demo-express-develop-20261115` : ancêtre de `develop`, via PR #17.
+
+Elles sont candidates à la même suppression contrôlée par Codex après revalidation des pointes et de l'absence de nouveau travail. Ne pas confondre leur suppression avec celle de `main` ou `develop` elles-mêmes. Cette note ne vaut pas suppression effective.
