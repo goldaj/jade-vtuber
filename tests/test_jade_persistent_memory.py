@@ -9,6 +9,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
+from src.jade_runtime.discord_text import parse_discord_message
+from src.jade_runtime.twitch_irc import parse_message
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming, Reply
 from src.jade_runtime.memory_service import MemoryService
@@ -35,6 +37,25 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertEqual(identity_of(Incoming("microphone", "Goldaj", "Salut")),
                          ("microphone", "goldaj"))
         self.assertIsNone(identity_of(Incoming("twitch", "Goldaj", "Je suis Goldaj")))
+
+    def test_connector_parsers_expose_account_ids_without_spoofing_names(self):
+        discord = SimpleNamespace(
+            id=42, content="Bonjour Jade",
+            author=SimpleNamespace(id=101, display_name="Alice"),
+            channel=SimpleNamespace(id=10),
+        )
+        from_discord = parse_discord_message(discord)
+        self.assertEqual(from_discord.account_id, "101")
+        self.assertEqual(identity_of(from_discord), self.alice)
+        from_twitch = parse_message(
+            "@id=msg-3;user-id=6001 :alias!alias@alias.tmi.twitch.tv PRIVMSG #live :Bonjour Jade"
+        )
+        self.assertEqual(from_twitch.account_id, "6001")
+        self.assertEqual(identity_of(from_twitch), ("twitch", "6001"))
+        unknown = parse_message(
+            ":alias!alias@alias.tmi.twitch.tv PRIVMSG #live :Bonjour Jade"
+        )
+        self.assertIsNone(identity_of(unknown))
 
     def test_opt_in_core_never_expires_and_isolated_per_channel(self):
         self.assertIsNone(self.store.account(self.alice))
