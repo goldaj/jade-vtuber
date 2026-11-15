@@ -7,6 +7,8 @@ import asyncio
 import logging
 import re
 import ssl
+import time
+from collections import OrderedDict
 from dataclasses import replace
 from collections.abc import Awaitable, Callable
 
@@ -63,6 +65,8 @@ class TwitchIRC:
         # messages are intentionally ignored rather than backlogged.
         self._awaiting_reply = False
         self.skipped_while_replying = 0
+        # Recent human chatters, excluding Jade; IRC cannot count silent viewers.
+        self.participants: OrderedDict[str, float] = OrderedDict()
 
     async def _offer_message(self, incoming: Incoming) -> None:
         """Queue at most one Twitch turn until its complete delivery finishes.
@@ -74,7 +78,10 @@ class TwitchIRC:
             return
         self._awaiting_reply = True
         try:
-            work = await self.on_message(replace(incoming, force_reply=True))
+            # Only a verified one-chatter room forces a reply; in a group
+            # Dialogue uses the configured 30% sampling for spontaneous turns.
+            work = await self.on_message(replace(
+                incoming, force_reply=(len(self.participants) == 1)))
         except BaseException:
             self._awaiting_reply = False
             raise
@@ -120,6 +127,15 @@ class TwitchIRC:
                 incoming = parse_message(line)
                 if incoming is not None and incoming.channel == self.channel:
                     if incoming.author.casefold() != self.login.casefold():
+                        now = time.monotonic()
+                        for uid, seen in list(self.participants.items()):
+                            if now - seen >= 600:
+                                self.participants.pop(uid, None)
+                        uid = incoming.account_id or incoming.author.casefold()
+                        self.participants[uid] = now
+                        self.participants.move_to_end(uid)
+                        while len(self.participants) > 256:
+                            self.participants.popitem(last=False)
                         try:
                             await self._offer_message(incoming)
                         except (asyncio.QueueFull, RuntimeError):
