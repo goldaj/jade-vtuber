@@ -82,6 +82,25 @@ class Autobiography(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.store.recall_self_core(OWNER), [])
         await svc.close()
 
+    async def test_erasure_from_linked_discord_account_cannot_resurrect_self_core(self):
+        self.store.enable(OWNER)
+        self.store.enable(ALICE)
+        self.store.put_self_core(
+            OWNER, summary="Jade a vécu un moment marquant avec Goldaj.")
+        code = self.store.begin_link(OWNER)
+        self.assertTrue(self.store.complete_link(ALICE, code))
+        self.assertTrue(self.store.forget(ALICE))
+        self.assertEqual(self.store.recall_self_core(OWNER), [])
+        self.store.enable(OWNER)
+        self.assertEqual(self.store.recall_self_core(OWNER), [])
+
+    async def test_unlinked_discord_erasure_keeps_owner_autobiography(self):
+        self.store.enable(OWNER)
+        self.store.enable(ALICE)
+        self.store.put_self_core(OWNER, summary="Jade a remporté sa première partie.")
+        self.assertTrue(self.store.forget(ALICE))
+        self.assertEqual(len(self.store.recall_self_core(OWNER)), 1)
+
     async def test_v1_upgrade_and_portable_v2_backup(self):
         self.store.enable(OWNER)
         # Simulate the exact pre-autobiography SQLite layout and user_version.
