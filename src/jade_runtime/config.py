@@ -153,7 +153,8 @@ class Settings:
             raise ValueError("mobile app requires a separate 32+ character token")
         if self.mobile_enabled and not (3 <= len(self.mobile_owner_login) <= 256
                                         and "\r" not in self.mobile_owner_login
-                                        and "\n" not in self.mobile_owner_login):
+                                        and "\n" not in self.mobile_owner_login
+                                        and self.mobile_owner_login.isascii()):
             raise ValueError("mobile app requires JADE_MOBILE_OWNER_LOGIN (Tailscale identity)")
         if self.mobile_enabled and self.http_enabled and self.mobile_port == self.http_port:
             raise ValueError("mobile and legacy HTTP cannot share one port")
