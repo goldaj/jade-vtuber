@@ -526,3 +526,14 @@ sans présenter les mocks comme des tests d'API réels.
 - [Passation opérationnelle de la PR](HANDOFF-CODEX-MEMORY-20261115.md) : chemins privés sur D:, commandes de transfert, compromis/coûts, fonctionnalités codées, limites techniques et checklist de reprise par Codex.
 - [Conversation Discord unifiée, **DOCUMENTATION UNIQUEMENT**](IDEE-CONVERSATION-UNIFIEE-20261115.md) : partager la même chronologie lors d'une conversation orale et écrite avec une même personne sans fuite inter-salon ; ne pas coder dans le lot mémoire courant.
 - Ne pas annoncer de validation locale avant un test sur le PC. Conserver `main` inchangée ; ne pas fusionner cette PR dans `develop` automatiquement.
+
+## PR indépendante : application mobile privée Jade (15 novembre 2026)
+
+- Branche `feat/jade-private-mobile-pwa-20261115`, PR vers `develop`, non intégrée à `main`.
+- [Passation complète, installation sur D: et suite Codex](HANDOFF-CODEX-MOBILE-20261115.md). Choix : PWA Android avec décor CSS et avatar Live2D Web transparent, SDK propriétaire local non redistribué, API locale sur PC via Tailscale Serve privé sans détour par le VPS trading.
+- Implémenté : auth Bearer, chat texte, micro WAV via OpenAI STT, réponse IA et TTS, replay WAV, intentions/expression/bouche, identité mobile Goldaj et session texte/vocal unifiée.
+- Limites : SDK Web/licence et modèle r20 à installer localement ; pas de validation du rendu ni du micro Android, pas de streaming duplex, pas de fusion mémoire Core Goldaj avec PR #6 ; aucune modification VPS.
+- Tests hors ligne et contrôles CI à vérifier sur le dernier commit ; vraie recette téléphone requise avant publication ou affirmation de fonctionnement réel.
+
+
+- [Contre-audit mobile + mémoire : correctifs appliqués et reste à valider](AUDIT-REVUE-MOBILE-MEMOIRE-20261115.md). **NO-GO production** sans vrai rendu Android, permissions Tailscale propriétaire et intégration de `main.py`/`Incoming` entre les PR #6 et #7.
