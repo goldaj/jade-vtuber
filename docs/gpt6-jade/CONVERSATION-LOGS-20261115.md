@@ -29,3 +29,9 @@ Le journal de sortie porte delivery_status=planned_not_confirmed. Il ne garantit
 ## Validation
 
 Tests ciblés : python -m unittest tests.test_jade_turn_logging -v. Contrôles globaux : python -m unittest discover -s tests -v et python -m compileall -q src main.py. Aucun appel payant ni test réel du microphone, de Discord ou de Twitch n'est requis pour la CI.
+
+## Contrat d'intention commun à toutes les plateformes
+
+Le modèle reçoit le même `INTENT_PROMPT` dans `Dialogue.respond`, quelle que soit l'origine : Twitch, Discord texte, Discord vocal, microphone, HTTP local ou console. Chaque réponse passe par le parseur commun et expose `Reply.intent` ainsi qu'un `Reply.text` débarrassé des balises. Le logger `jade.conversation` reconstruit la balise canonique pour **toutes** les réponses préparées, pas uniquement celles provenant de Discord. Lorsqu'un fournisseur omet malgré tout le préfixe exigé, l'intention devient `neutral` plutôt que de laisser fuiter une balise dans la sortie.
+
+Les tests `test_intent_contract_and_logs_apply_to_every_entry_platform` et `test_missing_intent_tag_gets_neutral_metadata_even_for_twitch` protègent explicitement ce comportement multicanal. La présence de l'intention dans les logs n'implique pas une voix audible : un message Twitch peut rester uniquement écrit si le TTS n'est pas activé.
