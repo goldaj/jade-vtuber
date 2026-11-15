@@ -14,6 +14,7 @@
   let mouth = 0;
   let palette = null;
   let pendingIntent = "neutral";
+  let activeChoice = null;
   let observer = null;
   let resetTimer = null;
   let speaking = false;
@@ -48,6 +49,7 @@
   function returnToIdle() {
     clearTimer();
     pendingIntent = "neutral";
+    activeChoice = null;
     mood.textContent = "Jade est attentive.";
     applyExpression("Neutral");
   }
@@ -72,6 +74,7 @@
       counts[key] = index + 1;
       const choice = reactions[index % reactions.length];
       if (!choice || typeof choice.text !== "string") return;
+      activeChoice = choice;
       mood.textContent = choice.text;
       applyExpression(choice.expression);
       clearTimer();
@@ -143,8 +146,9 @@
           if (animation && animation.catch) animation.catch(() => {});
         } catch (_) {}
       }
-      // An emotion may have arrived while the SDK was still loading.
-      if (pendingIntent !== "neutral") avatar.setIntent(pendingIntent);
+      // Reapply the SAME chosen reaction after slow SDK loading, not the
+      // next variant. One reply must never count as two emotional turns.
+      if (activeChoice && palette?.enabled) applyExpression(activeChoice.expression);
     } catch (_) {
       if (observer) observer.disconnect();
       if (pixi) { try { pixi.destroy(true, {children: true}); } catch (_) {} }
