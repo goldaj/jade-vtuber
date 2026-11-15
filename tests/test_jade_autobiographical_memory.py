@@ -121,6 +121,38 @@ class Autobiography(unittest.IsolatedAsyncioTestCase):
         import_memory(archive, restored_v2)
         self.assertEqual(len(MemoryStore(restored_v2).recall_self_core(OWNER)), 1)
 
+    async def test_queued_core_self_does_not_resurface_after_owner_forget(self):
+        self.store.enable(OWNER)
+        entered, release = asyncio.Event(), asyncio.Event()
+
+        async def delayed(_messages):
+            entered.set()
+            await release.wait()
+            return json.dumps({
+                "kind": "core_self",
+                "summary": "Jade a terminé sa première histoire.",
+                "significance": "Un événement fondateur.",
+                "evidence": "Nous avons terminé le dernier chapitre.",
+            })
+
+        model = AsyncMock()
+        model.complete.side_effect = delayed
+        svc = MemoryService(self.store, model, curator_enabled=True)
+        source = Incoming("microphone", "Goldaj",
+                          "Nous avons terminé le dernier chapitre.",
+                          message_id="delayed-core", force_reply=True)
+        try:
+            self.assertTrue(svc.schedule(source, Reply(source, "Fin du récit.")))
+            await asyncio.wait_for(entered.wait(), 2)
+            before = self.store.account(OWNER)
+            self.assertTrue(self.store.forget(OWNER))
+            self.assertNotEqual(self.store.enable(OWNER), before)
+            release.set()
+            await asyncio.wait_for(asyncio.gather(*list(svc.tasks)), 2)
+            self.assertEqual(self.store.recall_self_core(OWNER), [])
+        finally:
+            await svc.close()
+
     async def test_curator_keeps_core_self_out_of_personal_table(self):
         self.store.enable(OWNER)
         backend = AsyncMock()
