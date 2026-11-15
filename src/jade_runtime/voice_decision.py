@@ -120,9 +120,9 @@ class ConversationTurnDecider:
         state = self._session(session_id, now)
         if state is None:
             return TurnDecision(False, "session_capacity")
-        addressed = participant_count == 1 or direct_address or (
-            state.last_speaker == speaker_id and now < state.active_until)
-        if normalized in (_MUTE | _RESUME) and not addressed:
+        addressed = participant_count == 1 or direct_address
+        contextual_followup = (state.last_speaker == speaker_id and now < state.active_until)
+        if normalized in (_MUTE | _RESUME) and not (addressed or contextual_followup):
             return TurnDecision(False, "ambiguous_group")
         if normalized in _MUTE:
             state.muted = True
@@ -143,7 +143,8 @@ class ConversationTurnDecider:
         if len(state.pending) >= 8:
             state.pending.popitem(last=False)
         state.pending[turn_id] = (speaker_id, now)
-        return TurnDecision(True, "solo" if participant_count == 1 else "addressed_or_followup", turn_id)
+        reason = "solo" if participant_count == 1 else ("direct" if direct_address else "group_sampled")
+        return TurnDecision(True, reason, turn_id)
 
     def mark_replied(self, session_id: str, turn_id: str) -> bool:
         """Start a follow-up window only after the application emitted a reply."""
