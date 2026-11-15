@@ -72,14 +72,15 @@ class Dialogue:
         # Reject stale duplicates by transport ID, not by repeated message text.
         if len(incoming.text) > 1200 or not self.should_reply(incoming):
             return None
-        key = incoming.session
+        key = incoming.history_key
         lock = self._acquire_session(key)
         try:
             async with lock:
                 if not valid():
                     raise TimeoutError("message expired")
                 used = self.seen.setdefault(key, deque(maxlen=512))
-                if incoming.message_id and incoming.message_id in used:
+                dedup_id = (incoming.platform, incoming.channel, incoming.message_id)
+                if incoming.message_id and dedup_id in used:
                     return None
                 history = self.history.setdefault(
                     key, deque(maxlen=self.max_messages))
@@ -152,7 +153,7 @@ class Dialogue:
                 if not defer_history:
                     history.extend((user, {"role": "assistant", "content": result.text}))
                     if incoming.message_id:
-                        used.append(incoming.message_id)
+                        used.append(dedup_id)
                 return result
         finally:
             self._users[key] -= 1
@@ -160,12 +161,13 @@ class Dialogue:
 
     async def commit_stream_response(self, incoming: Incoming, text: str | None):
         """Commit after playback; None denotes interruption without word alignment."""
-        key = incoming.session
+        key = incoming.history_key
         lock = self._acquire_session(key)
         try:
             async with lock:
                 used = self.seen.setdefault(key, deque(maxlen=512))
-                if incoming.message_id and incoming.message_id in used:
+                dedup_id = (incoming.platform, incoming.channel, incoming.message_id)
+                if incoming.message_id and dedup_id in used:
                     return
                 history = self.history.setdefault(key, deque(maxlen=self.max_messages))
                 user = {"role": "user", "content": (
@@ -173,7 +175,33 @@ class Dialogue:
                 content = text if text is not None else "[réponse vocale interrompue ou non diffusée]"
                 history.extend((user, {"role": "assistant", "content": content}))
                 if incoming.message_id:
-                    used.append(incoming.message_id)
+                    used.append(dedup_id)
+        finally:
+            self._users[key] -= 1
+            self._last_used[key] = time.monotonic()
+
+    async def observe_linked_text(self, incoming: Incoming) -> bool:
+        """Keep a non-reply text event in the *same verified voice-chat thread*.
+
+        This never triggers an LLM call or changes the platform's reply policy.
+        Only trusted Discord connector code should attach conversation_id.
+        """
+        if (incoming.platform != "discord" or not incoming.conversation_id
+                or not incoming.message_id or len(incoming.text) > 1200):
+            return False
+        key = incoming.history_key
+        lock = self._acquire_session(key)
+        try:
+            async with lock:
+                used = self.seen.setdefault(key, deque(maxlen=512))
+                dedup_id = (incoming.platform, incoming.channel, incoming.message_id)
+                if dedup_id in used:
+                    return False
+                history = self.history.setdefault(key, deque(maxlen=self.max_messages))
+                history.append({"role": "user", "content":
+                    f"{incoming.author} (discord, message écrit sans réponse) : {incoming.text}"})
+                used.append(dedup_id)
+                return True
         finally:
             self._users[key] -= 1
             self._last_used[key] = time.monotonic()
