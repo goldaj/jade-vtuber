@@ -103,6 +103,10 @@ class SpeechOutput:
 
     def _delivery_context(self, source=None):
         """Take a playback snapshot, never promoting a private Discord DM to voice."""
+        if getattr(source, "platform", None) in ("microphone", "local_http", "mobile"):
+            # Local/owner input must not be broadcast into a public Discord
+            # voice channel merely because the connector is also running.
+            return None
         if (getattr(source, "platform", None) == "discord"
                 and getattr(source, "private_channel", False)):
             return None
