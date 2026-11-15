@@ -157,7 +157,8 @@ class MemoryStore:
             return True
 
     def put(self, key: tuple[str, str], *, kind: str, scope: str, summary: str,
-            significance: str = "", message_id: str = "", ordinary_days: int = 90) -> bool:
+            significance: str = "", message_id: str = "", ordinary_days: int = 90,
+            expected_person_id: str | None = None) -> bool:
         """No consent -> no write; Core always has an SQL-enforced NULL TTL."""
         _validate_key(key)
         if (kind not in KINDS or not isinstance(scope, str)
@@ -176,7 +177,8 @@ class MemoryStore:
             row = db.execute(
                 "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
             ).fetchone()
-            if not row:
+            if not row or (expected_person_id is not None
+                           and row["person_id"] != expected_person_id):
                 return False
             result = db.execute("""
                 INSERT OR IGNORE INTO memories(
