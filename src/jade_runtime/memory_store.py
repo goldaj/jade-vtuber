@@ -168,11 +168,19 @@ class MemoryStore:
             ).fetchone()
             if not row:
                 return False
-            # A privacy erasure must also remove autobiography created from
-            # the owner's conversation, even though it lives in a global table.
-            if key == ("microphone", "goldaj"):
-                db.execute("""DELETE FROM jade_self_core
-                    WHERE source_platform=? AND source_account_id=?""", key)
+            # Deleting *any* identity in the linked owner profile erases
+            # autobiography sourced by Goldaj too. Otherwise an erasure from
+            # a linked Discord/Twitch account leaves orphan core memories
+            # which can reappear when the local owner is enabled again.
+            owner_present = db.execute("""
+                SELECT 1 FROM identities WHERE person_id=?
+                  AND platform='microphone' AND account_id='goldaj'
+                """, (row["person_id"],)).fetchone()
+            if owner_present:
+                db.execute("""
+                    DELETE FROM jade_self_core
+                    WHERE source_platform='microphone' AND source_account_id='goldaj'
+                    """)
             db.execute("DELETE FROM persons WHERE id=?", (row["person_id"],))
             db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
             return True
