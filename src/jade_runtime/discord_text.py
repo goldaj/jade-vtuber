@@ -5,6 +5,7 @@ alone never joins voice channels or records other users.
 """
 import asyncio
 import logging
+from dataclasses import replace
 
 from .messages import Incoming
 from .discord_text_policy import DiscordTextPolicy
@@ -68,12 +69,31 @@ class DiscordText:
                 if incoming is not None:
                     selected = parent.policy.observe(
                         message, incoming, own_user_id=self.user.id if self.user else None)
+                    # Native text chat of the current voice channel has the
+                    # same Discord permissions as that voice channel. We never
+                    # merge a different channel, even within the same guild.
+                    linked = None
+                    bridge = parent.voice_bridge
+                    if (bridge is not None and getattr(message.author, "bot", True) is False
+                            and incoming.account_id and getattr(message, "guild", None) is not None):
+                        guild_id = getattr(message.guild, "id", None)
+                        if type(guild_id) is int and type(message.channel.id) is int:
+                            linked = bridge.linked_text_conversation_id(
+                                guild_id, message.channel.id, message.author.id)
                     if selected is not None:
+                        if linked:
+                            selected = replace(selected, conversation_id=linked)
                         try:
                             await parent.on_message(selected)
                         except (asyncio.QueueFull, RuntimeError):
                             parent.dropped += 1
                             parent.policy.forget_pending(selected.channel, selected.message_id)
+                    elif (linked and incoming.message_id and len(incoming.text) <= 1200
+                          and not incoming.text.lstrip().startswith(("!", "/", "."))):
+                        # No LLM call for passive text. Its owner can resume
+                        # verbally moments later without Jade losing the detail.
+                        await bridge.runtime.dialogue.observe_linked_text(
+                            replace(incoming, conversation_id=linked))
 
             async def on_voice_state_update(self, member, before, after):
                 if parent.voice_bridge is not None:
