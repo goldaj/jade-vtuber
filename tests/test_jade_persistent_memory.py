@@ -57,6 +57,7 @@ class MemoryStoreTests(unittest.TestCase):
             self.assertIsNone(db.execute(
                 "SELECT expires_at FROM memories WHERE kind='core_relationship'").fetchone()[0])
             db.execute("UPDATE memories SET expires_at='2000-01-01' WHERE kind='ordinary'")
+            db.commit()
         self.assertEqual(self.store.prune_ordinary(), 1)
         self.assertEqual(len(self.store.recall(self.alice, "discord:10")), 1)
         self.assertEqual(len(MemoryStore(self.path).recall(self.alice, "discord:10")), 1)
