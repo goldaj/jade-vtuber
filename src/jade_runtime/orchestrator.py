@@ -6,6 +6,7 @@ from collections.abc import Awaitable, Callable
 import time
 from .dialogue import Dialogue
 from .messages import Incoming, Reply
+from .turn_logging import record_input, record_reply, record_outcome
 
 
 @dataclass
@@ -25,11 +26,12 @@ class Work:
 
 class Runtime:
     def __init__(self, dialogue: Dialogue, on_reply: Callable[[Reply], Awaitable[None]],
-                 max_queue: int = 64, on_stream_start=None):
+                 max_queue: int = 64, on_stream_start=None, delivery_plan=None):
         if not 1 <= max_queue <= 1024:
             raise ValueError("invalid queue limit")
         self.dialogue, self.on_reply = dialogue, on_reply
         self.on_stream_start = on_stream_start
+        self.delivery_plan = delivery_plan
         self.queue = asyncio.Queue(maxsize=max_queue)
         self.worker = None
         self.active = None
@@ -148,6 +150,7 @@ class Runtime:
         if not item.valid():
             raise TimeoutError("message expired")
         self.mark_timing("queue_start")
+        record_input(item.turn, item.message)
         turn = None
         committed = False
         try:
@@ -172,6 +175,12 @@ class Runtime:
                 turn = None
             if turn is not None:
                 await turn.finish_input()
+            if reply is None:
+                record_outcome(item.turn, "no_reply")
+            else:
+                destinations = (self.delivery_plan(reply) if self.delivery_plan is not None
+                                else ("console_text",))
+                record_reply(item.turn, reply, destinations)
             if item.result is not None and not item.result.done():
                 if reply is None:
                     item.result.set_exception(RuntimeError("message not accepted"))
@@ -184,7 +193,9 @@ class Runtime:
                 await self.dialogue.commit_stream_response(item.message,
                                                            reply.text if played else None)
                 committed = True
-        except BaseException:
+        except BaseException as exc:
+            record_outcome(item.turn, "cancelled" if isinstance(
+                exc, asyncio.CancelledError) else "failed")
             if turn is not None:
                 await turn.abort()
                 if not committed and turn.has_submitted:

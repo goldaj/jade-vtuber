@@ -503,3 +503,9 @@ sans présenter les mocks comme des tests d'API réels.
 - La commande d'arrêt peut être transcrite pendant la lecture ; les autres phrases entendues durant la lecture ne déclenchent pas de dialogue. L'état silencieux bloque aussi les sorties vocales d'autres sources jusqu'à « reprends », tout en gardant les sorties texte et la connexion.
 - Suite locale : **330 tests hors ligne réussis** ; compilation Python réussie. Les scénarios d'arrêt et de reprise sont simulés ; pendant la lecture, la détection d'arrêt utilise OpenAI STT et son coût ainsi que l'écho restent à mesurer en conditions réelles.
 - Lancement demandé par le propriétaire depuis son téléphone : runtime local avec Discord vocal, avatar r20 et option Twitch ; connexion vocale Discord et fenêtre de l'avatar constatées. La conversation, le son perçu et le partage du modèle vers le téléphone restent à recetter. Le compte Discord du PC demande une reconnexion avant le partage de fenêtre.
+
+
+## Journalisation des conversations sélectionnées (15 novembre 2026)
+
+- Instrumentation JSON sur stderr : origine et modalité entrantes, texte sélectionné, réponse canonique [INTENT:label], destinations et modalités prévues. Voir [CONVERSATION-LOGS-20261115.md](CONVERSATION-LOGS-20261115.md).
+- Contrôler la CI sur le commit final puis faire une recette en conditions réelles après redémarrage local. Ne jamais publier les logs réels.

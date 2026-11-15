@@ -11,6 +11,7 @@ from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming
 from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.orchestrator import Runtime
+from src.jade_runtime.turn_logging import enable_console_logs, planned_destinations
 from src.jade_runtime.output import AudioOutput, SpeechOutput
 from src.jade_runtime.twitch_token import validate_twitch_token
 from src.jade_runtime.voice_pipeline import VoiceInput
@@ -27,6 +28,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                   discord=False, vts=False, discord_voice=False, http=False, avatar=False):
     config = Settings.load()
     config.validate()
+    enable_console_logs()
     if (voice or mic or twitch or discord or vts or discord_voice or http) and not live:
         raise ValueError("external services require --live; demo never bills OpenAI")
     if live:
@@ -125,8 +127,18 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 turn.on_first_sentence = trigger_vts
             return turn
 
+        def describe_delivery(reply):
+            return planned_destinations(
+                reply, has_speech=speech is not None,
+                audio_output=config.audio_output,
+                discord_voice=discord_voice_bridge is not None,
+                twitch_text=twitch_client is not None and config.twitch_send,
+                discord_text=discord_client is not None,
+                local_http=local_api is not None)
+
         runtime = Runtime(dialogue, on_reply, config.max_queue,
-                          on_stream_start=(start_early_voice if speech and config.early_voice else None))
+                          on_stream_start=(start_early_voice if speech and config.early_voice else None),
+                          delivery_plan=describe_delivery)
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(
