@@ -297,10 +297,22 @@ def main():
                         help="Display the animated Live2D r20 avatar")
     parser.add_argument("--mobile", action="store_true",
                         help="Start the owner-only mobile PWA on localhost")
+    parser.add_argument("--all-channels", action="store_true",
+                        help="Start all inputs and avatar simultaneously; no channel mode selection")
     parser.add_argument("--preflight", action="store_true",
                         help="Check settings and local dependencies with zero provider/network calls")
     args = vars(parser.parse_args())
-    if args.pop("preflight"):
+    all_channels = args.pop("all_channels")
+    preflight = args.pop("preflight")
+    if all_channels:
+        # A single instance for all transports; no channel takes precedence.
+        # VTS is an optional alternate renderer, used only when configured;
+        # the autonomous r20 avatar is started in every case.
+        settings = Settings.load()
+        args.update(live=True, voice=True, mic=True, twitch=True,
+                    discord=True, discord_voice=True, http=True,
+                    avatar=True, mobile=True, vts=settings.vts_enabled)
+    if preflight:
         from src.jade_runtime.diagnostics import inspect_environment
         try:
             config = Settings.load()
