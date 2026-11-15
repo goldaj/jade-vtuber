@@ -19,12 +19,16 @@ class Incoming:
     account_id: str = field(default="", repr=False)
     # Ephemeral key assigned only by trusted Discord connectors.
     conversation_id: str = field(default="", repr=False)
+    # Trusted Discord parser marks direct messages: no public voice playback.
+    private_channel: bool = field(default=False, repr=False)
 
     def __post_init__(self):
         if (not self.platform.strip() or not self.author.strip()
                 or not self.channel.strip() or not isinstance(self.text, str)
                 or not self.text.strip()):
             raise ValueError("invalid incoming message")
+        if type(self.private_channel) is not bool:
+            raise ValueError("invalid private channel flag")
         if len(self.text) > 4000:
             raise ValueError("incoming message too long")
         if (not isinstance(self.context, tuple) or len(self.context) > 6
