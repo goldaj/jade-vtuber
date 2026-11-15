@@ -74,13 +74,17 @@ class MobileGateway:
 
     def __init__(self, runtime, services, *, token: str, port=8766,
                  web_root: Path | None = None, model_dir: Path | None = None,
-                 vendor_dir: Path | None = None):
+                 vendor_dir: Path | None = None, owner_login: str | None = None):
         if not isinstance(token, str) or len(token) < 32 or len(token) > 256:
             raise ValueError("JADE_MOBILE_TOKEN must contain 32-256 characters")
         if type(port) is not int or not 1024 <= port <= 65535:
             raise ValueError("invalid mobile port")
         self.runtime, self.services = runtime, services
+        if owner_login is not None and (not isinstance(owner_login, str)
+                                         or not 3 <= len(owner_login.strip()) <= 256):
+            raise ValueError("invalid Tailscale owner login")
         self.token, self.port = token, port
+        self.owner_login = owner_login.strip().casefold() if owner_login else None
         self.web_root = Path(web_root or WEB_ROOT)
         self.model_dir = Path(model_dir or DEFAULT_MODEL)
         self.vendor_dir = Path(vendor_dir) if vendor_dir else None
@@ -378,6 +382,14 @@ class MobileGateway:
                 headers[key] = value.strip().decode("ascii", "ignore")
             else:
                 await self._json(writer, 413, {"error": "too many headers"})
+                return
+            # Tailscale Serve injects the login and strips untrusted versions
+            # supplied by remote clients. On the loopback address, another
+            # local process could spoof it: the PC itself remains trusted.
+            if (self.owner_login is not None and not hmac.compare_digest(
+                    headers.get("tailscale-user-login", "").casefold(),
+                    self.owner_login)):
+                await self._json(writer, 403, {"error": "private owner required"})
                 return
             if method == "GET":
                 await self._static(writer, route)
