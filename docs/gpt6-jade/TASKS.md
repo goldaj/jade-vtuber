@@ -509,3 +509,12 @@ sans présenter les mocks comme des tests d'API réels.
 
 - Instrumentation JSON sur stderr : origine et modalité entrantes, texte sélectionné, réponse canonique [INTENT:label], destinations et modalités prévues. Voir [CONVERSATION-LOGS-20261115.md](CONVERSATION-LOGS-20261115.md).
 - Contrôler la CI sur le commit final puis faire une recette en conditions réelles après redémarrage local. Ne jamais publier les logs réels.
+
+
+## Prochaine étape : mémoire persistante, identités et Core Memories (15 novembre 2026)
+
+- **Documentation uniquement, pas de code** : [PLAN-MEMOIRE-PERSISTANTE-IDENTITES-CORE-20261115.md](PLAN-MEMOIRE-PERSISTANTE-IDENTITES-CORE-20261115.md).
+- Reconnaissance par ID Discord/Twitch stable, liaison interplateforme volontaire ; contexte de salon distinct des profils personnels, microphone inconnu sauf configuration locale explicite.
+- Persistance SQLite privée sur D: hors dépôt ; mémoires ordinaires révisables ; **Core Memories autonomes** de Jade et relationnelles, décidées par Jade elle-même pour les événements vraiment marquants, **sans TTL ni purge automatique**.
+- En cas de demande de la personne : possibilité de corriger, exporter ou supprimer ses données, y compris ses Core relationnelles et les références dérivées ; ne pas restaurer depuis une sauvegarde.
+- Lots futurs : contrats d'identité, stockage, discernement des Core, récupération ciblée, gestion des utilisateurs, tests puis recette humaine. Aucun déploiement ou test live effectué dans ce lot.
