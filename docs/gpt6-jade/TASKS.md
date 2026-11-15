@@ -527,3 +527,5 @@ sans présenter les mocks comme des tests d'API réels.
 - Limites : SDK Web/licence et modèle r20 à installer localement ; pas de validation du rendu ni du micro Android, pas de streaming duplex, pas de fusion mémoire Core Goldaj avec PR #6 ; aucune modification VPS.
 - Tests hors ligne et contrôles CI à vérifier sur le dernier commit ; vraie recette téléphone requise avant publication ou affirmation de fonctionnement réel.
 
+
+- [Contre-audit mobile + mémoire : correctifs appliqués et reste à valider](AUDIT-REVUE-MOBILE-MEMOIRE-20261115.md). **NO-GO production** sans vrai rendu Android, permissions Tailscale propriétaire et intégration de `main.py`/`Incoming` entre les PR #6 et #7.
