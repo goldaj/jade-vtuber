@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import io
 import json
 import os
 from pathlib import Path
@@ -25,8 +24,9 @@ MAX_ARCHIVE_BYTES = 256 * 1024 * 1024
 def _check(path: Path) -> int:
     with sqlite3.connect(str(path)) as db:
         status = db.execute("PRAGMA integrity_check").fetchone()
+        foreign = db.execute("PRAGMA foreign_key_check").fetchone()
         version = db.execute("PRAGMA user_version").fetchone()[0]
-    if status != ("ok",):
+    if status != ("ok",) or foreign is not None:
         raise ValueError("corrupt memory database")
     if version != 1:
         raise ValueError("unsupported Jade memory schema version")
@@ -46,7 +46,7 @@ def export_memory(db_path: str | Path, archive_path: str | Path) -> Path:
     temporary = None
     zip_tmp = None
     try:
-        with tempfile.NamedTemporaryFile(suffix=".sqlite3", delete=False) as temp:
+        with tempfile.NamedTemporaryFile(dir=source.parent, suffix=".sqlite3", delete=False) as temp:
             temporary = Path(temp.name)
         # SQLite's backup API copies a transactionally coherent DB, including WAL.
         with sqlite3.connect(str(source)) as src, sqlite3.connect(str(temporary)) as dst:
@@ -92,8 +92,10 @@ def import_memory(archive_path: str | Path, db_path: str | Path) -> Path:
     if archive.stat().st_size > MAX_ARCHIVE_BYTES:
         raise ValueError("archive too large")
     with zipfile.ZipFile(archive) as bundle:
-        if set(bundle.namelist()) != {DB_NAME, MANIFEST_NAME}:
+        if len(bundle.namelist()) != 2 or set(bundle.namelist()) != {DB_NAME, MANIFEST_NAME}:
             raise ValueError("unexpected archive contents")
+        if bundle.getinfo(MANIFEST_NAME).file_size > 8192:
+            raise ValueError("manifest exceeds size limit")
         meta = json.loads(bundle.read(MANIFEST_NAME))
         if (meta.get("format") != "jade-memory-backup"
                 or meta.get("archive_version") != ARCHIVE_VERSION
