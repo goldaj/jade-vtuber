@@ -25,3 +25,7 @@ La Démo Express permet donc la découverte immédiate **sans contourner la déc
 ## Différence entre démos et rendu d'intention (15/11/2026)
 
 Le moteur réel sur `develop` sait choisir parmi deux réactions faciales et textuelles par intention avec un toggle global. La **Démo Express hors ligne** reste volontairement une simulation sans avatar Live2D et ne prétend donc pas démontrer ce comportement. La démo animée séparée `demo/reelle/` possède déjà un renderer acceptant des commandes `expression` ; ce chantier route les intentions depuis le **runtime principal** et la PWA, sans modifier la politique de facturation ni garantir une démonstration matérielle. Voir [passation et exigences des 14 motions futures](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+
+## Comportement dialogue réel et limites de la démo (2026-11-15)
+
+La Démo Express simulée ne permet **pas** de conclure que les réglages `low/320`, le nouveau prompt approuvé, le journal SQLite ou les taux d'intervention ont été testés contre OpenAI/Discord/Twitch. Ces fonctions existent dans le runtime `develop`, pas nécessairement dans les simulateurs. Les animations futures à deux réactions par intention sont un chantier documentaire, non un ajout d'assets. Voir [passation dialogue](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md).
