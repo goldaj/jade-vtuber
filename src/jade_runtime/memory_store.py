@@ -186,7 +186,8 @@ class MemoryStore:
             return True
 
     def put(self, key: tuple[str, str], *, kind: str, scope: str, summary: str,
-            significance: str = "", message_id: str = "", ordinary_days: int = 90) -> bool:
+            significance: str = "", message_id: str = "", ordinary_days: int = 90,
+            expected_person_id: str | None = None) -> bool:
         """No consent -> no write; Core always has an SQL-enforced NULL TTL."""
         _validate_key(key)
         if (kind not in KINDS or not isinstance(scope, str)
@@ -205,7 +206,8 @@ class MemoryStore:
             row = db.execute(
                 "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
             ).fetchone()
-            if not row:
+            if not row or (expected_person_id is not None
+                           and row["person_id"] != expected_person_id):
                 return False
             result = db.execute("""
                 INSERT OR IGNORE INTO memories(
@@ -220,7 +222,8 @@ class MemoryStore:
             return result.rowcount > 0
 
     def put_self_core(self, key: tuple[str, str], *, summary: str,
-                      significance: str = "", message_id: str = "") -> bool:
+                      significance: str = "", message_id: str = "",
+                      expected_person_id: str | None = None) -> bool:
         """Jade's own lasting episodes, owner-only until explicit promotion exists.
 
         Only an opted-in, locally verified owner may populate the global table.
@@ -234,9 +237,11 @@ class MemoryStore:
                 or not isinstance(message_id, str)):
             raise ValueError("invalid Jade autobiography")
         with self._db() as db:
-            if not db.execute(
-                    "SELECT 1 FROM identities WHERE platform=? AND account_id=?", key
-            ).fetchone():
+            profile = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
+            ).fetchone()
+            if not profile or (expected_person_id is not None
+                               and profile["person_id"] != expected_person_id):
                 return False
             written = db.execute("""
                 INSERT OR IGNORE INTO jade_self_core
