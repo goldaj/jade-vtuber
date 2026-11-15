@@ -27,7 +27,8 @@ class OpenAIServices:
         response = await self.client.chat.completions.create(
             model=self.settings.model,
             messages=messages,
-            max_completion_tokens=160,
+            max_completion_tokens=self.settings.max_completion_tokens,
+            reasoning_effort=self.settings.reasoning_effort,
         )
         value = response.choices[0].message.content
         if not value:
@@ -38,7 +39,8 @@ class OpenAIServices:
         """Yield OpenAI chat token fragments; do not retry on partial output."""
         stream = await self.client.chat.completions.create(
             model=self.settings.model, messages=messages,
-            max_completion_tokens=160, stream=True,
+            max_completion_tokens=self.settings.max_completion_tokens,
+            reasoning_effort=self.settings.reasoning_effort, stream=True,
         )
         completed = False
         try:
