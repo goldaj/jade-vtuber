@@ -163,11 +163,16 @@ class Runtime:
         committed = False
         command_reply = None
         memory_context = ""
+        history_messages = []
         try:
             if self.memory_service is not None:
                 command_reply = await self.memory_service.command(item.message)
                 if command_reply is None:
                     memory_context = await self.memory_service.context_for(item.message)
+                    if (isinstance(self.dialogue, Dialogue)
+                            and item.message.history_key not in self.dialogue.history):
+                        history_messages = await self.memory_service.history_for(
+                            item.message, limit=self.dialogue.max_messages // 2)
             if (command_reply is None and self.on_stream_start is not None
                     and item.message.platform == "discord_voice"
                     and callable(getattr(self.dialogue.backend, "complete_stream", None))):
@@ -178,7 +183,8 @@ class Runtime:
                 if isinstance(self.dialogue, Dialogue):
                     reply = await self.dialogue.respond(item.message, valid=item.valid,
                                                         on_timing=self.mark_timing,
-                                                        memory_context=memory_context)
+                                                        memory_context=memory_context,
+                                                        history_messages=history_messages)
                 else:
                     reply = await self.dialogue.respond(item.message, valid=item.valid)
             else:
@@ -186,7 +192,8 @@ class Runtime:
                     item.message, valid=item.valid, on_sentence=turn.emit,
                     on_timing=self.mark_timing, defer_history=True,
                     on_intent=getattr(turn, "set_intent", None),
-                    memory_context=memory_context)
+                    memory_context=memory_context,
+                    history_messages=history_messages)
             if not item.valid():
                 raise TimeoutError("message expired")
             if reply is None and turn is not None:
@@ -215,6 +222,7 @@ class Runtime:
                 committed = True
             if (reply is not None and played and command_reply is None and item.valid()
                     and self.memory_service is not None):
+                await self.memory_service.remember_turn(item.message, reply)
                 self.memory_service.schedule(item.message, reply)
         except BaseException as exc:
             record_outcome(item.turn, "cancelled" if isinstance(
