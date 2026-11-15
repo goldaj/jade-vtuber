@@ -11,6 +11,7 @@ import unittest
 from types import SimpleNamespace
 import wave
 
+from src.jade_runtime.config import Settings
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming
 from src.jade_runtime.mobile_gateway import (
@@ -146,6 +147,49 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(json.loads(body)["audio_wav_b64"])
         self.assertEqual(len(self.fake.speeches), 1)
 
+    async def test_owner_tailscale_identity_is_checked_for_all_files_and_api(self):
+        self.mobile.owner_login = "creator@example.test"
+        # The identity header is provided only by trusted Tailscale Serve.
+        status, _, _ = await self.request("GET", "/")
+        self.assertEqual(status, 403)
+        status, _, _ = await self.request("GET", "/model/Jade.model3.json")
+        self.assertEqual(status, 403)
+        status, _, _ = await self.request(
+            "GET", "/", headers={"Tailscale-User-Login":"someone@example.test"})
+        self.assertEqual(status, 403)
+        status, _, _ = await self.request(
+            "GET", "/", headers={"Tailscale-User-Login":"creator@example.test"})
+        self.assertEqual(status, 200)
+        payload = json.dumps({"text":"Jade, salut", "session":"m-123456789012",
+                              "speak":False}).encode()
+        status, _, _ = await self.request("POST", "/api/chat", body=payload,
+            headers=self.headers("application/json"))
+        self.assertEqual(status, 403)
+        status, _, _ = await self.request("POST", "/api/chat", body=payload,
+            headers={**self.headers("application/json"),
+                     "Tailscale-User-Login":"creator@example.test"})
+        self.assertEqual(status, 200)
+
+    async def test_muted_voice_does_not_spend_tts(self):
+        status, body, _ = await self.request(
+            "POST", "/api/voice", body=wav16(),
+            headers={**self.headers("audio/wav"),
+                     "X-Jade-Session":"m-123456789012",
+                     "X-Jade-Speak":"0"})
+        self.assertEqual(status, 200)
+        response = json.loads(body)
+        self.assertEqual(response["transcript"], "Tu m'entends, Jade ?")
+        self.assertIsNone(response["audio_wav_b64"])
+        self.assertFalse(self.fake.speeches)
+        self.assertEqual(planned_destinations(self.reply_log[-1], mobile=True),
+                         ("mobile_text",))
+        status, _, _ = await self.request(
+            "POST", "/api/voice", body=wav16(),
+            headers={**self.headers("audio/wav"),
+                     "X-Jade-Session":"m-123456789012",
+                     "X-Jade-Speak":"invalid"})
+        self.assertEqual(status, 400)
+
     async def test_authentication_origin_and_bad_routes(self):
         body = json.dumps({"text":"Jade, bonjour", "session":"m-123456789012",
                            "speak":False}).encode()
@@ -219,6 +263,10 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status, 404)
 
     async def test_invalid_token_and_missing_flags(self):
+        with self.assertRaises(ValueError):
+            Settings(mobile_enabled=True, mobile_token="x" * 40).validate()
+        Settings(mobile_enabled=True, mobile_token="x" * 40,
+                 mobile_owner_login="creator@example.test").validate()
         with self.assertRaises(ValueError):
             MobileGateway(self.runtime, self.fake, token="short")
         with self.assertRaises(ValueError):
