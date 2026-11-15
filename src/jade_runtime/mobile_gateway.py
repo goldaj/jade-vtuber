@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 import wave
 
 from .messages import Incoming
+from .intent_visuals import public_visual_contract
 
 LOG = logging.getLogger("jade.mobile")
 HERE = Path(__file__).resolve().parent
@@ -77,7 +78,8 @@ class MobileGateway:
     def __init__(self, runtime, services, *, token: str, port=8766,
                  web_root: Path | None = None, model_dir: Path | None = None,
                  vendor_dir: Path | None = None, owner_login: str | None = None,
-                 public_origin: str | None = None):
+                 public_origin: str | None = None,
+                 avatar_intent_enabled: bool = True):
         if not isinstance(token, str) or len(token) < 32 or len(token) > 256:
             raise ValueError("JADE_MOBILE_TOKEN must contain 32-256 characters")
         if type(port) is not int or not 1024 <= port <= 65535:
@@ -88,6 +90,7 @@ class MobileGateway:
                                          or not owner_login.isascii()):
             raise ValueError("invalid Tailscale owner login")
         self.token, self.port = token, port
+        self.avatar_intent_enabled = bool(avatar_intent_enabled)
         self.owner_login = owner_login.strip().casefold() if owner_login else None
         if public_origin is not None:
             origin = urlsplit(public_origin)
@@ -203,6 +206,12 @@ class MobileGateway:
         return allowed, json.dumps(model, separators=(",", ":")).encode("utf-8")
 
     async def _static(self, writer, route: str):
+        if route == "/assets/intent-visuals.json":
+            try:
+                await self._json(writer, 200, public_visual_contract(self.avatar_intent_enabled))
+            except (OSError, ValueError, TypeError, KeyError):
+                await self._json(writer, 503, {"error": "visual reactions unavailable"})
+            return
         if route in ("/icon-192.png", "/icon-512.png"):
             from .mobile_icons import icon_png
             size = 192 if route == "/icon-192.png" else 512
