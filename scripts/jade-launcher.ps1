@@ -44,7 +44,7 @@ function Git {
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = 'Jade | Launcher local'
-$form.ClientSize = New-Object System.Drawing.Size(730, 465)
+$form.ClientSize = New-Object System.Drawing.Size(730, 430)
 $form.StartPosition = 'CenterScreen'
 $form.FormBorderStyle = 'FixedDialog'
 $form.MaximizeBox = $false
@@ -72,38 +72,25 @@ $branchBox.SetBounds(22, 45, 465, 32)
 $form.Controls.Add($branchBox)
 $refreshButton = ButtonAt 'Actualiser Git' 500 43 205
 
-$null = LabelAt 'Configuration de demarrage' 22 92 350
-$modeBox = New-Object System.Windows.Forms.ComboBox
-$modeBox.DropDownStyle = 'DropDownList'
-$modeBox.SetBounds(22, 118, 683, 32)
-[void]$modeBox.Items.AddRange([object[]]@(
-    'Discord vocal + texte + avatar',
-    'Discord texte seulement',
-    'Micro local + avatar',
-    'Application mobile privee',
-    'Discord vocal + avatar + mobile',
-    'Demo hors ligne'
-))
-$modeBox.SelectedIndex = 0
-$form.Controls.Add($modeBox)
+$null = LabelAt 'Jade demarre avec tous les canaux simultanement : Discord, Twitch, PC et mobile.' 22 102 690
 
 $syncCheck = New-Object System.Windows.Forms.CheckBox
 $syncCheck.Text = 'Installer / verifier les dependances Poetry (recommande)'
-$syncCheck.SetBounds(22, 163, 600, 25)
+$syncCheck.SetBounds(22, 142, 600, 25)
 $syncCheck.Checked = $true
 $form.Controls.Add($syncCheck)
 $lfsCheck = New-Object System.Windows.Forms.CheckBox
 $lfsCheck.Text = 'Recuperer les fichiers Live2D (Git LFS) si necessaire'
-$lfsCheck.SetBounds(22, 192, 600, 25)
+$lfsCheck.SetBounds(22, 170, 600, 25)
 $lfsCheck.Checked = $true
 $form.Controls.Add($lfsCheck)
 
-$null = LabelAt 'Chemin de configuration privee (facultatif, valeurs jamais affichees)' 22 227 660
+$null = LabelAt 'Chemin de configuration privee (facultatif, valeurs jamais affichees)' 22 203 660
 $secretBox = New-Object System.Windows.Forms.TextBox
-$secretBox.SetBounds(22, 254, 573, 28)
+$secretBox.SetBounds(22, 230, 573, 28)
 $secretBox.Text = [string]$settings.secretsFile
 $form.Controls.Add($secretBox)
-$browseButton = ButtonAt 'Parcourir...' 602 252 103
+$browseButton = ButtonAt 'Parcourir...' 602 228 103
 $browseButton.Add_Click({
     $picker = New-Object System.Windows.Forms.OpenFileDialog
     $picker.Filter = 'Fichiers de configuration (*.env;*.txt)|*.env;*.txt|Tous les fichiers (*.*)|*.*'
@@ -113,13 +100,13 @@ $browseButton.Add_Click({
     $picker.Dispose()
 })
 
-$launchButton = ButtonAt 'Mettre a jour et lancer Jade' 22 308 683
+$launchButton = ButtonAt 'Mettre a jour et lancer toute Jade' 22 282 683
 $launchButton.Height = 44
 $logBox = New-Object System.Windows.Forms.TextBox
 $logBox.Multiline = $true
 $logBox.ReadOnly = $true
 $logBox.ScrollBars = 'Vertical'
-$logBox.SetBounds(22, 361, 683, 81)
+$logBox.SetBounds(22, 334, 683, 75)
 $form.Controls.Add($logBox)
 function Info([string]$message) {
     $logBox.AppendText($message + [Environment]::NewLine)
@@ -150,28 +137,6 @@ $refreshButton.Add_Click({
     }
 })
 
-function Mode-Flags([string]$mode) {
-    switch ($mode) {
-        'Discord vocal + texte + avatar' { return @('--live','--discord','--voice','--discord-voice','--avatar') }
-        'Discord texte seulement'       { return @('--live','--discord') }
-        'Micro local + avatar'           { return @('--live','--mic','--voice','--avatar') }
-        'Application mobile privee'      { return @('--live','--mobile') }
-        'Discord vocal + avatar + mobile' { return @('--live','--discord','--voice','--discord-voice','--avatar','--mobile') }
-        'Demo hors ligne'                { return @() }
-    }
-    throw 'Profil de lancement inconnu.'
-}
-function Mode-Extras([string]$mode) {
-    switch ($mode) {
-        'Discord vocal + texte + avatar' { return @('-E','discord-voice','-E','avatar') }
-        'Discord texte seulement'       { return @('-E','discord') }
-        'Micro local + avatar'           { return @('-E','mic','-E','avatar') }
-        'Application mobile privee'      { return @() }
-        'Discord vocal + avatar + mobile' { return @('-E','discord-voice','-E','avatar') }
-        'Demo hors ligne'                { return @() }
-    }
-    throw 'Profil de dependances inconnu.'
-}
 function Active-Jade {
     $marker = Join-Path $PSScriptRoot 'jade-active.pid'
     if (-not (Test-Path -LiteralPath $marker)) { return $false }
@@ -187,8 +152,7 @@ $launchButton.Add_Click({
         }
         if ($branchBox.SelectedIndex -lt 0) { throw 'Aucune branche selectionnee. Actualiser Git.' }
         $branch = [string]$branchBox.SelectedItem
-        $mode = [string]$modeBox.SelectedItem
-        $flags = @(Mode-Flags $mode)
+        $flags = @('--all-channels')
         [void](Get-Command poetry -ErrorAction Stop)
         $privatePath = $secretBox.Text.Trim()
         if ($privatePath -and -not (Test-Path -LiteralPath $privatePath -PathType Leaf)) {
@@ -212,13 +176,13 @@ $launchButton.Add_Click({
         }
         [void](Git @('merge', '--ff-only', ('origin/' + $branch)))
         Info ('Branche mise a jour sans reinitialisation destructive : ' + $branch)
-        if ($lfsCheck.Checked -and ($mode -match 'avatar' -or $mode -match 'mobile')) {
+        if ($lfsCheck.Checked) {
             Info 'Recuperation des assets Live2D...'
             [void](Git @('lfs', 'pull'))
         }
         if ($syncCheck.Checked) {
             Info 'Verification des dependances Poetry...'
-            $syncArgs = @('sync','--only','main') + @(Mode-Extras $mode)
+            $syncArgs = @('sync','--only','main','-E','all')
             [void](Invoke-Local 'poetry' $syncArgs)
         }
         $previousSecrets = [Environment]::GetEnvironmentVariable('JADE_SECRETS_FILE','Process')
@@ -233,7 +197,7 @@ $launchButton.Add_Click({
         $settings.secretsFile = $privatePath
         $settings | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding UTF8
         $runPath = Join-Path $PSScriptRoot 'jade-run.json'
-        @{ repo = $script:repo; branch = $branch; mode = $mode; flags = $flags; secretsFile = $privatePath } |
+        @{ repo = $script:repo; branch = $branch; flags = $flags; secretsFile = $privatePath } |
             ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $runPath -Encoding UTF8
         $runner = Join-Path $PSScriptRoot 'JadeRunner.ps1'
         $start = Start-Process -FilePath 'powershell.exe' -WorkingDirectory $script:repo -ArgumentList @(
@@ -242,9 +206,7 @@ $launchButton.Add_Click({
         ) -PassThru
         [string]$start.Id | Set-Content -LiteralPath (Join-Path $PSScriptRoot 'jade-active.pid') -Encoding ASCII
         Info 'Console Jade lancee. Pour terminer : Ctrl+C dans sa console.'
-        if ($mode -match 'mobile') {
-            Info 'Mobile : verifier Tailscale Serve sur le PC. Le launcher ne change pas ses routes.'
-        }
+        Info 'Mobile : verifier Tailscale Serve sur le PC. Aucune route n est modifiee.'
     } catch {
         Info ('ECHEC : ' + $_.Exception.Message)
         [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Jade - demarrage impossible')
