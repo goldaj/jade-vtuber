@@ -74,16 +74,7 @@ $refreshButton = ButtonAt 'Actualiser Git' 500 43 205
 
 $null = LabelAt 'Jade demarre avec tous les canaux simultanement : Discord, Twitch, PC et mobile.' 22 102 690
 
-$syncCheck = New-Object System.Windows.Forms.CheckBox
-$syncCheck.Text = 'Installer / verifier les dependances Poetry (recommande)'
-$syncCheck.SetBounds(22, 142, 600, 25)
-$syncCheck.Checked = $true
-$form.Controls.Add($syncCheck)
-$lfsCheck = New-Object System.Windows.Forms.CheckBox
-$lfsCheck.Text = 'Recuperer les fichiers Live2D (Git LFS) si necessaire'
-$lfsCheck.SetBounds(22, 170, 600, 25)
-$lfsCheck.Checked = $true
-$form.Controls.Add($lfsCheck)
+$null = LabelAt 'Dependances Python et ressources Live2D verifiees automatiquement.' 22 150 690
 
 $null = LabelAt 'Chemin de configuration privee (facultatif, valeurs jamais affichees)' 22 203 660
 $secretBox = New-Object System.Windows.Forms.TextBox
@@ -116,8 +107,8 @@ function Info([string]$message) {
 }
 
 function Load-Branches {
-    $current = Git @('branch', '--show-current')
-    $refs = Git @('for-each-ref', '--format=%(refname:strip=3)', 'refs/remotes/origin')
+    $current = Git -Arguments @('branch', '--show-current')
+    $refs = Git -Arguments @('for-each-ref', '--format=%(refname:strip=3)', 'refs/remotes/origin')
     $branches = @($refs -split '\r?\n' | Where-Object { $_ -and $_ -ne 'HEAD' } | Sort-Object -Unique)
     $branchBox.Items.Clear()
     foreach ($branch in $branches) { [void]$branchBox.Items.Add($branch) }
@@ -129,7 +120,7 @@ function Load-Branches {
 $refreshButton.Add_Click({
     try {
         Info 'Synchronisation de la liste des branches...'
-        [void](Git @('fetch', '--prune', 'origin'))
+        [void](Git -Arguments @('fetch', '--prune', 'origin'))
         Load-Branches
     } catch {
         [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Git')
@@ -159,32 +150,27 @@ $launchButton.Add_Click({
             throw 'Fichier de configuration privee introuvable.'
         }
         Info ('Preparation de ' + $branch + '...')
-        [void](Git @('fetch', '--prune', 'origin'))
+        [void](Git -Arguments @('fetch', '--prune', 'origin'))
         # Les branches proviennent de Git, jamais d'une saisie libre.
-        $remoteRefs = @( (Git @('for-each-ref', '--format=%(refname:strip=3)', 'refs/remotes/origin')) -split '\r?\n' )
+        $remoteRefs = @( (Git -Arguments @('for-each-ref', '--format=%(refname:strip=3)', 'refs/remotes/origin')) -split '\r?\n' )
         if ($remoteRefs -notcontains $branch) { throw 'Branche distante introuvable.' }
-        $dirty = Git @('status', '--porcelain')
+        $dirty = Git -Arguments @('status', '--porcelain')
         if ($dirty) { throw 'Fichiers locaux modifies ou non suivis : commit/stash manuel requis. Rien ne sera ecrase.' }
-        $current = Git @('branch', '--show-current')
+        $current = Git -Arguments @('branch', '--show-current')
         if ($current -ne $branch) {
-            $localRefs = @( (Git @('for-each-ref', '--format=%(refname:strip=2)', 'refs/heads')) -split '\r?\n' )
+            $localRefs = @( (Git -Arguments @('for-each-ref', '--format=%(refname:strip=2)', 'refs/heads')) -split '\r?\n' )
             if ($localRefs -contains $branch) {
-                [void](Git @('switch', $branch))
+                [void](Git -Arguments @('switch', $branch))
             } else {
-                [void](Git @('switch', '--track', '-c', $branch, ('origin/' + $branch)))
+                [void](Git -Arguments @('switch', '--track', '-c', $branch, ('origin/' + $branch)))
             }
         }
-        [void](Git @('merge', '--ff-only', ('origin/' + $branch)))
+        [void](Git -Arguments @('merge', '--ff-only', ('origin/' + $branch)))
         Info ('Branche mise a jour sans reinitialisation destructive : ' + $branch)
-        if ($lfsCheck.Checked) {
-            Info 'Recuperation des assets Live2D...'
-            [void](Git @('lfs', 'pull'))
-        }
-        if ($syncCheck.Checked) {
-            Info 'Verification des dependances Poetry...'
-            $syncArgs = @('sync','--only','main','-E','all')
-            [void](Invoke-Local 'poetry' $syncArgs)
-        }
+        Info 'Recuperation des assets Live2D...'
+        [void](Git -Arguments @('lfs', 'pull'))
+        Info 'Verification de toutes les dependances Poetry...'
+        [void](Invoke-Local 'poetry' @('sync','--only','main','-E','all'))
         $previousSecrets = [Environment]::GetEnvironmentVariable('JADE_SECRETS_FILE','Process')
         try {
             if ($privatePath) { $env:JADE_SECRETS_FILE = $privatePath }
