@@ -133,7 +133,8 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
         checks.append(Check("Client mobile privé", settings.mobile_enabled
                             and len(settings.mobile_token) >= 32
                             and settings.mobile_port != settings.http_port
-                            and bool(settings.mobile_owner_login.strip()),
+                            and bool(settings.mobile_owner_login.strip())
+                            and settings.mobile_public_origin.startswith("https://"),
                             "Jeton privé et port distinct ; serveur lié à 127.0.0.1"))
         checks.append(Check("Interface PWA", (WEB_ROOT / "index.html").is_file(),
                             "Fichiers frontend présents, navigateur non testé"))
