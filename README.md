@@ -4,7 +4,9 @@
 
 **Démo immédiate Windows :** double-cliquer `Installer-Demo-Express.cmd` ou `Lancer-Demo-Express.cmd`. Démo **simulée** : aucune IA, aucune clé, aucun canal ni Live2D requis. **Produit réel :** installer/configurer tous les canaux puis utiliser le launcher unique `--all-channels`, voir les guides. 
 
-![Portrait de Jade](jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/Jade_r21_master_v3_canvas_3840x4160.png)
+![Jade en pied, avec jambes et chaussures](jade-modeling/assets/live2d/r21_professional_art/Jade_r21_fullbody_restoration_chroma_v2.png)
+
+*Référence artistique r21 en pied (fond magenta de détourage). Le rig Live2D r21 animé n'est pas encore validé comme modèle final.*
 
 Jade est un projet expérimental de VTuber IA : un personnage 2D conçu pour
 interagir par texte et par voix. Ce dépôt présente le moteur Python qui reçoit
