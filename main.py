@@ -199,7 +199,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 discord_voice_bridge.playback_observer = avatar_client.observer("discord")
 
         async def accept(message):
-            await runtime.submit(message)
+            # Twitch needs the Work.finished signal to ignore stale chat while replying.
+            return await runtime.submit(message)
 
         try:
             if twitch:
