@@ -27,7 +27,7 @@ Ce document décrit le code de `develop`, pas une recette matérielle validée.
 
 ## 3. Tête-à-tête et groupes par support
 
-**Règle :** lorsqu'un seul interlocuteur humain est effectivement connu dans la conversation, Jade répond à tous les messages éligibles ; en groupe, elle participe à hauteur d'un **tirage aléatoire de 30 %** sur les messages admissibles, en gardant les exceptions de commande/adressage direct et les limites propres à chaque connecteur.
+**Règle affinée par Goldaj :** en local, Jade répond toujours à son créateur. Sur Twitch, elle prend systématiquement **un message lorsqu'elle est libre**, ignore les messages reçus avant la fin complète de cette réponse (génération et livraison incluses), puis ne traite que de nouveaux messages arrivés après. Sur Discord, tête-à-tête = 100 % des tours admissibles et groupe = tirage à 30 %, avec exceptions et limites de canal.
 
 | Support | Détection du tête-à-tête | Groupe |
 | --- | --- | --- |
@@ -35,15 +35,16 @@ Ce document décrit le code de `develop`, pas une recette matérielle validée.
 | PWA mobile privée | Goldaj authentifié seul | Sans objet |
 | HTTP local | Session individuelle authentifiée | Sans objet |
 | Discord écrit | Auteurs non-bots uniques **observés** dans les 10 dernières minutes sur le canal ; ID Discord | 30 % des interventions spontanées admissibles ; cooldown 180 s ; mentions, réponses directes et suivis restent prioritaires |
-| Twitch IRC | Chateurs actifs **observés** dans les 10 dernières minutes ; ID Twitch ou pseudonyme transport | 30 % via `JADE_RANDOM_REPLY_RATE` ; adressage direct prioritaire |
+| Twitch IRC | Pas de comptage de participants : lorsqu'une réponse n'est pas en cours, le premier nouveau message est retenu et forcé | Les autres messages reçus pendant la réponse sont ignorés, jamais placés dans une file de rattrapage ; la sélection reprend à la fin complète du tour |
 | Discord vocal | Membres humains du salon vocal **vus dans l'état Discord** à l'instant du tour STT | 30 % via `ConversationTurnDecider`, sauf adressage explicite / suivi ; état inconnu traité comme groupe, pas comme tête-à-tête |
 
 **Limites importantes :**
-- Twitch IRC ne donne pas une liste exhaustive des spectateurs, et Discord texte ne prouve pas qu'une autre personne silencieuse écoute. La règle solo vaut pour les **participants actifs observés**, pas pour les lurkers.
+- Discord texte ne prouve pas qu'une autre personne silencieuse écoute. Le statut « solo » y vaut pour les **participants actifs observés**, pas pour tous les membres présents. Twitch ne tente plus de compter ses spectateurs ou ses chateurs.
 - Le tirage de 30 % n'est pas un classifieur sémantique : il ne mesure pas la pertinence. Le cooldown Discord reste important pour éviter le spam.
 - La connexion vocale continue d'écouter les personnes audibles sans filtrage par participant ; le comptage sert uniquement à choisir la fréquence des **réponses**.
 - Les transcriptions vides, commandes mute et situations invalides restent traitées par le système de garde existant.
-- Les réglages `JADE_DISCORD_TEXT_AUTO_RATE` et `JADE_RANDOM_REPLY_RATE` peuvent être personnalisés indépendamment ; leurs valeurs par défaut valent 0,30.
+- Twitch garde la lecture IRC et les réponses PING/PONG pendant la génération, en utilisant `Work.finished` renvoyé par `main.accept`; aucune ancienne intervention reçue entre-temps n'est rejouée. Les messages arrivant après l'accusé de fin du tour sont à nouveau éligibles.
+- `JADE_DISCORD_TEXT_AUTO_RATE=0.30` contrôle la participation spontanée Discord écrit ; `JADE_RANDOM_REPLY_RATE=0.30` règle la participation aléatoire générale et le groupe Discord vocal. **Le connecteur Twitch contourne cette probabilité** car il soumet ses messages retenus avec `force_reply=True`.
 
 ## 4. Deux réactions par intention : plan seulement, rien de branché
 
