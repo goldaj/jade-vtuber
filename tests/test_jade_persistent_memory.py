@@ -209,11 +209,14 @@ class MemoryServiceTests(unittest.IsolatedAsyncioTestCase):
                           channel="mic", force_reply=True)
         self.assertTrue(svc.schedule(source, Reply(source, "Merci, papa !")))
         await asyncio.wait_for(asyncio.gather(*list(svc.tasks)), 2)
-        self.assertEqual(len(self.store.list_for_account(key)), 1)
-        self.assertEqual(self.store.list_for_account(key)[0]["kind"], "core_self")
+        self.assertEqual(len(self.store.list_for_account(key)), 0)
+        self.assertEqual(len(self.store.recall_self_core(key)), 1)
+        self.assertEqual(self.store.recall_self_core(key)[0]["summary"],
+                         "Jade et Goldaj ont achevé leur premier jeu.")
         await svc.close()
         self.assertTrue(self.store.forget(key))
         self.assertEqual(self.store.list_for_account(key), [])
+        self.assertEqual(self.store.recall_self_core(key), [])
 
     async def test_unknown_account_and_curator_disabled_no_model_call(self):
         source = Incoming("twitch", "User", "Bonjour Jade", channel="live")
