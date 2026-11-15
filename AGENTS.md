@@ -48,6 +48,10 @@ CI Windows/Linux réussie en simulation : la **recette réelle** voix/Discord/t�
 
 **Cadrage uniquement, non codé :** [plan mémoire et relations](docs/gpt6-jade/PLAN-MEMOIRE-PERSISTANTE-IDENTITES-CORE-20261115.md). Le propriétaire souhaite que Jade reconnaisse les personnes à l'aide des identifiants de plateformes et décide elle-même quand un événement devient une Core Memory. Les Core de Jade et les Core relationnelles ne subissent aucune purge automatique ; les droits de correction, de déliaison et de suppression sur demande restent obligatoires. Avant de développer ce chantier, lire le plan, vérifier les changements des autres branches, préserver le prompt et les contrats d'intention et ne pas écrire de données privées dans le dépôt public.
 
+## PR en cours : développement de la mémoire persistante (15 novembre 2026)
+
+**À lire en priorité pour Codex :** [passation du code SQLite, activation et migration de PC](docs/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md). La branche `feat/jade-persistent-memory-core-20261115` est une PR séparée vers `develop` ; ne pas la confondre avec la spécification initiale non codée. Le développement inclut l'identité stable, le micro local attribué à Goldaj, des Core Memories non purgées, une mémoire opt-in et des exports/imports SQLite. Aucun poste local ni compte réel testé. **Conversation Discord écrite et vocale en parallèle : spécification Codex uniquement**, pas de fusion des historiques dans cette PR ; voir [idée de conversation unifiée](docs/gpt6-jade/IDEE-CONVERSATION-UNIFIEE-20261115.md). Ne pas modifier main automatiquement.
+
 ## Ressources 2D
 
 Conserver les sources et les objets Git LFS. Lire `jade-modeling/MODEL_GUIDE.md`, `jade-modeling/CONTINUATION.md` et les documents de coordination 2D avant de les modifier. Exécuter `python jade-modeling/verify_assets.py` après récupération des objets LFS. Le propriétaire décide du périmètre des travaux visuels et des revues Astra.
