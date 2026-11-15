@@ -1,66 +1,68 @@
-"""Opt-in SQLite memory for Jade. No raw audio, cloud service, or global singleton.
+"""Private, opt-in, portable SQLite memory for Jade (no cloud dependency).
 
-All records are scoped to a verified transport account and a conversation
-channel. Core memories have no TTL; explicit account erasure still applies.
-The database belongs on a private local data volume, never in this repository.
+Identity comes from trusted transport IDs, NEVER nickname or spoken claim.
+Core memories have no TTL; explicit user erasure remains possible.
 """
 from __future__ import annotations
 
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 import hashlib
 from pathlib import Path
 import re
+import secrets
 import sqlite3
 import uuid
 
 SCHEMA_VERSION = 1
 KINDS = frozenset(("ordinary", "core_self", "core_relationship"))
-_CORE = ("core_self", "core_relationship")
-_KEY = re.compile(r"^[1-9][0-9]{0,24}$")
+_ID = re.compile(r"^[1-9][0-9]{0,24}$")
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 def identity_of(message) -> tuple[str, str] | None:
-    """Accept ONLY trusted connector-account identifiers, not display names."""
-    platform = message.platform
-    if platform == "discord_voice":
+    """Return verified platform account ID or None; mic/HTTP stay anonymous."""
+    if message.platform == "discord_voice":
         value = getattr(message, "speaker_id", None)
         return ("discord", str(value)) if type(value) is int and value > 0 else None
-    if platform not in ("discord", "twitch"):
-        return None
-    value = getattr(message, "account_id", "")
-    return (platform, value) if isinstance(value, str) and _KEY.fullmatch(value) else None
+    if message.platform in ("discord", "twitch"):
+        value = getattr(message, "account_id", "")
+        if isinstance(value, str) and _ID.fullmatch(value):
+            return (message.platform, value)
+    return None
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+def _validate_key(key: tuple[str, str]) -> None:
+    if (not isinstance(key, tuple) or len(key) != 2
+            or key[0] not in ("discord", "twitch") or not isinstance(key[1], str)
+            or not _ID.fullmatch(key[1])):
+        raise ValueError("trusted Discord/Twitch account ID required")
 
 
-def _digest(text: str) -> str:
-    return hashlib.sha256(" ".join(text.casefold().split()).encode("utf-8")).hexdigest()
-
-
-def _scope(message) -> str:
-    # A separate namespace per channel prevents accidental cross-channel recall.
-    return f"{message.platform}:{message.channel}"
+def _fingerprint(text: str) -> str:
+    return hashlib.sha256(" ".join(text.strip().casefold().split()).encode("utf-8")).hexdigest()
 
 
 class MemoryStore:
-    """A fresh SQLite connection per operation; works across async-to-thread calls."""
+    """One SQLite database, short-lived connections; no network or extra service."""
 
-    def __init__(self, path: Path):
+    def __init__(self, path: str | Path):
         self.path = Path(path).expanduser()
-        if self.path.name in ("", ".", "..") or str(self.path) == ":memory:":
-            raise ValueError("persistent memory requires a real file path")
+        if (not self.path.is_absolute() or self.path.is_symlink()
+                or not self.path.name.endswith(".sqlite3")):
+            raise ValueError("use an absolute private .sqlite3 path")
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as db:
+        with self._db() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
             if version not in (0, SCHEMA_VERSION):
-                raise RuntimeError("unsupported Jade memory database schema")
+                raise RuntimeError("unsupported Jade memory schema; migrate before starting")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS persons (
                     id TEXT PRIMARY KEY,
-                    created_at TEXT NOT NULL,
-                    consent INTEGER NOT NULL DEFAULT 1 CHECK (consent = 1)
+                    created_at TEXT NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS identities (
                     platform TEXT NOT NULL,
@@ -78,177 +80,239 @@ class MemoryStore:
                     significance TEXT NOT NULL,
                     fingerprint TEXT NOT NULL,
                     source_platform TEXT NOT NULL,
+                    source_account_id TEXT NOT NULL,
                     source_message_id TEXT NOT NULL,
                     created_at TEXT NOT NULL,
                     expires_at TEXT,
                     UNIQUE(person_id,kind,scope,fingerprint),
-                    CHECK (
-                        (kind = 'ordinary' AND expires_at IS NOT NULL)
-                        OR (kind != 'ordinary' AND expires_at IS NULL)
-                    )
+                    CHECK ((kind='ordinary' AND expires_at IS NOT NULL)
+                        OR (kind!='ordinary' AND expires_at IS NULL))
                 );
-                CREATE INDEX IF NOT EXISTS idx_memory_owner ON
-                    memories(person_id,scope,kind,created_at);
+                CREATE INDEX IF NOT EXISTS idx_memory_owner
+                    ON memories(person_id,scope,kind,created_at);
+                CREATE TABLE IF NOT EXISTS link_challenges (
+                    token_hash TEXT PRIMARY KEY,
+                    platform TEXT NOT NULL,
+                    account_id TEXT NOT NULL,
+                    expires_at TEXT NOT NULL
+                );
             """)
             db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
 
-    def _connect(self):
+    @contextmanager
+    def _db(self):
         db = sqlite3.connect(str(self.path), timeout=5)
-        db.row_factory = sqlite3.Row
-        db.execute("PRAGMA foreign_keys=ON")
-        db.execute("PRAGMA busy_timeout=5000")
-        return db
+        try:
+            db.row_factory = sqlite3.Row
+            db.execute("PRAGMA foreign_keys=ON")
+            db.execute("PRAGMA busy_timeout=5000")
+            with db:
+                yield db
+        finally:
+            db.close()
 
     def account(self, key: tuple[str, str]) -> str | None:
-        with self._connect() as db:
+        _validate_key(key)
+        with self._db() as db:
             row = db.execute(
-                "SELECT person_id FROM identities WHERE platform=? AND account_id=?",
-                key,
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
             ).fetchone()
         return row["person_id"] if row else None
 
     def enable(self, key: tuple[str, str]) -> str:
-        """A user-initiated command explicitly authorizes personal memory."""
-        if key[0] not in ("discord", "twitch") or not _KEY.fullmatch(key[1]):
-            raise ValueError("unsupported authenticated identity")
-        with self._connect() as db:
-            found = db.execute(
-                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
-            ).fetchone()
-            if found:
-                return found["person_id"]
-            person_id = uuid.uuid4().hex
-            db.execute("INSERT INTO persons(id,created_at) VALUES (?,?)",
-                       (person_id, _now()))
-            db.execute("INSERT INTO identities(platform,account_id,person_id) VALUES (?,?,?)",
-                       (*key, person_id))
-            return person_id
-
-    def forget(self, key: tuple[str, str]) -> bool:
-        """Explicit user erasure, including Core Memories and linked identities."""
-        with self._connect() as db:
+        """Called by an authenticated user's explicit opt-in, never automatically."""
+        _validate_key(key)
+        with self._db() as db:
             row = db.execute(
                 "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
             ).fetchone()
-            if row is None:
+            if row:
+                return row["person_id"]
+            person = uuid.uuid4().hex
+            db.execute("INSERT INTO persons(id,created_at) VALUES (?,?)",
+                       (person, _now().isoformat()))
+            db.execute("INSERT INTO identities(platform,account_id,person_id) VALUES (?,?,?)",
+                       (*key, person))
+            return person
+
+    def forget(self, key: tuple[str, str]) -> bool:
+        """Erase linked person and ALL ordinary/core memories explicitly."""
+        _validate_key(key)
+        with self._db() as db:
+            row = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
+            ).fetchone()
+            if not row:
                 return False
             db.execute("DELETE FROM persons WHERE id=?", (row["person_id"],))
+            db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
             return True
 
     def put(self, key: tuple[str, str], *, kind: str, scope: str, summary: str,
             significance: str = "", message_id: str = "", ordinary_days: int = 90) -> bool:
-        """Only consented accounts; Core has no expiry, even if pruned later."""
-        if kind not in KINDS or not 1 <= ordinary_days <= 365 or not scope:
-            raise ValueError("invalid memory metadata")
-        if (not isinstance(summary, str) or not summary.strip() or len(summary) > 400
-                or not isinstance(significance, str) or len(significance) > 280):
+        """No consent -> no write; Core always has an SQL-enforced NULL TTL."""
+        _validate_key(key)
+        if (kind not in KINDS or not isinstance(scope, str)
+                or not (scope == "person" or
+                        (scope.startswith(("discord:", "discord_voice:", "twitch:"))
+                         and 1 <= len(scope) <= 128))
+                or type(ordinary_days) is not int or not 1 <= ordinary_days <= 365):
+            raise ValueError("invalid memory scope or retention")
+        if (not isinstance(summary, str) or not summary.strip()
+                or len(summary) > 400 or not isinstance(significance, str)
+                or len(significance) > 280):
             raise ValueError("invalid memory contents")
-        expires = (datetime.now(timezone.utc) + timedelta(days=ordinary_days)).isoformat(
-            timespec="seconds") if kind == "ordinary" else None
-        with self._connect() as db:
+        when = _now()
+        expires = (when + timedelta(days=ordinary_days)).isoformat() if kind == "ordinary" else None
+        with self._db() as db:
             row = db.execute(
                 "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
             ).fetchone()
-            if row is None:
+            if not row:
                 return False
-            cursor = db.execute("""
+            result = db.execute("""
                 INSERT OR IGNORE INTO memories(
                     id,person_id,kind,scope,summary,significance,fingerprint,
-                    source_platform,source_message_id,created_at,expires_at
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+                    source_platform,source_account_id,source_message_id,created_at,expires_at
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
                 """, (
                     uuid.uuid4().hex, row["person_id"], kind, scope,
-                    summary.strip(), significance.strip(), _digest(summary),
-                    key[0], message_id[:128], _now(), expires,
+                    summary.strip(), significance.strip(), _fingerprint(summary),
+                    key[0], key[1], message_id[:128], when.isoformat(), expires,
                 ))
-            return cursor.rowcount > 0
+            return result.rowcount > 0
 
     def recall(self, key: tuple[str, str], scope: str, *, limit: int = 8) -> list[dict]:
+        """Personal and current-channel memories; never another person's memories."""
+        _validate_key(key)
         if not 1 <= limit <= 32:
-            raise ValueError("invalid memory recall limit")
-        with self._connect() as db:
+            raise ValueError("invalid recall limit")
+        with self._db() as db:
             rows = db.execute("""
-                SELECT m.kind,m.summary,m.significance,m.created_at
+                SELECT m.kind,m.scope,m.summary,m.significance,m.created_at
                 FROM memories m JOIN identities i ON i.person_id=m.person_id
-                WHERE i.platform=? AND i.account_id=? AND m.scope=?
+                WHERE i.platform=? AND i.account_id=?
+                  AND (m.scope='person' OR m.scope=?)
                   AND (m.expires_at IS NULL OR m.expires_at>?)
                 ORDER BY CASE WHEN m.kind='ordinary' THEN 1 ELSE 0 END,
-                         m.created_at DESC
-                LIMIT ?
-                """, (*key, scope, _now(), limit)).fetchall()
+                         m.created_at DESC LIMIT ?
+                """, (*key, scope, _now().isoformat(), limit)).fetchall()
         return [dict(row) for row in rows]
 
     def list_for_account(self, key: tuple[str, str]) -> list[dict]:
-        with self._connect() as db:
+        _validate_key(key)
+        with self._db() as db:
             rows = db.execute("""
                 SELECT m.id,m.kind,m.scope,m.summary,m.significance,
                        m.created_at,m.expires_at
                 FROM memories m JOIN identities i ON i.person_id=m.person_id
-                WHERE i.platform=? AND i.account_id=?
-                ORDER BY m.created_at DESC
+                WHERE i.platform=? AND i.account_id=? ORDER BY m.created_at DESC
                 """, key).fetchall()
         return [dict(row) for row in rows]
 
+    def delete_memory(self, key: tuple[str, str], memory_id: str) -> bool:
+        """Explicit correction/erasure by owner, including Core."""
+        _validate_key(key)
+        with self._db() as db:
+            row = db.execute("""
+                DELETE FROM memories WHERE id=? AND person_id=(
+                    SELECT person_id FROM identities WHERE platform=? AND account_id=?)
+                """, (memory_id, *key))
+            return row.rowcount > 0
+
     def prune_ordinary(self) -> int:
-        """Never touches Core: these rows cannot have an expiry by constraint."""
-        with self._connect() as db:
-            result = db.execute(
-                "DELETE FROM memories WHERE kind='ordinary' AND expires_at<=?", (_now(),)
-            )
-            return result.rowcount
+        with self._db() as db:
+            deleted = db.execute(
+                "DELETE FROM memories WHERE kind='ordinary' AND expires_at<=?",
+                (_now().isoformat(),))
+            return deleted.rowcount
 
-    def link_verified(self, first: tuple[str, str], second: tuple[str, str], *,
-                      verified: bool = False) -> bool:
-        """A caller must verify BOTH accounts out of band before requesting a link.
+    def begin_link(self, key: tuple[str, str], *, ttl_seconds: int = 300) -> str:
+        """Generate a one-time, short-lived secret for *another* authenticated account.
 
-        Not exposed to Discord/Twitch messages. The explicit flag is not proof,
-        merely an API guard until an authenticated challenge flow is built.
+        UI must deliver this out of band/privately, NEVER to a public chat.
         """
-        if verified is not True:
-            raise PermissionError("both accounts must be independently verified")
-        if first == second:
+        _validate_key(key)
+        if not 30 <= ttl_seconds <= 600:
+            raise ValueError("invalid link TTL")
+        token = secrets.token_urlsafe(24)
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        with self._db() as db:
+            if not db.execute(
+                "SELECT 1 FROM identities WHERE platform=? AND account_id=?", key
+            ).fetchone():
+                raise PermissionError("opt-in required for both accounts")
+            db.execute("DELETE FROM link_challenges WHERE expires_at<=?",
+                       (_now().isoformat(),))
+            db.execute("INSERT INTO link_challenges VALUES (?,?,?,?)",
+                       (digest, *key, (_now() + timedelta(seconds=ttl_seconds)).isoformat()))
+        return token
+
+    def complete_link(self, target: tuple[str, str], token: str) -> bool:
+        """Prove control of both accounts by making each call under its trusted ID.
+
+        This is an API, NOT a Twitch or Discord command exposed in public.
+        """
+        _validate_key(target)
+        if not isinstance(token, str) or len(token) > 128:
             return False
-        with self._connect() as db:
-            rows = []
-            for key in (first, second):
-                rows.append(db.execute(
-                    "SELECT person_id FROM identities WHERE platform=? AND account_id=?",
-                    key).fetchone())
-            if None in rows:
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        with self._db() as db:
+            challenge = db.execute(
+                "SELECT platform,account_id FROM link_challenges "
+                "WHERE token_hash=? AND expires_at>?",
+                (digest, _now().isoformat()),
+            ).fetchone()
+            if challenge is None:
                 return False
-            primary, secondary = rows[0]["person_id"], rows[1]["person_id"]
-            if primary == secondary:
+            source = (challenge["platform"], challenge["account_id"])
+            if source == target or source[0] == target[0]:
+                return False  # Cross-platform only; same-provider accounts not merged.
+            first = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", source
+            ).fetchone()
+            second = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", target
+            ).fetchone()
+            if first is None or second is None:
                 return False
-            # Preserve all memories; avoid duplicate keys with the same fingerprint.
-            db.execute("""
-                DELETE FROM memories WHERE person_id=? AND EXISTS (
-                    SELECT 1 FROM memories old WHERE old.person_id=?
-                    AND old.kind=memories.kind AND old.scope=memories.scope
-                    AND old.fingerprint=memories.fingerprint)
-            """, (secondary, primary))
-            db.execute("UPDATE memories SET person_id=? WHERE person_id=?", (primary, secondary))
-            db.execute("UPDATE identities SET person_id=? WHERE person_id=?", (primary, secondary))
-            db.execute("DELETE FROM persons WHERE id=?", (secondary,))
+            a, b = first["person_id"], second["person_id"]
+            if a != b:
+                # Remove only exact duplicate records before migrating source ownership.
+                db.execute("""
+                    DELETE FROM memories WHERE person_id=? AND EXISTS(
+                        SELECT 1 FROM memories prior WHERE prior.person_id=?
+                        AND prior.kind=memories.kind AND prior.scope=memories.scope
+                        AND prior.fingerprint=memories.fingerprint)
+                    """, (b, a))
+                db.execute("UPDATE memories SET person_id=? WHERE person_id=?", (a, b))
+                db.execute("UPDATE identities SET person_id=? WHERE person_id=?", (a, b))
+                db.execute("DELETE FROM persons WHERE id=?", (b,))
+            db.execute("DELETE FROM link_challenges WHERE token_hash=?", (digest,))
             return True
 
     def unlink(self, key: tuple[str, str]) -> bool:
-        """Split one identity without copying another identity's private memories."""
-        with self._connect() as db:
+        """Detach a platform, preserving only memories sourced by that account."""
+        _validate_key(key)
+        with self._db() as db:
             row = db.execute(
                 "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
             ).fetchone()
-            if row is None:
+            if not row:
                 return False
-            count = db.execute("SELECT COUNT(*) FROM identities WHERE person_id=?",
-                               (row["person_id"],)).fetchone()[0]
-            if count <= 1:
+            person = row["person_id"]
+            size = db.execute("SELECT COUNT(*) FROM identities WHERE person_id=?",
+                              (person,)).fetchone()[0]
+            if size <= 1:
                 return False
-            new_id = uuid.uuid4().hex
-            db.execute("INSERT INTO persons(id,created_at) VALUES (?,?)", (new_id, _now()))
+            separate = uuid.uuid4().hex
+            db.execute("INSERT INTO persons(id,created_at) VALUES (?,?)",
+                       (separate, _now().isoformat()))
             db.execute("UPDATE identities SET person_id=? WHERE platform=? AND account_id=?",
-                       (new_id, *key))
-            # Origin is recorded; only that account's source memories move.
-            # Shared memories from other accounts never become accessible.
-            db.execute("UPDATE memories SET person_id=? WHERE person_id=? AND source_platform=?",
-                       (new_id, row["person_id"], key[0]))
+                       (separate, *key))
+            db.execute("""
+                UPDATE memories SET person_id=?
+                WHERE person_id=? AND source_platform=? AND source_account_id=?
+            """, (separate, person, *key))
+            db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
             return True
