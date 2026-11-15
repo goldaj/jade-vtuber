@@ -23,7 +23,9 @@ def parse_discord_message(message, *, own_user_id=None) -> Incoming | None:
                     author=getattr(author, "display_name", "") or str(author),
                     text=text,
                     channel=str(message.channel.id),
-                    message_id=str(message.id))
+                    message_id=str(message.id),
+                    account_id=(str(author.id) if type(getattr(author, "id", None)) is int
+                                and author.id > 0 else ""))
 
 
 class DiscordText:
