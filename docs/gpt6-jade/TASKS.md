@@ -543,3 +543,10 @@ sans présenter les mocks comme des tests d'API réels.
 - **Livrable :** branche `feat/jade-windows-launcher-20261115` ; installateur `.cmd`, UI WinForms PowerShell, choix de branche distante, bascule Git non destructive, préparation Poetry/LFS selon mode, préflight strict et console du moteur. Guide : [LAUNCHER-WINDOWS-20261115.md](LAUNCHER-WINDOWS-20261115.md).
 - **Validation :** revue statique de la logique et ajout d'un parseur syntaxique PowerShell 5.1 en CI Windows. Résultat constaté sur le HEAD de la PR #13 : analyse syntaxique PowerShell Windows réussie, tests hors ligne Windows/Linux réussis, scan de secrets réussi. PR #13 fusionnée dans `develop`, non dans `main`.
 - **Limites :** aucun lancement sur le poste Windows, aucun contrôle de Git/Poetry réel, audio/Discord/Tailscale ni test du vrai mode live ; absence d'appel OpenAI depuis cette intervention. `develop` et `main` inchangées.
+
+## Correction produit : TOUS les supports Jade actifs (15 novembre 2026)
+
+- **Décision utilisateur :** aucune sélection d'un mode de fonctionnement depuis le launcher. Discord texte et vocal, Twitch, micro local, HTTP privé, PWA mobile, avatar et voix doivent être actifs simultanément si leur configuration existe. Le launcher exige la configuration entière et bloque un démarrage partiel.
+- **Modifications :** CLI `main.py --all-channels`; suppression du sélecteur de modes PowerShell, dépendances Poetry `-E all`, contrôle préflight ; module `turn_arbitration.py` + file commune sans priorité permanente par transport, choix de Jade par LLM à concurrence et repli FIFO/délai ; écoute micro non bloquée par la file globale ; interdiction de diffuser une réponse micro/HTTP privée automatiquement en vocal Discord.
+- **Validation :** tests hors ligne de la file, du modèle arbitre simulé, de la CLI et de l'isolation des sorties. La CI et le test Windows réel sont à confirmer au SHA final. Les classements du modèle peuvent créer un appel LLM additionnel facturable par arbitrage, aucun appel en absence de contention.
+- **Passation :** [LAUNCHER-WINDOWS-20261115.md](LAUNCHER-WINDOWS-20261115.md). `main` et le VPS trading restent hors périmètre.
