@@ -13,6 +13,7 @@ from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.discord_text_policy import DiscordTextPolicy
 from src.jade_runtime.memory_store import MemoryStore
 from src.jade_runtime.messages import Incoming
+from src.jade_runtime.twitch_irc import TwitchIRC
 from src.jade_runtime.voice_decision import ConversationTurnDecider
 
 
@@ -83,6 +84,32 @@ class PersonaRuntimeTests(unittest.TestCase):
         self.assertIsNone(observe(102, 2))  # More than one current participant.
         policy.rng.value = 0.0
         self.assertIsNotNone(observe(101, 3))
+
+    def test_twitch_drops_messages_during_complete_reply(self):
+        async def scenario():
+            delivered = []
+            loop = asyncio.get_running_loop()
+            done = loop.create_future()
+
+            async def submit(incoming):
+                delivered.append(incoming)
+                return SimpleNamespace(finished=done)
+
+            twitch = TwitchIRC(login="jadebot", token="secret",
+                               channel="streamer", on_message=submit)
+            mk = lambda n: Incoming("twitch", "viewer", f"message {n}",
+                                    channel="streamer", message_id=str(n))
+            await twitch._offer_message(mk(1))
+            await twitch._offer_message(mk(2))
+            self.assertEqual(len(delivered), 1)
+            self.assertTrue(delivered[0].force_reply)
+            self.assertEqual(twitch.skipped_while_replying, 1)
+            done.set_result(None)
+            await asyncio.sleep(0)
+            await twitch._offer_message(mk(3))
+            self.assertEqual([x.text for x in delivered], ["message 1", "message 3"])
+
+        asyncio.run(scenario())
 
     def test_voice_solo_vs_group_uses_provided_rate(self):
         r = _Random(1.0)
