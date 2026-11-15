@@ -61,3 +61,7 @@ Elles sont candidates à la même suppression contrôlée par Codex après reval
 
 ## Note sur les commits du 2026-11-15
 La mise à jour Low/320, personnalité validée, conservation opt-in sans résumé et politiques de participation est intégrée directement dans `develop` à la demande du propriétaire. Elle ne crée pas de branche supplémentaire à supprimer, ne fusionne pas `main` et ne modifie pas les anciennes branches divergentes. La planification de deux réactions par intention (14 futurs emplacements) **n'implique pas** l'existence des assets. Voir [passation dialogue](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md).
+
+## Branche corrective DevOps (15/11/2026)
+
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). La branche `fix/develop-devops-audit-20261115` part de `develop` et contient des corrections CI, mémoire ZIP et documentation. Après fusion/rejet motivé de sa PR #19 vers `develop`, elle pourra être supprimée **uniquement** après vérification d'ascendance, d'absence de nouveaux commits et de PR encore actives. Aucun changement de `main` n'est demandé.

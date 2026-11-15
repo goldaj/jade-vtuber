@@ -89,3 +89,7 @@ Lire [la passation dialogue](docs/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPA
 Contrat : `gpt-6-luna` + `low` + plafond 320 par défaut, sauf variables privées ; persistences des échanges complets strictement opt-in, conservation sans résumé, 48 messages de contexte au maximum, archivage local plus long, suppression associée au profil. Politique tête-à-tête observé (100 %) et groupe (30 % sur tours admissibles) selon le canal ; garder les réponses directes/commandes, les gardes de sécurité, la politique de confidentialité et la gestion des silences.
 
 Deux réactions 2D par intention sont **planifiées**, mais aucune animation supplémentaire n'est fournie par ce chantier. Ne pas assimiler une intention existante ou un emplacement documentaire à une animation validée. Mettre à jour les guides de cette branche, exécuter les tests et réaliser les recettes réelles avant de déclarer la fonction opérationnelle.
+
+## Portes DevOps de develop (15/11/2026)
+
+Pour toute intervention sur la CI, le launcher ou les sauvegardes, consulter [l'audit DevOps et la passation Codex](docs/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Un scan de secrets vert ne remplace pas une suite complète Ubuntu/Windows verte sur le SHA final, et les tests simulés ne sont pas une preuve de recette Discord/Twitch/Android. Le format de transfert SQLite accepte v1/v2/v3 tout en restant non chiffré. Documenter séparément tout accès matériel indisponible et **ne pas** contourner un test en échec.

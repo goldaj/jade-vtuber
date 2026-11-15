@@ -550,3 +550,7 @@ sans présenter les mocks comme des tests d'API réels.
 - **Modifications :** CLI `main.py --all-channels`; suppression du sélecteur de modes PowerShell, dépendances Poetry `-E all`, contrôle préflight ; module `turn_arbitration.py` + file commune sans priorité permanente par transport, choix de Jade par LLM à concurrence et repli FIFO/délai ; écoute micro non bloquée par la file globale ; interdiction de diffuser une réponse micro/HTTP privée automatiquement en vocal Discord.
 - **Validation :** tests hors ligne de la file, du modèle arbitre simulé, de la CLI et de l'isolation des sorties. La CI et le test Windows réel sont à confirmer au SHA final. Les classements du modèle peuvent créer un appel LLM additionnel facturable par arbitrage, aucun appel en absence de contention.
 - **Passation :** [LAUNCHER-WINDOWS-20261115.md](LAUNCHER-WINDOWS-20261115.md). `main` et le VPS trading restent hors périmètre.
+
+## DevOps `develop` : correctifs et dette (15/11/2026)
+
+Suivre le rapport [AUDIT-DEVOPS-DEVELOP-20261115.md](AUDIT-DEVOPS-DEVELOP-20261115.md). Corrections proposées : concurrence CI, checkout sans token persistant, préflight précoce, diagnostic manuel, support export/import SQLite v3. **Bloquants Codex** : suite Ubuntu/Windows sur le SHA final, régressions Discord/Twitch/voice, stratégie de protection `develop`, traitement confidentiel des logs et backups, reprise Windows et recette Android/Live2D. Ne pas cocher la validation du produit sur la seule présence des scripts ou sur le statut Gitleaks.

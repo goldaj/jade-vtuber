@@ -23,3 +23,7 @@ Le chantier de synchronisation du modèle 2D PC/PWA avec `Reply.intent`, les deu
 
 ## Actualisation dialogue, personnalité et mémoire : 2026-11-15
 Consulter la [passation dialogue Low/320 et participation](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md). Le nouveau prompt de caractère exact est actif sur `develop`, les propositions antérieures sont archivées. Conservation opt-in des échanges complets non résumés (SQLite v3), contexte volatile 48 messages, réponse solo systématique sur tours admissibles / groupe échantillonné 30 %. Prévision de deux variantes de réaction par intention, **sans nouveaux assets animés**.
+
+## Suivi DevOps (15/11/2026)
+
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). La CI peut échouer malgré une analyse Gitleaks verte ; vérifier les jobs Windows/Linux sur le SHA ciblé et ne pas présenter les tests hors ligne comme une recette des périphériques ou des connecteurs.
