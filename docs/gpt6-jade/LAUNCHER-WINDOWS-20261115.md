@@ -4,7 +4,7 @@
 
 ## Fonctionnement livré
 
-- Le launcher ne propose que **le choix de la branche Git** et la préparation technique (Poetry, Git LFS, chemin de configuration privée). Il invoque uniquement `python main.py --all-channels` pour le préflight et pour le runtime.
+- Le launcher ne propose que **le choix de la branche Git** et le chemin facultatif de la configuration privée. Poetry et Git LFS sont systématiquement préparés. Il invoque uniquement `python main.py --all-channels` pour le préflight et pour le runtime.
 - `--all-channels` active ensemble les sources prises en charge par le moteur : **Discord texte et vocal, Twitch, microphone local, API HTTP locale, application mobile privée**, ainsi que la voix OpenAI et l'avatar r20 autonome. VTube Studio est aussi activé si et seulement si son connecteur `JADE_VTS_ENABLED=1` est configuré, car il s'agit d'un rendu supplémentaire et non d'un canal de conversation obligatoire.
 - Le moteur `Runtime` conserve une **file unique bornée** pour tous les messages sélectionnés. Quand plusieurs conversations sont en attente, `TurnArbiter` demande au modèle de dialogue de Jade de choisir l'identifiant du prochain tour selon pertinence, urgence et attente. Il n'existe **aucun poids fixe accordé à Discord, Twitch, PC ou mobile**.
 - Les tours successifs d'une même conversation conservent leur ordre. Un délai d'attente de 15 s ou une requête proche de son expiration prévaut sur l'arbitrage IA pour empêcher la famine. Si le modèle ne répond pas en 2 secondes, renvoie une réponse invalide ou est indisponible, l'ordre d'arrivée reste le repli fiable.
@@ -17,7 +17,7 @@
 
 Installer ou mettre à jour une fois le lanceur depuis un clone `develop` à jour en double-cliquant sur `Installer-Launcher-Jade.cmd`. Il installe les scripts **hors du clone Git** dans `D:\Jade\launcher`. Le launcher n'est pas mis à jour automatiquement à chaque changement de branche : **relancer cet installateur après récupération de cette correction**.
 
-Ensuite double-cliquer sur `D:\Jade\launcher\Lancer-Jade.cmd`. Sélectionner la branche Git et cliquer **Mettre à jour et lancer toute Jade**. Le lanceur refuse de détruire les changements locaux, utilise un fast-forward et lance `poetry sync --only main -E all`, `git lfs pull` et le préflight. Le lancement réel peut facturer OpenAI.
+Ensuite double-cliquer sur `D:\Jade\launcher\Lancer-Jade.cmd`. Sélectionner la branche Git et cliquer **Mettre à jour et lancer toute Jade**. Le lanceur refuse de détruire les changements locaux, utilise un fast-forward et lance **automatiquement** `poetry sync --only main -E all`, `git lfs pull` et le préflight, sans option pour désactiver un support. Le lancement réel peut facturer OpenAI.
 
 ## Prérequis *stricts* pour démarrer tous les canaux
 
