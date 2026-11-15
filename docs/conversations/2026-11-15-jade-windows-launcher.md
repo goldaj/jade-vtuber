@@ -1,0 +1,9 @@
+# Jade : launcher de demarrage Windows (15 novembre 2026)
+
+**Demande utilisateur (verbatim) :** « J'aimerais qu'on crée aussi un launcher qui permette de lancer la dernière version de Jade sur le pc local de Jade. Où on choisirait la branche et ça lancerait l'ensemble des logiciels nécessaires pour avoir Jade qui tourne. Pas besoin de faire un truc trop générique, juste que ça fonctionne sur mon poste. »
+
+**Reformulation / choix d'implémentation :** application personnelle Windows, sans empaquetage générique. Installation hors clone dans `D:\Jade\launcher`, sélection d'une branche Git distante, mise à jour fast-forward uniquement, préparation des dépendances Poetry et Git LFS selon le mode, préflight local sans réseau puis démarrage du moteur Jade dans une console. Modes : Discord texte/vocal + avatar r20 ; Discord texte ; micro local ; mobile privé ; Discord+mobile ; simulation. Discord Desktop, OBS et VTube Studio ne sont pas lancés arbitrairement puisque le runtime n'en dépend pas en mode avatar autonome. Tailscale Serve déjà configuré sur PC n'est pas modifié et le VPS trading est exclu.
+
+**Travail à distance :** branche `feat/jade-windows-launcher-20261115` créée depuis le `develop` qui intègre l'ensemble des derniers lots. Fichiers `Installer-Launcher-Jade.cmd`, `scripts/install-jade-launcher.ps1`, `scripts/jade-launcher.ps1`, `scripts/jade-runner.ps1`, documentation `docs/gpt6-jade/LAUNCHER-WINDOWS-20261115.md`, contrôle syntaxique PowerShell en CI Windows.
+
+**État de validation :** absence d'accès au PC de l'utilisateur et à un PowerShell Windows dans l'environnement de l'intervention. La PR et la CI sont à vérifier ; aucun service, appel facturé, route réseau ou logiciel n'a été lancé sur le PC. Test matériel à conduire par le propriétaire/Codex. Ceci est un résumé des messages accessibles et non une transcription exhaustive.
