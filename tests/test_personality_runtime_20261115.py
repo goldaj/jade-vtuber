@@ -130,6 +130,18 @@ class TestJadeRuntime20261115(unittest.TestCase):
         self.assertTrue(solo.should_reply)
         self.assertFalse(group.should_reply)
         self.assertEqual(group.reason, "group_sampled_out")
+        self.assertTrue(decider.mark_replied("abcdefghijklmnop", solo.turn_id))
+        # Even a recent conversational follow-up is sampled in a group.
+        followup = decider.decide(
+            "abcdefghijklmnop", 13, "Et donc ?",
+            authorized=True, consent_confirmed=True, participant_count=2)
+        self.assertFalse(followup.should_reply)
+        # Being directly addressed in the group remains an exception.
+        direct = decider.decide(
+            "qrstuvwxyzabcdef", 13, "Jade, tu en penses quoi ?",
+            authorized=True, consent_confirmed=True,
+            participant_count=2, direct_address=True)
+        self.assertTrue(direct.should_reply)
 
 
 if __name__ == "__main__":
