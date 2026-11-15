@@ -58,3 +58,6 @@ Elles sont candidates à la même suppression contrôlée par Codex après reval
 ## Nouvelle branche active de synchronisation 2D (15/11/2026)
 
 `feat/live2d-intent-expression-sync-20261115` est une nouvelle branche créée depuis `develop` ; **ne pas la supprimer tant que son travail n'est pas intégré et vérifié**. Après une éventuelle fusion dans `develop`, la ranger parmi les branches candidates au nettoyage uniquement après comparaison d'ascendance et vérification des PR. Elle ne modifie pas `main`. La passation Codex pour les 14 motions 2D encore absentes est dans [LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+
+## Note sur les commits du 2026-11-15
+La mise à jour Low/320, personnalité validée, conservation opt-in sans résumé et politiques de participation est intégrée directement dans `develop` à la demande du propriétaire. Elle ne crée pas de branche supplémentaire à supprimer, ne fusionne pas `main` et ne modifie pas les anciennes branches divergentes. La planification de deux réactions par intention (14 futurs emplacements) **n'implique pas** l'existence des assets. Voir [passation dialogue](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md).
