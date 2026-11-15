@@ -23,3 +23,7 @@ divulgation déjà faite. Les règles de détection ont des limites et le scan G
 ne lit que les pointeurs LFS, pas les fichiers LFS eux-mêmes ni les archives
 binaires internes. Maintenir les secrets hors du dépôt, contrôler les fichiers
 à partager et vérifier séparément les ressources binaires avant publication.
+
+## Concurrence des scans (15/11/2026)
+
+Le workflow emploie `concurrency` par PR ou ref avec annulation des runs remplacés. Le dernier run balaye encore `--all HEAD` depuis un checkout complet. Le gain attendu porte sur le nombre de runners utilisés ; **aucune garantie** n'est donnée pour des commits rendus inaccessibles par réécriture de l'historique ou des secrets déjà exposés. Ne pas désactiver les protections de branche, les scans avant push ou la révocation de credentials. Voir [l'audit DevOps](AUDIT-DEVOPS-DEVELOP-20261115.md).
