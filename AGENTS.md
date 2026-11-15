@@ -65,3 +65,8 @@ Conserver les sources et les objets Git LFS. Lire `jade-modeling/MODEL_GUIDE.md`
 ## Feuille de route voix et téléphone (3 novembre 2026)
 
 La spécification courante pour l'usage oral naturel de Jade **sans obligation de prononcer son nom**, le MVP Discord avec avatar visible et le futur client mobile audio/vidéo est dans [ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md](docs/gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md). Codex doit la lire avant tout travail sur Discord vocal, la pertinence conversationnelle, VTube Studio, la sortie audiovisuelle ou l'interface mobile. Elle distingue les fonctions déjà codées de celles qui restent à développer et à recetter ; aucune fusion main automatique.
+
+
+## Contre-audit transverse des branches Jade (15 novembre 2026)
+
+Après les PR #6 (mémoire), #8 (Discord unifié), #9 (autobiographie) et #7 (PWA mobile), consulter **[AUDIT-TRANSVERSE-20261115.md](docs/gpt6-jade/AUDIT-TRANSVERSE-20261115.md)** avant toute reprise. La branche d'intégration `review/jade-mobile-memory-integration-20261115` vérifie les quatre lots sans déploiement. Protéger le contenu privé des logs, ne pas divulguer de DM dans le vocal, conserver les garde-fous de suppression des souvenirs et comparer les SHA des PR avant fusion. Les tests GitHub n'équivalent pas aux essais matériels. Ne pas toucher au VPS Hyperliquid ni à `main` sans nouvelle autorisation du propriétaire.
