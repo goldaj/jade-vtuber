@@ -1,5 +1,11 @@
 # Jade — un personnage virtuel capable de dialoguer
 
+**Documentation de `test/intent-all-channels-20261115` :** [installation](docs/handbook/INSTALLATION.md), [Démo Express](docs/handbook/DEMO.md), [guide utilisateur](docs/handbook/USER_GUIDE.md), [architecture](docs/handbook/TECHNICAL.md), [agents IA](docs/handbook/AI_HANDOFF.md), [état précis](docs/handbook/BRANCH_STATE.md).
+
+Branche de tests historiques divergente ; **pas** de --all-channels ni de PWA. La Démo Express installable sans Python est disponible via `Installer-Demo-Express.cmd`, avec réponses simulées.
+
+
+
 ![Portrait de Jade](jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/Jade_r21_master_v3_canvas_3840x4160.png)
 
 Jade est un projet expérimental de VTuber IA : un personnage 2D conçu pour

@@ -1,5 +1,11 @@
 # Instructions du projet Jade
 
+## Directive documentaire obligatoire : test/intent-all-channels-20261115
+
+À **chaque changement de code, test, interface, configuration, outil ou architecture**, mettre à jour tous les guides de `docs/handbook/`, ce fichier et les passations spécialisées pertinentes dans la même PR. `scripts/check_docs.py` sert de garde. Les capacités `--all-channels`, PWA et SQLite de develop sont **absentes sur cette branche**, malgré son nom. Elle est divergente : Codex doit comparer ses deux commits propres avant toute suppression. La Démo Express n'est qu'une simulation Windows.
+
+
+
 Avant toute modification, lire [l’index des conversations](docs/conversations/INDEX.md), puis les instructions de cette page et les documents liés au domaine concerné. Le journal est partiel : conserver les décisions successives, distinguer verbatim et résumé et ne jamais y copier de secrets, identifiants privés ou sorties brutes d’outils.
 
 ## Dépôt et configuration
