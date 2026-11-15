@@ -96,6 +96,67 @@ class RuntimeTurnLoggingTests(unittest.IsolatedAsyncioTestCase):
                          "[INTENT:curious] Intéressant !")
         self.assertEqual(sent, ["Intéressant !"])
 
+
+    async def test_intent_contract_and_logs_apply_to_every_entry_platform(self):
+        """No special-case Discord rule: one Dialogue contract for every source."""
+        for platform in ("twitch", "discord", "discord_voice", "microphone",
+                         "local_http", "console"):
+            with self.subTest(platform=platform):
+                model_messages = []
+                delivered = []
+
+                class Backend:
+                    async def complete(self, messages):
+                        model_messages.append(messages)
+                        return "[INTENT:serious] Une réponse vérifiée."
+
+                async def on_reply(reply):
+                    delivered.append(reply)
+
+                runtime = Runtime(Dialogue(Backend(), "Jade"), on_reply,
+                                  delivery_plan=lambda reply: ("console_text",))
+                with self.assertLogs("jade.conversation", level="INFO") as captured:
+                    await runtime.start()
+                    await runtime.submit(Incoming(
+                        platform, "Auteur", "Bonjour Jade", channel="test",
+                        message_id="fixture", force_reply=True))
+                    await asyncio.wait_for(runtime.idle(), 2)
+                    await runtime.stop()
+                events = records(captured)
+                self.assertEqual([event["event"] for event in events],
+                                 ["input_selected", "reply_planned"])
+                self.assertEqual(events[0]["source_platform"], platform)
+                self.assertEqual(events[0]["turn"], events[1]["turn"])
+                self.assertIn("[INTENT:label]", model_messages[0][0]["content"])
+                self.assertEqual(delivered[0].intent, "serious")
+                self.assertEqual(delivered[0].text, "Une réponse vérifiée.")
+                self.assertEqual(events[1]["reply_with_intent"],
+                                 "[INTENT:serious] Une réponse vérifiée.")
+                self.assertEqual(events[1]["intent"], "serious")
+                self.assertNotIn("[INTENT:", delivered[0].text)
+
+    async def test_missing_intent_tag_gets_neutral_metadata_even_for_twitch(self):
+        """Providers can violate the prompt; public text stays clean and logs complete."""
+        backend = AsyncMock()
+        backend.complete.return_value = "Réponse sans balise."
+        delivered = []
+        async def output(reply):
+            delivered.append(reply)
+        runtime = Runtime(Dialogue(backend, "Jade"), output,
+                          delivery_plan=lambda reply: ("twitch_text",))
+        with self.assertLogs("jade.conversation", level="INFO") as captured:
+            await runtime.start()
+            await runtime.submit(Incoming(
+                "twitch", "Auteur", "Bonjour Jade", "chat", "fixture", True))
+            await asyncio.wait_for(runtime.idle(), 2)
+            await runtime.stop()
+        response = records(captured)[1]
+        self.assertEqual(delivered[0].intent, "neutral")
+        self.assertEqual(response["reply_with_intent"],
+                         "[INTENT:neutral] Réponse sans balise.")
+        self.assertEqual(response["output_destinations"], ["twitch_text"])
+        self.assertEqual(delivered[0].text, "Réponse sans balise.")
+
     async def test_non_replied_message_has_no_planned_output(self):
         backend = AsyncMock()
         output = AsyncMock()
