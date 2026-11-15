@@ -38,7 +38,7 @@ def _discord_stack_ok():
 def inspect_environment(settings, *, live=False, voice=False, mic=False,
                         twitch=False, discord=False, vts=False,
                         discord_voice=False, http=False, avatar=False,
-                        mobile=False):
+                        mobile=False, all_channels=False):
     """Return explicit diagnostics without connecting to any external service.
 
     Checks of installed packages, configured flags and presence of secrets are
@@ -82,7 +82,15 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
     if mic:
         checks.append(Check("Capture microphone", _installed("sounddevice"),
                             "sounddevice installé, aucun enregistrement réalisé"))
+        if voice:
+            checks.append(Check("Retour vocal du micro local",
+                                settings.audio_output == "ffplay" and which("ffplay") is not None,
+                                "Pour la voix locale : JADE_AUDIO_OUTPUT=ffplay et ffplay sur PATH"))
     if twitch:
+        if all_channels:
+            checks.append(Check(
+                "Twitch réponses activées", settings.twitch_send,
+                "Activer JADE_TWITCH_SEND=1 dans la configuration privée pour répondre dans le chat"))
         checks.append(Check(
             "Twitch activé", settings.twitch_enabled
             and all((settings.twitch_oauth, settings.channel)),
@@ -147,5 +155,6 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
             "Bibliothèques à installer sur D: après contrôle de licence ; pas dans Git",
             required=False))
         checks.append(Check("Tailscale Serve", which("tailscale") is not None,
-                            "HTTPS privé à configurer et tester manuellement", required=False))
+                            "HTTPS privé à configurer et tester manuellement",
+                            required=all_channels))
     return checks

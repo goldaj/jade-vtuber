@@ -103,6 +103,10 @@ class SpeechOutput:
 
     def _delivery_context(self, source=None):
         """Take a playback snapshot, never promoting a private Discord DM to voice."""
+        if getattr(source, "platform", None) in ("microphone", "local_http", "mobile"):
+            # Local/owner input must not be broadcast into a public Discord
+            # voice channel merely because the connector is also running.
+            return None
         if (getattr(source, "platform", None) == "discord"
                 and getattr(source, "private_channel", False)):
             return None
@@ -291,9 +295,14 @@ class SpeechOutput:
                 if discord_voice:
                     require_session()
                 path.parent.mkdir(parents=True, exist_ok=True)
-                tmp = path.with_name(path.name + ".tmp")
-                tmp.write_text(spoken_text, encoding="utf-8")
-                tmp.replace(path)
+                if reply.source.platform in ("microphone", "local_http"):
+                    # Multiple active supports must not make a private local
+                    # answer visible in the public OBS subtitle overlay.
+                    path.write_text("", encoding="utf-8")
+                else:
+                    tmp = path.with_name(path.name + ".tmp")
+                    tmp.write_text(spoken_text, encoding="utf-8")
+                    tmp.replace(path)
                 subtitle_written = True
                 if discord_voice:
                     require_session()
