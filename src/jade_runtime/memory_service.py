@@ -140,7 +140,11 @@ class MemoryService:
 
     async def _curate(self, key, incoming, reply):
         try:
-            if not await asyncio.to_thread(self.store.account, key):
+            # Pin this selection to the original opted-in profile. If the
+            # person forgets and re-enables memory while the LLM is thinking,
+            # the old event must never reappear in their new profile.
+            person_id = await asyncio.to_thread(self.store.account, key)
+            if not person_id:
                 return
             # Background call is optional and billed when the backend is live.
             # The identity/consent is rechecked transactionally before writing.
@@ -190,7 +194,7 @@ class MemoryService:
                 return
             # A deliberately conservative non-model filter for common secrets.
             if re.search(r"(?i)(api[_ -]?key|mot de passe|password|token|"
-                         r"code bancaire|carte bancaire|sk-[a-z0-9]+)", summary):
+                         r"code bancaire|carte bancaire|sk-[a-z0-9]+)", summary + "\n" + significance):
                 return
             # Public channels never recall memories originating in a different
             # channel, even if both messages come from the same account.
@@ -202,7 +206,7 @@ class MemoryService:
                 await asyncio.to_thread(
                     self.store.put, key, kind=kind, scope=_scope(incoming),
                     summary=summary, significance=significance,
-                    message_id=incoming.message_id,
+                    message_id=incoming.message_id, expected_person_id=person_id,
                 )
         except asyncio.CancelledError:
             raise
