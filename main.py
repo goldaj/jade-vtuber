@@ -89,7 +89,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         avatar_client = None
         if avatar:
             from src.jade_runtime.avatar import Avatar
-            avatar_client = await Avatar().start()
+            avatar_client = await Avatar(intent_enabled=config.avatar_intent_enabled).start()
             scopes.push_async_callback(avatar_client.close)
         player = AudioOutput(config.audio_output)
         if avatar_client is not None:
@@ -111,6 +111,10 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             # their full text to stdout; responses are delivered to the app.
             if reply.source.platform != "mobile":
                 print("Jade:", reply.text)
+            # Expressions use trusted, normalized Reply.intent (never raw LLM text).
+            # Text-only replies also animate; mobile has its own Live2D instance.
+            if avatar_client is not None and runtime.current_valid():
+                avatar_client.set_intent(reply.intent)
 
             async def optional(label, action, *, timeout=20):
                 if not runtime.current_valid():
@@ -183,7 +187,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 owner_login=config.mobile_owner_login,
                 public_origin=config.mobile_public_origin,
                 vendor_dir=Path(config.mobile_vendor_dir) if config.mobile_vendor_dir else None,
-                model_dir=Path(config.mobile_model_dir) if config.mobile_model_dir else None)
+                model_dir=Path(config.mobile_model_dir) if config.mobile_model_dir else None,
+                avatar_intent_enabled=config.avatar_intent_enabled)
         if discord_voice:
             from src.jade_runtime.discord_voice import OpenVoiceBridge
             discord_voice_bridge = OpenVoiceBridge(chat, runtime, config.discord_voice_channel)
