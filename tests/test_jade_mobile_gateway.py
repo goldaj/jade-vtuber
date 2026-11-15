@@ -182,6 +182,17 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status, 400)
         self.assertFalse(self.fake.transcripts)
 
+    async def test_png_icons_satisfy_android_install_sizes(self):
+        for dimension in (192, 512):
+            with self.subTest(size=dimension):
+                status, body, response = await self.request(
+                    "GET", f"/icon-{dimension}.png")
+                self.assertEqual(status, 200)
+                self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
+                self.assertEqual(int.from_bytes(body[16:20], "big"), dimension)
+                self.assertEqual(int.from_bytes(body[20:24], "big"), dimension)
+                self.assertIn(b"Content-Type: image/png", response)
+
     async def test_safe_assets_served_and_r20_idle_is_virtual(self):
         status, page, headers = await self.request("GET", "/")
         self.assertEqual(status, 200)
