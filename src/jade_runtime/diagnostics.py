@@ -38,7 +38,7 @@ def _discord_stack_ok():
 def inspect_environment(settings, *, live=False, voice=False, mic=False,
                         twitch=False, discord=False, vts=False,
                         discord_voice=False, http=False, avatar=False,
-                        mobile=False):
+                        mobile=False, all_channels=False):
     """Return explicit diagnostics without connecting to any external service.
 
     Checks of installed packages, configured flags and presence of secrets are
@@ -87,6 +87,10 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
                                 settings.audio_output == "ffplay" and which("ffplay") is not None,
                                 "Pour la voix locale : JADE_AUDIO_OUTPUT=ffplay et ffplay sur PATH"))
     if twitch:
+        if all_channels:
+            checks.append(Check(
+                "Twitch réponses activées", settings.twitch_send,
+                "Activer JADE_TWITCH_SEND=1 dans la configuration privée pour répondre dans le chat"))
         checks.append(Check(
             "Twitch activé", settings.twitch_enabled
             and all((settings.twitch_oauth, settings.channel)),
