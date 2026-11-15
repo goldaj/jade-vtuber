@@ -69,7 +69,7 @@ class Settings:
     audio_output: str = "none"
     early_voice: bool = False
     subtitle_path: Path = Path("subtitle.txt")
-    max_history_messages: int = 24
+    max_history_messages: int = 48
     max_queue: int = 64
     reply_probability: float = 0.0
     timeout_seconds: float = 20.0
@@ -123,7 +123,7 @@ class Settings:
             audio_output=str(environ("JADE_AUDIO_OUTPUT", "none")),
             early_voice=_enabled(str(environ("JADE_EARLY_VOICE", "0")).lower()),
             subtitle_path=Path(str(environ("JADE_SUBTITLE_PATH", "subtitle.txt"))),
-            max_history_messages=int(environ("JADE_HISTORY_LIMIT", "24")),
+            max_history_messages=int(environ("JADE_HISTORY_LIMIT", "48")),
             max_queue=int(environ("JADE_QUEUE_LIMIT", "64")),
             reply_probability=float(environ("JADE_RANDOM_REPLY_RATE", "0")),
             timeout_seconds=float(environ("JADE_API_TIMEOUT", "20")),
