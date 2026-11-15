@@ -1,4 +1,5 @@
 # Index des conversations Jade
+| [Application privée mobile Jade du 15 novembre](2026-11-15-jade-mobile-pwa.md) | Développement autorisé d'une PWA dédiée, avatar Live2D, micro/texte Goldaj et accès Tailscale | Synthèse de la décision ; tests CI hors ligne, appareil local à recetter |
 
 Cet index est créé le 2 novembre 2026, avant les modifications documentaires de l’audit de migration. La couverture est **partielle** : aucune exhaustivité historique n’est revendiquée.
 
