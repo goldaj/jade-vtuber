@@ -28,6 +28,10 @@ def identity_of(message) -> tuple[str, str] | None:
     if message.platform == "discord_voice":
         value = getattr(message, "speaker_id", None)
         return ("discord", str(value)) if type(value) is int and value > 0 else None
+    if message.platform == "microphone":
+        # Only the local hardware bridge constructs this platform. A spoken
+        # self-introduction or a Discord/Twitch nickname cannot impersonate it.
+        return ("microphone", "goldaj")
     if message.platform in ("discord", "twitch"):
         value = getattr(message, "account_id", "")
         if isinstance(value, str) and _ID.fullmatch(value):
@@ -37,9 +41,10 @@ def identity_of(message) -> tuple[str, str] | None:
 
 def _validate_key(key: tuple[str, str]) -> None:
     if (not isinstance(key, tuple) or len(key) != 2
-            or key[0] not in ("discord", "twitch") or not isinstance(key[1], str)
-            or not _ID.fullmatch(key[1])):
-        raise ValueError("trusted Discord/Twitch account ID required")
+            or not isinstance(key[1], str)
+            or not ((key[0] in ("discord", "twitch") and _ID.fullmatch(key[1]))
+                    or key == ("microphone", "goldaj"))):
+        raise ValueError("trusted transport account ID required")
 
 
 def _fingerprint(text: str) -> str:
@@ -84,7 +89,7 @@ class MemoryStore:
                     source_message_id TEXT NOT NULL,
                     created_at TEXT NOT NULL,
                     expires_at TEXT,
-                    UNIQUE(person_id,kind,scope,fingerprint),
+                    UNIQUE(person_id,kind,scope,source_platform,source_account_id,fingerprint),
                     CHECK ((kind='ordinary' AND expires_at IS NOT NULL)
                         OR (kind!='ordinary' AND expires_at IS NULL))
                 );
@@ -278,13 +283,8 @@ class MemoryStore:
                 return False
             a, b = first["person_id"], second["person_id"]
             if a != b:
-                # Remove only exact duplicate records before migrating source ownership.
-                db.execute("""
-                    DELETE FROM memories WHERE person_id=? AND EXISTS(
-                        SELECT 1 FROM memories prior WHERE prior.person_id=?
-                        AND prior.kind=memories.kind AND prior.scope=memories.scope
-                        AND prior.fingerprint=memories.fingerprint)
-                    """, (b, a))
+                # A core must never be silently discarded during identity linking;
+                # source account is part of the uniqueness key.
                 db.execute("UPDATE memories SET person_id=? WHERE person_id=?", (a, b))
                 db.execute("UPDATE identities SET person_id=? WHERE person_id=?", (a, b))
                 db.execute("DELETE FROM persons WHERE id=?", (b,))
