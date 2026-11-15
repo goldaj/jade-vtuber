@@ -71,6 +71,35 @@ class MemoryService:
                 "Ne les révèle pas à des tiers et privilégie la correction récente.\n"
                 + "\n".join(lines))
 
+    async def history_for(self, incoming, *, limit: int = 24) -> list[dict[str, str]]:
+        """Only opted-in identities recover exact text turns, never summaries."""
+        key = identity_of(incoming)
+        if key is None:
+            return []
+        try:
+            return await asyncio.to_thread(
+                self.store.recent_conversation_turns, key, _scope(incoming), limit=limit)
+        except Exception:
+            LOG.warning("Conversation history unavailable; using volatile turns")
+            return []
+
+    async def remember_turn(self, incoming, reply: Reply) -> bool:
+        """Save a successfully delivered full exchange for consenting users only."""
+        key = identity_of(incoming)
+        if key is None:
+            return False
+        try:
+            user_content = f"{incoming.author} ({incoming.platform}): {incoming.text}"
+            return await asyncio.to_thread(
+                self.store.append_conversation_turn, key, _scope(incoming),
+                source_platform=incoming.platform,
+                message_id=incoming.message_id,
+                user_content=user_content,
+                assistant_content=reply.text)
+        except Exception:
+            LOG.warning("Conversation history write failed; no text logged")
+            return False
+
     async def command(self, incoming) -> Reply | None:
         match = COMMAND.fullmatch(incoming.text.strip())
         if not match:
