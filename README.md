@@ -17,8 +17,9 @@ streaming. Le travail sur le personnage et son animation est mené séparément.
 
 ## Ce que fait le moteur
 
-- Reçoit du texte depuis une console et propose des connecteurs optionnels
-  pour Twitch, Discord et une interface HTTP locale.
+- Reçoit les messages depuis Discord écrit/vocal, Twitch, micro Windows,
+  API HTTP locale et PWA Android privée. Le launcher active tous ces canaux
+  simultanément via --all-channels, sans choix de mode.
 - Met les demandes dans une file bornée, maintient un historique limité par
   conversation et produit des réponses via une interface de dialogue modulaire.
 - Utilise **OpenAI exclusivement pour la transcription et la synthèse vocale** ;
@@ -28,12 +29,14 @@ streaming. Le travail sur le personnage et son animation est mené séparément.
   locale de VTube Studio. Ces intégrations sont désactivées par défaut.
 
 ```text
-Console / Twitch / Discord / HTTP ─────────┐
-Microphone → transcription OpenAI ─────────┤
-                                           ↓
-                                  File → Dialogue
-                                           ↓
-                   Texte / synthèse vocale / sous-titres
+Discord / Twitch / HTTP / Android PWA ─────┐
+Microphone / vocal → STT OpenAI ───────────┤
+                                            ↓
+                               File → Arbitre Jade
+                                            ↓
+                                  Dialogue + mémoire
+                                            ↓
+                      Réponse routée / TTS / avatar
 ```
 
 Le dialogue dispose d’une interface backend interchangeable dans le code ; seul
@@ -93,12 +96,14 @@ peuvent utiliser un profil de `config/profiles/`. Le prompt du personnage peut
 être fourni séparément via `JADE_PROMPT_FILE` ou `JADE_ASSETS_ROOT` ; le prompt
 du projet est inclus dans ce dépôt.
 
-Le passage en mode réel exige explicitement `--live`, une configuration valide
-et peut générer des frais. Le microphone, Twitch, Discord, VTube Studio et
-l’interface HTTP s’activent séparément par leurs options ; l’envoi vers le
-chat Twitch demande son réglage dédié. `--discord` active l'envoi Discord.
-Les extras Poetry
-disponibles sont `mic`, `discord`, `discord-voice` et `vts`.
+La démo console reste hors ligne. Pour le vrai fonctionnement sur Windows,
+le launcher utilise `--all-channels` et active ensemble tous les supports
+configurés ; le préflight bloque le démarrage si l'un des services obligatoires
+manque. Cette exécution peut entraîner des frais OpenAI. Les anciens drapeaux
+individuels restent disponibles pour le diagnostic et le développement, mais
+ne constituent pas des profils de lancement utilisateur. Les extras Poetry
+s'installent avec `poetry sync --only main -E all`. L'envoi Twitch requiert
+`JADE_TWITCH_SEND=1` en plus du jeton et du salon.
 
 Pour Twitch, un jeton utilisateur valide et le canal sont requis ; le nom du
 bot est déduit du jeton si `TWITCH_BOT_LOGIN` est vide. La procédure pour obtenir
