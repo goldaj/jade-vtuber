@@ -53,12 +53,14 @@ def planned_destinations(reply, *, has_speech=False, audio_output="none",
         destinations.append("local_http_text")
     if has_speech:
         if reply.spoken:
-            if discord_voice:
+            if discord_voice and not (
+                    platform == "discord" and getattr(reply.source, "private_channel", False)):
                 destinations.append("discord_voice")
         else:
             if audio_output == "ffplay":
                 destinations.append("local_audio")
-            if discord_voice:
+            if discord_voice and not (
+                    platform == "discord" and getattr(reply.source, "private_channel", False)):
                 destinations.append("discord_voice")
     if not destinations:
         destinations.append("console_text")
