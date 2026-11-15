@@ -28,6 +28,7 @@ MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/index.html",
     "src/jade_runtime/mobile_web/styles.css",
     "src/jade_runtime/mobile_web/avatar.js",
+    "src/jade_runtime/mobile_web/intent-visuals.json",
     "src/jade_runtime/mobile_web/app.js",
     "src/jade_runtime/mobile_web/manifest.webmanifest",
     "src/jade_runtime/mobile_web/sw.js",
