@@ -81,7 +81,8 @@ class MobileGateway:
             raise ValueError("invalid mobile port")
         self.runtime, self.services = runtime, services
         if owner_login is not None and (not isinstance(owner_login, str)
-                                         or not 3 <= len(owner_login.strip()) <= 256):
+                                         or not 3 <= len(owner_login.strip()) <= 256
+                                         or not owner_login.isascii()):
             raise ValueError("invalid Tailscale owner login")
         self.token, self.port = token, port
         self.owner_login = owner_login.strip().casefold() if owner_login else None
