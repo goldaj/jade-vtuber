@@ -52,6 +52,8 @@ CI Windows/Linux réussie en simulation : la **recette réelle** voix/Discord/t�
 
 **Codex/Terra :** [passation mobile du 15 novembre](docs/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md). Branche `feat/jade-private-mobile-pwa-20261115`, PR indépendante vers `develop`, ni déployée sur le PC ni fusionnée en production. Le client PWA réservé à Goldaj (créateur/père) utilise `--mobile` et `127.0.0.1:8766` derrière Tailscale Serve **sur le PC**, sans changement des services VPS Hyperliquid. Deux entrées `mobile/text` et `mobile/voice` partagent un historique de session ; le SDK Cubism Core propriétaire et les bundles Pixi sont installés **sur D: hors Git** après vérification de licence. **Le rendu Live2D, le micro mobile et les coûts réels nécessitent la recette Android/Windows.** Le rapprochement avec la mémoire personnelle de la PR #6 reste à faire après fusion consciente des branches.
 
+**Contre-audit du 15 novembre :** [contre-audit mobile + mémoire, correctifs et gates réels](docs/gpt6-jade/AUDIT-REVUE-MOBILE-MEMOIRE-20261115.md). Le backend vérifie maintenant `JADE_MOBILE_OWNER_LOGIN` dans l'en-tête de Tailscale Serve pour toutes les routes, les captures sont abandonnées en arrière-plan, et une voix mobile coupée ne facture pas de TTS. Le code n'est pas recetté sur Android : SDK Cubism 3/4 versus 5 à contrôler, fusion PR #6/#7 manuelle obligatoire.
+
 ## Ressources 2D
 
 Conserver les sources et les objets Git LFS. Lire `jade-modeling/MODEL_GUIDE.md`, `jade-modeling/CONTINUATION.md` et les documents de coordination 2D avant de les modifier. Exécuter `python jade-modeling/verify_assets.py` après récupération des objets LFS. Le propriétaire décide du périmètre des travaux visuels et des revues Astra.
