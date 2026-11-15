@@ -71,7 +71,7 @@ class Settings:
     subtitle_path: Path = Path("subtitle.txt")
     max_history_messages: int = 48
     max_queue: int = 64
-    reply_probability: float = 0.0
+    reply_probability: float = 0.30
     timeout_seconds: float = 20.0
     # Optional, private persistent SQLite data; disabled unless explicitly enabled.
     memory_enabled: bool = False
@@ -125,7 +125,7 @@ class Settings:
             subtitle_path=Path(str(environ("JADE_SUBTITLE_PATH", "subtitle.txt"))),
             max_history_messages=int(environ("JADE_HISTORY_LIMIT", "48")),
             max_queue=int(environ("JADE_QUEUE_LIMIT", "64")),
-            reply_probability=float(environ("JADE_RANDOM_REPLY_RATE", "0")),
+            reply_probability=float(environ("JADE_RANDOM_REPLY_RATE", "0.30")),
             timeout_seconds=float(environ("JADE_API_TIMEOUT", "20")),
             memory_enabled=_enabled(str(environ("JADE_MEMORY_ENABLED", "0")).lower()),
             memory_curator_enabled=_enabled(str(environ("JADE_MEMORY_CURATOR_ENABLED", "0")).lower()),
