@@ -24,7 +24,7 @@ Ensuite double-cliquer sur `D:\Jade\launcher\Lancer-Jade.cmd`. Sélectionner la 
 La configuration privée existante doit contenir les secrets et l'activation **de tous** les connecteurs. Le launcher ne les invente pas et ne masque pas les canaux absents : si un préflight obligatoire échoue, **aucun lancement partiel** ne survient.
 
 - `OPENAI_API_KEY`, `DISCORD_TOKEN` et `DISCORD_VOICE_CHANNEL` ;
-- `JADE_TWITCH_ENABLED=1`, `TWITCH_CHANNEL`, `TWITCH_TOKEN` ;
+- `JADE_TWITCH_ENABLED=1`, `JADE_TWITCH_SEND=1`, `TWITCH_CHANNEL`, `TWITCH_TOKEN` ;
 - `JADE_MOBILE_ENABLED=1`, `JADE_MOBILE_TOKEN`, `JADE_MOBILE_OWNER_LOGIN`, `JADE_MOBILE_PUBLIC_ORIGIN` (HTTPS privé Tailscale Serve réel) ;
 - `JADE_HTTP_ENABLED=1`, `JADE_HTTP_TOKEN` (jeton **différent** du mobile) ;
 - `JADE_AUDIO_OUTPUT=ffplay`, `ffplay` et `ffmpeg` dans le PATH, Python/Poetry, dépendances facultatives (`-E all`) et ressources Live2D ;
