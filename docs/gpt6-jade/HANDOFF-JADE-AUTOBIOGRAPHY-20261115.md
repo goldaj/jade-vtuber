@@ -44,3 +44,10 @@ Ce chemin est un exemple et doit pointer vers un dossier privé de l'utilisateur
 5. Faire une revue qualitative du tri par IA : le filtre de secrets est **heuristique**, il ne garantit pas l'absence de données privées dans les résumés. Ne jamais présenter les Core comme des faits objectifs certains.
 
 **Aucune recette en conditions réelles n'a été effectuée par ce chantier distant.**
+
+
+## Contre-revue complémentaire : suppression multi-identités (15 novembre)
+
+Défaut corrigé : si Goldaj avait lié son profil local à un compte Discord/Twitch, `forget` appelé depuis l'autre compte supprimait la fiche relationnelle mais laissait `jade_self_core` en base. Un nouveau `enable` du compte local pouvait alors faire réapparaître une Core supposée oubliée. L'effacement recherche maintenant **l'appartenance du propriétaire dans toutes les identités du même `person_id`**, avant de retirer ses Core globales. Un compte non lié ne peut pas supprimer la biographie du propriétaire. Deux tests couvrent l'effacement lié et l'effacement indépendant.
+
+**Attention :** les anciennes sauvegardes chiffrées ou non chiffrées peuvent toujours contenir des données oubliées. Il faut gérer leur durée de conservation et éviter de restaurer une sauvegarde dépassée après suppression.
