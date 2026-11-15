@@ -5,6 +5,8 @@ No Live2D SDK, real microphone, audio output, tokens or LLM services required.
 import asyncio
 import json
 from pathlib import Path
+import shutil
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -51,6 +53,19 @@ class VisualContractTests(unittest.TestCase):
         self.assertIn("playful", INTENTS)
         self.assertFalse(public_visual_contract(False)["enabled"])
         self.assertTrue(public_visual_contract(True)["enabled"])
+
+    def test_mobile_js_parses_and_avoids_double_intent_trigger(self):
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("Node.js unavailable: JS syntax checked in browser recipe")
+        for name in ("avatar.js", "app.js"):
+            with self.subTest(name=name):
+                result = subprocess.run(
+                    [node, "--check", str(WEB_ROOT / name)],
+                    text=True, capture_output=True, timeout=10)
+                self.assertEqual(result.returncode, 0, result.stderr)
+        app_source = (WEB_ROOT / "app.js").read_text(encoding="utf-8")
+        self.assertEqual(app_source.count("avatar().setIntent("), 1)
 
     def test_mobile_adapter_reads_shared_palette_not_separate_expressions(self):
         source = (WEB_ROOT / "avatar.js").read_text(encoding="utf-8")
