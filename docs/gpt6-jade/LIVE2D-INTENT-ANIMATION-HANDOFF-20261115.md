@@ -55,3 +55,5 @@
 | Représentation textuelle additionnelle sur PC/Discord/Twitch | Non branchée, décision produit à prendre pour éviter du bruit |
 | Rendu mobile et reset neutre Cubism 4/5 | Non validés en environnement réel |
 | Rig final r21 complet en pied | Travaux art/rig en cours, **non connecté** |
+
+**Compatibilité de l'aperçu de publication isolé :** le catalogue JSON versionné doit rester sur la liste blanche explicite de `tools/jade_publication_export.py`, sinon le moteur ne peut pas lire ses deux variantes depuis l'aperçu cloné et les tests d'export échouent. Ne pas inclure pour autant les assets LFS ou SDK propriétaires dans l'aperçu.
