@@ -17,6 +17,8 @@ class Incoming:
     context: tuple[str, ...] = field(default=(), repr=False)
     # Verified transport account ID; NEVER use an untrusted nickname as ID.
     account_id: str = field(default="", repr=False)
+    # Ephemeral key assigned only by trusted Discord connectors.
+    conversation_id: str = field(default="", repr=False)
 
     def __post_init__(self):
         if (not self.platform.strip() or not self.author.strip()
@@ -30,9 +32,16 @@ class Incoming:
             raise ValueError("invalid context")
         if self.speaker_id is not None and (type(self.speaker_id) is not int or self.speaker_id <= 0):
             raise ValueError("invalid speaker identifier")
+        if self.conversation_id and (self.platform not in ("discord", "discord_voice")
+                or not re.fullmatch(r"dc-[0-9a-f]{32}", self.conversation_id)):
+            raise ValueError("invalid conversation routing key")
         if self.voice_session_id and (self.platform != "discord_voice" or not re.fullmatch(
                 r"[A-Za-z0-9_-]{16,128}", self.voice_session_id)):
             raise ValueError("invalid voice session identifier")
+
+    @property
+    def history_key(self) -> tuple[str, str]:
+        return ("discord_conversation", self.conversation_id) if self.conversation_id else self.session
 
     @property
     def session(self) -> tuple[str, str]:
