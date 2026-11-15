@@ -155,5 +155,6 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
             "Bibliothèques à installer sur D: après contrôle de licence ; pas dans Git",
             required=False))
         checks.append(Check("Tailscale Serve", which("tailscale") is not None,
-                            "HTTPS privé à configurer et tester manuellement", required=False))
+                            "HTTPS privé à configurer et tester manuellement",
+                            required=all_channels))
     return checks
