@@ -14,7 +14,7 @@ import secrets
 import sqlite3
 import uuid
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 KINDS = frozenset(("ordinary", "core_self", "core_relationship"))
 _ID = re.compile(r"^[1-9][0-9]{0,24}$")
 
@@ -65,7 +65,7 @@ class MemoryStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._db() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, SCHEMA_VERSION):
+            if version not in (0, 1, SCHEMA_VERSION):
                 raise RuntimeError("unsupported Jade memory schema; migrate before starting")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS persons (
@@ -104,6 +104,22 @@ class MemoryStore:
                     account_id TEXT NOT NULL,
                     expires_at TEXT NOT NULL
                 );
+                -- Separate autobiography from person-bound relationship memories.
+                -- Global to Jade's own timeline, but initially owner-only.
+                CREATE TABLE IF NOT EXISTS jade_self_core (
+                    id TEXT PRIMARY KEY,
+                    summary TEXT NOT NULL,
+                    significance TEXT NOT NULL,
+                    fingerprint TEXT NOT NULL UNIQUE,
+                    source_platform TEXT NOT NULL,
+                    source_account_id TEXT NOT NULL,
+                    source_message_id TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    visibility TEXT NOT NULL DEFAULT 'owner_only'
+                        CHECK(visibility='owner_only')
+                );
+                CREATE INDEX IF NOT EXISTS idx_jade_self_core_recency
+                    ON jade_self_core(created_at DESC);
             """)
             db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
 
@@ -152,6 +168,11 @@ class MemoryStore:
             ).fetchone()
             if not row:
                 return False
+            # A privacy erasure must also remove autobiography created from
+            # the owner's conversation, even though it lives in a global table.
+            if key == ("microphone", "goldaj"):
+                db.execute("""DELETE FROM jade_self_core
+                    WHERE source_platform=? AND source_account_id=?""", key)
             db.execute("DELETE FROM persons WHERE id=?", (row["person_id"],))
             db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
             return True
@@ -189,6 +210,70 @@ class MemoryStore:
                     key[0], key[1], message_id[:128], when.isoformat(), expires,
                 ))
             return result.rowcount > 0
+
+    def put_self_core(self, key: tuple[str, str], *, summary: str,
+                      significance: str = "", message_id: str = "") -> bool:
+        """Jade's own lasting episodes, owner-only until explicit promotion exists.
+
+        Only an opted-in, locally verified owner may populate the global table.
+        No TTL, no retention purge, no copy into other people's prompt context.
+        """
+        _validate_key(key)
+        if key != ("microphone", "goldaj"):
+            return False
+        if (not isinstance(summary, str) or not 1 <= len(summary.strip()) <= 400
+                or not isinstance(significance, str) or len(significance) > 280
+                or not isinstance(message_id, str)):
+            raise ValueError("invalid Jade autobiography")
+        with self._db() as db:
+            if not db.execute(
+                    "SELECT 1 FROM identities WHERE platform=? AND account_id=?", key
+            ).fetchone():
+                return False
+            written = db.execute("""
+                INSERT OR IGNORE INTO jade_self_core
+                (id,summary,significance,fingerprint,source_platform,
+                 source_account_id,source_message_id,created_at,visibility)
+                VALUES (?,?,?,?,?,?,?,?, 'owner_only')
+                """, (uuid.uuid4().hex, summary.strip(), significance.strip(),
+                      _fingerprint(summary), key[0], key[1], message_id[:128],
+                      _now().isoformat()))
+            return written.rowcount > 0
+
+    def recall_self_core(self, key: tuple[str, str], *, limit: int = 6) -> list[dict]:
+        """Read only for the verified Goldaj profile; never disclose to a server."""
+        _validate_key(key)
+        if not 1 <= limit <= 20:
+            raise ValueError("invalid autobiography recall limit")
+        if key != ("microphone", "goldaj"):
+            return []
+        with self._db() as db:
+            if not db.execute(
+                    "SELECT 1 FROM identities WHERE platform=? AND account_id=?", key
+            ).fetchone():
+                return []
+            rows = db.execute("""
+                SELECT id,summary,significance,created_at,visibility
+                FROM jade_self_core WHERE visibility='owner_only'
+                ORDER BY created_at DESC LIMIT ?""", (limit,)).fetchall()
+        return [dict(row) for row in rows]
+
+    def delete_self_core(self, key: tuple[str, str], memory_id: str) -> bool:
+        """Owner-selected erasure of one autobiographical Core Memory."""
+        _validate_key(key)
+        if key != ("microphone", "goldaj"):
+            return False
+        if not isinstance(memory_id, str) or not re.fullmatch(r"[0-9a-f]{32}", memory_id):
+            raise ValueError("invalid autobiographical memory identifier")
+        with self._db() as db:
+            if not db.execute(
+                    "SELECT 1 FROM identities WHERE platform=? AND account_id=?", key
+            ).fetchone():
+                return False
+            deleted = db.execute("""
+                DELETE FROM jade_self_core WHERE id=?
+                AND source_platform=? AND source_account_id=?""", (memory_id, *key))
+            return deleted.rowcount > 0
 
     def recall(self, key: tuple[str, str], scope: str, *, limit: int = 8) -> list[dict]:
         """Personal and current-channel memories; never another person's memories."""
