@@ -19,6 +19,7 @@ class Work:
     task: asyncio.Task | None = None
     turn: int = 0
     queued_at: float = field(default_factory=time.monotonic)
+    finished: asyncio.Future | None = field(default=None, repr=False)
 
     def valid(self):
         return not self.cancelled and (self.deadline is None or
@@ -58,7 +59,8 @@ class Runtime:
         if self.state != "RUNNING" or self.worker is None or self.worker.done():
             raise RuntimeError("runtime is not running")
         self._turn_sequence += 1
-        item = Work(message, deadline, result, turn=self._turn_sequence)
+        item = Work(message, deadline, result, turn=self._turn_sequence,
+                    finished=asyncio.get_running_loop().create_future())
         self.queue.put_nowait(item)
         return item
 
@@ -70,6 +72,8 @@ class Runtime:
             item.task.cancel()
         if item.result is not None and not item.result.done():
             item.result.cancel()
+        if item.task is None and item.finished is not None and not item.finished.done():
+            item.finished.set_result(None)
 
     def _expire_work(self, item):
         if item.cancelled:
@@ -259,3 +263,5 @@ class Runtime:
                     timer.cancel()
                 self.active = None
                 self.queue.task_done()
+                if item.finished is not None and not item.finished.done():
+                    item.finished.set_result(None)
