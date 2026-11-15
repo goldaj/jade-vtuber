@@ -28,9 +28,12 @@ def identity_of(message) -> tuple[str, str] | None:
     if message.platform == "discord_voice":
         value = getattr(message, "speaker_id", None)
         return ("discord", str(value)) if type(value) is int and value > 0 else None
-    if message.platform == "microphone":
-        # Only the local hardware bridge constructs this platform. A spoken
-        # self-introduction or a Discord/Twitch nickname cannot impersonate it.
+    if message.platform in ("microphone", "mobile"):
+        # Local hardware and the authenticated, owner-only mobile gateway map
+        # to ONE Goldaj profile. Both transport origins are assigned by trusted
+        # connectors, not by a caller's nickname or spoken self-introduction.
+        # Mobile must be gated by Tailscale owner identity + private Bearer
+        # before constructing Incoming(platform="mobile").
         return ("microphone", "goldaj")
     if message.platform in ("discord", "twitch"):
         value = getattr(message, "account_id", "")
