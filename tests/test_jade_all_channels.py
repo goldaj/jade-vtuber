@@ -100,6 +100,27 @@ class UnifiedTurnTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await runtime.stop(graceful=False)
 
+    async def test_private_local_speech_never_shows_in_obs_overlay(self):
+        from tempfile import TemporaryDirectory
+        from pathlib import Path
+
+        class FakeTTS:
+            async def synthesize_wav(self, text):
+                return b"RIFFsynthetic"
+        class FakePlayer:
+            mode = "ffplay"
+            async def play(self, data):
+                observed.append(path.read_text(encoding="utf-8"))
+
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "obs.txt"
+            observed = []
+            speaker = SpeechOutput(FakeTTS(), FakePlayer(), path)
+            await speaker.speak(Reply(
+                Incoming("microphone", "Goldaj", "Bonjour Jade"), "Reponse privee"))
+            self.assertEqual(observed, [""])
+            self.assertEqual(path.read_text(encoding="utf-8"), "")
+
     async def test_private_local_micro_never_uses_discord_broadcast(self):
         speaker = SpeechOutput(AsyncMock(), AudioOutput("ffplay"), "ignored.txt")
         bridge = type("Bridge", (), {})()
