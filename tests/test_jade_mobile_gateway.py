@@ -84,7 +84,7 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         reader, writer = await asyncio.open_connection("127.0.0.1", self.port)
         extra = headers or {}
         lines = [f"{method} {route} HTTP/1.1", f"Host: 127.0.0.1:{self.port}"]
-        if method == "POST":
+        if method == "POST" and "Content-Length" not in extra:
             lines.append(f"Content-Length: {len(body)}")
         lines.extend(f"{key}: {value}" for key, value in extra.items())
         packet = ("\r\n".join(lines) + "\r\n\r\n").encode() + body
@@ -169,9 +169,12 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status, 404)
 
     async def test_oversized_invalid_microphone_never_calls_stt(self):
+        # Announce an oversized body without sending 1MB of unread data;
+        # otherwise TCP may reset before the client can read HTTP 413.
         status, _, _ = await self.request(
-            "POST", "/api/voice", body=b"x" * (MAX_WAV + 1),
-            headers={**self.headers("audio/wav"), "X-Jade-Session":"m-123456789012"})
+            "POST", "/api/voice", body=b"",
+            headers={**self.headers("audio/wav"), "X-Jade-Session":"m-123456789012",
+                     "Content-Length":str(MAX_WAV + 1)})
         self.assertEqual(status, 413)
         status, _, _ = await self.request(
             "POST", "/api/voice", body=b"bad wav header" * 4,
