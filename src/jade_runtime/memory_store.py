@@ -197,7 +197,7 @@ class MemoryStore:
                 SELECT m.kind,m.scope,m.summary,m.significance,m.created_at
                 FROM memories m JOIN identities i ON i.person_id=m.person_id
                 WHERE i.platform=? AND i.account_id=?
-                  AND (m.scope='person' OR m.scope=?)
+                  AND m.scope=?
                   AND (m.expires_at IS NULL OR m.expires_at>?)
                 ORDER BY CASE WHEN m.kind='ordinary' THEN 1 ELSE 0 END,
                          m.created_at DESC LIMIT ?
