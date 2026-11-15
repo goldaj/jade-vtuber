@@ -2,6 +2,10 @@
 
 ![Portrait de Jade](jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/Jade_r21_master_v3_canvas_3840x4160.png)
 
+**Guides à jour pour cette branche :** [installation depuis un poste neuf](docs/handbook/INSTALLATION.md), [Démo Express sans prérequis](docs/handbook/DEMO.md), [guide utilisateur de toutes les fonctions](docs/handbook/USER_GUIDE.md), [architecture et algorithmes](docs/handbook/TECHNICAL.md), [passation agents IA](docs/handbook/AI_HANDOFF.md), [état exact de main](docs/handbook/BRANCH_STATE.md).
+
+**Démonstration Windows immédiate :** double-cliquer `Installer-Demo-Express.cmd` dans le clone, puis ouvrir « Jade Demo Express » dans le menu Démarrer. C'est une **simulation locale** (ni IA, ni voix, ni Live2D, ni compte externe). Alternative portable : `Lancer-Demo-Express.cmd`. Pour de vraies fonctions IA, voir les guides et la configuration opt-in.
+
 Jade est un projet expérimental de VTuber IA : un personnage 2D conçu pour
 interagir par texte et par voix. Ce dépôt présente le moteur Python qui reçoit
 les messages, prépare une réponse et peut la transmettre à des outils de

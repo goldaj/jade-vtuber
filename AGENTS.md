@@ -1,5 +1,10 @@
 # Instructions du projet Jade
 
+## Documentation vivante et passation agents (règle prioritaire)
+
+**Chaque modification de code, tests, configuration, infrastructure, scripts ou assets exige la mise à jour de TOUS les guides de la branche dans la même PR** : `docs/handbook/INSTALLATION.md`, `DEMO.md`, `USER_GUIDE.md`, `TECHNICAL.md`, `AI_HANDOFF.md`, `BRANCH_STATE.md` et `BRANCH_MAINTENANCE.md`. Revoir également l'index et ce fichier. `scripts/check_docs.py` vérifie la présence et, en PR, le couplage des modifications. Ne pas attribuer à `main` les fonctionnalités propres à `develop`. Voir [le manuel de main](docs/handbook/README.md), [la passation détaillée](docs/handbook/AI_HANDOFF.md) et [le plan de suppression des branches intégrées](docs/handbook/BRANCH_MAINTENANCE.md). La démo Express Windows simule uniquement les réponses, sans IA ni Live2D. Les essais réels ne sont jamais présumés.
+
+
 Avant toute modification, lire [l’index des conversations](docs/conversations/INDEX.md), puis les instructions de cette page et les documents liés au domaine concerné. Le journal est partiel : conserver les décisions successives, distinguer verbatim et résumé et ne jamais y copier de secrets, identifiants privés ou sorties brutes d’outils.
 
 ## Dépôt et configuration
