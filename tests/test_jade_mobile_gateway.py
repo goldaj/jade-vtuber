@@ -138,6 +138,22 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(planned_destinations(self.reply_log[1], mobile=True),
                          ("mobile_text", "mobile_audio"))
 
+    async def test_runtime_llm_failure_returns_503_without_waiting_for_gateway_timeout(self):
+        async def failed_dialogue(messages):
+            raise RuntimeError("synthetic provider failure")
+        self.fake.complete = failed_dialogue
+        payload = json.dumps({"text":"Jade, écoute",
+                              "session":"m-123456789012", "speak":True}).encode()
+        # The HTTP client itself times out in 4 seconds. A gateway that waits
+        # 55 seconds after an LLM failure would fail this offline test.
+        status, body, _ = await self.request(
+            "POST", "/api/chat", body=payload,
+            headers=self.headers("application/json"))
+        self.assertEqual(status, 503)
+        self.assertEqual(json.loads(body)["error"], "Jade indisponible")
+        self.assertFalse(self.fake.speeches)
+        self.assertFalse(self.mobile.pending)
+
     async def test_chat_optional_audio_and_no_pc_double_play(self):
         payload = json.dumps({"text":"Jade, comment tu vas ?",
                               "session":"m-123456789012", "speak":True}).encode()
