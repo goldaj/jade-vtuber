@@ -191,7 +191,9 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 avatar_intent_enabled=config.avatar_intent_enabled)
         if discord_voice:
             from src.jade_runtime.discord_voice import OpenVoiceBridge
-            discord_voice_bridge = OpenVoiceBridge(chat, runtime, config.discord_voice_channel)
+            discord_voice_bridge = OpenVoiceBridge(
+                chat, runtime, config.discord_voice_channel,
+                group_reply_rate=config.reply_probability)
             speech.secondary_player = discord_voice_bridge
             if avatar_client is not None:
                 discord_voice_bridge.playback_observer = avatar_client.observer("discord")
