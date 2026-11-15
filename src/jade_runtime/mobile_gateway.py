@@ -40,7 +40,9 @@ WEB_FILES = {
     "/sw.js": ("sw.js", "text/javascript; charset=utf-8"),
     "/icon.svg": ("icon.svg", "image/svg+xml"),
 }
-CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; "
+# Cubism Web Core may compile WebAssembly at runtime. 'wasm-unsafe-eval' is
+# narrower than 'unsafe-eval': permit WASM only, never dynamic JavaScript eval.
+CSP = ("default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; "
        "connect-src 'self'; img-src 'self' data: blob:; "
        "media-src 'self' blob:; worker-src 'self'; "
        "manifest-src 'self'; base-uri 'none'; form-action 'none'; "
