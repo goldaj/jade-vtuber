@@ -1,6 +1,6 @@
 # Propositions de personnalité Jade - 15 novembre 2026
 
-**Statut : trois candidats UNIQUEMENT, en attente de validation explicite de Goldaj.**
+**Statut : archive de trois variantes non retenues ; le prompt exact approuvé est actif dans \`prompt_chat.txt\`.**
 **Ne pas remplacer `prompt_chat.txt`, ni modifier `INTENT_PROMPT` ou les règles de tags sans validation spécifique.**
 
 Contexte : Jade utilise GPT-6 Luna par défaut, avec effort `low` et plafond de 320 tokens de complétion sur develop. Le contrat `[INTENT:...]` est déjà ajouté indépendamment du prompt de personnalité par `dialogue.py`.
@@ -65,3 +65,6 @@ Tu sais devenir sérieuse, attentionnée ou respectueuse lorsque c'est nécessai
 - Intentions : prévoir **deux variantes de réaction texte + deux variantes de réaction 2D** par intention existante. Garder les labels et le parseur actuel inchangés. Ce document n'ajoute aucune animation et n'active aucune variation.
 - Concevoir plus tard un catalogue `intent -> [variant_a, variant_b]` séparant sélection, métadonnées textuelles, poses/mouvements et fallback neutre. Exiger assets effectivement disponibles et tests avant branchement.
 - Pour éviter les répétitions, prévoir une sélection anti-répétition de la dernière variante utilisée dans une même session ; pas de nouvelle requête LLM dédiée.
+
+## Décision finale de Goldaj — 2026-11-15
+**Décision prise :** Goldaj a fourni une autre version exacte et a autorisé son activation immédiate dans `develop/prompt_chat.txt`. Les trois textes V1/V2/V3 ci-dessus restent archivés à titre comparatif, **mais aucun n'est le prompt effectivement exécuté**. Le fichier `prompt_chat.txt` fait foi, y compris sa ligne littérale « Ta répartie Réagis... », volontairement non corrigée. Les intentions restent inchangées. Consulter [l'état d'implémentation, les paramètres, les limites et les 14 réactions futures seulement prévues](./DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md).
