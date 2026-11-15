@@ -281,16 +281,22 @@ class MobileGateway:
         outcome_future.add_done_callback(propagate_failure)
         self.pending[incoming.message_id] = reply_future
         work = None
+        completed = False
         try:
             deadline = loop.time() + 50
             work = await self.runtime.submit(
                 incoming, deadline=deadline, result=outcome_future)
-            return await asyncio.wait_for(reply_future, timeout=55)
+            reply = await asyncio.wait_for(reply_future, timeout=55)
+            completed = True
+            return reply
         finally:
+            # wait_for() cancels reply_future on timeout, making done() True.
+            # Checking done() alone would leave the paid LLM work running
+            # after the browser abandoned this request.
+            if not completed and work is not None:
+                self.runtime.cancel_work(work)
             if not reply_future.done():
                 reply_future.cancel()
-                if work is not None:
-                    self.runtime.cancel_work(work)
             self.pending.pop(incoming.message_id, None)
 
     async def _post(self, writer, route: str, headers: dict, body: bytes):
