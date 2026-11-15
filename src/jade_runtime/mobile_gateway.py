@@ -74,7 +74,8 @@ class MobileGateway:
 
     def __init__(self, runtime, services, *, token: str, port=8766,
                  web_root: Path | None = None, model_dir: Path | None = None,
-                 vendor_dir: Path | None = None, owner_login: str | None = None):
+                 vendor_dir: Path | None = None, owner_login: str | None = None,
+                 public_origin: str | None = None):
         if not isinstance(token, str) or len(token) < 32 or len(token) > 256:
             raise ValueError("JADE_MOBILE_TOKEN must contain 32-256 characters")
         if type(port) is not int or not 1024 <= port <= 65535:
@@ -86,6 +87,15 @@ class MobileGateway:
             raise ValueError("invalid Tailscale owner login")
         self.token, self.port = token, port
         self.owner_login = owner_login.strip().casefold() if owner_login else None
+        if public_origin is not None:
+            origin = urlsplit(public_origin)
+            if (origin.scheme != "https" or not origin.hostname
+                    or not origin.hostname.endswith(".ts.net")
+                    or origin.path or origin.query or origin.fragment
+                    or origin.username or origin.password
+                    or public_origin.endswith("/")):
+                raise ValueError("invalid Tailscale HTTPS origin")
+        self.public_origin = public_origin
         self.web_root = Path(web_root or WEB_ROOT)
         self.model_dir = Path(model_dir or DEFAULT_MODEL)
         self.vendor_dir = Path(vendor_dir) if vendor_dir else None
@@ -134,12 +144,16 @@ class MobileGateway:
         await self._send(writer, code, json.dumps(
             value, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
 
-    @staticmethod
-    def _origin_allowed(headers: dict[str, str]) -> bool:
+    def _origin_allowed(self, headers: dict[str, str]) -> bool:
         origin = headers.get("origin")
         if not origin:
             return True  # CLI clients still need the bearer token.
         host = headers.get("host", "").lower()
+        if self.public_origin is not None:
+            # Go ReverseProxy SetURL() rewrites the backend Host to localhost;
+            # the browser Origin remains the HTTPS .ts.net public hostname.
+            # Compare to a deliberately configured origin, never that Host.
+            return hmac.compare_digest(origin, self.public_origin)
         try:
             parsed = urlsplit(origin)
             return (parsed.scheme in ("https", "http")
