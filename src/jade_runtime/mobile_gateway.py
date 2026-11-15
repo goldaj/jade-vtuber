@@ -150,6 +150,8 @@ class MobileGateway:
             return True  # CLI clients still need the bearer token.
         host = headers.get("host", "").lower()
         if self.public_origin is not None:
+            if not isinstance(origin, str) or not origin.isascii() or len(origin) > 256:
+                return False
             # Go ReverseProxy SetURL() rewrites the backend Host to localhost;
             # the browser Origin remains the HTTPS .ts.net public hostname.
             # Compare to a deliberately configured origin, never that Host.
