@@ -129,6 +129,14 @@ class AllChannelsCLITests(unittest.TestCase):
             self.assertTrue(flags[key], key)
         self.assertFalse(flags["vts"])
 
+    def test_twitch_must_send_when_all_channels_are_enabled(self):
+        from src.jade_runtime.diagnostics import inspect_environment
+        checks = inspect_environment(Settings(), live=True, twitch=True,
+                                     all_channels=True)
+        item = next(check for check in checks if check.name == "Twitch réponses activées")
+        self.assertFalse(item.ok)
+        self.assertTrue(item.required)
+
     def test_vtube_studio_is_also_enabled_when_configured(self):
         import main
         from unittest.mock import AsyncMock
