@@ -63,7 +63,7 @@ La spécification courante pour l'usage oral naturel de Jade **sans obligation d
 
 ## Contre-audit transverse des branches Jade (15 novembre 2026)
 
-Après les PR #6 (mémoire), #8 (Discord unifié), #9 (autobiographie) et #7 (PWA mobile), consulter **[AUDIT-TRANSVERSE-20261115.md](docs/gpt6-jade/AUDIT-TRANSVERSE-20261115.md)** avant toute reprise. La branche d'intégration `review/jade-mobile-memory-integration-20261115` vérifie les quatre lots sans déploiement. Protéger le contenu privé des logs, ne pas divulguer de DM dans le vocal, conserver les garde-fous de suppression des souvenirs et comparer les SHA des PR avant fusion. Les tests GitHub n'équivalent pas aux essais matériels. Ne pas toucher au VPS Hyperliquid ni à `main` sans nouvelle autorisation du propriétaire.
+**Historique :** les PR #6 (mémoire), #8 (Discord unifié), #9 (autobiographie) et #7 (PWA mobile) ont d'abord été revues sur une branche d'intégration avant fusion dans `develop` via la PR #11. Consulter [l'audit transverse](docs/gpt6-jade/AUDIT-TRANSVERSE-20261115.md) pour les réserves initiales, puis appliquer l'[état courant du guide d'installation sur le PC](docs/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md). Protéger le contenu privé des logs, ne pas divulguer de DM en vocal, conserver la suppression des souvenirs sur demande. Les tests GitHub ne valent pas une recette matérielle. Ne pas toucher au VPS Hyperliquid ni à `main` sans autorisation explicite.
 
 ## Launcher Windows local et arbitrage (15 novembre 2026)
 
