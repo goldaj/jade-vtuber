@@ -7,6 +7,7 @@ import time
 from .dialogue import Dialogue
 from .messages import Incoming, Reply
 from .turn_logging import record_input, record_reply, record_outcome
+from .turn_arbitration import ArbitratingQueue, TurnArbiter
 
 
 @dataclass
@@ -34,7 +35,8 @@ class Runtime:
         self.on_stream_start = on_stream_start
         self.delivery_plan = delivery_plan
         self.memory_service = memory_service
-        self.queue = asyncio.Queue(maxsize=max_queue)
+        self.queue = ArbitratingQueue(maxsize=max_queue)
+        self.arbiter = TurnArbiter(dialogue.backend) if isinstance(dialogue, Dialogue) else None
         self.worker = None
         self.active = None
         self.state = "STOPPED"
@@ -221,6 +223,12 @@ class Runtime:
 
     async def _process(self):
         while True:
+            # Interleaved sources compete on content and recency, never on transport.
+            # Heads preserve the order of each independent conversation.
+            if self.arbiter is not None and self.queue.qsize() >= 2:
+                choice = await self.arbiter.choose(self.queue.heads())
+                if choice is not None:
+                    self.queue.choose(choice)
             item = await self.queue.get()
             self.active = item
             timer = None
