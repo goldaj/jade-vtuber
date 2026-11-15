@@ -180,6 +180,12 @@ class MobileGateway:
         return allowed, json.dumps(model, separators=(",", ":")).encode("utf-8")
 
     async def _static(self, writer, route: str):
+        if route in ("/icon-192.png", "/icon-512.png"):
+            from .mobile_icons import icon_png
+            size = 192 if route == "/icon-192.png" else 512
+            await self._send(writer, 200, await asyncio.to_thread(icon_png, size),
+                             "image/png")
+            return
         if route in WEB_FILES:
             filename, mime = WEB_FILES[route]
             path = self.web_root / filename
