@@ -6,6 +6,7 @@ bridge retains the historical participant-restricted mode for older callers.
 """
 import asyncio
 import os
+import re
 from dataclasses import dataclass, replace
 from collections.abc import Mapping
 from io import BytesIO
@@ -625,9 +626,18 @@ class DiscordVoiceBridge:
                 epoch = None if during_playback else item.audio_epoch
                 if value and self._capture_authorized(item.user_id, item.generation, item.session_id, epoch):
                     if self._open_voice:
-                        # Everyone audible in the active connection participates;
-                        # this mode does not inspect or classify room membership.
-                        participant_count = None
+                        # Read-only Discord membership snapshot for solo-vs-group
+                        # replies; this never excludes anyone from voice capture.
+                        channel = getattr(self.connection, "channel", None)
+                        members = getattr(channel, "members", None)
+                        if isinstance(members, (list, tuple)):
+                            humans = {member.id for member in members
+                                      if type(getattr(member, "id", None)) is int
+                                      and getattr(member, "bot", None) is False
+                                      and member.id != self.own_bot_id}
+                            participant_count = len(humans) if item.user_id in humans and 1 <= len(humans) <= 32 else 2
+                        else:
+                            participant_count = 2  # Unknown presence: never guess a solo room.
                     else:
                         channel = getattr(self.connection, 'channel', None)
                         try:
@@ -655,7 +665,7 @@ class DiscordVoiceBridge:
                         decision = self._decider.decide(
                             item.session_id, item.user_id, value, authorized=True,
                             consent_confirmed=True, participant_count=participant_count,
-                            direct_address=self._open_voice)
+                            direct_address=(self._open_voice and bool(re.search(r"(?<!\\w)jade(?!\\w)", value, re.I))))
                     if not decision.should_reply:
                         if decision.reason == 'muted':
                             self._stop_playback(self.connection)
@@ -1101,8 +1111,10 @@ class OpenVoiceBridge(DiscordVoiceBridge):
 
     _open_voice = True
 
-    def __init__(self, services, runtime, channel_id, *, threshold=550):
+    def __init__(self, services, runtime, channel_id, *, threshold=550,
+                 group_reply_rate=0.30):
         super().__init__(services, runtime, channel_id, threshold=threshold)
+        self._decider = ConversationTurnDecider(group_reply_probability=group_reply_rate)
         self._awaiting_channel_update = False
 
     def _speaker_allowed_locked(self, user_id):
