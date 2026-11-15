@@ -18,14 +18,15 @@ class Incoming:
     # Local mobile voice/text share one conversation identity, independently
     # of the transport. Never accept this value as a verified external account.
     input_modality: str = field(default="text", repr=False)
+    requested_speech: bool = field(default=False, repr=False)
 
     def __post_init__(self):
         if (not self.platform.strip() or not self.author.strip()
                 or not self.channel.strip() or not isinstance(self.text, str)
                 or not self.text.strip()):
             raise ValueError("invalid incoming message")
-        if self.input_modality not in ("text", "voice"):
-            raise ValueError("invalid input modality")
+        if self.input_modality not in ("text", "voice") or type(self.requested_speech) is not bool:
+            raise ValueError("invalid input/output modality")
         if len(self.text) > 4000:
             raise ValueError("incoming message too long")
         if (not isinstance(self.context, tuple) or len(self.context) > 6
