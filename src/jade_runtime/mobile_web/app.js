@@ -68,9 +68,12 @@
       method: "POST", mode: "same-origin", credentials: "omit",
       cache: "no-store", headers, body
     });
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
       authorizeAgain();
-      throw new Error("Accès refusé ou session privée expirée.");
+      throw new Error("Jeton mobile incorrect : ressaisis-le.");
+    }
+    if (response.status === 403) {
+      throw new Error("Accès réservé au propriétaire Tailscale : vérifie ton VPN et ton identité.");
     }
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -106,7 +109,7 @@
 
   async function playWav(base64Audio, intent) {
     stopPlayback();
-    if (!base64Audio || !soundEnabled) return;
+    if (!base64Audio || !soundEnabled || document.hidden) return true;
     try {
       const context = await ensureAudioContext();
       // Limit the size of an untrusted API response.
@@ -146,9 +149,10 @@
       src.start(0);
       mood.textContent = "Jade te répond…";
       animateMouth();
+      return true;
     } catch (_) {
-      setStatus("Réponse écrite reçue, mais la lecture audio a échoué.");
       avatar().setMouth(0);
+      return false;
     }
   }
 
@@ -157,7 +161,11 @@
     addBubble(String(result.reply || "…"), "jade");
     avatar().setIntent(result.intent || "neutral");
     if (result.audio_wav_b64 && soundEnabled) {
-      await playWav(result.audio_wav_b64, result.intent || "neutral");
+      const played = await playWav(result.audio_wav_b64, result.intent || "neutral");
+      if (!played) {
+        setStatus("Réponse écrite reçue, mais la lecture audio a échoué.");
+        return;
+      }
     } else if (result.audio_unavailable && soundEnabled) {
       setStatus("La réponse est là, mais la synthèse vocale est indisponible.");
       return;
