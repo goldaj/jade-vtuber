@@ -59,6 +59,21 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
         c = msg("Jadette était là", ident=3, channel=10)
         self.assertIsNone(policy.observe(c, parse_discord_message(c), own_user_id=42))
 
+    def test_memory_commands_are_selected_without_jade_mention(self):
+        policy = DiscordTextPolicy(auto_rate=0)
+        for num, text in enumerate(
+            ("!jade-memoire", "!jade-memoire activer",
+             "!jade-memoire oublier", "!jade-memoire etat"), start=1
+        ):
+            with self.subTest(text=text):
+                source = msg(text, ident=num)
+                self.assertTrue(policy.observe(
+                    source, parse_discord_message(source),
+                    own_user_id=42).force_reply)
+        invalid = msg("!jade-memoire inventer", ident=100)
+        self.assertIsNone(policy.observe(
+            invalid, parse_discord_message(invalid), own_user_id=42))
+
     def test_dm_and_reply_to_jade_are_direct(self):
         policy = DiscordTextPolicy(auto_rate=0)
         dm = msg("Salut", ident=1, guild=None)
