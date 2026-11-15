@@ -123,3 +123,7 @@ Les sources du personnage sont dans `jade-modeling/`. Après clonage, installer
 Git LFS puis lancer `git lfs pull` pour récupérer les ressources volumineuses.
 Le contrôle d’intégrité s’exécute avec `python jade-modeling/verify_assets.py`.
 Les documents de suivi du projet et l’index des conversations sont dans `docs/`.
+
+## Launcher local pour Windows
+
+Un [launcher Windows personnel](docs/gpt6-jade/LAUNCHER-WINDOWS-20261115.md) permet de choisir une branche et de démarrer les profils Discord, avatar, micro, mobile ou démo. Depuis le clone sur D:, exécuter une fois `Installer-Launcher-Jade.cmd`, puis `D:\Jade\launcher\Lancer-Jade.cmd`. Le lancement réel reste soumis au préflight, à la configuration privée et aux tests matériels sur le PC.

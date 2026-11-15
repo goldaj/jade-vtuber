@@ -70,3 +70,7 @@ La spécification courante pour l'usage oral naturel de Jade **sans obligation d
 ## Contre-audit transverse des branches Jade (15 novembre 2026)
 
 Après les PR #6 (mémoire), #8 (Discord unifié), #9 (autobiographie) et #7 (PWA mobile), consulter **[AUDIT-TRANSVERSE-20261115.md](docs/gpt6-jade/AUDIT-TRANSVERSE-20261115.md)** avant toute reprise. La branche d'intégration `review/jade-mobile-memory-integration-20261115` vérifie les quatre lots sans déploiement. Protéger le contenu privé des logs, ne pas divulguer de DM dans le vocal, conserver les garde-fous de suppression des souvenirs et comparer les SHA des PR avant fusion. Les tests GitHub n'équivalent pas aux essais matériels. Ne pas toucher au VPS Hyperliquid ni à `main` sans nouvelle autorisation du propriétaire.
+
+## Launcher Windows local (15 novembre 2026)
+
+Le programme de lancement pour le PC Jade est en PR isolée `feat/jade-windows-launcher-20261115` vers `develop`. Lire [le guide et la passation](docs/gpt6-jade/LAUNCHER-WINDOWS-20261115.md) avant toute retouche. Le launcher est installé sur `D:\Jade\launcher` **hors du clone Git**, choisit une branche distante, met à jour uniquement en fast-forward sur une copie locale propre, prépare Poetry/LFS, effectue un préflight puis lance un profil en console. Ne pas ajouter de secrets, changer les routes Tailscale ni toucher à `main` ; validation Windows sur le poste encore nécessaire.

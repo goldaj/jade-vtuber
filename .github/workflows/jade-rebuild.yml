@@ -26,6 +26,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Parse Windows launcher scripts
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $files = @('scripts/jade-launcher.ps1', 'scripts/jade-runner.ps1', 'scripts/install-jade-launcher.ps1')
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Join-Path $pwd $file), [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Host $_.ToString() }
+              exit 1
+            }
+          }
       - name: Python 3.11
         uses: actions/setup-python@v5
         with:
