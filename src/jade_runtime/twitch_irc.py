@@ -7,6 +7,9 @@ import asyncio
 import logging
 import re
 import ssl
+import time
+from collections import OrderedDict
+from dataclasses import replace
 from collections.abc import Awaitable, Callable
 
 from .messages import Incoming
@@ -57,6 +60,8 @@ class TwitchIRC:
         self.send_lock = asyncio.Lock()
         self.last_sent = -1e9
         self.dropped = 0
+        # Active Twitch chatters only; IRC cannot reveal silent viewers.
+        self.participants: OrderedDict[str, float] = OrderedDict()
 
     async def _write(self, line):
         if self.writer is None:
@@ -92,8 +97,20 @@ class TwitchIRC:
                 incoming = parse_message(line)
                 if incoming is not None and incoming.channel == self.channel:
                     if incoming.author.casefold() != self.login.casefold():
+                        now = time.monotonic()
+                        for uid, seen in list(self.participants.items()):
+                            if now - seen >= 600:
+                                self.participants.pop(uid, None)
+                        uid = incoming.account_id or incoming.author.casefold()
+                        self.participants[uid] = now
+                        self.participants.move_to_end(uid)
+                        while len(self.participants) > 256:
+                            self.participants.popitem(last=False)
+                        # 1 human chatter + Jade => always answer.
+                        # With several active chatters, Dialogue applies 30%.
+                        selected = replace(incoming, force_reply=True) if len(self.participants) == 1 else incoming
                         try:
-                            await self.on_message(incoming)
+                            await self.on_message(selected)
                         except (asyncio.QueueFull, RuntimeError):
                             # Local overload or shutdown must not break IRC/PING.
                             self.dropped += 1
