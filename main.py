@@ -26,7 +26,7 @@ class DemoChat:
 
 async def console(*, live=False, voice=False, mic=False, twitch=False,
                   discord=False, vts=False, discord_voice=False, http=False,
-                  avatar=False, mobile=False):
+                  avatar=False, mobile=False, all_channels=False):
     config = Settings.load()
     config.validate()
     enable_console_logs()
@@ -36,6 +36,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         config.require_openai()
     if voice and config.audio_output == "none" and not discord_voice:
         raise ValueError("set JADE_AUDIO_OUTPUT=ffplay before enabling billed TTS")
+    if all_channels and not config.twitch_send:
+        raise ValueError("JADE_TWITCH_SEND=1 is required so Twitch can reply in all-channel mode")
     if twitch and not config.twitch_enabled:
         raise ValueError("set JADE_TWITCH_ENABLED=1 to allow Twitch connection")
     if discord and (not config.discord_token or config.discord_token == "example"):
@@ -311,7 +313,8 @@ def main():
         settings = Settings.load()
         args.update(live=True, voice=True, mic=True, twitch=True,
                     discord=True, discord_voice=True, http=True,
-                    avatar=True, mobile=True, vts=settings.vts_enabled)
+                    avatar=True, mobile=True, vts=settings.vts_enabled,
+                    all_channels=True)
     if preflight:
         from src.jade_runtime.diagnostics import inspect_environment
         try:
