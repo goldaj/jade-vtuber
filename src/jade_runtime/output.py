@@ -295,9 +295,14 @@ class SpeechOutput:
                 if discord_voice:
                     require_session()
                 path.parent.mkdir(parents=True, exist_ok=True)
-                tmp = path.with_name(path.name + ".tmp")
-                tmp.write_text(spoken_text, encoding="utf-8")
-                tmp.replace(path)
+                if reply.source.platform in ("microphone", "local_http"):
+                    # Multiple active supports must not make a private local
+                    # answer visible in the public OBS subtitle overlay.
+                    path.write_text("", encoding="utf-8")
+                else:
+                    tmp = path.with_name(path.name + ".tmp")
+                    tmp.write_text(spoken_text, encoding="utf-8")
+                    tmp.replace(path)
                 subtitle_written = True
                 if discord_voice:
                     require_session()
