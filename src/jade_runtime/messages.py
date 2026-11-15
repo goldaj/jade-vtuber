@@ -19,6 +19,8 @@ class Incoming:
     account_id: str = field(default="", repr=False)
     # Ephemeral key assigned only by trusted Discord connectors.
     conversation_id: str = field(default="", repr=False)
+    # Trusted Discord parser marks direct messages: no public voice playback.
+    private_channel: bool = field(default=False, repr=False)
     # Mobile PWA requests use the trusted gateway, not the Discord session.
     input_modality: str = field(default="text", repr=False)
     requested_speech: bool = field(default=False, repr=False)
@@ -31,6 +33,8 @@ class Incoming:
         if (self.input_modality not in ("text", "voice")
                 or type(self.requested_speech) is not bool):
             raise ValueError("invalid input/output modality")
+        if type(self.private_channel) is not bool:
+            raise ValueError("invalid private channel flag")
         if len(self.text) > 4000:
             raise ValueError("incoming message too long")
         if (not isinstance(self.context, tuple) or len(self.context) > 6
