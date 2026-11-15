@@ -11,6 +11,7 @@
 
 | Priorité | Constat | Traitement |
 | --- | --- | --- |
+| P0 | Tailscale Serve peut réécrire le `Host` du backend en `localhost` alors que `Origin` reste l’URL HTTPS du téléphone. La comparaison initiale Host/Origin empêchait alors les POST Android. | Ajout obligatoire de `JADE_MOBILE_PUBLIC_ORIGIN=https://<nom-pc>.<tailnet>.ts.net` ; le backend compare l’origine du navigateur à cette URL configurée et non au Host réécrit. Nouveau test HTTP reproduisant le reverse proxy. |
 | P1 | Les ressources PWA / SDK / modèle en GET étaient servies sans identification personnelle. Toute personne du tailnet pouvant joindre le service pouvait les demander, même sans Bearer. | Ajout obligatoire de `JADE_MOBILE_OWNER_LOGIN` dans la configuration et contrôle du `Tailscale-User-Login` envoyé par **Tailscale Serve** sur **toutes** les routes GET et POST ; les requêtes sans identité ou avec autre identité reçoivent 403. L'API conserve aussi un Bearer indépendant. Tests hors ligne négatifs et positifs ajoutés. |
 | P1 | Le bouton microphone pouvait recevoir des touches multiples pendant la demande de permission ou la fermeture asynchrone, conduisant potentiellement à plusieurs captures. | Ajout du verrou `starting` et de `busy` avant fermeture ; une seule capture active, relâchement des pistes, fermeture du contexte audio ; en cas de passage en arrière-plan, abandon sans envoyer la parole enregistrée. |
 | P1 | `Voix coupée` ne désactivait pas la synthèse payante lorsque le message venait du micro. | Ajout du contrôle `X-Jade-Speak: 0|1`. Le backend ne facture plus le TTS pour une entrée vocale lorsque la sortie sonore est désactivée. Test hors ligne. |
@@ -32,6 +33,8 @@ Le chargeur actuel utilise `pixi-live2d-display` (PixiJS 6 et bundle Cubism 4). 
 Sources techniques à contrôler : https://github.com/guansss/pixi-live2d-display ; https://www.live2d.com/en/sdk/download/web/ ; https://github.com/omniwaifu/pixi-live2d5 (alternative candidate non encore recettée).
 
 ### 2. Authentification réelle sur le téléphone : gate réseau bloquant
+
+L'URL HTTPS attendue **doit être relevée par `tailscale serve status` sur le PC** et inscrite dans `JADE_MOBILE_PUBLIC_ORIGIN`. Ce paramètre évite de supposer que le `Host` reçu par le backend est le même que l'`Origin` du navigateur : la réécriture par Go `ReverseProxy.SetURL()` est un cas réel. Le test automatisé couvre la situation `Host=127.0.0.1:<port>` + `Origin=https://...ts.net`, sans en déduire qu'un navigateur réel a été testé.
 
 Tailscale Serve transmet l'en-tête `Tailscale-User-Login` et retire les versions forgées par les clients distants ; c'est une garantie du proxy et **non** de Python lorsqu'on se connecte directement au loopback. Le backend exige cet en-tête pour toutes les routes en production. Le test HTTP direct du PC renvoie désormais 403 par conception ; la vérification de l'avatar doit passer par l'URL privée HTTPS affichée par Serve. Activer la règle d'accès tailnet strictement pour Goldaj et ne pas exposer le port au LAN, à Funnel ni à Internet.
 
