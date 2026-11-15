@@ -1,129 +1,205 @@
-# Jade Mobile : client privé Goldaj, architecture et passation Codex
-**Date : 15 novembre 2026. Branche : `feat/jade-private-mobile-pwa-20261115`. PR vers `develop` ; aucune fusion dans `develop` ou `main` sans revue.**
+# Guide opérationnel : Jade sur Windows et Android (passation à Codex)
 
-## 1. Choix retenu et périmètre livré
+**Mise à jour du 15 novembre 2026. Statut : code livré sur \`develop\`, installation réelle non effectuée.**
 
-**PWA installable sur Android + Live2D Web transparent + transport HTTPS privé via Tailscale Serve directement du téléphone au PC Windows qui fait tourner Jade.** La PWA reste un client : le LLM, le STT, le TTS, les intentions et la mémoire sont calculés par le runtime Python du PC, non par le téléphone ou le VPS.
+Ce document est **la procédure courante que Codex doit suivre sur le PC de Goldaj à sa demande**. Il remplace les étapes historiques où la PWA était lancée seule via \`--live --mobile\` et les instructions mentionnant une PR mobile non fusionnée.
 
-C'est volontairement distinct du VPS Hyperliquid. Le dépôt de trading indique déjà que Tailscale Serve est utilisé sur ce VPS pour l'IA :443 et le dashboard :8443. **Aucune route ni configuration de ce VPS n'est modifiée par ce chantier.** L'autre solution étudiée, streaming de la fenêtre Windows en vidéo, a été écartée du trajet principal car plus coûteuse en bande passante et en latence. Le rendu Live2D dans le navigateur n'a pas besoin de « chroma key » ; l'alpha du canvas laisse apparaître le décor CSS derrière Jade.
+## 0. Demande et résultat attendu
 
-### Ce qui fonctionne dans le code, en mode opt-in
+Le propriétaire veut, depuis **son PC Windows avec les données et le travail Jade sur D:** :
 
-- `main.py --live --mobile` lance un serveur distinct sur **`127.0.0.1:8766` par défaut**, sans ouvrir de port vers Internet. `JADE_MOBILE_TOKEN` est différent de `JADE_HTTP_TOKEN` ; jeton de 32 à 256 caractères requis et transmis en Bearer, jamais en URL, cookie ou stockage local du navigateur. En plus, **`JADE_MOBILE_OWNER_LOGIN` est obligatoire** : le serveur exige la correspondance exacte de l'en-tête d'identité `Tailscale-User-Login` injecté par Tailscale Serve avant **toute** page, image du modèle ou API ; les requêtes HTTP directes sans cet en-tête reçoivent 403.
-- Interface visuelle PWA : décor chaleureux et animable par CSS, texte et microphone, sous-titres de dialogue, sélection de la synthèse vocale, nouvelle discussion, mode plein écran, couleurs adaptatives, manifest/icône SVG, service worker **sans cache privé**. Fichiers dans `src/jade_runtime/mobile_web/`.
-- `GET /` sert le client ; `GET /assets/*`, `GET /vendor/*` et `GET /model/*` sont des ressources en lecture seule, limitées à une whitelist. Le modèle r20 est servi à partir de son répertoire existant après un vrai `git lfs pull`.
-- `POST /api/chat` reçoit `{text,session,speak}` ; `POST /api/voice` reçoit un court WAV mono PCM16/16 kHz produit dans le navigateur (en-tête `X-Jade-Speak: 0|1`, permettant de désactiver réellement les appels TTS lorsque la voix est coupée). Pas d'enregistrement WAV sur disque : octets en RAM, envoyés au service STT OpenAI existant, puis au dialogue Jade et au TTS OpenAI pour une réponse vocale.
-- Les réponses portent `reply`, `intent`, `transcript` (voix uniquement), `audio_wav_b64` facultatif. Le client décode le WAV, le joue sur Android et anime approximativement la bouche d'après l'amplitude du son réellement lu.
-- Les deux entrées appartiennent à **Goldaj, créateur et père de Jade** : `Incoming(platform="mobile", author="Goldaj", input_modality="text"|"voice")`. La même `session` logique est conservée entre voix et texte sur ce client, à la différence de la fusion Discord multicanal qui reste un autre chantier. Le rôle de Goldaj est ajouté au contexte *uniquement pour la plateforme mobile produite par le serveur authentifié*.
-- L'intention `[INTENT:...]` est toujours parsée/supprimée par le moteur actuel ; le client lit `Reply.intent`. Le traitement TTS du mobile n'envoie **pas** une seconde lecture à `ffplay` ni à VTube Studio sur PC.
-- Modes : le micro est initialement **appuyer pour parler, toucher à nouveau pour envoyer** (20 secondes maximum). Un mode voix continue, interruptions/barge-in et audio streaming temps réel ne sont **pas encore livrés** ; le code ne prétend pas les réaliser.
+1. Choisir la branche Git dans le launcher, puis **lancer une seule instance de Jade présente simultanément sur tous ses supports** : Discord écrit/vocal, Twitch, micro du PC, API HTTP locale, PWA Android privée, voix et avatar. Aucun profil ni priorité fixe par support. L'arbitrage de l'ordre des réponses appartient au runtime Jade.
+2. Installer une PWA Android réservée à Goldaj. Elle permet d'écrire, de parler avec un bouton microphone, d'entendre la réponse et d'afficher Jade r20 animée au-dessus d'un décor. **Ce n'est pas un APK** et ne nécessite pas le VPS Hyperliquid.
+3. Après installation initiale, usage normal : **Jade et Tailscale actifs sur le PC ; Tailscale actif sur Android ; ouverture de l'icône Jade installée dans Chrome**. PC éteint ou Jade arrêtée : service indisponible.
+4. Codex doit **faire les manipulations réalisables sur le PC lorsqu'il aura accès**, vérifier les résultats, présenter les opérations nécessitant un compte ou une autorisation humaine et ne pas inventer des succès.
 
-### Dépendance graphique : SDK Web Cubism
+**Références de code :** intégration de la PWA/mémoire/Discord dans \`develop\` (PR #11), launcher Windows (PR #13), correction « tous les supports » et arbitrage (PR #14). \`main\` n'est pas la branche de travail de ce déploiement. Lire aussi [launcher Windows](LAUNCHER-WINDOWS-20261115.md), [audit transverse](AUDIT-TRANSVERSE-20261115.md), et \`AGENTS.md\`. Les anciens journaux de PR #6/#7/#8/#9 décrivent une situation antérieure à la fusion.
 
-Le SDK Live2D Web requiert son moteur **Cubism Core propriétaire**. Pour éviter de publier un composant dont la redistribution est encadrée, **aucun `live2dcubismcore.min.js` ni bundle tiers n'est intégré au dépôt**. La PWA tente de charger trois fichiers sur le PC Jade, dans un dossier privé hors Git :
+## 1. Séquence de reprise obligatoire pour Codex sur le vrai PC
 
-| Nom dans le dossier privé | Provenance |
-| --- | --- |
-| `pixi.min.js` | PixiJS 6.x, version de la génération compatible avec l'adaptateur |
-| `live2dcubismcore.min.js` | Téléchargement officiel Live2D Cubism SDK for Web, après acceptation de la licence |
-| `cubism4.min.js` | `pixi-live2d-display`, bundle Web Cubism 4 prévu pour Cubism 3/4, **non garanti pour les exports Cubism 5**. Vérifier d'abord la version réelle du `.moc3` r20. Si export Cubism 5, ne pas simplement changer la version de `live2dcubismcore.min.js` ; utiliser un adaptateur prévu pour SDK 5 (à expertiser, par exemple `pixi-live2d5` + PixiJS 8) ou intégrer le SDK Web officiel, puis adapter `avatar.js`. |
+**Phase A, inventaire sans modification :**
 
-Exemple local : `D:\Jade\private\mobile-sdk\`. Le script `scripts/setup-jade-mobile-sdk.ps1` copie les trois fichiers **déjà acquis** vers ce dossier et affiche leur SHA-256. Vérifier d'abord leurs licences et leur provenance : script volontairement non téléchargeur.
+- Vérifier que la session est bien celle du PC Jade Windows, le volume \`D:\`, le clone Git existant, l'état \`git status --short --branch\`, les branches et processus Jade éventuels. Ne **pas** écraser des changements de Terra/Codex, lancer un \`reset --hard\`, nettoyer des données uniques, changer \`main\` ou tuer d'autres logiciels.
+- Localiser le vrai dépôt Jade, les dossiers privés, le fichier de secrets existant, Python 3.11, Poetry 2.2.1, Git + LFS, FFmpeg/\`ffplay\`, SDK Web Live2D éventuel et installation Tailscale **sur le PC**. Les chemins ci-dessous sont des emplacements cibles, pas une preuve que ces dossiers existent.
+- Vérifier les ports et la configuration actuelle avant toute écriture : \`tailscale status\`, \`tailscale serve status\`, \`tailscale version\` et les éventuels ports déjà utilisés (\`8766\` mobile, \`8765\` HTTP local). Ne pas publier dans le chat de tokens, contenu du \`.env\`, transcriptions ou identités tierces.
+- Vérifier l'état des accès et autorisations réels (Discord/Twitch/Tailscale/OpenAI) en demandant au propriétaire uniquement l'action qu'il doit effectuer lui-même (connexion, portail, licence), sans recopier ses secrets dans la conversation.
 
-Lorsque les bibliothèques manquent ou que le modèle r20 ne se charge pas, le décor et le chat restent disponibles, **mais l'avatar Live2D n'est pas dessiné** ; un message explicite signale la limite. C'est une dégradation contrôlée, pas une preuve de rendu réussi. Le model3.json r20 ne déclarant pas le mouvement Idle pourtant présent, le serveur ajoute virtuellement sa référence sans modifier le fichier source du modèle.
+**Phase B, préparation et configuration :** utiliser les étapes 2 à 5 ci-dessous, vérifier chaque commande et conserver la configuration existante si elle fonctionne.
 
-Sources des licences et SDK :
-- https://docs.live2d.com/en/cubism-sdk-manual/cubism-sdk-for-web/
-- https://www.live2d.com/en/sdk/download/web/
-- https://github.com/guansss/pixi-live2d-display
-- https://www.live2d.com/en/sdk/license/
+**Phase C, recette PC et Android :** tests hors ligne d'abord, puis démarrage réel **uniquement quand le propriétaire accepte les connexions et appels OpenAI facturables**. Ne pas conclure à la réussite sur la base de CI GitHub : il faut des essais sur les appareils.
 
-## 2. Installation sur le PC Windows, sans toucher au VPS
+**Phase D, passation :** fournir un compte-rendu au propriétaire avec les éléments réellement installés, les vérifications réussies/échouées, la vraie URL privée (si autorisé, jamais le jeton), l'état du Live2D et les actions Android restantes. Ne pas signaler « terminé » si une dépendance ou un test matériel manque.
 
-**Ne lancer aucune commande de ce guide depuis le VPS Hyperliquid.** Le serveur Jade tourne sur ton PC Windows, avec tous les fichiers de travail sur **D:**. Vérifier les branches et processus locaux avant toute reprise.
+## 2. Mettre le code et le launcher à jour sur D:
 
-1. Travailler sur la PR mobile, vérifier les éventuels travaux Codex/Terra en parallèle et installer les dépendances Python déjà utilisées par Jade.
-2. Restaurer les binaires Live2D locaux : `git lfs pull`, puis `python jade-modeling/verify_assets.py`. Le package r20 se trouve dans `jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/`. Ses images et le `.moc3` sont enregistrés via Git LFS et peuvent apparaître comme des pointeurs sans les objets.
-3. Télécharger/acquérir légalement les trois bibliothèques Web Live2D sur le PC, vérifier qu'elles fonctionnent avec la version r20, puis copier vers un dossier privé sous D: à l'aide du script (ou manuellement). Ni ce SDK ni ses fichiers binaires ne doivent être committés sur GitHub.
-4. Obtenir d’abord la vraie URL HTTPS depuis `tailscale serve status` **sur le PC Windows**, même si Jade n'est pas encore démarrée : le proxy peut renvoyer temporairement une erreur tant que le port backend n'écoute pas. En déduire **sans l'inventer** la valeur exacte de `JADE_MOBILE_PUBLIC_ORIGIN` (pas de `/` final). Inscrire ensuite les valeurs suivantes dans le **fichier de configuration privé** Jade (pas dans `.env.example` versionné pour les secrets) :
+Sur le **clone existant** du PC, vérifier les travaux locaux avant de changer de branche. Si le dépôt est propre et la cible est \`develop\` :
 
-```dotenv
-# Exemple : adapter au vrai chemin de ton poste, ne pas recopier un jeton dans Git.
-JADE_MOBILE_ENABLED=1
-JADE_MOBILE_TOKEN=<jeton aleatoire prive d'au moins 32 caracteres>
-JADE_MOBILE_OWNER_LOGIN=<identifiant de connexion Tailscale du propriétaire>
-JADE_MOBILE_PUBLIC_ORIGIN=https://<nom-reel-du-pc>.<tailnet>.ts.net
-JADE_MOBILE_PORT=8766
-JADE_MOBILE_VENDOR_DIR=D:\Jade\private\mobile-sdk
-# Optionnel, sinon le package r20 du depot est utilise :
-JADE_MOBILE_MODEL_DIR=D:\Jade\jade-vtuber\jade-modeling\runtime-installed\Jade_professional_r20_idle_complete
-```
+\`\`\`powershell
+git status --short --branch
+git fetch --prune origin
+git switch develop
+git merge --ff-only origin/develop
+git lfs pull
+poetry sync --only main -E all
+\`\`\`
 
-5. Tester **sans connexion ni facturation** :
+Ne jamais remplacer le clone existant ni supposer son chemin. En cas de modifications locales, **ne pas forcer** : présenter le diff et préserver le travail. Les commandes Python se lancent dans le venv Poetry du dépôt. Vérifier les binaires du modèle après LFS (si présent) :
 
-```powershell
-python main.py --preflight --live --mobile
-python -m compileall -q src main.py
-python -m unittest discover -s tests -v
-```
+\`\`\`powershell
+poetry run python jade-modeling/verify_assets.py
+\`\`\`
 
-6. Puis, **après ton autorisation pour les appels OpenAI facturés**, lancer depuis le PC :
+La première fois **ou après une modification du code du launcher**, double-cliquer \`Installer-Launcher-Jade.cmd\` depuis le dépôt : il installe un lanceur **hors Git**, dans \`D:\Jade\launcher\Lancer-Jade.cmd\`. Il conserve le chemin du fichier privé déjà configuré, mais il faut s'assurer qu'il pointe vers le bon fichier. Il est possible de créer un raccourci Bureau. Le programme ne se met **pas** à jour tout seul lorsque le clone change de branche.
 
-```powershell
-python main.py --live --mobile
-```
+**IMPORTANT :** le launcher actuel ne possède **aucun sélecteur de mode**. La seule commande runtime attendue est \`poetry run python main.py --all-channels\`; préflight : \`poetry run python main.py --preflight --all-channels\`. Tous les canaux sont activés ensemble. Son démarrage est **bloquant si un prérequis obligatoire manque**, au lieu de démarrer silencieusement un sous-ensemble.
 
-**Attention audit :** l'accès direct `http://127.0.0.1:8766/` renvoie maintenant **403 sans identité Tailscale Serve**, y compris pour une simple page ; vérifier le rendu via l'URL privée HTTPS Tailscale. Pour diagnostic CLI local uniquement, une requête explicitement construite avec l'en-tête `Tailscale-User-Login` peut confirmer la réponse, mais cela ne valide pas le proxy ni le téléphone.  `--voice` n'est **pas nécessaire** pour la voix mobile, puisque la passerelle utilise directement le même TTS et renvoie le WAV au navigateur. Éviter d'activer simultanément `--http` sur le même port ; la config l'interdit.
+## 3. Configurer Tailscale Serve sur le PC et Tailscale Android
 
-### Accès Android par Tailscale Serve
+1. Installer/ouvrir Tailscale sur **le PC Jade Windows** et l'y connecter, puis installer/ouvrir Tailscale sur **Android** en utilisant le **même tailnet** et un compte utilisateur personnel. Des appareils Tailscale « tagged » ne transmettent pas forcément l'identité utilisateur attendue par cette application.
+2. Sur le PC, vérifier les certificats HTTPS du tailnet, MagicDNS, les politiques d'accès et les routes Serve existantes. La CLI récente de Tailscale a changé par rapport aux anciens guides. Sur Windows, utiliser si nécessaire **Windows Terminal / PowerShell en administrateur** pour les commandes Serve. Référence officielle : https://tailscale.com/docs/features/tailscale-serve et https://tailscale.com/docs/reference/tailscale-cli/serve.
+3. Sur le **PC Jade seulement**, inspecter sans écraser :
 
-Vérifier que le PC et le téléphone sont connectés au **même tailnet**, que les autorisations limitent ce nouveau service à ton compte/appareil et que les certificats HTTPS fonctionnent. Depuis le PC Jade uniquement :
-
-```powershell
+\`\`\`powershell
+tailscale version
+tailscale status
 tailscale serve status
-# Si le port HTTPS par defaut du PC est disponible et sans route existante :
+tailscale serve --help
+\`\`\`
+
+4. **Uniquement si le PC n'a pas de route Serve incompatible sur le port HTTPS choisi**, ajouter le proxy privé persistant vers le backend Jade sur loopback :
+
+\`\`\`powershell
 tailscale serve --bg 8766
 tailscale serve status
-```
+\`\`\`
 
-La commande fournit normalement une URL privée `https://<nom-du-pc>.<tailnet>.ts.net/`. **Ne pas inventer d'adresse : lire celle réellement affichée sur ton PC.** Si Serve possède déjà une route, choisir une route distincte avec la version de CLI installée, plutôt que remplacer une application existante. Les ports :443 et :8443 du **VPS Hyperliquid** ne sont pas concernés, puisqu'il s'agit d'un autre appareil Tailscale.
+Lire l'adresse HTTPS **réellement renvoyée** : généralement \`https://nom-reel-du-pc.nom-reel-du-tailnet.ts.net\`. Si une route existe déjà sur ce PC, choisir une route/port compatible avec la version installée **sans écraser l'existant** et noter l'URL avec son port éventuel. Les routes Tailscale \`:443\`/\`:8443\` du **VPS Hyperliquid sont sur une autre machine** et **ne doivent jamais être modifiées** pour Jade.
 
-Ouvrir cette URL HTTPS sur Android Chrome, puis « Ajouter à l'écran d'accueil » ou « Installer l'application ». Saisir le jeton privé du client mobile dans l'écran d'accès. La page **ne le stocke pas** : il faudra le ressaisir au rechargement complet. Autoriser le microphone Android à la demande et vérifier les paramètres d'absence d'écho.
+5. Vérifier que la configuration est en **Serve privé**, pas en Funnel public. Ne jamais exposer \`0.0.0.0:8766\`, configurer une redirection de box/pare-feu, ou rendre les données mémoire accessibles publiquement. Le service Python reste uniquement sur \`127.0.0.1:8766\`. Tailscale Serve fournit au backend l'en-tête vérifié \`Tailscale-User-Login\`. **Ne pas confondre** le nom de l'appareil et le login réel du compte Tailscale. Dans \`JADE_MOBILE_OWNER_LOGIN\`, saisir le login exact du propriétaire associé au téléphone, typiquement une adresse e-mail ; le code compare cet en-tête exactement (hors casse).
+6. Avec \`--bg\`, Serve demeure normalement enregistré après un redémarrage de Tailscale/Windows, mais **Jade elle-même doit être démarrée sur le PC** pour répondre. Vérifier la reconnexion et le comportement après reboot sur le poste réel.
 
-**Interdictions :** Tailscale Funnel, ouverture d'un port public, bind `0.0.0.0`, hébergement de la mémoire SQLite sur le VPS trading, collage du jeton dans l'URL, déploiement d'un SDK propriétaire dans un dépôt public.
+## 4. Secrets et réglages privés de Jade
 
-## 3. Isolation, limites et contrats à préserver
+La configuration est chargée par \`src/utility/private_config.py\`. **Priorité aux variables d'environnement du processus**, puis au fichier \`JADE_SECRETS_FILE\`, puis aux anciens emplacements de compatibilité. Sur le poste actuel, **retrouver le vrai fichier avant de créer une copie**. Si un nouveau fichier est nécessaire, préférer par exemple \`D:\Jade\private\jade.env\`, avec droits restreints et **hors du dépôt Git**. Dans le launcher, renseigner **seulement le chemin** vers ce fichier privé, pas son contenu.
 
-- Le serveur HTTP est limité à `127.0.0.1` ; **toutes les routes GET et POST sont filtrées par l'identifiant propriétaire de Tailscale Serve**, avec vérification explicite de l'origine HTTPS configurée pour chaque requête POST lorsque le navigateur en transmet une, et chaque requête de conversation doit présenter en plus le jeton Bearer. Il n'y a pas de cookie, de CORS, d'analytics, de fonts distantes ni d'exposition du moteur OpenAI au téléphone.
-- L'identité Goldaj est **attribuée par la passerelle authentifiée et privée** après contrôle propriétaire Tailscale et Bearer, pas par un pseudo reçu de Discord ou Twitch. Dans cette PR, la session vocale/texte mobile est unifiée ; **la mémoire SQLite durable de la PR #6 n'est pas encore intégrée** et La PR mémoire #6 a été mise à jour pour résoudre `mobile` et `microphone` vers la même clé `("microphone", "goldaj")`. Codex devra encore **fusionner les deux PR et initialiser ce profil au démarrage mobile**, sans créer un double profil et sans affaiblir la reconnaissance des tiers.
-- Le dossier `/model` ne sert que les fichiers listés par le modèle ; les SDK tiers locaux sont servis en lecture seule sous `/vendor`. Il n'y a pas de cache Service Worker des données privées. **Les assets statiques ne sont pas sous Bearer** afin que Live2D puisse charger ses dépendances depuis un navigateur ; leur accès est toutefois refusé à toute requête qui ne possède pas le bon en-tête d'identité Tailscale injecté par Serve. Ne jamais rendre le port HTTP accessible au réseau public ; un processus local au PC pourrait usurper un en-tête, car il contrôle déjà le loopback.
-- Les messages peuvent figurer dans les logs `jade.conversation` existants, mais la passerelle n'enregistre pas les WAV/transcriptions sur disque. Il faut gérer séparément la politique de conservation des logs.
-- Correctifs de revue : démarrage micro unique, abandon de l'enregistrement si Android passe en arrière-plan (aucun envoi automatique), retour d'erreur audio conservé, choix de ne pas facturer le TTS si `Voix coupée`, service worker réseau seulement sans cache.
-- Limites actuelles : pas de streaming PCM/WebRTC, pas de reprise fiable de lecture lors d'une perte réseau, aucune notification push, pas d'APK Android généré, pas de mode toujours à l'écoute, pas de visuel Live2D validé sur un téléphone réel. Une PWA installable suffit à l'objectif de **client dédié V1**, l'APK étant une option ultérieure.
-- Le modèle Jade reste sur le PC : **PC éteint = Jade indisponible**, même si le VPS trading fonctionne.
-- Le chargeur `pixi-live2d-display` est documenté principalement pour Cubism 3/4 (source : https://github.com/guansss/pixi-live2d-display). **La seule présence du package r20 ne démontre pas la compatibilité** avec le Web Core 5. Le SDK officiel disponible en 2026 est Cubism 5 Web R5 ; comparer l'export réel du `.moc3` et l'adaptateur avant toute conclusion. Un fork Cubism 5/PixiJS 8 existe (https://github.com/omniwaifu/pixi-live2d5) mais sa maintenance, ses licences et sa compatibilité n'ont pas été recettées. Codex doit choisir une pile cohérente avant de déployer l'avatar. Ne pas présenter son rendu comme déjà vérifié.
+Valeurs exactes à vérifier ou renseigner dans le fichier privé ; les marqueurs entre chevrons sont **des exemples**, ne jamais les laisser comme valeurs réelles :
 
-## 4. Tests de reprise pour Codex
+\`\`\`dotenv
+# Services partagés, tous activés par --all-channels :
+OPENAI_API_KEY=<cle_ouverte_reelle>
+DISCORD_TOKEN=<jeton_discord_existant>
+DISCORD_VOICE_CHANNEL=<id_numerique_du_salon>
+JADE_TWITCH_ENABLED=1
+JADE_TWITCH_SEND=1
+TWITCH_CHANNEL=<chaine_twitch>
+TWITCH_BOT_LOGIN=<compte_bot_twitch>
+TWITCH_TOKEN=<jeton_twitch>
+JADE_HTTP_ENABLED=1
+JADE_HTTP_TOKEN=<jeton_http_independant_de_32_caracteres_ou_plus>
+JADE_AUDIO_OUTPUT=ffplay
 
-Les tests présents dans `tests/test_jade_mobile_gateway.py` couvrent hors ligne : jeton et origine, conversation texte suivie de voix dans un même fil, identité Goldaj, réponse TTS WAV mockée, parsing de WAV et limites, routes statiques, sources du modèle en liste blanche, injection virtuelle du mouvement Idle, et syntaxe JS si Node est installé.
+# PWA Android privee :
+JADE_MOBILE_ENABLED=1
+JADE_MOBILE_TOKEN=<jeton_mobile_aleatoire_de_32_a_256_caracteres>
+JADE_MOBILE_OWNER_LOGIN=<login_utilisateur_tailscale_exact>
+JADE_MOBILE_PUBLIC_ORIGIN=https://<hote_reel>.<tailnet_reel>.ts.net
+JADE_MOBILE_PORT=8766
+JADE_MOBILE_VENDOR_DIR=D:\Jade\private\mobile-sdk
+# Facultatif : sinon le repertoire r20 du depot est utilise
+# JADE_MOBILE_MODEL_DIR=D:\chemin_reel_du_clone\jade-modeling\runtime-installed\Jade_professional_r20_idle_complete
+\`\`\`
 
-**Validation physique obligatoire** avant fusion en production :
-1. Ouvrir la PWA sur ton Android, constater que le modèle **Jade r20 réel** s'affiche sans fond vert, repos/idle, Blink, expression et bouche articulée sans caméra.
-2. Couper le réseau, rouvrir, vérifier que la session échoue proprement sans enregistrer le jeton ; reconnecter Tailscale.
-3. Écrire « Salut Jade », puis appuyer pour parler « tu te souviens de ce que je viens de dire ? » : même fil, voix restituée **une fois** dans le téléphone, pas sur les haut-parleurs du PC.
-4. Mesurer premier son et durée totale, Android en Wi-Fi puis mobile, et tester expiration du STT, TTS indisponible, refus microphone, perte du modèle.
-5. Vérifier que seul ton compte/device Tailscale peut consulter l'interface, aucun port n'est rendu public, aucune modification de la route VPS trading.
-6. Avec PR #6 intégrée et validée, vérifier que les **souvenirs Goldaj sont réellement partagés** micro PC / micro mobile / texte mobile, puis seulement y activer la curation Core. Le code de cette PR ne l'affirme pas.
-7. Vérifier Tailscale Serve au reboot PC si souhaité ; ne pas confondre un test de connexion ponctuel avec un service toujours disponible.
+Le client mobile requiert un **jeton distinct** du jeton HTTP local, aléatoire et entre 32 et 256 caractères. Le créer dans le fichier privé avec une génération cryptographiquement sûre, pas dans une PR, un prompt ou un journal. La valeur \`JADE_MOBILE_PUBLIC_ORIGIN\` doit être **l'origine HTTPS Tailscale réelle**, sans slash final ni chemin, avec \`:<port>\` si la route Tailscale choisie l'exige. Le validateur attend un domaine \`.ts.net\`. Attention aux valeurs d'environnement Windows existantes, qui **peuvent prévaloir sur le .env**.
 
-## 5. Reprise future, priorités produit
+Si la mémoire doit fonctionner, conserver les réglages \`JADE_MEMORY_ENABLED\`, \`JADE_MEMORY_DB_PATH\` et \`JADE_MEMORY_CURATOR_ENABLED\` **déjà choisis**, sans réinitialiser ni écraser la base SQLite ; consulter [la passation mémoire](HANDOFF-CODEX-MEMORY-20261115.md). Le client authentifié mobile et le micro PC sont tous deux associés à l'identité Goldaj. Pour l'avatar autonome, VTube Studio est **facultatif** ; si activé, il doit être effectivement configuré sur le PC. Éviter d'inventer des paramètres d'activation Discord historiques : le runtime actuel utilise \`--all-channels\` et les paramètres de connexion.
 
-**Phase 2 (Codex)** : conserver le rendu Live2D mobile après inspection d'une version Cubism Web vérifiée, normaliser animations/expression selon les sept intentions, affiner le lip-sync et la lecture audio sur Android. Ajouter un transport audio faible latence en streaming avec WebSocket/WebRTC et un vrai duplex, gestion d'interruption/barge-in, état audio/texte robuste, reconnexion et wake lock contrôlé.
+## 5. Installer le SDK graphique Web et les ressources r20
 
-**Phase 3** : harmoniser la mémoire propriétaire avec PR #6 et la conversation Discord texte/vocal unifiée déjà réservée à Codex dans `IDEE-CONVERSATION-UNIFIEE-20261115.md`, sans divulgation des conversations privées. Décider ensuite seulement si un APK encapsulant la PWA apporte un gain concret.
+Le modèle source Live2D r20 vient du dépôt et de **Git LFS** : \`jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/\`. Vérifier notamment \`Jade.model3.json\`, textures et \`.moc3\` réels, pas des pointeurs LFS.
 
-**Fichiers d'entrée à lire** : `AGENTS.md`, `main.py`, `src/jade_runtime/mobile_gateway.py`, `src/jade_runtime/mobile_web/{index.html,app.js,avatar.js,styles.css}`, `src/jade_runtime/dialogue.py`, `src/jade_runtime/messages.py`, `src/jade_runtime/openai_services.py`, `src/jade_runtime/turn_logging.py`, `docs/gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md`. Avant toute intégration, comparer les branches et les modifications locales simultanées.
+Le navigateur Android ne peut pas afficher le modèle avec le moteur Live2D Python du PC. Il lui faut sur le PC **trois fichiers JavaScript réels**, servis par Jade depuis un répertoire privé hors Git :
 
-**Ne jamais considérer les tests hors ligne GitHub comme une preuve que l'application est installée ou animée sur le téléphone Android.**
+| Fichier requis | Origine et précaution |
+| --- | --- |
+| \`pixi.min.js\` | PixiJS compatible avec l'adaptateur sélectionné (initialement génération PixiJS 6.x) |
+| \`live2dcubismcore.min.js\` | SDK Live2D Cubism Core for Web officiel, acquis suivant sa licence |
+| \`cubism4.min.js\` | Adaptateur \`pixi-live2d-display\` pour Cubism 3/4, **non garanti** si le modèle exporté relève de Cubism 5 |
 
-**Réseau, correction de contre-audit :** le reverse proxy Go de Tailscale Serve utilise `SetURL()`, ce qui peut réécrire le `Host` reçu par le serveur Python en `127.0.0.1:8766` alors que le navigateur envoie `Origin: https://<nom-du-pc>.<tailnet>.ts.net`. Ne jamais comparer ces deux valeurs entre elles : le serveur valide l'`Origin` par rapport à `JADE_MOBILE_PUBLIC_ORIGIN` configuré explicitement. Un test HTTP simule maintenant cette réécriture avec identifiant Tailscale propriétaire + Bearer. Il faut tester l'URL réelle sur Android avant de conclure.
+**Codex doit vérifier la version du .moc3 et la compatibilité de la pile graphique AVANT d'installer un faux mélange de versions.** Si Cubism 5 : choisir et tester une pile SDK/adapter cohérente, adapter \`src/jade_runtime/mobile_web/avatar.js\` si nécessaire, et documenter la décision. Ne pas committer les binaires propriétaires dans le dépôt public.
+
+Références : https://docs.live2d.com/en/cubism-sdk-manual/cubism-sdk-for-web/ ; https://www.live2d.com/en/sdk/download/web/ ; https://www.live2d.com/en/sdk/license/ ; https://github.com/guansss/pixi-live2d-display.
+
+Pour copier les trois **fichiers déjà obtenus légalement**, utiliser le script fourni en donnant les véritables chemins :
+
+\`\`\`powershell
+.\scripts\setup-jade-mobile-sdk.ps1 -PixiJs "D:\chemin\reel\pixi.min.js" -CubismCoreJs "D:\chemin\reel\live2dcubismcore.min.js" -CubismAdapterJs "D:\chemin\reel\cubism4.min.js" -Destination "D:\Jade\private\mobile-sdk"
+\`\`\`
+
+**Attention :** ce script **refuse un répertoire destination non vide** ; ne pas effacer le SDK existant pour le relancer. Il copie, vérifie des tailles plausibles et affiche les sommes SHA-256. Un fichier présent n'est pas à lui seul une validation de compatibilité ou de rendu Android.
+
+**État réel :** le préflight actuel signale le SDK Web et certains fichiers modèle en **information facultative**, donc il peut réussir **sans l'avatar graphique mobile**. Pour considérer le travail terminé, Codex doit tester son affichage sur Android ; chat texte et voix peuvent fonctionner sans lui, mais le résultat complet demandé par le propriétaire ne serait pas atteint.
+
+## 6. Préflight, démarrage puis installation Android
+
+**Tests locaux sans connexion OpenAI, microphone ou facturation :**
+
+\`\`\`powershell
+# Dans la session PowerShell de travail, remplacer par le chemin prive REEL :
+$env:JADE_SECRETS_FILE = "D:\Jade\private\jade.env"
+poetry run python main.py --preflight --all-channels
+poetry run python -m compileall -q src main.py
+poetry run python -m unittest discover -s tests -v
+tailscale serve status
+\`\`\`
+
+Vérifier et corriger **tous les diagnostics obligatoires**, y compris les extensions Discord vocal, Twitch en lecture **et en réponse**, la sortie vocale locale \`JADE_AUDIO_OUTPUT=ffplay\`, \`ffmpeg\`, \`ffplay\`, Jetons Discord/Twitch/OpenAI/HTTP/Mobile, les droits du salon vocal et la présence de Tailscale. \`poetry sync --only main -E all\` installe les extras Python attendus. Le préflight ne teste pas les permissions réelles ni l'API distante.
+
+**Démarrage réel, avec accord du propriétaire pour les connexions/API payantes :**
+
+- Double-cliquer \`D:\Jade\launcher\Lancer-Jade.cmd\`, sélectionner la branche \`develop\` (ou celle réellement demandée) puis **« Mettre à jour et lancer toute Jade »**. Le launcher refait Git fetch/fast-forward, LFS, Poetry, préflight, puis démarre le runtime dans une console PowerShell séparée. Si le launcher lui-même vient d'être corrigé, relancer d'abord \`Installer-Launcher-Jade.cmd\` depuis le clone Git à jour.
+- Ne pas lancer \`--live --mobile\` en remplacement : ce serait une exécution **partielle**, contraire à la décision produit. Éviter plusieurs instances Jade concurrentes sur les mêmes salons/ports.
+- Vérifier que la console reste active et que le service mobile répond **via l'URL HTTPS Serve**. Une requête directe vers \`http://127.0.0.1:8766/\` peut renvoyer **403** : c'est normal, car elle ne transporte pas l'identité Serve.
+- Un port serveur mobile \`8766\` ne doit pas être utilisé par une autre application ; l'API HTTP locale distincte utilise \`8765\` par défaut.
+
+**Sur le téléphone Android (actions où Codex guide le propriétaire) :**
+
+1. Installer/ouvrir **Tailscale** depuis Google Play, autoriser le VPN, se connecter au même tailnet que le PC.
+2. Ouvrir **Chrome** et saisir l'adresse **HTTPS Serve réelle du PC** ; ne jamais ouvrir un lien public Funnel ou une adresse hypothétique.
+3. Dans la fenêtre **« L'espace privé de Jade »**, saisir le \`JADE_MOBILE_TOKEN\` configuré sur le PC. Le jeton reste **uniquement en mémoire de l'onglet** : il faut le saisir à nouveau après rechargement complet ; ne pas le coller dans une URL, un historique ou une capture.
+4. Dans le menu \`⋮\` Chrome, sélectionner **« Installer l'application »** ou **« Ajouter à l'écran d'accueil »** selon le menu proposé. Une icône Jade apparaît sur Android ; aucun APK n'est nécessaire.
+5. Envoyer un message écrit. Tester **microphone appuyer pour parler, retoucher pour envoyer** (20 s maximum), accorder l'autorisation micro Android ; vérifier lecture audio, expression/bouche et le décor. Le mode « toujours à l'écoute », les interruptions et les notifications push ne sont **pas implémentés**.
+6. Tester en Wi-Fi et en réseau mobile avec Tailscale connecté, puis après mise en veille/réouverture et coupure/rétablissement du réseau.
+
+La PWA garde texte et voix dans une même session mobile. La réponse TTS est restituée **sur Android**, sans seconde lecture automatique sur les haut-parleurs du PC, et les souvenirs de Goldaj suivent le profil propriétaire si la mémoire privée est activée.
+
+## 7. Dépannage à faire par Codex
+
+| Symptôme | Vérification / correction |
+| --- | --- |
+| Launcher bloque avant démarrage | Lire chaque ligne du préflight, la configuration complète \`--all-channels\` et le chemin \`JADE_SECRETS_FILE\`. Ne **pas** masquer un connecteur par un mode partiel. |
+| Serve indique une erreur proxy ou le site ne répond pas | Confirmer que Jade écoute réellement \`127.0.0.1:8766\`, que l'URL Serve vise ce port, que le PC n'a pas été arrêté et que les deux appareils sont en ligne Tailscale. |
+| **403** dès l'ouverture | Identité \`Tailscale-User-Login\` manquante/différente (mauvais compte, appareil tagged, lien direct au port local, route incorrecte). Sur un POST, une origine HTTPS non autorisée peut aussi produire 403. |
+| **401** à l'envoi d'un message | Jeton Bearer de la PWA absent/incorrect, le ressaisir depuis le fichier privé réel ; ne jamais le publier dans les logs. |
+| Page affichée, Jade r20 invisible | \`git lfs pull\`, \`.moc3\`, textures, \`JADE_MOBILE_VENDOR_DIR\`, vrais fichiers JS et compatibilité Cubism ; vérifier la console Chrome Android sans fuite de secrets. |
+| Microphone refusé / aucune voix | HTTPS valide, permission Chrome/Android, Tailscale, WAV/STT/TTS, bouton « Voix activée », autorisations de capture. La voix continue n'est pas développée. |
+| Erreur 404 sur \`/vendor/\` ou \`/model/\` | Fichiers locaux manquants/chemins ou noms invalides ; le SDK sous D: n'est pas automatiquement téléchargé par Poetry. |
+| Jade répond sur Discord mais pas sur Android | Le PC doit lancer \`--all-channels\` et la PWA doit joindre le backend privé avec le bon login et jeton ; diagnostiquer la passerelle, pas changer de « profil ». |
+
+## 8. Recette de fin, preuves et limites
+
+Faire constater **sur le matériel réel**, pas seulement dans les tests simulés :
+
+- [ ] Le dépôt, Poetry/SDK/cache et le launcher sont bien sur D:, sans perte de travaux locaux.
+- [ ] Le launcher Windows n'a **pas** de sélecteur de mode et lance une seule instance \`--all-channels\`.
+- [ ] Discord écrit et vocal, Twitch, micro du PC, HTTP local et mobile sont disponibles simultanément ; répondre depuis plusieurs canaux n'en désactive aucun.
+- [ ] L'arbitrage choisit entre plusieurs conversations **sans priorité fixe par plateforme** et les réponses sont délivrées à leurs destinataires légitimes, sans fuite de conversation privée.
+- [ ] Tailscale Serve est sur le **PC**, URL HTTPS et login réellement vérifiés, aucune exposition Funnel, aucune modification du VPS.
+- [ ] La PWA installée depuis Chrome s'ouvre sous son icône Android, accès réservé à Goldaj, texte puis voix dans le même fil.
+- [ ] Le vrai avatar r20 est visible **sans fond vert** sur le décor, joue son idle, cligne des yeux, change d'expression, et sa bouche réagit au son sur Android ; noter précisément ce qui n'est pas vérifié.
+- [ ] Le bouton de voix coupée évite un TTS payant côté mobile ; micro Android fonctionne uniquement après autorisation et n'envoie pas de son en arrière-plan.
+- [ ] Les tests fonctionnent en Wi-Fi et en connexion mobile, après reconnexion Tailscale, sans double réponse ni données privées dans Git/logs publics.
+- [ ] Évaluer coûts et latence réels avec l'accord du propriétaire ; relever les problèmes et ne pas les transformer en succès supposés.
+
+Ne pas annoncer que l'avatar Live2D est compatible avec la version du SDK, que Tailscale est configuré, ou que les identités Android sont correctes avant de l'avoir observé sur la machine. La PWA ne fournit **ni APK**, ni WebRTC vocal continu, ni notifications push, ni fallback via VPS. Le PC doit rester sous tension avec Jade démarrée.
+
+**Fin de mission Codex :** rapport synthétique avec branche/SHA réellement exécuté, services fonctionnels par support, tests faits (automatiques vs matériels), URL privée sans token, lieu du fichier de secrets **sans son contenu**, problèmes ouverts et prochaines interventions humaines. Aucune modification de \`main\`, aucun déploiement de code/proxy sur le VPS Hyperliquid sans autorisation spécifique.
