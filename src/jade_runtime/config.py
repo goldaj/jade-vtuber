@@ -31,6 +31,8 @@ def _voice_users(value: str) -> tuple[int, ...]:
 @dataclass(frozen=True)
 class Settings:
     model: str = "gpt-6-luna"
+    reasoning_effort: str = "low"
+    max_completion_tokens: int = 320
     stt_model: str = "gpt-transcribe"
     tts_model: str = "gpt-realtime-2.1-mini"
     voice: str = "shimmer"
@@ -89,6 +91,8 @@ class Settings:
         """The project-private dotenv is preferred over a tracked file."""
         cfg = cls(
             model=str(environ("JADE_LLM_MODEL", "gpt-6-luna")),
+            reasoning_effort=str(environ("JADE_LLM_REASONING_EFFORT", "low")).lower(),
+            max_completion_tokens=int(environ("JADE_MAX_COMPLETION_TOKENS", "320")),
             stt_model=str(environ("JADE_STT_MODEL", "gpt-transcribe")),
             tts_model=str(environ("JADE_TTS_MODEL", "gpt-realtime-2.1-mini")),
             voice=str(environ("JADE_TTS_VOICE", "shimmer")),
@@ -138,6 +142,9 @@ class Settings:
         return cfg
 
     def validate(self):
+        if (self.reasoning_effort not in ("none", "low", "medium", "high", "xhigh", "max")
+                or not 128 <= self.max_completion_tokens <= 8192):
+            raise ValueError("invalid LLM effort or completion budget")
         if (not self.model or not self.stt_model or not self.tts_model or not self.voice
                 or not self.bot_name.strip()):
             raise ValueError("model names and Jade name must not be blank")
