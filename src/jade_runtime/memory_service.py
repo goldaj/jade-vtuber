@@ -201,7 +201,8 @@ class MemoryService:
             if kind == "core_self" and key == ("microphone", "goldaj"):
                 await asyncio.to_thread(
                     self.store.put_self_core, key, summary=summary,
-                    significance=significance, message_id=incoming.message_id)
+                    significance=significance, message_id=incoming.message_id,
+                    expected_person_id=person_id)
             else:
                 await asyncio.to_thread(
                     self.store.put, key, kind=kind, scope=_scope(incoming),
