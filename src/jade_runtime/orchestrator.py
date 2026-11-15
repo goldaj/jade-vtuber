@@ -26,12 +26,14 @@ class Work:
 
 class Runtime:
     def __init__(self, dialogue: Dialogue, on_reply: Callable[[Reply], Awaitable[None]],
-                 max_queue: int = 64, on_stream_start=None, delivery_plan=None):
+                 max_queue: int = 64, on_stream_start=None, delivery_plan=None,
+                 memory_service=None):
         if not 1 <= max_queue <= 1024:
             raise ValueError("invalid queue limit")
         self.dialogue, self.on_reply = dialogue, on_reply
         self.on_stream_start = on_stream_start
         self.delivery_plan = delivery_plan
+        self.memory_service = memory_service
         self.queue = asyncio.Queue(maxsize=max_queue)
         self.worker = None
         self.active = None
@@ -153,21 +155,32 @@ class Runtime:
         record_input(item.turn, item.message)
         turn = None
         committed = False
+        command_reply = None
+        memory_context = ""
         try:
-            if (self.on_stream_start is not None and item.message.platform == "discord_voice"
+            if self.memory_service is not None:
+                command_reply = await self.memory_service.command(item.message)
+                if command_reply is None:
+                    memory_context = await self.memory_service.context_for(item.message)
+            if (command_reply is None and self.on_stream_start is not None
+                    and item.message.platform == "discord_voice"
                     and callable(getattr(self.dialogue.backend, "complete_stream", None))):
                 turn = self.on_stream_start(item.message)
-            if turn is None:
+            if command_reply is not None:
+                reply = command_reply
+            elif turn is None:
                 if isinstance(self.dialogue, Dialogue):
                     reply = await self.dialogue.respond(item.message, valid=item.valid,
-                                                        on_timing=self.mark_timing)
+                                                        on_timing=self.mark_timing,
+                                                        memory_context=memory_context)
                 else:
                     reply = await self.dialogue.respond(item.message, valid=item.valid)
             else:
                 reply = await self.dialogue.respond(
                     item.message, valid=item.valid, on_sentence=turn.emit,
                     on_timing=self.mark_timing, defer_history=True,
-                    on_intent=getattr(turn, "set_intent", None))
+                    on_intent=getattr(turn, "set_intent", None),
+                    memory_context=memory_context)
             if not item.valid():
                 raise TimeoutError("message expired")
             if reply is None and turn is not None:
@@ -188,11 +201,15 @@ class Runtime:
                     item.result.set_result(reply.text)
             if reply is not None and item.valid():
                 await self.on_reply(replace(reply, spoken=True) if turn is not None else reply)
+            played = True
             if turn is not None:
                 played = await turn.wait()
                 await self.dialogue.commit_stream_response(item.message,
                                                            reply.text if played else None)
                 committed = True
+            if (reply is not None and played and command_reply is None and item.valid()
+                    and self.memory_service is not None):
+                self.memory_service.schedule(item.message, reply)
         except BaseException as exc:
             record_outcome(item.turn, "cancelled" if isinstance(
                 exc, asyncio.CancelledError) else "failed")
