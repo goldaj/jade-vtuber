@@ -7,8 +7,6 @@ import asyncio
 import logging
 import re
 import ssl
-import time
-from collections import OrderedDict
 from dataclasses import replace
 from collections.abc import Awaitable, Callable
 
@@ -60,8 +58,33 @@ class TwitchIRC:
         self.send_lock = asyncio.Lock()
         self.last_sent = -1e9
         self.dropped = 0
-        # Active Twitch chatters only; IRC cannot reveal silent viewers.
-        self.participants: OrderedDict[str, float] = OrderedDict()
+        # Only one Twitch message per completed Jade response.
+        # While that reply is queued/generated/delivered, all other chat
+        # messages are intentionally ignored rather than backlogged.
+        self._awaiting_reply = False
+        self.skipped_while_replying = 0
+
+    async def _offer_message(self, incoming: Incoming) -> None:
+        """Queue at most one Twitch turn until its complete delivery finishes.
+
+        Keeps reading IRC/PING while Jade works; never replay stale messages.
+        """
+        if self._awaiting_reply:
+            self.skipped_while_replying += 1
+            return
+        self._awaiting_reply = True
+        try:
+            work = await self.on_message(replace(incoming, force_reply=True))
+        except BaseException:
+            self._awaiting_reply = False
+            raise
+        finished = getattr(work, "finished", None)
+        if finished is None:
+            # Legacy callbacks may not expose a Work future. They should
+            # complete synchronously; the production callback returns Work.
+            self._awaiting_reply = False
+            return
+        finished.add_done_callback(lambda _done: setattr(self, "_awaiting_reply", False))
 
     async def _write(self, line):
         if self.writer is None:
@@ -97,20 +120,8 @@ class TwitchIRC:
                 incoming = parse_message(line)
                 if incoming is not None and incoming.channel == self.channel:
                     if incoming.author.casefold() != self.login.casefold():
-                        now = time.monotonic()
-                        for uid, seen in list(self.participants.items()):
-                            if now - seen >= 600:
-                                self.participants.pop(uid, None)
-                        uid = incoming.account_id or incoming.author.casefold()
-                        self.participants[uid] = now
-                        self.participants.move_to_end(uid)
-                        while len(self.participants) > 256:
-                            self.participants.popitem(last=False)
-                        # 1 human chatter + Jade => always answer.
-                        # With several active chatters, Dialogue applies 30%.
-                        selected = replace(incoming, force_reply=True) if len(self.participants) == 1 else incoming
                         try:
-                            await self.on_message(selected)
+                            await self._offer_message(incoming)
                         except (asyncio.QueueFull, RuntimeError):
                             # Local overload or shutdown must not break IRC/PING.
                             self.dropped += 1
