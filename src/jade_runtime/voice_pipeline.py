@@ -1,5 +1,6 @@
 """OpenAI STT microphone bridge, serialized against Jade speech playback."""
 import asyncio
+import secrets
 
 from .messages import Incoming
 from .orchestrator import Runtime
@@ -13,6 +14,7 @@ class VoiceInput:
         self.services = services
         self.runtime = runtime
         self.segment = 0
+        self.session_token = secrets.token_hex(8)
 
     async def once(self, duration=3.0) -> bool:
         if self.audio_gate is None:
@@ -31,7 +33,7 @@ class VoiceInput:
         self.segment += 1
         work = await self.runtime.submit(Incoming(
             platform="microphone", author="Goldaj",
-            channel="mic", message_id=f"mic-{self.segment}",
+            channel="mic", message_id=f"mic-{self.session_token}-{self.segment}",
             text=text, force_reply=True))
         # Await only this microphone turn, including its playback, rather than
         # waiting for unrelated Twitch/Discord/mobile messages queued later.
