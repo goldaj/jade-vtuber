@@ -665,7 +665,7 @@ class DiscordVoiceBridge:
                         decision = self._decider.decide(
                             item.session_id, item.user_id, value, authorized=True,
                             consent_confirmed=True, participant_count=participant_count,
-                            direct_address=(self._open_voice and bool(re.search(r"(?<!\\w)jade(?!\\w)", value, re.I))))
+                            direct_address=(self._open_voice and bool(re.search(r"(?<!\w)jade(?!\w)", value, re.I))))
                     if not decision.should_reply:
                         if decision.reason == 'muted':
                             self._stop_playback(self.connection)
