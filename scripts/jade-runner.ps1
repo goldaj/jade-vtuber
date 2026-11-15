@@ -14,7 +14,7 @@ try {
     Set-Location -LiteralPath $config.repo
     $flags = @($config.flags | ForEach-Object { [string]$_ })
     Write-Host ('Jade - branche : ' + $config.branch)
-    Write-Host ('Mode : ' + $config.mode)
+    Write-Host 'Canaux : tous les supports configures, sans priorite fixe.'
     Write-Host 'La console affiche les logs de Jade. Ctrl+C pour arreter proprement.'
     Write-Host ''
     & poetry run python main.py @flags
