@@ -101,8 +101,10 @@ bot est déduit du jeton si `TWITCH_BOT_LOGIN` est vide. La procédure pour obte
 un jeton sans exposer les secrets est décrite dans [l'aide Twitch](docs/gpt6-jade/TWITCH-AUTH.md).
 Le renouvellement automatique est facultatif et exige une sauvegarde GitHub
 privée configurée ; ses garanties et limites sont détaillées dans cette aide.
-Lorsque Discord vocal est connecté, les réponses vocales de Jade, y compris
-celles issues d'autres sources, peuvent être diffusées dans le salon actif.
+Lorsque Discord vocal est connecté, certaines réponses vocales issues
+d'autres sources peuvent être diffusées dans le salon actif. **Les réponses
+locales privées (microphone du PC et API HTTP privée) ne doivent pas être
+diffusées automatiquement dans Discord ou les sous-titres OBS publics.**
 Le vocal ne demande ni liste de participants ni confirmation supplémentaire :
 toute source entendue peut interagir, y compris un autre bot. Jade ignore sa
 propre voix pour limiter les boucles. Le canal indiqué sert au raccordement
@@ -126,4 +128,4 @@ Les documents de suivi du projet et l’index des conversations sont dans `docs/
 
 ## Launcher local pour Windows
 
-Un [launcher Windows personnel](docs/gpt6-jade/LAUNCHER-WINDOWS-20261115.md) permet de choisir une branche et de lancer **tous les supports simultanément, sans choix de profil** : Discord vocal et écrit, Twitch, microphone local, HTTP local, application mobile privée, voix et avatar. Le moteur Jade arbitre les messages en attente, sans priorité fixe par support. Depuis le clone sur D:, exécuter `Installer-Launcher-Jade.cmd`, puis `D:\Jade\launcher\Lancer-Jade.cmd`. Il faut configurer tous les connecteurs dans la configuration privée ; un préflight incomplet bloque le démarrage plutôt que lancer un sous-ensemble invisible. Le démarrage peut facturer OpenAI.
+Un [launcher Windows personnel](docs/gpt6-jade/LAUNCHER-WINDOWS-20261115.md) permet de choisir une branche et de lancer **tous les supports simultanément, sans choix de profil** : Discord vocal et écrit, Twitch, microphone local, HTTP local, application mobile privée, voix et avatar. Le moteur Jade arbitre les messages en attente, sans priorité fixe par support. Depuis le clone sur D:, exécuter `Installer-Launcher-Jade.cmd`, puis `D:\Jade\launcher\Lancer-Jade.cmd`. Il faut configurer tous les connecteurs dans la configuration privée ; un préflight incomplet bloque le démarrage plutôt que lancer un sous-ensemble invisible. Le démarrage peut facturer OpenAI. **Pour installer l'application Android avec l'aide de Codex : consulter le [guide opérationnel Windows + Android](docs/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md)**. Il couvre Tailscale Serve sur le PC, les secrets privés, le SDK Web Live2D, la PWA Chrome, le diagnostic et les tests réels.
