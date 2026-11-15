@@ -154,6 +154,33 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(self.fake.speeches)
         self.assertFalse(self.mobile.pending)
 
+    async def test_gateway_timeout_cancels_queued_paid_work(self):
+        entered = asyncio.Event()
+        released = asyncio.Event()
+
+        async def slow_dialogue(messages):
+            entered.set()
+            try:
+                await asyncio.sleep(3)
+            finally:
+                released.set()
+            return "[INTENT:neutral] Ne doit jamais être diffusé."
+
+        self.fake.complete = slow_dialogue
+        self.mobile.request_timeout = 0.15
+        payload = json.dumps({"text":"Jade, test d'expiration",
+                              "session":"m-123456789012", "speak":False}).encode()
+        status, body, _ = await self.request(
+            "POST", "/api/chat", body=payload,
+            headers=self.headers("application/json"))
+        self.assertTrue(entered.is_set())
+        self.assertEqual(status, 504)
+        await asyncio.wait_for(released.wait(), 1)
+        await asyncio.wait_for(self.runtime.idle(), 1)
+        self.assertFalse(self.reply_log)
+        self.assertFalse(self.mobile.pending)
+        self.assertFalse(self.fake.speeches)
+
     async def test_chat_optional_audio_and_no_pc_double_play(self):
         payload = json.dumps({"text":"Jade, comment tu vas ?",
                               "session":"m-123456789012", "speak":True}).encode()
