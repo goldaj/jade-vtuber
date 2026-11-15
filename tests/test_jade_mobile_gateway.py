@@ -260,6 +260,8 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status, 200)
         self.assertIn(b'id="avatar-container"', page)
         self.assertIn(b"frame-ancestors 'none'", headers)
+        self.assertIn(b"script-src 'self' 'wasm-unsafe-eval'", headers)
+        self.assertNotIn(b" 'unsafe-eval'", headers)
         status, _, _ = await self.request("GET", "/assets/app.js")
         self.assertEqual(status, 200)
         model_dir = Path(self.temp.name) / "model"
