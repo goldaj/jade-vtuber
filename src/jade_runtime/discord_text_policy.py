@@ -21,6 +21,7 @@ class _Channel:
     recent: deque[str] = field(default_factory=lambda: deque(maxlen=6))
     pending: OrderedDict[str, int | None] = field(default_factory=OrderedDict)
     sent_ids: deque[int] = field(default_factory=lambda: deque(maxlen=32))
+    participants: OrderedDict[str, float] = field(default_factory=OrderedDict)
     last_reply_at: float = float("-inf")
     last_reply_author: int | None = None
     last_unsolicited_at: float = float("-inf")
@@ -67,6 +68,21 @@ class DiscordTextPolicy:
         text = incoming.text.strip()
         author = message.author
         author_id = getattr(author, "id", None)
+        # Active contributors, not all guild members or silent spectators.
+        # Solo means one verified non-bot speaker observed in this room recently.
+        stale = [uid for uid, seen in state.participants.items() if now - seen >= 600]
+        for uid in stale:
+            state.participants.pop(uid, None)
+        if (getattr(author, "bot", True) is False and type(author_id) is int
+                and author_id > 0):
+            uid = str(author_id)
+            state.participants[uid] = now
+            state.participants.move_to_end(uid)
+            while len(state.participants) > 64:
+                state.participants.popitem(last=False)
+        solo = (getattr(author, "bot", True) is False
+                and type(author_id) is int and str(author_id) in state.participants
+                and len(state.participants) == 1)
         recent = tuple(state.recent)  # Excludes the current message.
 
         mentions = getattr(message, "mentions", ()) or ()
@@ -96,10 +112,10 @@ class DiscordTextPolicy:
                         ("et ", "mais ", "donc ", "pourquoi ", "comment ", "sinon "))))
         unsolicited = (not direct and not followup and not getattr(author, "bot", False)
                        and not text.startswith(("!", "/", "."))
-                       and question and len(text) <= 500
+                       and len(text) <= 500
                        and now - state.last_unsolicited_at >= self.cooldown_seconds
                        and self.rng.random() < self.auto_rate)
-        selected = direct or followup or unsolicited
+        selected = direct or solo or followup or unsolicited
         # Do not bill for very long messages, even when someone pings Jade.
         if len(text) > 1200:
             selected = False
