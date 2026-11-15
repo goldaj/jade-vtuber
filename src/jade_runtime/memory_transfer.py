@@ -7,6 +7,7 @@ Import refuses to overwrite an existing database or follow symlink targets.
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 import hashlib
 import json
 import os
@@ -22,7 +23,7 @@ MAX_ARCHIVE_BYTES = 256 * 1024 * 1024
 
 
 def _check(path: Path) -> int:
-    with sqlite3.connect(str(path)) as db:
+    with closing(sqlite3.connect(str(path))) as db:
         status = db.execute("PRAGMA integrity_check").fetchone()
         foreign = db.execute("PRAGMA foreign_key_check").fetchone()
         version = db.execute("PRAGMA user_version").fetchone()[0]
@@ -49,7 +50,7 @@ def export_memory(db_path: str | Path, archive_path: str | Path) -> Path:
         with tempfile.NamedTemporaryFile(dir=source.parent, suffix=".sqlite3", delete=False) as temp:
             temporary = Path(temp.name)
         # SQLite's backup API copies a transactionally coherent DB, including WAL.
-        with sqlite3.connect(str(source)) as src, sqlite3.connect(str(temporary)) as dst:
+        with closing(sqlite3.connect(str(source))) as src, closing(sqlite3.connect(str(temporary))) as dst:
             src.backup(dst)
         version = _check(temporary)
         raw = temporary.read_bytes()
