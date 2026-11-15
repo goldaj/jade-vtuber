@@ -29,7 +29,7 @@ def _check(path: Path) -> int:
         version = db.execute("PRAGMA user_version").fetchone()[0]
     if status != ("ok",) or foreign is not None:
         raise ValueError("corrupt memory database")
-    if version != 1:
+    if version not in (1, 2):
         raise ValueError("unsupported Jade memory schema version")
     return version
 
@@ -101,7 +101,7 @@ def import_memory(archive_path: str | Path, db_path: str | Path) -> Path:
         if (meta.get("format") != "jade-memory-backup"
                 or meta.get("archive_version") != ARCHIVE_VERSION
                 or meta.get("database") != DB_NAME
-                or meta.get("schema_version") != 1
+                or meta.get("schema_version") not in (1, 2)
                 or not isinstance(meta.get("size"), int)
                 or not 0 < meta["size"] <= MAX_ARCHIVE_BYTES):
             raise ValueError("unsupported archive manifest")
@@ -120,7 +120,8 @@ def import_memory(archive_path: str | Path, db_path: str | Path) -> Path:
             temp.write(raw)
             temp.flush()
             os.fsync(temp.fileno())
-        _check(temp_path)
+        if _check(temp_path) != meta["schema_version"]:
+            raise ValueError("backup schema mismatch")
         if target.exists() or target.is_symlink():
             raise FileExistsError("destination appeared during restore")
         os.link(temp_path, target)
