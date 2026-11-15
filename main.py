@@ -161,6 +161,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             from src.jade_runtime.mobile_gateway import MobileGateway
             mobile_gateway = MobileGateway(
                 runtime, chat, token=config.mobile_token, port=config.mobile_port,
+                owner_login=config.mobile_owner_login,
                 vendor_dir=Path(config.mobile_vendor_dir) if config.mobile_vendor_dir else None,
                 model_dir=Path(config.mobile_model_dir) if config.mobile_model_dir else None)
         if discord_voice:
