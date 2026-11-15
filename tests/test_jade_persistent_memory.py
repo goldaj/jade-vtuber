@@ -1,5 +1,6 @@
 """Offline SQLite memory tests. No paid API calls or real user data."""
 import asyncio
+from contextlib import closing
 import json
 import sqlite3
 import tempfile
@@ -52,7 +53,7 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertEqual(self.store.recall(self.bob, "discord:10"), [])
         self.assertFalse(self.store.put(self.alice, kind="core_relationship",
                                         scope="discord:10", summary="Nous avons achevé un jeu."))
-        with sqlite3.connect(self.path) as db:
+        with closing(sqlite3.connect(self.path)) as db:
             self.assertIsNone(db.execute(
                 "SELECT expires_at FROM memories WHERE kind='core_relationship'").fetchone()[0])
             db.execute("UPDATE memories SET expires_at='2000-01-01' WHERE kind='ordinary'")
