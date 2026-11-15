@@ -284,6 +284,9 @@
     const current = recording;
     if (!current) return;
     recording = null;
+    // Unlock the playback context while the stop-button gesture is active.
+    // Chrome Android may reject a first play() after an awaited network turn.
+    if (soundEnabled) ensureAudioContext().catch(() => {});
     clearTimeout(current.timer);
     mic.classList.remove("recording");
     mic.setAttribute("aria-pressed", "false");
@@ -302,8 +305,6 @@
     busy = true;
     setStatus("Je transmets ta voix à Jade…", true);
     try {
-      // Unlock playback in the stop-button gesture before awaiting the server.
-      if (soundEnabled) ensureAudioContext().catch(() => {});
       const wav = buildWav(current.chunks, current.context.sampleRate, current.frames);
       const result = await makeRequest("/api/voice", wav, {
         "Content-Type":"audio/wav",
