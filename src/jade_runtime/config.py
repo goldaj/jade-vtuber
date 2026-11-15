@@ -69,6 +69,10 @@ class Settings:
     max_queue: int = 64
     reply_probability: float = 0.0
     timeout_seconds: float = 20.0
+    # Optional, private persistent SQLite data; disabled unless explicitly enabled.
+    memory_enabled: bool = False
+    memory_curator_enabled: bool = False
+    memory_db_path: str = ""
 
     @classmethod
     def load(cls) -> "Settings":
@@ -108,6 +112,9 @@ class Settings:
             max_queue=int(environ("JADE_QUEUE_LIMIT", "64")),
             reply_probability=float(environ("JADE_RANDOM_REPLY_RATE", "0")),
             timeout_seconds=float(environ("JADE_API_TIMEOUT", "20")),
+            memory_enabled=_enabled(str(environ("JADE_MEMORY_ENABLED", "0")).lower()),
+            memory_curator_enabled=_enabled(str(environ("JADE_MEMORY_CURATOR_ENABLED", "0")).lower()),
+            memory_db_path=str(environ("JADE_MEMORY_DB_PATH", "")),
         )
         cfg.validate()
         return cfg
@@ -138,6 +145,12 @@ class Settings:
             raise ValueError("HTTP API requires an independent 32+ character token")
         if self.audio_output not in ("none", "ffplay"):
             raise ValueError("audio output must be 'none' or 'ffplay'")
+        if self.memory_curator_enabled and not self.memory_enabled:
+            raise ValueError("memory curator needs JADE_MEMORY_ENABLED=1")
+        if self.memory_enabled and (not self.memory_db_path
+                                    or not Path(self.memory_db_path).is_absolute()
+                                    or not self.memory_db_path.endswith(".sqlite3")):
+            raise ValueError("memory requires absolute private JADE_MEMORY_DB_PATH (.sqlite3)")
         if self.twitch_enabled and not (self.channel and self.twitch_oauth):
             raise ValueError("Twitch explicitly enabled but credentials missing")
         if self.twitch_send and not self.twitch_enabled:
