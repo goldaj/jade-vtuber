@@ -45,13 +45,14 @@ Sources des licences et SDK :
 1. Travailler sur la PR mobile, vérifier les éventuels travaux Codex/Terra en parallèle et installer les dépendances Python déjà utilisées par Jade.
 2. Restaurer les binaires Live2D locaux : `git lfs pull`, puis `python jade-modeling/verify_assets.py`. Le package r20 se trouve dans `jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/`. Ses images et le `.moc3` sont enregistrés via Git LFS et peuvent apparaître comme des pointeurs sans les objets.
 3. Télécharger/acquérir légalement les trois bibliothèques Web Live2D sur le PC, vérifier qu'elles fonctionnent avec la version r20, puis copier vers un dossier privé sous D: à l'aide du script (ou manuellement). Ni ce SDK ni ses fichiers binaires ne doivent être committés sur GitHub.
-4. Inscrire les valeurs suivantes dans le **fichier de configuration privé** Jade (pas dans `.env.example` versionné pour les secrets) :
+4. Obtenir d’abord la vraie URL HTTPS depuis `tailscale serve status` **sur le PC Windows**, même si Jade n'est pas encore démarrée : le proxy peut renvoyer temporairement une erreur tant que le port backend n'écoute pas. En déduire **sans l'inventer** la valeur exacte de `JADE_MOBILE_PUBLIC_ORIGIN` (pas de `/` final). Inscrire ensuite les valeurs suivantes dans le **fichier de configuration privé** Jade (pas dans `.env.example` versionné pour les secrets) :
 
 ```dotenv
 # Exemple : adapter au vrai chemin de ton poste, ne pas recopier un jeton dans Git.
 JADE_MOBILE_ENABLED=1
 JADE_MOBILE_TOKEN=<jeton aleatoire prive d'au moins 32 caracteres>
 JADE_MOBILE_OWNER_LOGIN=<identifiant de connexion Tailscale du propriétaire>
+JADE_MOBILE_PUBLIC_ORIGIN=https://<nom-reel-du-pc>.<tailnet>.ts.net
 JADE_MOBILE_PORT=8766
 JADE_MOBILE_VENDOR_DIR=D:\Jade\private\mobile-sdk
 # Optionnel, sinon le package r20 du depot est utilise :
@@ -93,7 +94,7 @@ Ouvrir cette URL HTTPS sur Android Chrome, puis « Ajouter à l'écran d'accueil
 
 ## 3. Isolation, limites et contrats à préserver
 
-- Le serveur HTTP est limité à `127.0.0.1` ; **toutes les routes GET et POST sont filtrées par l'identifiant propriétaire de Tailscale Serve**, et chaque requête de conversation doit présenter en plus le jeton Bearer. Il n'y a pas de cookie, de CORS, d'analytics, de fonts distantes ni d'exposition du moteur OpenAI au téléphone.
+- Le serveur HTTP est limité à `127.0.0.1` ; **toutes les routes GET et POST sont filtrées par l'identifiant propriétaire de Tailscale Serve**, avec vérification explicite de l'origine HTTPS configurée pour chaque requête POST lorsque le navigateur en transmet une, et chaque requête de conversation doit présenter en plus le jeton Bearer. Il n'y a pas de cookie, de CORS, d'analytics, de fonts distantes ni d'exposition du moteur OpenAI au téléphone.
 - L'identité Goldaj est **attribuée par la passerelle authentifiée et privée** après contrôle propriétaire Tailscale et Bearer, pas par un pseudo reçu de Discord ou Twitch. Dans cette PR, la session vocale/texte mobile est unifiée ; **la mémoire SQLite durable de la PR #6 n'est pas encore intégrée** et La PR mémoire #6 a été mise à jour pour résoudre `mobile` et `microphone` vers la même clé `("microphone", "goldaj")`. Codex devra encore **fusionner les deux PR et initialiser ce profil au démarrage mobile**, sans créer un double profil et sans affaiblir la reconnaissance des tiers.
 - Le dossier `/model` ne sert que les fichiers listés par le modèle ; les SDK tiers locaux sont servis en lecture seule sous `/vendor`. Il n'y a pas de cache Service Worker des données privées. **Les assets statiques ne sont pas sous Bearer** afin que Live2D puisse charger ses dépendances depuis un navigateur ; leur accès est toutefois refusé à toute requête qui ne possède pas le bon en-tête d'identité Tailscale injecté par Serve. Ne jamais rendre le port HTTP accessible au réseau public ; un processus local au PC pourrait usurper un en-tête, car il contrôle déjà le loopback.
 - Les messages peuvent figurer dans les logs `jade.conversation` existants, mais la passerelle n'enregistre pas les WAV/transcriptions sur disque. Il faut gérer séparément la politique de conservation des logs.
@@ -124,3 +125,5 @@ Les tests présents dans `tests/test_jade_mobile_gateway.py` couvrent hors ligne
 **Fichiers d'entrée à lire** : `AGENTS.md`, `main.py`, `src/jade_runtime/mobile_gateway.py`, `src/jade_runtime/mobile_web/{index.html,app.js,avatar.js,styles.css}`, `src/jade_runtime/dialogue.py`, `src/jade_runtime/messages.py`, `src/jade_runtime/openai_services.py`, `src/jade_runtime/turn_logging.py`, `docs/gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md`. Avant toute intégration, comparer les branches et les modifications locales simultanées.
 
 **Ne jamais considérer les tests hors ligne GitHub comme une preuve que l'application est installée ou animée sur le téléphone Android.**
+
+**Réseau, correction de contre-audit :** le reverse proxy Go de Tailscale Serve utilise `SetURL()`, ce qui peut réécrire le `Host` reçu par le serveur Python en `127.0.0.1:8766` alors que le navigateur envoie `Origin: https://<nom-du-pc>.<tailnet>.ts.net`. Ne jamais comparer ces deux valeurs entre elles : le serveur valide l'`Origin` par rapport à `JADE_MOBILE_PUBLIC_ORIGIN` configuré explicitement. Un test HTTP simule maintenant cette réécriture avec identifiant Tailscale propriétaire + Bearer. Il faut tester l'URL réelle sur Android avant de conclure.
