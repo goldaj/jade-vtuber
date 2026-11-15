@@ -9,10 +9,10 @@ C'est volontairement distinct du VPS Hyperliquid. Le dépôt de trading indique 
 
 ### Ce qui fonctionne dans le code, en mode opt-in
 
-- `main.py --live --mobile` lance un serveur distinct sur **`127.0.0.1:8766` par défaut**, sans ouvrir de port vers Internet. `JADE_MOBILE_TOKEN` est différent de `JADE_HTTP_TOKEN` ; jeton de 32 à 256 caractères requis et transmis en Bearer, jamais en URL, cookie ou stockage local du navigateur.
+- `main.py --live --mobile` lance un serveur distinct sur **`127.0.0.1:8766` par défaut**, sans ouvrir de port vers Internet. `JADE_MOBILE_TOKEN` est différent de `JADE_HTTP_TOKEN` ; jeton de 32 à 256 caractères requis et transmis en Bearer, jamais en URL, cookie ou stockage local du navigateur. En plus, **`JADE_MOBILE_OWNER_LOGIN` est obligatoire** : le serveur exige la correspondance exacte de l'en-tête d'identité `Tailscale-User-Login` injecté par Tailscale Serve avant **toute** page, image du modèle ou API ; les requêtes HTTP directes sans cet en-tête reçoivent 403.
 - Interface visuelle PWA : décor chaleureux et animable par CSS, texte et microphone, sous-titres de dialogue, sélection de la synthèse vocale, nouvelle discussion, mode plein écran, couleurs adaptatives, manifest/icône SVG, service worker **sans cache privé**. Fichiers dans `src/jade_runtime/mobile_web/`.
 - `GET /` sert le client ; `GET /assets/*`, `GET /vendor/*` et `GET /model/*` sont des ressources en lecture seule, limitées à une whitelist. Le modèle r20 est servi à partir de son répertoire existant après un vrai `git lfs pull`.
-- `POST /api/chat` reçoit `{text,session,speak}` ; `POST /api/voice` reçoit un court WAV mono PCM16/16 kHz produit dans le navigateur. Pas d'enregistrement WAV sur disque : octets en RAM, envoyés au service STT OpenAI existant, puis au dialogue Jade et au TTS OpenAI pour une réponse vocale.
+- `POST /api/chat` reçoit `{text,session,speak}` ; `POST /api/voice` reçoit un court WAV mono PCM16/16 kHz produit dans le navigateur (en-tête `X-Jade-Speak: 0|1`, permettant de désactiver réellement les appels TTS lorsque la voix est coupée). Pas d'enregistrement WAV sur disque : octets en RAM, envoyés au service STT OpenAI existant, puis au dialogue Jade et au TTS OpenAI pour une réponse vocale.
 - Les réponses portent `reply`, `intent`, `transcript` (voix uniquement), `audio_wav_b64` facultatif. Le client décode le WAV, le joue sur Android et anime approximativement la bouche d'après l'amplitude du son réellement lu.
 - Les deux entrées appartiennent à **Goldaj, créateur et père de Jade** : `Incoming(platform="mobile", author="Goldaj", input_modality="text"|"voice")`. La même `session` logique est conservée entre voix et texte sur ce client, à la différence de la fusion Discord multicanal qui reste un autre chantier. Le rôle de Goldaj est ajouté au contexte *uniquement pour la plateforme mobile produite par le serveur authentifié*.
 - L'intention `[INTENT:...]` est toujours parsée/supprimée par le moteur actuel ; le client lit `Reply.intent`. Le traitement TTS du mobile n'envoie **pas** une seconde lecture à `ffplay` ni à VTube Studio sur PC.
@@ -26,7 +26,7 @@ Le SDK Live2D Web requiert son moteur **Cubism Core propriétaire**. Pour évite
 | --- | --- |
 | `pixi.min.js` | PixiJS 6.x, version de la génération compatible avec l'adaptateur |
 | `live2dcubismcore.min.js` | Téléchargement officiel Live2D Cubism SDK for Web, après acceptation de la licence |
-| `cubism4.min.js` | `pixi-live2d-display`, bundle Web Cubism 4 compatible avec Cubism 3/4 ; compatibilité avec l'export r20 Cubism 5 **à tester** |
+| `cubism4.min.js` | `pixi-live2d-display`, bundle Web Cubism 4 prévu pour Cubism 3/4, **non garanti pour les exports Cubism 5**. Vérifier d'abord la version réelle du `.moc3` r20. Si export Cubism 5, ne pas simplement changer la version de `live2dcubismcore.min.js` ; utiliser un adaptateur prévu pour SDK 5 (à expertiser, par exemple `pixi-live2d5` + PixiJS 8) ou intégrer le SDK Web officiel, puis adapter `avatar.js`. |
 
 Exemple local : `D:\Jade\private\mobile-sdk\`. Le script `scripts/setup-jade-mobile-sdk.ps1` copie les trois fichiers **déjà acquis** vers ce dossier et affiche leur SHA-256. Vérifier d'abord leurs licences et leur provenance : script volontairement non téléchargeur.
 
@@ -72,7 +72,7 @@ python -m unittest discover -s tests -v
 python main.py --live --mobile
 ```
 
-Le client local sera accessible sur `http://127.0.0.1:8766/` pour la vérification du rendu sur le PC. `--voice` n'est **pas nécessaire** pour la voix mobile, puisque la passerelle utilise directement le même TTS et renvoie le WAV au navigateur. Éviter d'activer simultanément `--http` sur le même port ; la config l'interdit.
+**Attention audit :** l'accès direct `http://127.0.0.1:8766/` renvoie maintenant **403 sans identité Tailscale Serve**, y compris pour une simple page ; vérifier le rendu via l'URL privée HTTPS Tailscale. Pour diagnostic CLI local uniquement, une requête explicitement construite avec l'en-tête `Tailscale-User-Login` peut confirmer la réponse, mais cela ne valide pas le proxy ni le téléphone.  `--voice` n'est **pas nécessaire** pour la voix mobile, puisque la passerelle utilise directement le même TTS et renvoie le WAV au navigateur. Éviter d'activer simultanément `--http` sur le même port ; la config l'interdit.
 
 ### Accès Android par Tailscale Serve
 
@@ -93,13 +93,14 @@ Ouvrir cette URL HTTPS sur Android Chrome, puis « Ajouter à l'écran d'accueil
 
 ## 3. Isolation, limites et contrats à préserver
 
-- Le serveur HTTP est limité à `127.0.0.1` ; chaque requête de conversation doit présenter le jeton Bearer. Il n'y a pas de cookie, de CORS, d'analytics, de fonts distantes ni d'exposition du moteur OpenAI au téléphone.
-- L'identité Goldaj est **attribuée par la passerelle authentifiée et privée**, pas par un pseudo reçu de Discord ou Twitch. Dans cette PR, la session vocale/texte mobile est unifiée ; **la mémoire SQLite durable de la PR #6 n'est pas encore intégrée** et Codex devra réconcilier explicitement `mobile:Goldaj` avec `microphone:Goldaj` sans créer un double profil et sans affaiblir la reconnaissance des tiers.
-- Le dossier `/model` ne sert que les fichiers listés par le modèle ; les SDK tiers locaux sont servis en lecture seule sous `/vendor`. Il n'y a pas de cache Service Worker des données privées. **Les assets statiques ne sont pas sous Bearer** afin que Live2D puisse charger ses dépendances depuis un navigateur ; leur confidentialité repose sur le tailnet privé et les règles d'accès.
+- Le serveur HTTP est limité à `127.0.0.1` ; **toutes les routes GET et POST sont filtrées par l'identifiant propriétaire de Tailscale Serve**, et chaque requête de conversation doit présenter en plus le jeton Bearer. Il n'y a pas de cookie, de CORS, d'analytics, de fonts distantes ni d'exposition du moteur OpenAI au téléphone.
+- L'identité Goldaj est **attribuée par la passerelle authentifiée et privée** après contrôle propriétaire Tailscale et Bearer, pas par un pseudo reçu de Discord ou Twitch. Dans cette PR, la session vocale/texte mobile est unifiée ; **la mémoire SQLite durable de la PR #6 n'est pas encore intégrée** et La PR mémoire #6 a été mise à jour pour résoudre `mobile` et `microphone` vers la même clé `("microphone", "goldaj")`. Codex devra encore **fusionner les deux PR et initialiser ce profil au démarrage mobile**, sans créer un double profil et sans affaiblir la reconnaissance des tiers.
+- Le dossier `/model` ne sert que les fichiers listés par le modèle ; les SDK tiers locaux sont servis en lecture seule sous `/vendor`. Il n'y a pas de cache Service Worker des données privées. **Les assets statiques ne sont pas sous Bearer** afin que Live2D puisse charger ses dépendances depuis un navigateur ; leur accès est toutefois refusé à toute requête qui ne possède pas le bon en-tête d'identité Tailscale injecté par Serve. Ne jamais rendre le port HTTP accessible au réseau public ; un processus local au PC pourrait usurper un en-tête, car il contrôle déjà le loopback.
 - Les messages peuvent figurer dans les logs `jade.conversation` existants, mais la passerelle n'enregistre pas les WAV/transcriptions sur disque. Il faut gérer séparément la politique de conservation des logs.
+- Correctifs de revue : démarrage micro unique, abandon de l'enregistrement si Android passe en arrière-plan (aucun envoi automatique), retour d'erreur audio conservé, choix de ne pas facturer le TTS si `Voix coupée`, service worker réseau seulement sans cache.
 - Limites actuelles : pas de streaming PCM/WebRTC, pas de reprise fiable de lecture lors d'une perte réseau, aucune notification push, pas d'APK Android généré, pas de mode toujours à l'écoute, pas de visuel Live2D validé sur un téléphone réel. Une PWA installable suffit à l'objectif de **client dédié V1**, l'APK étant une option ultérieure.
 - Le modèle Jade reste sur le PC : **PC éteint = Jade indisponible**, même si le VPS trading fonctionne.
-- Le chargeur `pixi-live2d-display` est une intégration de SDK à tester sur l'export r20 Cubism 5 ; si incompatible, remplacer l'adaptateur graphique ou employer le SDK Web officiel. Ne pas présenter son rendu comme déjà vérifié.
+- Le chargeur `pixi-live2d-display` est documenté principalement pour Cubism 3/4 (source : https://github.com/guansss/pixi-live2d-display). **La seule présence du package r20 ne démontre pas la compatibilité** avec le Web Core 5. Le SDK officiel disponible en 2026 est Cubism 5 Web R5 ; comparer l'export réel du `.moc3` et l'adaptateur avant toute conclusion. Un fork Cubism 5/PixiJS 8 existe (https://github.com/omniwaifu/pixi-live2d5) mais sa maintenance, ses licences et sa compatibilité n'ont pas été recettées. Codex doit choisir une pile cohérente avant de déployer l'avatar. Ne pas présenter son rendu comme déjà vérifié.
 
 ## 4. Tests de reprise pour Codex
 
