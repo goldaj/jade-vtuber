@@ -15,6 +15,8 @@ class Incoming:
     voice_session_id: str = field(default="", repr=False)
     # Volatile recent Discord messages, never persisted or emitted in logs.
     context: tuple[str, ...] = field(default=(), repr=False)
+    # Verified transport account ID; NEVER use an untrusted nickname as ID.
+    account_id: str = field(default="", repr=False)
 
     def __post_init__(self):
         if (not self.platform.strip() or not self.author.strip()
