@@ -1,5 +1,10 @@
 # Instructions du projet Jade
 
+## Maintenance documentaire systématique (règle prioritaire sur develop)
+
+Pour **tout changement de code, dépendance, test, configuration, interface, script ou infrastructure** de cette branche, réviser dans le même commit/PR **chaque guide** : `docs/handbook/INSTALLATION.md`, `DEMO.md`, `USER_GUIDE.md`, `TECHNICAL.md`, `AI_HANDOFF.md`, `BRANCH_STATE.md`, `BRANCH_MAINTENANCE.md`. Mettre également à jour `AGENTS.md`, l'index et les passations spécialisées pertinentes. Le contrôle `scripts/check_docs.py` bloque les PR sans mise à jour. **Ces documents décrivent develop, pas main.** Ne pas recopier des capacités inexistantes sur une branche antérieure. Voir [la règle agents détaillée](docs/handbook/AI_HANDOFF.md), [le manuel](docs/handbook/README.md) et [le nettoyage des branches intégrées](docs/handbook/BRANCH_MAINTENANCE.md). La Démo Express est uniquement simulée, sans OpenAI, micro ni Live2D.
+
+
 Avant toute modification, lire [l’index des conversations](docs/conversations/INDEX.md), puis les instructions de cette page et les documents liés au domaine concerné. Le journal est partiel : conserver les décisions successives, distinguer verbatim et résumé et ne jamais y copier de secrets, identifiants privés ou sorties brutes d’outils.
 
 ## Dépôt et configuration

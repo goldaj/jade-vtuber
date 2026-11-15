@@ -1,5 +1,9 @@
 # Jade — un personnage virtuel capable de dialoguer
 
+**Documentation complète et spécifique à cette branche develop :** [installation depuis un poste neuf](docs/handbook/INSTALLATION.md), [Démo Express sans installation Python](docs/handbook/DEMO.md), [guide utilisateur de toutes les fonctions](docs/handbook/USER_GUIDE.md), [architecture et algorithmes](docs/handbook/TECHNICAL.md), [passation agents IA](docs/handbook/AI_HANDOFF.md), [état précis de develop](docs/handbook/BRANCH_STATE.md).
+
+**Démo immédiate Windows :** double-cliquer `Installer-Demo-Express.cmd` ou `Lancer-Demo-Express.cmd`. Démo **simulée** : aucune IA, aucune clé, aucun canal ni Live2D requis. **Produit réel :** installer/configurer tous les canaux puis utiliser le launcher unique `--all-channels`, voir les guides. 
+
 ![Portrait de Jade](jade-modeling/assets/live2d/r21_professional_art/master_v4_assets_v1/Jade_r21_master_v3_canvas_3840x4160.png)
 
 Jade est un projet expérimental de VTuber IA : un personnage 2D conçu pour
