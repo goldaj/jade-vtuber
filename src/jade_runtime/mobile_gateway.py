@@ -287,6 +287,10 @@ class MobileGateway:
                 await self._json(writer, 400, {"error": "invalid microphone WAV"})
                 return
             session = headers.get("x-jade-session", "")
+            speak_header = headers.get("x-jade-speak", "1")
+            if speak_header not in ("0", "1"):
+                await self._json(writer, 400, {"error": "invalid speech preference"})
+                return
             modality = "voice"
             text = None
         else:
@@ -311,13 +315,14 @@ class MobileGateway:
                         channel=session, message_id=secrets.token_hex(16),
                         text=text, force_reply=True,
                         input_modality=modality,
-                        requested_speech=(modality == "voice" or request["speak"]),
+                        requested_speech=(speak_header == "1" if modality == "voice"
+                                          else request["speak"]),
                     )
                     reply = await self._conversation(source)
                     payload = {"reply": reply.text, "intent": reply.intent,
                                "transcript": text if modality == "voice" else None,
                                "audio_wav_b64": None, "audio_unavailable": False}
-                    speak = (modality == "voice" or request["speak"])
+                    speak = source.requested_speech
                     if speak:
                         try:
                             speech = await self.services.synthesize_speech(
