@@ -64,4 +64,4 @@ La mise à jour Low/320, personnalité validée, conservation opt-in sans résum
 
 ## Branche corrective DevOps (15/11/2026)
 
-**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). La branche `fix/develop-devops-audit-20261115` part de `develop` et contient des corrections CI, mémoire ZIP et documentation. Elle ne doit pas être supprimée avant fusion/rejet motivé de sa PR vers `develop` et vérification des SHA. Aucun changement de `main` n'est demandé.
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). La branche `fix/develop-devops-audit-20261115` part de `develop` et contient des corrections CI, mémoire ZIP et documentation. Après fusion/rejet motivé de sa PR #19 vers `develop`, elle pourra être supprimée **uniquement** après vérification d'ascendance, d'absence de nouveaux commits et de PR encore actives. Aucun changement de `main` n'est demandé.
