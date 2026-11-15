@@ -541,5 +541,5 @@ sans présenter les mocks comme des tests d'API réels.
 ## Launcher Windows personnel (15 novembre 2026)
 
 - **Livrable :** branche `feat/jade-windows-launcher-20261115` ; installateur `.cmd`, UI WinForms PowerShell, choix de branche distante, bascule Git non destructive, préparation Poetry/LFS selon mode, préflight strict et console du moteur. Guide : [LAUNCHER-WINDOWS-20261115.md](LAUNCHER-WINDOWS-20261115.md).
-- **Validation :** revue statique de la logique et ajout d'un parseur syntaxique PowerShell 5.1 en CI Windows. Son résultat au HEAD final reste à vérifier après ouverture de la PR.
+- **Validation :** revue statique de la logique et ajout d'un parseur syntaxique PowerShell 5.1 en CI Windows. Résultat constaté sur le HEAD de la PR #13 : analyse syntaxique PowerShell Windows réussie, tests hors ligne Windows/Linux réussis, scan de secrets réussi. PR #13 fusionnée dans `develop`, non dans `main`.
 - **Limites :** aucun lancement sur le poste Windows, aucun contrôle de Git/Poetry réel, audio/Discord/Tailscale ni test du vrai mode live ; absence d'appel OpenAI depuis cette intervention. `develop` et `main` inchangées.
