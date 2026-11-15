@@ -263,16 +263,32 @@ class MobileGateway:
 
     async def _conversation(self, incoming: Incoming):
         loop = asyncio.get_running_loop()
-        future = loop.create_future()
-        self.pending[incoming.message_id] = future
+        reply_future = loop.create_future()
+        # Runtime.result carries the early text acknowledgement OR an error.
+        # It cannot carry Reply.intent, so the complete Reply still comes from
+        # on_reply -> deliver(). Propagate only failures to fail fast.
+        outcome_future = loop.create_future()
+
+        def propagate_failure(outcome):
+            if outcome.cancelled():
+                if not reply_future.done():
+                    reply_future.cancel()
+                return
+            error = outcome.exception()  # consume exceptions even on shutdown
+            if error is not None and not reply_future.done():
+                reply_future.set_exception(error)
+
+        outcome_future.add_done_callback(propagate_failure)
+        self.pending[incoming.message_id] = reply_future
         work = None
         try:
             deadline = loop.time() + 50
-            work = await self.runtime.submit(incoming, deadline=deadline)
-            return await asyncio.wait_for(future, timeout=55)
+            work = await self.runtime.submit(
+                incoming, deadline=deadline, result=outcome_future)
+            return await asyncio.wait_for(reply_future, timeout=55)
         finally:
-            if future.done() is False:
-                future.cancel()
+            if not reply_future.done():
+                reply_future.cancel()
                 if work is not None:
                     self.runtime.cancel_work(work)
             self.pending.pop(incoming.message_id, None)
