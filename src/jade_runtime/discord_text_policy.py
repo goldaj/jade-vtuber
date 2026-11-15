@@ -115,7 +115,9 @@ class DiscordTextPolicy:
                        and len(text) <= 500
                        and now - state.last_unsolicited_at >= self.cooldown_seconds
                        and self.rng.random() < self.auto_rate)
-        selected = direct or solo or followup or unsolicited
+        # In a group, only explicit addressing bypasses the 30% sampling.
+        # Contextual follow-ups are still sampled; solo conversations are not.
+        selected = direct or solo or (followup and self.rng.random() < self.auto_rate) or unsolicited
         # Do not bill for very long messages, even when someone pings Jade.
         if len(text) > 1200:
             selected = False
