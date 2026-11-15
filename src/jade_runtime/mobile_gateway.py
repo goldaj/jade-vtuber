@@ -298,6 +298,7 @@ class MobileGateway:
                         channel=session, message_id=secrets.token_hex(16),
                         text=text, force_reply=True,
                         input_modality=modality,
+                        requested_speech=(modality == "voice" or request["speak"]),
                     )
                     reply = await self._conversation(source)
                     payload = {"reply": reply.text, "intent": reply.intent,
