@@ -245,6 +245,9 @@
       return;
     }
     stopPlayback();
+    // Android may auto-stop after 20 seconds (no further user gesture).
+    // Unlock the output context on the initial microphone tap too.
+    if (soundEnabled) ensureAudioContext().catch(() => {});
     starting = true;
     mic.disabled = true;
     setStatus("Autorisation du microphone…");
