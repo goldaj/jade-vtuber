@@ -212,7 +212,7 @@ $launchButton.Add_Click({
         }
         [void](Git @('merge', '--ff-only', ('origin/' + $branch)))
         Info ('Branche mise a jour sans reinitialisation destructive : ' + $branch)
-        if ($lfsCheck.Checked -and $mode -match 'avatar') {
+        if ($lfsCheck.Checked -and ($mode -match 'avatar' -or $mode -match 'mobile')) {
             Info 'Recuperation des assets Live2D...'
             [void](Git @('lfs', 'pull'))
         }
