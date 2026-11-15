@@ -518,3 +518,12 @@ sans présenter les mocks comme des tests d'API réels.
 - Persistance SQLite privée sur D: hors dépôt ; mémoires ordinaires révisables ; **Core Memories autonomes** de Jade et relationnelles, décidées par Jade elle-même pour les événements vraiment marquants, **sans TTL ni purge automatique**.
 - En cas de demande de la personne : possibilité de corriger, exporter ou supprimer ses données, y compris ses Core relationnelles et les références dérivées ; ne pas restaurer depuis une sauvegarde.
 - Lots futurs : contrats d'identité, stockage, discernement des Core, récupération ciblée, gestion des utilisateurs, tests puis recette humaine. Aucun déploiement ou test live effectué dans ce lot.
+
+## PR indépendante : application mobile privée Jade (15 novembre 2026)
+
+- Branche `feat/jade-private-mobile-pwa-20261115`, PR vers `develop`, non intégrée à `main`.
+- [Passation complète, installation sur D: et suite Codex](HANDOFF-CODEX-MOBILE-20261115.md). Choix : PWA Android avec décor CSS et avatar Live2D Web transparent, SDK propriétaire local non redistribué, API locale sur PC via Tailscale Serve privé sans détour par le VPS trading.
+- Implémenté : auth Bearer, chat texte, micro WAV via OpenAI STT, réponse IA et TTS, replay WAV, intentions/expression/bouche, identité mobile Goldaj et session texte/vocal unifiée.
+- Limites : SDK Web/licence et modèle r20 à installer localement ; pas de validation du rendu ni du micro Android, pas de streaming duplex, pas de fusion mémoire Core Goldaj avec PR #6 ; aucune modification VPS.
+- Tests hors ligne et contrôles CI à vérifier sur le dernier commit ; vraie recette téléphone requise avant publication ou affirmation de fonctionnement réel.
+
