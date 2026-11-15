@@ -9,8 +9,8 @@
   const mic = $("mic"), send = $("send"), status = $("status");
   const modal = $("auth-modal"), authForm = $("auth-form"), authInput = $("auth-token");
   const connection = $("connection-status"), soundToggle = $("sound-toggle");
-  const newChat = $("new-chat"), mood = $("mood-line");
-  const avatar = () => window.JadeAvatar || {setMouth() {}, setIntent() {}};
+  const newChat = $("new-chat");
+  const avatar = () => window.JadeAvatar || {setMouth() {}, setIntent() {}, setSpeaking() {}, resetIntent() {}};
   let token = "";
   let busy = false;
   let recording = null;
@@ -103,11 +103,12 @@
     if (playing) {
       try { playing.stop(); } catch (_) {}
       playing = null;
+      avatar().setSpeaking(false);
     }
     avatar().setMouth(0);
   }
 
-  async function playWav(base64Audio, intent) {
+  async function playWav(base64Audio) {
     stopPlayback();
     if (!base64Audio || !soundEnabled || document.hidden) return true;
     try {
@@ -123,14 +124,15 @@
       analyser.fftSize = 1024;
       src.connect(analyser);
       analyser.connect(context.destination);
-      avatar().setIntent(intent);
       playing = src;
+      avatar().setSpeaking(true);
       src.onended = () => {
         if (playing === src) {
           playing = null;
           if (playFrame) cancelAnimationFrame(playFrame);
           playFrame = null;
           avatar().setMouth(0);
+          avatar().setSpeaking(false);
         }
       };
       const samples = new Uint8Array(analyser.fftSize);
@@ -147,7 +149,6 @@
         playFrame = requestAnimationFrame(animateMouth);
       }
       src.start(0);
-      mood.textContent = "Jade te répond…";
       animateMouth();
       return true;
     } catch (_) {
@@ -161,7 +162,7 @@
     addBubble(String(result.reply || "…"), "jade");
     avatar().setIntent(result.intent || "neutral");
     if (result.audio_wav_b64 && soundEnabled) {
-      const played = await playWav(result.audio_wav_b64, result.intent || "neutral");
+      const played = await playWav(result.audio_wav_b64);
       if (!played) {
         setStatus("Réponse écrite reçue, mais la lecture audio a échoué.");
         return;
@@ -170,7 +171,6 @@
       setStatus("La réponse est là, mais la synthèse vocale est indisponible.");
       return;
     }
-    mood.textContent = "Toujours là, papa.";
     setStatus("Prête.");
   }
 
@@ -400,6 +400,7 @@
     if (busy || recording || starting) return;
     thread = newThread();
     stopPlayback();
+    avatar().resetIntent();
     log.replaceChildren();
     const intro = document.createElement("div");
     intro.className = "welcome";
