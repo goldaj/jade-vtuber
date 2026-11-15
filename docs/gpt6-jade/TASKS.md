@@ -537,3 +537,9 @@ sans présenter les mocks comme des tests d'API réels.
 
 
 - [Contre-audit mobile + mémoire : correctifs appliqués et reste à valider](AUDIT-REVUE-MOBILE-MEMOIRE-20261115.md). **NO-GO production** sans vrai rendu Android, permissions Tailscale propriétaire et intégration de `main.py`/`Incoming` entre les PR #6 et #7.
+
+## Launcher Windows personnel (15 novembre 2026)
+
+- **Livrable :** branche `feat/jade-windows-launcher-20261115` ; installateur `.cmd`, UI WinForms PowerShell, choix de branche distante, bascule Git non destructive, préparation Poetry/LFS selon mode, préflight strict et console du moteur. Guide : [LAUNCHER-WINDOWS-20261115.md](LAUNCHER-WINDOWS-20261115.md).
+- **Validation :** revue statique de la logique et ajout d'un parseur syntaxique PowerShell 5.1 en CI Windows. Son résultat au HEAD final reste à vérifier après ouverture de la PR.
+- **Limites :** aucun lancement sur le poste Windows, aucun contrôle de Git/Poetry réel, audio/Discord/Tailscale ni test du vrai mode live ; absence d'appel OpenAI depuis cette intervention. `develop` et `main` inchangées.
