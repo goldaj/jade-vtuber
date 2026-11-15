@@ -13,7 +13,6 @@ from io import BytesIO
 import hmac
 import json
 import logging
-import mimetypes
 from pathlib import Path, PurePosixPath
 import re
 import secrets
@@ -219,7 +218,11 @@ class MobileGateway:
             return
         try:
             # No redirects or symlinks to a private file outside approved roots.
-            if path.is_symlink() or not path.is_file() or path.stat().st_size > 40_000_000:
+            base = (self.web_root if route in WEB_FILES else
+                    self.vendor_dir if route.startswith("/vendor/") else self.model_dir)
+            if (base is None or not path.resolve().is_relative_to(base.resolve())
+                    or path.is_symlink() or not path.is_file()
+                    or path.stat().st_size > 40_000_000):
                 raise FileNotFoundError()
             data = await asyncio.to_thread(path.read_bytes)
             if data.startswith(b"version https://git-lfs.github.com/spec/v1"):
