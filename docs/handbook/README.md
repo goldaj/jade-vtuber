@@ -20,3 +20,6 @@ Pour les manipulations concrètes sur le PC déjà utilisé par le propriétaire
 ## Synchronisation expressions Live2D des intentions (15/11/2026)
 
 Le chantier de synchronisation du modèle 2D PC/PWA avec `Reply.intent`, les deux variantes textuelles/faciales de chaque intention et le toggle `JADE_AVATAR_INTENT_ENABLED` est décrit dans la [passation dédiée pour Codex](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md). **Attention : les 14 véritables animations propres restent à produire et à recetter.** Les visages r20 actuels ne sont que des substituts et le rig final en pied n'est pas branché. Voir les guides d'installation, utilisateur et technique de cette branche.
+
+## Actualisation dialogue, personnalité et mémoire : 2026-11-15
+Consulter la [passation dialogue Low/320 et participation](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md). Le nouveau prompt de caractère exact est actif sur `develop`, les propositions antérieures sont archivées. Conservation opt-in des échanges complets non résumés (SQLite v3), contexte volatile 48 messages, réponse solo systématique sur tours admissibles / groupe échantillonné 30 %. Prévision de deux variantes de réaction par intention, **sans nouveaux assets animés**.
