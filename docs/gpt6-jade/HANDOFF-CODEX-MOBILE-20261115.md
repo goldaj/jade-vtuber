@@ -202,4 +202,19 @@ Faire constater **sur le matériel réel**, pas seulement dans les tests simulé
 
 Ne pas annoncer que l'avatar Live2D est compatible avec la version du SDK, que Tailscale est configuré, ou que les identités Android sont correctes avant de l'avoir observé sur la machine. La PWA ne fournit **ni APK**, ni WebRTC vocal continu, ni notifications push, ni fallback via VPS. Le PC doit rester sous tension avec Jade démarrée.
 
+### Carte du code pour diagnostiquer les problèmes sur le PC
+
+| Besoin | Fichier à ouvrir sur `develop` |
+| --- | --- |
+| Activation simultanée et préflight | `main.py`, `src/jade_runtime/diagnostics.py` |
+| File commune et arbitrage des réponses | `src/jade_runtime/orchestrator.py`, `src/jade_runtime/turn_arbitration.py` |
+| Paramètres réels et fichier privé | `src/jade_runtime/config.py`, `src/utility/private_config.py` |
+| Installation/affichage du launcher | `Installer-Launcher-Jade.cmd`, `scripts/install-jade-launcher.ps1`, `scripts/jade-launcher.ps1`, `scripts/jade-runner.ps1` |
+| Serveur HTTP Android, contrôle Tailscale et jeton | `src/jade_runtime/mobile_gateway.py` (GET `/`, `/assets/*`, `/vendor/*`, `/model/*` et POST `/api/chat`, `/api/voice`) |
+| Écran Android, son et rendu 2D | `src/jade_runtime/mobile_web/index.html`, `app.js`, `avatar.js`, `manifest.webmanifest` |
+| Copie du SDK Web licencié | `scripts/setup-jade-mobile-sdk.ps1` |
+| Tests hors ligne | `tests/test_jade_mobile_gateway.py`, `tests/test_jade_all_channels.py`, `tests/test_jade_preflight.py` |
+
+Si un point échoue, **inspecter d'abord ce code et les journaux du PC** puis appliquer le correctif le plus local possible, sur une branche dédiée si modification du dépôt nécessaire. Ne pas désactiver la sécurité de la passerelle pour contourner un 403, ne pas retirer un canal pour contourner le préflight, et ne pas publier les secrets.
+
 **Fin de mission Codex :** rapport synthétique avec branche/SHA réellement exécuté, services fonctionnels par support, tests faits (automatiques vs matériels), URL privée sans token, lieu du fichier de secrets **sans son contenu**, problèmes ouverts et prochaines interventions humaines. Aucune modification de `main`, aucun déploiement de code/proxy sur le VPS Hyperliquid sans autorisation spécifique.
