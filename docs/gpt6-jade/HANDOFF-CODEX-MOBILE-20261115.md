@@ -51,6 +51,7 @@ Sources des licences et SDK :
 # Exemple : adapter au vrai chemin de ton poste, ne pas recopier un jeton dans Git.
 JADE_MOBILE_ENABLED=1
 JADE_MOBILE_TOKEN=<jeton aleatoire prive d'au moins 32 caracteres>
+JADE_MOBILE_OWNER_LOGIN=<identifiant de connexion Tailscale du propriétaire>
 JADE_MOBILE_PORT=8766
 JADE_MOBILE_VENDOR_DIR=D:\Jade\private\mobile-sdk
 # Optionnel, sinon le package r20 du depot est utilise :
