@@ -14,6 +14,7 @@
   let token = "";
   let busy = false;
   let recording = null;
+  let starting = false;
   let soundEnabled = true;
   let audioContext = null;
   let playing = null;
@@ -167,7 +168,7 @@
 
   async function submitText(event) {
     event.preventDefault();
-    if (busy || recording) return;
+    if (busy || recording || starting) return;
     if (!token) { authorizeAgain(); return; }
     const text = input.value.trim();
     if (!text) return;
@@ -230,12 +231,15 @@
 
   async function startRecording() {
     if (!token) { authorizeAgain(); return; }
-    if (busy || recording) return;
+    if (busy || recording || starting) return;
     if (!navigator.mediaDevices?.getUserMedia) {
       setStatus("Microphone indisponible : ouvrir l'application en HTTPS via Tailscale.");
       return;
     }
     stopPlayback();
+    starting = true;
+    mic.disabled = true;
+    setStatus("Autorisation du microphone…");
     let stream, context;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -245,6 +249,7 @@
       const Ctx = window.AudioContext || window.webkitAudioContext;
       context = new Ctx();
       await context.resume();
+      if (document.hidden) throw new Error("la page est en arrière-plan");
       const source = context.createMediaStreamSource(stream);
       const processor = context.createScriptProcessor(4096, 1, 1);
       const silent = context.createGain();
@@ -277,38 +282,59 @@
       if (stream) stream.getTracks().forEach(track => track.stop());
       if (context) await context.close().catch(() => {});
       setStatus("Accès au micro refusé ou indisponible.");
+    } finally {
+      starting = false;
+      mic.disabled = false;
     }
+  }
+
+  function resetMicButton() {
+    mic.classList.remove("recording");
+    mic.setAttribute("aria-pressed", "false");
+    mic.setAttribute("aria-label", "Démarrer l'enregistrement vocal");
+  }
+
+  async function releaseRecording(current) {
+    clearTimeout(current.timer);
+    current.processor.onaudioprocess = null;
+    for (const node of [current.source, current.processor, current.silent]) {
+      try { node.disconnect(); } catch (_) {}
+    }
+    current.stream.getTracks().forEach(track => track.stop());
+    await current.context.close().catch(() => {});
+  }
+
+  function cancelRecording() {
+    const current = recording;
+    if (!current) return;
+    recording = null;
+    resetMicButton();
+    // Backgrounding the app must discard, never send, microphone data.
+    releaseRecording(current).catch(() => {});
+    setStatus("Enregistrement interrompu, aucun audio envoyé.");
   }
 
   async function stopRecording() {
     const current = recording;
-    if (!current) return;
+    if (!current || busy) return;
     recording = null;
-    // Unlock the playback context while the stop-button gesture is active.
-    // Chrome Android may reject a first play() after an awaited network turn.
+    busy = true;  // Prevent a second tap/turn while audio tracks are closing.
+    // Unlock playback inside the stop-button gesture, before network awaits.
     if (soundEnabled) ensureAudioContext().catch(() => {});
-    clearTimeout(current.timer);
-    mic.classList.remove("recording");
-    mic.setAttribute("aria-pressed", "false");
-    mic.setAttribute("aria-label", "Démarrer l'enregistrement vocal");
-    current.processor.onaudioprocess = null;
-    current.source.disconnect();
-    current.processor.disconnect();
-    current.silent.disconnect();
-    current.stream.getTracks().forEach(track => track.stop());
-    await current.context.close().catch(() => {});
-    if (busy) return;
-    if (Date.now() - current.started < 250 || current.frames < 4000) {
-      setStatus("Enregistrement trop court.");
-      return;
-    }
-    busy = true;
+    resetMicButton();
     setStatus("Je transmets ta voix à Jade…", true);
+    const rate = current.context.sampleRate, frames = current.frames;
     try {
-      const wav = buildWav(current.chunks, current.context.sampleRate, current.frames);
+      await releaseRecording(current);
+      if (Date.now() - current.started < 250 || frames < 4000) {
+        setStatus("Enregistrement trop court.");
+        return;
+      }
+      const wav = buildWav(current.chunks, rate, frames);
       const result = await makeRequest("/api/voice", wav, {
         "Content-Type":"audio/wav",
-        "X-Jade-Session": thread
+        "X-Jade-Session": thread,
+        "X-Jade-Speak": soundEnabled ? "1" : "0"
       });
       await present(result);
     } catch (error) {
@@ -341,7 +367,17 @@
   });
   mic.addEventListener("click", () => {
     if (recording) stopRecording();
-    else startRecording();
+    else if (!starting) startRecording();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      cancelRecording();
+      stopPlayback();
+    }
+  });
+  window.addEventListener("pagehide", () => {
+    cancelRecording();
+    stopPlayback();
   });
   soundToggle.addEventListener("click", () => {
     soundEnabled = !soundEnabled;
@@ -350,7 +386,7 @@
     if (!soundEnabled) stopPlayback();
   });
   newChat.addEventListener("click", () => {
-    if (busy || recording) return;
+    if (busy || recording || starting) return;
     thread = newThread();
     stopPlayback();
     log.replaceChildren();
