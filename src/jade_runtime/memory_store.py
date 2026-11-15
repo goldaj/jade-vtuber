@@ -14,7 +14,7 @@ import secrets
 import sqlite3
 import uuid
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 KINDS = frozenset(("ordinary", "core_self", "core_relationship"))
 _ID = re.compile(r"^[1-9][0-9]{0,24}$")
 
@@ -65,7 +65,7 @@ class MemoryStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._db() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, SCHEMA_VERSION):
+            if version not in (0, 1, 2, SCHEMA_VERSION):
                 raise RuntimeError("unsupported Jade memory schema; migrate before starting")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS persons (
@@ -120,6 +120,20 @@ class MemoryStore:
                 );
                 CREATE INDEX IF NOT EXISTS idx_jade_self_core_recency
                     ON jade_self_core(created_at DESC);
+                -- Complete, non-summarized dialogue turns, strictly opt-in per verified identity.
+                CREATE TABLE IF NOT EXISTS conversation_turns (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    person_id TEXT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+                    scope TEXT NOT NULL,
+                    source_platform TEXT NOT NULL,
+                    source_message_id TEXT,
+                    user_content TEXT NOT NULL,
+                    assistant_content TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    UNIQUE(person_id,scope,source_platform,source_message_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_conversation_turns_scope
+                    ON conversation_turns(person_id,scope,id DESC);
             """)
             db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
 
@@ -332,6 +346,58 @@ class MemoryStore:
                 "DELETE FROM memories WHERE kind='ordinary' AND expires_at<=?",
                 (_now().isoformat(),))
             return deleted.rowcount
+
+    def append_conversation_turn(self, key: tuple[str, str], scope: str, *,
+                                 source_platform: str, message_id: str,
+                                 user_content: str, assistant_content: str) -> bool:
+        """Persist a complete delivered turn only for an opted-in verified person.
+
+        A blank transport message ID is stored as NULL so consecutive local turns
+        cannot accidentally overwrite or deduplicate each other.
+        """
+        _validate_key(key)
+        if (not isinstance(scope, str) or not 1 <= len(scope) <= 256
+                or not isinstance(source_platform, str) or not 1 <= len(source_platform) <= 32
+                or not isinstance(message_id, str) or len(message_id) > 128
+                or not isinstance(user_content, str) or not 1 <= len(user_content) <= 5000
+                or not isinstance(assistant_content, str) or not 1 <= len(assistant_content) <= 5000):
+            raise ValueError("invalid conversation turn")
+        with self._db() as db:
+            row = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
+            ).fetchone()
+            if row is None:
+                return False
+            changed = db.execute("""
+                INSERT OR IGNORE INTO conversation_turns
+                  (person_id,scope,source_platform,source_message_id,
+                   user_content,assistant_content,created_at)
+                VALUES (?,?,?,?,?,?,?)
+            """, (row["person_id"],scope,source_platform,message_id or None,
+                  user_content,assistant_content,_now().isoformat())).rowcount
+            return bool(changed)
+
+    def recent_conversation_turns(self, key: tuple[str, str], scope: str,
+                                  *, limit: int = 24) -> list[dict]:
+        """Recover full turns in chronological order, without LLM summarization."""
+        _validate_key(key)
+        if not isinstance(scope, str) or not 1 <= len(scope) <= 256 or not 1 <= limit <= 50:
+            raise ValueError("invalid conversation history request")
+        with self._db() as db:
+            row = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
+            ).fetchone()
+            if row is None:
+                return []
+            turns = db.execute("""
+                SELECT user_content, assistant_content FROM conversation_turns
+                 WHERE person_id=? AND scope=? ORDER BY id DESC LIMIT ?
+            """, (row["person_id"],scope,limit)).fetchall()
+        result = []
+        for turn in reversed(turns):
+            result.append({"role": "user", "content": turn["user_content"]})
+            result.append({"role": "assistant", "content": turn["assistant_content"]})
+        return result
 
     def begin_link(self, key: tuple[str, str], *, ttl_seconds: int = 300) -> str:
         """Generate a one-time, short-lived secret for *another* authenticated account.
