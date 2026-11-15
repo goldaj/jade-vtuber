@@ -1,6 +1,6 @@
 # Launcher Windows personnel pour Jade
 
-**Date : 15 novembre 2026.** Lot isolé `feat/jade-windows-launcher-20261115`, ciblant `develop`, sans intervention sur `main`, le PC physique ni le VPS Hyperliquid.
+**Date : 15 novembre 2026.** Lot développé sur `feat/jade-windows-launcher-20261115`, fusionné dans `develop` via PR #13 après CI Windows/Linux et scan de secrets réussis. Aucune intervention sur `main`, le PC physique ou le VPS Hyperliquid.
 
 ## But et installation (sur le PC Windows Jade)
 
