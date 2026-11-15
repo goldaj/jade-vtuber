@@ -82,6 +82,10 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
     if mic:
         checks.append(Check("Capture microphone", _installed("sounddevice"),
                             "sounddevice installé, aucun enregistrement réalisé"))
+        if voice:
+            checks.append(Check("Retour vocal du micro local",
+                                settings.audio_output == "ffplay" and which("ffplay") is not None,
+                                "Pour la voix locale : JADE_AUDIO_OUTPUT=ffplay et ffplay sur PATH"))
     if twitch:
         checks.append(Check(
             "Twitch activé", settings.twitch_enabled
