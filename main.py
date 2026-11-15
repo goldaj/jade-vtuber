@@ -38,6 +38,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         raise ValueError("set JADE_AUDIO_OUTPUT=ffplay before enabling billed TTS")
     if all_channels and not config.twitch_send:
         raise ValueError("JADE_TWITCH_SEND=1 is required so Twitch can reply in all-channel mode")
+    if all_channels and config.audio_output != "ffplay":
+        raise ValueError("JADE_AUDIO_OUTPUT=ffplay is required for private local microphone replies")
     if twitch and not config.twitch_enabled:
         raise ValueError("set JADE_TWITCH_ENABLED=1 to allow Twitch connection")
     if discord and (not config.discord_token or config.discord_token == "example"):
