@@ -126,4 +126,4 @@ Les documents de suivi du projet et l’index des conversations sont dans `docs/
 
 ## Launcher local pour Windows
 
-Un [launcher Windows personnel](docs/gpt6-jade/LAUNCHER-WINDOWS-20261115.md) permet de choisir une branche et de démarrer les profils Discord, avatar, micro, mobile ou démo. Depuis le clone sur D:, exécuter une fois `Installer-Launcher-Jade.cmd`, puis `D:\Jade\launcher\Lancer-Jade.cmd`. Le lancement réel reste soumis au préflight, à la configuration privée et aux tests matériels sur le PC.
+Un [launcher Windows personnel](docs/gpt6-jade/LAUNCHER-WINDOWS-20261115.md) permet de choisir une branche et de lancer **tous les supports simultanément, sans choix de profil** : Discord vocal et écrit, Twitch, microphone local, HTTP local, application mobile privée, voix et avatar. Le moteur Jade arbitre les messages en attente, sans priorité fixe par support. Depuis le clone sur D:, exécuter `Installer-Launcher-Jade.cmd`, puis `D:\Jade\launcher\Lancer-Jade.cmd`. Il faut configurer tous les connecteurs dans la configuration privée ; un préflight incomplet bloque le démarrage plutôt que lancer un sous-ensemble invisible. Le démarrage peut facturer OpenAI.
