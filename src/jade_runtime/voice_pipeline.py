@@ -29,13 +29,15 @@ class VoiceInput:
         if self.audio_gate is not None and not await self.audio_gate.valid(generation):
             return False
         self.segment += 1
-        await self.runtime.submit(Incoming(
+        work = await self.runtime.submit(Incoming(
             platform="microphone", author="Goldaj",
             channel="mic", message_id=f"mic-{self.segment}",
             text=text, force_reply=True))
-        # Keep listening while other independent channels are queued. The
-        # audio gate controls feedback during local playback; waiting for the
-        # entire global queue would starve the PC microphone under load.
+        # Await only this microphone turn, including its playback, rather than
+        # waiting for unrelated Twitch/Discord/mobile messages queued later.
+        # This preserves echo protection without giving any source priority.
+        if work.finished is not None:
+            await work.finished
         return True
 
     async def loop(self, duration=3.0):
