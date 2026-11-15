@@ -119,3 +119,7 @@ Dans la configuration privée, `JADE_LLM_MODEL=gpt-6-luna`, `JADE_LLM_REASONING_
 Le schéma passe de la version 2 à la version 3 ; **sauvegarder le fichier SQLite avant la première ouverture par le nouveau programme**, car une vieille version du code peut refuser la base migrée. L'historique restauré contient des messages complets, sans résumé, mais seulement les 48 plus récents dans le contexte. Le reste reste en base. Les conversations d'autres utilisateurs ne sont pas enregistrées automatiquement sans consentement.
 
 Avant la recette réelle, lancer `poetry run python -m unittest discover -s tests -v` puis `poetry run python main.py --preflight`. Voir [détails et limites](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md). Aucun nouveau rig ou asset d'animation 2D n'est nécessaire pour ces réglages.
+
+## Contrôle DevOps avant utilisation réelle (15/11/2026)
+
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Exécuter localement les tests et préflights décrits dans le guide technique. Le backup de mémoire SQLite supporte les schémas 1, 2 et 3, mais l'archive ZIP n'est **pas chiffrée** : la déplacer uniquement via un support chiffré et vérifier la restauration sur une base de test. Le launcher copié dans `D:\Jade\launcher` doit être **réinstallé** après toute modification de ses scripts ; pas de mise à jour automatique garantie. Les tests de GitHub Actions n'établissent pas le fonctionnement du PC réel.
