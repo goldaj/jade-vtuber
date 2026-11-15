@@ -27,11 +27,13 @@ def _scope(incoming) -> str:
 
 
 class MemoryService:
-    def __init__(self, store: MemoryStore, backend, *, max_pending=4):
+    def __init__(self, store: MemoryStore, backend, *, max_pending=4,
+                 curator_enabled=False):
         if not 1 <= max_pending <= 16:
             raise ValueError("invalid memory backlog")
         self.store = store
         self.backend = backend
+        self.curator_enabled = curator_enabled
         self.max_pending = max_pending
         self.tasks: set[asyncio.Task] = set()
         self._closed = False
@@ -90,7 +92,7 @@ class MemoryService:
 
         The actual decision (including no memory) is taken by Jade's LLM.
         """
-        if self._closed or len(self.tasks) >= self.max_pending:
+        if self._closed or not self.curator_enabled or len(self.tasks) >= self.max_pending:
             return False
         key = identity_of(incoming)
         if key is None or COMMAND.fullmatch(incoming.text.strip()):
@@ -159,8 +161,10 @@ class MemoryService:
             if re.search(r"(?i)(api[_ -]?key|mot de passe|password|token|"
                          r"code bancaire|carte bancaire|sk-[a-z0-9]+)", summary):
                 return
+            # Public channels never recall memories originating in a different
+            # channel, even if both messages come from the same account.
             await asyncio.to_thread(
-                self.store.put, key, kind=kind, scope="person",
+                self.store.put, key, kind=kind, scope=_scope(incoming),
                 summary=summary, significance=significance,
                 message_id=incoming.message_id,
             )
