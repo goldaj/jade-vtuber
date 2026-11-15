@@ -61,7 +61,7 @@
 
 1. Confirmer les CI du **SHA HEAD** de #6, #7 et de la branche d'intégration #11 : Ubuntu + Windows, vérification des secrets et hygiène de publication. Les anciens SHA verts ne valident pas les nouvelles modifications.
 2. Préserver l'ordre des PR : #6 → #8 → #9 → #11, en évitant le double merge de #7 déjà contenu dans #11. Prendre une seule décision de fusion après revue, jamais vers `main` sans accord du propriétaire.
-3. Sur le PC Windows Jade, sauvegarder la base SQLite v1 avant migration ; vérifier D:, version de Python, exigences Tailscale Serve, JWT/Bearer distincts et URL HTTPS réelle. Aucun secret ne doit apparaître dans les PR publiques.
+3. Sur le PC Windows Jade, sauvegarder la base SQLite v1 avant migration ; vérifier D:, version de Python, exigences Tailscale Serve, jeton Bearer mobile distinct et URL HTTPS réelle. Aucun secret ne doit apparaître dans les PR publiques.
 4. Test Discord : vocal et chat du même salon (même auteur), changement de pseudo, autre utilisateur, DM, salon séparé, déconnexion/reconnexion. Vérifier **aussi** qu'un DM ne sort jamais en vocal.
 5. Test PWA : texte puis microphone Android dans le même fil, voix désactivée (pas de TTS facturé), rendu alpha/expressions/bouche du SDK légalement installé, réseau instable, interruption et expédition non dupliquée.
 6. Test mémoire : une Core ordinaire et une autobiographique décidées en simulation puis en réel avec petit quota, redémarrage, restauration, correction/effacement, course forget/réactivation. Vérifier l'absence de fuite sur un autre compte ou salon.
