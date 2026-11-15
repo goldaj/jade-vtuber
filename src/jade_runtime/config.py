@@ -69,6 +69,12 @@ class Settings:
     max_queue: int = 64
     reply_probability: float = 0.0
     timeout_seconds: float = 20.0
+    # Mobile PWA is opt-in, served on local loopback only.
+    mobile_enabled: bool = False
+    mobile_token: str = field(default="", repr=False)
+    mobile_port: int = 8766
+    mobile_vendor_dir: str = ""
+    mobile_model_dir: str = ""
 
     @classmethod
     def load(cls) -> "Settings":
@@ -108,6 +114,11 @@ class Settings:
             max_queue=int(environ("JADE_QUEUE_LIMIT", "64")),
             reply_probability=float(environ("JADE_RANDOM_REPLY_RATE", "0")),
             timeout_seconds=float(environ("JADE_API_TIMEOUT", "20")),
+            mobile_enabled=_enabled(str(environ("JADE_MOBILE_ENABLED", "0")).lower()),
+            mobile_token=str(environ("JADE_MOBILE_TOKEN", "")),
+            mobile_port=int(environ("JADE_MOBILE_PORT", "8766")),
+            mobile_vendor_dir=str(environ("JADE_MOBILE_VENDOR_DIR", "")),
+            mobile_model_dir=str(environ("JADE_MOBILE_MODEL_DIR", "")),
         )
         cfg.validate()
         return cfg
@@ -134,6 +145,12 @@ class Settings:
             raise ValueError("invalid Discord text participation limits")
         if not 1024 <= self.http_port <= 65535:
             raise ValueError("invalid local API port")
+        if not 1024 <= self.mobile_port <= 65535:
+            raise ValueError("invalid mobile port")
+        if self.mobile_enabled and not 32 <= len(self.mobile_token) <= 256:
+            raise ValueError("mobile app requires a separate 32+ character token")
+        if self.mobile_enabled and self.http_enabled and self.mobile_port == self.http_port:
+            raise ValueError("mobile and legacy HTTP cannot share one port")
         if self.http_enabled and len(self.http_token) < 32:
             raise ValueError("HTTP API requires an independent 32+ character token")
         if self.audio_output not in ("none", "ffplay"):
