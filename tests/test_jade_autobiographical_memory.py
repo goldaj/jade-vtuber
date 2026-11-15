@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import AsyncMock
 
-from src.jade_runtime.memory_store import MemoryStore
+from src.jade_runtime.memory_store import MemoryStore, SCHEMA_VERSION
 from src.jade_runtime.memory_service import MemoryService
 from src.jade_runtime.memory_transfer import export_memory, import_memory
 from src.jade_runtime.messages import Incoming, Reply
@@ -43,7 +43,7 @@ class Autobiography(unittest.IsolatedAsyncioTestCase):
         with closing(sqlite3.connect(self.path)) as db:
             self.assertEqual(db.execute(
                 "SELECT COUNT(*) FROM jade_self_core").fetchone()[0], 1)
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 2)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], SCHEMA_VERSION)
 
     async def test_personal_dialogue_reads_self_core_but_discord_does_not(self):
         self.store.enable(OWNER)
@@ -101,7 +101,7 @@ class Autobiography(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.store.forget(ALICE))
         self.assertEqual(len(self.store.recall_self_core(OWNER)), 1)
 
-    async def test_v1_upgrade_and_portable_v2_backup(self):
+    async def test_v1_upgrade_and_portable_current_backup(self):
         self.store.enable(OWNER)
         # Simulate the exact pre-autobiography SQLite layout and user_version.
         with closing(sqlite3.connect(self.path)) as db:
@@ -115,9 +115,9 @@ class Autobiography(unittest.IsolatedAsyncioTestCase):
         migrated = MemoryStore(restored_v1)
         self.assertTrue(migrated.put_self_core(
             OWNER, summary="Jade a migré sa mémoire vers le nouveau PC."))
-        archive = Path(self.temp.name) / "v2.zip"
+        archive = Path(self.temp.name) / "current.zip"
         export_memory(restored_v1, archive)
-        restored_v2 = Path(self.temp.name) / "restored_v2.sqlite3"
+        restored_v2 = Path(self.temp.name) / "restored_current.sqlite3"
         import_memory(archive, restored_v2)
         self.assertEqual(len(MemoryStore(restored_v2).recall_self_core(OWNER)), 1)
 
