@@ -17,9 +17,7 @@ interagir par texte et par voix. Ce dépôt présente le moteur Python qui reço
 les messages, prépare une réponse et peut la transmettre à des outils de
 streaming. Le travail sur le personnage et son animation est mené séparément.
 
-> **État : prototype en cours de développement.** Le mode de démonstration
-> fonctionne hors ligne. Les connexions aux plateformes et les appareils audio
-> demandent encore une validation réelle.
+**État de develop :** les fonctions raccordées sont implémentées ; leur activation sur le PC dépend des paramètres privés, comptes et dépendances installés.
 
 ## Ce que fait le moteur
 
@@ -80,19 +78,9 @@ Le projet fournit un fichier de dépendances verrouillé `poetry.lock`. Installe
 Poetry et les dépendances nécessite un accès au registre de paquets ; une fois
 installées, la démo et les tests n’appellent pas de service IA distant.
 
-## Fonctionnalités et niveau de validation
+## Fonctions implémentées sur develop
 
-| Élément | État de la preuve |
-| --- | --- |
-| Console, file de messages et historique | Tests automatisés hors ligne ; démo locale disponible |
-| Texte OpenAI | Un essai réel court a réussi ; ce n’est pas une mesure de performance généralisable |
-| Chaîne micro → STT → dialogue → TTS | Services simulés et courts essais STT/TTS OpenAI sur audio synthétique ; micro réel non testé |
-| Twitch, Discord et Discord vocal | Authentification Twitch et connexion Discord vérifiées sans message ; vocal Discord réel non testé et expérimental |
-| Sous-titres et VTube Studio | Interfaces et tests simulés ; configuration OBS et interactions VTube Studio réelles à vérifier |
-| Personnage 2D | Sources et portrait inclus ; intégration et animation en cours |
-
-La simulation vérifie des comportements logiciels et ne remplace pas un essai
-matériel, une recette de diffusion ou une mesure de latence et de coût.
+Discord écrit/vocal, Twitch IRC, micro PC, API HTTP locale, PWA mobile, mémoire SQLite opt-in, intentions, voix OpenAI, r20 PC/PWA et orchestration sont raccordés au runtime. Voir **[l'inventaire actuel du code](docs/handbook/BRANCH_STATE.md)** pour leurs limites, sans tableau redondant d'état de recette.
 
 ## Options et configuration privée
 
@@ -145,20 +133,12 @@ Les documents de suivi du projet et l’index des conversations sont dans `docs/
 
 Un [launcher Windows personnel](docs/gpt6-jade/LAUNCHER-WINDOWS-20261115.md) permet de choisir une branche et de lancer **tous les supports simultanément, sans choix de profil** : Discord vocal et écrit, Twitch, microphone local, HTTP local, application mobile privée, voix et avatar. Le moteur Jade arbitre les messages en attente, sans priorité fixe par support. Depuis le clone sur D:, exécuter `Installer-Launcher-Jade.cmd`, puis `D:\Jade\launcher\Lancer-Jade.cmd`. Il faut configurer tous les connecteurs dans la configuration privée ; un préflight incomplet bloque le démarrage plutôt que lancer un sous-ensemble invisible. Le démarrage peut facturer OpenAI. **Pour installer l'application Android avec l'aide de Codex : consulter le [guide opérationnel Windows + Android](docs/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md)**. Il couvre Tailscale Serve sur le PC, les secrets privés, le SDK Web Live2D, la PWA Chrome, le diagnostic et les tests réels.
 
-## Réactions émotionnelles du modèle 2D sur develop
+## Intentions, mémoire et futurs travaux
 
-Le moteur d'intentions pilote désormais (sur le chantier [Live2D réactions](docs/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), à intégrer et tester) des expressions faciales r20 de substitution et une ligne d'humeur textuelle dans la PWA : **deux variantes par intention** parmi les sept labels autorisés. L'avatar autonome Windows reçoit également les expressions. Le réglage privé `JADE_AVATAR_INTENT_ENABLED=1` (défaut) permet de les couper à `0` sans couper la prosodie TTS ni le lip-sync. Le **vrai objectif restant** est de créer et de valider **14 animations distinctes** du modèle 2D en pied (deux par intention) sur PC et Android, puis seulement de les connecter. Les tests hors ligne ne garantissent pas le rendu matériel.
+**Implémenté :** sept intentions avec **deux variantes faciales r20 et deux textes PWA par intention**, voix Étincelle, dialogue configurable (par défaut `gpt-6-luna`, `low`, 320 tokens), historique de 48 messages et mémoire SQLite v3 opt-in des échanges complets. Voir [dialogue/mémoire](docs/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md) et [Live2D](docs/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
 
-## Décisions dialogue et personnalité du 15 novembre 2026
+**À développer ultérieurement :** 14 motions corporelles r21, routage exclusif par canal d'origine, mémoire anticipée, avatar à visibilité conditionnelle et moteur Realtime léger sans Luna. Ces projets figurent dans [le backlog unique](docs/ameliorations/README.md).
 
-Sur `develop`, `prompt_chat.txt` contient le texte **exact** validé par Goldaj (espièglerie, opinions nuancées, lien père/fille, réponses variées). Le contrat `[INTENT:...]` est inchangé. Par défaut, le dialogue `gpt-6-luna` emploie explicitement `low` et **320 tokens de complétion** pour les appels non-streaming et streaming, sauf surcharge par configuration privée.
+## Audits historiques
 
-La mémoire opt-in conserve maintenant en SQLite des **échanges complets, sans résumé** après livraison des réponses ; jusqu'à 48 messages récents sont restaurés dans le contexte au redémarrage. L'historique n'est pas automatiquement activé pour des comptes publics. Micro et mobile personnel répondent toujours ; Discord texte/vocal et Twitch passent à 100 % en tête-à-tête observé, avec 30 % d'échantillonnage en groupe (interpellations directes privilégiées, gardes techniques conservés). Les spectateurs Twitch silencieux ne sont pas détectables par IRC.
-
-Deux réactions par intention, soit **14 variantes conceptuelles**, sont prévues pour le futur ; aucune nouvelle animation 2D n'a été fabriquée ni branchée dans ce chantier. Documentation détaillée et limites : [dialogue Low/320, historique et participation](docs/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md). Tests de régression : `tests/test_personality_runtime_20261115.py` (à exécuter par CI/PC).
-
-## Audit DevOps de `develop` (15 novembre 2026)
-
-L'[audit PO/SRE/sécurité/QA et passation Codex](docs/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md) distingue le code corrigé, les tests CI rouges et les opérations PC/Android encore nécessaires. Les corrections proposées traitent notamment la compatibilité sauvegarde SQLite v3 et la concurrence GitHub Actions. **Un scan de secrets vert n'autorise ni une publication, ni un déploiement sur le PC Jade tant que les tests du SHA cible et la recette réelle ne sont pas passés.**
-
-**État de réconciliation du 16 novembre 2026 :** [audit des raccordements code / configuration / documentation sur develop](docs/gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md).
+Les audits et PR datés sont conservés dans [docs/gpt6-jade](docs/gpt6-jade/). L'[audit du 16 novembre](docs/gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md) est un instantané ; l'état courant dépend du code et de [BRANCH_STATE.md](docs/handbook/BRANCH_STATE.md).
