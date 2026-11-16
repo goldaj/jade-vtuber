@@ -7,7 +7,7 @@
 - **[État du code de develop](docs/handbook/BRANCH_STATE.md)** : liste canonique des fonctions et limitations.
 - **[Manuel et guide technique](docs/handbook/README.md)** ; [atlas des décisions et appels](docs/architecture/atlas-fonctionnel-2026-11-16/README.md) et [contrat de flux](docs/architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md) (instantanés datés à confronter au code).
 - **[Backlog central des améliorations](docs/ameliorations/README.md)** : projets futurs classés par thème, pas des fonctions déjà développées.
-- [Archives et index des conversations](docs/conversations/INDEX.md) : contexte historique, pas des ordres d'exécution actuels.
+- [Archives et index des conversations](docs/history/conversations/INDEX.md) : contexte historique, pas des ordres d'exécution actuels.
 
 **Décision du 16 novembre 2026 :** Goldaj veut d'abord tester Jade avant de développer les pistes du backlog. Ne pas lancer ces travaux sans nouvelle demande. Le routage exclusivement par canal source, le préchargement mémoire, la visibilité conditionnelle de l'avatar et le moteur Realtime sans Luna sont des objectifs **non intégrés**. Luna reste le modèle configuré par défaut dans le code actuel.
 
@@ -30,7 +30,7 @@
 
 ## Maintenance et passation
 
-Avant modification lire [l'index des conversations](docs/conversations/INDEX.md), les sources du domaine, [AI_HANDOFF](docs/handbook/AI_HANDOFF.md), puis la passation adaptée : [voix](docs/gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), [mémoire](docs/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md), [Discord](docs/gpt6-jade/HANDOFF-DISCORD-UNIFIED-20261115.md), [PC/Android](docs/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), [Live2D](docs/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [DevOps](docs/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md).
+Avant modification lire [l'index des conversations](docs/history/conversations/INDEX.md), les sources du domaine, [AI_HANDOFF](docs/handbook/AI_HANDOFF.md), puis la passation adaptée : [voix](docs/history/gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), [mémoire](docs/history/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md), [Discord](docs/history/gpt6-jade/HANDOFF-DISCORD-UNIFIED-20261115.md), [PC/Android](docs/history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), [Live2D](docs/history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [DevOps](docs/history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md).
 
 Toute modification de **code, test, configuration, dépendance, script, interface, asset ou infrastructure** doit mettre à jour dans la même PR les guides `docs/handbook/README.md`, `INSTALLATION.md`, `DEMO.md`, `USER_GUIDE.md`, `TECHNICAL.md`, `AI_HANDOFF.md`, `BRANCH_STATE.md`, `BRANCH_MAINTENANCE.md` ainsi qu'`AGENTS.md`, conformément à `scripts/check_docs.py`. Mettre également à jour README, atlas et passations touchés, et marquer dans le backlog ce qui est réellement codé. Ne pas répéter les comptes rendus d'anciennes CI dans chaque guide.
 

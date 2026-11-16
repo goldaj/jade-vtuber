@@ -3,7 +3,7 @@
 > **État courant au 2 novembre 2026 :** la PR #1 est fermée sans fusion et son
 > historique est entièrement inclus dans la PR #2, toujours en brouillon.
 > La branche consolidée est `research/gpt6-jade-publication-readiness-20261028`.
-> Lire [la migration préparée](migration/2026-11-02/README.md) avant de reprendre.
+> Lire [la migration préparée](../migrations/2026-11-02/README.md) avant de reprendre.
 > Le texte ci-dessous est conservé comme historique du 24 octobre.
 
 GPT-6 Chat travaille en parallèle sur la branche isolée

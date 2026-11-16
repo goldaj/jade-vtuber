@@ -59,9 +59,9 @@ La politique Tera par défaut du 29/10 remplace les directives antérieures impo
 - Utilisateur (résumé non verbatim, heure individuelle indisponible) : contrôle rapide de la refonte, documentation de migration, erreurs et incertitudes ; visuel/animation 2D laissés de côté ; relecture manuelle Astra avant retour Terra pour les travaux réels.
 - Utilisateur (verbatim, clarification, heure individuelle indisponible) : « Il n’y a pas encore de production active ».
 - Assistant (résumé non verbatim) : copie d’audit isolée sur D:, carte des branches, plan, reproductions synthétiques et tests. Aucun correctif runtime, merge, push, appel payant ou changement d’asset.
-- [Index des conversations](conversations/INDEX.md), [dossier de migration](migration/2026-11-02/README.md). Les anciennes décisions sont conservées comme historique.
+- [Index des conversations](../conversations/INDEX.md), [dossier de migration](../migrations/2026-11-02/README.md). Les anciennes décisions sont conservées comme historique.
 
 ## 2026-11-02 — Relecture Astra et retour Terra
 
-- Utilisateur : demande accessible intégralement dans [le journal de revue](conversations/2026-11-02-astra.md), avec instruction de limiter les tokens.
+- Utilisateur : demande accessible intégralement dans [le journal de revue](../conversations/2026-11-02-astra.md), avec instruction de limiter les tokens.
 - Assistant (résumé non verbatim) : confirme le graphe et les reproductions, précise les pièges d’implémentation et corrige l’ordre push/CI ; valide le plan amendé pour la reprise Terra. Aucun code applicatif modifié.

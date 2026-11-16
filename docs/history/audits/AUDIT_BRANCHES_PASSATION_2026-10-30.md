@@ -24,6 +24,6 @@
 - **Ancien code** : ne pas réintroduire ElevenLabs ni anciennes routines Discord concurrentes depuis `speechtotext-discord` ; comparer le besoin fonctionnel à l'architecture cible.
 
 ## Passation reproductible
-Lire `AGENTS.md`, `docs/CODEX_PARALLEL_GPT6.md`, `docs/CHATGPT_PROJECT_HISTORY.md`, le README (« # Jade — VTuber IA, voix et modèle Live2D ») et tous les guides PR #2. Monter un environnement local secret-free avec mocks ; mesurer erreurs et performances, vérifier les assets LFS puis préparer une revue humaine. Ne toucher à aucune prod, stream, compte ou modèle natif pendant un audit documentaire.
+Lire `AGENTS.md`, `docs/history/handoffs/CODEX_PARALLEL_GPT6.md`, `docs/history/handoffs/CHATGPT_PROJECT_HISTORY.md`, le README (« # Jade — VTuber IA, voix et modèle Live2D ») et tous les guides PR #2. Monter un environnement local secret-free avec mocks ; mesurer erreurs et performances, vérifier les assets LFS puis préparer une revue humaine. Ne toucher à aucune prod, stream, compte ou modèle natif pendant un audit documentaire.
 
 **Sources vérifiées :** branches, comparaisons ciblées, état PR GitHub au 30/10/2026. Les branches non comparées sont explicitement à recontrôler, pas présumées inutiles. Aucun test exécuté, seul ce document est ajouté.
