@@ -1,5 +1,7 @@
 # Contrat et passation permanente pour les agents IA : develop
 
+**Cartographie obligatoire avant modification des flux de dialogue, arbitrage, mémoire ou diffusion :** [atlas fonctionnel à cinq vues](../architecture/atlas-fonctionnel-2026-11-16/README.md) et [contrat détaillé](../architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md). Réviser les diagrammes lors de tout changement fonctionnel ; les vues de novembre 2026 sont datées, seule l'implémentation de la branche courante est source de vérité.
+
 **Cartographie de référence :** consulter les [deux schémas visuels](../architecture/README.md) avant d'analyser les flux ou de déplacer des composants. Ils servent d'orientation, jamais de preuve à eux seuls : examiner `main.py`, la configuration, les adaptateurs et les sorties. Lorsqu'une modification rend une flèche ou une fonction obsolète, mettre à jour les images et cette documentation dans la même branche.
 
 ## Instruction impérative : documentation synchronisée avec le code

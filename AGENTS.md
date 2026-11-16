@@ -2,7 +2,7 @@
 
 ## Références visuelles de l’architecture (develop)
 
-Les [deux schémas de Jade](docs/architecture/README.md) documentent le flux d’appels et la répartition des composants entre le PC de Jade, Android, les connecteurs et les services externes. **Les consulter avant un changement d’architecture**, puis vérifier les liaisons dans le code effectif de la branche : les schémas datés sont indicatifs, le code prime. Toute modification qui rend ces illustrations inexactes implique leur mise à jour ainsi que celle des guides.
+**Référence fonctionnelle prioritaire :** [atlas du 16 novembre 2026](docs/architecture/atlas-fonctionnel-2026-11-16/README.md) et [contrat des décisions et appels](docs/architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md). L'atlas comporte cinq vues : boucle, choix par canal, parallélisme, mémoire et sorties/échecs. Les [deux schémas du 15 novembre](docs/architecture/README.md) restent des références historiques d'infrastructure. **Consulter ces documents avant tout changement de flux**, puis vérifier le comportement réel dans le code de la branche et la configuration privée. Toute modification d'architecture ou des politiques de décision impose la mise à jour coordonnée des cinq vues, du contrat et des guides ; aucune illustration ne prévaut sur le code exécuté.
 
 ## Maintenance documentaire systématique (règle prioritaire sur develop)
 

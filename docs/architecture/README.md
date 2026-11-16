@@ -1,6 +1,20 @@
 # Schémas de référence de l'architecture de Jade
 
-Ces deux schémas ont été fournis par le propriétaire le **15 novembre 2026** et sont conservés dans cette branche `develop` comme **références visuelles pour les agents IA et les contributeurs**. Leur perspective est complémentaire : le premier détaille la chronologie des appels ; le second localise les composants par machine et service.
+## Nouvelle référence fonctionnelle : atlas du 16 novembre 2026
+
+**Priorité pour la compréhension du comportement sur `develop` :** [Atlas de la boucle fonctionnelle complète](atlas-fonctionnel-2026-11-16/README.md) et [contrat détaillé](atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md).
+
+Les cinq vues corrigées et compactes décrivent les décisions d'acceptation par canal, l'arbitrage, les allers-retours vers les services IA/STT/TTS, les traitements simultanés, la mémoire différée, les sorties et les exceptions. Elles sont datées du 16 novembre 2026 et fondées sur `develop` au commit `a841628b`. Elles sont **documentaires**, sans validation de la configuration privée ni de la recette du PC.
+
+- [1. Boucle principale](atlas-fonctionnel-2026-11-16/01_boucle_maitre.svg)
+- [2. Décisions par canal](atlas-fonctionnel-2026-11-16/02_decisions_canaux.svg)
+- [3. Parallélisme et voix](atlas-fonctionnel-2026-11-16/03_parallelisme_voix.svg)
+- [4. Mémoire et identités](atlas-fonctionnel-2026-11-16/04_memoire_et_identites.svg)
+- [5. Sorties et exceptions](atlas-fonctionnel-2026-11-16/05_sorties_et_exceptions.svg)
+
+Les **deux schémas du 15 novembre** sont conservés ci-dessous à titre historique. En cas de divergence, consulter le code exécuté, puis actualiser l'atlas, le contrat et les guides correspondants.
+
+Les deux schémas historiques ci-dessous ont été fournis par le propriétaire le **15 novembre 2026** et sont conservés dans cette branche `develop` comme **références visuelles pour les agents IA et les contributeurs**. Leur perspective est complémentaire : le premier détaille la chronologie des appels ; le second localise les composants par machine et service.
 
 ## 1. Architecture et flux d'appels
 

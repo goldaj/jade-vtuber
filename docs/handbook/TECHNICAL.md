@@ -1,6 +1,6 @@
 # Guide technique : architecture, infrastructure et algorithmes de Jade sur develop
 
-**Références visuelles :** voir les [deux schémas d'architecture](../architecture/README.md), l'un sur les appels et leur chronologie, l'autre sur les postes, services et responsabilités. Ces vues sont datées ; le code exécuté et les réglages de cette branche ont priorité sur les illustrations.
+**Références fonctionnelles prioritaires :** [atlas du 16 novembre 2026](../architecture/atlas-fonctionnel-2026-11-16/README.md) (cinq vues compactes) et [contrat exhaustif des parcours](../architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md), couvrant règles propres à Twitch/Discord/micro/Android/HTTP, arbitrage, appels IA distincts, parallélisme, mémoire et incidents. Les [deux anciens schémas](../architecture/README.md) sont conservés pour l'infrastructure. L'atlas est basé sur `develop` au SHA `a841628b`, non sur une recette PC en conditions réelles ; le code et les réglages de la branche ont priorité.
 
 ## 1. Portée et architecture globale
 
