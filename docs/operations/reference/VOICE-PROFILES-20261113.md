@@ -6,7 +6,7 @@
 
 ## 1. Contexte et objectif produit
 
-Source de personnalité : [`prompt_chat.txt`](../../prompt_chat.txt), identique sur `main` et `develop` lors de l'étude.
+Source de personnalité : [`prompt_chat.txt`](../../../prompt_chat.txt), identique sur `main` et `develop` lors de l'étude.
 
 Jade est un personnage virtuel de VTuber IA francophone, créé par Goldaj. Le prompt la décrit comme **vive, espiègle, légèrement arrogante, taquine, attachante, expressive et concise**. Elle répond habituellement en une ou deux phrases, sans rires ou interjections répétés. Goldaj est son père dans son histoire ; une affection **timide, rare, naturelle** est permise, ainsi que le mot « papa » avec parcimonie et uniquement pour lui. La voix ne doit ni infantiliser Jade ni accentuer artificiellement la relation père/fille.
 
@@ -14,7 +14,7 @@ Jade est un personnage virtuel de VTuber IA francophone, créé par Goldaj. Le p
 
 ## 2. Configuration technique historique (avant sélection Étincelle)
 
-Avant la décision du 13 novembre, [`src/jade_runtime/config.py`](../../src/jade_runtime/config.py) avait ces valeurs publiques. **Cet encadré est historique, et non la configuration de la branche actuelle** (voir section 7) :
+Avant la décision du 13 novembre, [`src/jade_runtime/config.py`](../../../src/jade_runtime/config.py) avait ces valeurs publiques. **Cet encadré est historique, et non la configuration de la branche actuelle** (voir section 7) :
 
 - STT : `gpt-transcribe` ; TTS : `gpt-realtime-2.1-mini`.
 - Voix : `coral` ; vitesse : `1.5`.
@@ -104,10 +104,10 @@ La première étude ne retenait aucune voix. **La décision a évolué depuis : 
 
 ## 6. Références
 
-- [Prompt Jade](../../prompt_chat.txt)
-- [Configuration](../../src/jade_runtime/config.py)
-- [Transport TTS Realtime](../../src/jade_runtime/realtime_tts.py)
-- [Passation streaming Discord](HANDOFF-STREAMING-TTS-20261113.md)
+- [Prompt Jade](../../../prompt_chat.txt)
+- [Configuration](../../../src/jade_runtime/config.py)
+- [Transport TTS Realtime](../../../src/jade_runtime/realtime_tts.py)
+- [Passation streaming Discord](../../history/gpt6-jade/HANDOFF-STREAMING-TTS-20261113.md)
 - [OpenAI — Realtime conversations](https://developers.openai.com/api/docs/guides/realtime-conversations)
 - [OpenAI — Realtime client events](https://developers.openai.com/api/reference/resources/realtime/client-events)
 - [OpenAI — Text to speech](https://developers.openai.com/api/docs/guides/text-to-speech)
@@ -136,7 +136,7 @@ Une balise **unique, en tête de réponse** ; l'intention vaut pour toute la ré
 
 **Aucune balise ne doit apparaître** dans Discord/Twitch, le retour HTTP, la console, les sous-titres, la sortie parlée ou l'historique du dialogue. Les métadonnées restent attachées à `Reply.intent`, séparées de `Reply.text`.
 
-Le module source de vérité est [`src/jade_runtime/intent_engine.py`](../../src/jade_runtime/intent_engine.py). Le `Dialogue` ajoute au **prompt système** un contrat stable, quel que soit le prompt privé de personnalité. Le parseur streaming retient les fragments initiaux jusqu'à avoir identifié ou écarté la balise, avant d'émettre le premier morceau de texte propre. La voie non-streaming suit la même règle.
+Le module source de vérité est [`src/jade_runtime/intent_engine.py`](../../../src/jade_runtime/intent_engine.py). Le `Dialogue` ajoute au **prompt système** un contrat stable, quel que soit le prompt privé de personnalité. Le parseur streaming retient les fragments initiaux jusqu'à avoir identifié ou écarté la balise, avant d'émettre le premier morceau de texte propre. La voie non-streaming suit la même règle.
 
 ### 7.2 Registre fermé des intentions
 
@@ -171,7 +171,7 @@ Pour chaque future intention : (1) justification métier ; (2) libellé stable ;
 - `orchestrator.py` et `early_speech.py` : une intention par tour, fixée avant le premier segment ; pas de changement dynamique pendant la lecture.
 - `output.py` : les chemins PCM progressif, WAV et les sorties compatibles transportent l'intention lorsque l'adaptateur est OpenAI ; les doubles de test hérités gardent leur contrat.
 - `openai_services.py` et `realtime_tts.py` : instructions **statiques** de prosodie, sélectionnées par allowlist ; texte de la réponse inchangé. Les anciens modèles Speech, s'ils étaient explicitement reconfigurés, gardent leur lecture standard sans réglage d'émotion.
-- Tests ciblés : [`tests/test_jade_intent_engine.py`](../../tests/test_jade_intent_engine.py) ; le choix de vitesse met à jour une attente dans `test_jade_runtime_realtime.py`.
+- Tests ciblés : [`tests/test_jade_intent_engine.py`](../../../tests/test_jade_intent_engine.py) ; le choix de vitesse met à jour une attente dans `test_jade_runtime_realtime.py`.
 
 ### 7.5 Critères d'acceptation et limites avant validation réelle
 

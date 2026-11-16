@@ -1,7 +1,7 @@
 # AGENTS.md — Jade
 
 > **Coordination en cours** : avant toute modification par Codex, lire
-> [`docs/CODEX_PARALLEL_GPT6.md`](docs/CODEX_PARALLEL_GPT6.md) : GPT-6 Chat
+> [`docs/history/handoffs/CODEX_PARALLEL_GPT6.md`](docs/history/handoffs/CODEX_PARALLEL_GPT6.md) : GPT-6 Chat
 > développe sur `codex/chat-gpt6-jade-rebuild` (branche séparée).
 > Aucun merge ou déploiement implicite.
 
@@ -19,7 +19,7 @@
 Les fichiers `jade-modeling/RIG_CODEX_PLAYBOOK.md` et `jade-modeling/RIG_CODEX_STATE.md` sont d'anciennes entrées, conservées comme renvois : **utiliser exclusivement les fichiers MODEL2D pour l'organisation actuelle**.
 
 ## Avant toute intervention
-- Lire `README.md`, puis **`docs/CHATGPT_PROJECT_HISTORY.md`** pour les décisions de conception et les limites documentaires. Consulter ensuite les documents spécialisés cités par le README.
+- Lire `README.md`, puis **`docs/history/handoffs/CHATGPT_PROJECT_HISTORY.md`** pour les décisions de conception et les limites documentaires. Consulter ensuite les documents spécialisés cités par le README.
 - Mission : Personnage VTuber IA, bot Python 3.11 (Twitch/Discord/LLM/audio) et art/rig Live2D VTube Studio. État r21, jalon natif v30, runtime animé r20, fichiers volumineux LFS.
 - Invariants : Lire jade-modeling/MODEL_GUIDE.md, manifestes d'assets et PRIVATE_CONFIGURATION.md ; ne pas toucher aux éléments de coffre privé ou à l'historique sensible ; pas d'appels payants non requis.
 
@@ -28,7 +28,7 @@ Les fichiers `jade-modeling/RIG_CODEX_PLAYBOOK.md` et `jade-modeling/RIG_CODEX_S
 - Préserver le travail préexistant, les versions anciennes et les fichiers non concernés. Valider uniquement ce qui peut être vérifié dans l'environnement disponible.
 
 ## Continuité du contexte
-- Après toute modification de projet, consulter et enrichir `docs/CHATGPT_PROJECT_HISTORY.md` avec les échanges fournis, les décisions et le résultat de la validation.
+- Après toute modification de projet, consulter et enrichir `docs/history/handoffs/CHATGPT_PROJECT_HISTORY.md` avec les échanges fournis, les décisions et le résultat de la validation.
 - Distinguer `Utilisateur (verbatim)`, `Assistant (verbatim)` et `Résumé reconstruit (non verbatim)`. Donner date et heure uniquement si attestées, sinon noter qu'elles manquent.
 - Ne pas inventer d'échanges ou de tests. Si une transcription n'est pas accessible, demander son export plutôt que supposer son contenu.
 - Le dépôt peut être public : expurger secrets, données personnelles et contenus ne relevant pas du projet. Ne pas écraser les éléments historiques.

@@ -94,7 +94,7 @@ Flux : LLM → préfixe `[INTENT:...]` filtré par `intent_engine.py` → `Reply
 
 **Mobile et dégradation :** `mobile_gateway.py` sert le JSON de palette en lecture sous identité Tailscale ; `avatar.js` lit le catalogue avant d'essayer le SDK Web, sélectionne A/B par intention, affiche un libellé `textContent` et déclenche les `.exp3` connues. Si le SDK/asset ou le catalogue manque, la discussion et la voix continuent. `app.js` évite de doubler les commandes d'émotion et ne remplace plus les libellés par un état vocal générique ; l'Idle est rétabli en fin de voix. La remise à zéro des expressions Web utilise `resetExpression()` seulement si la version du SDK l'expose ; validation matérielle obligatoire.
 
-**Limite métier :** aucun des deux rendus ne dispose encore de **deux nouvelles motions corporelles distinctes par intention**. Les variantes sont des expressions faciales du r20, certaines réutilisées. L'animation de base Idle et la bouche sont conservées. L'extension v2 avec 14 ressources propres doit être conçue, riggée, validée et seulement ensuite activée. Ne pas basculer automatiquement sur le r21 en pied non finalisé. Contrat/risques/tests : [passation Codex Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+**Limite métier :** aucun des deux rendus ne dispose encore de **deux nouvelles motions corporelles distinctes par intention**. Les variantes sont des expressions faciales du r20, certaines réutilisées. L'animation de base Idle et la bouche sont conservées. L'extension v2 avec 14 ressources propres doit être conçue, riggée, validée et seulement ensuite activée. Ne pas basculer automatiquement sur le r21 en pied non finalisé. Contrat/risques/tests : [passation Codex Live2D](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
 
 ## 9. Dialogue, historique et participation
 
@@ -102,6 +102,6 @@ Le backend `OpenAIServices` transmet `reasoning_effort=low` et `max_completion_t
 
 `DiscordTextPolicy` et le vocal utilisent 100 % de réponse en tête-à-tête observé et un tirage à 30 % des tours spontanés admissibles en groupe. `TwitchIRC` ignore les nouveaux messages pendant un tour Twitch en cours, force une réponse si un seul auteur est observé et passe par le dialogue pour les 30 % en groupe ; les spectateurs silencieux ne sont pas comptés.
 
-**Les variantes faciales/textuelles A/B des sept intentions sont codées**. Seules les 14 motions corporelles dédiées restent futures. Pour le détail : [dialogue et participation](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md), [contrat Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [inventaire actuel](BRANCH_STATE.md).
+**Les variantes faciales/textuelles A/B des sept intentions sont codées**. Seules les 14 motions corporelles dédiées restent futures. Pour le détail : [dialogue et participation](../history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md), [contrat Live2D](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [inventaire actuel](BRANCH_STATE.md).
 
 La roadmap technique non implémentée est centralisée dans le [catalogue](../ameliorations/README.md). Les anciennes anomalies et comptes rendus CI restent dans les audits datés et ne sont pas répétés dans cette documentation d'architecture.

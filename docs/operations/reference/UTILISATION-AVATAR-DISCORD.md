@@ -27,7 +27,7 @@ Le propriétaire confirme la réponse vocale réelle depuis le téléphone et le
 mouvement du modèle en local. Le partage vidéo vers le téléphone, la perception
 de la synchronisation et les scénarios d'interruption restent à vérifier avec
 lui. Le portrait Discord utilise maintenant r21 ; cela ne remplace pas le modèle
-animé r20. Voir le [relais latence](PLAN-LATENCE-20261110.md).
+animé r20. Voir le [relais latence](../../history/gpt6-jade/PLAN-LATENCE-20261110.md).
 
 ## VTube Studio : état et reprise du partage différé
 
@@ -47,7 +47,7 @@ pas une synchronisation dans VTube Studio.
    client Discord du PC. Si la session demande encore une connexion, utiliser
    le QR code ou la connexion normale du propriétaire ; le code QR est temporaire.
 3. Pour le parcours demandé dans VTube Studio, ouvrir le package r20 décrit dans
-   [MODEL_GUIDE](../../jade-modeling/MODEL_GUIDE.md), activer son API locale et
+   [MODEL_GUIDE](../../../jade-modeling/MODEL_GUIDE.md), activer son API locale et
    autoriser le plugin Jade. Conserver le jeton obtenu dans la configuration
    privée (`JADE_VTS_TOKEN`, `JADE_VTS_ENABLED=1`), jamais dans Git. L'authentification
    et la lecture du modèle chargé suivent l'[API officielle VTS](https://github.com/DenchiSoft/VTubeStudio).

@@ -33,10 +33,10 @@ Le diff de la branche research depuis cette base commune touche 83 fichiers, ave
 
 Ils ajoutent ou complètent seulement quatre documents, 271 lignes :
 
-- `docs/AUDIT_BRANCHES_PASSATION_2026-10-30.md`
-- `docs/AUDIT_PASSATION_2026-10-30.md`
-- `docs/GITHUB_BRANCH_AUDIT_20261030.md`
-- `docs/NOTEPAD_IDEAS_MIGRATION_2026-11-01.md`
+- `docs/history/audits/AUDIT_BRANCHES_PASSATION_2026-10-30.md`
+- `docs/history/audits/AUDIT_PASSATION_2026-10-30.md`
+- `docs/history/audits/GITHUB_BRANCH_AUDIT_20261030.md`
+- `docs/history/migrations/NOTEPAD_IDEAS_MIGRATION_2026-11-01.md`
 
 Aucun de ces chemins n’est modifié sur research depuis la base commune. Aucun conflit textuel n’est donc anticipé à ces SHA, **sans avoir exécuté de merge ni de simulation de merge**. Les contradictions de dates et de workflow exigent néanmoins une réconciliation documentaire : garder les textes historiques, ajouter un état courant clairement daté.
 
