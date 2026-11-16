@@ -84,3 +84,8 @@ La mise à jour Low/320, personnalité validée, conservation opt-in sans résum
 - Ne supprimer aucune branche locale Terra/Codex et ne pas remplacer leurs fichiers non commités. Les actions sur le clone Windows nécessitent une revue locale distincte.
 
 Voir [l'audit code/configuration/documentation](../gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md).
+
+
+### Correctifs en PR : Discord PCM / identité mémoire / PWA
+
+La branche de PR `fix/discord-pcm-memory-mobile-20261116` découple le streaming Discord du lecteur `ffplay` local et propose une liaison mémoire Goldaj ↔ Discord/Twitch via un code temporaire créé dans la PWA privée. **Source unique des détails, risques, prérequis et essais PC restant à faire :** [note de correctifs](PR-PCM-MEMOIRE-MOBILE-20261116.md). Ce document décrit une PR **non fusionnée** ; ne pas traiter son contenu comme présent dans `develop` avant le merge.
