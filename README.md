@@ -2,6 +2,8 @@
 
 **Architecture fonctionnelle détaillée (`develop`) :** [atlas visuel des cinq parcours](docs/architecture/atlas-fonctionnel-2026-11-16/README.md) et [contrat d'appels, décisions et parallélisme](docs/architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md), datés du 16 novembre 2026. Le code reste la source de vérité.
 
+**Pour les agents et la collaboration :** [AGENTS.md](AGENTS.md), [centre opérationnel](docs/operations/README.md), [passations actives](docs/operations/handoffs/README.md) et [historique](docs/history/README.md).
+
 **Documentation complète et spécifique à cette branche develop :** [installation depuis un poste neuf](docs/handbook/INSTALLATION.md), [Démo Express sans installation Python](docs/handbook/DEMO.md), [guide utilisateur de toutes les fonctions](docs/handbook/USER_GUIDE.md), [architecture et algorithmes](docs/handbook/TECHNICAL.md), [passation agents IA](docs/handbook/AI_HANDOFF.md), [état précis de develop](docs/handbook/BRANCH_STATE.md).
 
 **Améliorations envisagées (backlog, aucun développement autorisé avant les tests PC)** : [catalogue central par thème](docs/ameliorations/README.md), classé par latence, mémoire, routage, avatar, architecture, mobile, qualité et modèle 2D.

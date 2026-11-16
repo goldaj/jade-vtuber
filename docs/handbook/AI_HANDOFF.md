@@ -4,22 +4,13 @@
 
 **Cartographie de référence :** consulter les [deux schémas visuels](../architecture/README.md) avant d'analyser les flux ou de déplacer des composants. Ils servent d'orientation, jamais de preuve à eux seuls : examiner `main.py`, la configuration, les adaptateurs et les sorties. Lorsqu'une modification rend une flèche ou une fonction obsolète, mettre à jour les images et cette documentation dans la même branche.
 
-## Instruction impérative : documentation synchronisée avec le code
+## Documentation et communication entre agents (contrat allégé)
 
-**Après CHAQUE modification de code, test, configuration, outil, dépendance, route infra, interface, API ou ressource, un agent IA doit revoir et mettre à jour TOUS les documents de la branche modifiée dans la même PR**, même si certains se contentent de signaler « vérifié, sans changement de comportement ». Une action ne doit pas finir avec seulement un commit de code et un message de chat.
+Le point d'entrée est **[`AGENTS.md`](../../AGENTS.md)**. La documentation fonctionnelle courante vit dans ce manuel et la coordination inter-agents dans [`docs/operations/AGENT_COORDINATION.md`](../operations/AGENT_COORDINATION.md). Une mission active possède **sa propre fiche** dans [`docs/operations/handoffs/`](../operations/handoffs/README.md) et une PR clairement liée ; ne pas modifier un ancien dossier historique comme canal de coordination.
 
-Fichiers à actualiser systématiquement :
-- `docs/handbook/INSTALLATION.md`
-- `docs/handbook/DEMO.md`
-- `docs/handbook/USER_GUIDE.md`
-- `docs/handbook/TECHNICAL.md`
-- `docs/handbook/AI_HANDOFF.md`
-- `docs/handbook/BRANCH_STATE.md`
-- `docs/handbook/BRANCH_MAINTENANCE.md`
-- `AGENTS.md` et `docs/handbook/README.md` dès que leur index/règle/état doit évoluer.
-- **En complément** : toutes les passations spécialisées `docs/gpt6-jade/` impactées (mobile, voix, mémoire, launcher, historique de décisions). Une mise à jour dans un seul ancien guide ne suffit pas si les autres deviennent contradictoires.
+Une modification technique doit **actualiser seulement `docs/operations/CHANGELOG.md` de manière obligatoire** afin de tracer la décision et les preuves ; la garde CI `scripts/check_docs.py` vérifie cette règle. Actualiser en plus uniquement les guides, schémas et données de référence affectés, notamment `BRANCH_STATE.md` si le comportement réel change. Ne pas ajouter des mentions « vérifié, inchangé » aux huit autres manuels par automatisme. Une modification de tests uniquement n'exige pas d'entrée de changelog si elle ne modifie pas les contrats produit.
 
-La garde `scripts/check_docs.py` vérifie le contrat en PR et les workflows GitHub exécutent tests Windows/Linux et scan de secrets. **Chaque branche a ses propres versions**, révisées en fonction du code **réellement présent sur cette branche**, y compris `main`. Ne pas propager une revendication de develop vers main, ni écraser le code d'une branche de feature pour « mettre à jour la doc ».
+Les versions de documentation sont **spécifiques à chaque branche** et reflètent son code. Les anciennes passations datées dans [`docs/history/`](../history/README.md) sont des preuves et non des instructions d'exécution actuelles.
 
 ## Décisions produit non négociables sur develop
 

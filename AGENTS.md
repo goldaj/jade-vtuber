@@ -1,5 +1,9 @@
 # Instructions du projet Jade — develop
 
+## Point d'entrée et gouvernance documentaire
+
+**Toute IA (Codex, Terra, Astra, ChatGPT) commence par ce fichier**, puis lit [le centre opérationnel](docs/operations/README.md) et [les règles de collaboration](docs/operations/AGENT_COORDINATION.md). Le [journal des modifications](docs/operations/CHANGELOG.md) consigne chaque changement technique. Les échanges entre agents sont écrits dans `docs/operations/handoffs/`, avec une fiche **par mission**, puis référencés dans la PR ; jamais dans un rapport historique pris pour un ordre courant.
+
 ## Sources de vérité et décisions du propriétaire
 
 **Le code de la branche consultée définit les fonctionnalités existantes.** Si un module est intégré et raccordé au runtime, le considérer comme implémenté. Les tests/recettes relèvent de l'assurance qualité et ne créent pas un deuxième statut fonctionnel. Les variables privées peuvent modifier le comportement du poste.
@@ -32,6 +36,6 @@
 
 Avant modification lire [l'index des conversations](docs/history/conversations/INDEX.md), les sources du domaine, [AI_HANDOFF](docs/handbook/AI_HANDOFF.md), puis la passation adaptée : [voix](docs/history/gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), [mémoire](docs/history/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md), [Discord](docs/history/gpt6-jade/HANDOFF-DISCORD-UNIFIED-20261115.md), [PC/Android](docs/history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), [Live2D](docs/history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [DevOps](docs/history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md).
 
-Toute modification de **code, test, configuration, dépendance, script, interface, asset ou infrastructure** doit mettre à jour dans la même PR les guides `docs/handbook/README.md`, `INSTALLATION.md`, `DEMO.md`, `USER_GUIDE.md`, `TECHNICAL.md`, `AI_HANDOFF.md`, `BRANCH_STATE.md`, `BRANCH_MAINTENANCE.md` ainsi qu'`AGENTS.md`, conformément à `scripts/check_docs.py`. Mettre également à jour README, atlas et passations touchés, et marquer dans le backlog ce qui est réellement codé. Ne pas répéter les comptes rendus d'anciennes CI dans chaque guide.
+Pour toute modification **technique** (code, configuration, dépendances, scripts, assets, workflow), mettre à jour **un seul document imposé par la CI** : [`docs/operations/CHANGELOG.md`](docs/operations/CHANGELOG.md), avec la justification, les fichiers concernés, les risques et les vérifications. Examiner ensuite les guides et schémas du domaine : **modifier seulement ceux réellement impactés**. `BRANCH_STATE.md` reste la source de vérité fonctionnelle lorsque le comportement change ; `AGENTS.md` seulement lorsque les règles changent. Les tests seuls et les archives documentaires ne forcent pas une réécriture des guides. Voir [`scripts/check_docs.py`](scripts/check_docs.py) et [règles de collaboration](docs/operations/AGENT_COORDINATION.md).
 
 Préserver les assets Git LFS et leurs droits (`python jade-modeling/verify_assets.py`). La compilation et les tests (`python -m unittest discover -s tests -v`, `python -m compileall -q src main.py`) servent aux contrôles de changement ; leur exécution ne modifie pas à elle seule le statut d'une fonction déjà présente dans le code.

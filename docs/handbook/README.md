@@ -16,4 +16,4 @@ Les modules raccordés dans le code sont considérés comme **implémentés**. L
 
 `main.py --all-channels` lance les connecteurs Discord écrit/vocal, Twitch, PC et PWA privée simultanément, avec mémoire optionnelle, voix et avatar ; aucun sélecteur de plateforme. Pour la configuration PC/Android, utiliser la [passation opérationnelle](../history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md). Pour les intentions A/B r20 et les animations corporelles futures, consulter [Live2D](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
 
-Toute modification de code doit maintenir les guides requis par `scripts/check_docs.py` et les documents de domaine concernés. Les historiques de PR restent consultables, sans répéter leurs statuts anciens ici.
+Pour les agents : commencer par [AGENTS.md](../../AGENTS.md), puis [le centre opérationnel](../operations/README.md). Le contrôle CI ne requiert désormais qu'une entrée technique dans [CHANGELOG.md](../operations/CHANGELOG.md) lorsque le code ou les outils changent ; mettre à jour les autres guides uniquement s'ils sont impactés. Les archives sont dans [docs/history](../history/README.md).
