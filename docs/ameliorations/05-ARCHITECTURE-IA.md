@@ -21,4 +21,4 @@
 
 Une première réponse audible utile après une salutation courte **environ 0,5 à 1,5 s** serait une cible de recherche dans des conditions favorables (connexion chaude, file vide, réseau adapté). Elle n'est ni garantie ni preuve d'une mise en production. Utiliser des épreuves incluant les questions de mémoire et les interruptions ; relever médiane/p95 et coût.
 
-**Sources :** [roadmap produit](../gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md), [plan latence](../gpt6-jade/PLAN-LATENCE-20261110.md), [handbook technique](../handbook/TECHNICAL.md), [atlas des flux](../architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md), conversation du 16/11/2026.
+**Sources :** [roadmap produit](../history/gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md), [plan latence](../history/gpt6-jade/PLAN-LATENCE-20261110.md), [handbook technique](../handbook/TECHNICAL.md), [atlas des flux](../architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md), conversation du 16/11/2026.

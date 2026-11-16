@@ -1,6 +1,6 @@
 # Jade : plan professionnel modèle, animation et utilisation
 
-Statut : **plan de travail à exécuter**, pas modèle livré. Référence produit : conserver le style de Jade et viser une présence de qualité professionnelle, à apprécier en conditions réelles ; aucune affirmation sur le rig privé d'Ironmouse ou de Neuro-sama. Ce plan complète [le plan existant](PLAN_MODELE_JADE.md), le [guide modèle](MODEL_GUIDE.md) et la [feuille de route produit](../docs/gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md). Les contraintes et choix déjà validés restent applicables.
+Statut : **plan de travail à exécuter**, pas modèle livré. Référence produit : conserver le style de Jade et viser une présence de qualité professionnelle, à apprécier en conditions réelles ; aucune affirmation sur le rig privé d'Ironmouse ou de Neuro-sama. Ce plan complète [le plan existant](PLAN_MODELE_JADE.md), le [guide modèle](MODEL_GUIDE.md) et la [feuille de route produit](../docs/history/gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md). Les contraintes et choix déjà validés restent applicables.
 
 ## Sources et limites
 

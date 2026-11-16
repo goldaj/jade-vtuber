@@ -13,7 +13,7 @@ import wave
 
 LOG = logging.getLogger("jade.avatar")
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "demo/reelle/avatar.py"
+SCRIPT = ROOT / "src/jade_runtime/avatar_renderer.py"
 MODEL = ROOT / "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete"
 
 

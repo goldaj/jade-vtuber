@@ -13,7 +13,7 @@ from src.jade_runtime.discord_voice import OpenVoiceBridge
 from src.jade_runtime.messages import Incoming, Reply
 from src.jade_runtime.output import SpeechOutput
 from src.jade_runtime.realtime_tts import RealtimeTTS, RealtimeTTSError, RealtimeConnectionPool
-from tests.test_demo_realtime_tts import (FakeClient, FakeManager, FakeConnection as FakeRealtimeConnection,
+from tests.test_jade_realtime_tts import (FakeClient, FakeManager, FakeConnection as FakeRealtimeConnection,
                                          configured, created, delta, transcript, done)
 
 

@@ -11,7 +11,7 @@ from src.jade_runtime.intent_engine import (
 from src.jade_runtime.messages import Incoming, Reply
 from src.jade_runtime.config import Settings
 from src.jade_runtime.openai_services import OpenAIServices
-from tests.test_demo_realtime_tts import (
+from tests.test_jade_realtime_tts import (
     FakeClient, configured, created, delta, transcript, done,
 )
 

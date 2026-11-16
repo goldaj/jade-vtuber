@@ -32,4 +32,4 @@
 - Aucun double son ni fuite locale/Discord lors d'un turn vocal ; première parole Discord non retardée par un joueur PC inutilisé.
 - Cible de recherche, **non contractuelle** : première réaction simple vers 0,5–1,5 s après fin de parole en conditions favorables, p95 mesuré séparément. L'atteindre dépend du backend et du réseau.
 
-**Sources :** [plan latence](../gpt6-jade/PLAN-LATENCE-20261110.md), [passation streaming](../gpt6-jade/HANDOFF-STREAMING-TTS-20261113.md), [voix/intention](../gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), [état de develop](../handbook/TECHNICAL.md), conversation du 16/11/2026.
+**Sources :** [plan latence](../history/gpt6-jade/PLAN-LATENCE-20261110.md), [passation streaming](../history/gpt6-jade/HANDOFF-STREAMING-TTS-20261113.md), [voix/intention](../history/gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), [état de develop](../handbook/TECHNICAL.md), conversation du 16/11/2026.

@@ -17,4 +17,4 @@
 | UX-13 | P2 / C | Documenter et vérifier **mini-démos** séparées : Démo Express simulée et installation réelle avec préflight, coût autorisé et fonctionnalités effectivement utilisables. |
 | UX-14 | P3 / D | Étudier un client mobile plus riche ou natif seulement après validation PWA, dépendances SDK Live2D et comparaison latence/batterie ; ne pas créer un APK par principe. |
 
-**Sources :** [guide PC/Android](../gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), [audit PWA](../gpt6-jade/AUDIT-REVUE-MOBILE-MEMOIRE-20261115.md), [launcher](../gpt6-jade/LAUNCHER-WINDOWS-20261115.md), [roadmap MVP](../gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md), [priorités historiques](../gpt6-jade/NEXT-PRIORITIES.md) (ne pas reprendre ses statuts littéralement).
+**Sources :** [guide PC/Android](../history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), [audit PWA](../history/gpt6-jade/AUDIT-REVUE-MOBILE-MEMOIRE-20261115.md), [launcher](../operations/reference/LAUNCHER-WINDOWS-20261115.md), [roadmap MVP](../history/gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md), [priorités historiques](../history/gpt6-jade/NEXT-PRIORITIES.md) (ne pas reprendre ses statuts littéralement).

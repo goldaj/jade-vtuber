@@ -28,4 +28,4 @@ La présence d'un spectateur et la visibilité de l'avatar ne sont pas synonymes
 - **Visibilité inconnue** : politique conservatrice configurable, et possibilité de forcer le mode visuel manuellement ; jamais un partage d'informations privées vers une scène publique.
 - La disponibilité d'un moteur graphique n'est pas un motif pour diffuser les messages vers lui.
 
-**Sources :** [handoff Live2D intentions](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [audit mobile/mémoire](../gpt6-jade/AUDIT-REVUE-MOBILE-MEMOIRE-20261115.md), [qualité artistique](../../jade-modeling/PLAN_QUALITE_PRO_20261113.md), code avatar.py, main.py, mobile_gateway.py et conversation du 16/11/2026.
+**Sources :** [handoff Live2D intentions](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [audit mobile/mémoire](../history/gpt6-jade/AUDIT-REVUE-MOBILE-MEMOIRE-20261115.md), [qualité artistique](../../jade-modeling/PLAN_QUALITE_PRO_20261113.md), code avatar.py, main.py, mobile_gateway.py et conversation du 16/11/2026.

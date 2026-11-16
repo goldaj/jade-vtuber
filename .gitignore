@@ -38,3 +38,6 @@ secrets/
 *.sqlite3-*
 *.jade-memory.zip
 jade-memory-backup*.zip
+
+# Local IDE workspace and generated settings
+.idea/

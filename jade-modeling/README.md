@@ -24,7 +24,7 @@ captures vidéo brutes ne font pas partie du code source du modèle. Les outils
 externes (Cubism/Krita/VTube Studio) s'installent séparément. Les configurations
 OBS contenant des secrets sont sauvegardées dans le coffre local hors Git.
 
-Avant publication : clarifier la provenance et les droits des éléments artistiques,
+Dépôt déjà public au 16 novembre 2026 : clarifier la provenance et les droits des éléments artistiques,
 des bibliothèques et du code repris, remplacer les chemins locaux et retirer les
 instructions personnelles. Aucun droit de redistribution des éléments tiers
 n'est présumé. Le modèle et l'intégration complète restent en cours de réalisation.

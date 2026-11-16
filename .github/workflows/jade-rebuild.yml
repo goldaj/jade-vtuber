@@ -7,9 +7,6 @@ concurrency:
 on:
   push:
     branches:
-      - codex/chat-gpt6-jade-rebuild
-      - research/gpt6-jade-publication-readiness-20261028
-      - codex/jade-runtime-integration-20261102
       - develop
       - main
   pull_request:
