@@ -38,7 +38,7 @@ class TurnLoggingTests(unittest.TestCase):
 
     def test_link_confirmation_code_is_masked_in_structured_input_logs(self):
         code = "v1.twitch.6001.oneTimeSecretNotForLogs1234567890"
-        incoming = Incoming("twitch", "Alice", "!jade-memoire confirmer " + code,
+        incoming = Incoming("twitch", "Alice", "!jade-memoire   CoNfIrMeR " + code,
                             channel="public", account_id="6001")
         with self.assertLogs("jade.conversation", level="INFO") as captured:
             record_input(7, incoming)
