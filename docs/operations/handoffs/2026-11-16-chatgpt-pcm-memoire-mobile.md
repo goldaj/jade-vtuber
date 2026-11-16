@@ -2,7 +2,7 @@
 
 - **Agent / rôle :** ChatGPT (développement Python async, sécurité mémoire, intégration Web, QA et documentation)
 - **Branche :** `fix/discord-pcm-memory-mobile-20261116`, partie de `develop` au SHA `5368f008`, réconciliée avec `develop` après les PR documentaires #22 et #24 (SHA courant à vérifier dans la PR)
-- **PR :** [#23](https://github.com/goldaj/jade-vtuber/pull/23), **en brouillon, non fusionnée**.
+- **PR :** [#23](https://github.com/goldaj/jade-vtuber/pull/23), **statut de fusion à vérifier directement sur GitHub**. Cette fiche reste active pour la recette PC/Android.
 - **Décision :** ne pas utiliser `main`, ne pas toucher au PC/VPS, ne pas installer des SDK propriétaires ni provoquer d'appels facturés. La PWA expose un mécanisme d'association **réservé à Goldaj**, pas un portail public générique.
 
 ## Changements committés et justification
@@ -18,7 +18,7 @@ Le détail du protocole et des risques suit. Sources techniques modifiées : `sr
 
 ---
 
-**Branche de travail :** `fix/discord-pcm-memory-mobile-20261116`. Cette note décrit **le contenu de la PR**, pas le code de `develop` tant que la PR n'est pas fusionnée. Le PC Jade, les comptes réels, les clés et le SDK Live2D ne sont pas accessibles depuis l'environnement GitHub ; ne pas présenter ces vérifications comme effectuées.
+**Branche de travail :** `fix/discord-pcm-memory-mobile-20261116`. Cette note décrit **le contenu de la PR #23**. Pour connaître l'état réellement fusionné de `develop`, vérifier la PR, le SHA courant et `docs/handbook/BRANCH_STATE.md`. Le PC Jade, les comptes réels, les clés et le SDK Live2D ne sont pas accessibles depuis l'environnement GitHub ; ne pas présenter ces vérifications comme effectuées.
 
 ## 1. Discord vocal : streaming PCM avec le launcher tous canaux
 
@@ -62,7 +62,7 @@ python -m unittest discover -s tests -v
 python -m compileall -q src main.py
 ```
 
-Vérification PC **après fusion autorisée** : `--preflight --all-channels`, Discord vocal PCM tout en conservant la réponse micro dans les haut-parleurs ; coupure/reconnexion Discord pendant synthèse ; aucun doublon TTS ; deux comptes réels pour confirmer la liaison ; test refus du code depuis un autre ID ; PWA sous Tailscale Serve, SDK Live2D installé légalement et modèle r20 animé ; relevé de latence/coût et contrôle des logs. Aucun déploiement ni merge `develop`/ `main` inclus dans cette PR.
+Vérification PC **après fusion autorisée** : `--preflight --all-channels`, Discord vocal PCM tout en conservant la réponse micro dans les haut-parleurs ; coupure/reconnexion Discord pendant synthèse ; aucun doublon TTS ; deux comptes réels pour confirmer la liaison ; test refus du code depuis un autre ID ; PWA sous Tailscale Serve, SDK Live2D installé légalement et modèle r20 animé ; relevé de latence/coût et contrôle des logs. Aucun déploiement réel ni modification de `main` ne découle de ces commits ; la fusion de la PR dans `develop` est une action GitHub distincte à vérifier.
 
 ## Revue senior transversale après les évolutions documentaires de develop
 
