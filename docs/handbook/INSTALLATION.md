@@ -125,3 +125,8 @@ Avant la recette réelle, lancer `poetry run python -m unittest discover -s test
 **Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Exécuter localement les tests et préflights décrits dans le guide technique. Le backup de mémoire SQLite supporte les schémas 1, 2 et 3, mais l'archive ZIP n'est **pas chiffrée** : la déplacer uniquement via un support chiffré et vérifier la restauration sur une base de test. Le launcher copié dans `D:\Jade\launcher` doit être **réinstallé** après toute modification de ses scripts ; pas de mise à jour automatique garantie. Les tests de GitHub Actions n'établissent pas le fonctionnement du PC réel.
 
 Les corrections historiques de CI sont conservées dans [l'audit DevOps](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Pour l'état actuel des fonctions codées : [BRANCH_STATE.md](BRANCH_STATE.md).
+
+
+### Correctifs en PR : Discord PCM / identité mémoire / PWA
+
+La branche de PR `fix/discord-pcm-memory-mobile-20261116` découple le streaming Discord du lecteur `ffplay` local et propose une liaison mémoire Goldaj ↔ Discord/Twitch via un code temporaire créé dans la PWA privée. **Source unique des détails, risques, prérequis et essais PC restant à faire :** [note de correctifs](PR-PCM-MEMOIRE-MOBILE-20261116.md). Ce document décrit une PR **non fusionnée** ; ne pas traiter son contenu comme présent dans `develop` avant le merge.
