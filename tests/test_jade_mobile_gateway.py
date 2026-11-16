@@ -14,6 +14,8 @@ import wave
 from src.jade_runtime.config import Settings
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming
+from src.jade_runtime.memory_store import MemoryStore
+from src.jade_runtime.memory_service import MemoryService
 from src.jade_runtime.mobile_gateway import (
     MAX_WAV, MobileGateway, WEB_FILES, WEB_ROOT, validate_wav)
 from src.jade_runtime.orchestrator import Runtime
@@ -101,6 +103,41 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
     def headers(self, content_type):
         return {"Authorization": "Bearer " + "x" * 40,
                 "Content-Type": content_type}
+
+    async def test_owner_link_endpoint_binds_target_without_public_token_issuance(self):
+        store = MemoryStore(Path(self.temp.name) / "linked.sqlite3")
+        owner, target = ("microphone", "goldaj"), ("twitch", "6001")
+        store.enable(owner)
+        store.enable(target)
+        memory = MemoryService(store, self.fake)
+        self.runtime.memory_service = memory
+        payload = json.dumps({"platform": "twitch", "account_id": "6001"}).encode()
+        bad_status, _, _ = await self.request(
+            "POST", "/api/link", body=payload,
+            headers={"Content-Type": "application/json",
+                     "Authorization": "Bearer " + "z" * 40})
+        self.assertEqual(bad_status, 401)
+        status, body, raw = await self.request(
+            "POST", "/api/link", body=payload,
+            headers=self.headers("application/json"))
+        self.assertEqual(status, 200)
+        self.assertIn(b"Cache-Control: no-store", raw)
+        code = json.loads(body)["code"]
+        self.assertTrue(code.startswith("v1.twitch.6001."))
+        unauthorized = await memory.command(Incoming(
+            "twitch", "someone", "!jade-memoire confirmer " + code,
+            account_id="6002"))
+        self.assertIn("non destiné", unauthorized.text)
+        confirmed = await memory.command(Incoming(
+            "twitch", "owner", "!jade-memoire confirmer " + code,
+            account_id="6001"))
+        self.assertIn("associés", confirmed.text)
+        self.assertEqual(store.account(owner), store.account(target))
+        repeated = await memory.command(Incoming(
+            "twitch", "owner", "!jade-memoire confirmer " + code,
+            account_id="6001"))
+        self.assertIn("refusée", repeated.text)
+        await memory.close()
 
     async def test_chat_response_is_one_goldaj_identity_and_intent(self):
         payload = json.dumps({"text":"Jade, bonjour", "session":"m-123456789012",
