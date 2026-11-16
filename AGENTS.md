@@ -1,5 +1,9 @@
 # Instructions du projet Jade — develop
 
+## Point d'entrée et gouvernance documentaire
+
+**Toute IA (Codex, Terra, Astra, ChatGPT) commence par ce fichier**, puis lit [le centre opérationnel](docs/operations/README.md) et [les règles de collaboration](docs/operations/AGENT_COORDINATION.md). Le [journal des modifications](docs/operations/CHANGELOG.md) consigne chaque changement technique. Les échanges entre agents sont écrits dans `docs/operations/handoffs/`, avec une fiche **par mission**, puis référencés dans la PR ; jamais dans un rapport historique pris pour un ordre courant.
+
 ## Sources de vérité et décisions du propriétaire
 
 **Le code de la branche consultée définit les fonctionnalités existantes.** Si un module est intégré et raccordé au runtime, le considérer comme implémenté. Les tests/recettes relèvent de l'assurance qualité et ne créent pas un deuxième statut fonctionnel. Les variables privées peuvent modifier le comportement du poste.
@@ -7,7 +11,7 @@
 - **[État du code de develop](docs/handbook/BRANCH_STATE.md)** : liste canonique des fonctions et limitations.
 - **[Manuel et guide technique](docs/handbook/README.md)** ; [atlas des décisions et appels](docs/architecture/atlas-fonctionnel-2026-11-16/README.md) et [contrat de flux](docs/architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md) (instantanés datés à confronter au code).
 - **[Backlog central des améliorations](docs/ameliorations/README.md)** : projets futurs classés par thème, pas des fonctions déjà développées.
-- [Archives et index des conversations](docs/conversations/INDEX.md) : contexte historique, pas des ordres d'exécution actuels.
+- [Archives et index des conversations](docs/history/conversations/INDEX.md) : contexte historique, pas des ordres d'exécution actuels.
 
 **Décision du 16 novembre 2026 :** Goldaj veut d'abord tester Jade avant de développer les pistes du backlog. Ne pas lancer ces travaux sans nouvelle demande. Le routage exclusivement par canal source, le préchargement mémoire, la visibilité conditionnelle de l'avatar et le moteur Realtime sans Luna sont des objectifs **non intégrés**. Luna reste le modèle configuré par défaut dans le code actuel.
 
@@ -26,17 +30,12 @@
 - Mémoire SQLite v3, opt-in et curation facultative ; profil privé Goldaj partagé par micro PC et mobile authentifié ; historique complet en base avec fenêtre récente bornée ; conversation Discord voix/chat natif du même vocal unifiée par compte et session.
 - Réponses vocales OpenAI ; voix `shimmer` 1,25×, pitch +2 via FFmpeg Rubber Band quand disponible. Intention `[INTENT:...]` filtrée. **Deux réactions faciales r20 et deux textes PWA par chacune des sept intentions** codés ; **14 motions corporelles originales** et rig r21 final à créer.
 - PWA Android privée : texte, prise de parole WAV, TTS mobile, avatar Web sous SDK compatible. Le duplex temps réel n'est pas codé.
-- Streaming PCM Discord disponible sous conditions ; `--all-channels` conserve `ffplay` pour le microphone PC ; la branche de correctif permet désormais le PCM Discord malgré ce réglage. Les réponses écrites peuvent encore déclencher du TTS sur d'autres sorties : le routage exclusif reste à développer.
+- Streaming PCM Discord disponible sous conditions : le PCM vers le pont Discord est désormais indépendant de `JADE_AUDIO_OUTPUT=ffplay`, conservé pour le microphone PC dans `--all-channels`. Le repli WAV hérité et le routage exclusivement par source restent à refondre. Les réponses écrites peuvent encore déclencher du TTS sur d'autres sorties : le routage exclusif reste à développer.
 
 ## Maintenance et passation
 
-Avant modification lire [l'index des conversations](docs/conversations/INDEX.md), les sources du domaine, [AI_HANDOFF](docs/handbook/AI_HANDOFF.md), puis la passation adaptée : [voix](docs/gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), [mémoire](docs/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md), [Discord](docs/gpt6-jade/HANDOFF-DISCORD-UNIFIED-20261115.md), [PC/Android](docs/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), [Live2D](docs/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [DevOps](docs/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md).
+Avant modification lire [l'index des conversations](docs/history/conversations/INDEX.md), les sources du domaine, [AI_HANDOFF](docs/handbook/AI_HANDOFF.md), puis la passation adaptée : [voix](docs/history/gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), [mémoire](docs/history/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md), [Discord](docs/history/gpt6-jade/HANDOFF-DISCORD-UNIFIED-20261115.md), [PC/Android](docs/history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), [Live2D](docs/history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [DevOps](docs/history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md).
 
-Toute modification de **code, test, configuration, dépendance, script, interface, asset ou infrastructure** doit mettre à jour dans la même PR les guides `docs/handbook/README.md`, `INSTALLATION.md`, `DEMO.md`, `USER_GUIDE.md`, `TECHNICAL.md`, `AI_HANDOFF.md`, `BRANCH_STATE.md`, `BRANCH_MAINTENANCE.md` ainsi qu'`AGENTS.md`, conformément à `scripts/check_docs.py`. Mettre également à jour README, atlas et passations touchés, et marquer dans le backlog ce qui est réellement codé. Ne pas répéter les comptes rendus d'anciennes CI dans chaque guide.
+Pour toute modification **technique** (code, configuration, dépendances, scripts, assets, workflow), mettre à jour **un seul document imposé par la CI** : [`docs/operations/CHANGELOG.md`](docs/operations/CHANGELOG.md), avec la justification, les fichiers concernés, les risques et les vérifications. Examiner ensuite les guides et schémas du domaine : **modifier seulement ceux réellement impactés**. `BRANCH_STATE.md` reste la source de vérité fonctionnelle lorsque le comportement change ; `AGENTS.md` seulement lorsque les règles changent. Les tests seuls et les archives documentaires ne forcent pas une réécriture des guides. Voir [`scripts/check_docs.py`](scripts/check_docs.py) et [règles de collaboration](docs/operations/AGENT_COORDINATION.md).
 
 Préserver les assets Git LFS et leurs droits (`python jade-modeling/verify_assets.py`). La compilation et les tests (`python -m unittest discover -s tests -v`, `python -m compileall -q src main.py`) servent aux contrôles de changement ; leur exécution ne modifie pas à elle seule le statut d'une fonction déjà présente dans le code.
-
-
-### Correctifs en PR : Discord PCM / identité mémoire / PWA
-
-La branche de PR `fix/discord-pcm-memory-mobile-20261116` découple le streaming Discord du lecteur `ffplay` local et propose une liaison mémoire Goldaj ↔ Discord/Twitch via un code temporaire créé dans la PWA privée. **Source unique des détails, risques, prérequis et essais PC restant à faire :** [note de correctifs](docs/handbook/PR-PCM-MEMOIRE-MOBILE-20261116.md). Ce document décrit une PR **non fusionnée** ; ne pas traiter son contenu comme présent dans `develop` avant le merge.

@@ -2,6 +2,8 @@
 
 **Architecture fonctionnelle détaillée (`develop`) :** [atlas visuel des cinq parcours](docs/architecture/atlas-fonctionnel-2026-11-16/README.md) et [contrat d'appels, décisions et parallélisme](docs/architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md), datés du 16 novembre 2026. Le code reste la source de vérité.
 
+**Pour les agents et la collaboration :** [AGENTS.md](AGENTS.md), [centre opérationnel](docs/operations/README.md), [passations actives](docs/operations/handoffs/README.md) et [historique](docs/history/README.md).
+
 **Documentation complète et spécifique à cette branche develop :** [installation depuis un poste neuf](docs/handbook/INSTALLATION.md), [Démo Express sans installation Python](docs/handbook/DEMO.md), [guide utilisateur de toutes les fonctions](docs/handbook/USER_GUIDE.md), [architecture et algorithmes](docs/handbook/TECHNICAL.md), [passation agents IA](docs/handbook/AI_HANDOFF.md), [état précis de develop](docs/handbook/BRANCH_STATE.md).
 
 **Améliorations envisagées (backlog, aucun développement autorisé avant les tests PC)** : [catalogue central par thème](docs/ameliorations/README.md), classé par latence, mémoire, routage, avatar, architecture, mobile, qualité et modèle 2D.
@@ -48,13 +50,9 @@ le backend OpenAI et le backend de démonstration sont fournis actuellement.
 
 ## Essayer la démo sans clé API
 
-Une démo Windows animée est préparée avec le modèle Live2D r20, dialogue et
-voix OpenAI : consultez son [guide](demo/reelle/GUIDE-DEMO.md) et sa
-[notice de construction](demo/reelle/README-BUILD.md). Elle demande une clé
-OpenAI personnelle et une connexion Internet pour les échanges réels.
-
-Une [ancienne démo statique hors ligne](demo/windows/README.md) reste disponible :
-elle utilise un portrait et un dialogue simulé, sans IA ni animation Live2D.
+La seule démonstration distribuée est désormais **Démo Express** (`demo/express/`),
+simulée et sans clé API. Le moteur Jade complet et son renderer Live2D r20
+restent disponibles dans `src/jade_runtime/` avec leurs prérequis normaux.
 
 Prérequis : Python 3.11 et Poetry 2.2.1. Depuis la racine de cette copie :
 
@@ -101,7 +99,7 @@ s'installent avec `poetry sync --only main -E all`. L'envoi Twitch requiert
 
 Pour Twitch, un jeton utilisateur valide et le canal sont requis ; le nom du
 bot est déduit du jeton si `TWITCH_BOT_LOGIN` est vide. La procédure pour obtenir
-un jeton sans exposer les secrets est décrite dans [l'aide Twitch](docs/gpt6-jade/TWITCH-AUTH.md).
+un jeton sans exposer les secrets est décrite dans [l'aide Twitch](docs/operations/reference/TWITCH-AUTH.md).
 Le renouvellement automatique est facultatif et exige une sauvegarde GitHub
 privée configurée ; ses garanties et limites sont détaillées dans cette aide.
 Lorsque Discord vocal est connecté, certaines réponses vocales issues
@@ -131,14 +129,14 @@ Les documents de suivi du projet et l’index des conversations sont dans `docs/
 
 ## Launcher local pour Windows
 
-Un [launcher Windows personnel](docs/gpt6-jade/LAUNCHER-WINDOWS-20261115.md) permet de choisir une branche et de lancer **tous les supports simultanément, sans choix de profil** : Discord vocal et écrit, Twitch, microphone local, HTTP local, application mobile privée, voix et avatar. Le moteur Jade arbitre les messages en attente, sans priorité fixe par support. Depuis le clone sur D:, exécuter `Installer-Launcher-Jade.cmd`, puis `D:\Jade\launcher\Lancer-Jade.cmd`. Il faut configurer tous les connecteurs dans la configuration privée ; un préflight incomplet bloque le démarrage plutôt que lancer un sous-ensemble invisible. Le démarrage peut facturer OpenAI. **Pour installer l'application Android avec l'aide de Codex : consulter le [guide opérationnel Windows + Android](docs/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md)**. Il couvre Tailscale Serve sur le PC, les secrets privés, le SDK Web Live2D, la PWA Chrome, le diagnostic et les tests réels.
+Un [launcher Windows personnel](docs/operations/reference/LAUNCHER-WINDOWS-20261115.md) permet de choisir une branche et de lancer **tous les supports simultanément, sans choix de profil** : Discord vocal et écrit, Twitch, microphone local, HTTP local, application mobile privée, voix et avatar. Le moteur Jade arbitre les messages en attente, sans priorité fixe par support. Depuis le clone sur D:, exécuter `Installer-Launcher-Jade.cmd`, puis `D:\Jade\launcher\Lancer-Jade.cmd`. Il faut configurer tous les connecteurs dans la configuration privée ; un préflight incomplet bloque le démarrage plutôt que lancer un sous-ensemble invisible. Le démarrage peut facturer OpenAI. **Pour installer l'application Android avec l'aide de Codex : consulter le [guide opérationnel Windows + Android](docs/history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md)**. Il couvre Tailscale Serve sur le PC, les secrets privés, le SDK Web Live2D, la PWA Chrome, le diagnostic et les tests réels.
 
 ## Intentions, mémoire et futurs travaux
 
-**Implémenté :** sept intentions avec **deux variantes faciales r20 et deux textes PWA par intention**, voix Étincelle, dialogue configurable (par défaut `gpt-6-luna`, `low`, 320 tokens), historique de 48 messages et mémoire SQLite v3 opt-in des échanges complets. Voir [dialogue/mémoire](docs/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md) et [Live2D](docs/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+**Implémenté :** sept intentions avec **deux variantes faciales r20 et deux textes PWA par intention**, voix Étincelle, dialogue configurable (par défaut `gpt-6-luna`, `low`, 320 tokens), historique de 48 messages et mémoire SQLite v3 opt-in des échanges complets. Voir [dialogue/mémoire](docs/history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md) et [Live2D](docs/history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
 
 **À développer ultérieurement :** 14 motions corporelles r21, routage exclusif par canal d'origine, mémoire anticipée, avatar à visibilité conditionnelle et moteur Realtime léger sans Luna. Ces projets figurent dans [le backlog unique](docs/ameliorations/README.md).
 
 ## Audits historiques
 
-Les audits et PR datés sont conservés dans [docs/gpt6-jade](docs/gpt6-jade/). L'[audit du 16 novembre](docs/gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md) est un instantané ; l'état courant dépend du code et de [BRANCH_STATE.md](docs/handbook/BRANCH_STATE.md).
+Les audits et PR datés sont conservés dans [archives GPT-6/Jade](docs/history/gpt6-jade/). L'[audit du 16 novembre](docs/history/gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md) est un instantané ; l'état courant dépend du code et de [BRANCH_STATE.md](docs/handbook/BRANCH_STATE.md).

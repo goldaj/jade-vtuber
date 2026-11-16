@@ -24,7 +24,7 @@ Configurer un salon vocal initial `DISCORD_VOICE_CHANNEL`, les droits du bot, le
 
 ## 5. Twitch : lecture et réponse écrite
 
-Configurer `TWITCH_CHANNEL`, `TWITCH_TOKEN`, éventuellement `TWITCH_BOT_LOGIN`, et **`JADE_TWITCH_ENABLED=1`, `JADE_TWITCH_SEND=1`**. Jade lit les messages IRC du salon, sélectionne les messages auxquels répondre et envoie ses réponses avec une limitation de débit. L'activation d'un client IRC ne garantit pas l'envoi : vérifier OAuth, scope, token, profil du bot et ses droits réels. L'autorenouvellement est une configuration distincte documentée dans `docs/gpt6-jade/TWITCH-AUTH.md`.
+Configurer `TWITCH_CHANNEL`, `TWITCH_TOKEN`, éventuellement `TWITCH_BOT_LOGIN`, et **`JADE_TWITCH_ENABLED=1`, `JADE_TWITCH_SEND=1`**. Jade lit les messages IRC du salon, sélectionne les messages auxquels répondre et envoie ses réponses avec une limitation de débit. L'activation d'un client IRC ne garantit pas l'envoi : vérifier OAuth, scope, token, profil du bot et ses droits réels. L'autorenouvellement est une configuration distincte documentée dans `docs/operations/reference/TWITCH-AUTH.md`.
 
 ## 6. Microphone et voix du PC
 
@@ -44,7 +44,7 @@ La PWA permet :
 - **Nouveau fil / plein écran** : nouveau contexte de dialogue mobile ou affichage agrandi.
 - **Sécurité** : réseau privé Tailscale, identité utilisateur vérifiée et jeton Bearer ; sans ces deux éléments, refus 403/401. Ne pas activer Funnel ni modifier le VPS Hyperliquid.
 
-La PWA n'utilise pas le VPS de trading. **PC arrêté ou Jade non exécutée = application indisponible**, même si Tailscale Android est actif. Le guide pas-à-pas complet pour Codex sur le PC est `docs/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md`.
+La PWA n'utilise pas le VPS de trading. **PC arrêté ou Jade non exécutée = application indisponible**, même si Tailscale Android est actif. Le guide pas-à-pas complet pour Codex sur le PC est `docs/history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md`.
 
 ## 8. Avatar Live2D Windows et affichage VTube Studio
 
@@ -62,7 +62,7 @@ Les nuances émotionnelles et la qualité sonore exigent un **test d'écoute ré
 
 La mémoire est **désactivée par défaut**, même si le code est présent. Le propriétaire doit configurer `JADE_MEMORY_ENABLED=1`, un chemin absolu privé `JADE_MEMORY_DB_PATH` vers un fichier `.sqlite3`, puis éventuellement `JADE_MEMORY_CURATOR_ENABLED=1`. La mémoire est gérée localement en SQLite, avec souvenirs ordinaires, Core Memories sans expiration automatique et relations identifiées. Sur Discord/Twitch, un utilisateur identifiable ne devient pas automatiquement inscrit : la mémoire peut être activée et effacée par `!jade-memoire activer`, `!jade-memoire etat` et `!jade-memoire oublier`, sous réserve des droits de sa session. Ne pas traiter un simple pseudonyme comme une preuve d'identité.
 
-Le microphone local et le client Android propriétaire authentifié peuvent retrouver le profil Goldaj commun. Le curation optionnelle par LLM peut générer un **appel supplémentaire** pour décider si un fait devient un souvenir ordinaire ou fondateur. Les souvenirs ne constituent pas une preuve objective que Jade a réellement « vécu » un événement. La sauvegarde/restauration SQLite se fait via `memory_transfer.py`, sans écraser un fichier existant. Plus d'informations dans `docs/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md`.
+Le microphone local et le client Android propriétaire authentifié peuvent retrouver le profil Goldaj commun. Le curation optionnelle par LLM peut générer un **appel supplémentaire** pour décider si un fait devient un souvenir ordinaire ou fondateur. Les souvenirs ne constituent pas une preuve objective que Jade a réellement « vécu » un événement. La sauvegarde/restauration SQLite se fait via `memory_transfer.py`, sans écraser un fichier existant. Plus d'informations dans `docs/history/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md`.
 
 ## 11. Conversations unifiées et autobiographie
 
@@ -86,7 +86,7 @@ En cas de panne : contrôler la console de lancement, les erreurs `--preflight -
 
 Quand Jade renvoie une intention valide `neutral`, `playful`, `excited`, `curious`, `tender`, `reassuring` ou `serious`, le modèle 2D Windows reçoit une commande d'expression ; la PWA propriétaire affiche une expression (si Live2D Web est compatible) et une **courte indication textuelle d'humeur**. Deux variantes A/B tournent entre deux réponses successives de même intention. C'est un complément visuel : la phrase réellement dite ou écrite par Jade reste inchangée. Le rendu fonctionne aussi en réponse **écrite sans voix** ; la bouche continue d'être synchronisée sur le son quand il y en a. La réaction s'efface après la fin de lecture ou 12 secondes sans son pour revenir à l'Idle neutre. Les sept expressions de premier choix sont distinctes, mais la palette r20 limitée implique des réutilisations pour la variante B.
 
-**Activation :** `JADE_AVATAR_INTENT_ENABLED=1` dans la configuration privée sur le PC (défaut). Pour couper les réactions émotionnelles sans toucher à la voix ni au lip-sync : `JADE_AVATAR_INTENT_ENABLED=0`. Redémarrer Jade, recharger la PWA ; il n'existe pas encore de bouton ON/OFF à chaud sur l'application mobile. En mode coupé, la détection vocale des intentions continue pour le TTS. Les 14 textes sont de simples libellés sur la PWA, jamais envoyés à Discord/Twitch ou prononcés. En cas d'échec du rendu, la conversation doit continuer. **Les 14 véritables animations propres (deux par intention) sont le prochain chantier de création de motions Live2D, pas un résultat déjà livré.** Voir la [passation Codex](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md) et prévoir un test visuel PC/Android.
+**Activation :** `JADE_AVATAR_INTENT_ENABLED=1` dans la configuration privée sur le PC (défaut). Pour couper les réactions émotionnelles sans toucher à la voix ni au lip-sync : `JADE_AVATAR_INTENT_ENABLED=0`. Redémarrer Jade, recharger la PWA ; il n'existe pas encore de bouton ON/OFF à chaud sur l'application mobile. En mode coupé, la détection vocale des intentions continue pour le TTS. Les 14 textes sont de simples libellés sur la PWA, jamais envoyés à Discord/Twitch ou prononcés. En cas d'échec du rendu, la conversation doit continuer. **Les 14 véritables animations propres (deux par intention) sont le prochain chantier de création de motions Live2D, pas un résultat déjà livré.** Voir la [passation Codex](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md) et prévoir un test visuel PC/Android.
 
 ## Dialogue, mémoire et fréquence des réponses — develop, 15 novembre 2026
 
@@ -96,15 +96,15 @@ La personnalité active de Jade est le texte exact approuvé par Goldaj dans `pr
 
 **Conservation :** la commande `!jade-memoire activer` est nécessaire pour les identités vérifiées et la configuration `JADE_MEMORY_ENABLED=1` doit être active. Les réponses livrées sont conservées avec le message utilisateur **en texte intégral**, et non résumées, dans la base SQLite privée. 48 messages récents maximum peuvent être réinjectés à la reprise d'une session. Les messages publics auxquels Jade n'a pas répondu ne sont pas automatiquement archivés par cette fonction. `!jade-memoire oublier` efface l'identité et ses échanges enregistrés, en plus des mémoires ordinaires/core ; la suppression ne couvre pas les journaux console séparés.
 
-Les **deux variantes faciales et textuelles par intention** sont présentes dans le code r20/PWA. Les **14 motions corporelles originales** restent un projet artistique : [contrat Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+Les **deux variantes faciales et textuelles par intention** sont présentes dans le code r20/PWA. Les **14 motions corporelles originales** restent un projet artistique : [contrat Live2D](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
 
 ## Sauvegardes et incidents (15/11/2026)
 
-**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Les versions de schéma mémoire 1, 2 et 3 sont prises en charge par la fonction d'export/import portable, sous réserve des tests du SHA exécuté. L'export ZIP est en clair et peut conserver des données même après leur suppression de Jade : garder les archives hors Git, appliquer une durée de conservation et vérifier les restaurations en environnement isolé. En cas de CI rouge, ne pas considérer la simple présence d'un fichier ou de sa documentation comme une fonctionnalité validée.
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Les versions de schéma mémoire 1, 2 et 3 sont prises en charge par la fonction d'export/import portable, sous réserve des tests du SHA exécuté. L'export ZIP est en clair et peut conserver des données même après leur suppression de Jade : garder les archives hors Git, appliquer une durée de conservation et vérifier les restaurations en environnement isolé. En cas de CI rouge, ne pas considérer la simple présence d'un fichier ou de sa documentation comme une fonctionnalité validée.
 
 Les travaux futurs, sans doublon avec ce guide utilisateur, sont centralisés dans le [catalogue](../ameliorations/README.md).
 
 
-### Correctifs en PR : Discord PCM / identité mémoire / PWA
+## Association de comptes à la mémoire personnelle
 
-La branche de PR `fix/discord-pcm-memory-mobile-20261116` découple le streaming Discord du lecteur `ffplay` local et propose une liaison mémoire Goldaj ↔ Discord/Twitch via un code temporaire créé dans la PWA privée. **Source unique des détails, risques, prérequis et essais PC restant à faire :** [note de correctifs](PR-PCM-MEMOIRE-MOBILE-20261116.md). Ce document décrit une PR **non fusionnée** ; ne pas traiter son contenu comme présent dans `develop` avant le merge.
+Lorsque `JADE_MEMORY_ENABLED=1`, activer aussi la mémoire sur le compte cible avec `!jade-memoire activer`. Depuis **la PWA privée de Goldaj**, ouvrir « Associer un compte Discord / Twitch », saisir l'**ID numérique** du compte, puis copier la commande `!jade-memoire confirmer <code>` vers le chat **de ce même compte** dans les cinq minutes. La confirmation est à usage unique et liée à cet ID ; elle ne fusionne pas les historiques de salons indépendants. Attention : `!jade-memoire oublier` sur un compte lié efface **tout le profil commun**, pas seulement ce compte. Voir [la passation technique du 16 novembre](../operations/handoffs/2026-11-16-chatgpt-pcm-memoire-mobile.md).

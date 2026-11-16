@@ -106,11 +106,11 @@ Tester Wi-Fi et données mobiles, échange écrit/voix « appuyer pour parler »
 | Twitch reçoit mais ne répond pas | Vérifier `JADE_TWITCH_SEND=1` et autorisations réelles |
 | Voix muette sur PC | `JADE_AUDIO_OUTPUT=ffplay`, `ffplay`, pilote et micro/permissions |
 
-Pour une **intervention sur le PC réel avec Codex**, suivre impérativement [la procédure complète de passation](../gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md) : inventaire d'abord, aucune destruction des données existantes, détails d'authentification et recette humaine. **Aucune installation matérielle ne peut être déduite d'une CI verte**.
+Pour une **intervention sur le PC réel avec Codex**, suivre impérativement [la procédure complète de passation](../history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md) : inventaire d'abord, aucune destruction des données existantes, détails d'authentification et recette humaine. **Aucune installation matérielle ne peut être déduite d'une CI verte**.
 
 ## Mise à jour du rendu émotionnel Live2D (15/11/2026)
 
-Dans le fichier privé `JADE_SECRETS_FILE`, le réglage `JADE_AVATAR_INTENT_ENABLED=1` (valeur par défaut) autorise l'avatar Windows et la PWA Android à réagir à `Reply.intent`. `0` désactive uniquement les réactions visuelles/textuelles émotionnelles ; la voix, la bouche et l'Idle continuent. **Redémarrer Jade et recharger la PWA** après changement. Vérifier que `/assets/intent-visuals.json` est servi sur l'URL Tailscale privée ; sa propriété `enabled` reflète le réglage. Le contrat JSON public ne contient aucun secret. Ne jamais désactiver les contrôles d'accès de la PWA pour le diagnostiquer. Les expressions viennent de r20 installé par Git LFS et dépendent des SDK et GPU. Aucun nouveau fichier d'animation corporelle n'est livré. Recette concrète et suite obligatoire : [passation Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+Dans le fichier privé `JADE_SECRETS_FILE`, le réglage `JADE_AVATAR_INTENT_ENABLED=1` (valeur par défaut) autorise l'avatar Windows et la PWA Android à réagir à `Reply.intent`. `0` désactive uniquement les réactions visuelles/textuelles émotionnelles ; la voix, la bouche et l'Idle continuent. **Redémarrer Jade et recharger la PWA** après changement. Vérifier que `/assets/intent-visuals.json` est servi sur l'URL Tailscale privée ; sa propriété `enabled` reflète le réglage. Le contrat JSON public ne contient aucun secret. Ne jamais désactiver les contrôles d'accès de la PWA pour le diagnostiquer. Les expressions viennent de r20 installé par Git LFS et dépendent des SDK et GPU. Aucun nouveau fichier d'animation corporelle n'est livré. Recette concrète et suite obligatoire : [passation Live2D](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
 
 ## Réglages de dialogue et conservation (develop, 15 novembre 2026)
 
@@ -118,15 +118,10 @@ Dans la configuration privée, `JADE_LLM_MODEL=gpt-6-luna`, `JADE_LLM_REASONING_
 
 Le schéma passe de la version 2 à la version 3 ; **sauvegarder le fichier SQLite avant la première ouverture par le nouveau programme**, car une vieille version du code peut refuser la base migrée. L'historique restauré contient des messages complets, sans résumé, mais seulement les 48 plus récents dans le contexte. Le reste reste en base. Les conversations d'autres utilisateurs ne sont pas enregistrées automatiquement sans consentement.
 
-Avant la recette réelle, lancer `poetry run python -m unittest discover -s tests -v` puis `poetry run python main.py --preflight`. Voir [détails et limites](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md). Aucun nouveau rig ou asset d'animation 2D n'est nécessaire pour ces réglages.
+Avant la recette réelle, lancer `poetry run python -m unittest discover -s tests -v` puis `poetry run python main.py --preflight`. Voir [détails et limites](../history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md). Aucun nouveau rig ou asset d'animation 2D n'est nécessaire pour ces réglages.
 
 ## Contrôle DevOps avant utilisation réelle (15/11/2026)
 
-**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Exécuter localement les tests et préflights décrits dans le guide technique. Le backup de mémoire SQLite supporte les schémas 1, 2 et 3, mais l'archive ZIP n'est **pas chiffrée** : la déplacer uniquement via un support chiffré et vérifier la restauration sur une base de test. Le launcher copié dans `D:\Jade\launcher` doit être **réinstallé** après toute modification de ses scripts ; pas de mise à jour automatique garantie. Les tests de GitHub Actions n'établissent pas le fonctionnement du PC réel.
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Exécuter localement les tests et préflights décrits dans le guide technique. Le backup de mémoire SQLite supporte les schémas 1, 2 et 3, mais l'archive ZIP n'est **pas chiffrée** : la déplacer uniquement via un support chiffré et vérifier la restauration sur une base de test. Le launcher copié dans `D:\Jade\launcher` doit être **réinstallé** après toute modification de ses scripts ; pas de mise à jour automatique garantie. Les tests de GitHub Actions n'établissent pas le fonctionnement du PC réel.
 
-Les corrections historiques de CI sont conservées dans [l'audit DevOps](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Pour l'état actuel des fonctions codées : [BRANCH_STATE.md](BRANCH_STATE.md).
-
-
-### Correctifs en PR : Discord PCM / identité mémoire / PWA
-
-La branche de PR `fix/discord-pcm-memory-mobile-20261116` découple le streaming Discord du lecteur `ffplay` local et propose une liaison mémoire Goldaj ↔ Discord/Twitch via un code temporaire créé dans la PWA privée. **Source unique des détails, risques, prérequis et essais PC restant à faire :** [note de correctifs](PR-PCM-MEMOIRE-MOBILE-20261116.md). Ce document décrit une PR **non fusionnée** ; ne pas traiter son contenu comme présent dans `develop` avant le merge.
+Les corrections historiques de CI sont conservées dans [l'audit DevOps](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Pour l'état actuel des fonctions codées : [BRANCH_STATE.md](BRANCH_STATE.md).

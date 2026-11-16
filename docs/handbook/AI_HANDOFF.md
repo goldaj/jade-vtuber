@@ -4,22 +4,13 @@
 
 **Cartographie de référence :** consulter les [deux schémas visuels](../architecture/README.md) avant d'analyser les flux ou de déplacer des composants. Ils servent d'orientation, jamais de preuve à eux seuls : examiner `main.py`, la configuration, les adaptateurs et les sorties. Lorsqu'une modification rend une flèche ou une fonction obsolète, mettre à jour les images et cette documentation dans la même branche.
 
-## Instruction impérative : documentation synchronisée avec le code
+## Documentation et communication entre agents (contrat allégé)
 
-**Après CHAQUE modification de code, test, configuration, outil, dépendance, route infra, interface, API ou ressource, un agent IA doit revoir et mettre à jour TOUS les documents de la branche modifiée dans la même PR**, même si certains se contentent de signaler « vérifié, sans changement de comportement ». Une action ne doit pas finir avec seulement un commit de code et un message de chat.
+Le point d'entrée est **[`AGENTS.md`](../../AGENTS.md)**. La documentation fonctionnelle courante vit dans ce manuel et la coordination inter-agents dans [`docs/operations/AGENT_COORDINATION.md`](../operations/AGENT_COORDINATION.md). Une mission active possède **sa propre fiche** dans [`docs/operations/handoffs/`](../operations/handoffs/README.md) et une PR clairement liée ; ne pas modifier un ancien dossier historique comme canal de coordination.
 
-Fichiers à actualiser systématiquement :
-- `docs/handbook/INSTALLATION.md`
-- `docs/handbook/DEMO.md`
-- `docs/handbook/USER_GUIDE.md`
-- `docs/handbook/TECHNICAL.md`
-- `docs/handbook/AI_HANDOFF.md`
-- `docs/handbook/BRANCH_STATE.md`
-- `docs/handbook/BRANCH_MAINTENANCE.md`
-- `AGENTS.md` et `docs/handbook/README.md` dès que leur index/règle/état doit évoluer.
-- **En complément** : toutes les passations spécialisées `docs/gpt6-jade/` impactées (mobile, voix, mémoire, launcher, historique de décisions). Une mise à jour dans un seul ancien guide ne suffit pas si les autres deviennent contradictoires.
+Une modification technique doit **actualiser seulement `docs/operations/CHANGELOG.md` de manière obligatoire** afin de tracer la décision et les preuves ; la garde CI `scripts/check_docs.py` vérifie cette règle. Actualiser en plus uniquement les guides, schémas et données de référence affectés, notamment `BRANCH_STATE.md` si le comportement réel change. Ne pas ajouter des mentions « vérifié, inchangé » aux huit autres manuels par automatisme. Une modification de tests uniquement n'exige pas d'entrée de changelog si elle ne modifie pas les contrats produit.
 
-La garde `scripts/check_docs.py` vérifie le contrat en PR et les workflows GitHub exécutent tests Windows/Linux et scan de secrets. **Chaque branche a ses propres versions**, révisées en fonction du code **réellement présent sur cette branche**, y compris `main`. Ne pas propager une revendication de develop vers main, ni écraser le code d'une branche de feature pour « mettre à jour la doc ».
+Les versions de documentation sont **spécifiques à chaque branche** et reflètent son code. Les anciennes passations datées dans [`docs/history/`](../history/README.md) sont des preuves et non des instructions d'exécution actuelles.
 
 ## Décisions produit non négociables sur develop
 
@@ -29,7 +20,7 @@ La garde `scripts/check_docs.py` vérifie le contrat en PR et les workflows GitH
 4. **Android est une PWA privée** : Tailscale Serve uniquement sur le PC vers loopback `8766`, double protection compte Tailscale + Bearer ; aucun service public, aucune modification du VPS Hyperliquid. SDK Web Live2D propriétaire installé hors Git et compatible avec le modèle r20.
 5. **Mémoire persistante optionnelle et respect du consentement** : SQLite hors repo, identités transport vérifiées, Core Memories non purgées automatiquement mais effaçables sur demande, curation facultative avec coûts et risques.
 6. **Voix/intention** : préfixe strict `[INTENT:...]` supprimé avant sorties et mémoire, pitch DSP nécessitant FFmpeg/rubberband ; aucune affirmation de prosodie garantie sans écoute.
-7. **Deux démos clairement distinctes** : Démo Express Windows sans API et purement simulée ; démo OpenAI Live2D réelle séparée, avec clé/budget. Ne pas vendre la simulation comme preuve d'IA opérationnelle.
+7. **Une seule démonstration livrable** : Démo Express Windows sans API et purement simulée. Le vrai rendu Live2D r20 appartient au runtime `src/jade_runtime/avatar_renderer.py`, et non plus à `demo/reelle/`. Ne pas vendre la simulation comme preuve d'IA opérationnelle.
 
 ## Procédure de travail des agents
 
@@ -44,7 +35,7 @@ La garde `scripts/check_docs.py` vérifie le contrat en PR et les workflows GitH
 
 ## Reprise Codex sur le PC Windows et Android
 
-Avant toute manipulation sur le vrai PC de Goldaj, lire [le guide d'installation PC Android](../gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), le [launcher](../gpt6-jade/LAUNCHER-WINDOWS-20261115.md), les [voix](../gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), la [mémoire](../gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md) et [l'audit transverse](../gpt6-jade/AUDIT-TRANSVERSE-20261115.md). Réaliser l'inventaire du volume D:, de la config privée, du SDK/Live2D, des routes Serve et du stockage SQLite avant installation. Ne pas afficher/committer le contenu des secrets. Ne pas annoncer de connexion ou d'animation réussie sur Android sans avoir vu le test.
+Avant toute manipulation sur le vrai PC de Goldaj, lire [le guide d'installation PC Android](../history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), le [launcher](../operations/reference/LAUNCHER-WINDOWS-20261115.md), les [voix](../history/gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), la [mémoire](../history/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md) et [l'audit transverse](../history/gpt6-jade/AUDIT-TRANSVERSE-20261115.md). Réaliser l'inventaire du volume D:, de la config privée, du SDK/Live2D, des routes Serve et du stockage SQLite avant installation. Ne pas afficher/committer le contenu des secrets. Ne pas annoncer de connexion ou d'animation réussie sur Android sans avoir vu le test.
 
 L'utilisateur ne veut pas de longue chaîne de prérequis pour la **démo** : privilégier le programme WinForms simulé pour les visiteurs, et conserver la chaîne technique complète seulement pour le **vrai runtime**.
 
@@ -64,23 +55,18 @@ Le connecteur GitHub de cette session ne dispose pas d'action de suppression de 
 
 ## Addendum obligatoire : 14 réactions propres par intention (15/11/2026)
 
-Le propriétaire demande maintenant **deux animations Live2D réellement différentes ET deux représentations textuelles par chacune des sept intentions**, sur un modèle **2D**, pas 3D. Sur cette branche, seules deux expressions faciales de substitution et deux libellés PWA ont été codés par intention, avec toggle global et synchronisation PC/mobile. Les **14 motion assets dédiés** et le rig en pied validé ne sont PAS livrés. Codex doit lire la [passation Live2D explicite et sa matrice de statuts](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), réaliser le travail artistique/technique qui manque sur une branche indépendante, ne brancher aucun motion ID fictif ou SDK incompatible, effectuer une recette réelle PC + Android, et synchroniser **toutes** les documentations de la branche. Ne pas afficher de didascalies sur les canaux publics ni modifier `main` sans accord.
+Le propriétaire demande maintenant **deux animations Live2D réellement différentes ET deux représentations textuelles par chacune des sept intentions**, sur un modèle **2D**, pas 3D. Sur cette branche, seules deux expressions faciales de substitution et deux libellés PWA ont été codés par intention, avec toggle global et synchronisation PC/mobile. Les **14 motion assets dédiés** et le rig en pied validé ne sont PAS livrés. Codex doit lire la [passation Live2D explicite et sa matrice de statuts](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), réaliser le travail artistique/technique qui manque sur une branche indépendante, ne brancher aucun motion ID fictif ou SDK incompatible, effectuer une recette réelle PC + Android, et synchroniser **toutes** les documentations de la branche. Ne pas afficher de didascalies sur les canaux publics ni modifier `main` sans accord.
 
 ## Passation obligatoire : évolution dialogue (2026-11-15)
 
-Goldaj a validé un prompt exact : **ne pas le réécrire** sans autorisation. Fichier d'exécution `prompt_chat.txt` ; les trois prototypes dans `docs/gpt6-jade/PROPOSITIONS-PERSONNALITE-20261115.md` ne sont plus à activer. Garder les intentions `[INTENT:...]` séparées et inchangées. Le code `develop` a reçu `low / 320`, mémoire SQLite v3 des échanges entiers opt-in, 48 messages d'historique, et participation solo 100 % / groupe 30 % des interventions spontanées admissibles sur Discord/Twitch, avec contraintes de plateforme.
+Goldaj a validé un prompt exact : **ne pas le réécrire** sans autorisation. Fichier d'exécution `prompt_chat.txt` ; les trois prototypes dans `docs/history/gpt6-jade/PROPOSITIONS-PERSONNALITE-20261115.md` ne sont plus à activer. Garder les intentions `[INTENT:...]` séparées et inchangées. Le code `develop` a reçu `low / 320`, mémoire SQLite v3 des échanges entiers opt-in, 48 messages d'historique, et participation solo 100 % / groupe 30 % des interventions spontanées admissibles sur Discord/Twitch, avec contraintes de plateforme.
 
-Avant toute autre modification, lire [la passation technique de ce chantier](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md), examiner les variables privées et contrôler les règles de consentement. Tester la migration d'une base v2 sur copie de sauvegarde, les reprises après redémarrage, l'effacement, les politiques solo/groupe et le coût. Les **deux variantes faciales/textuelles r20 par intention sont codées** ; les **14 motions corporelles originales** restent à créer. Les scénarios de recette sont une activité QA distincte de l'inventaire fonctionnel.
+Avant toute autre modification, lire [la passation technique de ce chantier](../history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md), examiner les variables privées et contrôler les règles de consentement. Tester la migration d'une base v2 sur copie de sauvegarde, les reprises après redémarrage, l'effacement, les politiques solo/groupe et le coût. Les **deux variantes faciales/textuelles r20 par intention sont codées** ; les **14 motions corporelles originales** restent à créer. Les scénarios de recette sont une activité QA distincte de l'inventaire fonctionnel.
 
 ## Passation Codex : sécurité, CI et restauration (15/11/2026)
 
-**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Priorité : garder les checks Ubuntu/Windows bloquants, **ne pas** masquer les erreurs de la suite ni fusionner dans `main` pour contourner un échec. Vérifier l'ordre des changements des agents sur `develop`, le diagnostic des 17 tests en échec et 5 erreurs observés sur le commit initial, le transfert SQLite v3, la conservation des logs privés et la protection GitHub de `develop`. Les documents et l'historique GitHub Actions décrivent les résultats observables, pas un test sur le poste Jade. Après toute modification, actualiser les guides de cette branche.
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Priorité : garder les checks Ubuntu/Windows bloquants, **ne pas** masquer les erreurs de la suite ni fusionner dans `main` pour contourner un échec. Vérifier l'ordre des changements des agents sur `develop`, le diagnostic des 17 tests en échec et 5 erreurs observés sur le commit initial, le transfert SQLite v3, la conservation des logs privés et la protection GitHub de `develop`. Les documents et l'historique GitHub Actions décrivent les résultats observables, pas un test sur le poste Jade. Après toute modification, actualiser les guides de cette branche.
 
 ## Références courantes
 
 **État des fonctions codées :** [BRANCH_STATE.md](BRANCH_STATE.md). **Améliorations futures :** [catalogue](../ameliorations/README.md). Ne pas recopier des résultats d'anciens audits comme s'il s'agissait de déficiences actuelles du code.
-
-
-### Correctifs en PR : Discord PCM / identité mémoire / PWA
-
-La branche de PR `fix/discord-pcm-memory-mobile-20261116` découple le streaming Discord du lecteur `ffplay` local et propose une liaison mémoire Goldaj ↔ Discord/Twitch via un code temporaire créé dans la PWA privée. **Source unique des détails, risques, prérequis et essais PC restant à faire :** [note de correctifs](PR-PCM-MEMOIRE-MOBILE-20261116.md). Ce document décrit une PR **non fusionnée** ; ne pas traiter son contenu comme présent dans `develop` avant le merge.
