@@ -8,6 +8,8 @@ Runs with the standard library; PR checkout must use fetch-depth: 0.
 from __future__ import annotations
 
 import os
+import re
+from urllib.parse import unquote
 from pathlib import Path
 import subprocess
 import sys
@@ -69,6 +71,36 @@ def changed_files(base_ref: str) -> set[str]:
     return set(comparison.stdout.splitlines())
 
 
+
+def broken_local_markdown_links() -> list[str]:
+    """Check relative links in active manuals, excluding historical transcripts."""
+    active_files = {ROOT / path for path in REQUIRED}
+    active_files.add(ROOT / "README.md")
+    for directory in (
+        "docs/ameliorations", "docs/architecture", "docs/operations",
+        "docs/publication",
+    ):
+        active_files.update((ROOT / directory).rglob("*.md"))
+    pattern = re.compile(r"!?\[[^\]\n]*\]\(([^)\n]+)\)")
+    root = ROOT.resolve()
+    missing = []
+    for file in sorted(active_files):
+        if not file.is_file():
+            continue
+        content = file.read_text(encoding="utf-8")
+        for match in pattern.finditer(content):
+            href = match.group(1).strip().split(' "', 1)[0]
+            if not href or href.startswith("#") or re.match(
+                r"^(https?:|mailto:|tel:|data:|//)", href, re.IGNORECASE
+            ):
+                continue
+            destination = unquote(href.split("#", 1)[0].split("?", 1)[0])
+            target = (file.parent / destination).resolve()
+            if not target.is_relative_to(root) or not target.exists():
+                missing.append(f"{file.relative_to(ROOT)} -> {href}")
+    return missing
+
+
 def main() -> int:
     missing = [path for path in REQUIRED if not (ROOT / path).is_file()]
     if missing:
@@ -78,6 +110,13 @@ def main() -> int:
         if not (ROOT / path).read_text(encoding="utf-8").strip():
             print("Empty documentation: " + path, file=sys.stderr)
             return 1
+
+    links = broken_local_markdown_links()
+    if links:
+        print("Broken current Markdown links:", file=sys.stderr)
+        for item in links[:30]:
+            print("  " + item, file=sys.stderr)
+        return 1
 
     base = os.environ.get("GITHUB_BASE_REF", "").strip()
     if base:
