@@ -403,7 +403,8 @@ class MemoryStore:
                    target: tuple[str, str] | None = None) -> str:
         """Generate a one-time, short-lived secret for *another* authenticated account.
 
-        UI must deliver this out of band/privately, NEVER to a public chat.
+        Unbound legacy tokens must stay private. Target-bound v1 codes may be
+        confirmed in a public chat, since only the verified target can redeem.
         """
         _validate_key(key)
         if not 30 <= ttl_seconds <= 600:
