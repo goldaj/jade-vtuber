@@ -51,7 +51,7 @@ le rig, les animations, les exports VTube Studio et les documents de suivi.
 AGENTS (extrait) : # AGENTS.md — Jade
 
 > **Coordination en cours** : avant toute modification par Codex, lire
-> [`docs/history/handoffs/CODEX_PARALLEL_GPT6.md`](../../docs/history/handoffs/CODEX_PARALLEL_GPT6.md) : GPT-6 Chat
+> [`docs/history/handoffs/CODEX_PARALLEL_GPT6.md`](../handoffs/CODEX_PARALLEL_GPT6.md) : GPT-6 Chat
 > développe sur `codex/chat-gpt6-jade-rebuild` (branche séparée).
 > Aucun merge ou déploiement implicite.
 
@@ -59,8 +59,8 @@ AGENTS (extrait) : # AGENTS.md — Jade
 
 **OBLIGATOIRE dès la prochaine session de travail consacrée au personnage 2D** (dessin, calques/assets, rig, physique, animations, expressions, export et tests VTube Studio). Le propriétaire a expressément approuvé le protocole général et son extension à l'ensemble du modèle 2D. Ce n'est **pas** l'approbation d'un plan technique encore inexistant.
 
-1. Lire [`jade-modeling/MODEL2D_CODEX_PLAYBOOK.md`](../../jade-modeling/MODEL2D_CODEX_PLAYBOOK.md) pour les rôles Astra/Terra/Sol, l'organisation et les changements manuels de modèle.
-2. Lire [`jade-modeling/MODEL2D_CODEX_STATE.md`](../../jade-modeling/MODEL2D_CODEX_STATE.md) pour la prochaine action, le modèle recommandé, les preuves et la reprise.
+1. Lire [`jade-modeling/MODEL2D_CODEX_PLAYBOOK.md`](../../../jade-modeling/MODEL2D_CODEX_PLAYBOOK.md) pour les rôles Astra/Terra/Sol, l'organisation et les changements manuels de modèle.
+2. Lire [`jade-modeling/MODEL2D_CODEX_STATE.md`](../../../jade-modeling/MODEL2D_CODEX_STATE.md) pour la prochaine action, le modèle recommandé, les preuves et la reprise.
 3. Lire `jade-modeling/MODEL2D_MASTER_PLAN.md` **seulement s'il existe et a été validé**. Sinon demander le passage manuel à **GPT-6 Astra** pour produire le plan détaillé de toute la chaîne 2D ; puis faire valider ce plan avant exécution.
 4. Codex **ne change jamais de modèle automatiquement**. Au besoin, s'a
 

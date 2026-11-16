@@ -4,9 +4,9 @@ Les instructions ci-dessous sont conservées pour contexte historique ; les inst
 
 ## Reprise migration applicative — 2 novembre 2026
 
-Avant toute modification, lire [l’index de conversation](docs/history/conversations/INDEX.md),
-puis [le dossier de migration courant](docs/history/migrations/2026-11-02/README.md).
-La revue Astra est terminée : lire ses [précisions d’exécution](docs/history/migrations/2026-11-02/06-ASTRA-REVIEW.md)
+Avant toute modification, lire [l’index de conversation](../conversations/INDEX.md),
+puis [le dossier de migration courant](../migrations/2026-11-02/README.md).
+La revue Astra est terminée : lire ses [précisions d’exécution](../migrations/2026-11-02/06-ASTRA-REVIEW.md)
 avant la reprise Terra. Elles prévalent sur les passages correspondants du plan initial.
 Le propriétaire a confirmé dans ce chat qu’il n’existe **aucune production active**.
 `develop` est la cible Git proposée pour l’intégration ; `master` reste historique.

@@ -173,7 +173,7 @@ sans présenter les mocks comme des tests d'API réels.
 - Exécutable extrait testé avec PATH minimal, sommes du paquet vérifiées, scans
   ciblés sans alerte ; 203 tests locaux et compilation réussis.
 - Capture visuelle de la fenêtre expirée ; rendu visuel et VTube Studio non
-  recettés. Documentation et empreinte dans [la notice](../../../demo/windows/README.md).
+  recettés. Documentation et empreinte dans [la notice](https://github.com/goldaj/jade-vtuber/blob/5368f008b8970532702ceac1e50ca6b60fd5c1d7/demo/windows/README.md).
 
 ## MVP Discord — D0, 3 novembre 2026
 - Base `bb44d7a` installée depuis le lock sur Windows dans un environnement isolé
