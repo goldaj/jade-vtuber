@@ -97,6 +97,37 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertEqual(len(self.store.recall(mobile, "person")), 1)
         self.assertEqual(len(self.store.list_for_account(mobile)), 1)
 
+    def test_target_bound_link_preserves_complete_history_on_link_and_unlink(self):
+        twitch = ("twitch", "6001")
+        other = ("twitch", "6002")
+        for key in (self.alice, twitch, other):
+            self.store.enable(key)
+        self.assertTrue(self.store.append_conversation_turn(
+            self.alice, "discord:10", source_platform="discord",
+            message_id="discord-1", user_content="Salut Discord",
+            assistant_content="Salut Alice"))
+        self.assertTrue(self.store.append_conversation_turn(
+            twitch, "twitch:live", source_platform="twitch",
+            message_id="twitch-1", user_content="Salut Twitch",
+            assistant_content="Salut Twitch"))
+        code = self.store.begin_link(self.alice, target=twitch)
+        self.assertTrue(code.startswith("v1.twitch.6001."))
+        self.assertFalse(self.store.complete_link(other, code))
+        self.assertTrue(self.store.complete_link(twitch, code))
+        self.assertFalse(self.store.complete_link(twitch, code))
+        # Both scopes survive deleting the previous person (ON DELETE CASCADE).
+        self.assertEqual(len(self.store.recent_conversation_turns(
+            self.alice, "twitch:live")), 2)
+        self.assertEqual(len(self.store.recent_conversation_turns(
+            twitch, "discord:10")), 2)
+        self.assertTrue(self.store.unlink(twitch))
+        self.assertEqual(len(self.store.recent_conversation_turns(
+            twitch, "twitch:live")), 2)
+        self.assertEqual(self.store.recent_conversation_turns(
+            self.alice, "twitch:live"), [])
+        self.assertEqual(len(self.store.recent_conversation_turns(
+            self.alice, "discord:10")), 2)
+
     def test_cross_platform_link_unlink_and_explicit_erasure(self):
         twitch = ("twitch", "6001")
         self.store.enable(self.alice)
