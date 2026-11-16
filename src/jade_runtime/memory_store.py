@@ -433,7 +433,8 @@ class MemoryStore:
     def complete_link(self, target: tuple[str, str], token: str) -> bool:
         """Prove control of both accounts by making each call under its trusted ID.
 
-        This is an API, NOT a Twitch or Discord command exposed in public.
+        Legacy unbound codes are for internal API only; public confirmation
+        first verifies the target-bound v1 prefix against the trusted account.
         """
         _validate_key(target)
         if not isinstance(token, str) or len(token) > 128:
