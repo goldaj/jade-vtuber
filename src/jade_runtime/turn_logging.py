@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import sys
 
 LOG = logging.getLogger("jade.conversation")
@@ -29,7 +30,7 @@ def _write(payload: dict) -> None:
 def record_input(turn: int, incoming) -> None:
     """Selected Runtime inputs only; no passive Discord channel traffic."""
     value = incoming.text
-    if value.strip().casefold().startswith("!jade-memoire confirmer "):
+    if re.match(r"^!jade-memoire\s+confirmer(?:\s|$)", value.strip(), re.I):
         # Never copy the one-use identity proof into persistent diagnostic logs.
         value = "!jade-memoire confirmer [code masqué]"
     _write({
