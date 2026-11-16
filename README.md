@@ -139,4 +139,4 @@ Un [launcher Windows personnel](docs/operations/reference/LAUNCHER-WINDOWS-20261
 
 ## Audits historiques
 
-Les audits et PR datés sont conservés dans [docs/gpt6-jade](docs/history/audits/gpt6-jade). L'[audit du 16 novembre](docs/history/gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md) est un instantané ; l'état courant dépend du code et de [BRANCH_STATE.md](docs/handbook/BRANCH_STATE.md).
+Les audits et PR datés sont conservés dans [archives GPT-6/Jade](docs/history/gpt6-jade/). L'[audit du 16 novembre](docs/history/gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md) est un instantané ; l'état courant dépend du code et de [BRANCH_STATE.md](docs/handbook/BRANCH_STATE.md).

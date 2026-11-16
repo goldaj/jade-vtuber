@@ -17,7 +17,7 @@ from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.orchestrator import Runtime
 from src.jade_runtime.output import SpeechOutput
 from src.jade_runtime.voice_pipeline import VoiceInput
-from tests.test_demo_realtime_tts import FakeClient, configured, created, delta, transcript, done
+from tests.test_jade_realtime_tts import FakeClient, configured, created, delta, transcript, done
 
 
 class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
