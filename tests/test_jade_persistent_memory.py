@@ -162,6 +162,16 @@ class MemoryStoreTests(unittest.TestCase):
             self.alice, "discord:45")), 4)
         self.assertEqual(self.store.recent_conversation_turns(twitch, "discord:45"), [])
 
+    def test_new_link_challenge_invalidates_previous_code(self):
+        twitch = ("twitch", "6001")
+        self.store.enable(self.alice)
+        self.store.enable(twitch)
+        first = self.store.begin_link(self.alice, target=twitch)
+        second = self.store.begin_link(self.alice, target=twitch)
+        self.assertNotEqual(first, second)
+        self.assertFalse(self.store.complete_link(twitch, first))
+        self.assertTrue(self.store.complete_link(twitch, second))
+
     def test_cross_platform_link_unlink_and_explicit_erasure(self):
         twitch = ("twitch", "6001")
         self.store.enable(self.alice)
