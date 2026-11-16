@@ -144,6 +144,24 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertEqual(len(self.store.recent_conversation_turns(owner, "person")), 4)
         self.assertEqual(self.store.recent_conversation_turns(twitch, "person"), [])
 
+    def test_unlink_discord_preserves_voice_and_text_conversations(self):
+        twitch = ("twitch", "6001")
+        self.store.enable(self.alice)
+        self.store.enable(twitch)
+        for platform in ("discord", "discord_voice"):
+            self.assertTrue(self.store.append_conversation_turn(
+                self.alice, "discord:45", source_platform=platform,
+                message_id=platform + "-01", user_content="Hello " + platform,
+                assistant_content="Bonjour"))
+        code = self.store.begin_link(twitch, target=self.alice)
+        self.assertTrue(self.store.complete_link(self.alice, code))
+        self.assertEqual(len(self.store.recent_conversation_turns(
+            twitch, "discord:45")), 4)
+        self.assertTrue(self.store.unlink(self.alice))
+        self.assertEqual(len(self.store.recent_conversation_turns(
+            self.alice, "discord:45")), 4)
+        self.assertEqual(self.store.recent_conversation_turns(twitch, "discord:45"), [])
+
     def test_cross_platform_link_unlink_and_explicit_erasure(self):
         twitch = ("twitch", "6001")
         self.store.enable(self.alice)
