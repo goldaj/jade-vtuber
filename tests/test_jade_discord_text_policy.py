@@ -89,6 +89,22 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(policy.observe(
             invalid, parse_discord_message(invalid), own_user_id=42))
 
+    def test_identity_confirmation_code_never_enters_discord_context(self):
+        policy = DiscordTextPolicy(auto_rate=0)
+        prime_group(policy)
+        code = "v1.twitch.6001.somethingSecret12345678901234567890"
+        command = msg("!jade-memoire confirmer " + code, ident=333)
+        selected = policy.observe(command, parse_discord_message(command),
+                                  own_user_id=42)
+        self.assertTrue(selected.force_reply)
+        later = msg("<@42> Question suivante ?", ident=334,
+                    mentions=[SimpleNamespace(id=42)])
+        followup = policy.observe(later, parse_discord_message(later),
+                                  own_user_id=42)
+        self.assertIsNotNone(followup)
+        self.assertNotIn(code, str(followup.context))
+        self.assertIn("[code masqué]", str(followup.context))
+
     def test_dm_and_reply_to_jade_are_direct(self):
         policy = DiscordTextPolicy(auto_rate=0)
         dm = msg("Salut", ident=1, guild=None)
