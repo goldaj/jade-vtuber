@@ -79,3 +79,8 @@ Avant toute autre modification, lire [la passation technique de ce chantier](../
 ## Références courantes
 
 **État des fonctions codées :** [BRANCH_STATE.md](BRANCH_STATE.md). **Améliorations futures :** [catalogue](../ameliorations/README.md). Ne pas recopier des résultats d'anciens audits comme s'il s'agissait de déficiences actuelles du code.
+
+
+### Correctifs en PR : Discord PCM / identité mémoire / PWA
+
+La branche de PR `fix/discord-pcm-memory-mobile-20261116` découple le streaming Discord du lecteur `ffplay` local et propose une liaison mémoire Goldaj ↔ Discord/Twitch via un code temporaire créé dans la PWA privée. **Source unique des détails, risques, prérequis et essais PC restant à faire :** [note de correctifs](PR-PCM-MEMOIRE-MOBILE-20261116.md). Ce document décrit une PR **non fusionnée** ; ne pas traiter son contenu comme présent dans `develop` avant le merge.
