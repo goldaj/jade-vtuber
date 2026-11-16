@@ -48,7 +48,7 @@ Date du chat : 2026-11-02, Europe/Paris. Les heures individuelles des messages c
 
 Audit d’une copie isolée du dépôt ; inventaire des neuf branches distantes et des deux PR ; comparaison avec le clone applicatif historique sans le modifier. Lecture des six commits documentaires supplémentaires de la branche cible. Installation d’un environnement Python séparé, tests existants et reproductions synthétiques des défauts de concurrence et de connecteurs. Documentation et scripts de reproduction seulement : aucun correctif du runtime, aucune fusion, aucun déploiement, aucun appel de service payant et aucune manipulation du modèle 2D.
 
-Les résultats vérifiés et les limites figurent dans [le dossier de migration](../migration/2026-11-02/README.md). Cette synthèse relate les actions de l’assistant ; elle n’est pas présentée comme une citation du dialogue.
+Les résultats vérifiés et les limites figurent dans [le dossier de migration](../migrations/2026-11-02/README.md). Cette synthèse relate les actions de l’assistant ; elle n’est pas présentée comme une citation du dialogue.
 
 ## Décision actuelle et suite
 

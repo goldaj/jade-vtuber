@@ -4,9 +4,9 @@ Les instructions ci-dessous sont conservées pour contexte historique ; les inst
 
 ## Reprise migration applicative — 2 novembre 2026
 
-Avant toute modification, lire [l’index de conversation](docs/conversations/INDEX.md),
-puis [le dossier de migration courant](docs/migration/2026-11-02/README.md).
-La revue Astra est terminée : lire ses [précisions d’exécution](docs/migration/2026-11-02/06-ASTRA-REVIEW.md)
+Avant toute modification, lire [l’index de conversation](docs/history/conversations/INDEX.md),
+puis [le dossier de migration courant](docs/history/migrations/2026-11-02/README.md).
+La revue Astra est terminée : lire ses [précisions d’exécution](docs/history/migrations/2026-11-02/06-ASTRA-REVIEW.md)
 avant la reprise Terra. Elles prévalent sur les passages correspondants du plan initial.
 Le propriétaire a confirmé dans ce chat qu’il n’existe **aucune production active**.
 `develop` est la cible Git proposée pour l’intégration ; `master` reste historique.
@@ -17,12 +17,12 @@ ce chantier à partir d’un ancien document de continuation.
 
 ## Coordination des documents Codex 2D — 29 octobre 2026
 
-La branche Codex `develop` apporte `jade-modeling/MODEL2D_CODEX_PLAYBOOK.md`, `jade-modeling/MODEL2D_CODEX_STATE.md` et les anciens renvois `RIG_CODEX_*`. Consulter ces sources avant tout travail sur Jade 2D. **En cas de divergence, la politique propriétaire la plus récente du 29/10 prime : Tera 6.1 exécute par défaut ; il sollicite lui-même un changement manuel vers Astra uniquement en cas de doute motivé ; la revue Astra ultérieure est laissée à la décision du propriétaire.** Les anciennes prescriptions de plan Astra obligatoire ne sont pas activées par cette consolidation. Le texte antérieur de Codex est archivé sous `docs/merge-archive/CODEX_DEVELOP_AGENTS.md` sans perte d'information.
+La branche Codex `develop` apporte `jade-modeling/MODEL2D_CODEX_PLAYBOOK.md`, `jade-modeling/MODEL2D_CODEX_STATE.md` et les anciens renvois `RIG_CODEX_*`. Consulter ces sources avant tout travail sur Jade 2D. **En cas de divergence, la politique propriétaire la plus récente du 29/10 prime : Tera 6.1 exécute par défaut ; il sollicite lui-même un changement manuel vers Astra uniquement en cas de doute motivé ; la revue Astra ultérieure est laissée à la décision du propriétaire.** Les anciennes prescriptions de plan Astra obligatoire ne sont pas activées par cette consolidation. Le texte antérieur de Codex est archivé sous `docs/history/legacy/CODEX_DEVELOP_AGENTS.md` sans perte d'information.
 
 # AGENTS.md — Jade, branche de refonte GPT-6
 
 > Codex : travail isolé en cours sur `codex/chat-gpt6-jade-rebuild`.
-> Sur `develop`, lire `docs/CODEX_PARALLEL_GPT6.md` pour la coordination.
+> Sur `develop`, lire `docs/history/handoffs/CODEX_PARALLEL_GPT6.md` pour la coordination.
 > **Ne pas merger ni déployer sans revue du propriétaire.**
 
 ## Politique propriétaire de répartition des modèles — 29 octobre 2026
@@ -46,11 +46,11 @@ fait contrôler par Astra les travaux de Tera. Cette revue éventuelle est
 après chaque tâche. Les tests techniques, sauvegardes, permissions et revues
 humaines de sécurité restent obligatoires selon le type de modification.
 
-Contrat complet : `docs/gpt6-jade/TERA-ASTRA-WORKFLOW.md`.
+Contrat complet : `docs/operations/reference/TERA-ASTRA-WORKFLOW.md`.
 
 ## Avant toute intervention
-- Lire `README.md`, `docs/CHATGPT_PROJECT_HISTORY.md`, `docs/gpt6-jade/DECISIONS.md`,
-  `docs/gpt6-jade/HANDOFF.md`, `docs/gpt6-jade/TASKS.md` et `PRIVATE_CONFIGURATION.md`.
+- Lire `README.md`, `docs/history/handoffs/CHATGPT_PROJECT_HISTORY.md`, `docs/history/gpt6-jade/DECISIONS.md`,
+  `docs/history/gpt6-jade/HANDOFF.md`, `docs/history/gpt6-jade/TASKS.md` et `PRIVATE_CONFIGURATION.md`.
 - Code runtime : Python. STT et TTS = **OpenAI exclusivement**, modèles configurables
   favorisant une faible latence. Le dialogue LLM est interchangeable.
 - Ne pas activer automatiquement Twitch, Discord, microphone ou VTube Studio.
@@ -64,7 +64,7 @@ Contrat complet : `docs/gpt6-jade/TERA-ASTRA-WORKFLOW.md`.
 
 ## Validation et mémoire
 - `python -m unittest discover -s tests -v`, `python -m compileall -q src main.py`.
-- Après chaque sous-lot : mettre `docs/gpt6-jade/TASKS.md` à jour avec les
+- Après chaque sous-lot : mettre `docs/history/gpt6-jade/TASKS.md` à jour avec les
   *résultats réellement observés* et la confiance. Actualiser `CONVERSATIONS.md`
   uniquement avec des dialogues accessibles ; citer les heures si attestées.
 - Ne jamais annoncer de réussite de connexion Twitch/Discord/OpenAI/STT/TTS

@@ -34,7 +34,7 @@ sont pas entièrement réimplémentés dans le moteur actuel. La protection CI c
 les futurs ajouts de secrets doit aussi être renforcée. Aucun correctif runtime
 ni aucune fusion vers `main` n'est réalisé pendant cette revue.
 
-Le [rapport de reprise Terra](../migration/2026-11-02/08-ASTRA-CONTROLE-DEPOT-PUBLIC.md)
+Le [rapport de reprise Terra](../migrations/2026-11-02/08-ASTRA-CONTROLE-DEPOT-PUBLIC.md)
 contient les constats, limites et étapes de travail. La passe Astra s'arrête après
 sa remise ; une relance alors que le modèle est encore Astra doit seulement
 demander le passage à Terra.
