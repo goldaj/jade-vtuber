@@ -96,18 +96,10 @@ La personnalité active de Jade est le texte exact approuvé par Goldaj dans `pr
 
 **Conservation :** la commande `!jade-memoire activer` est nécessaire pour les identités vérifiées et la configuration `JADE_MEMORY_ENABLED=1` doit être active. Les réponses livrées sont conservées avec le message utilisateur **en texte intégral**, et non résumées, dans la base SQLite privée. 48 messages récents maximum peuvent être réinjectés à la reprise d'une session. Les messages publics auxquels Jade n'a pas répondu ne sont pas automatiquement archivés par cette fonction. `!jade-memoire oublier` efface l'identité et ses échanges enregistrés, en plus des mémoires ordinaires/core ; la suppression ne couvre pas les journaux console séparés.
 
-Les deux réactions futures par intention sont un projet de variations artistiques, non des animations déjà disponibles. Informations de recette et limites : [document de passation](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md).
+Les **deux variantes faciales et textuelles par intention** sont présentes dans le code r20/PWA. Les **14 motions corporelles originales** restent un projet artistique : [contrat Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
 
 ## Sauvegardes et incidents (15/11/2026)
 
 **Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Les versions de schéma mémoire 1, 2 et 3 sont prises en charge par la fonction d'export/import portable, sous réserve des tests du SHA exécuté. L'export ZIP est en clair et peut conserver des données même après leur suppression de Jade : garder les archives hors Git, appliquer une durée de conservation et vérifier les restaurations en environnement isolé. En cas de CI rouge, ne pas considérer la simple présence d'un fichier ou de sa documentation comme une fonctionnalité validée.
 
-## Contrôle P0 CI du 16 novembre 2026 (develop)
-
-- Politique de réponse conservée : **100 % en solo vérifié, 30 % en groupe** ; sollicitation explicite prioritaire. Les suivis contextuels en groupe restent échantillonnés et ne garantissent pas une réponse.
-- Tests de transport Discord vocal : échantillonnage neutralisé **dans les doubles de test seulement** pour vérifier indépendamment déplacement de canal, interruption et récupération. La présence des participants est une information en lecture seule permettant de distinguer solo/groupe, jamais une autorisation d'écoute.
-- Tests Discord écrit : salons à plusieurs participants simulés explicitement pour vérifier le taux et les limites de réponses, sans supprimer la réponse automatique en salon solo.
-- Twitch : le test de non-empilement des réponses initialise le participant que l'adaptateur IRC observe normalement. Aucun changement de comportement de production dans ce lot.
-- Vérification GitHub Actions Windows/Ubuntu, export de publication, scripts PowerShell et scan de secrets indispensable avant toute affirmation de CI verte. Aucun test vocal matériel ni appel OpenAI réalisé par cette revue.
-
-- Correctif Windows du test IPC Live2D : la simulation valide toujours les deux trames d'expression et de bouche, puis termine par une coupure de pipe contrôlée. L'attente auparavant non bornée du faux moteur était responsable d'annulations Windows au délai de huit minutes ; aucun runtime ni test réel de Live2D n'est remplacé.
+Les travaux futurs, sans doublon avec ce guide utilisateur, sont centralisés dans le [catalogue](../ameliorations/README.md).

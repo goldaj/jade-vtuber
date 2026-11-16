@@ -15,7 +15,7 @@
 | ARC-09 | P2 / P | **Observabilité par étape**, budgets de temps et de coût configurables, feature flags et rollback vers pipeline historique sans migration irréversible. |
 | ARC-10 | P3 / D | **Luna ultérieurement** : décision de délégation sur besoin prouvé, travaux parallèles, injection de résultat vérifié, gestion d'attente sans mensonge. Ne pas activer ni optimiser ce composant aujourd'hui. |
 | ARC-11 | P3 / D | **Moteur IA local éventuel** : évaluer selon matériel réel, latence, mémoire, qualité française et coûts avant de changer les services OpenAI ; pas de promesse de compatibilité sans benchmark PC. |
-| ARC-12 | P1 / R | Maintenir la **personnalité validée** (prompt de Goldaj, intentions, variations, affection occasionnelle) et une voix cohérente à travers tout backend ; écouter de vrais dialogues et non quelques mocks. |
+| ARC-12 | P1 / C | Maintenir la **personnalité validée** (prompt de Goldaj, intentions, variations, affection occasionnelle) et une voix cohérente à travers tout backend ; écouter de vrais dialogues et non quelques mocks. |
 
 ## Cible mesurable, à confirmer
 

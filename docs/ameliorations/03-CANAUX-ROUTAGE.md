@@ -32,7 +32,7 @@
 | RTE-10 | P2 / E | Garder le partage d'historique entre voix Discord et chat **natif du même vocal** et améliorer les cas de textes reçus pendant STT ; ne pas fusionner automatiquement les autres salons. |
 | RTE-11 | P1 / P | Faire de **la sortie visuelle un abonné filtré** par audience : une conversation Discord ne doit pas automatiquement déclencher un visage visible sur Twitch ni vice versa. |
 | RTE-12 | P1 / E | Journaliser séparément **destinations prévues**, **envois réellement confirmés** et **diffusion audio complète** ; éviter de présenter planned_not_confirmed comme une preuve de livraison. |
-| RTE-13 | P0 / R | Tester la matrice complète sur deux salons Discord, un MP, un vocal, Twitch, micro PC, HTTP et PWA ; vérifier facturation TTS nulle sur les écrits et non-fuite de texte/audio/avatar. |
+| RTE-13 | P0 / C | Tester la matrice complète sur deux salons Discord, un MP, un vocal, Twitch, micro PC, HTTP et PWA ; vérifier facturation TTS nulle sur les écrits et non-fuite de texte/audio/avatar. |
 | RTE-14 | P2 / P | Évaluer la suppression ou réduction des sorties texte de débogage contenant des échanges privés sur stdout/stderr ; maintenir une observabilité diagnostique confidentielle sans transformer la console en destination utilisateur. |
 
 **Sources :** [audit transverse](../gpt6-jade/AUDIT-TRANSVERSE-20261115.md), [Discord unifié](../gpt6-jade/HANDOFF-DISCORD-UNIFIED-20261115.md), [réconciliation](../gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md), [contrat de flux](../architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md), code main.py/output.py/turn_logging.py et conversation du 16/11/2026.

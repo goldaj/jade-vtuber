@@ -70,18 +70,12 @@ Le propriétaire demande maintenant **deux animations Live2D réellement différ
 
 Goldaj a validé un prompt exact : **ne pas le réécrire** sans autorisation. Fichier d'exécution `prompt_chat.txt` ; les trois prototypes dans `docs/gpt6-jade/PROPOSITIONS-PERSONNALITE-20261115.md` ne sont plus à activer. Garder les intentions `[INTENT:...]` séparées et inchangées. Le code `develop` a reçu `low / 320`, mémoire SQLite v3 des échanges entiers opt-in, 48 messages d'historique, et participation solo 100 % / groupe 30 % des interventions spontanées admissibles sur Discord/Twitch, avec contraintes de plateforme.
 
-Avant toute autre modification, lire [la passation technique de ce chantier](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md), examiner les variables privées et contrôler les règles de consentement. Tester la migration d'une base v2 sur copie de sauvegarde, les reprises après redémarrage, l'effacement, les politiques solo/groupe et le coût. Aucun test réel PC/Discord/Twitch n'a été observé dans ce chantier : tests Python ajoutés, pas encore exécutés. Deux réactions par intention sont seulement **planifiées** ; ne pas prétendre que 14 animations nouvelles sont prêtes.
+Avant toute autre modification, lire [la passation technique de ce chantier](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md), examiner les variables privées et contrôler les règles de consentement. Tester la migration d'une base v2 sur copie de sauvegarde, les reprises après redémarrage, l'effacement, les politiques solo/groupe et le coût. Les **deux variantes faciales/textuelles r20 par intention sont codées** ; les **14 motions corporelles originales** restent à créer. Les scénarios de recette sont une activité QA distincte de l'inventaire fonctionnel.
 
 ## Passation Codex : sécurité, CI et restauration (15/11/2026)
 
 **Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Priorité : garder les checks Ubuntu/Windows bloquants, **ne pas** masquer les erreurs de la suite ni fusionner dans `main` pour contourner un échec. Vérifier l'ordre des changements des agents sur `develop`, le diagnostic des 17 tests en échec et 5 erreurs observés sur le commit initial, le transfert SQLite v3, la conservation des logs privés et la protection GitHub de `develop`. Les documents et l'historique GitHub Actions décrivent les résultats observables, pas un test sur le poste Jade. Après toute modification, actualiser les guides de cette branche.
 
-## Contrôle P0 CI du 16 novembre 2026 (develop)
+## Références courantes
 
-- Politique de réponse conservée : **100 % en solo vérifié, 30 % en groupe** ; sollicitation explicite prioritaire. Les suivis contextuels en groupe restent échantillonnés et ne garantissent pas une réponse.
-- Tests de transport Discord vocal : échantillonnage neutralisé **dans les doubles de test seulement** pour vérifier indépendamment déplacement de canal, interruption et récupération. La présence des participants est une information en lecture seule permettant de distinguer solo/groupe, jamais une autorisation d'écoute.
-- Tests Discord écrit : salons à plusieurs participants simulés explicitement pour vérifier le taux et les limites de réponses, sans supprimer la réponse automatique en salon solo.
-- Twitch : le test de non-empilement des réponses initialise le participant que l'adaptateur IRC observe normalement. Aucun changement de comportement de production dans ce lot.
-- Vérification GitHub Actions Windows/Ubuntu, export de publication, scripts PowerShell et scan de secrets indispensable avant toute affirmation de CI verte. Aucun test vocal matériel ni appel OpenAI réalisé par cette revue.
-
-- Correctif Windows du test IPC Live2D : la simulation valide toujours les deux trames d'expression et de bouche, puis termine par une coupure de pipe contrôlée. L'attente auparavant non bornée du faux moteur était responsable d'annulations Windows au délai de huit minutes ; aucun runtime ni test réel de Live2D n'est remplacé.
+**État des fonctions codées :** [BRANCH_STATE.md](BRANCH_STATE.md). **Améliorations futures :** [catalogue](../ameliorations/README.md). Ne pas recopier des résultats d'anciens audits comme s'il s'agissait de déficiences actuelles du code.

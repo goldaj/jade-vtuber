@@ -124,12 +124,4 @@ Avant la recette réelle, lancer `poetry run python -m unittest discover -s test
 
 **Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Exécuter localement les tests et préflights décrits dans le guide technique. Le backup de mémoire SQLite supporte les schémas 1, 2 et 3, mais l'archive ZIP n'est **pas chiffrée** : la déplacer uniquement via un support chiffré et vérifier la restauration sur une base de test. Le launcher copié dans `D:\Jade\launcher` doit être **réinstallé** après toute modification de ses scripts ; pas de mise à jour automatique garantie. Les tests de GitHub Actions n'établissent pas le fonctionnement du PC réel.
 
-## Contrôle P0 CI du 16 novembre 2026 (develop)
-
-- Politique de réponse conservée : **100 % en solo vérifié, 30 % en groupe** ; sollicitation explicite prioritaire. Les suivis contextuels en groupe restent échantillonnés et ne garantissent pas une réponse.
-- Tests de transport Discord vocal : échantillonnage neutralisé **dans les doubles de test seulement** pour vérifier indépendamment déplacement de canal, interruption et récupération. La présence des participants est une information en lecture seule permettant de distinguer solo/groupe, jamais une autorisation d'écoute.
-- Tests Discord écrit : salons à plusieurs participants simulés explicitement pour vérifier le taux et les limites de réponses, sans supprimer la réponse automatique en salon solo.
-- Twitch : le test de non-empilement des réponses initialise le participant que l'adaptateur IRC observe normalement. Aucun changement de comportement de production dans ce lot.
-- Vérification GitHub Actions Windows/Ubuntu, export de publication, scripts PowerShell et scan de secrets indispensable avant toute affirmation de CI verte. Aucun test vocal matériel ni appel OpenAI réalisé par cette revue.
-
-- Correctif Windows du test IPC Live2D : la simulation valide toujours les deux trames d'expression et de bouche, puis termine par une coupure de pipe contrôlée. L'attente auparavant non bornée du faux moteur était responsable d'annulations Windows au délai de huit minutes ; aucun runtime ni test réel de Live2D n'est remplacé.
+Les corrections historiques de CI sont conservées dans [l'audit DevOps](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Pour l'état actuel des fonctions codées : [BRANCH_STATE.md](BRANCH_STATE.md).

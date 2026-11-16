@@ -4,7 +4,7 @@
 
 | ID | Priorité / état | Amélioration proposée / condition de réussite |
 | --- | --- | --- |
-| LAT-01 | P0 / R | **Profiler tout le tour de bout en bout** : fin réelle de parole, VAD, début/fin STT, mémoire, file, IA, premier token, première trame TTS, premier son entendu et fin audio. Collecter médiane, p95, coût et durée, séparément pour Discord/PC/mobile. Pas de texte privé dans télémétrie exportable. |
+| LAT-01 | P0 / C | **Profiler tout le tour de bout en bout** : fin réelle de parole, VAD, début/fin STT, mémoire, file, IA, premier token, première trame TTS, premier son entendu et fin audio. Collecter médiane, p95, coût et durée, séparément pour Discord/PC/mobile. Pas de texte privé dans télémétrie exportable. |
 | LAT-02 | P1 / E | Remplacer les seuils fixes de silence Discord (fin de tour actuellement ~700 ms) par un **VAD adaptatif** ; mesurer ~450–500 ms comme candidats, sans couper les hésitations et phrases françaises. |
 | LAT-03 | P1 / E | Abandonner la capture micro PC en fenêtres fixes d'environ 3 s au profit d'un VAD local qui déclenche STT dès la fin de la phrase ; préserver anti-écho et refus des bruits. |
 | LAT-04 | P2 / P | Essayer le **STT incrémental / streaming audio** pour préparer une réponse avant fin d'enregistrement ; gérer hypothèses de transcription révisées et conflits d'identité. |
@@ -21,7 +21,7 @@
 | LAT-15 | P2 / P | **Barre d'interruption véritable** : couper diffusion et génération, libérer la file et reprendre une conversation après le mot d'arrêt ; barge-in sans réintroduire l'écho de Jade. |
 | LAT-16 | P2 / P | Accélérer le mobile, actuellement WAV envoyé puis renvoyé en JSON Base64 : transport streaming audio bidirectionnel, file bornée et lecture progressive, y compris sur réseau mobile. |
 | LAT-17 | P2 / P | Comparer le pipeline existant (STT → IA → TTS) à un **dialogue vocal Realtime natif**, en conservant intentions, persona et mémoire. A/B sur phrases identiques, p95, coûts, interruptions et français. |
-| LAT-18 | P1 / R | Tester l'effet de la voix Étincelle, 1,25×, pitch +2 demi-tons : naturels des sept intentions, artefacts FFmpeg/Rubber Band, CPU, délai ajouté ; mesurer l'intérêt d'un pitch en flux. |
+| LAT-18 | P1 / C | Tester l'effet de la voix Étincelle, 1,25×, pitch +2 demi-tons : naturels des sept intentions, artefacts FFmpeg/Rubber Band, CPU, délai ajouté ; mesurer l'intérêt d'un pitch en flux. |
 | LAT-19 | P2 / P | Ajuster budget de réponse, longueur usuelle et stratégie de fin de tour pour les échanges simples sans rendre Jade artificiellement expéditive. L'ancien Low/320 comprend les tokens de réflexion ; revoir les contraintes avec le nouveau backend. |
 | LAT-20 | P2 / P | Étudier le VAD sémantique / détection adaptative de fin de tour du backend temps réel ; test des pauses, interruptions, chevauchements et bruits Discord. |
 

@@ -17,7 +17,7 @@ La présence d'un spectateur et la visibilité de l'avatar ne sont pas synonymes
 | VIS-09 | P1 / E | **Deux variantes par intention** : contrats texte/expression r20 existants, mais développer et valider deux véritables motions Live2D différentes pour chacune des sept intentions, soit 14. |
 | VIS-10 | P2 / E | Uniformiser synchronisation PC/Discord/PWA : déclencher bouche sur **audio effectivement consommé**, expression seulement pour une audience autorisée, retour au neutre, silence et annulation. |
 | VIS-11 | P2 / E | **Contrat visuel v2** : motions identifiées, transitions/blends, ordre, Idle, fallback facial si asset absent ; tests sur Windows et Android, pas d'appel StartMotion avant validation du SDK et des fichiers. |
-| VIS-12 | P2 / R | Vérifier r20 actuel, SDK Pixi/Cubism Web réellement compatible, r21 en pied, alpha sans fond vert, expressions et rendu Android ; ne pas déclarer une animation fonctionnelle sur tests simulés. |
+| VIS-12 | P2 / C | Vérifier r20 actuel, SDK Pixi/Cubism Web réellement compatible, r21 en pied, alpha sans fond vert, expressions et rendu Android ; ne pas déclarer une animation fonctionnelle sur tests simulés. |
 | VIS-13 | P1 / P | **Filtrage par audience** : une question privée/mobile ou un salon Discord sans visibilité ne pilote pas l'avatar d'un live Twitch public. Si OBS montre Jade, l'Idle peut continuer sans réagir aux conversations hors diffusion. |
 | VIS-14 | P2 / P | Mesurer charge CPU/GPU, consommation mémoire, FPS et délai de bascule visible/invisible. Ne pas prétendre gagner une seconde de LLM parce que l'avatar est éteint. |
 

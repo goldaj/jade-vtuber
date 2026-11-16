@@ -21,7 +21,7 @@
 | MEM-15 | P2 / E | Qualité de la **curation asynchrone** : pertinence des Core, doublons sémantiques, contradictions, coûts, surcharge, possibilité de curation par lots, sans retarder la parole. |
 | MEM-16 | P2 / E | Commandes personnelles de **consultation, correction ciblée, export, déliaison et effacement** ; révoquer les caches, clarifier les archives déjà sauvegardées et les journaux séparés de SQLite. |
 | MEM-17 | P3 / D | Éventuelle mémoire autobiographique globale de Jade partageable publiquement, uniquement après classification des événements, politique de visibilité et accord explicite ; l'actuel core_self privé ne devient jamais public par défaut. |
-| MEM-18 | P1 / R | Recetter les identités, scopes et consentements avec deux utilisateurs Discord, Goldaj PC/mobile, opt-in puis oubli/réactivation, déconnexion pendant chargement et conversation collective ; aucun souvenir privé ne doit sortir sur le mauvais canal. |
+| MEM-18 | P1 / C | Recetter les identités, scopes et consentements avec deux utilisateurs Discord, Goldaj PC/mobile, opt-in puis oubli/réactivation, déconnexion pendant chargement et conversation collective ; aucun souvenir privé ne doit sortir sur le mauvais canal. |
 
 ## Invariants de sécurité
 

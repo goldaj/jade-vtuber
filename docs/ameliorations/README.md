@@ -1,11 +1,11 @@
 # Catalogue centralisé des améliorations de Jade
 
 **Branche de référence : develop. Date de création : 16 novembre 2026.**
-**Statut : carnet de propositions, PAS un ordre de développement ou de déploiement.**
+**Statut : propositions et actions futures, PAS un ordre de développement ni de déploiement.**
 
 Ce dossier rassemble les idées de la conversation du 16 novembre 2026 sur la réduction de latence, la mémoire anticipée, le routage des réponses et la visibilité Live2D, ainsi que les pistes encore pertinentes repérées dans les audits, plans, passations et documents de modélisation de ce dépôt.
 
-**Décision du propriétaire : effectuer d'abord les tests en conditions réelles sur son PC. Aucun code fonctionnel ne doit être ajouté au titre de ce catalogue avant validation du prochain chantier.** Les capacités existantes ne sont pas déclarées recettées pour autant.
+**Décision du propriétaire : effectuer d'abord les tests sur son PC. Aucun changement de code au titre de ce catalogue avant une nouvelle demande.** Toute fonction déjà codée dans `develop` est considérée implémentée, indépendamment du programme de recette.
 
 ## Où trouver les idées
 
@@ -24,8 +24,8 @@ Ce dossier rassemble les idées de la conversation du 16 novembre 2026 sur la r�
 
 - **Identifiant** : stable par idée et thème (LAT, MEM, RTE, VIS, ARC, UX, QUA, ART) ; les futures PR peuvent le citer.
 - **Priorité** : P0 = recette / risque ou prérequis incontournable ; P1 = gain rapide ou besoin produit explicite ; P2 = chantier structurant ; P3 = amélioration ultérieure. Ce n'est **pas** l'ordre automatique d'exécution.
-- **État** : **P** = proposition non implémentée ; **E** = améliorer un socle existant / implémentation partielle ; **R** = vérifier en vrai ou décider, sans présumer de développement ; **D** = différée volontairement.
-- **Preuve** : les documents historiques sont des sources d'idées, pas des preuves du runtime actuel. Vérifier le code de develop, les flags privés du PC et les tests avant de modifier un statut.
+- **Nature** : **P** = fonction nouvelle à concevoir ; **E** = amélioration d'une fonction déjà codée (donc considérée implémentée) ; **C** = contrôle, décision ou action d'exploitation sans affirmer une absence de fonction ; **D** = proposition différée.
+- **Référence de statut** : si une fonctionnalité est raccordée au code de `develop`, elle est **implémentée**. Ne pas introduire une seconde distinction « fonctionnelle seulement si testée ». La configuration privée et les rapports QA sont des sujets distincts ; vérifier le code avant d'ajouter une idée.
 
 Les critères mentionnés dans chaque thème sont des critères cibles ; les chiffres de latence évoqués en conversation sont **hypothétiques**, pas mesurés sur Jade. Les durées et économies ne doivent jamais être déclarées acquises sans mesure.
 

@@ -22,24 +22,8 @@ Le parcours utilisateur normal de `develop` est `main.py --all-channels` via le 
 
 La Démo Express permet donc la découverte immédiate **sans contourner la décision produit « tous les supports toujours actifs » dans la vraie Jade**.
 
-## Différence entre démos et rendu d'intention (15/11/2026)
+## Différence entre les démos et le runtime complet
 
-Le moteur réel sur `develop` sait choisir parmi deux réactions faciales et textuelles par intention avec un toggle global. La **Démo Express hors ligne** reste volontairement une simulation sans avatar Live2D et ne prétend donc pas démontrer ce comportement. La démo animée séparée `demo/reelle/` possède déjà un renderer acceptant des commandes `expression` ; ce chantier route les intentions depuis le **runtime principal** et la PWA, sans modifier la politique de facturation ni garantir une démonstration matérielle. Voir [passation et exigences des 14 motions futures](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+La Démo Express reste volontairement un simulateur sans Live2D ni OpenAI. La démo animée indépendante peut utiliser r20 et OpenAI. Le **runtime de develop** inclut le moteur d'intentions et les variantes faciales/textuelles A/B ; elles ne sont pas censées apparaître dans la Démo Express.
 
-## Comportement dialogue réel et limites de la démo (2026-11-15)
-
-La Démo Express simulée ne permet **pas** de conclure que les réglages `low/320`, le nouveau prompt approuvé, le journal SQLite ou les taux d'intervention ont été testés contre OpenAI/Discord/Twitch. Ces fonctions existent dans le runtime `develop`, pas nécessairement dans les simulateurs. Les animations futures à deux réactions par intention sont un chantier documentaire, non un ajout d'assets. Voir [passation dialogue](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md).
-
-## Vérifications CI et produit (15/11/2026)
-
-**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). La Démo Express hors ligne confirme uniquement son parcours simulé. Ni une démo réussie, ni un scan de secrets vert ne valident les connexions Twitch/Discord, la mémoire SQLite, la PWA ou le moteur de voix réel. Pour l'usage complet, attendre une suite Ubuntu/Windows verte au commit de déploiement et une recette matérielle spécifique.
-
-## Contrôle P0 CI du 16 novembre 2026 (develop)
-
-- Politique de réponse conservée : **100 % en solo vérifié, 30 % en groupe** ; sollicitation explicite prioritaire. Les suivis contextuels en groupe restent échantillonnés et ne garantissent pas une réponse.
-- Tests de transport Discord vocal : échantillonnage neutralisé **dans les doubles de test seulement** pour vérifier indépendamment déplacement de canal, interruption et récupération. La présence des participants est une information en lecture seule permettant de distinguer solo/groupe, jamais une autorisation d'écoute.
-- Tests Discord écrit : salons à plusieurs participants simulés explicitement pour vérifier le taux et les limites de réponses, sans supprimer la réponse automatique en salon solo.
-- Twitch : le test de non-empilement des réponses initialise le participant que l'adaptateur IRC observe normalement. Aucun changement de comportement de production dans ce lot.
-- Vérification GitHub Actions Windows/Ubuntu, export de publication, scripts PowerShell et scan de secrets indispensable avant toute affirmation de CI verte. Aucun test vocal matériel ni appel OpenAI réalisé par cette revue.
-
-- Correctif Windows du test IPC Live2D : la simulation valide toujours les deux trames d'expression et de bouche, puis termine par une coupure de pipe contrôlée. L'attente auparavant non bornée du faux moteur était responsable d'annulations Windows au délai de huit minutes ; aucun runtime ni test réel de Live2D n'est remplacé.
+L'[inventaire de la branche](BRANCH_STATE.md) décrit les fonctions présentes et le [catalogue](../ameliorations/README.md) les futures améliorations. Les anciens comptes rendus CI ne sont pas recopiés dans le guide de démonstration.
