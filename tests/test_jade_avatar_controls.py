@@ -6,15 +6,15 @@ import unittest
 from unittest.mock import Mock, call, patch
 
 try:
-    from demo.reelle.avatar import (AvatarControls, EXPRESSIONS, NEUTRAL_EXPRESSION,
+    from src.jade_runtime.avatar_renderer import (AvatarControls, EXPRESSIONS, NEUTRAL_EXPRESSION,
                                    _apply_expression, _read_commands)
 except ModuleNotFoundError as exc:
-    if exc.name not in {"demo", "demo.reelle", "demo.reelle.avatar"}:
+    if exc.name not in {"src.jade_runtime.avatar_renderer"}:
         raise
     AvatarControls = None
 
 
-@unittest.skipIf(AvatarControls is None, "graphical demo omitted from this preview")
+@unittest.skipIf(AvatarControls is None, "Live2D renderer omitted from this preview")
 class AvatarControlsTests(unittest.TestCase):
     def test_expression_allowlist_matches_original_model(self):
         root = Path(__file__).resolve().parents[1]
@@ -55,7 +55,7 @@ class AvatarControlsTests(unittest.TestCase):
 
     def test_mouth_values_and_expiration(self):
         controls = AvatarControls()
-        with patch("demo.reelle.avatar.time.monotonic", return_value=10.0):
+        with patch("src.jade_runtime.avatar_renderer.time.monotonic", return_value=10.0):
             self.assertTrue(controls.accept('{"type":"mouth","value":0.75}'))
         self.assertEqual(controls.level(now=10.4), 0.75)
         self.assertEqual(controls.level(now=10.6), 0.0)

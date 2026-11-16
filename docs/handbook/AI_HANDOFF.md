@@ -29,7 +29,7 @@ La garde `scripts/check_docs.py` vérifie le contrat en PR et les workflows GitH
 4. **Android est une PWA privée** : Tailscale Serve uniquement sur le PC vers loopback `8766`, double protection compte Tailscale + Bearer ; aucun service public, aucune modification du VPS Hyperliquid. SDK Web Live2D propriétaire installé hors Git et compatible avec le modèle r20.
 5. **Mémoire persistante optionnelle et respect du consentement** : SQLite hors repo, identités transport vérifiées, Core Memories non purgées automatiquement mais effaçables sur demande, curation facultative avec coûts et risques.
 6. **Voix/intention** : préfixe strict `[INTENT:...]` supprimé avant sorties et mémoire, pitch DSP nécessitant FFmpeg/rubberband ; aucune affirmation de prosodie garantie sans écoute.
-7. **Deux démos clairement distinctes** : Démo Express Windows sans API et purement simulée ; démo OpenAI Live2D réelle séparée, avec clé/budget. Ne pas vendre la simulation comme preuve d'IA opérationnelle.
+7. **Une seule démonstration livrable** : Démo Express Windows sans API et purement simulée. Le vrai rendu Live2D r20 appartient au runtime `src/jade_runtime/avatar_renderer.py`, et non plus à `demo/reelle/`. Ne pas vendre la simulation comme preuve d'IA opérationnelle.
 
 ## Procédure de travail des agents
 

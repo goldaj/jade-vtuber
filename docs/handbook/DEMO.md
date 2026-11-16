@@ -1,29 +1,17 @@
-# Démonstrations de Jade : branche develop
+# Démonstration de Jade — develop
 
-## Démo Express à installer en moins de manipulations
+## Démo Express (seule démonstration conservée)
 
-Sous Windows 10/11, double-cliquer `Installer-Demo-Express.cmd` à la racine du clone, puis ouvrir l'entrée **Jade Demo Express** du menu Démarrer. Cela copie un petit programme PowerShell WinForms dans `%LOCALAPPDATA%\JadeDemoExpress` et crée son raccourci **sans droits administrateur**. Il utilise uniquement les composants Windows intégrés. Aucun Python, Poetry, OpenAI, Discord, Twitch, micro, Tailscale, SDK Live2D, modèle Git LFS ou compte requis.
+Sous Windows 10/11, double-cliquer `Installer-Demo-Express.cmd` à la racine du clone. L'installation crée une entrée **Jade Demo Express** dans le menu Démarrer sans droits administrateur, Python, Poetry, OpenAI, Discord, Twitch, micro, Tailscale, SDK Live2D ou modèle Git LFS. On peut aussi lancer `Lancer-Demo-Express.cmd` sans installation.
 
-Alternative sans installation : `Lancer-Demo-Express.cmd` depuis le clone. Les réponses sont **pré-écrites, déterministes et non IA** et le personnage est **un dessin local, pas le modèle Live2D r20/r21**. Aucun message stocké sur disque ni appel réseau. Tester « Bonjour », « Qui es-tu ? », « Avatar », « Discord ». Pour désinstaller, supprimer le dossier JadeDemoExpress dans LOCALAPPDATA et son raccourci Start Menu.
+Les réponses sont **simulées, déterministes, sans IA et sans accès réseau**. Le personnage est un dessin Windows local, pas le vrai modèle animé r20/r21. Aucun message n'est stocké sur disque. Pour désinstaller, supprimer `%LOCALAPPDATA%\JadeDemoExpress` et le raccourci du menu Démarrer.
 
-Test hors interface : `powershell.exe -NoProfile -File demo\express\Jade-Demo-Express.ps1 -SelfTest`. L'interface réelle doit être vérifiée sous Windows interactif, la CI n'affiche pas de fenêtre.
+Autotest sans interface : `powershell.exe -NoProfile -File demo\express\Jade-Demo-Express.ps1 -SelfTest`. La CI ne remplace pas un essai visuel Windows.
 
-## Démo du vrai moteur avec backend simulé
+## Produit Jade complet (ce n'est pas une démo autonome)
 
-Avec Python 3.11 et Poetry 2.2.1, `poetry sync --only main` puis `poetry run python main.py`. Les phrases « Mode démo » viennent de `DemoChat`, pas d'un LLM. Quitter par `/exit`. Cela permet de parcourir une requête dans le runtime sans autorisation de connecteur, sans compte ni coût.
+Le runtime Python reste lancé par `main.py --all-channels` avec les prérequis et canaux réels décrits dans [INSTALLATION.md](INSTALLATION.md) et [USER_GUIDE.md](USER_GUIDE.md). Son renderer Live2D r20 est désormais dans `src/jade_runtime/avatar_renderer.py`, et non dans une ancienne démonstration. Le simple `poetry run python main.py` utilise toujours un backend conversationnel simulé à des fins de diagnostic.
 
-## Démo animée IA indépendante déjà présente
+Les anciennes démos `demo/reelle/` et `demo/windows/`, ainsi que leurs guides de build, ont été retirées de `develop` à la demande du propriétaire. Elles restent récupérables dans l'historique Git sans maintenir des builds concurrents.
 
-`demo/reelle/` contient son guide d'installation et sa procédure de build `Installer-Jade.exe`. Cette version peut utiliser **le vrai modèle r20 et une clé OpenAI facturable**. Elle est distincte de la PWA Android et du launcher « tous supports ». Les objets LFS, la carte graphique, le son et la clé API doivent être vérifiés. La présence de scripts de construction ne garantit pas la disponibilité d'un exécutable précompilé dans le dépôt.
-
-## Démontrer le produit complet
-
-Le parcours utilisateur normal de `develop` est `main.py --all-channels` via le launcher Windows. Il exige tous les connecteurs et ne doit pas être appelé « démo sans prérequis ». Pour tester un système complet, suivre [INSTALLATION.md](INSTALLATION.md) puis [USER_GUIDE.md](USER_GUIDE.md). Un préflight réussi prouve seulement la configuration locale, pas un fonctionnement réel sur le téléphone, Discord ou Twitch.
-
-La Démo Express permet donc la découverte immédiate **sans contourner la décision produit « tous les supports toujours actifs » dans la vraie Jade**.
-
-## Différence entre les démos et le runtime complet
-
-La Démo Express reste volontairement un simulateur sans Live2D ni OpenAI. La démo animée indépendante peut utiliser r20 et OpenAI. Le **runtime de develop** inclut le moteur d'intentions et les variantes faciales/textuelles A/B ; elles ne sont pas censées apparaître dans la Démo Express.
-
-L'[inventaire de la branche](BRANCH_STATE.md) décrit les fonctions présentes et le [catalogue](../ameliorations/README.md) les futures améliorations. Les anciens comptes rendus CI ne sont pas recopiés dans le guide de démonstration.
+Voir l'[état des fonctions](BRANCH_STATE.md) et les [améliorations envisagées](../ameliorations/README.md).

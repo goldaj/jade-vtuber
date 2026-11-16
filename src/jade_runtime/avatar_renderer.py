@@ -1,4 +1,4 @@
-"""Standalone r20 Live2D window for the Windows demo.
+"""Isolated r20 Live2D window for the main Jade runtime.
 
 Run on the main thread of a child process. The parent sends one JSON object per
 line on stdin: {"type":"mouth","value":0.0..1.0},

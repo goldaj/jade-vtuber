@@ -17,7 +17,7 @@
 | Mobile | PWA privée/Tailscale Serve, texte, capture WAV, TTS à la demande, modèle Live2D Web via assets/SDK installés |
 | Audio | STT/TTS OpenAI, PCM progressif sous conditions, voix Étincelle `shimmer` 1,25×, pitch optionnel via FFmpeg Rubber Band |
 | Émotions | Sept intentions ; **deux expressions faciales r20 + deux libellés PWA par intention**, synchronisation expression/bouche, toggle global |
-| Démonstrations | Démo Express simulée, démo console hors ligne, démo OpenAI animée séparée |
+| Démonstrations | Démo Express simulée uniquement comme démonstration distribuée ; console hors ligne comme mode du vrai runtime. Renderer r20 intégré au code applicatif |
 
 ## Limitations fonctionnelles actuelles
 

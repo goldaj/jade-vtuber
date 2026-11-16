@@ -48,13 +48,9 @@ le backend OpenAI et le backend de démonstration sont fournis actuellement.
 
 ## Essayer la démo sans clé API
 
-Une démo Windows animée est préparée avec le modèle Live2D r20, dialogue et
-voix OpenAI : consultez son [guide](demo/reelle/GUIDE-DEMO.md) et sa
-[notice de construction](demo/reelle/README-BUILD.md). Elle demande une clé
-OpenAI personnelle et une connexion Internet pour les échanges réels.
-
-Une [ancienne démo statique hors ligne](demo/windows/README.md) reste disponible :
-elle utilise un portrait et un dialogue simulé, sans IA ni animation Live2D.
+La seule démonstration distribuée est désormais **Démo Express** (`demo/express/`),
+simulée et sans clé API. Le moteur Jade complet et son renderer Live2D r20
+restent disponibles dans `src/jade_runtime/` avec leurs prérequis normaux.
 
 Prérequis : Python 3.11 et Poetry 2.2.1. Depuis la racine de cette copie :
 
