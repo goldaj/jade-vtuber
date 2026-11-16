@@ -26,4 +26,4 @@ binaires internes. Maintenir les secrets hors du dépôt, contrôler les fichier
 
 ## Concurrence des scans (15/11/2026)
 
-Le workflow emploie `concurrency` par PR ou ref avec annulation des runs remplacés. Le dernier run balaye encore `--all HEAD` depuis un checkout complet. Le gain attendu porte sur le nombre de runners utilisés ; **aucune garantie** n'est donnée pour des commits rendus inaccessibles par réécriture de l'historique ou des secrets déjà exposés. Ne pas désactiver les protections de branche, les scans avant push ou la révocation de credentials. Voir [l'audit DevOps](AUDIT-DEVOPS-DEVELOP-20261115.md).
+Le workflow emploie `concurrency` par PR ou ref avec annulation des runs remplacés. Le dernier run balaye encore `--all HEAD` depuis un checkout complet. Le gain attendu porte sur le nombre de runners utilisés ; **aucune garantie** n'est donnée pour des commits rendus inaccessibles par réécriture de l'historique ou des secrets déjà exposés. Ne pas désactiver les protections de branche, les scans avant push ou la révocation de credentials. Voir [l'audit DevOps](../../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md).

@@ -1,7 +1,7 @@
 # Jade — persistance, identité et Core Memories
 **Dossier de cadrage PO / architecture / IA — 15 novembre 2026**
 
-> **Archive de cadrage du 15 novembre, désormais partiellement réalisée :** SQLite v3, identités vérifiées, mémoire opt-in, Core/autobiographie et historique complet sont **implémentés sur develop**. Les propositions de recherche sémantique, cache de présence et contrôle fin des souvenirs restent au [catalogue central](../ameliorations/02-MEMOIRE-PRESENCE.md). Les matrices d'« état actuel » ci-dessous sont un **instantané antérieur au développement**, non l'inventaire courant ; consulter [BRANCH_STATE](../handbook/BRANCH_STATE.md).
+> **Archive de cadrage du 15 novembre, désormais partiellement réalisée :** SQLite v3, identités vérifiées, mémoire opt-in, Core/autobiographie et historique complet sont **implémentés sur develop**. Les propositions de recherche sémantique, cache de présence et contrôle fin des souvenirs restent au [catalogue central](../../ameliorations/02-MEMOIRE-PRESENCE.md). Les matrices d'« état actuel » ci-dessous sont un **instantané antérieur au développement**, non l'inventaire courant ; consulter [BRANCH_STATE](../../handbook/BRANCH_STATE.md).
 
 ## 1. Vision et décisions produit
 

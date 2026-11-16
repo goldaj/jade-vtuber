@@ -105,7 +105,7 @@ puisse intervenir ponctuellement **sans refaire l'exploration depuis zéro** :
 
 Pour les travaux graphiques/Live2D, conserver le journal de suivi dans
 les documents du projet artistique adaptés et dans
-`docs/gpt6-jade/TASKS.md` lorsque cela fait partie du lot. Maintenir
+`docs/history/gpt6-jade/TASKS.md` lorsque cela fait partie du lot. Maintenir
 les grandes sources r21, les assets LFS, les versions et les backups sans
 écrasement destructif.
 

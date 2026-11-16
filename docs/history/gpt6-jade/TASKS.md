@@ -1,6 +1,6 @@
 # Compte rendu des étapes
 
-**Journal chronologique uniquement.** Les statuts des anciennes branches et les actions annoncées « à intégrer » ne décrivent pas nécessairement `develop` aujourd'hui. Utiliser [BRANCH_STATE](../handbook/BRANCH_STATE.md) pour le code et le [catalogue](../ameliorations/README.md) pour les améliorations restantes ; ne pas relancer les PR historiques sur la seule base de cette chronologie.
+**Journal chronologique uniquement.** Les statuts des anciennes branches et les actions annoncées « à intégrer » ne décrivent pas nécessairement `develop` aujourd'hui. Utiliser [BRANCH_STATE](../../handbook/BRANCH_STATE.md) pour le code et le [catalogue](../../ameliorations/README.md) pour les améliorations restantes ; ne pas relancer les PR historiques sur la seule base de cette chronologie.
 
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
@@ -10,14 +10,14 @@ sans présenter les mocks comme des tests d'API réels.
 - **Implémenté sur `develop` :** `JADE_TTS_PITCH_SEMITONES=2.0` par défaut, validé entre -6 et +6 ; `0` désactive. Transformation locale du PCM 24 kHz par FFmpeg Rubber Band avec `tempo=1` et `formant=preserved` ; aucun service externe ajouté.
 - Sorties : WAV, Discord PCM progressif, early speech (un seul processus DSP par tour). **FFmpeg sans `rubberband` = voix native inchangée** avec avertissement. L'allowlist du profil `fast-openai` a été complétée pour autoriser le réglage.
 - Tests : `tests/test_jade_pitch_shift.py`, `test_jade_publication_profiles.py`, `test_jade_early_speech.py` ; cas réels de filtre conditionnellement ignorés en CI si le runner n'a pas Rubber Band.
-- [Passation exhaustive Codex/Terra](PITCH-SHIFT-ETINCELLE-20261113.md) : détection FFmpeg sur le PC, expérience A/B pitch 0/+2, CPU, latence, intentions, coupure et retour arrière.
+- [Passation exhaustive Codex/Terra](../../operations/reference/PITCH-SHIFT-ETINCELLE-20261113.md) : détection FFmpeg sur le PC, expérience A/B pitch 0/+2, CPU, latence, intentions, coupure et retour arrière.
 - **Non réalisé** : écoute réelle de la voix, mesure Discord/téléphone et redémarrage du PC. Ne pas considérer la sortie audio comme validée par la seule CI ; vérifier la CI du dernier commit.
 
 ## Voix Étincelle + moteur d'intentions (13 novembre 2026, dernière intervention)
 
 - Livré sur **`develop`** : voix publique par défaut `shimmer` à **1,25×** ; profils alternatifs Friponne et Rosée conservés. `gpt-transcribe` et `gpt-realtime-2.1-mini` inchangés ; le pitch +2 demi-tons est depuis implémenté comme **post-traitement FFmpeg facultatif** (voir lot de suivi ci-dessus).
 - LLM : préfixe `[INTENT:label]` ; 7 labels statiques contrôlés par `src/jade_runtime/intent_engine.py`. Préfixe supprimé **avant** tout texte public, historique et TTS ; un label par réponse, repli `neutral`, suppression des tags répétés ; le streaming utilise un parseur dédié.
-- Relais détaillé pour Codex : [HANDOFF-CODEX-VOICE-INTENTS-20261113.md](HANDOFF-CODEX-VOICE-INTENTS-20261113.md), [spécification des trois profils](VOICE-PROFILES-20261113.md), [audit PO et QA](REVIEW-INTENT-ETINCELLE-20261113.md).
+- Relais détaillé pour Codex : [HANDOFF-CODEX-VOICE-INTENTS-20261113.md](HANDOFF-CODEX-VOICE-INTENTS-20261113.md), [spécification des trois profils](../../operations/reference/VOICE-PROFILES-20261113.md), [audit PO et QA](REVIEW-INTENT-ETINCELLE-20261113.md).
 - **Validation constatée sur le lot** : GitHub Actions [Windows + Ubuntu](https://github.com/goldaj/jade-vtuber/actions/runs/43486194055) réussi, **422 tests dont 2 ignorés** sur Ubuntu ; [scan des secrets](https://github.com/goldaj/jade-vtuber/actions/runs/43486194147) réussi. Les documents d'index/relais ajoutés après ce SHA doivent être contrôlés indépendamment sur leur SHA final.
 - **Limites :** aucune écoute réelle des sept émotions en français, aucune mesure de la latence ou de la facturation sur ce nouveau profil, aucun contrôle des valeurs privées actives, pas de redémarrage du processus PC et **pas de merge `main`**. Les sept émotions ne sont pas des capacités certifiées de `shimmer`, seulement des directions vocales demandées.
 
@@ -108,13 +108,13 @@ sans présenter les mocks comme des tests d'API réels.
 - Validation après changement de dépendance : **330 tests hors ligne réussis**,
   compilation, cohérence du lock Poetry et `pip check` réussis. Les résultats CI
   antérieurs ne sont pas attribués au nouveau commit ; consulter ses checks GitHub.
-- Nouveau [portrait r21](../../assets/branding/README.md) appliqué au profil du bot
+- Nouveau [portrait r21](../../../assets/branding/README.md) appliqué au profil du bot
   Discord, puis confirmé par relecture API. Sources artistiques préservées.
 - Le propriétaire a vu le modèle bouger en local. Le rendu essayé est r20 dans
   sa fenêtre autonome ; VTube Studio est installé mais son connecteur n'est pas
   configuré dans l'environnement actif. Partage vidéo téléphone différé, dernière
   session Discord PC contrôlée encore à reconnecter. Procédure et limites dans
-  le [guide avatar](UTILISATION-AVATAR-DISCORD.md).
+  le [guide avatar](../../operations/reference/UTILISATION-AVATAR-DISCORD.md).
 - Au contrôle de clôture, aucun processus temporaire Jade de diagnostic encore
   actif ; pas de nouvelle écoute ni appel OpenAI lancé pour cette documentation.
   VTube Studio et les services sans rapport sont laissés dans leur état.
@@ -173,7 +173,7 @@ sans présenter les mocks comme des tests d'API réels.
 - Exécutable extrait testé avec PATH minimal, sommes du paquet vérifiées, scans
   ciblés sans alerte ; 203 tests locaux et compilation réussis.
 - Capture visuelle de la fenêtre expirée ; rendu visuel et VTube Studio non
-  recettés. Documentation et empreinte dans [la notice](../../demo/windows/README.md).
+  recettés. Documentation et empreinte dans [la notice](../../../demo/windows/README.md).
 
 ## MVP Discord — D0, 3 novembre 2026
 - Base `bb44d7a` installée depuis le lock sur Windows dans un environnement isolé
@@ -247,7 +247,7 @@ sans présenter les mocks comme des tests d'API réels.
   avec les participants restent à recetter séparément.
 - Un contrôle spécialisé des secrets sur les pushes et PR, avec historique
   récupéré et autotest synthétique, complète la CI. Les octets Git LFS ne sont
-  pas couverts par le scan Git ; voir `docs/gpt6-jade/SECRET_SCANNING.md`.
+  pas couverts par le scan Git ; voir `docs/operations/reference/SECRET_SCANNING.md`.
 - À la demande du propriétaire, le renouvellement automatique du nouveau jeton
   est activé dans la configuration privée ; la sauvegarde distante initiale est
   confirmée. Rotation, conflits et pannes sont testés avec des doubles ; aucun
@@ -268,7 +268,7 @@ sans présenter les mocks comme des tests d'API réels.
 - Scans publics et contrôle des sauvegardes privées réalisés ; aucun secret connu
   détecté. Les limites binaires, deux écarts fonctionnels hérités et le renforcement
   nécessaire du contrôle CI sont décrits dans
-  [la reprise Terra](../migration/2026-11-02/08-ASTRA-CONTROLE-DEPOT-PUBLIC.md).
+  [la reprise Terra](../migrations/2026-11-02/08-ASTRA-CONTROLE-DEPOT-PUBLIC.md).
 - Aucun correctif applicatif effectué pendant cette passe ; arrêt de la revue et
   poursuite éventuelle sous Terra sur `develop`.
 
@@ -398,7 +398,7 @@ sans présenter les mocks comme des tests d'API réels.
   2025 ; historique Git et sources LFS restent intacts.
 - `prompt_chat.txt` actualisé sans références obsolètes aux services ou aux
   faux états de fonctionnalité. `credentials.py` tolère les IDs Discord absents.
-- `docs/gpt6-jade/LEGACY-AUDIT.md` détaille les modules supprimés et
+- `docs/history/gpt6-jade/LEGACY-AUDIT.md` détaille les modules supprimés et
   les équivalents. Nouveau contrôle empêchant une dépendance TTS/STT tierce
   de revenir dans le paquet actif.
 - **Validation observée** : [CI 40097862020](https://github.com/goldaj/jade-ai-vtuber/actions/runs/40097862020)
@@ -454,7 +454,7 @@ sans présenter les mocks comme des tests d'API réels.
 
 ## S14 — Audit préparatoire de migration (2026-11-02)
 
-- Dossier [migration du 2 novembre](../migration/2026-11-02/README.md), carte des neuf branches, traitement des anciennes branches, plan par lots et relais manuel Astra puis Terra.
+- Dossier [migration du 2 novembre](../migrations/2026-11-02/README.md), carte des neuf branches, traitement des anciennes branches, plan par lots et relais manuel Astra puis Terra.
 - Baseline source research `df544ed` ; develop distant `6420e24`, six commits documentaires supplémentaires. Aucun merge exécuté.
 - Validation locale Windows/Python 3.11 dans venv neuf : **51 tests OK**, compilation, diagnostic, démo `/exit`, `pip check` et préflight statique **109 fichiers** réussis.
 - Huit défauts reproduits avec doubles synthétiques ; quatre constats supplémentaires de code/contrat/tests. Aucun correctif runtime appliqué, travaux différés conformément à la demande.
@@ -463,7 +463,7 @@ sans présenter les mocks comme des tests d'API réels.
 
 ## S15 — Contre-lecture Astra (2026-11-02)
 
-- Plan validé avec [précisions d’exécution](../migration/2026-11-02/06-ASTRA-REVIEW.md) : arrêt global avant fermeture du TaskGroup, capture physique, lecteurs frères, résultats HTTP/échéances, sessions, connexions Discord et séquence push/CI/merge.
+- Plan validé avec [précisions d’exécution](../migrations/2026-11-02/06-ASTRA-REVIEW.md) : arrêt global avant fermeture du TaskGroup, capture physique, lecteurs frères, résultats HTTP/échéances, sessions, connexions Discord et séquence push/CI/merge.
 - Neuf références distantes inchangées, PR #2 ouverte en brouillon ; huit reproductions rejouées, défauts toujours présents. Les 51 tests de S14 ne sont pas présentés comme réexécutés.
 - Aucun correctif runtime, merge ou push ; reprise Terra prête. Installation verrouillée, CI finale et essais live restent à effectuer dans les lots prévus.
 
@@ -476,7 +476,7 @@ sans présenter les mocks comme des tests d'API réels.
 - Vérification locale observée : **79 tests hors ligne OK**, compilation et démo CLI ; `poetry check --lock` et `pip check` réussis. Ne constitue pas une preuve CI distante ni une recette de service.
 - Limites : navigateur déconnecté non détecté immédiatement en attendant HTTP ; fermeture d’une bibliothèque native résistante et audio matériel non certifiés. Consentement vocal, salons Discord, budget, tokens et essais des services nécessitent une recette réelle distincte.
 - Premier candidat `53f6fdf` : CI GitHub Windows/Linux et contrôle publication réussis ; le diagnostic runner est redevenu fonctionnel, sans cause historique identifiée. Le propriétaire choisit une recette texte/voix/micro à budget minimal. Préflight du poste : clé OpenAI absente ; lecteur ffplay existant reconnu en ajustant le PATH du processus ; aucun matériel ou appel API testé. Un changement documentaire ultérieur requiert à nouveau une CI sur son propre commit.
-- Candidat `b890eff` : CI GitHub Windows/Linux et hygiène réussies, y compris sur la PR. Aucun fichier `.env` actif n’a été retrouvé dans le clone ou le coffre prévu ; une valeur OpenAI présente dans l’historique privé a été authentifiée par une simple lecture de métadonnées de modèle, sans génération ni sortie de valeur. Entrée et sortie audio détectées, sans capture ni lecture. Le propriétaire préfère réaliser l’essai micro plus tard ; ne pas le lancer automatiquement. Reprise : [recette et intégration restantes](../migration/2026-11-02/07-REPRISE-RECETTE.md).
+- Candidat `b890eff` : CI GitHub Windows/Linux et hygiène réussies, y compris sur la PR. Aucun fichier `.env` actif n’a été retrouvé dans le clone ou le coffre prévu ; une valeur OpenAI présente dans l’historique privé a été authentifiée par une simple lecture de métadonnées de modèle, sans génération ni sortie de valeur. Entrée et sortie audio détectées, sans capture ni lecture. Le propriétaire préfère réaliser l’essai micro plus tard ; ne pas le lancer automatiquement. Reprise : [recette et intégration restantes](../migrations/2026-11-02/07-REPRISE-RECETTE.md).
 
 ## S17 — Simulation micro et essai texte (2026-11-02)
 
@@ -497,7 +497,7 @@ sans présenter les mocks comme des tests d'API réels.
 
 - Option `--avatar` : fenêtre Live2D r20 existante et mouvement de bouche approximatif lié au volume pendant la lecture locale ou Discord, arrêt au repos ; pas de synchronisation phonétique revendiquée. Le processus graphique ne reçoit ni clé, ni transcription, ni audio.
 - Le modèle s'est lancé lors d'un essai graphique local caché. Installation neuve sur D: des extras verrouillés Discord vocal et avatar, imports et `pip check` réussis ; 37 tests ciblés de transport et d'avatar réussis dans cet environnement.
-- Procédure et partage manuel de fenêtre : [utilisation de l'avatar Discord](UTILISATION-AVATAR-DISCORD.md). La perception de la synchronisation, le partage réel, le téléphone et la conversation vocale bout en bout restent à recetter ; r21 demeure distinct.
+- Procédure et partage manuel de fenêtre : [utilisation de l'avatar Discord](../../operations/reference/UTILISATION-AVATAR-DISCORD.md). La perception de la synchronisation, le partage réel, le téléphone et la conversation vocale bout en bout restent à recetter ; r21 demeure distinct.
 - Validation globale de l'état préparé : **328 tests hors ligne**, compilation, contrôle LFS et 202 fichiers du manifeste réussis. Préflight complet avec la configuration privée réussi sans appel ; connexion Discord réelle et intent des messages vérifiés séparément sans capture ni message envoyé. Scan Gitleaks et comparaison ciblée aux valeurs privées connues : aucune fuite détectée dans les modifications préparées. Une recherche ne garantit pas l'absence absolue de secrets.
 
 ## S20 — Silence vocal et lancement pour recette distante
@@ -542,7 +542,7 @@ sans présenter les mocks comme des tests d'API réels.
 
 ## Launcher Windows personnel (15 novembre 2026)
 
-- **Livrable :** branche `feat/jade-windows-launcher-20261115` ; installateur `.cmd`, UI WinForms PowerShell, choix de branche distante, bascule Git non destructive, préparation Poetry/LFS selon mode, préflight strict et console du moteur. Guide : [LAUNCHER-WINDOWS-20261115.md](LAUNCHER-WINDOWS-20261115.md).
+- **Livrable :** branche `feat/jade-windows-launcher-20261115` ; installateur `.cmd`, UI WinForms PowerShell, choix de branche distante, bascule Git non destructive, préparation Poetry/LFS selon mode, préflight strict et console du moteur. Guide : [LAUNCHER-WINDOWS-20261115.md](../../operations/reference/LAUNCHER-WINDOWS-20261115.md).
 - **Validation :** revue statique de la logique et ajout d'un parseur syntaxique PowerShell 5.1 en CI Windows. Résultat constaté sur le HEAD de la PR #13 : analyse syntaxique PowerShell Windows réussie, tests hors ligne Windows/Linux réussis, scan de secrets réussi. PR #13 fusionnée dans `develop`, non dans `main`.
 - **Limites :** aucun lancement sur le poste Windows, aucun contrôle de Git/Poetry réel, audio/Discord/Tailscale ni test du vrai mode live ; absence d'appel OpenAI depuis cette intervention. `develop` et `main` inchangées.
 
@@ -551,7 +551,7 @@ sans présenter les mocks comme des tests d'API réels.
 - **Décision utilisateur :** aucune sélection d'un mode de fonctionnement depuis le launcher. Discord texte et vocal, Twitch, micro local, HTTP privé, PWA mobile, avatar et voix doivent être actifs simultanément si leur configuration existe. Le launcher exige la configuration entière et bloque un démarrage partiel.
 - **Modifications :** CLI `main.py --all-channels`; suppression du sélecteur de modes PowerShell, dépendances Poetry `-E all`, contrôle préflight ; module `turn_arbitration.py` + file commune sans priorité permanente par transport, choix de Jade par LLM à concurrence et repli FIFO/délai ; écoute micro non bloquée par la file globale ; interdiction de diffuser une réponse micro/HTTP privée automatiquement en vocal Discord.
 - **Validation :** tests hors ligne de la file, du modèle arbitre simulé, de la CLI et de l'isolation des sorties. La CI et le test Windows réel sont à confirmer au SHA final. Les classements du modèle peuvent créer un appel LLM additionnel facturable par arbitrage, aucun appel en absence de contention.
-- **Passation :** [LAUNCHER-WINDOWS-20261115.md](LAUNCHER-WINDOWS-20261115.md). `main` et le VPS trading restent hors périmètre.
+- **Passation :** [LAUNCHER-WINDOWS-20261115.md](../../operations/reference/LAUNCHER-WINDOWS-20261115.md). `main` et le VPS trading restent hors périmètre.
 
 ## DevOps `develop` : correctifs et dette (15/11/2026)
 

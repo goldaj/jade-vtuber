@@ -1,6 +1,6 @@
 # Réduire la latence de Jade — relais Astra → Terra
 
-**Plan de latence historique débuté le 10 novembre, actualisé après intégration des lots PCM/TTS/launcher.** Le streaming PCM Discord, le pool de connexion TTS en voie stream et les intentions existent dans le code, **mais** le launcher `--all-channels` exige `ffplay` et le premier son reste sur le chemin tamponné. Le plan ci-dessous reste une analyse de solutions, non une consigne de relancer d'anciennes PR. Le [catalogue latence](../ameliorations/01-LATENCE-VOIX.md) est le backlog actif et le [BRANCH_STATE](../handbook/BRANCH_STATE.md) indique l'existant.
+**Plan de latence historique débuté le 10 novembre, actualisé après intégration des lots PCM/TTS/launcher.** Le streaming PCM Discord, le pool de connexion TTS en voie stream et les intentions existent dans le code, **mais** le launcher `--all-channels` exige `ffplay` et le premier son reste sur le chemin tamponné. Le plan ci-dessous reste une analyse de solutions, non une consigne de relancer d'anciennes PR. Le [catalogue latence](../../ameliorations/01-LATENCE-VOIX.md) est le backlog actif et le [BRANCH_STATE](../../handbook/BRANCH_STATE.md) indique l'existant.
 
 ## 1. Point de départ et clôture du correctif
 
@@ -18,7 +18,7 @@
 - Validation du correctif : **330 tests hors ligne réussis**, compilation et
   `pip check` réussis ; verrou Poetry régénéré et cohérent. Ces contrôles ne
   remplacent pas l'essai réel confirmé par le propriétaire.
-- Photo Discord : nouveau [portrait r21](../../assets/branding/README.md) appliqué
+- Photo Discord : nouveau [portrait r21](../../../assets/branding/README.md) appliqué
   au bot et confirmé par relecture API. Le modèle animé du MVP demeure r20.
 - Au contrôle de clôture, le processus temporaire de diagnostic Jade n'est plus
   actif. Aucun nouvel appel vocal payant ni essai téléphone n'est lancé. VTube
@@ -28,7 +28,7 @@
   essayée. La configuration active n'active pas VTS et ne contient pas son jeton.
   Le compte Discord PC demandait une reconnexion lors du dernier contrôle : il
   doit partager la fenêtre, le bot ne réalise pas ce partage. Le
-  [guide avatar](UTILISATION-AVATAR-DISCORD.md) distingue ces parcours. Ne pas
+  [guide avatar](../../operations/reference/UTILISATION-AVATAR-DISCORD.md) distingue ces parcours. Ne pas
   annoncer que le rendu VTS ou le partage téléphone sont validés.
 
 ## 2. Diagnostic utile, sans chiffres inventés

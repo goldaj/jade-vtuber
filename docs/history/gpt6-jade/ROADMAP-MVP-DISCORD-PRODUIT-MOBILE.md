@@ -1,6 +1,6 @@
 # Jade : MVP Discord puis compagnon audio et visuel sur téléphone
 
-**Feuille de route historique :** le connecteur Discord, la PWA privée, la mémoire et les intentions sont désormais présents dans develop. Les étapes de ce plan qui les présentent comme futures décrivent leur état de novembre **avant intégration**, non le code actuel. Références : [inventaire](../handbook/BRANCH_STATE.md) et [améliorations futures](../ameliorations/README.md).
+**Feuille de route historique :** le connecteur Discord, la PWA privée, la mémoire et les intentions sont désormais présents dans develop. Les étapes de ce plan qui les présentent comme futures décrivent leur état de novembre **avant intégration**, non le code actuel. Références : [inventaire](../../handbook/BRANCH_STATE.md) et [améliorations futures](../../ameliorations/README.md).
 
 > **Mise à jour du propriétaire — 10 novembre 2026 :** le serveur privé est
 > dédié à Jade. Personnes et autres bots peuvent interagir dans tous ses salons,
@@ -62,7 +62,7 @@ Ce n'est **ni** un mode où elle répond automatiquement à chaque bruit ou phra
 
 ## 3. État réel du dépôt develop au cadrage
 
-Documents de départ : AGENTS.md, README.md, docs/conversations/INDEX.md, docs/gpt6-jade/DECISIONS.md, TASKS.md, NEXT-PRIORITIES.md, PHONE_TAILSCALE.md, docs/migration/2026-11-02/08-ASTRA-CONTROLE-DEPOT-PUBLIC.md.
+Documents de départ : AGENTS.md, README.md, docs/history/conversations/INDEX.md, docs/history/gpt6-jade/DECISIONS.md, TASKS.md, NEXT-PRIORITIES.md, PHONE_TAILSCALE.md, docs/history/migrations/2026-11-02/08-ASTRA-CONTROLE-DEPOT-PUBLIC.md.
 
 | Fichier / composant | Existe | Reste à prouver / créer |
 | --- | --- | --- |
@@ -318,13 +318,13 @@ Gérer : autorisation micro refusée ; permission révoquée ; téléphone verro
 
 ## 9. Gouvernance, dépendances et interdictions
 
-- Suivre les règles de AGENTS.md et docs/gpt6-jade/TERA-ASTRA-WORKFLOW.md. Exécution ordinaire sous Terra/Tera, escalade motivée sous Astra si nécessaire ; bascule humaine et non automatique. Le propriétaire reste décisionnaire des revues et des fusions.
+- Suivre les règles de AGENTS.md et docs/operations/reference/TERA-ASTRA-WORKFLOW.md. Exécution ordinaire sous Terra/Tera, escalade motivée sous Astra si nécessaire ; bascule humaine et non automatique. Le propriétaire reste décisionnaire des revues et des fusions.
 - Sur develop : préparer un plan d'implémentation par lots, puis coder en commits indépendants, avec tests et comptes rendus au fur et à mesure. **Ne pas fusionner main sans autorisation.**
 - Vérifier la compatibilité de discord-ext-voice-recv, discord.py, FFmpeg et de la chaîne audiovisuelle actuelle sur Windows ; ne jamais introduire deux SDK Discord concurrents.
 - Réutiliser l'orchestrateur et les sources r20/r21, ne pas ramener l'ancien runtime, ne pas retoucher les assets binaires sans besoin explicite, ne jamais omettre Git LFS.
 - La migration publique a été auditée mais le scan de secrets en CI doit encore être durci : traiter avant les futures extensions importantes. Aucun secret ou configuration privée dans ce document ni dans les commits.
 - Ne pas faire de capture, de transcription, de connexion à un salon ou d'appel API payant en dehors d'une session d'essai explicitement convenue avec le propriétaire. Le consentement des autres participants est une exigence du produit.
-- Chaque lot : code/livrables, tests réellement exécutés, statut simulé ou physique, risques, blocages et prochaine action dans docs/gpt6-jade/TASKS.md ou un CR dédié.
+- Chaque lot : code/livrables, tests réellement exécutés, statut simulé ou physique, risques, blocages et prochaine action dans docs/history/gpt6-jade/TASKS.md ou un CR dédié.
 
 ## 10. Questions d'ingénierie que Codex doit trancher et documenter
 
@@ -353,10 +353,10 @@ Ne déclarer une étape finie qu'avec des preuves conformes à son gate. Si un �
 
 **Dans le dépôt**
 - https://github.com/goldaj/jade-vtuber/blob/develop/AGENTS.md
-- https://github.com/goldaj/jade-vtuber/blob/develop/docs/gpt6-jade/DECISIONS.md
-- https://github.com/goldaj/jade-vtuber/blob/develop/docs/gpt6-jade/NEXT-PRIORITIES.md
-- https://github.com/goldaj/jade-vtuber/blob/develop/docs/gpt6-jade/PHONE_TAILSCALE.md
-- https://github.com/goldaj/jade-vtuber/blob/develop/docs/migration/2026-11-02/08-ASTRA-CONTROLE-DEPOT-PUBLIC.md
+- https://github.com/goldaj/jade-vtuber/blob/develop/docs/history/gpt6-jade/DECISIONS.md
+- https://github.com/goldaj/jade-vtuber/blob/develop/docs/history/gpt6-jade/NEXT-PRIORITIES.md
+- https://github.com/goldaj/jade-vtuber/blob/develop/docs/operations/reference/PHONE_TAILSCALE.md
+- https://github.com/goldaj/jade-vtuber/blob/develop/docs/history/migrations/2026-11-02/08-ASTRA-CONTROLE-DEPOT-PUBLIC.md
 - https://github.com/goldaj/jade-vtuber/blob/develop/jade-modeling/MODEL2D_CODEX_STATE.md
 
 **Documents externes à vérifier lors du développement**
