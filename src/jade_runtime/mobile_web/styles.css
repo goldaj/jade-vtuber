@@ -104,6 +104,18 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
 .chat-pulse{display:inline-block;width:7px;height:7px;background:#b5a2d7;border-radius:100%;margin-right:5px}
 .chat-tools{margin-left:auto;display:flex;gap:13px}
 .text-button {border:0;color:#ccbce9;background:transparent;font-size:.72rem;padding:3px 0}
+.identity-panel{border-bottom:1px solid var(--line);padding:8px 15px;
+  max-height:42%;overflow-y:auto;color:#d6c8e9;font-size:.75rem;line-height:1.5}
+.identity-panel summary{cursor:pointer;font-weight:700}
+.identity-panel p{margin:8px 0}
+.identity-panel form{display:grid;grid-template-columns:1fr 1fr;gap:7px;align-items:center}
+.identity-panel input,.identity-panel select{min-width:0;border:1px solid #76638f;
+  background:#30283f;color:#f8efff;border-radius:8px;padding:7px}
+.identity-panel button{background:#c8b0e7;color:#21182f;border:0;padding:8px;
+  border-radius:8px;font-weight:600}
+.identity-panel form button{grid-column:1/-1}
+.identity-panel button:disabled{opacity:.45}
+.identity-result{overflow-wrap:anywhere;white-space:pre-wrap}
 .messages{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
   padding:12px 15px;scrollbar-width:thin;scrollbar-color:#706183 transparent}
 .welcome{align-self:center;text-align:center;color:#bcaeca;font-size:.77rem;max-width:75%;padding:9px 0}
