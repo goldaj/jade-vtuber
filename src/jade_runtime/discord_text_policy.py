@@ -126,7 +126,7 @@ class DiscordTextPolicy:
         # Confirmation tokens are one-use identity proofs, never context for
         # later LLM turns or another speaker in this Discord room.
         snippet = ("!jade-memoire confirmer [code masqué]"
-                   if text.casefold().startswith("!jade-memoire confirmer ")
+                   if re.match(r"^!jade-memoire\s+confirmer(?:\s|$)", text, re.I)
                    else " ".join(text.split())[:240])
         state.recent.append(f"{incoming.author[:48]} : {snippet}")
         if not selected:
