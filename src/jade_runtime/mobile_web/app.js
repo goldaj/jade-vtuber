@@ -13,6 +13,7 @@
   const linkForm = $("identity-link-form"), linkResult = $("identity-result");
   const linkCopy = $("identity-copy");
   let linkCommand = "";
+  let linkPending = false;
   const avatar = () => window.JadeAvatar || {setMouth() {}, setIntent() {}, setSpeaking() {}, resetIntent() {}};
   let token = "";
   let busy = false;
@@ -367,6 +368,7 @@
 
   linkForm.addEventListener("submit", async event => {
     event.preventDefault();
+    if (linkPending) return;
     linkCommand = "";
     linkCopy.disabled = true;
     const platform = $("identity-platform").value;
@@ -379,6 +381,9 @@
       authorizeAgain();
       return;
     }
+    linkPending = true;
+    const submit = linkForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
     linkResult.textContent = "Création du code de liaison…";
     try {
       const result = await makeRequest("/api/link",
@@ -392,6 +397,9 @@
       linkCopy.disabled = false;
     } catch (error) {
       linkResult.textContent = error.message || "Liaison indisponible.";
+    } finally {
+      linkPending = false;
+      submit.disabled = false;
     }
   });
   linkCopy.addEventListener("click", async () => {
