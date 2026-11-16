@@ -426,6 +426,11 @@ class MemoryStore:
                 raise PermissionError("opt-in required for source account")
             db.execute("DELETE FROM link_challenges WHERE expires_at<=?",
                        (_now().isoformat(),))
+            # Keep at most one outstanding code per verified source account.
+            # A new request invalidates the previous code rather than allowing
+            # an unbounded pile of outstanding identity challenges.
+            db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?",
+                       key)
             db.execute("INSERT INTO link_challenges VALUES (?,?,?,?)",
                        (digest, *key, (_now() + timedelta(seconds=ttl_seconds)).isoformat()))
         return token
