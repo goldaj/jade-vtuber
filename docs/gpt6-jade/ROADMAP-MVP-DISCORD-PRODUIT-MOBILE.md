@@ -1,5 +1,7 @@
 # Jade : MVP Discord puis compagnon audio et visuel sur téléphone
 
+**Feuille de route historique :** le connecteur Discord, la PWA privée, la mémoire et les intentions sont désormais présents dans develop. Les étapes de ce plan qui les présentent comme futures décrivent leur état de novembre **avant intégration**, non le code actuel. Références : [inventaire](../handbook/BRANCH_STATE.md) et [améliorations futures](../ameliorations/README.md).
+
 > **Mise à jour du propriétaire — 10 novembre 2026 :** le serveur privé est
 > dédié à Jade. Personnes et autres bots peuvent interagir dans tous ses salons,
 > sans liste individuelle ni validation supplémentaire. Cette décision remplace

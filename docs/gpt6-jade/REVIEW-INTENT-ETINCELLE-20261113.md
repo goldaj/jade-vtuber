@@ -1,5 +1,7 @@
 # Revue croisée PO / architecture / QA / audio — Étincelle et moteur d'intentions
 
+**Lecture historique :** le pitch +2 demi-tons est désormais codé dans `pitch_shift.py` et `output.py`, avec dépendance FFmpeg Rubber Band. Les constats « pitch non implémenté » ci-dessous correspondent à la date de cet audit et ne décrivent plus le code develop. Voir [état courant](../handbook/BRANCH_STATE.md).
+
 > **Addendum ultérieur :** cette revue décrit l'état **avant** l'intégration du pitch. Le filtre +2 demi-tons est désormais codé sur `develop` sous réserve de FFmpeg Rubber Band ; les tests et les prérequis sont consignés dans [PITCH-SHIFT-ETINCELLE-20261113.md](PITCH-SHIFT-ETINCELLE-20261113.md). Aucun rendu vocal réel n'a été validé ; conserver les conclusions de recette ouverte.
 
 **Date :** 13 novembre 2026  

@@ -1,14 +1,6 @@
 # Réduire la latence de Jade — relais Astra → Terra
 
-**État : documentation prête, développement à reprendre sous Terra.** Travailler
-sur `develop`, sans fusion automatique vers `main`. Ne pas rouvrir les audits de
-migration, la démo terminée, le rig r21 ou l'application mobile. Aux simples
-relances avant le passage sous Terra, répondre seulement **« doc latence ok »**.
-
-**Complément du 13 novembre :** le propriétaire souhaite la nouvelle voix
-française Aube dès que possible, et un débit ×1,5. Disponibilité et mise en œuvre
-documentées au lot A bis ; aucun changement vocal encore appliqué. Le fichier
-garde la date du début du plan, pas celle d'une recette ultérieure.
+**Plan de latence historique débuté le 10 novembre, actualisé après intégration des lots PCM/TTS/launcher.** Le streaming PCM Discord, le pool de connexion TTS en voie stream et les intentions existent dans le code, **mais** le launcher `--all-channels` exige `ffplay` et le premier son reste sur le chemin tamponné. Le plan ci-dessous reste une analyse de solutions, non une consigne de relancer d'anciennes PR. Le [catalogue latence](../ameliorations/01-LATENCE-VOIX.md) est le backlog actif et le [BRANCH_STATE](../handbook/BRANCH_STATE.md) indique l'existant.
 
 ## 1. Point de départ et clôture du correctif
 

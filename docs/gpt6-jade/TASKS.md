@@ -1,5 +1,7 @@
 # Compte rendu des étapes
 
+**Journal chronologique uniquement.** Les statuts des anciennes branches et les actions annoncées « à intégrer » ne décrivent pas nécessairement `develop` aujourd'hui. Utiliser [BRANCH_STATE](../handbook/BRANCH_STATE.md) pour le code et le [catalogue](../ameliorations/README.md) pour les améliorations restantes ; ne pas relancer les PR historiques sur la seule base de cette chronologie.
+
 Chaque lot doit indiquer : livrable, validation observée, limites et niveau de confiance,
 sans présenter les mocks comme des tests d'API réels.
 

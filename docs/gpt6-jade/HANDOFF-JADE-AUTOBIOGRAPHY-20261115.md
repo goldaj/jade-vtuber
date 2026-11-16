@@ -1,7 +1,8 @@
 # Jade : mémoire autobiographique autonome (15 novembre 2026)
 
-## Livraison
-Implémentation candidate sur `feat/jade-autobiographical-memory-20261115`, **empilée sur la PR #8 (conversation unifiée), elle-même empilée sur la PR #6 (mémoire de base)**. La PR mobile #7 n'a pas été fusionnée. Aucun accès au PC Windows, aucun appel OpenAI payant, aucun déploiement et aucune modification de main/develop.
+## État courant sur develop
+
+La table autobiographique `jade_self_core`, le rappel privé de Goldaj, les commandes et le schéma SQLite v3 sont **intégrés au code** de `develop`. La présente passation conserve les décisions et la provenance des PR #6/#8/#9/#11, et non un état « à merger ».
 
 ## Pourquoi un autre stockage ?
 Les `core_self` initiaux étaient stockés dans les souvenirs d'une *personne*, dans la portée de son salon. Ce n'est pas une mémoire autobiographique propre à Jade. La nouvelle table `jade_self_core` possède une identité globale de Jade séparée du registre des personnes et du journal des conversations. Une Core n'a **aucune expiration automatique**. Une provenance et un identifiant permettent sa correction/suppression.
@@ -26,7 +27,7 @@ Commandes **uniquement via l'identité locale Goldaj reconnue** :
 - `!jade-memoire oublier` : suppression des mémoires du compte propriétaire, y compris souvenirs autobiographiques issus de ce compte.
 
 ## SQLite et sauvegardes
-Le schéma passe de v1 à v2 par migration automatique `CREATE TABLE IF NOT EXISTS` au premier démarrage (sans suppression des souvenirs existants). Export/import accepte une archive v1 ou v2 avec empreinte SHA-256 et vérification de la cohérence du numéro de schéma ; un import v1 est migré lors de l'ouverture suivante par `MemoryStore`. Aucun écrasement de base existante. Les archives ne sont **pas chiffrées**, même si elles peuvent contenir des souvenirs privés.
+Le lot historique ajoutait la table en v2 ; le schéma actuel de develop est **v3**, avec migration additive `CREATE TABLE IF NOT EXISTS` au premier démarrage (sans suppression des souvenirs existants). Export/import accepte une archive v1 ou v2 avec empreinte SHA-256 et vérification de la cohérence du numéro de schéma ; un import v1 est migré lors de l'ouverture suivante par `MemoryStore`. Aucun écrasement de base existante. Les archives ne sont **pas chiffrées**, même si elles peuvent contenir des souvenirs privés.
 
 Les flags d'activation ne changent pas :
 ```dotenv
@@ -37,7 +38,7 @@ JADE_MEMORY_CURATOR_ENABLED=1
 Ce chemin est un exemple et doit pointer vers un dossier privé de l'utilisateur sur D:. La curation via OpenAI est optionnelle et facturable : une requête en plus par tour éligible, comme pour la PR #6.
 
 ## Recette/risques
-1. Intégrer proprement les PR #6, #8 et #9 sur une branche de reprise (et rapprocher #7 séparément). Mettre à niveau SQLite v1 avec sauvegarde **avant migration**.
+1. **Intégration déjà réalisée** dans develop. En cas de migration d'une ancienne base de poste, sauvegarder la SQLite avant changement de schéma et utiliser les procédures courantes.
 2. Tests offline Windows/Linux : nouveau stockage, déduplication, lecture owner-only, refus Discord/Twitch, effacement ciblé, export/import v1 et v2.
 3. Depuis le micro local, puis depuis l'application mobile une fois intégrée, évoquer une expérience significative. Vérifier le `core_self`, le rappel au redémarrage et l'absence de divulgation sur Discord.
 4. Tester la suppression individuelle, l'oubli du profil Goldaj, les sauvegardes et le contrôle du coût des appels de curation.

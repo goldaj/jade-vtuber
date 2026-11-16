@@ -1,5 +1,7 @@
 # Mission 2 — Réconciliation code, configurations et documentation sur develop
 
+**Instantané de réconciliation daté du 16 novembre :** les faits décrits sont ceux du SHA indiqué, pas un statut à recopier indéfiniment. L'état fonctionnel actuel est le [code de develop et son inventaire](../handbook/BRANCH_STATE.md) ; le [catalogue](../ameliorations/README.md) centralise les idées non réalisées.
+
 Date de revue : 16 novembre 2026. Dépôt `goldaj/jade-vtuber`.
 Base du contrôle : `develop` au SHA `b9beb904669dd57f070e5860e04f74b046854fec`.
 Ce document est un **inventaire de câblage vérifié dans Git**, non un certificat de fonctionnement sur le PC Jade.

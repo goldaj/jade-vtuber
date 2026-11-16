@@ -1,5 +1,7 @@
 # Jade — plan d'exécution du MVP Discord
 
+**Plan de migration historique :** l'état des lots ci-dessous est celui du 3 novembre, non celui du code actuel. Se reporter à [BRANCH_STATE](../handbook/BRANCH_STATE.md) et au [catalogue](../ameliorations/README.md) pour les fonctions codées et futures.
+
 > **Décision du propriétaire du 10 novembre 2026 :** le serveur privé est dédié
 > à Jade ; elle peut interagir avec les personnes et les autres bots dans tous
 > ses salons, sans validation ou liste individuelle. Les anciennes restrictions

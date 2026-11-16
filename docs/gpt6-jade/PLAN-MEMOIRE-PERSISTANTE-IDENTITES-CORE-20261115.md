@@ -1,7 +1,7 @@
 # Jade — persistance, identité et Core Memories
 **Dossier de cadrage PO / architecture / IA — 15 novembre 2026**
 
-> **STATUT : SPÉCIFICATION, NON IMPLÉMENTÉE.** Aucun code, schéma de base ni configuration runtime modifiés. Cible de développement future : `develop`. Aucune activation de mémoire persistante, de transcription enregistrée, de connexion externe ou de coût fournisseur autorisée par ce seul document.
+> **Archive de cadrage du 15 novembre, désormais partiellement réalisée :** SQLite v3, identités vérifiées, mémoire opt-in, Core/autobiographie et historique complet sont **implémentés sur develop**. Les propositions de recherche sémantique, cache de présence et contrôle fin des souvenirs restent au [catalogue central](../ameliorations/02-MEMOIRE-PRESENCE.md). Les matrices d'« état actuel » ci-dessous sont un **instantané antérieur au développement**, non l'inventaire courant ; consulter [BRANCH_STATE](../handbook/BRANCH_STATE.md).
 
 ## 1. Vision et décisions produit
 
@@ -21,7 +21,7 @@ La conservation automatique sans échéance ne vaut pas interdiction de rectifie
 - Jade vit un événement fondateur, par exemple son premier projet créatif mené jusqu'au bout avec une personne connue. Elle estime que cet événement la marque et le classe en Core Memory, sans demander une approbation humaine à chaque fois.
 - Un message banal (« salut ») ou une émotion passagère ne suffit pas à créer une Core Memory. Les événements significatifs demeurent rares.
 
-## 2. État réel de l'existant, vérifié dans develop au 15/11/2026
+## 2. État historique avant implémentation (15/11/2026, remplacé par le code actuel)
 
 | Élément | Existant | Limite |
 | --- | --- | --- |

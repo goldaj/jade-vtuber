@@ -1,4 +1,6 @@
 # Jade — contre-audit transverse PO / architecture / développement / QA
+
+**Rapport du 15 novembre :** les constatations et réserves de PR sont datées ; l'intégration mémoire/PWA/Discord et les corrections ultérieures figurent déjà dans `develop`. [État du code](../handbook/BRANCH_STATE.md) et [améliorations futures](../ameliorations/README.md) prévalent sur ce rapport.
 **Date : 15 novembre 2026.** Périmètre de revue : dépôt `goldaj/jade-vtuber`, les cinq premières PR déjà fusionnées dans `develop` (#1–#5) comme base comportementale, les PR actives #6 (SQLite), #7 (PWA), #8 (Discord écrit + vocal), #9 (autobiographie) et la branche de rapprochement #11.
 
 **Nature de la preuve :** inspection du code, comparaison des trees et des PR, tests automatisés GitHub Actions Windows/Linux avec doubles de test. **Pas de recette PC Windows de Goldaj, micro réel, Discord/Tailscale actif, SDK Live2D Web, ni d'appels OpenAI facturés**. Une compilation et des tests simulés réussis ne certifient aucun de ces éléments.
