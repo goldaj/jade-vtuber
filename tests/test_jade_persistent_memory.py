@@ -281,6 +281,34 @@ class MemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.addCleanup(self.tmp.cleanup)
         self.store = MemoryStore(Path(self.tmp.name) / "jade.sqlite3")
 
+    async def test_public_forget_and_unlink_commands_are_account_scoped(self):
+        owner = ("microphone", "goldaj")
+        twitch = ("twitch", "6001")
+        self.store.enable(owner)
+        self.store.enable(twitch)
+        self.store.put(owner, kind="core_relationship", scope="person",
+                       summary="Protected private owner memory")
+        self.store.put(twitch, kind="core_relationship", scope="twitch:live",
+                       summary="Public Twitch-origin memory")
+        code = self.store.begin_link(owner, target=twitch)
+        self.assertTrue(self.store.complete_link(twitch, code))
+        service = MemoryService(self.store, AsyncMock())
+        command = Incoming("twitch", "Viewer", "!jade-memoire oublier",
+                           channel="live", account_id="6001")
+        reply = await service.command(command)
+        self.assertIn("sans effacer", reply.text)
+        self.assertIsNone(self.store.account(twitch))
+        self.assertEqual(len(self.store.list_for_account(owner)), 1)
+        self.store.enable(twitch)
+        code = self.store.begin_link(owner, target=twitch)
+        self.assertTrue(self.store.complete_link(twitch, code))
+        separated = await service.command(Incoming(
+            "twitch", "Viewer", "!jade-memoire delier",
+            channel="live", account_id="6001"))
+        self.assertIn("séparé", separated.text)
+        self.assertNotEqual(self.store.account(owner), self.store.account(twitch))
+        await service.close()
+
     async def test_opt_in_and_runtime_recall_after_restart(self):
         key = ("discord", "101")
         model = AsyncMock()
