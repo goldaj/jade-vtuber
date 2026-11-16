@@ -124,6 +124,7 @@ class MobileGateway:
         reason = {
             200: "OK", 400: "Bad Request", 401: "Unauthorized",
             403: "Forbidden", 404: "Not Found", 405: "Method Not Allowed",
+            409: "Conflict",
             413: "Payload Too Large", 429: "Too Many Requests",
             503: "Service Unavailable", 504: "Gateway Timeout",
         }.get(code, "Error")
