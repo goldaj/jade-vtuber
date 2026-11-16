@@ -77,7 +77,7 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
         policy = DiscordTextPolicy(auto_rate=0)
         for num, text in enumerate(
             ("!jade-memoire", "!jade-memoire activer",
-             "!jade-memoire oublier", "!jade-memoire etat"), start=1
+             "!jade-memoire oublier", "!jade-memoire delier", "!jade-memoire etat"), start=1
         ):
             with self.subTest(text=text):
                 source = msg(text, ident=num)
