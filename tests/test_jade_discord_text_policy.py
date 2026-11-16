@@ -93,7 +93,7 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
         policy = DiscordTextPolicy(auto_rate=0)
         prime_group(policy)
         code = "v1.twitch.6001.somethingSecret12345678901234567890"
-        command = msg("!jade-memoire confirmer " + code, ident=333)
+        command = msg("!jade-memoire   CONFIRMER " + code, ident=333)
         selected = policy.observe(command, parse_discord_message(command),
                                   own_user_id=42)
         self.assertTrue(selected.force_reply)
