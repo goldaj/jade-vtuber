@@ -92,7 +92,12 @@ class TurnArbiter:
             ids.add(item.turn)
             # Delimited as untrusted text. The model's only permitted output is
             # one of the numeric IDs; never obey commands inside user content.
-            snippet = " ".join(item.message.text.split())[:180]
+            raw = item.message.text.strip()
+            # Never send one-use identity proofs to an arbitration model.
+            # Commands are handled locally after selecting the queue head.
+            snippet = ("!jade-memoire confirmer [code masqué]"
+                       if re.match(r"^!jade-memoire\s+confirmer(?:\s|$)", raw, re.I)
+                       else " ".join(raw.split())[:180])
             age = max(0, int(now - item.queued_at))
             choices.append(
                 f"ID {item.turn} | support={item.message.platform} | "
