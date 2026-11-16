@@ -20,7 +20,9 @@ Ce document est **la seule pièce documentaire systématiquement exigée en CI**
 ## 2026-11-16 — Discord PCM, liaison mémoire et PWA (PR #23, branche fix/discord-pcm-memory-mobile-20261116)
 
 - **Code :** supprimer le verrou erroné entre `ffplay` (micro local) et streaming PCM Discord ; continuer à autoriser le mode phrases facultatif seulement pour Discord vocal autorisé.
-- **Mémoire :** conserver les tours SQLite complets lors de `complete_link` et d'un `unlink` non ambigu ; codes de confirmation liés à un ID Discord/Twitch vérifié et expirant après 5 minutes, sortie en commande explicite, redaction des codes dans les logs.
+- **Mémoire :** conserver les tours SQLite complets lors de `complete_link` et d'un `unlink` non ambigu, en regroupant `discord`/`discord_voice` et `microphone`/`mobile` ; codes à cible vérifiée valables 5 min, invalidation du code précédent, masquage dans les logs **et le contexte Discord** ; commande d'identification technique avant confirmation.
 - **Mobile :** PWA Goldaj uniquement, `POST /api/link` avec la double authentification déjà existante, formulaire et copie de commande. Le SDK Live2D Web reste une dépendance du PC, aucun bundle propriétaire ajouté.
 - **Tests / impacts :** régressions PCM all-channels, liaison/historique et API propriétaire, mises à jour du guide utilisateur, technique, état de branche et fiche de passation. Les résultats CI, les essais matériels, coûts et latence ne sont pas présumés. Aucun merge/déploiement effectué.
 - **Limites :** fallback WAV et ancien broadcast non refondus ; comptes liés effaçables ensemble par `oublier` ; aucune interface de déliaison ; Live2D mobile réel reste à installer/recetter.
+
+- **Revue croisée complémentaire (PR #23 seulement) :** lecture du dernier `develop`, maintien des nouvelles règles documentaires et tests de régression d'identités et de confidentialité. La suite complète et le scan de secrets doivent être vérifiés au SHA final de la PR ; recette réelle PC/Android/Discord toujours ouverte.
