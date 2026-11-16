@@ -505,9 +505,14 @@ class MemoryStore:
                 UPDATE memories SET person_id=?
                 WHERE person_id=? AND source_platform=? AND source_account_id=?
             """, (separate, person, *key))
-            db.execute("""
-                UPDATE conversation_turns SET person_id=?
-                WHERE person_id=? AND source_platform=?
-            """, (separate, person, key[0]))
+            # Both authenticated PWA and the private PC microphone represent
+            # Goldaj; their stored source_platform fields are distinct even
+            # though identity_of maps them to a single account key.
+            platforms = ("microphone", "mobile") if key == ("microphone", "goldaj") else (key[0],)
+            db.execute(
+                "UPDATE conversation_turns SET person_id=? "
+                "WHERE person_id=? AND source_platform IN (" +
+                ",".join("?" for _ in platforms) + ")",
+                (separate, person, *platforms))
             db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
             return True
