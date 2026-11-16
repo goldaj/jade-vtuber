@@ -10,6 +10,9 @@
   const modal = $("auth-modal"), authForm = $("auth-form"), authInput = $("auth-token");
   const connection = $("connection-status"), soundToggle = $("sound-toggle");
   const newChat = $("new-chat");
+  const linkForm = $("identity-link-form"), linkResult = $("identity-result");
+  const linkCopy = $("identity-copy");
+  let linkCommand = "";
   const avatar = () => window.JadeAvatar || {setMouth() {}, setIntent() {}, setSpeaking() {}, resetIntent() {}};
   let token = "";
   let busy = false;
