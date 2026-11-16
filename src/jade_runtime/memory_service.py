@@ -15,7 +15,7 @@ from .messages import Reply
 
 LOG = logging.getLogger("jade.memory")
 COMMAND = re.compile(
-    r"^!jade-memoire(?:\s+(activer|oublier|etat|autobiographie|supprimer-self|confirmer|identite)"
+    r"^!jade-memoire(?:\s+(activer|oublier|etat|autobiographie|supprimer-self|confirmer|identite|delier)"
     r"(?:\s+([A-Za-z0-9._-]{1,128}))?)?\s*$", re.I)
 _KINDS = frozenset(("none", "ordinary", "core_self", "core_relationship"))
 
@@ -146,9 +146,15 @@ class MemoryService:
                 await asyncio.to_thread(self.store.enable, key)
                 text = ("Mémoire personnelle activée pour ce compte. "
                         "Je peux désormais choisir les événements importants à retenir.")
+            elif action == "delier":
+                separated = await asyncio.to_thread(self.store.unlink, key)
+                text = ("Ce compte a été séparé des autres profils, sans effacer ses souvenirs."
+                        if separated else
+                        "Ce compte n'est pas lié à un autre profil ou la séparation exige une revue.")
             elif action == "oublier":
-                removed = await asyncio.to_thread(self.store.forget, key)
-                text = ("J'ai supprimé le profil et les souvenirs associés à ce compte."
+                removed = await asyncio.to_thread(self.store.forget_own_identity, key)
+                text = ("J'ai supprimé les souvenirs et échanges de ce compte, "
+                        "sans effacer ceux des autres comptes associés."
                         if removed else "Aucune mémoire personnelle active pour ce compte.")
             else:
                 exists = await asyncio.to_thread(self.store.account, key)
