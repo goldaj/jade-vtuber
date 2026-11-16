@@ -22,7 +22,7 @@
 ## Limitations fonctionnelles actuelles
 
 1. **Routage :** une réponse à Discord/Twitch écrit est envoyée en texte, mais peut déclencher une voix supplémentaire sur le PC/Discord vocal. Les MP Discord ne sont pas diffusés publiquement. Le routeur exclusivement par canal d'origine n'est pas codé.
-2. **Streaming :** la sortie PCM progressive requiert une sortie audio locale `none`, tandis que `--all-channels` force `ffplay`. Le chemin vocal du launcher reste donc tamponné.
+2. **Streaming :** la branche de correctif permet le PCM Discord avec `--all-channels` et `ffplay` local. Le flux dépend toujours du TTS Realtime, du bridge autorisé et de l'activation facultative du mode phrases.
 3. **Concurrence :** l'orchestrateur attend la fin du tour et de sa diffusion pour avancer, même si la curation et les connecteurs peuvent travailler à côté.
 4. **Mémoire :** rappel par identité et portée, chronologique et limité ; pas de cache de présence Goldaj/Discord L1-L2, de préchargement anticipé ou de recherche sémantique profonde.
 5. **Mobile :** capture WAV et réponse audio complète ; pas de duplex/streaming temps réel ou APK natif.
@@ -35,3 +35,8 @@
 [Manuel](README.md) · [architecture](TECHNICAL.md) · [atlas des parcours](../architecture/atlas-fonctionnel-2026-11-16/README.md) · [passation dialogue](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md) · [backlog prospectif](../ameliorations/README.md).
 
 Les PR, audits et CI antérieurs sont archivés dans `docs/gpt6-jade/` et `docs/conversations/`. Ils conservent leur date historique, sans se substituer à ce document ou au code actuel.
+
+
+### Correctifs en PR : Discord PCM / identité mémoire / PWA
+
+La branche de PR `fix/discord-pcm-memory-mobile-20261116` découple le streaming Discord du lecteur `ffplay` local et propose une liaison mémoire Goldaj ↔ Discord/Twitch via un code temporaire créé dans la PWA privée. **Source unique des détails, risques, prérequis et essais PC restant à faire :** [note de correctifs](PR-PCM-MEMOIRE-MOBILE-20261116.md). Ce document décrit une PR **non fusionnée** ; ne pas traiter son contenu comme présent dans `develop` avant le merge.
