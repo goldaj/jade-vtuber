@@ -128,6 +128,22 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertEqual(len(self.store.recent_conversation_turns(
             self.alice, "discord:10")), 2)
 
+    def test_unlink_owner_keeps_mobile_and_microphone_history_private(self):
+        owner, twitch = ("microphone", "goldaj"), ("twitch", "6001")
+        self.store.enable(owner)
+        self.store.enable(twitch)
+        for source in ("mobile", "microphone"):
+            self.assertTrue(self.store.append_conversation_turn(
+                owner, "person", source_platform=source,
+                message_id=source + "-01", user_content="Journal " + source,
+                assistant_content="Reçu"))
+        code = self.store.begin_link(owner, target=twitch)
+        self.assertTrue(self.store.complete_link(twitch, code))
+        self.assertEqual(len(self.store.recent_conversation_turns(twitch, "person")), 4)
+        self.assertTrue(self.store.unlink(owner))
+        self.assertEqual(len(self.store.recent_conversation_turns(owner, "person")), 4)
+        self.assertEqual(self.store.recent_conversation_turns(twitch, "person"), [])
+
     def test_cross_platform_link_unlink_and_explicit_erasure(self):
         twitch = ("twitch", "6001")
         self.store.enable(self.alice)
