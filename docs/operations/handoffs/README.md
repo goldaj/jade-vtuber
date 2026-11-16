@@ -8,4 +8,4 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 Les documents clôturés peuvent être déplacés vers [les archives historiques](../../history/README.md) avec mise à jour des liens. Ne pas confondre une note de passation avec la liste des fonctionnalités codées.
 
-- [PCM Discord, identités mémoire et PWA (PR #23)](2026-11-16-chatgpt-pcm-memoire-mobile.md) : correctifs en brouillon, revue de sécurité, tests, recette PC et reprise par Codex/Terra.
+- [PCM Discord, identités mémoire et PWA (PR #23)](2026-11-16-chatgpt-pcm-memoire-mobile.md) : correctifs de code et sécurité, tests CI, recette PC/Android non réalisée et reprise par Codex/Terra.
