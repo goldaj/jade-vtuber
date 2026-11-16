@@ -399,7 +399,8 @@ class MemoryStore:
             result.append({"role": "assistant", "content": turn["assistant_content"]})
         return result
 
-    def begin_link(self, key: tuple[str, str], *, ttl_seconds: int = 300) -> str:
+    def begin_link(self, key: tuple[str, str], *, ttl_seconds: int = 300,
+                   target: tuple[str, str] | None = None) -> str:
         """Generate a one-time, short-lived secret for *another* authenticated account.
 
         UI must deliver this out of band/privately, NEVER to a public chat.
@@ -407,13 +408,21 @@ class MemoryStore:
         _validate_key(key)
         if not 30 <= ttl_seconds <= 600:
             raise ValueError("invalid link TTL")
+        if target is not None:
+            _validate_key(target)
+            if target[0] == key[0]:
+                raise ValueError("identity links must cross platforms")
         token = secrets.token_urlsafe(24)
+        if target is not None:
+            # Trust the target identity supplied by its authenticated connector.
+            # The target-bound token cannot be redeemed by another chatter.
+            token = f"v1.{target[0]}.{target[1]}.{token}"
         digest = hashlib.sha256(token.encode()).hexdigest()
         with self._db() as db:
             if not db.execute(
                 "SELECT 1 FROM identities WHERE platform=? AND account_id=?", key
             ).fetchone():
-                raise PermissionError("opt-in required for both accounts")
+                raise PermissionError("opt-in required for source account")
             db.execute("DELETE FROM link_challenges WHERE expires_at<=?",
                        (_now().isoformat(),))
             db.execute("INSERT INTO link_challenges VALUES (?,?,?,?)",
@@ -428,6 +437,11 @@ class MemoryStore:
         _validate_key(target)
         if not isinstance(token, str) or len(token) > 128:
             return False
+        if token.startswith("v1."):
+            fields = token.split(".", 3)
+            if (len(fields) != 4 or tuple(fields[1:3]) != target
+                    or len(fields[3]) < 24):
+                return False
         digest = hashlib.sha256(token.encode()).hexdigest()
         with self._db() as db:
             challenge = db.execute(
@@ -475,6 +489,13 @@ class MemoryStore:
                               (person,)).fetchone()[0]
             if size <= 1:
                 return False
+            # Old turn rows identify a platform but not a specific account.
+            # Refuse ambiguous detachments rather than misassign private history.
+            same_platform = db.execute(
+                "SELECT COUNT(*) FROM identities WHERE person_id=? AND platform=?",
+                (person, key[0])).fetchone()[0]
+            if same_platform != 1:
+                return False
             separate = uuid.uuid4().hex
             db.execute("INSERT INTO persons(id,created_at) VALUES (?,?)",
                        (separate, _now().isoformat()))
@@ -484,5 +505,9 @@ class MemoryStore:
                 UPDATE memories SET person_id=?
                 WHERE person_id=? AND source_platform=? AND source_account_id=?
             """, (separate, person, *key))
+            db.execute("""
+                UPDATE conversation_turns SET person_id=?
+                WHERE person_id=? AND source_platform=?
+            """, (separate, person, key[0]))
             db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
             return True
