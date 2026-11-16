@@ -80,7 +80,7 @@ audio Discord**. Après les deux correctifs :
    final, puis laisser les contrôles GitHub habituels s'exécuter. Ajouter
    seulement les régressions ciblées ci-dessus, pas une nouvelle campagne.
 2. Avec le propriétaire disponible, lancer la commande du
-   [guide existant](UTILISATION-AVATAR-DISCORD.md), vérifier une vraie phrase
+   [guide existant](../../operations/reference/UTILISATION-AVATAR-DISCORD.md), vérifier une vraie phrase
    entendue et une vraie réponse depuis le téléphone, puis les dix tours
    variés déjà prévus : suivi sans nom, silence pendant parole, reprise,
    changement de salon / reconnexion et retour normal.

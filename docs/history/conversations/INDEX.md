@@ -4,7 +4,7 @@ Cet index est créé le 2 novembre 2026, avant les modifications documentaires d
 
 | Source | Couverture et fidélité | Limites |
 | --- | --- | --- |
-| [CHATGPT_PROJECT_HISTORY.md](../CHATGPT_PROJECT_HISTORY.md) | Journal antérieur conservé ; citations et résumés étiquetés par leurs auteurs | Plusieurs exports et heures individuelles manquent |
+| [CHATGPT_PROJECT_HISTORY.md](../handoffs/CHATGPT_PROJECT_HISTORY.md) | Journal antérieur conservé ; citations et résumés étiquetés par leurs auteurs | Plusieurs exports et heures individuelles manquent |
 | [CONVERSATIONS.md](../gpt6-jade/CONVERSATIONS.md) | Extraits utilisateur accessibles du chantier du 24 octobre ; réponses résumées | Ce fichier n’est pas une transcription complète |
 | [Session du 2 novembre](2026-11-02-migration.md) | Demande de migration et réponses accessibles dans le présent chat ; rôles distincts | Date du chat connue, heures individuelles des messages non fournies |
 | [Revue Astra du 2 novembre](2026-11-02-astra.md) | Demande utilisateur, avancement et résultat de la contre-lecture | Heures individuelles non fournies ; synthèse du résultat étiquetée |
@@ -29,13 +29,13 @@ Cet index est créé le 2 novembre 2026, avant les modifications documentaires d
 
 ## Relais technique en cours — voix et intentions
 
-Pour le chantier du **13 novembre 2026**, le [relais opérationnel Codex](../gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md) récapitule les décisions d'Étincelle, les fichiers modifiés, le contrat de métadonnées d'intention, les tests, leurs limites et les étapes de recette réelle. Lire également la [spécification des voix](../gpt6-jade/VOICE-PROFILES-20261113.md) et l'[audit PO/architecture/QA](../gpt6-jade/REVIEW-INTENT-ETINCELLE-20261113.md).
+Pour le chantier du **13 novembre 2026**, le [relais opérationnel Codex](../gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md) récapitule les décisions d'Étincelle, les fichiers modifiés, le contrat de métadonnées d'intention, les tests, leurs limites et les étapes de recette réelle. Lire également la [spécification des voix](../../operations/reference/VOICE-PROFILES-20261113.md) et l'[audit PO/architecture/QA](../gpt6-jade/REVIEW-INTENT-ETINCELLE-20261113.md).
 
 Il s'agit de documents de passation **synthétiques**, pas d'une transcription verbatim des échanges ; les notes précédentes restent historiques. `develop` est la branche concernée ; `main` n'a pas reçu ce lot.
 
 Le chat antérieur « Analyser le projet AI VTuber » a été retrouvé. Seule une page récente a été consultée : elle concerne la modélisation 2D, hors périmètre de cette intervention. Son historique complet n’a pas été récupéré ni recopié. Les échanges ChatGPT ayant produit la refonte ne sont disponibles ici qu’à travers les documents du dépôt et les descriptions de PR ; aucune transcription supplémentaire n’est inventée.
 
-Les journaux conservent les décisions successives, même contradictoires. La synthèse des instructions actuelles est dans [le dossier de migration](../migration/2026-11-02/README.md) et ne réécrit pas les sources historiques. Les contenus privés, secrets, identifiants de compte, raisonnements internes, instructions système/développeur et sorties brutes d’outils sont exclus.
+Les journaux conservent les décisions successives, même contradictoires. La synthèse des instructions actuelles est dans [le dossier de migration](../migrations/2026-11-02/README.md) et ne réécrit pas les sources historiques. Les contenus privés, secrets, identifiants de compte, raisonnements internes, instructions système/développeur et sorties brutes d’outils sont exclus.
 
 Après toute nouvelle intervention, ajouter les échanges effectivement accessibles, avec leur rôle et leur fidélité. Utiliser les heures réelles seulement lorsqu’elles sont attestées ; ne pas dater rétroactivement un propos à partir de l’heure d’une commande.
 
