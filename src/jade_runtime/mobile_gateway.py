@@ -309,6 +309,40 @@ class MobileGateway:
             self.pending.pop(incoming.message_id, None)
 
     async def _post(self, writer, route: str, headers: dict, body: bytes):
+        if route == "/api/link":
+            # This endpoint is restricted by the same Tailscale owner check and
+            # Bearer authorization as chat. Never expose account-linking secrets
+            # through a public Discord/Twitch command or an unauthenticated GET.
+            if headers.get("content-type", "").split(";")[0].strip() != "application/json":
+                await self._json(writer, 400, {"error": "expected JSON"})
+                return
+            try:
+                request = json.loads(body)
+            except (ValueError, UnicodeDecodeError):
+                await self._json(writer, 400, {"error": "invalid JSON"})
+                return
+            if (type(request) is not dict or set(request) != {"platform", "account_id"}
+                    or request["platform"] not in ("discord", "twitch")
+                    or not isinstance(request["account_id"], str)
+                    or not re.fullmatch(r"[1-9][0-9]{0,24}", request["account_id"])):
+                await self._json(writer, 400, {"error": "invalid target identity"})
+                return
+            memory = getattr(self.runtime, "memory_service", None)
+            if memory is None:
+                await self._json(writer, 409, {"error": "memory is disabled"})
+                return
+            try:
+                code = await asyncio.to_thread(
+                    memory.store.begin_link, ("microphone", "goldaj"),
+                    target=(request["platform"], request["account_id"]))
+            except PermissionError:
+                await self._json(writer, 409, {"error": "owner memory is not enabled"})
+                return
+            except ValueError:
+                await self._json(writer, 400, {"error": "invalid identity"})
+                return
+            await self._json(writer, 200, {"code": code, "expires_in_seconds": 300})
+            return
         if route == "/api/chat":
             if headers.get("content-type", "").split(";")[0].strip() != "application/json":
                 await self._json(writer, 400, {"error": "expected JSON"})
@@ -449,7 +483,7 @@ class MobileGateway:
             if method == "GET":
                 await self._static(writer, route)
                 return
-            if route not in ("/api/chat", "/api/voice"):
+            if route not in ("/api/chat", "/api/voice", "/api/link"):
                 await self._json(writer, 404, {"error": "unknown route"})
                 return
             if (headers.get("transfer-encoding") or not self._origin_allowed(headers)
