@@ -57,14 +57,14 @@ Elles sont candidates à la même suppression contrôlée par Codex après reval
 
 ## Nouvelle branche active de synchronisation 2D (15/11/2026)
 
-`feat/live2d-intent-expression-sync-20261115` est une nouvelle branche créée depuis `develop` ; **ne pas la supprimer tant que son travail n'est pas intégré et vérifié**. Après une éventuelle fusion dans `develop`, la ranger parmi les branches candidates au nettoyage uniquement après comparaison d'ascendance et vérification des PR. Elle ne modifie pas `main`. La passation Codex pour les 14 motions 2D encore absentes est dans [LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+`feat/live2d-intent-expression-sync-20261115` a été **fusionnée dans `develop` par la PR #18 le 15 novembre 2026**. Comparaison d'ascendance revérifiée le 16 novembre (aucun commit propre restant). Elle est candidate à un nettoyage *après* contrôle de sa pointe et de l'absence de PR ou travail nouveau. Elle ne modifie pas `main`. La passation Codex pour les 14 motions 2D encore absentes est dans [LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
 
 ## Note sur les commits du 2026-11-15
 La mise à jour Low/320, personnalité validée, conservation opt-in sans résumé et politiques de participation est intégrée directement dans `develop` à la demande du propriétaire. Elle ne crée pas de branche supplémentaire à supprimer, ne fusionne pas `main` et ne modifie pas les anciennes branches divergentes. La planification de deux réactions par intention (14 futurs emplacements) **n'implique pas** l'existence des assets. Voir [passation dialogue](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md).
 
 ## Branche corrective DevOps (15/11/2026)
 
-**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). La branche `fix/develop-devops-audit-20261115` part de `develop` et contient des corrections CI, mémoire ZIP et documentation. Après fusion/rejet motivé de sa PR #19 vers `develop`, elle pourra être supprimée **uniquement** après vérification d'ascendance, d'absence de nouveaux commits et de PR encore actives. Aucun changement de `main` n'est demandé.
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). La branche `fix/develop-devops-audit-20261115` part de `develop` et contient des corrections CI, mémoire ZIP et documentation. La PR #19 a été **fusionnée dans `develop` le 15 novembre 2026**. La branche pourra être supprimée **uniquement** après vérification d'ascendance, d'absence de nouveaux commits et de PR encore actives. Aucun changement de `main` n'est demandé.
 
 ## Contrôle P0 CI du 16 novembre 2026 (develop)
 
@@ -75,3 +75,12 @@ La mise à jour Low/320, personnalité validée, conservation opt-in sans résum
 - Vérification GitHub Actions Windows/Ubuntu, export de publication, scripts PowerShell et scan de secrets indispensable avant toute affirmation de CI verte. Aucun test vocal matériel ni appel OpenAI réalisé par cette revue.
 
 - Correctif Windows du test IPC Live2D : la simulation valide toujours les deux trames d'expression et de bouche, puis termine par une coupure de pipe contrôlée. L'attente auparavant non bornée du faux moteur était responsable d'annulations Windows au délai de huit minutes ; aucun runtime ni test réel de Live2D n'est remplacé.
+
+## Réconciliation historique et maintenance du 16 novembre 2026
+
+- `main` est désormais ancêtre de `develop` depuis `dda14d1`, sans transfert de code vers `main` ni écrasement des guides propres à `develop`.
+- PR #18 (intentions 2D), #19 (DevOps + SQLite v3) et #20 (tests de politiques et CI Windows) : **fusionnées**.
+- `fix/p0-develop-ci-participation-20261116` est également candidate au nettoyage après revalidation de l'ascendance, mais n'a pas été supprimée ici.
+- Ne supprimer aucune branche locale Terra/Codex et ne pas remplacer leurs fichiers non commités. Les actions sur le clone Windows nécessitent une revue locale distincte.
+
+Voir [l'audit code/configuration/documentation](../gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md).

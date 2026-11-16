@@ -158,3 +158,5 @@ Deux réactions par intention, soit **14 variantes conceptuelles**, sont prévue
 ## Audit DevOps de `develop` (15 novembre 2026)
 
 L'[audit PO/SRE/sécurité/QA et passation Codex](docs/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md) distingue le code corrigé, les tests CI rouges et les opérations PC/Android encore nécessaires. Les corrections proposées traitent notamment la compatibilité sauvegarde SQLite v3 et la concurrence GitHub Actions. **Un scan de secrets vert n'autorise ni une publication, ni un déploiement sur le PC Jade tant que les tests du SHA cible et la recette réelle ne sont pas passés.**
+
+**État de réconciliation du 16 novembre 2026 :** [audit des raccordements code / configuration / documentation sur develop](docs/gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md).
