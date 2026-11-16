@@ -199,6 +199,63 @@ class MemoryStore:
             db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
             return True
 
+    def forget_own_identity(self, key: tuple[str, str]) -> bool:
+        """Erase only data originating from the verified account.
+
+        The legacy forget() API intentionally deletes an entire linked person.
+        Public Discord/Twitch commands MUST use this narrower operation so an
+        external account cannot wipe Goldaj's private memories or another
+        account's data. Old turn rows lack account_id, so ambiguous same-provider
+        detachments are refused rather than deleting another user's history.
+        """
+        _validate_key(key)
+        with self._db() as db:
+            row = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
+            ).fetchone()
+            if row is None:
+                return False
+            person = row["person_id"]
+            size = db.execute(
+                "SELECT COUNT(*) FROM identities WHERE person_id=?", (person,)
+            ).fetchone()[0]
+            if size == 1:
+                # Isolated account: preserve existing complete-erasure behavior.
+                if key == ("microphone", "goldaj"):
+                    db.execute("""
+                        DELETE FROM jade_self_core
+                        WHERE source_platform='microphone' AND source_account_id='goldaj'
+                    """)
+                db.execute("DELETE FROM persons WHERE id=?", (person,))
+            else:
+                same_provider = db.execute(
+                    "SELECT COUNT(*) FROM identities WHERE person_id=? AND platform=?",
+                    (person, key[0])).fetchone()[0]
+                if same_provider != 1:
+                    raise ValueError("cannot safely erase an ambiguous linked account")
+                if key == ("microphone", "goldaj"):
+                    db.execute("""
+                        DELETE FROM jade_self_core
+                        WHERE source_platform='microphone' AND source_account_id='goldaj'
+                    """)
+                db.execute("""
+                    DELETE FROM memories WHERE person_id=?
+                    AND source_platform=? AND source_account_id=?
+                """, (person, *key))
+                platforms = (("microphone", "mobile") if key == ("microphone", "goldaj")
+                             else ("discord", "discord_voice") if key[0] == "discord"
+                             else (key[0],))
+                db.execute(
+                    "DELETE FROM conversation_turns WHERE person_id=? "
+                    "AND source_platform IN (" +
+                    ",".join("?" for _ in platforms) + ")",
+                    (person, *platforms))
+                db.execute(
+                    "DELETE FROM identities WHERE platform=? AND account_id=?", key)
+            db.execute(
+                "DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
+            return True
+
     def put(self, key: tuple[str, str], *, kind: str, scope: str, summary: str,
             significance: str = "", message_id: str = "", ordinary_days: int = 90,
             expected_person_id: str | None = None) -> bool:
@@ -399,23 +456,38 @@ class MemoryStore:
             result.append({"role": "assistant", "content": turn["assistant_content"]})
         return result
 
-    def begin_link(self, key: tuple[str, str], *, ttl_seconds: int = 300) -> str:
+    def begin_link(self, key: tuple[str, str], *, ttl_seconds: int = 300,
+                   target: tuple[str, str] | None = None) -> str:
         """Generate a one-time, short-lived secret for *another* authenticated account.
 
-        UI must deliver this out of band/privately, NEVER to a public chat.
+        Unbound legacy tokens must stay private. Target-bound v1 codes may be
+        confirmed in a public chat, since only the verified target can redeem.
         """
         _validate_key(key)
         if not 30 <= ttl_seconds <= 600:
             raise ValueError("invalid link TTL")
+        if target is not None:
+            _validate_key(target)
+            if target[0] == key[0]:
+                raise ValueError("identity links must cross platforms")
         token = secrets.token_urlsafe(24)
+        if target is not None:
+            # Trust the target identity supplied by its authenticated connector.
+            # The target-bound token cannot be redeemed by another chatter.
+            token = f"v1.{target[0]}.{target[1]}.{token}"
         digest = hashlib.sha256(token.encode()).hexdigest()
         with self._db() as db:
             if not db.execute(
                 "SELECT 1 FROM identities WHERE platform=? AND account_id=?", key
             ).fetchone():
-                raise PermissionError("opt-in required for both accounts")
+                raise PermissionError("opt-in required for source account")
             db.execute("DELETE FROM link_challenges WHERE expires_at<=?",
                        (_now().isoformat(),))
+            # Keep at most one outstanding code per verified source account.
+            # A new request invalidates the previous code rather than allowing
+            # an unbounded pile of outstanding identity challenges.
+            db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?",
+                       key)
             db.execute("INSERT INTO link_challenges VALUES (?,?,?,?)",
                        (digest, *key, (_now() + timedelta(seconds=ttl_seconds)).isoformat()))
         return token
@@ -423,11 +495,17 @@ class MemoryStore:
     def complete_link(self, target: tuple[str, str], token: str) -> bool:
         """Prove control of both accounts by making each call under its trusted ID.
 
-        This is an API, NOT a Twitch or Discord command exposed in public.
+        Legacy unbound codes are for internal API only; public confirmation
+        first verifies the target-bound v1 prefix against the trusted account.
         """
         _validate_key(target)
         if not isinstance(token, str) or len(token) > 128:
             return False
+        if token.startswith("v1."):
+            fields = token.split(".", 3)
+            if (len(fields) != 4 or tuple(fields[1:3]) != target
+                    or len(fields[3]) < 24):
+                return False
         digest = hashlib.sha256(token.encode()).hexdigest()
         with self._db() as db:
             challenge = db.execute(
@@ -452,7 +530,10 @@ class MemoryStore:
             if a != b:
                 # A core must never be silently discarded during identity linking;
                 # source account is part of the uniqueness key.
+                # Preserve complete opt-in conversation history before deleting the old
+                # person; ON DELETE CASCADE would otherwise silently erase it.
                 db.execute("UPDATE memories SET person_id=? WHERE person_id=?", (a, b))
+                db.execute("UPDATE conversation_turns SET person_id=? WHERE person_id=?", (a, b))
                 db.execute("UPDATE identities SET person_id=? WHERE person_id=?", (a, b))
                 db.execute("DELETE FROM persons WHERE id=?", (b,))
             db.execute("DELETE FROM link_challenges WHERE token_hash=?", (digest,))
@@ -472,6 +553,13 @@ class MemoryStore:
                               (person,)).fetchone()[0]
             if size <= 1:
                 return False
+            # Old turn rows identify a platform but not a specific account.
+            # Refuse ambiguous detachments rather than misassign private history.
+            same_platform = db.execute(
+                "SELECT COUNT(*) FROM identities WHERE person_id=? AND platform=?",
+                (person, key[0])).fetchone()[0]
+            if same_platform != 1:
+                return False
             separate = uuid.uuid4().hex
             db.execute("INSERT INTO persons(id,created_at) VALUES (?,?)",
                        (separate, _now().isoformat()))
@@ -481,5 +569,21 @@ class MemoryStore:
                 UPDATE memories SET person_id=?
                 WHERE person_id=? AND source_platform=? AND source_account_id=?
             """, (separate, person, *key))
+            # Both authenticated PWA and the private PC microphone represent
+            # Goldaj; their stored source_platform fields are distinct even
+            # though identity_of maps them to a single account key.
+            if key == ("microphone", "goldaj"):
+                platforms = ("microphone", "mobile")
+            elif key[0] == "discord":
+                # Discord text and voice carry separate transport labels but
+                # share the same verified Discord identity.
+                platforms = ("discord", "discord_voice")
+            else:
+                platforms = (key[0],)
+            db.execute(
+                "UPDATE conversation_turns SET person_id=? "
+                "WHERE person_id=? AND source_platform IN (" +
+                ",".join("?" for _ in platforms) + ")",
+                (separate, person, *platforms))
             db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
             return True

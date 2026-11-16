@@ -99,7 +99,7 @@ class DiscordTextPolicy:
                                     text, flags=re.IGNORECASE)))
         command = (text.casefold().startswith(("!response", "!rsp"))
                    or bool(re.fullmatch(
-                       r"!jade-memoire(?:\s+(?:activer|oublier|etat))?\s*",
+                       r"!jade-memoire(?:\s+(?:activer|oublier|etat|autobiographie|supprimer-self|confirmer|identite|delier)(?:\s+[A-Za-z0-9._-]{1,128})?)?\s*",
                        text, flags=re.IGNORECASE)))
         dm = getattr(message, "guild", None) is None
         direct = bool(ping or reply_to_jade or named or command or dm)
@@ -123,7 +123,11 @@ class DiscordTextPolicy:
             selected = False
 
         # Keep the source short, bounded and labelled as untrusted channel text.
-        snippet = " ".join(text.split())[:240]
+        # Confirmation tokens are one-use identity proofs, never context for
+        # later LLM turns or another speaker in this Discord room.
+        snippet = ("!jade-memoire confirmer [code masqué]"
+                   if re.match(r"^!jade-memoire\s+confirmer(?:\s|$)", text, re.I)
+                   else " ".join(text.split())[:240])
         state.recent.append(f"{incoming.author[:48]} : {snippet}")
         if not selected:
             return None

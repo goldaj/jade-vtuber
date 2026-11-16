@@ -15,8 +15,8 @@ from .messages import Reply
 
 LOG = logging.getLogger("jade.memory")
 COMMAND = re.compile(
-    r"^!jade-memoire(?:\s+(activer|oublier|etat|autobiographie|supprimer-self)"
-    r"(?:\s+([0-9a-f]{32}))?)?\s*$", re.I)
+    r"^!jade-memoire(?:\s+(activer|oublier|etat|autobiographie|supprimer-self|confirmer|identite|delier)"
+    r"(?:\s+([A-Za-z0-9._-]{1,128}))?)?\s*$", re.I)
 _KINDS = frozenset(("none", "ordinary", "core_self", "core_relationship"))
 
 
@@ -105,14 +105,29 @@ class MemoryService:
         if not match:
             return None
         action = (match.group(1) or "etat").lower()
-        memory_id = (match.group(2) or "").lower()
+        memory_id = match.group(2) or ""
         key = identity_of(incoming)
         if key is None:
             return Reply(incoming, "Je ne peux pas associer ce message à un compte vérifié.")
         try:
-            if memory_id and action != "supprimer-self":
+            if memory_id and action not in ("supprimer-self", "confirmer"):
                 return Reply(incoming, "Cette commande n'attend pas d'identifiant.")
-            if action == "autobiographie":
+            if action == "identite":
+                text = f"Identifiant {key[0]} vérifié : {key[1]}."
+            elif action == "confirmer":
+                # Public IRC is observable; only the connector-verified target
+                # account may redeem its one-use token.
+                expected = f"v1.{key[0]}.{key[1]}."
+                if (key[0] not in ("discord", "twitch") or not memory_id
+                        or not memory_id.startswith(expected)):
+                    text = "Code de liaison absent ou non destiné à ce compte."
+                else:
+                    linked = await asyncio.to_thread(
+                        self.store.complete_link, key, memory_id)
+                    text = ("Comptes associés. Les restrictions de mémoire par salon "
+                            "restent appliquées." if linked else
+                            "Liaison refusée : code expiré, déjà utilisé ou mémoire inactive.")
+            elif action == "autobiographie":
                 if key != ("microphone", "goldaj"):
                     return Reply(incoming, "L'autobiographie privée de Jade est réservée au propriétaire.")
                 found = await asyncio.to_thread(self.store.recall_self_core, key, limit=6)
@@ -124,16 +139,22 @@ class MemoryService:
                     return Reply(incoming, "Seul le propriétaire peut corriger l'autobiographie.")
                 if not memory_id:
                     return Reply(incoming, "Indique l'identifiant du souvenir à supprimer.")
-                removed = await asyncio.to_thread(self.store.delete_self_core, key, memory_id)
+                removed = await asyncio.to_thread(self.store.delete_self_core, key, memory_id.lower())
                 text = ("Souvenir autobiographique supprimé." if removed
                         else "Souvenir introuvable ou déjà supprimé.")
             elif action == "activer":
                 await asyncio.to_thread(self.store.enable, key)
                 text = ("Mémoire personnelle activée pour ce compte. "
                         "Je peux désormais choisir les événements importants à retenir.")
+            elif action == "delier":
+                separated = await asyncio.to_thread(self.store.unlink, key)
+                text = ("Ce compte a été séparé des autres profils, sans effacer ses souvenirs."
+                        if separated else
+                        "Ce compte n'est pas lié à un autre profil ou la séparation exige une revue.")
             elif action == "oublier":
-                removed = await asyncio.to_thread(self.store.forget, key)
-                text = ("J'ai supprimé le profil et les souvenirs associés à ce compte."
+                removed = await asyncio.to_thread(self.store.forget_own_identity, key)
+                text = ("J'ai supprimé les souvenirs et échanges de ce compte, "
+                        "sans effacer ceux des autres comptes associés."
                         if removed else "Aucune mémoire personnelle active pour ce compte.")
             else:
                 exists = await asyncio.to_thread(self.store.account, key)

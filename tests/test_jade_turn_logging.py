@@ -36,6 +36,16 @@ class TurnLoggingTests(unittest.TestCase):
             self.assertEqual(item["input_text"], "Salut\nJade")
             self.assertNotIn("\n", captured.records[0].message)
 
+    def test_link_confirmation_code_is_masked_in_structured_input_logs(self):
+        code = "v1.twitch.6001.oneTimeSecretNotForLogs1234567890"
+        incoming = Incoming("twitch", "Alice", "!jade-memoire   CoNfIrMeR " + code,
+                            channel="public", account_id="6001")
+        with self.assertLogs("jade.conversation", level="INFO") as captured:
+            record_input(7, incoming)
+        self.assertNotIn(code, captured.records[0].message)
+        self.assertEqual(records(captured)[0]["input_text"],
+                         "!jade-memoire confirmer [code masqué]")
+
     def test_reply_canonical_intent_and_multimodal_output(self):
         reply = Reply(Incoming("discord", "Alice", "Jade ?"), "Bonjour !", intent="playful")
         targets = planned_destinations(reply, has_speech=True, audio_output="ffplay",

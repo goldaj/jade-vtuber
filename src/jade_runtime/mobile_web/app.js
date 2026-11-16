@@ -10,6 +10,10 @@
   const modal = $("auth-modal"), authForm = $("auth-form"), authInput = $("auth-token");
   const connection = $("connection-status"), soundToggle = $("sound-toggle");
   const newChat = $("new-chat");
+  const linkForm = $("identity-link-form"), linkResult = $("identity-result");
+  const linkCopy = $("identity-copy");
+  let linkCommand = "";
+  let linkPending = false;
   const avatar = () => window.JadeAvatar || {setMouth() {}, setIntent() {}, setSpeaking() {}, resetIntent() {}};
   let token = "";
   let busy = false;
@@ -40,6 +44,9 @@
 
   function authorizeAgain() {
     token = "";
+    linkCommand = "";
+    linkResult.textContent = "";
+    linkCopy.disabled = true;
     authInput.value = "";
     modal.classList.remove("hidden");
     connection.classList.remove("online");
@@ -358,6 +365,52 @@
       mic.disabled = false;
     }
   }
+
+  linkForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (linkPending) return;
+    linkCommand = "";
+    linkCopy.disabled = true;
+    const platform = $("identity-platform").value;
+    const accountId = $("identity-id").value.trim();
+    if (!["discord", "twitch"].includes(platform) || !/^[1-9][0-9]{0,24}$/.test(accountId)) {
+      linkResult.textContent = "Indique un identifiant numérique valide.";
+      return;
+    }
+    if (!token) {
+      authorizeAgain();
+      return;
+    }
+    linkPending = true;
+    const submit = linkForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    linkResult.textContent = "Création du code de liaison…";
+    try {
+      const result = await makeRequest("/api/link",
+        JSON.stringify({platform, account_id:accountId}),
+        {"Content-Type":"application/json"});
+      if (typeof result.code !== "string" || !result.code.startsWith("v1.")) {
+        throw new Error("Réponse de liaison inattendue.");
+      }
+      linkCommand = "!jade-memoire confirmer " + result.code;
+      linkResult.textContent = linkCommand + "\nValide depuis le compte cible dans les 5 minutes.";
+      linkCopy.disabled = false;
+    } catch (error) {
+      linkResult.textContent = error.message || "Liaison indisponible.";
+    } finally {
+      linkPending = false;
+      submit.disabled = false;
+    }
+  });
+  linkCopy.addEventListener("click", async () => {
+    if (!linkCommand) return;
+    try {
+      await navigator.clipboard.writeText(linkCommand);
+      linkResult.textContent = "Commande copiée. À envoyer depuis le compte cible dans les 5 minutes.";
+    } catch (_) {
+      linkResult.textContent = linkCommand + "\nCopie manuellement la commande.";
+    }
+  });
 
   authForm.addEventListener("submit", event => {
     event.preventDefault();

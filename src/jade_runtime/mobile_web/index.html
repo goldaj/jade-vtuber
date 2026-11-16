@@ -56,6 +56,20 @@
           <button type="button" class="text-button" id="new-chat">Nouveau fil</button>
         </div>
       </div>
+      <details class="identity-panel" id="identity-panel">
+        <summary>Associer un compte Discord / Twitch</summary>
+        <p>Le compte cible doit d'abord envoyer <code>!jade-memoire activer</code> puis <code>!jade-memoire identite</code> à Jade. Recopie l'identifiant numérique renvoyé, pas le pseudo.</p>
+        <form id="identity-link-form">
+          <label for="identity-platform">Service</label>
+          <select id="identity-platform"><option value="discord">Discord</option><option value="twitch">Twitch</option></select>
+          <label for="identity-id">Identifiant numérique du compte</label>
+          <input id="identity-id" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,24}" required maxlength="25" autocomplete="off">
+          <button type="submit">Créer un code de liaison (5 min)</button>
+        </form>
+        <p id="identity-result" role="status" class="identity-result"></p>
+        <button type="button" id="identity-copy" disabled>Copier la commande de confirmation</button>
+        <p>Envoie ensuite cette commande depuis le compte cible dans Discord ou Twitch. Le code est à usage unique et lié à cet identifiant. Pour séparer les comptes sans effacer les souvenirs : <code>!jade-memoire delier</code>. Pour effacer uniquement les données de ce compte : <code>!jade-memoire oublier</code>.</p>
+      </details>
       <div class="messages" id="messages" role="log" aria-live="polite" aria-label="Historique de la discussion">
         <div class="welcome">Bienvenue chez nous. Parle-moi ou écris-moi, comme tu préfères.</div>
       </div>

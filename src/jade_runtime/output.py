@@ -155,7 +155,6 @@ class SpeechOutput:
     def start_early(self, source):
         """Create an opt-in early voice turn if the runtime can actually stream."""
         if (source.platform != "discord_voice"
-                or getattr(self.player, "mode", None) != "none"
                 or self.secondary_player is None
                 or not callable(getattr(self.secondary_player, "play_pcm_stream_for_reply", None))
                 or not callable(getattr(self.services, "stream_speech_pcm", None))):
@@ -173,8 +172,10 @@ class SpeechOutput:
         One PCM iterator feeds exactly one Discord player and is cancelled
         whenever that player stops or its voice session is revoked.
         """
-        if getattr(self.player, "mode", None) != "none":
+        if not discord_voice and getattr(self.player, "mode", None) != "none":
             return False
+        # Discord PCM streams directly to the voice bridge. The local ffplay
+        # setting is for microphone replies and must not block Discord streaming.
         stream_factory = getattr(self.services, "stream_speech_pcm", None)
         method_name = ("play_pcm_stream_for_reply" if discord_voice
                        else "play_pcm_stream_for_context")

@@ -30,7 +30,7 @@
 - Mémoire SQLite v3, opt-in et curation facultative ; profil privé Goldaj partagé par micro PC et mobile authentifié ; historique complet en base avec fenêtre récente bornée ; conversation Discord voix/chat natif du même vocal unifiée par compte et session.
 - Réponses vocales OpenAI ; voix `shimmer` 1,25×, pitch +2 via FFmpeg Rubber Band quand disponible. Intention `[INTENT:...]` filtrée. **Deux réactions faciales r20 et deux textes PWA par chacune des sept intentions** codés ; **14 motions corporelles originales** et rig r21 final à créer.
 - PWA Android privée : texte, prise de parole WAV, TTS mobile, avatar Web sous SDK compatible. Le duplex temps réel n'est pas codé.
-- Streaming PCM Discord disponible sous conditions ; `--all-channels` exige actuellement `JADE_AUDIO_OUTPUT=ffplay`, ce qui empêche ce streaming. Les réponses écrites peuvent encore déclencher du TTS sur d'autres sorties : le routage exclusif reste à développer.
+- Streaming PCM Discord disponible sous conditions : `--all-channels` conserve `ffplay` pour le microphone PC, mais le PCM de Discord vocal l'utilise désormais indépendamment. Le mode par phrases reste opt-in, le fallback WAV et l'ancien broadcast restent à réexaminer. Les réponses écrites peuvent encore déclencher du TTS sur d'autres sorties : le routage exclusif reste à développer.
 
 ## Maintenance et passation
 

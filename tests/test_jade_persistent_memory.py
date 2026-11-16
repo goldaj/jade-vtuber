@@ -97,6 +97,122 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertEqual(len(self.store.recall(mobile, "person")), 1)
         self.assertEqual(len(self.store.list_for_account(mobile)), 1)
 
+    def test_target_bound_link_preserves_complete_history_on_link_and_unlink(self):
+        twitch = ("twitch", "6001")
+        other = ("twitch", "6002")
+        for key in (self.alice, twitch, other):
+            self.store.enable(key)
+        self.assertTrue(self.store.append_conversation_turn(
+            self.alice, "discord:10", source_platform="discord",
+            message_id="discord-1", user_content="Salut Discord",
+            assistant_content="Salut Alice"))
+        self.assertTrue(self.store.append_conversation_turn(
+            twitch, "twitch:live", source_platform="twitch",
+            message_id="twitch-1", user_content="Salut Twitch",
+            assistant_content="Salut Twitch"))
+        code = self.store.begin_link(self.alice, target=twitch)
+        self.assertTrue(code.startswith("v1.twitch.6001."))
+        self.assertFalse(self.store.complete_link(other, code))
+        self.assertTrue(self.store.complete_link(twitch, code))
+        self.assertFalse(self.store.complete_link(twitch, code))
+        # Both scopes survive deleting the previous person (ON DELETE CASCADE).
+        self.assertEqual(len(self.store.recent_conversation_turns(
+            self.alice, "twitch:live")), 2)
+        self.assertEqual(len(self.store.recent_conversation_turns(
+            twitch, "discord:10")), 2)
+        self.assertTrue(self.store.unlink(twitch))
+        self.assertEqual(len(self.store.recent_conversation_turns(
+            twitch, "twitch:live")), 2)
+        self.assertEqual(self.store.recent_conversation_turns(
+            self.alice, "twitch:live"), [])
+        self.assertEqual(len(self.store.recent_conversation_turns(
+            self.alice, "discord:10")), 2)
+
+    def test_unlink_owner_keeps_mobile_and_microphone_history_private(self):
+        owner, twitch = ("microphone", "goldaj"), ("twitch", "6001")
+        self.store.enable(owner)
+        self.store.enable(twitch)
+        for source in ("mobile", "microphone"):
+            self.assertTrue(self.store.append_conversation_turn(
+                owner, "person", source_platform=source,
+                message_id=source + "-01", user_content="Journal " + source,
+                assistant_content="Reçu"))
+        code = self.store.begin_link(owner, target=twitch)
+        self.assertTrue(self.store.complete_link(twitch, code))
+        self.assertEqual(len(self.store.recent_conversation_turns(twitch, "person")), 4)
+        self.assertTrue(self.store.unlink(owner))
+        self.assertEqual(len(self.store.recent_conversation_turns(owner, "person")), 4)
+        self.assertEqual(self.store.recent_conversation_turns(twitch, "person"), [])
+
+    def test_unlink_discord_preserves_voice_and_text_conversations(self):
+        twitch = ("twitch", "6001")
+        self.store.enable(self.alice)
+        self.store.enable(twitch)
+        for platform in ("discord", "discord_voice"):
+            self.assertTrue(self.store.append_conversation_turn(
+                self.alice, "discord:45", source_platform=platform,
+                message_id=platform + "-01", user_content="Hello " + platform,
+                assistant_content="Bonjour"))
+        code = self.store.begin_link(twitch, target=self.alice)
+        self.assertTrue(self.store.complete_link(self.alice, code))
+        self.assertEqual(len(self.store.recent_conversation_turns(
+            twitch, "discord:45")), 4)
+        self.assertTrue(self.store.unlink(self.alice))
+        self.assertEqual(len(self.store.recent_conversation_turns(
+            self.alice, "discord:45")), 4)
+        self.assertEqual(self.store.recent_conversation_turns(twitch, "discord:45"), [])
+
+    def test_new_link_challenge_invalidates_previous_code(self):
+        twitch = ("twitch", "6001")
+        self.store.enable(self.alice)
+        self.store.enable(twitch)
+        first = self.store.begin_link(self.alice, target=twitch)
+        second = self.store.begin_link(self.alice, target=twitch)
+        self.assertNotEqual(first, second)
+        self.assertFalse(self.store.complete_link(twitch, first))
+        self.assertTrue(self.store.complete_link(twitch, second))
+
+    def test_public_forget_erases_only_target_account_in_linked_profile(self):
+        owner, twitch = ("microphone", "goldaj"), ("twitch", "6001")
+        self.store.enable(owner)
+        self.store.enable(twitch)
+        self.store.put(owner, kind="core_relationship", scope="person",
+                       summary="Private Goldaj owner note")
+        self.store.put(twitch, kind="core_relationship", scope="twitch:live",
+                       summary="Twitch participant note")
+        self.store.put_self_core(owner, summary="Jade has remembered a family moment")
+        self.assertTrue(self.store.append_conversation_turn(
+            owner, "person", source_platform="mobile", message_id="m-1",
+            user_content="Private mobile note", assistant_content="Private response"))
+        self.assertTrue(self.store.append_conversation_turn(
+            twitch, "twitch:live", source_platform="twitch", message_id="t-1",
+            user_content="Public Twitch note", assistant_content="Public response"))
+        code = self.store.begin_link(owner, target=twitch)
+        self.assertTrue(self.store.complete_link(twitch, code))
+        self.assertTrue(self.store.forget_own_identity(twitch))
+        self.assertIsNone(self.store.account(twitch))
+        self.assertIsNotNone(self.store.account(owner))
+        self.assertEqual(len(self.store.list_for_account(owner)), 1)
+        self.assertEqual(len(self.store.recall_self_core(owner)), 1)
+        self.assertEqual(len(self.store.recent_conversation_turns(owner, "person")), 2)
+        self.assertEqual(self.store.recent_conversation_turns(owner, "twitch:live"), [])
+
+    def test_public_forget_owner_preserves_linked_external_account(self):
+        owner, twitch = ("microphone", "goldaj"), ("twitch", "6001")
+        self.store.enable(owner)
+        self.store.enable(twitch)
+        self.store.put(owner, kind="core_relationship", scope="person",
+                       summary="Private Goldaj owner note")
+        self.store.put(twitch, kind="core_relationship", scope="twitch:live",
+                       summary="Twitch participant note")
+        self.store.put_self_core(owner, summary="Jade has remembered a family moment")
+        code = self.store.begin_link(owner, target=twitch)
+        self.assertTrue(self.store.complete_link(twitch, code))
+        self.assertTrue(self.store.forget_own_identity(owner))
+        self.assertIsNone(self.store.account(owner))
+        self.assertEqual(len(self.store.list_for_account(twitch)), 1)
+        self.assertEqual(len(self.store.recall_self_core(owner)), 0)
+
     def test_cross_platform_link_unlink_and_explicit_erasure(self):
         twitch = ("twitch", "6001")
         self.store.enable(self.alice)
@@ -164,6 +280,34 @@ class MemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.store = MemoryStore(Path(self.tmp.name) / "jade.sqlite3")
+
+    async def test_public_forget_and_unlink_commands_are_account_scoped(self):
+        owner = ("microphone", "goldaj")
+        twitch = ("twitch", "6001")
+        self.store.enable(owner)
+        self.store.enable(twitch)
+        self.store.put(owner, kind="core_relationship", scope="person",
+                       summary="Protected private owner memory")
+        self.store.put(twitch, kind="core_relationship", scope="twitch:live",
+                       summary="Public Twitch-origin memory")
+        code = self.store.begin_link(owner, target=twitch)
+        self.assertTrue(self.store.complete_link(twitch, code))
+        service = MemoryService(self.store, AsyncMock())
+        command = Incoming("twitch", "Viewer", "!jade-memoire oublier",
+                           channel="live", account_id="6001")
+        reply = await service.command(command)
+        self.assertIn("sans effacer", reply.text)
+        self.assertIsNone(self.store.account(twitch))
+        self.assertEqual(len(self.store.list_for_account(owner)), 1)
+        self.store.enable(twitch)
+        code = self.store.begin_link(owner, target=twitch)
+        self.assertTrue(self.store.complete_link(twitch, code))
+        separated = await service.command(Incoming(
+            "twitch", "Viewer", "!jade-memoire delier",
+            channel="live", account_id="6001"))
+        self.assertIn("séparé", separated.text)
+        self.assertNotEqual(self.store.account(owner), self.store.account(twitch))
+        await service.close()
 
     async def test_opt_in_and_runtime_recall_after_restart(self):
         key = ("discord", "101")

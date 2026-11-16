@@ -12,7 +12,7 @@
 | Twitch | IRC entrée/sortie, reconnexion/PING, un seul tour à la fois, solo actif 100 %, groupe 30 % et interpellations directes |
 | Dialogue | `prompt_chat.txt`, backend OpenAI configurable, défaut `gpt-6-luna` / `low` / 320 tokens, historique volatil 48 messages |
 | Mémoire | SQLite v3 optionnelle, consentement opt-in, souvenirs ordinaires/Core, autobiographie privée, curation asynchrone, échanges complets et récupération des 24 derniers tours |
-| Identités | Profil Goldaj partagé par micro PC et PWA mobile authentifiée ; comptes publics via IDs fiables ; scopes de confidentialité |
+| Identités | Profil Goldaj partagé par micro PC et PWA mobile authentifiée ; liaison Goldaj vers comptes Discord/Twitch consentants par code vérifié à usage unique ; déliaison et effacement propres à l'identité vérifiée ; scopes de confidentialité |
 | Discord voix/texte | Même historique volatil pour un compte dans le vocal et **son chat textuel natif**, sous la même session ; autres salons distincts |
 | Mobile | PWA privée/Tailscale Serve, texte, capture WAV, TTS à la demande, modèle Live2D Web via assets/SDK installés |
 | Audio | STT/TTS OpenAI, PCM progressif sous conditions, voix Étincelle `shimmer` 1,25×, pitch optionnel via FFmpeg Rubber Band |
@@ -22,7 +22,7 @@
 ## Limitations fonctionnelles actuelles
 
 1. **Routage :** une réponse à Discord/Twitch écrit est envoyée en texte, mais peut déclencher une voix supplémentaire sur le PC/Discord vocal. Les MP Discord ne sont pas diffusés publiquement. Le routeur exclusivement par canal d'origine n'est pas codé.
-2. **Streaming :** la sortie PCM progressive requiert une sortie audio locale `none`, tandis que `--all-channels` force `ffplay`. Le chemin vocal du launcher reste donc tamponné.
+2. **Streaming :** Discord vocal utilise le PCM progressif (TTS Realtime et session autorisée) même avec `ffplay` activé dans `--all-channels` pour le micro PC ; le mode phrases reste opt-in et le fallback WAV peut encore employer la sortie locale.
 3. **Concurrence :** l'orchestrateur attend la fin du tour et de sa diffusion pour avancer, même si la curation et les connecteurs peuvent travailler à côté.
 4. **Mémoire :** rappel par identité et portée, chronologique et limité ; pas de cache de présence Goldaj/Discord L1-L2, de préchargement anticipé ou de recherche sémantique profonde.
 5. **Mobile :** capture WAV et réponse audio complète ; pas de duplex/streaming temps réel ou APK natif.
