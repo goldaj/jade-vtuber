@@ -452,7 +452,10 @@ class MemoryStore:
             if a != b:
                 # A core must never be silently discarded during identity linking;
                 # source account is part of the uniqueness key.
+                # Preserve complete opt-in conversation history before deleting the old
+                # person; ON DELETE CASCADE would otherwise silently erase it.
                 db.execute("UPDATE memories SET person_id=? WHERE person_id=?", (a, b))
+                db.execute("UPDATE conversation_turns SET person_id=? WHERE person_id=?", (a, b))
                 db.execute("UPDATE identities SET person_id=? WHERE person_id=?", (a, b))
                 db.execute("DELETE FROM persons WHERE id=?", (b,))
             db.execute("DELETE FROM link_challenges WHERE token_hash=?", (digest,))
