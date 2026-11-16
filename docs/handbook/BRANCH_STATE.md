@@ -1,6 +1,6 @@
 # Inventaire réel : branche develop
 
-**Point de départ du contrôle :** `develop` au SHA `aea51174cabae86274adfaa912990c2e6938b3de` avant ajout de cette documentation et de la Démo Express. Toute modification ultérieure de `develop` doit mettre à jour cet inventaire. Les anciennes branches de fonctionnalités sont historiques.
+**Point de départ historique du manuel :** `aea51174cabae86274adfaa912990c2e6938b3de`. **Revue de réconciliation du 16 novembre 2026 :** `develop` au commit `b9beb904669dd57f070e5860e04f74b046854fec` (PR #20 fusionnée). Le présent inventaire décrit les fonctionnalités vérifiées dans le code et les tests CI, pas une recette sur le PC Jade. Voir [l'audit de câblage](../gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md).
 
 ## Fonctions intégrées
 
@@ -23,11 +23,11 @@
 
 ## Différence avec main et gestion des branches
 
-`main` au moment du contrôle est encore sur son moteur modulaire **avec canaux opt-in et file FIFO**, sans launcher tout-en-un, PWA ni mémoire SQLite. Ne pas synchroniser par simple copier-coller ses guides. Les branches historiques intégrées sont recensées dans [BRANCH_MAINTENANCE.md](BRANCH_MAINTENANCE.md) ; leur suppression doit être effectuée par Codex après vérification de l'ascendance, faute d'outil de suppression dans le connecteur de cette intervention. Trois références divergentes nécessitent une revue.
+`main` au moment du contrôle est encore sur son moteur modulaire **avec canaux opt-in et file FIFO**, sans launcher tout-en-un, PWA ni mémoire SQLite. Ne pas synchroniser par simple copier-coller ses guides. Les branches historiques intégrées sont recensées dans [BRANCH_MAINTENANCE.md](BRANCH_MAINTENANCE.md) ; leur suppression doit être effectuée par Codex après vérification de l'ascendance, faute d'outil de suppression dans le connecteur de cette intervention. Trois références divergentes nécessitent une revue. L'historique `main` → `develop` a été réconcilié le 16 novembre 2026 par le commit `dda14d1108bd91a53f75c3827af472c626479cca`, en conservant exactement l'arbre de `develop` ; **`main` n'a pas reçu les fonctions de `develop`**.
 
 ## Addendum du 15/11/2026 : réactions émotionnelles 2D
 
-La branche dédiée `feat/live2d-intent-expression-sync-20261115` a été créée depuis `develop` pour ajouter le toggle `JADE_AVATAR_INTENT_ENABLED`, la table unique de deux expressions r20 et deux libellés textuels pour chacune des sept intentions, et le pilotage de l'avatar PC / PWA. **Ce sont des expressions, pas des animations corporelles propres**. Avant intégration effective de cette branche dans `develop`, considérer ces capacités comme proposées, non disponibles sur `develop` ; vérifier la PR et son statut. Le SDK Android, le retour au neutre Web, les 14 véritables animations et le modèle en pied r21 restent non validés ou absents. Voir [passation Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+La branche dédiée `feat/live2d-intent-expression-sync-20261115` a été créée depuis `develop` pour ajouter le toggle `JADE_AVATAR_INTENT_ENABLED`, la table unique de deux expressions r20 et deux libellés textuels pour chacune des sept intentions, et le pilotage de l'avatar PC / PWA. **Ce sont des expressions, pas des animations corporelles propres**. La PR #18 a été **fusionnée dans `develop` le 15 novembre 2026** : ces expressions et le contrôle PC/PWA font désormais partie du code. `mobile_web/avatar.js` contient le retour à l'expression neutre, mais son comportement avec un véritable SDK Live2D Web **n'est pas validé**. Le SDK Android, les 14 véritables animations corporelles et le rig final r21 en pied restent non validés ou absents. Voir [passation Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
 
 ## Évolution de develop : 2026-11-15, prompt approuvé et dialogue
 
@@ -37,7 +37,7 @@ La branche dédiée `feat/live2d-intent-expression-sync-20261115` a été créé
 
 ## État DevOps observé le 15/11/2026
 
-**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Le commit `1669d954717d3ac2939f2e094432a48197d3d8c5` de `develop` a produit une CI Ubuntu rouge (520 tests, 17 échecs et 5 erreurs) et un scan Gitleaks vert. Le travail de la PR #19 (`fix/develop-devops-audit-20261115`) fournit les protections de concurrence CI et la compatibilité des exports SQLite schéma v3. Contrôler le SHA de `develop` et l'état de la PR pour connaître son intégration effective. Une recette Windows/Android reste nécessaire.
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Le commit `1669d954717d3ac2939f2e094432a48197d3d8c5` de `develop` a produit une CI Ubuntu rouge (520 tests, 17 échecs et 5 erreurs) et un scan Gitleaks vert. La PR #19 (`fix/develop-devops-audit-20261115`) a été **fusionnée le 15 novembre 2026** et fournit les protections de concurrence CI ainsi que la compatibilité des exports SQLite schéma v3. La PR #20 a été **fusionnée le 16 novembre 2026**, après une CI verte Ubuntu/Windows et un scan secrets réussi. La CI de la branche après fusion et la recette réelle PC/Android sont des contrôles distincts.
 
 ## Contrôle P0 CI du 16 novembre 2026 (develop)
 

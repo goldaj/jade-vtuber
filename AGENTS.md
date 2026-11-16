@@ -103,3 +103,7 @@ Pour toute intervention sur la CI, le launcher ou les sauvegardes, consulter [l'
 - Vérification GitHub Actions Windows/Ubuntu, export de publication, scripts PowerShell et scan de secrets indispensable avant toute affirmation de CI verte. Aucun test vocal matériel ni appel OpenAI réalisé par cette revue.
 
 - Correctif Windows du test IPC Live2D : la simulation valide toujours les deux trames d'expression et de bouche, puis termine par une coupure de pipe contrôlée. L'attente auparavant non bornée du faux moteur était responsable d'annulations Windows au délai de huit minutes ; aucun runtime ni test réel de Live2D n'est remplacé.
+
+## Passation réconciliation develop, 16 novembre 2026
+
+Consulter [l'audit de raccordement code/configuration/docs](docs/gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md) avant de déclarer une fonctionnalité réellement prête sur le PC. Il confirme les PR #18/#19/#20 fusionnées et sépare preuve CI, branche Git et validation matérielle. `main` reste une branche fonctionnellement différente malgré son ascendance désormais partagée avec `develop`.
