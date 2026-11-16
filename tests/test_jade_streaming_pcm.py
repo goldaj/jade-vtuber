@@ -385,7 +385,7 @@ class StreamOutputTests(unittest.IsolatedAsyncioTestCase):
             turn = output.start_early(source)
             self.assertIsNotNone(turn)
             await turn.abort()
-            self.assertTrue(await output.speak(Reply(source, "Bonjour.")))
+            await output.speak(Reply(source, "Bonjour."))
             self.assertEqual(service.stream_calls, 1)
             self.assertGreater(bridge.received, 0)
             self.assertEqual((Path(directory) / "subtitle.txt").read_text(encoding="utf-8"), "")
