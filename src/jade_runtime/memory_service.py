@@ -15,7 +15,7 @@ from .messages import Reply
 
 LOG = logging.getLogger("jade.memory")
 COMMAND = re.compile(
-    r"^!jade-memoire(?:\s+(activer|oublier|etat|autobiographie|supprimer-self|confirmer)"
+    r"^!jade-memoire(?:\s+(activer|oublier|etat|autobiographie|supprimer-self|confirmer|identite)"
     r"(?:\s+([A-Za-z0-9._-]{1,128}))?)?\s*$", re.I)
 _KINDS = frozenset(("none", "ordinary", "core_self", "core_relationship"))
 
@@ -112,7 +112,9 @@ class MemoryService:
         try:
             if memory_id and action not in ("supprimer-self", "confirmer"):
                 return Reply(incoming, "Cette commande n'attend pas d'identifiant.")
-            if action == "confirmer":
+            if action == "identite":
+                text = f"Identifiant {key[0]} vérifié : {key[1]}."
+            elif action == "confirmer":
                 # Public IRC is observable; only the connector-verified target
                 # account may redeem its one-use token.
                 expected = f"v1.{key[0]}.{key[1]}."
