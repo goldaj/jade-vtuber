@@ -172,6 +172,47 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertFalse(self.store.complete_link(twitch, first))
         self.assertTrue(self.store.complete_link(twitch, second))
 
+    def test_public_forget_erases_only_target_account_in_linked_profile(self):
+        owner, twitch = ("microphone", "goldaj"), ("twitch", "6001")
+        self.store.enable(owner)
+        self.store.enable(twitch)
+        self.store.put(owner, kind="core_relationship", scope="person",
+                       summary="Private Goldaj owner note")
+        self.store.put(twitch, kind="core_relationship", scope="twitch:live",
+                       summary="Twitch participant note")
+        self.store.put_self_core(owner, summary="Jade has remembered a family moment")
+        self.assertTrue(self.store.append_conversation_turn(
+            owner, "person", source_platform="mobile", message_id="m-1",
+            user_content="Private mobile note", assistant_content="Private response"))
+        self.assertTrue(self.store.append_conversation_turn(
+            twitch, "twitch:live", source_platform="twitch", message_id="t-1",
+            user_content="Public Twitch note", assistant_content="Public response"))
+        code = self.store.begin_link(owner, target=twitch)
+        self.assertTrue(self.store.complete_link(twitch, code))
+        self.assertTrue(self.store.forget_own_identity(twitch))
+        self.assertIsNone(self.store.account(twitch))
+        self.assertIsNotNone(self.store.account(owner))
+        self.assertEqual(len(self.store.list_for_account(owner)), 1)
+        self.assertEqual(len(self.store.recall_self_core(owner)), 1)
+        self.assertEqual(len(self.store.recent_conversation_turns(owner, "person")), 2)
+        self.assertEqual(self.store.recent_conversation_turns(owner, "twitch:live"), [])
+
+    def test_public_forget_owner_preserves_linked_external_account(self):
+        owner, twitch = ("microphone", "goldaj"), ("twitch", "6001")
+        self.store.enable(owner)
+        self.store.enable(twitch)
+        self.store.put(owner, kind="core_relationship", scope="person",
+                       summary="Private Goldaj owner note")
+        self.store.put(twitch, kind="core_relationship", scope="twitch:live",
+                       summary="Twitch participant note")
+        self.store.put_self_core(owner, summary="Jade has remembered a family moment")
+        code = self.store.begin_link(owner, target=twitch)
+        self.assertTrue(self.store.complete_link(twitch, code))
+        self.assertTrue(self.store.forget_own_identity(owner))
+        self.assertIsNone(self.store.account(owner))
+        self.assertEqual(len(self.store.list_for_account(twitch)), 1)
+        self.assertEqual(len(self.store.recall_self_core(owner)), 0)
+
     def test_cross_platform_link_unlink_and_explicit_erasure(self):
         twitch = ("twitch", "6001")
         self.store.enable(self.alice)
