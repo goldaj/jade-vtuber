@@ -12,6 +12,7 @@ Documentation **spécifique au code de develop**, actualisée après les intégr
 | Inventaire précis de cette branche | [BRANCH_STATE.md](BRANCH_STATE.md) |
 | Branches à nettoyer prudemment | [BRANCH_MAINTENANCE.md](BRANCH_MAINTENANCE.md) |
 | Deux schémas visuels de l'infrastructure et des flux d'appels | [Architecture de Jade](../architecture/README.md) |
+| Backlog des améliorations, trié par thème et séparé du runtime courant | [Catalogue des améliorations](../ameliorations/README.md) |
 
 **Produit visé :** une seule instance Jade active simultanément sur **Discord texte et vocal, Twitch, micro Windows, HTTP local et PWA Android privée**, avec avatar et voix. Pas de classement de plateformes ; Jade peut arbitrer dynamiquement les prochains messages en attente. Le launcher Windows ne propose **pas de profil de démarrage**. Un connecteur obligatoire manquant empêche le lancement complet.
 
