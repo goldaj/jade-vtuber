@@ -93,3 +93,13 @@ Deux réactions 2D par intention sont **planifiées**, mais aucune animation sup
 ## Portes DevOps de develop (15/11/2026)
 
 Pour toute intervention sur la CI, le launcher ou les sauvegardes, consulter [l'audit DevOps et la passation Codex](docs/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Un scan de secrets vert ne remplace pas une suite complète Ubuntu/Windows verte sur le SHA final, et les tests simulés ne sont pas une preuve de recette Discord/Twitch/Android. Le format de transfert SQLite accepte v1/v2/v3 tout en restant non chiffré. Documenter séparément tout accès matériel indisponible et **ne pas** contourner un test en échec.
+
+## Contrôle P0 CI du 16 novembre 2026 (develop)
+
+- Politique de réponse conservée : **100 % en solo vérifié, 30 % en groupe** ; sollicitation explicite prioritaire. Les suivis contextuels en groupe restent échantillonnés et ne garantissent pas une réponse.
+- Tests de transport Discord vocal : échantillonnage neutralisé **dans les doubles de test seulement** pour vérifier indépendamment déplacement de canal, interruption et récupération. La présence des participants est une information en lecture seule permettant de distinguer solo/groupe, jamais une autorisation d'écoute.
+- Tests Discord écrit : salons à plusieurs participants simulés explicitement pour vérifier le taux et les limites de réponses, sans supprimer la réponse automatique en salon solo.
+- Twitch : le test de non-empilement des réponses initialise le participant que l'adaptateur IRC observe normalement. Aucun changement de comportement de production dans ce lot.
+- Vérification GitHub Actions Windows/Ubuntu, export de publication, scripts PowerShell et scan de secrets indispensable avant toute affirmation de CI verte. Aucun test vocal matériel ni appel OpenAI réalisé par cette revue.
+
+- Correctif Windows du test IPC Live2D : la simulation valide toujours les deux trames d'expression et de bouche, puis termine par une coupure de pipe contrôlée. L'attente auparavant non bornée du faux moteur était responsable d'annulations Windows au délai de huit minutes ; aucun runtime ni test réel de Live2D n'est remplacé.

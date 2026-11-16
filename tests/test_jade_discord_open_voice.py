@@ -17,10 +17,12 @@ class Channel:
     def __init__(self, channel_id):
         self.id = channel_id
         self.connect = AsyncMock()
+        # Presence is read-only input for solo/group sampling, not access control.
+        self.humans = (12,)
 
     @property
     def members(self):
-        raise AssertionError("open voice must not inspect participants")
+        return [types.SimpleNamespace(id=uid, bot=False) for uid in self.humans]
 
     @property
     def voice_states(self):
@@ -49,7 +51,8 @@ class OpenVoiceTests(unittest.IsolatedAsyncioTestCase):
                                              user=types.SimpleNamespace(id=100, bot=True))
         self.services = types.SimpleNamespace(transcribe_wav=AsyncMock(return_value="Salut !"))
         self.runtime = types.SimpleNamespace(submit=AsyncMock(), cancel_work=Mock())
-        self.bridge = OpenVoiceBridge(self.services, self.runtime, 45)
+        # Transport tests bypass random sampling; policy probabilities are tested separately.
+        self.bridge = OpenVoiceBridge(self.services, self.runtime, 45, group_reply_rate=1.0)
         self.addAsyncCleanup(self.bridge.close)
         await self.bridge.connect(self.client)
 
@@ -140,6 +143,8 @@ class OpenVoiceTests(unittest.IsolatedAsyncioTestCase):
         bridge._begin_playback(self.connection, bridge.generation, bridge.session_id)
         bridge.receive_pcm(12, "Visiteur", pcm(.25, 1800) + pcm(.8, 0))
         await asyncio.wait_for(started.wait(), 1)
+        # The speaker of the stop command is the sole human in the room.
+        self.channel.humans = (13,)
         bridge.receive_pcm(13, "Visiteur", pcm(.25, 1800) + pcm(.8, 0))
         await asyncio.sleep(.04)
         self.assertEqual(bridge.pending.qsize(), 1)
@@ -149,7 +154,7 @@ class OpenVoiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(bridge._decider.is_muted(bridge.session_id))
         self.runtime.submit.assert_not_awaited()
 
-    async def test_no_membership_check_and_group_speaks_without_name(self):
+    async def test_presence_never_filters_speakers_and_group_can_reply_without_name(self):
         self.channel.connect.assert_awaited_once_with(cls=self.dave_class)
         await self.utterance(12, "Comment vas-tu ?")
         await self.utterance(13, "Et demain ?")

@@ -109,3 +109,13 @@ Les intentions existantes et la réponse textuelle vocale restent inchangées ; 
 ## Audit de fiabilité DevOps du 15/11/2026
 
 **Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Les workflows de rebuild/scan secrets/hygiène publication limitent désormais les exécutions parallèles obsolètes par ref/PR ; le workflow principal conserve le checkout complet **nécessaire** à `scripts/check_docs.py`, désactive la persistance du token de checkout et exécute le préflight avant installation Poetry. Le diagnostic de runner ne se déclenche plus sur une vieille branche. Le format de sauvegarde SQLite accepte les versions 1, 2 et 3 sans modifier le format ZIP et ses contrôles d'intégrité ; il reste non chiffré. La CI du SHA initial audité était rouge ; le correctif ciblé ne vaut pas certification globale. Vérifier le SHA et les résultats réels avant de déployer.
+
+## Contrôle P0 CI du 16 novembre 2026 (develop)
+
+- Politique de réponse conservée : **100 % en solo vérifié, 30 % en groupe** ; sollicitation explicite prioritaire. Les suivis contextuels en groupe restent échantillonnés et ne garantissent pas une réponse.
+- Tests de transport Discord vocal : échantillonnage neutralisé **dans les doubles de test seulement** pour vérifier indépendamment déplacement de canal, interruption et récupération. La présence des participants est une information en lecture seule permettant de distinguer solo/groupe, jamais une autorisation d'écoute.
+- Tests Discord écrit : salons à plusieurs participants simulés explicitement pour vérifier le taux et les limites de réponses, sans supprimer la réponse automatique en salon solo.
+- Twitch : le test de non-empilement des réponses initialise le participant que l'adaptateur IRC observe normalement. Aucun changement de comportement de production dans ce lot.
+- Vérification GitHub Actions Windows/Ubuntu, export de publication, scripts PowerShell et scan de secrets indispensable avant toute affirmation de CI verte. Aucun test vocal matériel ni appel OpenAI réalisé par cette revue.
+
+- Correctif Windows du test IPC Live2D : la simulation valide toujours les deux trames d'expression et de bouche, puis termine par une coupure de pipe contrôlée. L'attente auparavant non bornée du faux moteur était responsable d'annulations Windows au délai de huit minutes ; aucun runtime ni test réel de Live2D n'est remplacé.

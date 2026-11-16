@@ -132,25 +132,26 @@ class AvatarVisualTests(unittest.IsolatedAsyncioTestCase):
         class Stdin:
             def __init__(self):
                 self.frames = []
+
             def write(self, data):
                 self.frames.extend(json.loads(line) for line in data.decode().splitlines())
+
             async def drain(self):
-                pass
+                # End this synthetic renderer deterministically after its
+                # first batch. The production loop stays long-lived; here we
+                # verify both IPC frames and its broken-pipe recovery.
+                raise BrokenPipeError("synthetic renderer finished")
+
         stdin = Stdin()
         self.avatar.process = type("FakeProcess", (), {"stdin": stdin})()
         self.avatar.set_intent("curious")
         self.avatar._queue_mouth(.4)
-        worker = asyncio.create_task(self.avatar._write_loop())
-        try:
-            for _ in range(10):
-                if len(stdin.frames) >= 2:
-                    break
-                await asyncio.sleep(.001)
-            self.assertIn({"type": "expression", "value": "Surprised"}, stdin.frames)
-            self.assertIn({"type": "mouth", "value": .4}, stdin.frames)
-        finally:
-            worker.cancel()
-            await asyncio.gather(worker, return_exceptions=True)
+        # On Windows the old infinite writer/cancel fixture hung until the
+        # eight-minute CI timeout. No tests are skipped or disabled.
+        with self.assertLogs("jade.avatar", level="WARNING"):
+            await asyncio.wait_for(self.avatar._write_loop(), timeout=2)
+        self.assertIn({"type": "expression", "value": "Surprised"}, stdin.frames)
+        self.assertIn({"type": "mouth", "value": .4}, stdin.frames)
 
     async def test_voice_end_returns_to_neutral(self):
         self.avatar.set_intent("excited")
