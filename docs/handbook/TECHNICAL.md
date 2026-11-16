@@ -105,3 +105,8 @@ Le backend `OpenAIServices` transmet `reasoning_effort=low` et `max_completion_t
 **Les variantes faciales/textuelles A/B des sept intentions sont codées**. Seules les 14 motions corporelles dédiées restent futures. Pour le détail : [dialogue et participation](../gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md), [contrat Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [inventaire actuel](BRANCH_STATE.md).
 
 La roadmap technique non implémentée est centralisée dans le [catalogue](../ameliorations/README.md). Les anciennes anomalies et comptes rendus CI restent dans les audits datés et ne sont pas répétés dans cette documentation d'architecture.
+
+
+### Correctifs en PR : Discord PCM / identité mémoire / PWA
+
+La branche de PR `fix/discord-pcm-memory-mobile-20261116` découple le streaming Discord du lecteur `ffplay` local et propose une liaison mémoire Goldaj ↔ Discord/Twitch via un code temporaire créé dans la PWA privée. **Source unique des détails, risques, prérequis et essais PC restant à faire :** [note de correctifs](PR-PCM-MEMOIRE-MOBILE-20261116.md). Ce document décrit une PR **non fusionnée** ; ne pas traiter son contenu comme présent dans `develop` avant le merge.
