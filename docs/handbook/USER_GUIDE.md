@@ -103,3 +103,8 @@ Les **deux variantes faciales et textuelles par intention** sont présentes dans
 **Audit de référence** : [revue DevOps develop du 15 novembre 2026](../gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Les versions de schéma mémoire 1, 2 et 3 sont prises en charge par la fonction d'export/import portable, sous réserve des tests du SHA exécuté. L'export ZIP est en clair et peut conserver des données même après leur suppression de Jade : garder les archives hors Git, appliquer une durée de conservation et vérifier les restaurations en environnement isolé. En cas de CI rouge, ne pas considérer la simple présence d'un fichier ou de sa documentation comme une fonctionnalité validée.
 
 Les travaux futurs, sans doublon avec ce guide utilisateur, sont centralisés dans le [catalogue](../ameliorations/README.md).
+
+
+### Correctifs en PR : Discord PCM / identité mémoire / PWA
+
+La branche de PR `fix/discord-pcm-memory-mobile-20261116` découple le streaming Discord du lecteur `ffplay` local et propose une liaison mémoire Goldaj ↔ Discord/Twitch via un code temporaire créé dans la PWA privée. **Source unique des détails, risques, prérequis et essais PC restant à faire :** [note de correctifs](PR-PCM-MEMOIRE-MOBILE-20261116.md). Ce document décrit une PR **non fusionnée** ; ne pas traiter son contenu comme présent dans `develop` avant le merge.
