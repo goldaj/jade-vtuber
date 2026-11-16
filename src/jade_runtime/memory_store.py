@@ -510,7 +510,14 @@ class MemoryStore:
             # Both authenticated PWA and the private PC microphone represent
             # Goldaj; their stored source_platform fields are distinct even
             # though identity_of maps them to a single account key.
-            platforms = ("microphone", "mobile") if key == ("microphone", "goldaj") else (key[0],)
+            if key == ("microphone", "goldaj"):
+                platforms = ("microphone", "mobile")
+            elif key[0] == "discord":
+                # Discord text and voice carry separate transport labels but
+                # share the same verified Discord identity.
+                platforms = ("discord", "discord_voice")
+            else:
+                platforms = (key[0],)
             db.execute(
                 "UPDATE conversation_turns SET person_id=? "
                 "WHERE person_id=? AND source_platform IN (" +
