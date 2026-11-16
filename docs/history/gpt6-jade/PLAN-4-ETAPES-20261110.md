@@ -1,6 +1,6 @@
 # Jade — réalisation du MVP Discord
 
-**Plan d'exécution historique :** plusieurs étapes ont depuis été codées et intégrées dans develop ; ne pas les traiter comme tâches non faites sans vérifier [BRANCH_STATE](../handbook/BRANCH_STATE.md). Les nouvelles priorités résident dans [docs/ameliorations](../ameliorations/README.md).
+**Plan d'exécution historique :** plusieurs étapes ont depuis été codées et intégrées dans develop ; ne pas les traiter comme tâches non faites sans vérifier [BRANCH_STATE](../../handbook/BRANCH_STATE.md). Les nouvelles priorités résident dans [docs/ameliorations](../../ameliorations/README.md).
 
 Plan de travail sur `develop`, à exécuter dans l'ordre. La démo est considérée
 comme terminée. Référence : [feuille de route](ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md).

@@ -1,13 +1,13 @@
 # Jade : passation GPT-6 Chat → Codex
 
-> **Reprise actuelle, 2 novembre 2026 :** consulter [le dossier de migration](../migration/2026-11-02/README.md).
+> **Reprise actuelle, 2 novembre 2026 :** consulter [le dossier de migration](../migrations/2026-11-02/README.md).
 > La PR #2 consolide la PR #1, sans être fusionnée. Les anciennes indications de
 > branche et de divergence ci-dessous sont historiques. Le propriétaire confirme
 > qu’aucune production n’est active ; le visuel 2D est laissé de côté. Documentation
 > préparée pour revue manuelle Astra, corrections et intégration différées sous Terra.
 
 Branche : `codex/chat-gpt6-jade-rebuild`.
-Document de coordination sur `develop` : `docs/CODEX_PARALLEL_GPT6.md`.
+Document de coordination sur `develop` : `docs/history/handoffs/CODEX_PARALLEL_GPT6.md`.
 Ne pas fusionner ni déployer automatiquement.
 
 ## Nouvelle consigne du propriétaire — choix de modèle (29 octobre 2026)
@@ -28,12 +28,12 @@ par le propriétaire sont organisées par le propriétaire hors du processus
 Tera.** Tera ne les programme pas, ne les demande pas par routine et ne
 s'auto-contrôle pas avec Astra après chaque livraison.
 
-Lire `docs/gpt6-jade/TERA-ASTRA-WORKFLOW.md` avant de planifier une session.
+Lire `docs/operations/reference/TERA-ASTRA-WORKFLOW.md` avant de planifier une session.
 Cette consigne n'autorise ni déploiement, ni publication, ni suppression
 d'assets ou de secrets.
 
 ## Avant de reprendre
-1. Lire `AGENTS.md`, `README.md`, `docs/CHATGPT_PROJECT_HISTORY.md`, puis `docs/gpt6-jade/DECISIONS.md` et `TASKS.md`.
+1. Lire `AGENTS.md`, `README.md`, `docs/history/handoffs/CHATGPT_PROJECT_HISTORY.md`, puis `docs/history/gpt6-jade/DECISIONS.md` et `TASKS.md`.
 2. Vérifier que tous les STT et TTS actifs sont OpenAI ; aucun service vocal externe ne doit appeler ElevenLabs, Google, ou autre fournisseur.
 3. Exécuter les tests hors ligne, puis un démarrage en mode mock, **sans clé ni appel payant**.
 4. Valider les adaptateurs avec micro/casques, Discord, Twitch et VTube Studio sur le PC de l'utilisateur, sans streamer publiquement pendant les essais.

@@ -1,6 +1,6 @@
 # Passation Terra : streaming audio Discord (13 novembre 2026)
 
-**État de develop au 16 novembre :** le streaming PCM Discord et la voie early voice expérimentale sont codés ; leur activation dépend du lecteur local. Avec `--all-channels`, `ffplay` est requis et le chemin progressif n'est pas utilisé. Cette passation date d'une phase de PR antérieure. Voir [état actuel](../handbook/BRANCH_STATE.md) et [backlog audio](../ameliorations/01-LATENCE-VOIX.md).
+**État de develop au 16 novembre :** le streaming PCM Discord et la voie early voice expérimentale sont codés ; leur activation dépend du lecteur local. Avec `--all-channels`, `ffplay` est requis et le chemin progressif n'est pas utilisé. Cette passation date d'une phase de PR antérieure. Voir [état actuel](../../handbook/BRANCH_STATE.md) et [backlog audio](../../ameliorations/01-LATENCE-VOIX.md).
 
 ## Périmètre et coordination
 

@@ -1,6 +1,6 @@
 # Jade : démarrage unifié sur le PC Windows et arbitrage des conversations
 
-**Passation prioritaire pour installer Jade sur le PC et Android avec Codex :** [GUIDE OPÉRATIONNEL WINDOWS + ANDROID](HANDOFF-CODEX-MOBILE-20261115.md). Elle explique la configuration initiale, le SDK Web Live2D, Tailscale Serve privé, Chrome Android et la recette physique. Ce launcher ne configure pas Tailscale à lui seul.
+**Passation prioritaire pour installer Jade sur le PC et Android avec Codex :** [GUIDE OPÉRATIONNEL WINDOWS + ANDROID](../../history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md). Elle explique la configuration initiale, le SDK Web Live2D, Tailscale Serve privé, Chrome Android et la recette physique. Ce launcher ne configure pas Tailscale à lui seul.
 
 **Décision du 15 novembre 2026 :** le propriétaire refuse la sélection de modes du launcher. Jade doit être présente simultanément sur **tous ses supports** ; Jade décide ensuite **l'ordre des réponses**, sans priorité fixe à un support. Cette décision remplace la sélection de profils de la PR #13.
 

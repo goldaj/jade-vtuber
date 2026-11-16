@@ -13,4 +13,4 @@ Alice parle de son roman dans le vocal de Jade, écrit un titre dans **le chat n
 - Préserver les identités fiables, le consentement, l'isolation des MP et l'annulation lors d'une déconnexion/changement de session.
 - Conserver le texte passive seulement dans le contexte autorisé ; ne pas transformer tout message en souvenir durable.
 
-Ces évolutions figurent dans [MEM-13 et le catalogue](../ameliorations/02-MEMOIRE-PRESENCE.md). Le présent fichier n'est plus une instruction de créer à nouveau le partage vocal/chat déjà implémenté.
+Ces évolutions figurent dans [MEM-13 et le catalogue](../../ameliorations/02-MEMOIRE-PRESENCE.md). Le présent fichier n'est plus une instruction de créer à nouveau le partage vocal/chat déjà implémenté.
