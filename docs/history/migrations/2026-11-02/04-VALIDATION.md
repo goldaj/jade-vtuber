@@ -49,8 +49,8 @@ $env:PYTHONUTF8 = '1'
 '/exit' | & $jadeAuditPython main.py
 & $jadeAuditPython -m compileall -q src main.py
 & $jadeAuditPython -m pip check
-& $jadeAuditPython -B docs/migration/2026-11-02/repros/runtime_repros.py (Get-Location).Path
-& $jadeAuditPython -B docs/migration/2026-11-02/repros/connector_repros.py (Get-Location).Path
+& $jadeAuditPython -B docs/history/migrations/2026-11-02/repros/runtime_repros.py (Get-Location).Path
+& $jadeAuditPython -B docs/history/migrations/2026-11-02/repros/connector_repros.py (Get-Location).Path
 ```
 
 Les reproductions utilisent seulement des doubles en mémoire ; le script cœur remplace le chargement privé avant import. Après correction, écrire des tests du comportement attendu inverse ; ne pas conserver « défaut reproduit » comme objectif de validation finale.

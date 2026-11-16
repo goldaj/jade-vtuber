@@ -8,7 +8,7 @@ Le propriétaire demande cette revue Astra pour la présente migration. Aucun mo
 
 - Copie : `D:\Codex\projects\jade-migration-20261102`.
 - Branche : `codex/migration-audit-20261102`, documents et scripts de constat sur research `df544ed`.
-- Lire `AGENTS.md`, `docs/conversations/INDEX.md`, puis `docs/migration/2026-11-02/README.md`.
+- Lire `AGENTS.md`, `docs/history/conversations/INDEX.md`, puis `docs/history/migrations/2026-11-02/README.md`.
 - Ancien clone applicatif inchangé ; aucune production active selon le propriétaire.
 
 ## Message de reprise proposé pour Astra

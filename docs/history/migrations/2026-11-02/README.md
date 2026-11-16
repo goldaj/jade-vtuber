@@ -15,7 +15,7 @@
 5. [Passation Astra → Terra et critères de décision](05-RELAY.md).
 6. [État machine lisible](snapshot.json), [journal et couverture](../../conversations/INDEX.md).
 
-Les deux scripts de [reproduction](repros/) sont des **constats de défauts sur la baseline**, pas des tests de non-régression : leur résultat favorable signifie que le défaut décrit est encore présent. Ils utilisent des données synthétiques et ne contactent aucun service.
+Les deux scripts de [reproduction](repros) sont des **constats de défauts sur la baseline**, pas des tests de non-régression : leur résultat favorable signifie que le défaut décrit est encore présent. Ils utilisent des données synthétiques et ne contactent aucun service.
 
 ## Résultat de la revue rapide
 

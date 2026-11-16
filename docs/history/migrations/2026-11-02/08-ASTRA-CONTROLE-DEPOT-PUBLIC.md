@@ -30,7 +30,7 @@ envoi de message externe n'a été déclenché pendant cette revue.
 - Dans le miroir historique, huit des neuf branches sont déjà incluses dans
   l'ancien `develop`. Seule `speechtotext-discord` possède sept commits divergents.
   Son delta de neuf fichiers est conservé dans
-  [l'archive assainie](../../archives/BRANCHE-DISCORD-HISTORIQUE.md).
+  [l'archive assainie](../../legacy/BRANCHE-DISCORD-HISTORIQUE.md).
 - Le dépôt privé de sauvegarde conserve les configurations, l'historique original
   et les instantanés des branches. Quatorze fichiers distants correspondent
   exactement aux copies locales ; les treize références du miroir original
