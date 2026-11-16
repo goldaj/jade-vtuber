@@ -345,5 +345,51 @@ class StreamOutputTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(path.read_text(encoding="utf-8"), "")
 
 
+    async def test_all_channels_ffplay_does_not_disable_discord_pcm(self):
+        """Local ffplay for the PC microphone must not force buffered Discord WAV."""
+        class Services:
+            settings = type("Settings", (), {"tts_model": "gpt-realtime-2.1-mini"})()
+            stream_calls = 0
+            async def synthesize_wav(self, _text):
+                raise AssertionError("Discord PCM must not fall back to a full WAV")
+            def stream_speech_pcm(self, _text):
+                self.stream_calls += 1
+                async def chunks():
+                    yield b"\\x01\\x00" * 480
+                return chunks()
+
+        class LocalPlayer:
+            mode = "ffplay"
+            async def play(self, _wav):
+                raise AssertionError("Local ffplay must not consume Discord PCM")
+
+        class Bridge:
+            received = 0
+            def reply_authorized(self, _source):
+                return True
+            async def play_pcm_stream_for_reply(self, stream, _source):
+                async for frame in stream:
+                    self.received += len(frame)
+                return True
+            def mark_voice_reply_played(self, _source):
+                pass
+
+        source = Incoming("discord_voice", "A", "salut", channel="45",
+                          voice_session_id="a" * 32, speaker_id=12, force_reply=True)
+        with tempfile.TemporaryDirectory() as directory:
+            service, bridge = Services(), Bridge()
+            output = SpeechOutput(service, LocalPlayer(),
+                                  Path(directory) / "subtitle.txt",
+                                  secondary_player=bridge)
+            # Early sentence streaming must be eligible with ffplay configured.
+            turn = output.start_early(source)
+            self.assertIsNotNone(turn)
+            await turn.abort()
+            self.assertTrue(await output.speak(Reply(source, "Bonjour.")))
+            self.assertEqual(service.stream_calls, 1)
+            self.assertGreater(bridge.received, 0)
+            self.assertEqual((Path(directory) / "subtitle.txt").read_text(encoding="utf-8"), "")
+
+
 if __name__ == "__main__":
     unittest.main()
