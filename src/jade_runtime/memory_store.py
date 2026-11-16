@@ -199,6 +199,63 @@ class MemoryStore:
             db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
             return True
 
+    def forget_own_identity(self, key: tuple[str, str]) -> bool:
+        """Erase only data originating from the verified account.
+
+        The legacy forget() API intentionally deletes an entire linked person.
+        Public Discord/Twitch commands MUST use this narrower operation so an
+        external account cannot wipe Goldaj's private memories or another
+        account's data. Old turn rows lack account_id, so ambiguous same-provider
+        detachments are refused rather than deleting another user's history.
+        """
+        _validate_key(key)
+        with self._db() as db:
+            row = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
+            ).fetchone()
+            if row is None:
+                return False
+            person = row["person_id"]
+            size = db.execute(
+                "SELECT COUNT(*) FROM identities WHERE person_id=?", (person,)
+            ).fetchone()[0]
+            if size == 1:
+                # Isolated account: preserve existing complete-erasure behavior.
+                if key == ("microphone", "goldaj"):
+                    db.execute("""
+                        DELETE FROM jade_self_core
+                        WHERE source_platform='microphone' AND source_account_id='goldaj'
+                    """)
+                db.execute("DELETE FROM persons WHERE id=?", (person,))
+            else:
+                same_provider = db.execute(
+                    "SELECT COUNT(*) FROM identities WHERE person_id=? AND platform=?",
+                    (person, key[0])).fetchone()[0]
+                if same_provider != 1:
+                    raise ValueError("cannot safely erase an ambiguous linked account")
+                if key == ("microphone", "goldaj"):
+                    db.execute("""
+                        DELETE FROM jade_self_core
+                        WHERE source_platform='microphone' AND source_account_id='goldaj'
+                    """)
+                db.execute("""
+                    DELETE FROM memories WHERE person_id=?
+                    AND source_platform=? AND source_account_id=?
+                """, (person, *key))
+                platforms = (("microphone", "mobile") if key == ("microphone", "goldaj")
+                             else ("discord", "discord_voice") if key[0] == "discord"
+                             else (key[0],))
+                db.execute(
+                    "DELETE FROM conversation_turns WHERE person_id=? "
+                    "AND source_platform IN (" +
+                    ",".join("?" for _ in platforms) + ")",
+                    (person, *platforms))
+                db.execute(
+                    "DELETE FROM identities WHERE platform=? AND account_id=?", key)
+            db.execute(
+                "DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
+            return True
+
     def put(self, key: tuple[str, str], *, kind: str, scope: str, summary: str,
             significance: str = "", message_id: str = "", ordinary_days: int = 90,
             expected_person_id: str | None = None) -> bool:
