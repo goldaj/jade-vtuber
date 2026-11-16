@@ -28,7 +28,7 @@ Les versions de documentation sont **spécifiques à chaque branche** et reflèt
 2. **Choisir la bonne branche** : travail sur `develop` ou branche dédiée à partir de `develop`, `main` uniquement sur autorisation séparée. Voir la [note de nettoyage](BRANCH_MAINTENANCE.md) ; les anciennes branches ancêtres de develop sont candidates à suppression par Codex, celles divergentes demandent revue.
 3. **Lire les sources et les docs exactes** de cette branche, surtout `main.py`, `config.py`, `orchestrator.py`, les transports touchés, `AGENTS.md` et le guide concerné. Ne pas considérer un rapport d'une ancienne PR comme la preuve d'un comportement courant.
 4. **Analyser avec perspectives PO, architecture, backend, audio/Live2D, SRE/infra, sécurité/privacité et QA** : user journey, coût, compatibilité, tests et mode dégradé. Corriger les contradictions plutôt que les documenter comme des réussites.
-5. **Coder puis documenter** la modification dans TOUS les fichiers listés, et dans chaque branche réellement concernée. Ne pas copier des documents tels quels sur main si le runtime diffère.
+5. **Coder puis documenter** en actualisant le journal technique obligatoire `docs/operations/CHANGELOG.md`, puis uniquement les guides, schémas et passations réellement impactés sur la branche concernée. Ne pas recopier des documents de develop sur main si le runtime diffère.
 6. **Valider** : `poetry run python -m compileall -q src main.py`, `poetry run python -m unittest discover -s tests -v`, `poetry run python main.py --preflight`, `python scripts/check_docs.py`, tests ciblés, Windows PowerShell parser ; plus essais physiques **avec consentement** quand nécessaires.
 7. **Revoir et merger** selon la politique propriétaire : ne pas modifier `main` ni les routes du VPS sans instruction claire. Un connecteur qui n'est pas configuré ne doit pas être masqué pour faire passer le launcher.
 8. **Livrer** une synthèse avec SHA/branche/PR, fichiers et documents mis à jour, tests automatiques vs tests réels, limites ouvertes, dépendances manuelles et risques. Les consignes de chat ne remplacent pas les changements enregistrés dans le dépôt.
@@ -46,7 +46,7 @@ Le connecteur GitHub de cette session ne dispose pas d'action de suppression de 
 ## Checklist avant fermeture d'une PR
 
 - [ ] Cette branche reflète les fonctions réellement présentes, et non des intentions futures
-- [ ] Tous les guides et les passations de domaine corrigés
+- [ ] Journal technique actualisé si nécessaire ; guides et passations touchés par la modification corrigés
 - [ ] Aucun secret, piste audio privée ou mémoire dans les commits
 - [ ] Aucune priorité fixe de canal ni sélecteur de mode réintroduit
 - [ ] L'isolation mobile/micro et la confidentialité OBS/Discord/Twitch restent testées
@@ -55,7 +55,7 @@ Le connecteur GitHub de cette session ne dispose pas d'action de suppression de 
 
 ## Addendum obligatoire : 14 réactions propres par intention (15/11/2026)
 
-Le propriétaire demande maintenant **deux animations Live2D réellement différentes ET deux représentations textuelles par chacune des sept intentions**, sur un modèle **2D**, pas 3D. Sur cette branche, seules deux expressions faciales de substitution et deux libellés PWA ont été codés par intention, avec toggle global et synchronisation PC/mobile. Les **14 motion assets dédiés** et le rig en pied validé ne sont PAS livrés. Codex doit lire la [passation Live2D explicite et sa matrice de statuts](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), réaliser le travail artistique/technique qui manque sur une branche indépendante, ne brancher aucun motion ID fictif ou SDK incompatible, effectuer une recette réelle PC + Android, et synchroniser **toutes** les documentations de la branche. Ne pas afficher de didascalies sur les canaux publics ni modifier `main` sans accord.
+Le propriétaire demande maintenant **deux animations Live2D réellement différentes ET deux représentations textuelles par chacune des sept intentions**, sur un modèle **2D**, pas 3D. Sur cette branche, seules deux expressions faciales de substitution et deux libellés PWA ont été codés par intention, avec toggle global et synchronisation PC/mobile. Les **14 motion assets dédiés** et le rig en pied validé ne sont PAS livrés. Codex doit lire la [passation Live2D explicite et sa matrice de statuts](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), réaliser le travail artistique/technique qui manque sur une branche indépendante, ne brancher aucun motion ID fictif ou SDK incompatible, effectuer une recette réelle PC + Android, et synchroniser les documentations **effectivement impactées** de cette branche, avec une entrée au journal technique. Ne pas afficher de didascalies sur les canaux publics ni modifier `main` sans accord.
 
 ## Passation obligatoire : évolution dialogue (2026-11-15)
 
@@ -65,7 +65,7 @@ Avant toute autre modification, lire [la passation technique de ce chantier](../
 
 ## Passation Codex : sécurité, CI et restauration (15/11/2026)
 
-**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Priorité : garder les checks Ubuntu/Windows bloquants, **ne pas** masquer les erreurs de la suite ni fusionner dans `main` pour contourner un échec. Vérifier l'ordre des changements des agents sur `develop`, le diagnostic des 17 tests en échec et 5 erreurs observés sur le commit initial, le transfert SQLite v3, la conservation des logs privés et la protection GitHub de `develop`. Les documents et l'historique GitHub Actions décrivent les résultats observables, pas un test sur le poste Jade. Après toute modification, actualiser les guides de cette branche.
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Priorité : garder les checks Ubuntu/Windows bloquants, **ne pas** masquer les erreurs de la suite ni fusionner dans `main` pour contourner un échec. Vérifier l'ordre des changements des agents sur `develop`, le diagnostic des 17 tests en échec et 5 erreurs observés sur le commit initial, le transfert SQLite v3, la conservation des logs privés et la protection GitHub de `develop`. Les documents et l'historique GitHub Actions décrivent les résultats observables, pas un test sur le poste Jade. Après tout changement technique, actualiser le journal technique puis les guides de la branche concernés par ce changement.
 
 ## Références courantes
 
