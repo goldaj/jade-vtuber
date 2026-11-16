@@ -81,7 +81,7 @@ class TwitchIRC:
             # Only a verified one-chatter room forces a reply; in a group
             # Dialogue uses the configured 30% sampling for spontaneous turns.
             command = bool(re.fullmatch(
-                r"!jade-memoire(?:\s+(?:activer|oublier|etat|identite|confirmer"
+                r"!jade-memoire(?:\s+(?:activer|oublier|etat|identite|delier|confirmer"
                 r"(?:\s+[A-Za-z0-9._-]{1,128})?))?\s*",
                 incoming.text.strip(), flags=re.IGNORECASE))
             work = await self.on_message(replace(
