@@ -13,7 +13,7 @@ Le propriétaire veut, depuis **son PC Windows avec les données et le travail J
 3. Après installation initiale, usage normal : **Jade et Tailscale actifs sur le PC ; Tailscale actif sur Android ; ouverture de l'icône Jade installée dans Chrome**. PC éteint ou Jade arrêtée : service indisponible.
 4. Codex doit **faire les manipulations réalisables sur le PC lorsqu'il aura accès**, vérifier les résultats, présenter les opérations nécessitant un compte ou une autorisation humaine et ne pas inventer des succès.
 
-**Références de code :** intégration de la PWA/mémoire/Discord dans `develop` (PR #11), launcher Windows (PR #13), correction « tous les supports » et arbitrage (PR #14). `main` n'est pas la branche de travail de ce déploiement. Lire aussi [launcher Windows](LAUNCHER-WINDOWS-20261115.md), [audit transverse](AUDIT-TRANSVERSE-20261115.md), et `AGENTS.md`. Les anciens journaux de PR #6/#7/#8/#9 décrivent une situation antérieure à la fusion.
+**Références de code :** intégration de la PWA/mémoire/Discord dans `develop` (PR #11), launcher Windows (PR #13), correction « tous les supports » et arbitrage (PR #14). `main` n'est pas la branche de travail de ce déploiement. Lire aussi [launcher Windows](../../operations/reference/LAUNCHER-WINDOWS-20261115.md), [audit transverse](AUDIT-TRANSVERSE-20261115.md), et `AGENTS.md`. Les anciens journaux de PR #6/#7/#8/#9 décrivent une situation antérieure à la fusion.
 
 ## 1. Séquence de reprise obligatoire pour Codex sur le vrai PC
 

@@ -38,7 +38,7 @@
   peut décider ultérieurement de vérifier chaque livraison ou certains lots.
 - Motif : privilégier les capacités pratiques de Tera et la consommation
   de tokens, sans sacrifier la traçabilité ou la sécurité des sources.
-- Voir `docs/gpt6-jade/TERA-ASTRA-WORKFLOW.md` pour les critères et
+- Voir `docs/operations/reference/TERA-ASTRA-WORKFLOW.md` pour les critères et
   la formulation de passation. Aucune action automatique de publication,
   de connexion aux comptes ou de migration des secrets n'en découle.
 

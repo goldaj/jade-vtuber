@@ -25,4 +25,4 @@ Les spectateurs Twitch silencieux ne sont pas connus par IRC. Les filtres de lon
 
 Le registre `intent-visuals.json` contient **sept intentions × deux expressions faciales r20 × deux libellés PWA** ; PC et mobile consomment ce contrat. Les **14 motions corporelles originales** sur rig r21 sont à développer, sans qualifier les expressions r20 actuelles de motions finales. Voir [passation Live2D](LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
 
-Le projet de backend Realtime léger sans Luna, la mémoire anticipée et le routage exclusivement par origine sont détaillés dans le [catalogue des améliorations](../ameliorations/README.md) ; ils ne sont pas encore intégrés.
+Le projet de backend Realtime léger sans Luna, la mémoire anticipée et le routage exclusivement par origine sont détaillés dans le [catalogue des améliorations](../../ameliorations/README.md) ; ils ne sont pas encore intégrés.

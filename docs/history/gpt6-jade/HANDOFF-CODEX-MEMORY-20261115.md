@@ -1,6 +1,6 @@
 # Passation Codex : mémoire persistante et Core Memories, lot distant (15 novembre 2026)
 
-**État courant :** mémoire SQLite v3 et autobiographie intégrées sur `develop`. Cette passation conserve le contexte des PR historiques ; voir [l'état du code](../handbook/BRANCH_STATE.md) pour l'inventaire actuel.
+**État courant :** mémoire SQLite v3 et autobiographie intégrées sur `develop`. Cette passation conserve le contexte des PR historiques ; voir [l'état du code](../../handbook/BRANCH_STATE.md) pour l'inventaire actuel.
 
 ## Arbitrage technique : SQLite plutôt que MongoDB
 
@@ -57,8 +57,8 @@ Le contenu de la base n'est pas synchronisé en temps réel entre PC, et n'inclu
 ## Reprise Codex : limites importantes restantes
 
 1. **Validation réelle du poste :** récupérer la PR sans écraser le travail local de Terra/Codex, contrôler la branche courante, les variables de configuration, le volume D: et les droits d'accès, puis tests `python -m compileall -q src main.py` et `python -m unittest discover -s tests -v` ; comparer les résultats CI de la PR. Tester une connexion Discord/Twitch réelle uniquement avec l'accord propriétaire et sans coût non autorisé.
-2. **Autobiographie :** la table séparée `jade_self_core` est intégrée ; son rappel est **owner_only** pour Goldaj. Une éventuelle autobiographie publique de Jade nécessiterait un nouveau contrat de visibilité. Voir [l'état actuel](../handbook/BRANCH_STATE.md).
-3. **Conversations croisées :** le partage **voix / chat textuel natif du même vocal Discord** est implémenté, à identité et session égales. L'association avec d'autres salons, MP ou chronologies indépendantes reste un projet, détaillé dans le [catalogue](../ameliorations/02-MEMOIRE-PRESENCE.md).
+2. **Autobiographie :** la table séparée `jade_self_core` est intégrée ; son rappel est **owner_only** pour Goldaj. Une éventuelle autobiographie publique de Jade nécessiterait un nouveau contrat de visibilité. Voir [l'état actuel](../../handbook/BRANCH_STATE.md).
+3. **Conversations croisées :** le partage **voix / chat textuel natif du même vocal Discord** est implémenté, à identité et session égales. L'association avec d'autres salons, MP ou chronologies indépendantes reste un projet, détaillé dans le [catalogue](../../ameliorations/02-MEMOIRE-PRESENCE.md).
 4. **Curation IA :** évaluer qualité réelle des Core, collisions sémantiques, faits contradictoires, effets de coût/latence, disponibilité du modèle et sortie JSON valide. Les refus/retries ne doivent jamais empêcher une réponse. Le moteur autorise au plus quatre tâches concurrentes ; des événements en surcharge peuvent ne pas être mémorisés, à observer.
 5. **Droits utilisateur :** compléter les commandes de consultation/export, correction ciblée, désactivation future et déliaison. Actuellement l'effacement global est implémenté, mais pas la correction conversationnelle d'une Core. Réviser une Core ne veut pas dire la purger automatiquement.
 6. **Liaison sûre :** brancher la génération/réception du défi d'identité à des interfaces privées **authentifiées**, pas une commande IRC publique ; empêcher code affiché sur un stream, vérifier comptes/source.

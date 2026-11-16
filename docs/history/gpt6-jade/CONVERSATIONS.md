@@ -17,4 +17,4 @@ priorités : runtime texte puis voix OpenAI, Twitch, VTube Studio, Discord, mém
 Branche indépendante + coordination `develop` exclusivement documentaire,
 rapport après chaque étape.
 
-Voir `docs/CHATGPT_PROJECT_HISTORY.md` pour la mémoire antérieure partielle.
+Voir `docs/history/handoffs/CHATGPT_PROJECT_HISTORY.md` pour la mémoire antérieure partielle.

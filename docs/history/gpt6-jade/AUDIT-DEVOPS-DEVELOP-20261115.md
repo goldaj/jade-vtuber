@@ -1,6 +1,6 @@
 # Audit DevOps/PO transverse de `develop` — 15 novembre 2026
 
-**Audit daté, conservé comme preuve historique.** Les 17 FAIL et 5 ERROR mentionnés ci-dessous ont été observés sur un **ancien SHA** ; ils ne constituent pas une liste des défauts actuels de develop. Les corrections des PR #19/#20/#21 ont été intégrées ensuite. Vérifier le code et le [statut courant](../handbook/BRANCH_STATE.md), et suivre les nouvelles pistes dans le [catalogue](../ameliorations/07-QUALITE-EXPLOITATION.md).
+**Audit daté, conservé comme preuve historique.** Les 17 FAIL et 5 ERROR mentionnés ci-dessous ont été observés sur un **ancien SHA** ; ils ne constituent pas une liste des défauts actuels de develop. Les corrections des PR #19/#20/#21 ont été intégrées ensuite. Vérifier le code et le [statut courant](../../handbook/BRANCH_STATE.md), et suivre les nouvelles pistes dans le [catalogue](../../ameliorations/07-QUALITE-EXPLOITATION.md).
 
 > **Périmètre réel** : `goldaj/jade-vtuber`, base `develop`, revue à partir de la pointe `1669d954717d3ac2939f2e094432a48197d3d8c5`. **Ce n'est ni la branche `devops` ni `main`.**
 > Ce rapport décrit les observations distantes (code GitHub + GitHub Actions), les modifications proposées et les opérations restant à effectuer sur le vrai PC Windows. La documentation n'est pas une preuve de recette réelle.
