@@ -99,7 +99,7 @@ class DiscordTextPolicy:
                                     text, flags=re.IGNORECASE)))
         command = (text.casefold().startswith(("!response", "!rsp"))
                    or bool(re.fullmatch(
-                       r"!jade-memoire(?:\s+(?:activer|oublier|etat|autobiographie|supprimer-self|confirmer|identite)(?:\s+[A-Za-z0-9._-]{1,128})?)?\s*",
+                       r"!jade-memoire(?:\s+(?:activer|oublier|etat|autobiographie|supprimer-self|confirmer|identite|delier)(?:\s+[A-Za-z0-9._-]{1,128})?)?\s*",
                        text, flags=re.IGNORECASE)))
         dm = getattr(message, "guild", None) is None
         direct = bool(ping or reply_to_jade or named or command or dm)
