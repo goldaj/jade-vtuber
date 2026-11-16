@@ -97,6 +97,8 @@ class PersonaRuntimeTests(unittest.TestCase):
 
             twitch = TwitchIRC(login="jadebot", token="secret",
                                channel="streamer", on_message=submit)
+            # The IRC reader normally records the only human speaker before offer.
+            twitch.participants["viewer"] = 1.0
             mk = lambda n: Incoming("twitch", "viewer", f"message {n}",
                                     channel="streamer", message_id=str(n))
             await twitch._offer_message(mk(1))

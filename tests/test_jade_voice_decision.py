@@ -54,15 +54,16 @@ class VoiceDecisionTests(unittest.TestCase):
         self.assertEqual(self.decide("reprends").reason, "resumed")
         self.assertTrue(self.decide("bonjour").should_reply)
 
-    def test_group_requires_trusted_address_or_confirmed_same_speaker_followup(self):
+    def test_group_requires_trusted_address_or_is_sampled_including_followups(self):
         self.assertEqual(self.decide("silence", participants=2).reason, "ambiguous_group")
         self.assertEqual(self.decide("Quel temps fait-il ?", participants=2).reason,
-                         "ambiguous_group")
+                         "group_sampled_out")
         addressed = self.decide("Tu peux m'aider ?", participants=2, direct_address=True)
         self.assertTrue(addressed.should_reply)
         self.assertFalse(self.decide("Et pourquoi ?", participants=2).should_reply)
         self.assertTrue(self.policy.mark_replied(self.session, addressed.turn_id))
-        self.assertTrue(self.decide("Et pourquoi ?", participants=2).should_reply)
+        # Context does not bypass the agreed 30% group sampling.
+        self.assertFalse(self.decide("Et pourquoi ?", participants=2).should_reply)
         self.assertFalse(self.decide("Et pourquoi ?", participants=2, speaker=2).should_reply)
         self.now += 31
         self.assertFalse(self.decide("Et pourquoi ?", participants=2).should_reply)
