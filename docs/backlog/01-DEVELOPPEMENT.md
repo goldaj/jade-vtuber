@@ -4,15 +4,19 @@
 
 Au dernier relevé GitHub, aucune issue/PR de développement ouverte. Les fonctionnalités existantes ne sont pas à recoder. Ce tableau distingue un travail futur **déjà nécessaire pour livrer le r21** des **anomalies candidates qui ne deviennent du développement qu'après reproduction en recette**. Il ne reprend pas par défaut les 185 idées futures.
 
-**Priorité :** valeur et dépendances, pas un engagement de calendrier. **Statut non finalisé :** les critères spécifiques ci-dessous sont des résultats attendus, pas la Definition of Done transversale, à définir avec le propriétaire ultérieurement.
+**Priorité :** valeur et dépendances, pas un engagement de calendrier. **DoD officielle :** [règle de clôture commune](DEFINITION_OF_DONE.md). La situation initiale décrit le constat technique ; seul **Statut** indique l'avancement. Les critères spécifiques restent distincts de la DoD. **Validation positive par Codex (tout modèle ou sous-agent) OU par le propriétaire**, sans double approbation.
 
-| ID | Prio | Jalon | Situation | Tâche | Résultat attendu / vérification | Dépend de |
-| --- | --- | --- | --- | --- | --- | --- |
-| **DEV-001** | P1 | B | Bloqué par assets r21 | Raccorder les 14 vraies motions r21 au runtime Jade | Lorsque les assets ART-009/011 seront prêts : contrat de motions versionné, sélection de deux motions par intention, transitions, idle/replis r20, appels Windows et PWA, tests de non-régression. Ne pas considérer les expressions r20 A/B comme 14 motions. | ART-009, ART-011, REC-020 |
-| **DEV-002** | P1 | A | Conditionnel : anomalie à confirmer | Corriger une éventuelle incompatibilité SDK Live2D Web Android | Créer un correctif uniquement si REC-019 révèle un défaut reproductible de compatibilité moc3/Cubism/adapter ; documenter version, cas minimal, correction et résultat ciblé. Sinon clore la qualification sans développement. | OPS-010, REC-019 |
-| **DEV-003** | P0 | A | Conditionnel : anomalie à confirmer | Corriger la sortie indésirable du repli WAV s'il se produit réellement | Le code courant contient encore un chemin de fallback pouvant jouer hors destination. Vérifier REC-007/REC-005 ; si reproduit, corriger ce défaut avec régression d'isolation sans engager la refonte RTE-01 du catalogue futur. Sinon pas de changement arbitraire. | REC-005, REC-007 |
+| ID | Prio | Jalon | Statut | Situation initiale | Tâche | Résultat attendu / vérification | Dépend de |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **DEV-001** | P1 | B | **Bloqué** | Bloqué par assets r21 | Raccorder les 14 vraies motions r21 au runtime Jade | Lorsque les assets ART-009/011 seront prêts : contrat de motions versionné, sélection de deux motions par intention, transitions, idle/replis r20, appels Windows et PWA, tests de non-régression. Ne pas considérer les expressions r20 A/B comme 14 motions. | ART-009, ART-011, REC-020 |
+| **DEV-002** | P1 | A | **À qualifier** | Conditionnel : anomalie à confirmer | Corriger une éventuelle incompatibilité SDK Live2D Web Android | Créer un correctif uniquement si REC-019 révèle un défaut reproductible de compatibilité moc3/Cubism/adapter ; documenter version, cas minimal, correction et résultat ciblé. Sinon clore la qualification sans développement. | OPS-010, REC-019 |
+| **DEV-003** | P0 | A | **À qualifier** | Conditionnel : anomalie à confirmer | Corriger la sortie indésirable du repli WAV s'il se produit réellement | Le code courant contient encore un chemin de fallback pouvant jouer hors destination. Vérifier REC-007/REC-005 ; si reproduit, corriger ce défaut avec régression d'isolation sans engager la refonte RTE-01 du catalogue futur. Sinon pas de changement arbitraire. | REC-005, REC-007 |
 
 ## Usage pour les agents
+
+**Clôture :** suivre la [Definition of Done officielle](DEFINITION_OF_DONE.md). **Done** n'est autorisé qu'après une passe de vérification explicite et une validation positive par **Codex OU le propriétaire**, les deux autres garanties étant les preuves pertinentes et la traçabilité/intégration requises. La décision indique dans la passation/PR liée : ID(s), validateur, date, version/SHA ou asset, tests observés, limites et livraison. Aucune carte n'a été automatiquement clôturée lors de l'adoption de cette règle.
+
+
 
 - Ne jamais confondre **fonction déjà codée mais non recettée** et **travail logiciel à développer**.
 - Tout nouveau bug exige une observation reproductible : source, environnement/branche SHA, résultat réel vs attendu, impact, dépendance de recette et preuve sans contenu privé.
