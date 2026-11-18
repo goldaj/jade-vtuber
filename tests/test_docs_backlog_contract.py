@@ -3,9 +3,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.check_docs import backlog_integrity_errors
+# The minimal public preview copies tests but intentionally omits scripts/.
+# Validate the real backlog only when its controller is included in the bundle.
+if (Path(__file__).resolve().parents[1] / "scripts/check_docs.py").is_file():
+    from scripts.check_docs import backlog_integrity_errors
+else:
+    backlog_integrity_errors = None
 
 
+@unittest.skipIf(backlog_integrity_errors is None,
+                 "portable preview does not include the operational backlog")
 class BacklogIntegrityTests(unittest.TestCase):
     def test_current_backlog_is_consistent(self):
         self.assertEqual(backlog_integrity_errors(), [])
