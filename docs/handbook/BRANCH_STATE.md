@@ -21,7 +21,7 @@
 
 ## Limitations fonctionnelles actuelles
 
-1. **Routage :** une réponse à Discord/Twitch écrit est envoyée en texte, mais peut déclencher une voix supplémentaire sur le PC/Discord vocal. Les MP Discord ne sont pas diffusés publiquement. Le routeur exclusivement par canal d'origine n'est pas codé.
+1. **Routage :** une réponse à Discord/Twitch écrit est envoyée en texte, mais peut déclencher une voix supplémentaire sur le PC/Discord vocal. Les MP Discord sont exclus de la diffusion vocale publique et leurs sous-titres OBS sont masqués sur le chemin WAV local. La capture de l'audio système par OBS dépend du mixage réel, toujours à recetter. Le routeur exclusivement par canal d'origine n'est pas codé.
 2. **Streaming :** Discord vocal utilise le PCM progressif (TTS Realtime et session autorisée) même avec `ffplay` activé dans `--all-channels` pour le micro PC ; le mode phrases reste opt-in et le fallback WAV peut encore employer la sortie locale.
 3. **Concurrence :** l'orchestrateur attend la fin du tour et de sa diffusion pour avancer, même si la curation et les connecteurs peuvent travailler à côté.
 4. **Mémoire :** rappel par identité et portée, chronologique et limité ; pas de cache de présence Goldaj/Discord L1-L2, de préchargement anticipé ou de recherche sémantique profonde.

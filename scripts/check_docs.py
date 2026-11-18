@@ -107,6 +107,98 @@ def broken_local_markdown_links() -> list[str]:
     return missing
 
 
+def backlog_integrity_errors(root: Path = ROOT) -> list[str]:
+    """Check canonical IDs, dependencies and index ranks without network access."""
+    directory = root / "docs/backlog"
+    views = {
+        "DEV": "01-DEVELOPPEMENT.md", "REC": "02-RECETTE.md",
+        "OPS": "03-INSTALLATION-OPS.md", "ART": "04-PRODUCTION-2D.md",
+    }
+    statuses = {"À qualifier", "À faire", "En cours", "À valider",
+                "Bloqué", "Done", "Classée sans suite"}
+    cards: dict[str, tuple[str, list[str]]] = {}
+    errors = []
+    for prefix, filename in views.items():
+        try:
+            lines = (directory / filename).read_text(encoding="utf-8").splitlines()
+        except OSError:
+            errors.append("Missing backlog view: " + filename)
+            continue
+        for line in lines:
+            if not re.match(r"^\|\s*\*\*(?:DEV|REC|OPS|ART)-\d{3}\*\*\s*\|", line):
+                continue
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            if len(cells) != 8:
+                errors.append("Malformed backlog card in " + filename)
+                continue
+            ident = cells[0].strip("*")
+            if ident in cards or not ident.startswith(prefix + "-"):
+                errors.append("Duplicate or misplaced backlog ID: " + ident)
+                continue
+            status = cells[3].removeprefix("**").removesuffix("**")
+            if cells[1] not in {"P0", "P1", "P2", "P3"} or status not in statuses:
+                errors.append("Invalid priority/status for " + ident)
+            dependencies = [] if cells[7] in ("", "—") else [
+                dep.strip() for dep in cells[7].split(",")]
+            cards[ident] = (cells[1], dependencies)
+    for ident, (_priority, dependencies) in cards.items():
+        for dep in dependencies:
+            if dep not in cards:
+                errors.append("Unknown dependency: " + ident + " -> " + dep)
+
+    visiting = set()
+    visited = set()
+
+    def visit(ident):
+        if ident in visiting:
+            errors.append("Circular dependency: " + ident)
+            return
+        if ident in visited:
+            return
+        visiting.add(ident)
+        for dep in cards[ident][1]:
+            if dep in cards:
+                visit(dep)
+        visiting.remove(ident)
+        visited.add(ident)
+
+    for ident in cards:
+        visit(ident)
+    try:
+        lines = (directory / "README.md").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return errors + ["Missing backlog index"]
+    ranks = []
+    indexed = []
+    priority = None
+    counts = {}
+    expected = {}
+    for line in lines:
+        heading = re.match(r"^### (P[0-3]) · (\d+) tâches$", line)
+        if heading:
+            priority = heading.group(1)
+            expected[priority] = int(heading.group(2))
+            counts[priority] = 0
+            continue
+        row = re.match(r"^\|\s*(\d+)\s*\|\s*((?:DEV|REC|OPS|ART)-\d{3})\s*\|", line)
+        if row is None:
+            continue
+        ranks.append(int(row.group(1)))
+        ident = row.group(2)
+        indexed.append(ident)
+        if priority is None or cards.get(ident, (None,))[0] != priority:
+            errors.append("Priority mismatch for " + ident)
+        if priority in counts:
+            counts[priority] += 1
+    if len(indexed) != len(cards) or len(set(indexed)) != len(indexed) or set(indexed) != set(cards):
+        errors.append("Backlog index and views do not match")
+    if ranks != list(range(1, len(ranks) + 1)):
+        errors.append("Invalid backlog rank sequence")
+    if counts != expected:
+        errors.append("Backlog section counts inconsistent")
+    return errors
+
+
 def main() -> int:
     missing = [path for path in REQUIRED if not (ROOT / path).is_file()]
     if missing:
@@ -116,6 +208,13 @@ def main() -> int:
         if not (ROOT / path).read_text(encoding="utf-8").strip():
             print("Empty documentation: " + path, file=sys.stderr)
             return 1
+
+    integrity = backlog_integrity_errors()
+    if integrity:
+        print("Backlog integrity errors:", file=sys.stderr)
+        for error in integrity[:30]:
+            print("  " + error, file=sys.stderr)
+        return 1
 
     links = broken_local_markdown_links()
     if links:

@@ -72,6 +72,43 @@ class DmVoicePrivacy(unittest.IsolatedAsyncioTestCase):
                 audio_output="ffplay", discord_voice=True, discord_text=True),
                 ("discord_text", "local_audio"))
 
+    async def test_obs_subtitle_privacy_matrix_during_wav_playback(self):
+        cases = (
+            ("discord_dm", Incoming("discord", "Alice", "Message privé",
+                                    private_channel=True, channel="404"), ""),
+            ("microphone", Incoming("microphone", "Owner", "Question privée"), ""),
+            ("local_http", Incoming("local_http", "Owner", "Question privée"), ""),
+            # Mobile uses a separate voice gateway in main.py: defensive test.
+            ("mobile", Incoming("mobile", "Owner", "Question privée"), ""),
+            ("discord_public", Incoming("discord", "Alice", "Question publique",
+                                        channel="999"), "Réponse test"),
+            ("twitch_public", Incoming("twitch", "Bob", "Question publique"),
+             "Réponse test"),
+        )
+        for label, source, expected in cases:
+            with self.subTest(source=label), tempfile.TemporaryDirectory() as folder:
+                path = Path(folder) / "subtitle.txt"
+                path.write_text("ancien sous-titre", encoding="utf-8")
+                observed = []
+
+                class InspectingLocal(Local):
+                    async def play(self, wav):
+                        observed.append(path.read_text(encoding="utf-8"))
+                        await super().play(wav)
+
+                services, local, bridge = Speech(), InspectingLocal(), Voice()
+                output = SpeechOutput(services, local, path, secondary_player=bridge)
+                await output.speak(Reply(source, "Réponse test"))
+                self.assertEqual(observed, [expected])
+                self.assertEqual(path.read_text(encoding="utf-8"), "")
+                self.assertEqual(services.calls, 1)
+                self.assertEqual(local.delivered, [b"synthetic-wav"])
+                if label.endswith("public"):
+                    self.assertEqual(bridge.plays, [b"synthetic-wav"])
+                else:
+                    self.assertEqual(bridge.context_queries, 0)
+                    self.assertEqual(bridge.plays, [])
+
     async def test_muted_local_audio_does_not_bill_dm_tts(self):
         with tempfile.TemporaryDirectory() as folder:
             services, local, bridge = Speech(), Local(mode="none"), Voice()

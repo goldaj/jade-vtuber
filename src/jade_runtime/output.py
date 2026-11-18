@@ -101,6 +101,13 @@ class SpeechOutput:
         # to broadcast spoken responses whenever a voice bridge is connected.
         self.secondary_broadcast = True
 
+    @staticmethod
+    def _public_subtitles_allowed(source):
+        """Only public-origin replies may reach the shared OBS text file."""
+        platform = getattr(source, "platform", None)
+        return platform not in ("microphone", "local_http", "mobile") and not (
+            platform == "discord" and getattr(source, "private_channel", False))
+
     def _delivery_context(self, source=None):
         """Take a playback snapshot, never promoting a private Discord DM to voice."""
         if getattr(source, "platform", None) in ("microphone", "local_http", "mobile"):
@@ -205,9 +212,12 @@ class SpeechOutput:
             if discord_voice:
                 require_session()
             path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_name(path.name + ".tmp")
-            tmp.write_text(reply.text, encoding="utf-8")
-            tmp.replace(path)
+            if self._public_subtitles_allowed(reply.source):
+                tmp = path.with_name(path.name + ".tmp")
+                tmp.write_text(reply.text, encoding="utf-8")
+                tmp.replace(path)
+            else:
+                path.write_text("", encoding="utf-8")
             written = True
             if discord_voice:
                 require_session()
@@ -296,9 +306,8 @@ class SpeechOutput:
                 if discord_voice:
                     require_session()
                 path.parent.mkdir(parents=True, exist_ok=True)
-                if reply.source.platform in ("microphone", "local_http"):
-                    # Multiple active supports must not make a private local
-                    # answer visible in the public OBS subtitle overlay.
+                if not self._public_subtitles_allowed(reply.source):
+                    # Keep private messages out of OBS text during local WAV playback.
                     path.write_text("", encoding="utf-8")
                 else:
                     tmp = path.with_name(path.name + ".tmp")
