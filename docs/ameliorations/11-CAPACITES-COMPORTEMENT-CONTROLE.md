@@ -1,6 +1,6 @@
 # Nouvelles capacités : contrôle, comportement, autonomie et interactions
 
-**Décision de priorisation du propriétaire — 18 novembre 2026.** Ajout des **36 propositions NEW-01 à NEW-36** formulées lors de la revue produit et architecture de Jade. **NEW-04, NEW-10 et NEW-18 sont P1 ; toutes les 33 autres sont P2**, sans exception, même lorsqu'elles avaient été recommandées en P0/P1/P3 à titre consultatif. Les priorités ci-dessous remplacent toutes les priorités proposées initialement par l'assistant.
+**Décision de priorisation du propriétaire — 18 novembre 2026.** Ajout des **36 propositions NEW-01 à NEW-36** formulées lors de la revue produit et architecture de Jade. **NEW-04, NEW-10, NEW-18, NEW-24 et NEW-36 sont P1** ; **NEW-34 et NEW-35 restent P3** comme dans la recommandation initiale ; **les 29 autres sont P2**, y compris les anciennes recommandations P0. La promotion explicite de NEW-36 en P1 prime sur son classement initial P3. Les priorités ci-dessous sont les décisions du propriétaire.
 
 **Statut : idées à étudier et à concevoir, pas de code autorisé.** Les mécanismes existants (files bornées, arrêt de session vocal, opt-in mémoire, contrôles de transport, expressions r20, sous-titres locaux, participation 30 %, etc.) doivent être conservés : les entrées ci-dessous couvrent seulement des extensions **non identifiées comme fonctionnalités complètes dans le code**. Vérifier l'état réel de `develop` lors de chaque prise en charge. Pour respecter l'identité de Jade, les contrôles de sortie publique doivent permettre la personnalité espiègle prévue, pas neutraliser systématiquement sa voix.
 
@@ -29,7 +29,7 @@
 | NEW-18 | **P1 / P** | **Apprentissage supervisé par retours humains** : accepter notes/retours du propriétaire ou participants autorisés sur réponses utiles, erronées, mal placées ou inadaptées ; rattacher chaque retour à son contexte, analyser les motifs récurrents, proposer des ajustements de comportement/prompts. Pas de mise à jour automatique irréversible du modèle, des permissions ou de la personnalité ; évaluer avant/après et respecter le droit à l'effacement. |
 | NEW-19 | P2 / P | **Profils comportementaux par contexte** : profils public Twitch, Discord, propriétaire privé, travail, etc., avec degré de spontanéité, style et règles de disponibilité différents ; ne pas multiplier les personas contradictoires ni affaiblir les invariants de sécurité. |
 | NEW-32 | P2 / P | **Direction vocale expressive affinée** : rythme, pauses, emphase, nuances émotionnelles et prosodie au-delà des sept intentions, compatibles avec les capacités réelles des différents fournisseurs TTS. |
-| NEW-36 | P2 / P | **Personnalité évolutive encadrée** : goûts, habitudes et références vécues enrichies progressivement grâce à la mémoire et aux retours, avec cohérence de la personnalité centrale, provenance, correction et consentement. Ne pas supposer qu'une LLM se réentraîne seule. |
+| NEW-36 | **P1 / P** | **Personnalité évolutive encadrée** : goûts, habitudes et références vécues enrichies progressivement grâce à la mémoire et aux retours, avec cohérence de la personnalité centrale, provenance, correction et consentement. Ne pas supposer qu'une LLM se réentraîne seule. |
 
 ## C. Connaissances, autonomie et tâches
 
@@ -39,7 +39,7 @@
 | NEW-13 | P2 / P | **Bibliothèque documentaire choisie** : consultation/recherche sur fichiers Markdown, PDF, dépôts ou documents explicitement accessibles, indexation, provenance, contrôle d'accès, données temporaires séparées de la mémoire personnelle. |
 | NEW-16 | P2 / P | **Initiative conversationnelle autorisée** : Jade peut démarrer une intervention à partir d'événements définis ou d'une planification, selon horaires et audience, avec garde-fous de fréquence et interruption manuelle. Distinct de l'intervention spontanée pendant un échange en cours. |
 | NEW-21 | P2 / P | **Gestion de tâches longues** : objectifs, étapes, états d'attente, reprise après interruption, rapports d'avancement exacts, journal des actions réalisées et autorisations par étape. Aucun travail autonome persistant implicite sans exécuteur/ordonnanceur explicite. |
-| NEW-35 | P2 / P | **Laboratoire d'expérimentation conversationnelle** : scénarios reproductibles et jeux d'évaluation pour comparer prompts, modèles, routage et taux d'intervention, avec mesures de coût, latence, qualité et stabilité. Distinct du banc d'attaques NEW-07. |
+| NEW-35 | P3 / D | **Laboratoire d'expérimentation conversationnelle** : scénarios reproductibles et jeux d'évaluation pour comparer prompts, modèles, routage et taux d'intervention, avec mesures de coût, latence, qualité et stabilité. Distinct du banc d'attaques NEW-07. |
 
 ## D. Twitch, Discord, stream et interaction collective
 
@@ -49,14 +49,14 @@
 | NEW-15 | P2 / P | **Prise en compte de la modération Discord/Twitch** : traiter des signaux de suppression, timeout et modération lorsqu'ils sont accessibles et autorisés ; éviter de répondre à des contenus modérés, respecter les décisions humaines. Pas de sanctions automatiques par défaut. |
 | NEW-30 | P2 / P | **Interactions collectives structurées** : votes, sondages, quiz, devinettes et mini-jeux avec états, règles, temps de participation, isolation par salon et contrôle anti-abus. |
 | NEW-33 | P2 / P | **Pilotage optionnel des scènes OBS** : déclencher changements de scène, cadrages, overlays ou présentations selon événements autorisés, avec permissions, confirmations si nécessaires et retour au mode manuel. Différent de l'observation de visibilité VIS-02. |
-| NEW-34 | P2 / P | **Réalisation autonome d'émissions** : préparer et enchaîner des segments de live, transitions et interventions ; reprendre la main en un geste, planifier sans frais non bornés, conserver validation humaine des actions sensibles. |
+| NEW-34 | P3 / D | **Réalisation autonome d'émissions** : préparer et enchaîner des segments de live, transitions et interventions ; reprendre la main en un geste, planifier sans frais non bornés, conserver validation humaine des actions sensibles. |
 
 ## E. Perception, audio, vidéo et expressivité
 
 | ID | Priorité / nature | Proposition et critères de réussite |
 | --- | --- | --- |
 | NEW-23 | P2 / P | **Diarisation sur une source audio partagée** : distinguer plusieurs locuteurs sur un seul microphone ou flux, de manière prudente, sans confondre une identité vocale inférée avec un compte authentifié. Le vocal Discord dispose déjà d'identités de transport distinctes. |
-| NEW-24 | P2 / P | **Compréhension des sons non verbaux** : rire, applaudissements, surprise ou événements acoustiques pertinents, avec niveau de confiance et réaction proportionnée ; ne pas déduire une identité ou un état émotionnel certain de simples sons. |
+| NEW-24 | **P1 / P** | **Compréhension des sons non verbaux** : rire, applaudissements, surprise ou événements acoustiques pertinents, avec niveau de confiance et réaction proportionnée ; ne pas déduire une identité ou un état émotionnel certain de simples sons. |
 | NEW-25 | P2 / P | **Multilinguisme et traduction contextuelle** : langues et préférences par conversation, traduction en temps réel facultative, maintien de la personnalité française par défaut, coût/latence mesurés. |
 | NEW-26 | P2 / P | **Télémétrie de jeux structurée** : fournisseurs d'événements de jeu (scores, manches, victoires, etc.) lorsqu'une API ou source locale autorisée existe ; corréler avec le visuel sans supposer l'existence d'une API universelle. |
 | NEW-27 | P2 / P | **Gestion de l'attention multimodale** : arbitrer entre événements vocaux, textuels, visuels et API en temps réel selon importance, coût, latence, consentement et priorité des conversations directes. Complète le TurnArbiter textuel existant et PER-09. |
@@ -78,4 +78,4 @@
 - **Ne pas dupliquer les fondations déjà codées** : vérifier le code de `develop` avant la conception. Compléter plutôt que recréer.
 - Aucune action externe, surveillance, connexion, nouvelle dépense API, modification de permissions ou déploiement n'est autorisé par cette seule liste.
 
-**Contrôle de cohérence attendu : 36 IDs distincts (NEW-01 à NEW-36), exactement 3 en P1 (NEW-04, NEW-10, NEW-18), exactement 33 en P2, aucun P0 ni P3.**
+**Contrôle de cohérence attendu : 36 IDs distincts (NEW-01 à NEW-36), exactement 5 en P1 (NEW-04, NEW-10, NEW-18, NEW-24, NEW-36), exactement 29 en P2, exactement 2 en P3 (NEW-34 et NEW-35), aucun P0.**
