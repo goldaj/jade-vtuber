@@ -23,6 +23,8 @@
 | MEM-17 | P3 / D | Éventuelle mémoire autobiographique globale de Jade partageable publiquement, uniquement après classification des événements, politique de visibilité et accord explicite ; l'actuel core_self privé ne devient jamais public par défaut. |
 | MEM-18 | P1 / C | Recetter les identités, scopes et consentements avec deux utilisateurs Discord, Goldaj PC/mobile, opt-in puis oubli/réactivation, déconnexion pendant chargement et conversation collective ; aucun souvenir privé ne doit sortir sur le mauvais canal. |
 
+**Normalisation et récupération structurée :** pour la structuration de faits, les index SQLite/FTS, la provenance, la gestion des contradictions et les formats communs entre modules, voir [10-NORMALISATION-DONNEES-MEMOIRE.md](10-NORMALISATION-DONNEES-MEMOIRE.md). Ce chantier complète MEM-04, MEM-11 et MEM-15 sans prétendre que la base SQLite v3 actuelle est dépourvue de schéma ou d'index.
+
 ## Invariants de sécurité
 
 La **présence n'est ni un consentement à mémoriser, ni une permission de divulgation**. On peut préparer un cache autorisé pour une identité déjà opt-in ; pour un utilisateur non opt-in, aucune récupération de souvenirs personnels ni activation mémoire automatique. Les données de tiers ne sont pas exposées à Goldaj simplement parce qu'il utilise l'application privée.
