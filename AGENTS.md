@@ -2,7 +2,7 @@
 
 ## Point d'entrée et gouvernance documentaire
 
-**Toute IA (Codex, Terra, Astra, ChatGPT) commence par ce fichier**, puis lit [le centre opérationnel](docs/operations/README.md) et [les règles de collaboration](docs/operations/AGENT_COORDINATION.md). Le [journal des modifications](docs/operations/CHANGELOG.md) consigne chaque changement technique. Les échanges entre agents sont écrits dans `docs/operations/handoffs/`, avec une fiche **par mission**, puis référencés dans la PR ; jamais dans un rapport historique pris pour un ordre courant.
+**Toute intervention d'agent, Codex (ses modèles Terra/Astra/Sol et ses sous-agents) ou ChatGPT en mode chat, commence par ce fichier**, puis lit [le centre opérationnel](docs/operations/README.md) et [les règles de collaboration](docs/operations/AGENT_COORDINATION.md). Le [journal des modifications](docs/operations/CHANGELOG.md) consigne chaque changement technique. Les échanges entre agents sont écrits dans `docs/operations/handoffs/`, avec une fiche **par mission**, puis référencés dans la PR ; jamais dans un rapport historique pris pour un ordre courant.
 
 ## Sources de vérité et décisions du propriétaire
 
@@ -11,6 +11,7 @@
 - **[État du code de develop](docs/handbook/BRANCH_STATE.md)** : liste canonique des fonctions et limitations.
 - **[Manuel et guide technique](docs/handbook/README.md)** ; [atlas des décisions et appels](docs/architecture/atlas-fonctionnel-2026-11-16/README.md) et [contrat de flux](docs/architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md) (instantanés datés à confronter au code).
 - **[Backlog opérationnel priorisé](docs/backlog/README.md)** : **source de vérité pour les travaux et recettes en attente**, quatre vues (DEV/REC/OPS/ART), jalons A/B, dépendances et statuts de travail.
+- **[Definition of Done officielle](docs/backlog/DEFINITION_OF_DONE.md)** : règle obligatoire avant de mettre une carte en **Done** : réalisation, tests/preuves, validation positive par **Codex OU le propriétaire**, intégration applicable et traçabilité. Ni double validation, ni accord humain systématique. La validation Codex est une passe distincte de la réalisation.
 - **[Catalogue des améliorations futures](docs/ameliorations/README.md)** : idées prospectives distinctes, non engagées automatiquement comme tâches du backlog opérationnel.
 - [Archives et index des conversations](docs/history/conversations/INDEX.md) : contexte historique, pas des ordres d'exécution actuels.
 
@@ -32,6 +33,12 @@
 - Réponses vocales OpenAI ; voix `shimmer` 1,25×, pitch +2 via FFmpeg Rubber Band quand disponible. Intention `[INTENT:...]` filtrée. **Deux réactions faciales r20 et deux textes PWA par chacune des sept intentions** codés ; **14 motions corporelles originales** et rig r21 final à créer.
 - PWA Android privée : texte, prise de parole WAV, TTS mobile, avatar Web sous SDK compatible. Le duplex temps réel n'est pas codé.
 - Streaming PCM Discord disponible sous conditions : `--all-channels` conserve `ffplay` pour le microphone PC, mais le PCM de Discord vocal l'utilise désormais indépendamment. Le mode par phrases reste opt-in, le fallback WAV et l'ancien broadcast restent à réexaminer. Les réponses écrites peuvent encore déclencher du TTS sur d'autres sorties : le routage exclusif reste à développer.
+
+## Validation du backlog opérationnel
+
+Pour toutes les cartes **DEV, REC, OPS, ART** : appliquer la [DoD officielle](docs/backlog/DEFINITION_OF_DONE.md) et renseigner le **statut dans la vue thématique**, pas dans l'index des priorités. Une validation explicite de **Codex (quel que soit modèle/sous-agent)** **OU du propriétaire** suffit. Une conversation ChatGPT en mode chat ne vaut pas validation Codex implicite. Un agent auteur peut faire une passe de vérification distincte ; contre-revue indépendante conseillée, non systématique. Tests physiques déclarés réussis uniquement s'ils ont été réellement observés. Les validations peuvent couvrir un lot de cartes nommées avec preuves par ID ; la présence du code ou la CI seule ne clôture pas une tâche de recette.
+
+Pour une carte en **À valider**, relier les preuves et la décision du validateur à une PR ou [passation](docs/operations/handoffs/TEMPLATE.md) avant **Done**. Si la carte conditionnelle est sans objet, classer sans suite avec justification au lieu d'inventer un correctif. `main` reste inchangée sans accord explicite.
 
 ## Maintenance et passation
 
