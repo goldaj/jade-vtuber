@@ -18,7 +18,7 @@ Ce dossier rassemble les idées de la conversation du 16 novembre 2026 sur la r�
 | Moteur IA et architecture | [05-ARCHITECTURE-IA.md](05-ARCHITECTURE-IA.md) | Jade Realtime légère, interfaces extensibles, Luna différée |
 | Expérience, mobile, installation | [06-PRODUIT-MOBILE.md](06-PRODUIT-MOBILE.md) | PWA Android, UX, launcher, Twitch/Discord, installation |
 | Recette, sécurité et exploitation | [07-QUALITE-EXPLOITATION.md](07-QUALITE-EXPLOITATION.md) | Tests PC réels, métriques, sauvegardes, CI, secrets et déploiement |
-| Modèle artistique r21 | [08-MODELE-2D.md](08-MODELE-2D.md) | Rig final, export, 14 motions, tests Windows et Android |
+| Perception visuelle et multimodale | [09-PERCEPTION-MULTIMODALE.md](09-PERCEPTION-MULTIMODALE.md) | Images statiques, lecture de textes/photos/dessins, flux vidéo/jeux/films et réactions en direct |\n| Modèle artistique r21 | [08-MODELE-2D.md](08-MODELE-2D.md) | Rig final, export, 14 motions, tests Windows et Android |
 
 ## Lecture du catalogue
 
