@@ -1,7 +1,7 @@
 # Catalogue centralisé des améliorations de Jade
 
 **Branche de référence : develop. Date de création : 16 novembre 2026.**
-**Statut : propositions et actions futures, PAS un ordre de développement ni de déploiement.**
+**Statut : propositions et actions futures, PAS un ordre de développement ni de déploiement.** Le [backlog opérationnel distinct](../backlog/README.md) recense les développements nécessaires déjà identifiés, les recettes, les opérations et le r21 en cours de production. Ne pas ouvrir automatiquement une tâche opérationnelle pour chaque idée de ce catalogue.
 
 Ce dossier rassemble les idées des conversations des 16 et 18 novembre 2026 (latence, mémoire, routage, visibilité, modularité, perception multimodale et normalisation), ainsi que les pistes encore pertinentes repérées dans les audits, plans, passations et documents de modélisation. Les propositions sont confrontées au code réel de `develop` ; les doublons clairement identifiés et les prémisses obsolètes sont retirés ou réécrits.
 
