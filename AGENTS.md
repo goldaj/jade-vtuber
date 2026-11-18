@@ -10,10 +10,11 @@
 
 - **[État du code de develop](docs/handbook/BRANCH_STATE.md)** : liste canonique des fonctions et limitations.
 - **[Manuel et guide technique](docs/handbook/README.md)** ; [atlas des décisions et appels](docs/architecture/atlas-fonctionnel-2026-11-16/README.md) et [contrat de flux](docs/architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md) (instantanés datés à confronter au code).
-- **[Backlog central des améliorations](docs/ameliorations/README.md)** : projets futurs classés par thème, pas des fonctions déjà développées.
+- **[Backlog opérationnel priorisé](docs/backlog/README.md)** : **source de vérité pour les travaux et recettes en attente**, quatre vues (DEV/REC/OPS/ART), jalons A/B, dépendances et statuts de travail.
+- **[Catalogue des améliorations futures](docs/ameliorations/README.md)** : idées prospectives distinctes, non engagées automatiquement comme tâches du backlog opérationnel.
 - [Archives et index des conversations](docs/history/conversations/INDEX.md) : contexte historique, pas des ordres d'exécution actuels.
 
-**Décision du 16 novembre 2026 :** Goldaj veut d'abord tester Jade avant de développer les pistes du backlog. Ne pas lancer ces travaux sans nouvelle demande. Le routage exclusivement par canal source, le préchargement mémoire, la visibilité conditionnelle de l'avatar et le moteur Realtime sans Luna sont des objectifs **non intégrés**. Luna reste le modèle configuré par défaut dans le code actuel.
+**Décision maintenue :** Goldaj veut d'abord tester Jade avant de développer les pistes du catalogue d'améliorations ; le backlog **opérationnel** créé le 18 novembre organise au contraire installation, recette, modèle r21 et maintenance déjà attendues. Ne pas lancer ces travaux sans nouvelle demande. Le routage exclusivement par canal source, le préchargement mémoire, la visibilité conditionnelle de l'avatar et le moteur Realtime sans Luna sont des objectifs **non intégrés**. Luna reste le modèle configuré par défaut dans le code actuel.
 
 ## Branches, poste et confidentialité
 
