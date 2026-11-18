@@ -1,5 +1,29 @@
 # Backlog opérationnel de Jade — source de vérité
 
+## REPRISE PRIORITAIRE — première lecture au prochain token Codex
+
+**Demandé par le propriétaire le 18 novembre 2026.** Cette liste est un **point d'entrée de reprise**, pas un second backlog ni une modification des P0/P1/P2. **Les cartes et leurs statuts canoniques restent dans les quatre vues** ci-dessous ; les références sont les mêmes. Toute intervention suit la [DoD](DEFINITION_OF_DONE.md). Ne pas marquer Done sans preuves et validation explicite par Codex ou le propriétaire.
+
+| Ordre de reprise | Cartes existantes | Actions encore impossibles depuis le chat et prérequis |
+| ---: | --- | --- |
+| **1** | **OPS-001** | Sur le vrai PC Windows, vérifier `git status`, travaux locaux des agents, chemins sur D:, processus Jade et fichiers privés **avant toute synchronisation** ; ne rien effacer ni écraser. |
+| **2** | **OPS-002, OPS-003, OPS-004, OPS-005, OPS-006** | Mettre à jour `develop` en avance rapide, vérifier Git LFS, dépendances, launcher installé et configuration privée, puis exécuter les tests et `--preflight --all-channels`. Ne pas afficher les secrets ni lancer des appels payants sans autorisation. |
+| **3** | **REC-001 à REC-010, puis REC-011 à REC-025 selon dépendances** | Faire la **recette matérielle réelle** : Discord écrit/vocal, micro, streaming/repli audio et confidentialité en premier ; ensuite Twitch, SQLite, Android/Tailscale/SDK, r20, latence/coût. Utiliser le [format de preuve rapide](02-RECETTE.md#compte-rendu-de-recette-rapide) ; les tests simulés de CI ne suffisent pas. Une fuite constatée conditionne **DEV-003**, une incompatibilité Web r20 constatée conditionne **DEV-002**. |
+| **4** | **OPS-013, OPS-014** | Nettoyer les **branches Git distantes** via une session Codex ayant les permissions : [audit du 18 novembre](../handbook/BRANCH_MAINTENANCE.md#audit-cible-du-18-novembre-2026). **14 branches ancêtres vérifiées**, 8 divergentes à examiner, 1 résultat indéterminé. Recontrôler pointes et PR avant chaque suppression ; ne jamais supprimer `develop`, `main` ou du travail unique. |
+| **5** | **OPS-017** | Examiner avec droits d'administration la **protection minimale de `main`** (par exemple éviter suppression et force-push accidentels), sans imposer automatiquement une PR obligatoire et **sans modifier la visibilité publique**. Confirmer le réglage souhaité avec le propriétaire avant toute mutation de gouvernance ; le connecteur chat n'a pas l'action d'administration. |
+| **6** | **OPS-015, OPS-016** | Sur D: et les objets Git LFS réels, examiner redondances artistiques, fichiers historiquement sensibles et provenance/licences ; éviter les suppressions sans preuve et toute exposition de secrets. |
+| **Parallèle, jalon B** | **ART-001 à ART-012, DEV-001** | Reprendre le modèle r21 à partir des checkpoints natifs ; traiter notamment les UV/export plein pied, les assets et 14 motions. Ce chantier reste parallèle au jalon A, sans prétendre avoir validé Cubism/VTube Studio depuis le chat. |
+
+**À ne pas recommencer :** le contrôle CI des liens et fichiers de `docs/backlog`, la simplification des règles de commit, cette file de reprise et le format de recette sont traités dans la présente intervention. Vérifier les [Actions GitHub](https://github.com/goldaj/jade-vtuber/actions) sur le dernier SHA avant de les considérer validés par la CI ; ne pas relancer un chantier logiciel déjà codé par simple absence de recette.
+
+## Focus de travail léger (limite indicative : 3 tâches réellement « En cours »)
+
+**Photographie initiale : 0 carte marquée « En cours ».** Les prochaines cartes à prendre sont **OPS-001**, puis **OPS-002** et **OPS-003** une fois le poste inventorié. `OPS-005` et `OPS-006` viennent ensuite selon leurs dépendances. Ne pas écrire « En cours » tant qu'un agent n'a pas commencé effectivement.
+
+**Règle pratique :** viser au plus **trois tâches en cours simultanément**, sans en faire un verrou automatique ; les autres restent « À faire », « À qualifier » ou « Bloqué ». Mettre à jour la colonne **Statut** de la vue canonique, pas ce texte historique. Pas de cadence Scrum obligatoire ni de tableau parallèle.
+
+---
+
 **Référence :** `goldaj/jade-vtuber` · branche `develop` · créé le 18 novembre 2026.
 **Périmètre :** tâches identifiées pour livrer, installer, recetter et maintenir **la Jade déjà en chantier**. **Ne pas confondre** avec les [185 idées prospectives](../ameliorations/README.md), qui restent un catalogue distinct, ni avec les archives historiques.
 **Photographie GitHub initiale :** aucune issue ni PR ouverte au relevé du 18 novembre ; les modules existants demeurent **codés** même sans recette physique. Les dernières CI hors ligne et le scan des secrets ont réussi au SHA `01c7551f8b4f4aae22e7e42a5a090fc05fbaac99`. Le PC, les clés et les comptes n'ont pas été inspectés par cet audit.

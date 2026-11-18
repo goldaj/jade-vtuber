@@ -34,6 +34,16 @@ Les priorités expriment la valeur de livraison et les dépendances, non un ordr
 | **REC-024** | P2 | A | **À faire** | À recetter | Seule Démo Express distribuée | Sur Windows graphique, tester installateur, raccourci, lancement sans installation, désinstallation et simulation sans API réelle. | OPS-002, OPS-003 |
 | **REC-025** | P1 | A | **À faire** | À recetter | Sauvegarde/restauration et droit à l'effacement | Restaurer SQLite dans une copie privée, vérifier que supprimer/oubli n'efface pas d'autres identités et contrôler les fichiers de logs/archives. | REC-021, OPS-012 |
 
+## Compte-rendu de recette rapide
+
+**Un seul petit tableau par session ou lot**, dans la PR, la fiche de [passation existante](../operations/handoffs/TEMPLATE.md) ou la référence de preuve prévue. **Pas un fichier supplémentaire par test.** Renseigner uniquement les faits observés, puis pointer vers ce compte-rendu depuis la carte lorsqu'elle change de statut.
+
+| ID | Version / environnement | Scénario | Attendu / observé | Verdict | Preuve ou anomalie | Validation et date |
+| --- | --- | --- | --- | --- | --- | --- |
+| `REC-XXX` | SHA, PC/appareil, version sans donnée sensible | Action concrète | Résultat attendu et résultat observé | OK / KO / Bloqué | Trace expurgée, test/PR ou ID DEV lié | Codex **OU** propriétaire, seulement après passe explicite |
+
+Un « OK » technique ne remplace pas les cinq conditions de la [DoD](DEFINITION_OF_DONE.md) et ne doit pas être attribué à une session réelle si elle n'a pas eu lieu. Un cas KO ouvre si nécessaire une anomalie `DEV` liée ; **la fonction codée reste codée**, seule la recette demeure ouverte. Une validation peut couvrir plusieurs IDs cités avec leur résultat propre.
+
 ## Règle de suivi
 
 **Clôture :** suivre la [Definition of Done officielle](DEFINITION_OF_DONE.md). **Done** n'est autorisé qu'après une passe de vérification explicite et une validation positive par **Codex OU le propriétaire**, les deux autres garanties étant les preuves pertinentes et la traçabilité/intégration requises. La décision indique dans la passation/PR liée : ID(s), validateur, date, version/SHA ou asset, tests observés, limites et livraison. Aucune carte n'a été automatiquement clôturée lors de l'adoption de cette règle.

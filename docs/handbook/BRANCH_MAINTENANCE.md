@@ -1,5 +1,25 @@
 # Plan de nettoyage des branches Git pour Codex
 
+## Audit ciblé du 18 novembre 2026
+
+**Base :** pointe de `develop` au SHA `3bba7d51db5216f718f1ad3fe80485636f6ccfb7` ; inventaire de **25 branches dont main/develop** ; **aucune suppression réalisée**. Comparaison GitHub de chaque branche avec `develop` : `behind_by=0` signifie que la pointe est ancêtre de `develop`, et `behind_by>0` indique des commits propres à examiner ; une fusion par squash peut faire apparaître des commits propres malgré un contenu repris. Cette photographie **ne dispense pas de refaire les comparaisons juste avant de supprimer**.
+
+**14 pointes déjà ancêtres de develop (candidates au contrôle final, pas à supprimer aveuglément) :**
+
+- `docs/handbook-demo-express-main-20261115`, `docs/codex-pc-mobile-onboarding-20261115`, `docs/handbook-demo-express-develop-20261115`, `docs/mission2-develop-wiring-audit-20261116`
+- `feat/jade-autobiographical-memory-20261115`, `feat/jade-discord-unified-conversations-20261115`, `feat/jade-persistent-memory-core-20261115`, `feat/jade-private-mobile-pwa-20261115`, `feat/jade-windows-launcher-20261115`, `feat/live2d-intent-expression-sync-20261115`
+- `fix/mission1-stabilize-develop-20261116`, `fix/p0-develop-ci-participation-20261116`, `fix/stabilize-develop-ci-20261116`, `review/jade-mobile-memory-integration-20261115`
+
+**8 branches divergentes, NE PAS supprimer avant revue d'écart, PR/squash et commits uniques :**
+
+- `chore/develop-repository-cleanup-20261116`, `docs/codex-cleanup-remaining-handoff-20261116`, `docs/final-post-cleanup-review-20261116`, `fix/discord-pcm-memory-mobile-20261116`
+- `docs/jade-persistent-memory-identity-20261115`, `feat/turn-conversation-logs-20261115`, `test/intent-all-channels-20261115`, `fix/develop-devops-audit-20261115`
+
+**1 branche non vérifiée** : `fix/jade-unified-always-on-20261115` (comparaison expirée ; recommencer). L'ancien audit la disait intégrée, ce qui n'est **pas** un résultat actuel de comparaison.
+
+**Prochaine session Codex :** lire la [file de reprise prioritaire](../backlog/README.md#reprise-prioritaire--première-lecture-au-prochain-token-codex), recontrôler têtes, PR et permissions. Ne supprimer que les refs effectivement sans travail unique et non utilisées par un autre agent. Pour la protection de `main`, proposer des contrôles minimaux anti-suppression/anti-force-push au propriétaire ; aucune modification de visibilité ou règle stricte de PR sans décision.
+
+
 **Demande du propriétaire du 15 novembre 2026 :** supprimer les vieilles branches dont le travail est déjà intégré dans `develop`. Ne pas toucher à `main` ni à `develop`. Le connecteur GitHub accessible à l'assistant dans cette session **ne dispose pas de suppression de branche** ; ce fichier sert de passation pour une session Codex possédant la permission de le faire. Ce n'est pas une confirmation de suppression.
 
 ## Branches dont la pointe était ancêtre de develop

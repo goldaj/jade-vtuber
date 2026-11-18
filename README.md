@@ -6,7 +6,9 @@
 
 **Documentation complète et spécifique à cette branche develop :** [installation depuis un poste neuf](docs/handbook/INSTALLATION.md), [Démo Express sans installation Python](docs/handbook/DEMO.md), [guide utilisateur de toutes les fonctions](docs/handbook/USER_GUIDE.md), [architecture et algorithmes](docs/handbook/TECHNICAL.md), [passation agents IA](docs/handbook/AI_HANDOFF.md), [état précis de develop](docs/handbook/BRANCH_STATE.md).
 
-**Améliorations envisagées (backlog, aucun développement autorisé avant les tests PC)** : [catalogue central par thème](docs/ameliorations/README.md), classé par latence, mémoire, routage, avatar, architecture, mobile, qualité et modèle 2D.
+**Travaux opérationnels et recettes en attente :** [backlog priorisé et file de reprise](docs/backlog/README.md) · [Definition of Done officielle](docs/backlog/DEFINITION_OF_DONE.md). Les agents y retrouvent les tâches réalisables et les validations réelles à effectuer.
+
+**Améliorations envisagées, distinctes du backlog opérationnel (pas de développement autorisé avant les tests PC) :** [catalogue central par thème](docs/ameliorations/README.md).
 
 **Démo immédiate Windows :** double-cliquer `Installer-Demo-Express.cmd` ou `Lancer-Demo-Express.cmd`. Démo **simulée** : aucune IA, aucune clé, aucun canal ni Live2D requis. **Produit réel :** installer/configurer tous les canaux puis utiliser le launcher unique `--all-channels`, voir les guides. 
 

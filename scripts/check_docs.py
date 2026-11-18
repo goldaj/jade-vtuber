@@ -30,6 +30,12 @@ REQUIRED = (
     "docs/operations/AGENT_COORDINATION.md",
     "docs/operations/CHANGELOG.md",
     "docs/operations/handoffs/README.md",
+    "docs/backlog/README.md",
+    "docs/backlog/DEFINITION_OF_DONE.md",
+    "docs/backlog/01-DEVELOPPEMENT.md",
+    "docs/backlog/02-RECETTE.md",
+    "docs/backlog/03-INSTALLATION-OPS.md",
+    "docs/backlog/04-PRODUCTION-2D.md",
 )
 CHANGELOG = "docs/operations/CHANGELOG.md"
 TECHNICAL_PREFIXES = (
@@ -77,8 +83,8 @@ def broken_local_markdown_links() -> list[str]:
     active_files = {ROOT / path for path in REQUIRED}
     active_files.add(ROOT / "README.md")
     for directory in (
-        "docs/ameliorations", "docs/architecture", "docs/operations",
-        "docs/publication",
+        "docs/ameliorations", "docs/architecture", "docs/backlog",
+        "docs/operations", "docs/publication",
     ):
         active_files.update((ROOT / directory).rglob("*.md"))
     pattern = re.compile(r"!?\[[^\]\n]*\]\(([^)\n]+)\)")

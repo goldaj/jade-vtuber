@@ -10,7 +10,7 @@
 
 - **[État du code de develop](docs/handbook/BRANCH_STATE.md)** : liste canonique des fonctions et limitations.
 - **[Manuel et guide technique](docs/handbook/README.md)** ; [atlas des décisions et appels](docs/architecture/atlas-fonctionnel-2026-11-16/README.md) et [contrat de flux](docs/architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md) (instantanés datés à confronter au code).
-- **[Backlog opérationnel priorisé](docs/backlog/README.md)** : **source de vérité pour les travaux et recettes en attente**, quatre vues (DEV/REC/OPS/ART), jalons A/B, dépendances et statuts de travail.
+- **[Backlog opérationnel priorisé](docs/backlog/README.md)** : **source de vérité pour les travaux et recettes en attente**, quatre vues (DEV/REC/OPS/ART), jalons A/B, dépendances et statuts de travail. **Lors d'une nouvelle session Codex, consulter d'abord la section « Reprise prioritaire » en tête du backlog**, puis vérifier les statuts canoniques et les dépendances.
 - **[Definition of Done officielle](docs/backlog/DEFINITION_OF_DONE.md)** : règle obligatoire avant de mettre une carte en **Done** : réalisation, tests/preuves, validation positive par **Codex OU le propriétaire**, intégration applicable et traçabilité. Ni double validation, ni accord humain systématique. La validation Codex est une passe distincte de la réalisation.
 - **[Catalogue des améliorations futures](docs/ameliorations/README.md)** : idées prospectives distinctes, non engagées automatiquement comme tâches du backlog opérationnel.
 - [Archives et index des conversations](docs/history/conversations/INDEX.md) : contexte historique, pas des ordres d'exécution actuels.
@@ -39,6 +39,10 @@
 Pour toutes les cartes **DEV, REC, OPS, ART** : appliquer la [DoD officielle](docs/backlog/DEFINITION_OF_DONE.md) et renseigner le **statut dans la vue thématique**, pas dans l'index des priorités. Une validation explicite de **Codex (quel que soit modèle/sous-agent)** **OU du propriétaire** suffit. Une conversation ChatGPT en mode chat ne vaut pas validation Codex implicite. Un agent auteur peut faire une passe de vérification distincte ; contre-revue indépendante conseillée, non systématique. Tests physiques déclarés réussis uniquement s'ils ont été réellement observés. Les validations peuvent couvrir un lot de cartes nommées avec preuves par ID ; la présence du code ou la CI seule ne clôture pas une tâche de recette.
 
 Pour une carte en **À valider**, relier les preuves et la décision du validateur à une PR ou [passation](docs/operations/handoffs/TEMPLATE.md) avant **Done**. Si la carte conditionnelle est sans objet, classer sans suite avec justification au lieu d'inventer un correctif. `main` reste inchangée sans accord explicite.
+
+## Commits et exécution sans surcharge
+
+**Privilégier un commit cohérent par lot de travail** incluant ses fichiers de code, ses tests pertinents et les documents impactés ; éviter les commits séquentiels artificiels « un fichier = un commit » qui annulent inutilement des CI. Garder plusieurs commits lorsque de véritables étapes indépendantes ou des travaux concurrents le justifient ; ne jamais réécrire l'historique publié juste pour regrouper des commits. Viser au plus trois tâches réellement actives simultanément et consulter le [focus du backlog](docs/backlog/README.md#focus-de-travail-léger-limite-indicative--3-tâches-réellement--en-cours-) sans calendrier cérémoniel imposé.
 
 ## Maintenance et passation
 

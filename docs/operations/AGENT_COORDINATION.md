@@ -29,6 +29,12 @@ La [DoD adoptée](../backlog/DEFINITION_OF_DONE.md) vaut pour toute tâche **DEV
 
 Indiquer : mission et propriétaire, ID(s) du backlog et statut, branche + SHA de base et d'arrivée, fichiers réellement modifiés, décisions prises et raisons, vérifications effectivement exécutées, limites et dépendances locales, **passe distincte de validation et conclusion**, validateur/date si la tâche est close, étapes restant à faire, PR associée. Ne jamais écrire de secrets, jetons, enregistrements vocaux, SQLite ou données personnelles.
 
+## Commits, focus et recette légère
+
+Regrouper autant que possible **une unité logique de travail en un commit**, avec tests et documentation impactée, plutôt qu'un commit par fichier. Les jalons réellement indépendants peuvent conserver plusieurs commits. Le contrôle CI annule les exécutions obsolètes du même ref : éviter les pushes en rafale uniquement documentaires. **Ne pas réécrire l'historique déjà partagé.**
+
+À chaque nouvelle session, lire en premier la [reprise prioritaire du backlog](../backlog/README.md) et ne prendre effectivement en charge que quelques tâches compatibles (cible indicative : trois en cours). Pour les recettes, utiliser le [tableau de preuve rapide](../backlog/02-RECETTE.md#compte-rendu-de-recette-rapide) plutôt qu'un compte rendu dédié à chaque micro-test. La [DoD](../backlog/DEFINITION_OF_DONE.md) reste inchangée ; une preuve manquante ne devient pas un test réussi par convention.
+
 ## Règles de concurrence et revue
 
 Créer une branche de travail depuis la tête réelle de `develop`, ne pas écraser les changements locaux Codex/Terra, ne pas faire `reset --hard`, ne pas utiliser `main` sans autorisation. Vérifier l'ascendance avant merge et supprimer les branches seulement après vérification et autorisation. Les agents adaptent uniquement la documentation **de leur propre branche**.
