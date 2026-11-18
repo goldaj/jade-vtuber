@@ -14,7 +14,7 @@
 - **[Catalogue des améliorations futures](docs/ameliorations/README.md)** : idées prospectives distinctes, non engagées automatiquement comme tâches du backlog opérationnel.
 - [Archives et index des conversations](docs/history/conversations/INDEX.md) : contexte historique, pas des ordres d'exécution actuels.
 
-**Décision maintenue :** Goldaj veut d'abord tester Jade avant de développer les pistes du catalogue d'améliorations ; le backlog **opérationnel** créé le 18 novembre organise au contraire installation, recette, modèle r21 et maintenance déjà attendues. Ne pas lancer ces travaux sans nouvelle demande. Le routage exclusivement par canal source, le préchargement mémoire, la visibilité conditionnelle de l'avatar et le moteur Realtime sans Luna sont des objectifs **non intégrés**. Luna reste le modèle configuré par défaut dans le code actuel.
+**Décision maintenue :** Goldaj veut d'abord tester Jade avant de développer les pistes du catalogue d'améliorations ; le backlog **opérationnel** créé le 18 novembre organise au contraire installation, recette, modèle r21 et maintenance déjà attendues. Ne pas engager de développement à partir du catalogue prospectif sans nouvelle demande ; la création du backlog opérationnel n'autorise pas à elle seule l'exécution de ses tâches ni des appels facturés. Le routage exclusivement par canal source, le préchargement mémoire, la visibilité conditionnelle de l'avatar et le moteur Realtime sans Luna sont des objectifs **non intégrés**. Luna reste le modèle configuré par défaut dans le code actuel.
 
 ## Branches, poste et confidentialité
 
