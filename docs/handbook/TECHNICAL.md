@@ -82,7 +82,7 @@ Android Chrome PWA + Tailscale -> URL privee Serve PC Jade
 
 **Validation automatisée :** `python -m compileall`, `python -m unittest discover -s tests -v`, tests du module mobile, mémoire, intentions, arbitrage et routage privé ; `scripts/check_docs.py` contrôle les guides par branche. GitHub Actions exécute Windows et Ubuntu en mode hors ligne, avec scan secrets. **Ce n'est pas une validation du PC réel** : prévoir recette Discord/Twitch/micro/audio, animation r20 Windows/Web, Tailscale et Android Wi-Fi/4G, charge simultanée, pertes de réseau, coûts réels, arrêt/reprise et fuite inter-canaux.
 
-**Maintenance :** tout changement d'interface, configuration, source, test, asset ou infra doit mettre à jour **les six guides principaux, la note de nettoyage, le README, AGENTS et les passations spécialisées impactées dans la même branche**. Voir [AI_HANDOFF.md](AI_HANDOFF.md). Ne pas merger `develop` dans `main` simplement pour lui donner ces documents.
+**Maintenance :** pour les changements techniques, mettre à jour le journal [`docs/operations/CHANGELOG.md`](../operations/CHANGELOG.md), puis **uniquement les guides, atlas, README, consignes AGENTS et passations réellement impactés**, conformément à [AGENTS.md](../../AGENTS.md) et [AGENT_COORDINATION.md](../operations/AGENT_COORDINATION.md). Aucune réécriture automatique de tous les guides ; une correction purement documentaire ne requiert pas d'entrée technique au changelog. Ne pas merger `develop` dans `main` simplement pour lui donner ces documents.
 
 ## 8. Contrat émotionnel avatar Live2D (ajout du 15/11/2026)
 
