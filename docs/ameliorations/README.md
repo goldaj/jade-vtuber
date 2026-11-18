@@ -5,7 +5,7 @@
 
 Ce dossier rassemble les idées des conversations des 16 et 18 novembre 2026 (latence, mémoire, routage, visibilité, modularité, perception multimodale et normalisation), ainsi que les pistes encore pertinentes repérées dans les audits, plans, passations et documents de modélisation. Les propositions sont confrontées au code réel de `develop` ; les doublons clairement identifiés et les prémisses obsolètes sont retirés ou réécrits.
 
-**Décision du propriétaire : effectuer d'abord les tests sur son PC. Aucun changement de code au titre de ce catalogue avant une nouvelle demande.** Toute fonction déjà codée dans `develop` est considérée implémentée, indépendamment du programme de recette. **Révision de cohérence du 18 novembre : 149 entrées identifiées dans 10 thèmes** (LAT-12 retirée, intégrée à RTE-07 ; IDs conservés pour traçabilité).
+**Décision du propriétaire : effectuer d'abord les tests sur son PC. Aucun changement de code au titre de ce catalogue avant une nouvelle demande.** Toute fonction déjà codée dans `develop` est considérée implémentée, indépendamment du programme de recette. **Révision de cohérence du 18 novembre : 149 entrées d'origine dans 10 thèmes** (LAT-12 retirée, intégrée à RTE-07 ; IDs conservés pour traçabilité). **Ajout validé par le propriétaire : 36 nouvelles propositions NEW-01 à NEW-36**, soit **185 entrées dans 11 thèmes** ; NEW-04, NEW-10, NEW-18 en **P1**, les 33 autres en **P2**.
 
 ## Où trouver les idées
 
@@ -21,10 +21,11 @@ Ce dossier rassemble les idées des conversations des 16 et 18 novembre 2026 (la
 | Modèle artistique r21 | [08-MODELE-2D.md](08-MODELE-2D.md) | Rig final, export, 14 motions, tests Windows et Android |
 | Perception visuelle et multimodale | [09-PERCEPTION-MULTIMODALE.md](09-PERCEPTION-MULTIMODALE.md) | Images statiques, lecture de textes/photos/dessins, flux vidéo/jeux/films et réactions en direct |
 | Normalisation des données et mémoire | [10-NORMALISATION-DONNEES-MEMOIRE.md](10-NORMALISATION-DONNEES-MEMOIRE.md) | Formats canoniques, événements inter-modules, structure SQLite, indexation et récupération de souvenirs |
+| Contrôle, comportement, autonomie et capacités complémentaires | [11-CAPACITES-COMPORTEMENT-CONTROLE.md](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | 36 propositions NEW : contrôle des réponses publiques, participation sociale, retours humains, administration, recherche, tâches, intégrations et expressivité |
 
 ## Lecture du catalogue
 
-- **Identifiant** : stable par idée et thème (LAT, MEM, RTE, VIS, ARC, UX, QUA, ART, PER, NRM) ; les futures PR peuvent le citer.
+- **Identifiant** : stable par idée et thème (LAT, MEM, RTE, VIS, ARC, UX, QUA, ART, PER, NRM, NEW) ; les futures PR peuvent le citer.
 - **Priorité** : P0 = recette / risque ou prérequis incontournable ; P1 = gain rapide ou besoin produit explicite ; P2 = chantier structurant ; P3 = amélioration ultérieure. Ce n'est **pas** l'ordre automatique d'exécution.
 - **Nature** : **P** = fonction nouvelle à concevoir ; **E** = amélioration d'une fonction déjà codée (donc considérée implémentée) ; **C** = contrôle, décision ou action d'exploitation sans affirmer une absence de fonction ; **D** = proposition différée.
 - **Référence de statut** : si une fonctionnalité est raccordée au code de `develop`, elle est **implémentée**. Ne pas introduire une seconde distinction « fonctionnelle seulement si testée ». La configuration privée et les rapports QA sont des sujets distincts ; vérifier le code avant d'ajouter une idée.
@@ -60,7 +61,7 @@ Lorsqu'une proposition est prise en charge, préciser dans sa ligne ou une PR : 
 
 ### Provenance des propositions
 
-- **Conversations du 16 au 18 novembre 2026** : latence profonde, mémoire proactive, sortie exclusive par source, modèle 2D à visibilité conditionnelle, perception d'images/vidéos, architecture ultra modulaire et normalisation des interactions/souvenirs.
+- **Conversations du 16 au 18 novembre 2026** : latence profonde, mémoire proactive, sortie exclusive par source, modèle 2D à visibilité conditionnelle, perception d'images/vidéos, architecture ultra modulaire, normalisation des interactions/souvenirs et **36 nouvelles capacités transverses priorisées par Goldaj** (3 en P1, 33 en P2).
 - **Code develop étudié** : main.py, output.py, realtime_tts.py, openai_services.py, orchestrator.py, dialogue.py, voice_turns.py, discord_text.py, discord_voice.py, memory_service.py, memory_store.py, mobile_gateway.py et avatar.py.
 - **Plans et audits** : [plan de latence](../history/gpt6-jade/PLAN-LATENCE-20261110.md), [audit transverse](../history/gpt6-jade/AUDIT-TRANSVERSE-20261115.md), [audit DevOps](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md), [audit mobile/mémoire](../history/gpt6-jade/AUDIT-REVUE-MOBILE-MEMOIRE-20261115.md), [réconciliation du 16 novembre](../history/gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md), [plan produit](../history/gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md).
 - **Passations et spécifications** : [mémoire](../history/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md), [streaming](../history/gpt6-jade/HANDOFF-STREAMING-TTS-20261113.md), [intention Live2D](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [PC et Android](../history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), [guide agents](../handbook/AI_HANDOFF.md).
