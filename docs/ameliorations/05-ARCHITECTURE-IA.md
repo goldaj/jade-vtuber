@@ -39,6 +39,8 @@
 - La modularité **n'impose pas un microservice par fonction** : commencer par des interfaces Python et adaptateurs au sein du processus actuel. N'isoler en services distincts que lorsque cela apporte une valeur mesurée.
 - Critère de réussite concret : **remplacer un fournisseur TTS/STT/LLM/vision, débrancher le visuel, ajouter un nouveau connecteur ou une compétence** avec des modifications confinées au module et à sa configuration, sans réécrire le moteur, l'identité, la mémoire ou le routage.
 
+**Normalisation transverse :** les échanges standardisés, contrats canoniques d'événements, formats des sorties et recherches mémoire sont détaillés dans [10-NORMALISATION-DONNEES-MEMOIRE.md](10-NORMALISATION-DONNEES-MEMOIRE.md). Les choix de formats restent indépendants des fournisseurs.
+
 **Lien fonctionnel :** la perception d'images et de vidéo est détaillée dans [09-PERCEPTION-MULTIMODALE.md](09-PERCEPTION-MULTIMODALE.md), et sert de cas d'usage exemplaire pour les adaptateurs et fournisseurs interchangeables.
 
 ## Cible mesurable, à confirmer
