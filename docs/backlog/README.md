@@ -16,6 +16,8 @@
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 12 |
 | **Total** | | **Tâches uniques identifiées, après reclassement du recensement initial** | **57** |
 
+**Definition of Done officielle :** [lire les règles de clôture](DEFINITION_OF_DONE.md). Toute carte n'est **Done** que si les cinq exigences sont satisfaites, dont validation explicite par **Codex (tous ses modèles et sous-agents) OU le propriétaire**, **au moins un des deux**. L'intervention humaine n'est plus obligatoire si Codex a validé. La présence du code ou d'une CI verte ne clôture pas à elle seule une recette physique.
+
 Les sous-tâches de recette et les étapes matérielles restent séparées lorsqu'elles fournissent une preuve indépendante. Une anomalie constatée ouvre une carte `DEV` liée à `REC` ; pas de duplication du développement livré. Les fichiers thématiques sont **canoniques pour le détail et le statut de chaque carte** ; la présente vue fournit le classement global. Lorsqu'une carte change de priorité, mettre à jour le détail puis le rang ici.
 
 ## Deux jalons produit
@@ -108,29 +110,39 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 56 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
 | 57 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
 
-## Workflow minimal
+## Workflow et statut canonique
 
-| Statut | Signification |
+La [Definition of Done officielle](DEFINITION_OF_DONE.md) est obligatoire sur **DEV, REC, OPS et ART**. La colonne **Statut** de chaque vue thématique est la **seule source de vérité opérationnelle du statut** ; ce tableau central est une vue de priorités. Chaque carte conserve aussi une *situation initiale* (à recetter, besoin de PC, conditionnelle, etc.), qui n'est pas son avancement.
+
+| Statut | Règle |
 | --- | --- |
-| **À qualifier** | Matérialité, portée ou dépendance encore incertaine. |
-| **Prêt** | Travail clarifié, responsable et prérequis confirmés ; peut être pris en charge. |
-| **En cours** | Intervention réellement engagée sur la branche/l'environnement identifiés. |
-| **Bloqué** | Dépendance empêchant l'exécution ; documenter le blocage et son responsable. |
-| **Terminé** | Clôture motivée et vérifiable ; **Definition of Done transversale encore à convenir avec le propriétaire**. |
+| **À qualifier** | Fait matériel, périmètre ou anomalie encore à établir. |
+| **À faire** | Travail recensé mais non démarré ; prérequis parfois manquants. |
+| **En cours** | Réalisation ou tests réellement engagés. |
+| **À valider** | Réalisation et preuves disponibles ; validation Codex **OU** propriétaire attendue, ainsi que l'intégration/traçabilité encore applicable. |
+| **Bloqué** | Dépendance empêchant de progresser ; consigner le blocage et son déblocage prévu. |
+| **Done** | Cinq conditions de la [DoD](DEFINITION_OF_DONE.md) réunies, dont validation positive par au moins un des deux validateurs autorisés. |
+| **Classée sans suite** | Cas devenu sans objet, abandonné ou non reproductible, avec justification ; ne vaut **pas** Done. |
 
-Les étiquettes actuelles des vues (`À recetter`, `À faire sur PC`, `Conditionnel`, `À vérifier`, etc.) décrivent **la situation initiale** et ne signifient pas qu'un agent s'est officiellement approprié la tâche. Ne pas convertir arbitrairement une fonctionnalité codée en « non développée » du seul fait d'un essai manquant.
+**La revue Codex doit être une passe explicite, distincte de la réalisation.** Les modèles Terra/Astra/Sol et sous-agents sont des exécutants possibles de **Codex**, pas des validateurs séparés obligatoires. Une contre-revue indépendante est recommandée pour les cas sensibles, mais elle n'est pas imposée systématiquement. **ChatGPT en mode chat ne valide pas automatiquement une tâche à la place de Codex.**
+
+Les statuts initiaux des 57 cartes sont ouverts : aucune n'est devenue Done lors de la création de cette règle. Les étiquettes de situation (`À recetter`, `À faire sur PC`, `Conditionnel`...) restent descriptives. Un défaut non reproduit se classe sans suite plutôt que d'inventer une réparation ; une fonction codée reste implémentée même quand sa carte REC est encore ouverte.
 
 ### Cartes, traçabilité et responsabilité
 
-Chaque ligne contient un **ID stable** (`DEV-`, `REC-`, `OPS-`, `ART-`), une priorité, le jalon, la situation initiale, le résultat observable et les dépendances. À l'ouverture réelle d'une tâche, renseigner dans le document thématique ou la PR : responsable confirmé, branche et SHA, lien d'issue/PR si créé, date, environnement non sensible, preuves et éventuels blocages. **Attribution des agents non présumée :** Codex/Terra pour l'exécution possible sur PC, propriétaires pour permissions, comptes et acceptation ; experts 2D selon disponibilité. Ne jamais réserver un agent ou un sprint sans accord.
+Chaque ligne contient un **ID stable** (`DEV-`, `REC-`, `OPS-`, `ART-`), une priorité, un jalon, un **statut**, la situation observée, le résultat attendu et les dépendances. Lorsqu'une carte est prise en charge, renseigner dans le document thématique ou la PR : responsable de réalisation, branche/SHA ou environnement, résultats et limites. **À la clôture**, la validation positive de **Codex OU du propriétaire** doit être traçable avec date et référence, via une [passation dédiée](../operations/handoffs/TEMPLATE.md) ou une PR explicitement liée à l'ID. Le validateur peut approuver plusieurs cartes en une seule passe en les nommant chacune. La vérification physique n'est pas déduite d'une CI hors ligne.
 
-Les [passations actives](../operations/handoffs/README.md) servent à l'exécution, pas à maintenir un deuxième backlog. Les archives et anciennes PR sont des sources datées, non des demandes de travail automatiquement réactivées. Conserver `main` inchangée et le dépôt public ; aucune suppression de branche ou modification de configuration privée sans contrôle/autorisation.
+Les passations actives [entre agents](../operations/handoffs/README.md) servent à l'exécution et à la preuve, pas à maintenir un deuxième backlog. Les archives et anciennes PR sont des sources datées, non des demandes de travail automatiquement réactivées. Conserver `main` inchangée et le dépôt public ; aucune suppression de branche, activation de microphone ou modification privée sans contrôle/autorisation.
 
-### Definition of Done : à construire ensemble ensuite
+### Conditions de clôture adoptées
 
-**La DoD générale n'est PAS encore adoptée.** Aucun critère de clôture transversal nouveau n'est imposé à ce stade. Les critères de chaque carte sont des **résultats attendus / critères d'acceptation proposés** ; ils ne constituent pas à eux seuls une DoD.
+1. Réalisation complète selon les critères d'acceptation **applicables** à la carte.
+2. Tests pertinents réellement exécutés, preuves et régressions concernées contrôlées.
+3. Validation explicite par **Codex (modèle/sous-agent quelconque) OU le propriétaire**, au moins un des deux, dans une passe identifiable.
+4. Intégration dans **`develop`** pour un changement de dépôt, ou application vérifiée sur le poste/service pertinent pour un travail local.
+5. Traçabilité du statut, du validateur, des tests, des limites, des commits/PR et des guides affectés.
 
-Lors de la discussion prévue avec le propriétaire, définir séparément ce que « terminé » exige pour `DEV`, `REC`, `OPS` et `ART` : preuves, tests pertinents, mise à jour documentaire par impact, contraintes matérielles, gestion des dérogations et responsabilité d'acceptation. Ne pas marquer les 57 lignes « terminées » sur la seule présence du code, d'une PR fusionnée ou d'une ancienne CI réussie.
+La DoD ne nécessite **ni une double validation, ni une validation humaine systématique, ni le merge vers `main`**. Les règles détaillées et les adaptations par type de tâche sont dans [DEFINITION_OF_DONE.md](DEFINITION_OF_DONE.md).
 
 ## Décision d'organisation
 
