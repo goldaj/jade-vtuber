@@ -20,10 +20,11 @@ Ce dossier rassemble les idées de la conversation du 16 novembre 2026 sur la r�
 | Recette, sécurité et exploitation | [07-QUALITE-EXPLOITATION.md](07-QUALITE-EXPLOITATION.md) | Tests PC réels, métriques, sauvegardes, CI, secrets et déploiement |
 | Modèle artistique r21 | [08-MODELE-2D.md](08-MODELE-2D.md) | Rig final, export, 14 motions, tests Windows et Android |
 | Perception visuelle et multimodale | [09-PERCEPTION-MULTIMODALE.md](09-PERCEPTION-MULTIMODALE.md) | Images statiques, lecture de textes/photos/dessins, flux vidéo/jeux/films et réactions en direct |
+| Normalisation des données et mémoire | [10-NORMALISATION-DONNEES-MEMOIRE.md](10-NORMALISATION-DONNEES-MEMOIRE.md) | Formats canoniques, événements inter-modules, structure SQLite, indexation et récupération de souvenirs |
 
 ## Lecture du catalogue
 
-- **Identifiant** : stable par idée et thème (LAT, MEM, RTE, VIS, ARC, UX, QUA, ART) ; les futures PR peuvent le citer.
+- **Identifiant** : stable par idée et thème (LAT, MEM, RTE, VIS, ARC, UX, QUA, ART, PER, NRM) ; les futures PR peuvent le citer.
 - **Priorité** : P0 = recette / risque ou prérequis incontournable ; P1 = gain rapide ou besoin produit explicite ; P2 = chantier structurant ; P3 = amélioration ultérieure. Ce n'est **pas** l'ordre automatique d'exécution.
 - **Nature** : **P** = fonction nouvelle à concevoir ; **E** = amélioration d'une fonction déjà codée (donc considérée implémentée) ; **C** = contrôle, décision ou action d'exploitation sans affirmer une absence de fonction ; **D** = proposition différée.
 - **Référence de statut** : si une fonctionnalité est raccordée au code de `develop`, elle est **implémentée**. Ne pas introduire une seconde distinction « fonctionnelle seulement si testée ». La configuration privée et les rapports QA sont des sujets distincts ; vérifier le code avant d'ajouter une idée.
