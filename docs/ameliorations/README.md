@@ -3,9 +3,9 @@
 **Branche de référence : develop. Date de création : 16 novembre 2026.**
 **Statut : propositions et actions futures, PAS un ordre de développement ni de déploiement.**
 
-Ce dossier rassemble les idées de la conversation du 16 novembre 2026 sur la réduction de latence, la mémoire anticipée, le routage des réponses et la visibilité Live2D, ainsi que les pistes encore pertinentes repérées dans les audits, plans, passations et documents de modélisation de ce dépôt.
+Ce dossier rassemble les idées des conversations des 16 et 18 novembre 2026 (latence, mémoire, routage, visibilité, modularité, perception multimodale et normalisation), ainsi que les pistes encore pertinentes repérées dans les audits, plans, passations et documents de modélisation. Les propositions sont confrontées au code réel de `develop` ; les doublons clairement identifiés et les prémisses obsolètes sont retirés ou réécrits.
 
-**Décision du propriétaire : effectuer d'abord les tests sur son PC. Aucun changement de code au titre de ce catalogue avant une nouvelle demande.** Toute fonction déjà codée dans `develop` est considérée implémentée, indépendamment du programme de recette.
+**Décision du propriétaire : effectuer d'abord les tests sur son PC. Aucun changement de code au titre de ce catalogue avant une nouvelle demande.** Toute fonction déjà codée dans `develop` est considérée implémentée, indépendamment du programme de recette. **Révision de cohérence du 18 novembre : 149 entrées identifiées dans 10 thèmes** (LAT-12 retirée, intégrée à RTE-07 ; IDs conservés pour traçabilité).
 
 ## Où trouver les idées
 
@@ -60,12 +60,12 @@ Lorsqu'une proposition est prise en charge, préciser dans sa ligne ou une PR : 
 
 ### Provenance des propositions
 
-- **Conversation du 16 novembre 2026** : les quatre chantiers demandés par Goldaj (latence profonde, mémoire proactive, sortie exclusive par source, modèle 2D à visibilité conditionnelle) et les optimisations rapides discutées.
+- **Conversations du 16 au 18 novembre 2026** : latence profonde, mémoire proactive, sortie exclusive par source, modèle 2D à visibilité conditionnelle, perception d'images/vidéos, architecture ultra modulaire et normalisation des interactions/souvenirs.
 - **Code develop étudié** : main.py, output.py, realtime_tts.py, openai_services.py, orchestrator.py, dialogue.py, voice_turns.py, discord_text.py, discord_voice.py, memory_service.py, memory_store.py, mobile_gateway.py et avatar.py.
 - **Plans et audits** : [plan de latence](../history/gpt6-jade/PLAN-LATENCE-20261110.md), [audit transverse](../history/gpt6-jade/AUDIT-TRANSVERSE-20261115.md), [audit DevOps](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md), [audit mobile/mémoire](../history/gpt6-jade/AUDIT-REVUE-MOBILE-MEMOIRE-20261115.md), [réconciliation du 16 novembre](../history/gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md), [plan produit](../history/gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md).
 - **Passations et spécifications** : [mémoire](../history/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md), [streaming](../history/gpt6-jade/HANDOFF-STREAMING-TTS-20261113.md), [intention Live2D](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [PC et Android](../history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), [guide agents](../handbook/AI_HANDOFF.md).
-- **Artistique et publication** : [plan r21](../../jade-modeling/PLAN_MODELE_JADE.md), [qualité r21](../../jade-modeling/PLAN_QUALITE_PRO_20261113.md), [migration/publication](../publication/03-CODEX-MIGRATION-PLAN.md).
+- **Artistique et visibilité publique réelle** : [plan r21](../../jade-modeling/PLAN_MODELE_JADE.md), [qualité r21](../../jade-modeling/PLAN_QUALITE_PRO_20261113.md), [statut actuel du dépôt public](../publication/CURRENT_PUBLIC_STATUS.md). Les anciens plans de migration sont historiques.
 
 ### Contrôle de cohérence
 
-Les notes des 10–15 novembre décrivent parfois une fonction alors en PR ou absente. Plusieurs ont depuis été intégrées dans develop (SQLite v3, PWA, Discord unifié, expressions r20 A/B, contrôles CI). **Ne pas rouvrir ces travaux sans vérifier le HEAD réel**. Un ancien incident CI, un écart historique main/develop ou une consigne de merge déjà satisfaite est un point de recontrôle, pas nécessairement une anomalie encore ouverte.
+Les notes des 10–15 novembre décrivent parfois une fonction alors en PR ou absente. Plusieurs ont depuis été intégrées dans develop (SQLite v3, PWA, Discord unifié, expressions r20 A/B, contrôles CI). **Ne pas rouvrir ces travaux sans vérifier le HEAD réel**. Un ancien incident CI, un écart historique main/develop ou une consigne de merge déjà satisfaite est un point de recontrôle, pas nécessairement une anomalie encore ouverte. Le dépôt est **déjà public et doit le rester** ; la **Démo Express est la seule démo distribuée**. Un fonctionnement réel de Jade n'est pas une deuxième démo.
