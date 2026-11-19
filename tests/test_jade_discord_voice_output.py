@@ -417,6 +417,28 @@ class DiscordVoiceRoutingTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(asyncio.CancelledError):
                         await app
 
+    async def test_discord_voice_wav_never_appears_in_shared_obs_subtitles(self):
+        with tempfile.TemporaryDirectory() as directory:
+            subtitle = Path(directory) / "subtitle.txt"
+            subtitle.write_text("stale", encoding="utf-8")
+            observed = []
+            class InspectingDiscord:
+                def reply_authorized(self, _source):
+                    return True
+                async def play_for_reply(self, _wav, _source):
+                    observed.append(subtitle.read_text(encoding="utf-8"))
+                    return True
+            class NoLocal:
+                async def play(self, _wav):
+                    raise AssertionError("Discord speech must not use local audio")
+            output = SpeechOutput(_Services(), NoLocal(), subtitle,
+                                  secondary_player=InspectingDiscord())
+            source = Incoming("discord_voice", "test", "question", channel="123",
+                              speaker_id=1, voice_session_id="a" * 32)
+            self.assertTrue(await output.speak(Reply(source, "answer")))
+            self.assertEqual(observed, [""])
+            self.assertEqual(subtitle.read_text(encoding="utf-8"), "")
+
     async def test_revoked_session_rejected_before_synthesis_or_outputs(self):
         with tempfile.TemporaryDirectory() as directory:
             local, discord = _Player(), _Player()

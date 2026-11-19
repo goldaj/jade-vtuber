@@ -22,7 +22,7 @@
 
 ## Limitations fonctionnelles actuelles
 
-1. **Routage :** Discord/Twitch/HTTP écrits ne déclenchent plus de TTS ni de hotkey VTS dans le callback. Le fallback vocal Discord n'utilise plus ffplay local. MP et sources privées restent exclus des sous-titres OBS. Le routeur central multi-audience et le filtrage du rendu 2D restent à développer ; recette mixage OBS nécessaire.
+1. **Routage :** Discord/Twitch/HTTP écrits ne déclenchent plus de TTS ni de hotkey VTS dans le callback. Le fallback vocal Discord n'utilise plus ffplay local et masque ses sous-titres OBS partagés. MP et sources privées restent exclus des sous-titres OBS. Le routeur central multi-audience et le filtrage du rendu 2D restent à développer ; recette mixage OBS nécessaire.
 2. **Streaming :** Discord vocal utilise le PCM progressif (session autorisée) même si ffplay est disponible pour le micro PC ; le mode phrases reste opt-in, mais le fallback WAV Discord vocal ne joue plus en local. Le hotkey VTS ne retarde plus le début de voix standard.
 3. **Concurrence :** l'orchestrateur attend la fin du tour et de sa diffusion pour avancer, même si la curation et les connecteurs peuvent travailler à côté.
 4. **Mémoire :** rappel par identité et portée, chronologique et limité ; pas de cache de présence Goldaj/Discord L1-L2, de préchargement anticipé ou de recherche sémantique profonde.

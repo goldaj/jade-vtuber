@@ -105,7 +105,7 @@ class SpeechOutput:
     def _public_subtitles_allowed(source):
         """Only public-origin replies may reach the shared OBS text file."""
         platform = getattr(source, "platform", None)
-        return platform not in ("microphone", "local_http", "mobile") and not (
+        return platform not in ("microphone", "local_http", "mobile", "discord_voice") and not (
             platform == "discord" and getattr(source, "private_channel", False))
 
     def _delivery_context(self, source=None):
