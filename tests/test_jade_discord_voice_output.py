@@ -49,7 +49,7 @@ class DiscordVoiceRoutingTests(unittest.IsolatedAsyncioTestCase):
                                   secondary_player=discord)
             for source in ("discord_voice", "discord", "twitch", "console", "http"):
                 await output.speak(Reply(Incoming(source, "test", "question"), "answer"))
-            self.assertEqual(len(local.played), 5)
+            self.assertEqual(len(local.played), 4)
             self.assertEqual(len(discord.played), 5)
 
     async def test_legacy_broadcast_flag_has_no_effect(self):
@@ -360,22 +360,22 @@ class DiscordVoiceRoutingTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(local.played, [])
             self.assertEqual(discord.played, [])
 
-    async def test_revocation_during_playback_stops_local_and_clears_subtitle(self):
+    async def test_revocation_during_fallback_stops_discord_without_local_audio(self):
         with tempfile.TemporaryDirectory() as directory:
             started, stopped = asyncio.Event(), asyncio.Event()
             class Local:
                 async def play(self, _wav):
-                    started.set()
-                    try:
-                        await asyncio.Event().wait()
-                    finally:
-                        stopped.set()
+                    raise AssertionError("Discord vocal must not play locally")
             class Discord:
                 allowed = True
                 def reply_authorized(self, _source):
                     return self.allowed
                 async def play_for_reply(self, _wav, _source):
-                    await asyncio.Event().wait()
+                    started.set()
+                    try:
+                        await asyncio.Event().wait()
+                    finally:
+                        stopped.set()
             discord = Discord()
             subtitle = Path(directory) / "subtitle.txt"
             output = SpeechOutput(_Services(), Local(), subtitle, secondary_player=discord)
@@ -442,21 +442,21 @@ class DiscordVoiceRoutingTests(unittest.IsolatedAsyncioTestCase):
             discord.mark_voice_reply_played.assert_not_called()
             self.assertEqual(subtitle.read_text(encoding="utf-8"), "")
 
-    async def test_no_acknowledgement_if_local_playback_fails(self):
+    async def test_discord_fallback_never_uses_failed_local_player(self):
         with tempfile.TemporaryDirectory() as directory:
             discord = _Player()
             discord.play_for_reply = AsyncMock(return_value=True)
             discord.mark_voice_reply_played = unittest.mock.Mock()
             class FailingLocal:
                 async def play(self, _wav):
-                    raise RuntimeError("synthetic player failure")
+                    raise AssertionError("local playback must not be attempted")
             output = SpeechOutput(_Services(), FailingLocal(), Path(directory) / "subtitle.txt",
                                   secondary_player=discord)
             source = Incoming("discord_voice", "test", "question", channel="123",
                               speaker_id=1, voice_session_id="a" * 32)
-            with self.assertRaises(ExceptionGroup):
-                await output.speak(Reply(source, "answer"))
-            discord.mark_voice_reply_played.assert_not_called()
+            self.assertTrue(await output.speak(Reply(source, "answer")))
+            discord.play_for_reply.assert_awaited_once()
+            discord.mark_voice_reply_played.assert_called_once_with(source)
 
     async def test_gate_cleanup_failure_still_clears_subtitle(self):
         with tempfile.TemporaryDirectory() as directory:
