@@ -29,7 +29,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                   avatar=False, mobile=False, all_channels=False):
     config = Settings.load()
     config.validate()
-    enable_console_logs()
+    enable_console_logs(enable_latency=config.latency_logging)
     if (voice or mic or twitch or discord or vts or discord_voice or http or mobile) and not live:
         raise ValueError("external services require --live; demo never bills OpenAI")
     if live:
@@ -141,7 +141,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 await optional("discord", lambda: discord_client.send_chat(
                     reply.source.channel, reply.text,
                     source_message_id=reply.source.message_id))
-            if (vts_client is not None and config.vts_speak_hotkey
+            if (vts_client is not None and speech is not None and config.vts_speak_hotkey
                     and not reply.spoken
                     and reply.source.platform in ("microphone", "discord_voice", "console")):
                 # Optional animation runs independently; voice starts immediately

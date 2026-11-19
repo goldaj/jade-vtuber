@@ -10,3 +10,5 @@
 - **Limites** : animations avatar multi-audience non traitées, premier son et coûts réels non mesurés, CI et pratiques PC à confirmer ; REC-005/007/010 restent ouvertes ; RTE-14 console privée reste P2.
 - **Aucune action** sur main, comptes, poste, secrets ni fichiers artistiques.
 - **Sources** : [DEV](../../backlog/01-DEVELOPPEMENT.md), [DoD](../../backlog/DEFINITION_OF_DONE.md), [état](../../handbook/BRANCH_STATE.md), [journal](../CHANGELOG.md).
+
+- **Réglage de mesure** : `JADE_LATENCY_LOG=1` dans la configuration privée. Les jalons sont désactivés par défaut ; pas de première trame audible ni de coûts réels garantis.

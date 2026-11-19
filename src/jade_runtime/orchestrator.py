@@ -121,7 +121,9 @@ class Runtime:
             # never record participants, raw speech or message content.
             self.latency_log.info(
                 "turn=%d platform=%s modality=%s stage=%s since_queue_ms=%.1f",
-                item.turn, item.message.platform, item.message.input_modality,
+                item.turn, item.message.platform,
+                ("voice" if item.message.platform in ("discord_voice", "microphone")
+                 else item.message.input_modality),
                 stage, (time.monotonic() - item.queued_at) * 1000)
 
     async def stop(self, *, graceful=True, timeout=5.0):

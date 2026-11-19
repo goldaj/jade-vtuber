@@ -1,14 +1,16 @@
 """Offline tests for selected incoming text, response intent and output modality."""
 import asyncio
 import json
+import logging
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
+from src.jade_runtime.config import Settings
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming, Reply
 from src.jade_runtime.orchestrator import Runtime
 from src.jade_runtime.turn_logging import (
-    planned_destinations, record_input, record_reply,
+    planned_destinations, record_input, record_reply, enable_console_logs,
 )
 
 
@@ -17,6 +19,28 @@ def records(captured):
 
 
 class TurnLoggingTests(unittest.TestCase):
+    def test_optional_latency_logger_is_configurable_and_private(self):
+        with patch("src.jade_runtime.config.environ",
+                   side_effect=lambda name, default: "1" if name == "JADE_LATENCY_LOG"
+                   else default):
+            settings = Settings.load()
+        self.assertTrue(settings.latency_logging)
+        logger = logging.getLogger("jade.latency")
+        previous_level = logger.level
+        previous_handlers = list(logger.handlers)
+        previous_propagate = logger.propagate
+        try:
+            enable_console_logs(enable_latency=settings.latency_logging)
+            self.assertTrue(logger.isEnabledFor(logging.INFO))
+            self.assertFalse(logger.propagate)
+        finally:
+            logger.handlers[:] = previous_handlers
+            logger.setLevel(previous_level)
+            logger.propagate = previous_propagate
+        with self.assertRaises(ValueError):
+            Settings(latency_logging="true").validate()
+
+
     def test_input_platform_modality_and_single_record(self):
         sources = (
             ("twitch", "text"), ("discord", "text"),

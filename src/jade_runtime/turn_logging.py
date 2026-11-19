@@ -12,14 +12,22 @@ _VOICE_OUTPUTS = frozenset(("discord_voice", "local_audio", "mobile_audio"))
 _TEXT_OUTPUTS = frozenset(("twitch_text", "discord_text", "local_http_text", "mobile_text", "console_text"))
 
 
-def enable_console_logs() -> None:
-    """Make selected conversation traces visible in local stderr."""
+def enable_console_logs(*, enable_latency=False) -> None:
+    """Make conversation traces visible; technical latency metrics are opt-in."""
     if not LOG.handlers:
         handler = logging.StreamHandler(sys.stderr)
         handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
         LOG.addHandler(handler)
     LOG.setLevel(logging.INFO)
     LOG.propagate = False
+    if enable_latency:
+        latency = logging.getLogger("jade.latency")
+        if not latency.handlers:
+            handler = logging.StreamHandler(sys.stderr)
+            handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+            latency.addHandler(handler)
+        latency.setLevel(logging.INFO)
+        latency.propagate = False
 
 
 def _write(payload: dict) -> None:

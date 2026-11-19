@@ -16,7 +16,7 @@ Au relevé du 18 novembre, aucune issue/PR de développement ouverte ; un lot de
 | **DEV-005** | P1 | A | **En cours** | Quick win approuvé le 19/11 | Supprimer le TTS des réponses Discord/Twitch/HTTP écrites | Réponse écrite sans TTS local/Discord ; destinations planifiées alignées ; tests sans dépenses. | — |
 | **DEV-006** | P1 | A | **En cours** | Quick win approuvé le 19/11 | Décorréler VTS de la voix | Hotkey facultatif asynchrone, sans retard de voix, annulé à la fermeture ; tests de blocage. | — |
 | **DEV-007** | P1 | A | **En cours** | Quick win approuvé le 19/11 | Partager le pool Realtime TTS entre PCM et WAV | Pool existant injecté aussi dans la synthèse tamponnée ; tests du raccordement, sans répétition facturable. | — |
-| **DEV-008** | P1 | A | **En cours** | Quick win approuvé le 19/11 | Mesurer les durées multi-canaux sans donnée privée | Jalons file/mémoire/LLM/diffusion/fin/erreur ; tests toutes plateformes. Premier son/STT/coût physique restent REC-010. | — |
+| **DEV-008** | P1 | A | **En cours** | Quick win approuvé le 19/11 | Mesurer les durées multi-canaux sans donnée privée | Jalons file/mémoire/LLM/diffusion/fin/erreur via JADE_LATENCY_LOG=1 ; tests toutes plateformes, désactivé par défaut. Premier son/STT/coût physique restent REC-010. | — |
 
 ## Usage pour les agents
 

@@ -17,7 +17,7 @@
 | Mobile | PWA privée/Tailscale Serve, texte, capture WAV, TTS à la demande, modèle Live2D Web via assets/SDK installés |
 | Audio | STT/TTS OpenAI, PCM progressif sous conditions, voix Étincelle `shimmer` 1,25×, pitch optionnel via FFmpeg Rubber Band ; pool Realtime partagé WAV/PCM |
 | Émotions | Sept intentions ; **deux expressions faciales r20 + deux libellés PWA par intention**, synchronisation expression/bouche, toggle global |
-| Observabilité | Jalons de latence sans contenu ni identité sur tous les canaux (file, mémoire, LLM, diffusion, fin) ; mesures physiques STT/premier son/coût restantes |
+| Observabilité | Jalons `jade.latency` sans contenu ni identité sur tous les canaux, activables par `JADE_LATENCY_LOG=1` (défaut 0) ; mesures physiques STT/premier son/coût restantes |
 | Démonstrations | Démo Express simulée uniquement comme démonstration distribuée ; console hors ligne comme mode du vrai runtime. Renderer r20 intégré au code applicatif |
 
 ## Limitations fonctionnelles actuelles
