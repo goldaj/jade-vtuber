@@ -93,6 +93,33 @@ class TurnLoggingTests(unittest.TestCase):
             ("discord_voice",))
 
 
+class RuntimeTimingTests(unittest.IsolatedAsyncioTestCase):
+    async def test_timing_stages_cover_all_entry_channels_without_private_text(self):
+        for platform in ("discord", "twitch", "discord_voice",
+                         "microphone", "local_http", "mobile", "console"):
+            with self.subTest(platform=platform):
+                backend = AsyncMock()
+                backend.complete.return_value = "[INTENT:neutral] Réponse publique"
+                runtime = Runtime(Dialogue(backend, "Jade"), AsyncMock())
+                with self.assertLogs("jade.latency", level="INFO") as captured:
+                    await runtime.start()
+                    await runtime.submit(Incoming(
+                        platform, "Nom confidentiel", "Question secrète Jade",
+                        force_reply=True))
+                    await asyncio.wait_for(runtime.idle(), 2)
+                    await runtime.stop()
+                events = [record.message for record in captured.records]
+                stages = {item.split("stage=", 1)[1].split(" ", 1)[0]
+                          for item in events}
+                self.assertTrue({"queue_start", "llm_start", "llm_end",
+                                 "delivery_start", "delivery_end",
+                                 "turn_complete"}.issubset(stages))
+                self.assertTrue(all("platform=" + platform in item for item in events))
+                self.assertTrue(all("since_queue_ms=" in item for item in events))
+                self.assertFalse(any("secrète" in item or "confidentiel" in item
+                                     for item in events))
+
+
 class RuntimeTurnLoggingTests(unittest.IsolatedAsyncioTestCase):
     async def test_correlated_input_and_reply_with_intent_not_delivered(self):
         backend = AsyncMock()
