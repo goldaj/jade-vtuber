@@ -344,6 +344,79 @@ class DiscordVoiceRoutingTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(asyncio.CancelledError):
                         await task
 
+    async def test_nonstreamed_voice_is_not_delayed_by_stuck_vts_hotkey(self):
+        with tempfile.TemporaryDirectory() as directory:
+            hotkey_started, voice_started, sent = (asyncio.Event() for _ in range(3))
+            runtimes = []
+            config = Settings(api_key="test", discord_token="test",
+                              discord_voice_channel=123, vts_enabled=True,
+                              vts_token="test", vts_speak_hotkey="speak",
+                              subtitle_path=Path(directory) / "subtitle.txt")
+
+            class Services:
+                client = SimpleNamespace(close=AsyncMock())
+                close = AsyncMock()
+                complete = AsyncMock(return_value="Bonjour !")
+
+            class Speech:
+                secondary_player = None
+                def __init__(self, *_args, **_kwargs):
+                    pass
+                def start_early(self, _source):
+                    return None
+                async def speak(self, _reply):
+                    voice_started.set()
+
+            class Bridge:
+                def __init__(self, *_args, **_kwargs):
+                    pass
+
+            class Connector:
+                def __init__(self, _token, on_message, **_kwargs):
+                    self.on_message = on_message
+                async def connect_forever(self):
+                    await self.on_message(Incoming("discord_voice", "test", "question",
+                                                   channel="123", speaker_id=1,
+                                                   voice_session_id="a" * 32,
+                                                   force_reply=True))
+                    sent.set()
+                    await asyncio.Event().wait()
+
+            class ObservedRuntime(main.Runtime):
+                def __init__(self, *args, **kwargs):
+                    super().__init__(*args, **kwargs)
+                    runtimes.append(self)
+
+            class VTS:
+                def __init__(self, *_args, **_kwargs):
+                    pass
+                async def __aenter__(self):
+                    return self
+                async def __aexit__(self, *_args):
+                    pass
+                async def trigger_hotkey(self, _name):
+                    hotkey_started.set()
+                    await asyncio.Event().wait()
+
+            with patch.object(main.Settings, "load", return_value=config), \
+                 patch.object(main, "OpenAIServices", return_value=Services()), \
+                 patch.object(main, "SpeechOutput", Speech), \
+                 patch.object(main, "Runtime", ObservedRuntime), \
+                 patch("src.jade_runtime.discord_voice.OpenVoiceBridge", Bridge), \
+                 patch("src.jade_runtime.discord_text.DiscordText", Connector), \
+                 patch("src.jade_runtime.vtube_studio.VTubeStudio", VTS):
+                app = asyncio.create_task(main.console(live=True, voice=True, vts=True,
+                                                        discord=True, discord_voice=True))
+                try:
+                    await asyncio.wait_for(sent.wait(), timeout=2)
+                    await asyncio.wait_for(hotkey_started.wait(), timeout=2)
+                    await asyncio.wait_for(voice_started.wait(), timeout=2)
+                    await asyncio.wait_for(runtimes[0].idle(), timeout=2)
+                finally:
+                    app.cancel()
+                    with self.assertRaises(asyncio.CancelledError):
+                        await app
+
     async def test_revoked_session_rejected_before_synthesis_or_outputs(self):
         with tempfile.TemporaryDirectory() as directory:
             local, discord = _Player(), _Player()

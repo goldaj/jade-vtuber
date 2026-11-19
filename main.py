@@ -102,6 +102,15 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             vts_client = await scopes.enter_async_context(VTubeStudio(
                 config.vts_token, url=config.vts_url))
 
+        vts_tasks = set()
+
+        async def stop_vts_tasks():
+            # Do not let a slow visual hotkey hold up a voice reply or shutdown.
+            for task in tuple(vts_tasks):
+                task.cancel()
+            if vts_tasks:
+                await asyncio.gather(*vts_tasks, return_exceptions=True)
+
         async def on_reply(reply):
             if local_api is not None:
                 local_api.deliver(reply)
@@ -133,8 +142,14 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     reply.source.channel, reply.text,
                     source_message_id=reply.source.message_id))
             if (vts_client is not None and config.vts_speak_hotkey
-                    and not reply.spoken and reply.source.platform != "mobile"):
-                await optional("vts", lambda: vts_client.trigger_hotkey(config.vts_speak_hotkey))
+                    and not reply.spoken
+                    and reply.source.platform in ("microphone", "discord_voice", "console")):
+                # Optional animation runs independently; voice starts immediately
+                # and the turn is not blocked by a 20-second VTube Studio timeout.
+                vts_task = asyncio.create_task(
+                    optional("vts", lambda: vts_client.trigger_hotkey(config.vts_speak_hotkey)))
+                vts_tasks.add(vts_task)
+                vts_task.add_done_callback(vts_tasks.discard)
             if (speech is not None and not reply.spoken
                     and reply.source.platform in ("microphone", "discord_voice", "console")):
                 # TTS and the ensuing playback share this deadline. The old
@@ -177,6 +192,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 0.001, shutdown_deadline - asyncio.get_running_loop().time())
             await runtime.stop(graceful=False, timeout=remaining)
         scopes.push_async_callback(stop_runtime)
+        scopes.push_async_callback(stop_vts_tasks)
         if http:
             from src.jade_runtime.local_http import LocalHTTP
             local_api = LocalHTTP(runtime, token=config.http_token,
