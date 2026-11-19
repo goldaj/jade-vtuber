@@ -56,10 +56,22 @@ class TurnLoggingTests(unittest.TestCase):
         self.assertEqual(item["event"], "reply_planned")
         self.assertEqual(item["reply_with_intent"], "[INTENT:playful] Bonjour !")
         self.assertEqual(item["intent"], "playful")
-        self.assertEqual(item["output_modalities"], ["text", "voice"])
-        self.assertEqual(item["output_destinations"], ["discord_text", "local_audio"])
+        self.assertEqual(item["output_modalities"], ["text"])
+        self.assertEqual(item["output_destinations"], ["discord_text"])
         self.assertEqual(item["delivery_status"], "planned_not_confirmed")
         self.assertEqual(reply.text, "Bonjour !")
+
+    def test_written_channels_never_plan_tts_with_all_voice_outputs_enabled(self):
+        for platform, text_flag in (("discord", "discord_text"),
+                                    ("twitch", "twitch_text"),
+                                    ("local_http", "local_http")):
+            with self.subTest(platform=platform):
+                reply = Reply(Incoming(platform, "Auteur", "Jade ?"), "Réponse")
+                options = dict(has_speech=True, audio_output="ffplay",
+                               discord_voice=True, **{text_flag: True})
+                self.assertEqual(planned_destinations(reply, **options),
+                                 ({"discord": "discord_text", "twitch": "twitch_text",
+                                   "local_http": "local_http_text"}[platform],))
 
     def test_destination_matrix_and_streamed_voice(self):
         cases = (

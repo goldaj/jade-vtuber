@@ -135,7 +135,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             if (vts_client is not None and config.vts_speak_hotkey
                     and not reply.spoken and reply.source.platform != "mobile"):
                 await optional("vts", lambda: vts_client.trigger_hotkey(config.vts_speak_hotkey))
-            if speech is not None and not reply.spoken and reply.source.platform != "mobile":
+            if (speech is not None and not reply.spoken
+                    and reply.source.platform in ("microphone", "discord_voice", "console")):
                 # TTS and the ensuing playback share this deadline. The old
                 # 20-second total could cut off an otherwise valid answer.
                 await optional("voice", lambda: speech.speak(reply),

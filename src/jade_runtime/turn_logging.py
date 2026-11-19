@@ -61,17 +61,12 @@ def planned_destinations(reply, *, has_speech=False, audio_output="none",
         destinations.append("mobile_text")
         if reply.source.requested_speech:
             destinations.append("mobile_audio")
-    if has_speech and platform != "mobile":
-        if reply.spoken:
-            if discord_voice and platform not in ("microphone", "local_http", "mobile") and not (
-                    platform == "discord" and getattr(reply.source, "private_channel", False)):
-                destinations.append("discord_voice")
-        else:
-            if audio_output == "ffplay":
-                destinations.append("local_audio")
-            if discord_voice and platform not in ("microphone", "local_http", "mobile") and not (
-                    platform == "discord" and getattr(reply.source, "private_channel", False)):
-                destinations.append("discord_voice")
+    # Text-origin turns never incur local or Discord TTS, even with --all-channels.
+    if has_speech and platform == "discord_voice":
+        if discord_voice:
+            destinations.append("discord_voice")
+    elif has_speech and platform in ("microphone", "console") and audio_output == "ffplay":
+        destinations.append("local_audio")
     if not destinations:
         destinations.append("console_text")
     return tuple(destinations)
