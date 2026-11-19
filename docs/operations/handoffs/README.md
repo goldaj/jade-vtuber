@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Quick wins voix/routage/latence du 19 novembre](2026-11-19-chatgpt-quickwins-voice-routing.md) : DEV-003/005–008, preuves et relais de validation.
+
 - [Passation Codex : clôture du rangement develop du 16 novembre](2026-11-16-repository-cleanup.md) : **résidus à effectuer**, tests physiques, revue du modeling, branches fusionnées, droits/provenance et règles explicites. **Le dépôt est volontairement public et doit le rester.**
 
 Les documents clôturés peuvent être déplacés vers [les archives historiques](../../history/README.md) avec mise à jour des liens. Ne pas confondre une note de passation avec la liste des fonctionnalités codées.

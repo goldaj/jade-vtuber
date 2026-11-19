@@ -15,7 +15,7 @@
 - **[Catalogue des améliorations futures](docs/ameliorations/README.md)** : idées prospectives distinctes, non engagées automatiquement comme tâches du backlog opérationnel.
 - [Archives et index des conversations](docs/history/conversations/INDEX.md) : contexte historique, pas des ordres d'exécution actuels.
 
-**Décision maintenue :** Goldaj veut d'abord tester Jade avant de développer les pistes du catalogue d'améliorations ; le backlog **opérationnel** créé le 18 novembre organise au contraire installation, recette, modèle r21 et maintenance déjà attendues. Ne pas engager de développement à partir du catalogue prospectif sans nouvelle demande ; la création du backlog opérationnel n'autorise pas à elle seule l'exécution de ses tâches ni des appels facturés. Le routage exclusivement par canal source, le préchargement mémoire, la visibilité conditionnelle de l'avatar et le moteur Realtime sans Luna sont des objectifs **non intégrés**. Luna reste le modèle configuré par défaut dans le code actuel.
+**Décision générale maintenue, avec exception du 19 novembre :** Goldaj a explicitement autorisé les quick wins DEV-003/005–008 avant les recettes PC ; les autres idées restent différées ; le backlog **opérationnel** créé le 18 novembre organise au contraire installation, recette, modèle r21 et maintenance déjà attendues. Ne pas engager de développement à partir du catalogue prospectif sans nouvelle demande ; la création du backlog opérationnel n'autorise pas à elle seule l'exécution de ses tâches ni des appels facturés. Le routage exclusivement par canal source, le préchargement mémoire, la visibilité conditionnelle de l'avatar et le moteur Realtime sans Luna sont des objectifs **non intégrés**. Luna reste le modèle configuré par défaut dans le code actuel.
 
 ## Branches, poste et confidentialité
 
@@ -32,7 +32,7 @@
 - Mémoire SQLite v3, opt-in et curation facultative ; profil privé Goldaj partagé par micro PC et mobile authentifié ; historique complet en base avec fenêtre récente bornée ; conversation Discord voix/chat natif du même vocal unifiée par compte et session.
 - Réponses vocales OpenAI ; voix `shimmer` 1,25×, pitch +2 via FFmpeg Rubber Band quand disponible. Intention `[INTENT:...]` filtrée. **Deux réactions faciales r20 et deux textes PWA par chacune des sept intentions** codés ; **14 motions corporelles originales** et rig r21 final à créer.
 - PWA Android privée : texte, prise de parole WAV, TTS mobile, avatar Web sous SDK compatible. Le duplex temps réel n'est pas codé.
-- Streaming PCM Discord disponible sous conditions : `--all-channels` conserve `ffplay` pour le microphone PC, mais le PCM de Discord vocal l'utilise désormais indépendamment. Le mode par phrases reste opt-in, le fallback WAV et l'ancien broadcast restent à réexaminer. Les réponses écrites peuvent encore déclencher du TTS sur d'autres sorties : le routage exclusif reste à développer.
+- Streaming PCM Discord disponible sous conditions : `--all-channels` conserve `ffplay` pour le microphone PC, mais le PCM de Discord vocal l'utilise désormais indépendamment. Le mode par phrases reste opt-in, le fallback WAV Discord vocal n'utilise plus la sortie locale et les écrits Discord/Twitch/HTTP ne déclenchent plus de TTS. Le routage complet des rendus par audience reste à construire.
 
 ## Validation du backlog opérationnel
 
