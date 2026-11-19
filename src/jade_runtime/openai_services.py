@@ -103,7 +103,7 @@ class OpenAIServices:
                 self.client, model=self.settings.tts_model, voice=self.settings.voice,
                 speed=self.settings.tts_speed,
                 timeout_seconds=self.settings.timeout_seconds, verify_transcript=False,
-                **intent_options,
+                connection_pool=self._stream_pool, **intent_options,
             ).synthesize(text)
         # WAV output permits decoding/playing with no additional TTS engine.
         response = await self.client.audio.speech.create(
