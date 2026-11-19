@@ -18,7 +18,7 @@
 
 ## Focus de travail léger (limite indicative : 3 tâches réellement « En cours »)
 
-**Photographie initiale : 0 carte marquée « En cours ».** Les prochaines cartes à prendre sont **OPS-001**, puis **OPS-002** et **OPS-003** une fois le poste inventorié. `OPS-005` et `OPS-006` viennent ensuite selon leurs dépendances. Ne pas écrire « En cours » tant qu'un agent n'a pas commencé effectivement.
+**Photographie du 18 novembre : 0 carte marquée « En cours ». Le lot DEV-003/005–008 du 19 novembre est suivi dans la vue DEV.** Les prochaines cartes à prendre sont **OPS-001**, puis **OPS-002** et **OPS-003** une fois le poste inventorié. `OPS-005` et `OPS-006` viennent ensuite selon leurs dépendances. Ne pas écrire « En cours » tant qu'un agent n'a pas commencé effectivement.
 
 **Règle pratique :** viser au plus **trois tâches en cours simultanément**, sans en faire un verrou automatique ; les autres restent « À faire », « À qualifier » ou « Bloqué ». Mettre à jour la colonne **Statut** de la vue canonique, pas ce texte historique. Pas de cadence Scrum obligatoire ni de tableau parallèle.
 
@@ -34,11 +34,11 @@
 
 | Type | Vue | Objet | Nombre initial |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Câblage r21 ou anomalies à confirmer par recette, **pas** réimplémentation de code existant | 3 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Câblage r21, anomalies et quick wins autorisés le 19 novembre | 8 |
 | `REC` | [Recette](02-RECETTE.md) | Tests de validation sur machines et comptes réels des fonctionnalités **déjà implémentées** | 25 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 17 |
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 12 |
-| **Total** | | **Tâches uniques identifiées, après reclassement du recensement initial** | **58** |
+| **Total** | | **Tâches uniques identifiées, incluant les quick wins du 19 novembre** | **62** |
 
 **Definition of Done officielle :** [lire les règles de clôture](DEFINITION_OF_DONE.md). Toute carte n'est **Done** que si les cinq exigences sont satisfaites, dont validation explicite par **Codex (tous ses modèles et sous-agents) OU le propriétaire**, **au moins un des deux**. L'intervention humaine n'est plus obligatoire si Codex a validé. La présence du code ou d'une CI verte ne clôture pas à elle seule une recette physique.
 
@@ -87,7 +87,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 19 | REC-010 | A | Latence et coût d'une session réelle | [REC](02-RECETTE.md) |
 | 20 | DEV-003 | A | Corriger la sortie indésirable du repli WAV s'il se produit réellement | [DEV](01-DEVELOPPEMENT.md) |
 
-### P1 · 32 tâches
+### P1 · 36 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
@@ -124,16 +124,21 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 51 | DEV-001 | B | Raccorder les 14 vraies motions r21 au runtime Jade | [DEV](01-DEVELOPPEMENT.md) |
 | 52 | ART-012 | B | Importer, calibrer et recetter r21 dans VTube Studio | [ART](04-PRODUCTION-2D.md) |
 
+| 53 | DEV-005 | A | Routage sans TTS pour Discord/Twitch/HTTP écrits | [DEV](01-DEVELOPPEMENT.md) |
+| 54 | DEV-006 | A | Hotkey VTS asynchrone, sans retarder la voix | [DEV](01-DEVELOPPEMENT.md) |
+| 55 | DEV-007 | A | Pool Realtime TTS partagé entre WAV et PCM | [DEV](01-DEVELOPPEMENT.md) |
+| 56 | DEV-008 | A | Jalons de latence multi-canaux sans contenu privé | [DEV](01-DEVELOPPEMENT.md) |
+
 ### P2 · 6 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 53 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
-| 54 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
-| 55 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
-| 56 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
-| 57 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
-| 58 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
+| 57 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
+| 58 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
+| 59 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
+| 60 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
+| 61 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
+| 62 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
 
 ## Workflow et statut canonique
 

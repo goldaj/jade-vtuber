@@ -116,10 +116,15 @@ class Runtime:
     def mark_timing(self, stage):
         """Optional local timing: no message content or participant identity."""
         item = self.active
-        if (item is not None and item.message.platform == "discord_voice"
-                and self.latency_log.isEnabledFor(logging.INFO)):
-            self.latency_log.info("turn=%d stage=%s since_queue_ms=%.1f",
-                                  item.turn, stage, (time.monotonic() - item.queued_at) * 1000)
+        if item is not None and self.latency_log.isEnabledFor(logging.INFO):
+            # Only technical routing metadata and monotonic elapsed time;
+            # never record participants, raw speech or message content.
+            self.latency_log.info(
+                "turn=%d platform=%s modality=%s stage=%s since_queue_ms=%.1f",
+                item.turn, item.message.platform,
+                ("voice" if item.message.platform in ("discord_voice", "microphone")
+                 else item.message.input_modality),
+                stage, (time.monotonic() - item.queued_at) * 1000)
 
     async def stop(self, *, graceful=True, timeout=5.0):
         async with self._stop_lock:
@@ -166,6 +171,7 @@ class Runtime:
         history_messages = []
         try:
             if self.memory_service is not None:
+                self.mark_timing("memory_start")
                 command_reply = await self.memory_service.command(item.message)
                 if command_reply is None:
                     memory_context = await self.memory_service.context_for(item.message)
@@ -173,6 +179,7 @@ class Runtime:
                             and item.message.history_key not in self.dialogue.history):
                         history_messages = await self.memory_service.history_for(
                             item.message, limit=self.dialogue.max_messages // 2)
+                self.mark_timing("memory_end")
             if (command_reply is None and self.on_stream_start is not None
                     and item.message.platform == "discord_voice"
                     and callable(getattr(self.dialogue.backend, "complete_stream", None))):
@@ -202,6 +209,7 @@ class Runtime:
             if turn is not None:
                 await turn.finish_input()
             if reply is None:
+                self.mark_timing("no_reply")
                 record_outcome(item.turn, "no_reply")
             else:
                 destinations = (self.delivery_plan(reply) if self.delivery_plan is not None
@@ -213,7 +221,11 @@ class Runtime:
                 else:
                     item.result.set_result(reply.text)
             if reply is not None and item.valid():
-                await self.on_reply(replace(reply, spoken=True) if turn is not None else reply)
+                self.mark_timing("delivery_start")
+                try:
+                    await self.on_reply(replace(reply, spoken=True) if turn is not None else reply)
+                finally:
+                    self.mark_timing("delivery_end")
             played = True
             if turn is not None:
                 played = await turn.wait()
@@ -224,7 +236,10 @@ class Runtime:
                     and self.memory_service is not None):
                 await self.memory_service.remember_turn(item.message, reply)
                 self.memory_service.schedule(item.message, reply)
+            self.mark_timing("turn_complete")
         except BaseException as exc:
+            self.mark_timing("turn_cancelled" if isinstance(
+                exc, asyncio.CancelledError) else "turn_failed")
             record_outcome(item.turn, "cancelled" if isinstance(
                 exc, asyncio.CancelledError) else "failed")
             if turn is not None:

@@ -137,27 +137,23 @@ class AudioSafetyTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(process.terminated)
         self.assertFalse(process.killed)
 
-    async def test_one_player_failure_cancels_and_awaits_other(self):
-        started, cleaned = asyncio.Event(), asyncio.Event()
-        class Slow:
+    async def test_discord_fallback_failure_does_not_start_local_player(self):
+        local_attempts = []
+        class NoLocal:
             async def play(self, wav):
-                started.set()
-                try:
-                    await asyncio.Event().wait()
-                finally:
-                    cleaned.set()
+                local_attempts.append(wav)
+                raise AssertionError("Discord voice must not play locally")
         class Fails:
             def reply_authorized(self, source):
                 return True
             async def play_for_reply(self, wav, source):
-                await started.wait()
-                raise RuntimeError("synthetic failure")
+                raise RuntimeError("synthetic Discord playback failure")
         services = type("Services", (), {"synthesize_wav": AsyncMock(return_value=b"wav")})()
         reply = Reply(Incoming("discord_voice", "test", "hello"), "reply")
         with tempfile.TemporaryDirectory() as directory:
             subtitle = Path(directory) / "subtitle.txt"
-            output = SpeechOutput(services, Slow(), subtitle, secondary_player=Fails())
+            output = SpeechOutput(services, NoLocal(), subtitle, secondary_player=Fails())
             with self.assertRaises(ExceptionGroup):
-                await output.speak(reply)
-            self.assertTrue(cleaned.is_set())
+                await asyncio.wait_for(output.speak(reply), timeout=2)
+            self.assertEqual(local_attempts, [])
             self.assertEqual(subtitle.read_text(encoding="utf-8"), "")

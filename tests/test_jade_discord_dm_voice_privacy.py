@@ -70,7 +70,7 @@ class DmVoicePrivacy(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(planned_destinations(
                 Reply(source, "Réponse privée"), has_speech=True,
                 audio_output="ffplay", discord_voice=True, discord_text=True),
-                ("discord_text", "local_audio"))
+                ("discord_text",))
 
     async def test_obs_subtitle_privacy_matrix_during_wav_playback(self):
         cases = (

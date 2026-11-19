@@ -1,6 +1,6 @@
 # État de develop — fonctionnalités codées
 
-**Référence :** sources de `goldaj/jade-vtuber`, branche `develop`, examinées le 16 novembre 2026. **Code raccordé = fonctionnalité implémentée**, sans catégorie supplémentaire « testé/non testé ». Le PC peut charger une configuration privée différente des défauts.
+**Référence :** sources de `goldaj/jade-vtuber`, branche `develop`, examinées le 19 novembre 2026 (quick wins en cours d'intégration). **Code raccordé = fonctionnalité implémentée**, sans catégorie supplémentaire « testé/non testé ». Le PC peut charger une configuration privée différente des défauts.
 
 ## Fonctions présentes
 
@@ -15,14 +15,15 @@
 | Identités | Profil Goldaj partagé par micro PC et PWA mobile authentifiée ; liaison Goldaj vers comptes Discord/Twitch consentants par code vérifié à usage unique ; déliaison et effacement propres à l'identité vérifiée ; scopes de confidentialité |
 | Discord voix/texte | Même historique volatil pour un compte dans le vocal et **son chat textuel natif**, sous la même session ; autres salons distincts |
 | Mobile | PWA privée/Tailscale Serve, texte, capture WAV, TTS à la demande, modèle Live2D Web via assets/SDK installés |
-| Audio | STT/TTS OpenAI, PCM progressif sous conditions, voix Étincelle `shimmer` 1,25×, pitch optionnel via FFmpeg Rubber Band |
+| Audio | STT/TTS OpenAI, PCM progressif sous conditions, voix Étincelle `shimmer` 1,25×, pitch optionnel via FFmpeg Rubber Band ; pool Realtime partagé WAV/PCM |
 | Émotions | Sept intentions ; **deux expressions faciales r20 + deux libellés PWA par intention**, synchronisation expression/bouche, toggle global |
+| Observabilité | Jalons `jade.latency` sans contenu ni identité sur tous les canaux, activables par `JADE_LATENCY_LOG=1` (défaut 0) ; mesures physiques STT/premier son/coût restantes |
 | Démonstrations | Démo Express simulée uniquement comme démonstration distribuée ; console hors ligne comme mode du vrai runtime. Renderer r20 intégré au code applicatif |
 
 ## Limitations fonctionnelles actuelles
 
-1. **Routage :** une réponse à Discord/Twitch écrit est envoyée en texte, mais peut déclencher une voix supplémentaire sur le PC/Discord vocal. Les MP Discord sont exclus de la diffusion vocale publique et leurs sous-titres OBS sont masqués sur le chemin WAV local. La capture de l'audio système par OBS dépend du mixage réel, toujours à recetter. Le routeur exclusivement par canal d'origine n'est pas codé.
-2. **Streaming :** Discord vocal utilise le PCM progressif (TTS Realtime et session autorisée) même avec `ffplay` activé dans `--all-channels` pour le micro PC ; le mode phrases reste opt-in et le fallback WAV peut encore employer la sortie locale.
+1. **Routage :** Discord/Twitch/HTTP écrits ne déclenchent plus de TTS ni de hotkey VTS dans le callback. Le fallback vocal Discord n'utilise plus ffplay local et masque ses sous-titres OBS partagés. MP et sources privées restent exclus des sous-titres OBS. Le routeur central multi-audience et le filtrage du rendu 2D restent à développer ; recette mixage OBS nécessaire.
+2. **Streaming :** Discord vocal utilise le PCM progressif (session autorisée) même si ffplay est disponible pour le micro PC ; le mode phrases reste opt-in, mais le fallback WAV Discord vocal ne joue plus en local. Le hotkey VTS ne retarde plus le début de voix standard.
 3. **Concurrence :** l'orchestrateur attend la fin du tour et de sa diffusion pour avancer, même si la curation et les connecteurs peuvent travailler à côté.
 4. **Mémoire :** rappel par identité et portée, chronologique et limité ; pas de cache de présence Goldaj/Discord L1-L2, de préchargement anticipé ou de recherche sémantique profonde.
 5. **Mobile :** capture WAV et réponse audio complète ; pas de duplex/streaming temps réel ou APK natif.

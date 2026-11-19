@@ -105,7 +105,7 @@ class SpeechOutput:
     def _public_subtitles_allowed(source):
         """Only public-origin replies may reach the shared OBS text file."""
         platform = getattr(source, "platform", None)
-        return platform not in ("microphone", "local_http", "mobile") and not (
+        return platform not in ("microphone", "local_http", "mobile", "discord_voice") and not (
             platform == "discord" and getattr(source, "private_channel", False))
 
     def _delivery_context(self, source=None):
@@ -318,20 +318,13 @@ class SpeechOutput:
                     require_session()
                     finished = asyncio.Event()
 
-                    async def play_local():
-                        require_session()
-                        await self.player.play(wav)
-
-                    async def play_both():
+                    async def play_discord_only():
                         nonlocal discord_played
                         try:
-                            async with asyncio.TaskGroup() as players:
-                                players.create_task(play_local())
-                                discord_task = players.create_task(
-                                    self.secondary_player.play_for_reply(wav, reply.source))
-                            # Only the bridge can attest that Discord actually
-                            # completed playback; a missing/false result is not success.
-                            discord_played = discord_task.result() is True
+                            # Discord voice WAV fallback never plays into ffplay
+                            # or local OBS audio.
+                            discord_played = (await self.secondary_player.play_for_reply(
+                                wav, reply.source)) is True
                         finally:
                             finished.set()
 
@@ -344,7 +337,7 @@ class SpeechOutput:
                                 continue
 
                     async with asyncio.TaskGroup() as tasks:
-                        tasks.create_task(play_both())
+                        tasks.create_task(play_discord_only())
                         tasks.create_task(watch_session())
                 else:
                     if context is None:

@@ -1,6 +1,6 @@
 # Routage par canal source, sessions et concurrence
 
-**Nouvelle décision produit du 16/11/2026 :** une réponse est envoyée **uniquement au canal et à la modalité d'entrée**, sauf requête de redirection explicite et autorisée. Ce choix **remplace comme cible l'ancien broadcast vocal hérité** ; il n'est pas encore implémenté. Le mode tous canaux du launcher reste actif.
+**Décision produit du 16/11/2026 :** réponse uniquement au canal/modalité d'entrée sauf redirection autorisée. **Correctifs partiels DEV-003/005 du 19/11** : plus de TTS pour les écrits, plus de fallback WAV local sur Discord vocal ; routeur général des sorties et animations encore à créer. Le mode tous canaux du launcher reste actif.
 
 ## Matrice cible du routeur
 

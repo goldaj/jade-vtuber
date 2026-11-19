@@ -1,14 +1,16 @@
 """Offline tests for selected incoming text, response intent and output modality."""
 import asyncio
 import json
+import logging
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
+from src.jade_runtime.config import Settings
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming, Reply
 from src.jade_runtime.orchestrator import Runtime
 from src.jade_runtime.turn_logging import (
-    planned_destinations, record_input, record_reply,
+    planned_destinations, record_input, record_reply, enable_console_logs,
 )
 
 
@@ -17,6 +19,28 @@ def records(captured):
 
 
 class TurnLoggingTests(unittest.TestCase):
+    def test_optional_latency_logger_is_configurable_and_private(self):
+        with patch("src.jade_runtime.config.environ",
+                   side_effect=lambda name, default: "1" if name == "JADE_LATENCY_LOG"
+                   else default):
+            settings = Settings.load()
+        self.assertTrue(settings.latency_logging)
+        logger = logging.getLogger("jade.latency")
+        previous_level = logger.level
+        previous_handlers = list(logger.handlers)
+        previous_propagate = logger.propagate
+        try:
+            enable_console_logs(enable_latency=settings.latency_logging)
+            self.assertTrue(logger.isEnabledFor(logging.INFO))
+            self.assertFalse(logger.propagate)
+        finally:
+            logger.handlers[:] = previous_handlers
+            logger.setLevel(previous_level)
+            logger.propagate = previous_propagate
+        with self.assertRaises(ValueError):
+            Settings(latency_logging="true").validate()
+
+
     def test_input_platform_modality_and_single_record(self):
         sources = (
             ("twitch", "text"), ("discord", "text"),
@@ -56,10 +80,22 @@ class TurnLoggingTests(unittest.TestCase):
         self.assertEqual(item["event"], "reply_planned")
         self.assertEqual(item["reply_with_intent"], "[INTENT:playful] Bonjour !")
         self.assertEqual(item["intent"], "playful")
-        self.assertEqual(item["output_modalities"], ["text", "voice"])
-        self.assertEqual(item["output_destinations"], ["discord_text", "local_audio"])
+        self.assertEqual(item["output_modalities"], ["text"])
+        self.assertEqual(item["output_destinations"], ["discord_text"])
         self.assertEqual(item["delivery_status"], "planned_not_confirmed")
         self.assertEqual(reply.text, "Bonjour !")
+
+    def test_written_channels_never_plan_tts_with_all_voice_outputs_enabled(self):
+        for platform, text_flag in (("discord", "discord_text"),
+                                    ("twitch", "twitch_text"),
+                                    ("local_http", "local_http")):
+            with self.subTest(platform=platform):
+                reply = Reply(Incoming(platform, "Auteur", "Jade ?"), "Réponse")
+                options = dict(has_speech=True, audio_output="ffplay",
+                               discord_voice=True, **{text_flag: True})
+                self.assertEqual(planned_destinations(reply, **options),
+                                 ({"discord": "discord_text", "twitch": "twitch_text",
+                                   "local_http": "local_http_text"}[platform],))
 
     def test_destination_matrix_and_streamed_voice(self):
         cases = (
@@ -79,6 +115,33 @@ class TurnLoggingTests(unittest.TestCase):
         self.assertEqual(planned_destinations(
             streamed, has_speech=True, audio_output="ffplay", discord_voice=True),
             ("discord_voice",))
+
+
+class RuntimeTimingTests(unittest.IsolatedAsyncioTestCase):
+    async def test_timing_stages_cover_all_entry_channels_without_private_text(self):
+        for platform in ("discord", "twitch", "discord_voice",
+                         "microphone", "local_http", "mobile", "console"):
+            with self.subTest(platform=platform):
+                backend = AsyncMock()
+                backend.complete.return_value = "[INTENT:neutral] Réponse publique"
+                runtime = Runtime(Dialogue(backend, "Jade"), AsyncMock())
+                with self.assertLogs("jade.latency", level="INFO") as captured:
+                    await runtime.start()
+                    await runtime.submit(Incoming(
+                        platform, "Nom confidentiel", "Question secrète Jade",
+                        force_reply=True))
+                    await asyncio.wait_for(runtime.idle(), 2)
+                    await runtime.stop()
+                events = [record.message for record in captured.records]
+                stages = {item.split("stage=", 1)[1].split(" ", 1)[0]
+                          for item in events}
+                self.assertTrue({"queue_start", "llm_start", "llm_end",
+                                 "delivery_start", "delivery_end",
+                                 "turn_complete"}.issubset(stages))
+                self.assertTrue(all("platform=" + platform in item for item in events))
+                self.assertTrue(all("since_queue_ms=" in item for item in events))
+                self.assertFalse(any("secrète" in item or "confidentiel" in item
+                                     for item in events))
 
 
 class RuntimeTurnLoggingTests(unittest.IsolatedAsyncioTestCase):

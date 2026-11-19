@@ -73,6 +73,7 @@ class Settings:
     max_queue: int = 64
     reply_probability: float = 0.30
     timeout_seconds: float = 20.0
+    latency_logging: bool = False  # Opt-in: technical timings only, no content.
     # Optional, private persistent SQLite data; disabled unless explicitly enabled.
     memory_enabled: bool = False
     memory_curator_enabled: bool = False
@@ -127,6 +128,7 @@ class Settings:
             max_queue=int(environ("JADE_QUEUE_LIMIT", "64")),
             reply_probability=float(environ("JADE_RANDOM_REPLY_RATE", "0.30")),
             timeout_seconds=float(environ("JADE_API_TIMEOUT", "20")),
+            latency_logging=_enabled(str(environ("JADE_LATENCY_LOG", "0")).lower()),
             memory_enabled=_enabled(str(environ("JADE_MEMORY_ENABLED", "0")).lower()),
             memory_curator_enabled=_enabled(str(environ("JADE_MEMORY_CURATOR_ENABLED", "0")).lower()),
             memory_db_path=str(environ("JADE_MEMORY_DB_PATH", "")),
@@ -156,6 +158,8 @@ class Settings:
                 or not math.isfinite(self.tts_pitch_semitones)
                 or not -6 <= self.tts_pitch_semitones <= 6):
             raise ValueError("pitch semitones must be between -6 and 6")
+        if type(self.latency_logging) is not bool:
+            raise ValueError("latency logging must be a boolean")
         if (self.max_history_messages < 2 or self.max_history_messages > 100
                 or not 1 <= self.max_queue <= 1024
                 or not 0 <= self.reply_probability <= 1
