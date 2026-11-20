@@ -168,7 +168,7 @@ class Runtime:
         committed = False
         command_reply = None
         memory_context = ""
-        history_messages = []
+        history_messages = None
         try:
             if self.memory_service is not None:
                 self.mark_timing("memory_start")
@@ -180,8 +180,7 @@ class Runtime:
                     memory_context = await self.memory_service.context_for(item.message)
                     if (isinstance(self.dialogue, Dialogue)
                             and item.message.history_key not in self.dialogue.history):
-                        history_messages = await self.memory_service.history_for(
-                            item.message, limit=self.dialogue.max_messages // 2)
+                        history_messages = await self.memory_service.history_for(item.message)
                 self.mark_timing("memory_end")
             if (command_reply is None and self.on_stream_start is not None
                     and item.message.platform == "discord_voice"
