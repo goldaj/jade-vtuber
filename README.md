@@ -21,6 +21,11 @@ interagir par texte et par voix. Ce dépôt présente le moteur Python qui reço
 les messages, prépare une réponse et peut la transmettre à des outils de
 streaming. Le travail sur le personnage et son animation est mené séparément.
 
+**Anniversaire officiel de Jade : 1er février 2025.** Date de référence fixée
+par le propriétaire le 20 novembre 2026, à partir des plus anciens fichiers
+locaux qu'il a retrouvés, datés du 1er février 2025. Il s'agit de la date
+symbolique retenue pour Jade, et non d'une date de création Git vérifiée.
+
 **État de develop :** les fonctions raccordées sont implémentées ; leur activation sur le PC dépend des paramètres privés, comptes et dépendances installés.
 
 ## Ce que fait le moteur
