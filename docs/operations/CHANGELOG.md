@@ -2,6 +2,13 @@
 
 Ce document est **la seule pièce documentaire systématiquement exigée en CI** pour les changements techniques. Les guides, atlas et passations sont révisés uniquement quand le comportement ou les procédures qu'ils décrivent changent. Une entrée indique les faits vérifiés ; un ancien journal ne remplace pas le code.
 
+## 2026-11-20 — DEV-011 révisée : souvenirs ordinaires sur demande, Core Memories autonomes (fix/dev-011-ordinary-only-autonomous-core-20261120)
+
+- **Décision du propriétaire (postérieure à la PR #29) :** aucune personne, y compris Goldaj, ne peut imposer de Core Memory profonde. Le développement de la PR #29 permettant à Goldaj de créer directement `core_self`/`core_relationship` est **remplacé** par ce correctif ; les anciennes notes de la PR sont historiques, pas le comportement attendu.
+- **Code :** nouveau `explicit_memory_intent.py` (français oral/écrit), retrait de `owner_core_intent.py` et de `MemoryStore.put_owner_core`, interception par `memory_service.py` sans appel LLM ni curation, écriture transactionnelle `MemoryStore.put_requested_ordinary` (`kind=ordinary`, TTL 90 jours, identité/salon et doublons vérifiés). Même une demande « Core Memories » est enregistrée **uniquement en ordinaire**, avec réponse explicite.
+- **Autonomie :** seule la curation de Jade peut ensuite choisir des Core Memories indépendamment des instructions de l'utilisateur ; le traitement d'une demande explicite ne déclenche jamais cette curation. Les commandes privées de lecture/effacement Core existantes sont maintenues pour la protection des données, sans droit d'écriture forcée.
+- **Vérifications :** tests ciblés de grammaire STT, refus des faux ordres, unicité, expiration, oubli, écriture SQL, cloisonnement, refus des secrets, runtime sans LLM et curation Core autonome ; résultats CI Linux/Windows consignés dans la passation. Aucune recette sur le PC réel.
+
 ## 2026-11-20 — DEV-011 Core Memories explicites par Goldaj (feat/dev-011-explicit-owner-core-memories-20261120)
 
 - **Code :** `owner_core_intent.py` (demande naturelle explicite), `memory_service.py` (interception prioritaire, confirmation réelle), `memory_store.py` (transaction Core propriétaire, catégorisation, refus des comptes non liés, déduplication et effacement des souvenirs autobiographiques de comptes liés, y compris par commande propriétaire), ainsi que commandes privées `lister-core`/`supprimer-core` pour les Core relationnelles.

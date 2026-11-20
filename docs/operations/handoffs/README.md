@@ -6,9 +6,11 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
-- [Développement DEV-011 Core Memories explicites](2026-11-20-chatgpt-dev011-core-memory-implementation.md) · Ecriture SQLite transactionnelle sur instruction authentifiée, tests et recette PC à effectuer.
+- [**DEV-011 : demandes de souvenirs ordinaires, Core choisies par Jade**](2026-11-20-chatgpt-dev011-ordinary-autonomous-core.md) · Décision du propriétaire du 20/11 remplaçant l'ajout forcé Core ; tests, correctif et recette PC.
 
-- [Core Memory explicite demandée par Goldaj (DEV-011 P0)](2026-11-20-chatgpt-core-memory-explicite-p0.md) · Critères d'acceptation et contrôle des identités pour la future implémentation.
+- [DEV-011 (historique, remplacée)](2026-11-20-chatgpt-dev011-core-memory-implementation.md) · Ancienne implémentation permettant de forcer une Core, **à ne pas reproduire**.
+
+- [DEV-011 (ancienne demande, annulée)](2026-11-20-chatgpt-core-memory-explicite-p0.md) · Référence historique remplacée par le refus d'écriture Core forcée.
 
 - [Mémoire SQLite par défaut et inscription Discord](2026-11-20-chatgpt-memoire-discord-auto.md) · Inscription automatique des intervenants vérifiés de serveur Discord et effacement durable, sans ouvrir la mémoire aux autres canaux.
 

@@ -1,5 +1,7 @@
 # DEV-011 : Core Memories sur instruction explicite de Goldaj (20/11/2026)
 
+> **HISTORIQUE, EXIGENCES REMPLACÉES LE 20 NOVEMBRE 2026.** Nouvelle décision du propriétaire : les demandes humaines mémorisent uniquement en ordinaire, Jade choisit seule ses Core Memories. Voir [la nouvelle passation DEV-011](2026-11-20-chatgpt-dev011-ordinary-autonomous-core.md). Les comportements d’ajout Core décrits ci-dessous ne doivent pas être rétablis.
+
 - Agent / rôle : ChatGPT, auteur du changement sur branche dédiée.
 - Carte : **DEV-011**, P0, jalon A ; statut **À valider** pour la recette PC par Goldaj après tests automatisés réussis. Ne pas classer Done sans recette réelle et validation explicitement enregistrées.
 - Départ : `develop` commit `209807c4a2de40f1604d63031e45cf732488cb7b`. Branche `feat/dev-011-explicit-owner-core-memories-20261120`.
