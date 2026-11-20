@@ -2,6 +2,14 @@
 
 Ce document est **la seule pièce documentaire systématiquement exigée en CI** pour les changements techniques. Les guides, atlas et passations sont révisés uniquement quand le comportement ou les procédures qu'ils décrivent changent. Une entrée indique les faits vérifiés ; un ancien journal ne remplace pas le code.
 
+## 2026-11-20 — Mémoire persistante active et inscription Discord sans commande (branche feat/auto-memory-discord-20261120-v2)
+
+- **Configuration / runtime :** conserver les nouveaux défauts `JADE_MEMORY_ENABLED=1` et `JADE_MEMORY_CURATOR_ENABLED=1` apportés sur `develop`, ajouter un chemin SQLite privé et absolu par défaut (`D:\\Jade\\private\\jade-memory.sqlite3` si D: existe sous Windows ; `~/.jade/jade-memory.sqlite3` ailleurs), ne pas créer de base pendant la démo hors ligne. Les variables privées explicitement à `0` continuent de primer.
+- **Identités / conservation :** inscrire automatiquement un utilisateur identifié lors d’une interaction effectivement traitée sur un serveur Discord (texte ou voix). Garder une activation explicite pour les messages privés Discord et Twitch. Ne pas fusionner les profils ni lever les restrictions de salon.
+- **Droit d’effacement :** `!jade-memoire oublier` supprime les données du compte et interdit les réinscriptions automatiques Discord, même après redémarrage ; réactivation volontaire via `!jade-memoire activer`. Nouvelle table additive `memory_auto_enrollment_blocks` conservant uniquement les identifiants requis au refus, sans changer le numéro de schéma SQLite v3.
+- **Vérifications :** tests de régression ajoutés pour les défauts, l’enregistrement, l’isolation, les MP, Twitch, le refus persistant et la compatibilité v3. Exécution CI à contrôler ; aucune validation sur le PC réel revendiquée.
+- **Risques / exploitation :** informer clairement les membres Discord avant leur participation, garder le fichier SQLite privé et réutiliser le chemin d’une éventuelle base existante ; la curation active ajoute potentiellement des appels API facturés.
+
 ## 2026-11-16 — Réorganisation du dépôt (branche chore/develop-repository-cleanup-20261116)
 
 - Démonstrations : garder `demo/express/` ; retirer `demo/reelle/` et `demo/windows/` et leurs tests spécifiques. **Le renderer r20 auparavant dépendant de `demo/reelle/avatar.py` est déplacé vers `src/jade_runtime/avatar_renderer.py`**, avec son appel mis à jour. Les tests du protocole avatar et du TTS de production sont conservés sous des noms `test_jade_*`.
