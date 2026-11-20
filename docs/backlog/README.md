@@ -34,11 +34,11 @@
 
 | Type | Vue | Objet | Nombre actuel |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Câblage r21, anomalies et quick wins autorisés le 19 novembre | 10 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Câblage r21, anomalies, mémoire explicite et quick wins | 11 |
 | `REC` | [Recette](02-RECETTE.md) | Tests de validation sur machines et comptes réels des fonctionnalités **déjà implémentées** | 25 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 17 |
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 12 |
-| **Total** | | **Tâches uniques identifiées, incluant les quick wins du 19 novembre** | **64** |
+| **Total** | | **Tâches uniques identifiées, incluant les quick wins du 19 novembre** | **65** |
 
 **Definition of Done officielle :** [lire les règles de clôture](DEFINITION_OF_DONE.md). Toute carte n'est **Done** que si les cinq exigences sont satisfaites, dont validation explicite par **Codex (tous ses modèles et sous-agents) OU le propriétaire**, **au moins un des deux**. L'intervention humaine n'est plus obligatoire si Codex a validé. La présence du code ou d'une CI verte ne clôture pas à elle seule une recette physique.
 
@@ -62,7 +62,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 
 ## Vue globale ordonnée
 
-### P0 · 20 tâches
+### P0 · 21 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
@@ -80,66 +80,67 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 12 | REC-004 | A | Microphone PC réel | [REC](02-RECETTE.md) |
 | 13 | REC-005 | A | Isolation des sorties et confidentialité | [REC](02-RECETTE.md) |
 | 14 | DEV-004 | A | Masquer les réponses privées dans les sous-titres OBS WAV | [DEV](01-DEVELOPPEMENT.md) |
-| 15 | REC-008 | A | Commandes silence/reprise et interruption | [REC](02-RECETTE.md) |
-| 16 | REC-006 | A | PCM Discord progressif sous --all-channels | [REC](02-RECETTE.md) |
-| 17 | REC-007 | A | Repli WAV et absence de double diffusion | [REC](02-RECETTE.md) |
-| 18 | REC-009 | A | Arbitrage multi-conversations | [REC](02-RECETTE.md) |
-| 19 | REC-010 | A | Latence et coût d'une session réelle | [REC](02-RECETTE.md) |
-| 20 | DEV-003 | A | Corriger la sortie indésirable du repli WAV s'il se produit réellement | [DEV](01-DEVELOPPEMENT.md) |
+| 15 | DEV-011 | A | Ajouter une Core Memory sur demande explicite et authentifiée de Goldaj | [DEV](01-DEVELOPPEMENT.md) |
+| 16 | REC-008 | A | Commandes silence/reprise et interruption | [REC](02-RECETTE.md) |
+| 17 | REC-006 | A | PCM Discord progressif sous --all-channels | [REC](02-RECETTE.md) |
+| 18 | REC-007 | A | Repli WAV et absence de double diffusion | [REC](02-RECETTE.md) |
+| 19 | REC-009 | A | Arbitrage multi-conversations | [REC](02-RECETTE.md) |
+| 20 | REC-010 | A | Latence et coût d'une session réelle | [REC](02-RECETTE.md) |
+| 21 | DEV-003 | A | Corriger la sortie indésirable du repli WAV s'il se produit réellement | [DEV](01-DEVELOPPEMENT.md) |
 
 ### P1 · 37 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 21 | OPS-012 | A | Sauvegarder SQLite avant migration ou recette mémoire | [OPS](03-INSTALLATION-OPS.md) |
-| 22 | REC-021 | A | Mémoire SQLite, Core et autobiographie | [REC](02-RECETTE.md) |
-| 23 | REC-025 | A | Sauvegarde/restauration et droit à l'effacement | [REC](02-RECETTE.md) |
-| 24 | OPS-009 | A | Configurer Tailscale Serve privé | [OPS](03-INSTALLATION-OPS.md) |
-| 25 | REC-014 | A | PWA Android texte et authentification | [REC](02-RECETTE.md) |
-| 26 | OPS-010 | A | Installer les dépendances Live2D Web de la PWA | [OPS](03-INSTALLATION-OPS.md) |
-| 27 | REC-019 | A | Avatar Web Android r20 | [REC](02-RECETTE.md) |
-| 28 | REC-015 | A | PWA Android voix et micro | [REC](02-RECETTE.md) |
-| 29 | REC-016 | A | PWA arrière-plan, connexion et réseau mobile | [REC](02-RECETTE.md) |
-| 30 | REC-017 | A | TTS mobile désactivé | [REC](02-RECETTE.md) |
-| 31 | OPS-011 | A | Préparer OAuth et authentification Twitch | [OPS](03-INSTALLATION-OPS.md) |
-| 32 | REC-012 | A | Twitch IRC réel | [REC](02-RECETTE.md) |
-| 33 | REC-013 | A | API HTTP locale authentifiée | [REC](02-RECETTE.md) |
-| 34 | REC-011 | A | Voix Étincelle et sept intentions | [REC](02-RECETTE.md) |
-| 35 | REC-018 | A | Avatar r20 Windows en rendu réel | [REC](02-RECETTE.md) |
-| 36 | REC-020 | A | Variantes d'intention A/B | [REC](02-RECETTE.md) |
-| 37 | REC-022 | A | Liaisons des comptes Discord/Twitch avec Goldaj | [REC](02-RECETTE.md) |
-| 38 | REC-023 | A | Résilience des canaux et arrêt propre | [REC](02-RECETTE.md) |
-| 39 | DEV-002 | A | Corriger une éventuelle incompatibilité SDK Live2D Web Android | [DEV](01-DEVELOPPEMENT.md) |
-| 40 | ART-001 | B | Aligner la reprise Codex avec l'avancement artistique v31 | [ART](04-PRODUCTION-2D.md) |
-| 41 | ART-002 | B | Identifier et sécuriser les sources r20/r21 | [ART](04-PRODUCTION-2D.md) |
-| 42 | ART-003 | B | Corriger les UV et construire un atlas plein pied | [ART](04-PRODUCTION-2D.md) |
-| 43 | ART-004 | B | Réparer les raccords cheveux, épaules, cou et vêtements | [ART](04-PRODUCTION-2D.md) |
-| 44 | ART-005 | B | Corriger le clignement et les yeux | [ART](04-PRODUCTION-2D.md) |
-| 45 | ART-006 | B | Finaliser tête, regard et rig du corps plein pied | [ART](04-PRODUCTION-2D.md) |
-| 46 | ART-007 | B | Finaliser les physiques cheveux, oreilles et vêtements | [ART](04-PRODUCTION-2D.md) |
-| 47 | ART-008 | B | Créer idle, expressions et règles de transitions r21 | [ART](04-PRODUCTION-2D.md) |
-| 48 | ART-009 | B | Créer 14 motions corporelles originales | [ART](04-PRODUCTION-2D.md) |
-| 49 | ART-010 | B | Réconcilier les sources éditables KRA/PSD avec le rig r21 | [ART](04-PRODUCTION-2D.md) |
-| 50 | ART-011 | B | Créer le bundle r21 versionné et réutilisable | [ART](04-PRODUCTION-2D.md) |
-| 51 | DEV-001 | B | Raccorder les 14 vraies motions r21 au runtime Jade | [DEV](01-DEVELOPPEMENT.md) |
-| 52 | ART-012 | B | Importer, calibrer et recetter r21 dans VTube Studio | [ART](04-PRODUCTION-2D.md) |
-| 53 | DEV-005 | A | Routage sans TTS pour Discord/Twitch/HTTP écrits | [DEV](01-DEVELOPPEMENT.md) |
-| 54 | DEV-006 | A | Hotkey VTS asynchrone, sans retarder la voix | [DEV](01-DEVELOPPEMENT.md) |
-| 55 | DEV-007 | A | Pool Realtime TTS partagé entre WAV et PCM | [DEV](01-DEVELOPPEMENT.md) |
-| 56 | DEV-008 | A | Jalons de latence multi-canaux sans contenu privé | [DEV](01-DEVELOPPEMENT.md) |
-| 57 | DEV-009 | A | Stabiliser le test micro synthétique avec Rubber Band | [DEV](01-DEVELOPPEMENT.md) |
+| 22 | OPS-012 | A | Sauvegarder SQLite avant migration ou recette mémoire | [OPS](03-INSTALLATION-OPS.md) |
+| 23 | REC-021 | A | Mémoire SQLite, Core et autobiographie | [REC](02-RECETTE.md) |
+| 24 | REC-025 | A | Sauvegarde/restauration et droit à l'effacement | [REC](02-RECETTE.md) |
+| 25 | OPS-009 | A | Configurer Tailscale Serve privé | [OPS](03-INSTALLATION-OPS.md) |
+| 26 | REC-014 | A | PWA Android texte et authentification | [REC](02-RECETTE.md) |
+| 27 | OPS-010 | A | Installer les dépendances Live2D Web de la PWA | [OPS](03-INSTALLATION-OPS.md) |
+| 28 | REC-019 | A | Avatar Web Android r20 | [REC](02-RECETTE.md) |
+| 29 | REC-015 | A | PWA Android voix et micro | [REC](02-RECETTE.md) |
+| 30 | REC-016 | A | PWA arrière-plan, connexion et réseau mobile | [REC](02-RECETTE.md) |
+| 31 | REC-017 | A | TTS mobile désactivé | [REC](02-RECETTE.md) |
+| 32 | OPS-011 | A | Préparer OAuth et authentification Twitch | [OPS](03-INSTALLATION-OPS.md) |
+| 33 | REC-012 | A | Twitch IRC réel | [REC](02-RECETTE.md) |
+| 34 | REC-013 | A | API HTTP locale authentifiée | [REC](02-RECETTE.md) |
+| 35 | REC-011 | A | Voix Étincelle et sept intentions | [REC](02-RECETTE.md) |
+| 36 | REC-018 | A | Avatar r20 Windows en rendu réel | [REC](02-RECETTE.md) |
+| 37 | REC-020 | A | Variantes d'intention A/B | [REC](02-RECETTE.md) |
+| 38 | REC-022 | A | Liaisons des comptes Discord/Twitch avec Goldaj | [REC](02-RECETTE.md) |
+| 39 | REC-023 | A | Résilience des canaux et arrêt propre | [REC](02-RECETTE.md) |
+| 40 | DEV-002 | A | Corriger une éventuelle incompatibilité SDK Live2D Web Android | [DEV](01-DEVELOPPEMENT.md) |
+| 41 | ART-001 | B | Aligner la reprise Codex avec l'avancement artistique v31 | [ART](04-PRODUCTION-2D.md) |
+| 42 | ART-002 | B | Identifier et sécuriser les sources r20/r21 | [ART](04-PRODUCTION-2D.md) |
+| 43 | ART-003 | B | Corriger les UV et construire un atlas plein pied | [ART](04-PRODUCTION-2D.md) |
+| 44 | ART-004 | B | Réparer les raccords cheveux, épaules, cou et vêtements | [ART](04-PRODUCTION-2D.md) |
+| 45 | ART-005 | B | Corriger le clignement et les yeux | [ART](04-PRODUCTION-2D.md) |
+| 46 | ART-006 | B | Finaliser tête, regard et rig du corps plein pied | [ART](04-PRODUCTION-2D.md) |
+| 47 | ART-007 | B | Finaliser les physiques cheveux, oreilles et vêtements | [ART](04-PRODUCTION-2D.md) |
+| 48 | ART-008 | B | Créer idle, expressions et règles de transitions r21 | [ART](04-PRODUCTION-2D.md) |
+| 49 | ART-009 | B | Créer 14 motions corporelles originales | [ART](04-PRODUCTION-2D.md) |
+| 50 | ART-010 | B | Réconcilier les sources éditables KRA/PSD avec le rig r21 | [ART](04-PRODUCTION-2D.md) |
+| 51 | ART-011 | B | Créer le bundle r21 versionné et réutilisable | [ART](04-PRODUCTION-2D.md) |
+| 52 | DEV-001 | B | Raccorder les 14 vraies motions r21 au runtime Jade | [DEV](01-DEVELOPPEMENT.md) |
+| 53 | ART-012 | B | Importer, calibrer et recetter r21 dans VTube Studio | [ART](04-PRODUCTION-2D.md) |
+| 54 | DEV-005 | A | Routage sans TTS pour Discord/Twitch/HTTP écrits | [DEV](01-DEVELOPPEMENT.md) |
+| 55 | DEV-006 | A | Hotkey VTS asynchrone, sans retarder la voix | [DEV](01-DEVELOPPEMENT.md) |
+| 56 | DEV-007 | A | Pool Realtime TTS partagé entre WAV et PCM | [DEV](01-DEVELOPPEMENT.md) |
+| 57 | DEV-008 | A | Jalons de latence multi-canaux sans contenu privé | [DEV](01-DEVELOPPEMENT.md) |
+| 58 | DEV-009 | A | Stabiliser le test micro synthétique avec Rubber Band | [DEV](01-DEVELOPPEMENT.md) |
 
 ### P2 · 7 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 58 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
-| 59 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
-| 60 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
-| 61 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
-| 62 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
-| 63 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
-| 64 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
+| 59 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
+| 60 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
+| 61 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
+| 62 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
+| 63 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
+| 64 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
+| 65 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
 
 ## Workflow et statut canonique
 
