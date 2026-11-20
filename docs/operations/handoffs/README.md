@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Mémoire SQLite par défaut et inscription Discord](2026-11-20-chatgpt-memoire-discord-auto.md) · Inscription automatique des intervenants vérifiés de serveur Discord et effacement durable, sans ouvrir la mémoire aux autres canaux.
+
 - [Retours Discord et lancement PyCharm](2026-11-20-codex-retours-discord.md) · coupures, fin de parole, reconnect et recette REC-023.
 
 - [Dépenses OpenAI et voix mobile progressive](2026-11-20-codex-couts-voix-mobile.md) · UX-18, LAT-06 et LAT-16, branche isolée non intégrée.
