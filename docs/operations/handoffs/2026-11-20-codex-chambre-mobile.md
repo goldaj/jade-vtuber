@@ -21,3 +21,7 @@ Le propriétaire a demandé le déploiement direct sur develop et sur son instan
 ## Cadrage du modèle r20
 
 Le propriétaire a validé l'aperçu au format téléphone avec un zoom relatif de 50 % et un déplacement vertical de 16 % de la hauteur de la scène. Le point d'ancrage passe de 63 % à 79 %. Le fichier avatar.js applique ces valeurs à chaque redimensionnement. La chambre constitue un plan distinct. [Accord de déploiement](../../history/conversations/2026-11-20-reprise-develop.md#validation-du-cadrage-mobile).
+
+## Ajustements après essai mobile
+
+L'avatar est centré à 58 % de la largeur pour rendre la tasse et sa vapeur visibles. Le zoom de 50 % et la position verticale validée servent de base au cadrage. La zone du rideau s'étend sous l'ourlet pour permettre un balancement plus ample sans déplacer les bords de la zone. Un extrait de l'illustration fait bouger les ombres du mur par-dessus le décor, et les reflets du parquet se déplacent et varient davantage en intensité. Le décor reste fixe en cas de mouvement réduit.

@@ -46,7 +46,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
 }
 .room-plane {position:absolute;inset:0}
 .room-plane img {display:block;width:100%;height:100%;object-fit:cover}
-.room-curtain,.room-reflection,.room-steam {display:none}
+.room-curtain,.room-dapple,.room-reflection,.room-steam {display:none}
 @supports (width: 1cqh) {
   .room-plane {
     inset:50% auto auto 50%;
@@ -54,15 +54,26 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
     aspect-ratio:4 / 3;
     transform:translate(-50%,-50%);
   }
-  .room-curtain,.room-reflection,.room-steam {display:block}
+  .room-curtain,.room-dapple,.room-reflection,.room-steam {display:block}
 }
 .room-curtain {
   position: absolute;
   left: 62.57%;
   top: 4.24%;
   width: 18.78%;
-  height: 29.01%;
+  height: 33.89%;
   mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 87%, transparent);
+}
+.room-dapple {
+  position: absolute;
+  left: 12%;
+  top: 12%;
+  width: 34%;
+  height: 40%;
+  /* This crop registers against the painted shadows at rest. */
+  background: url("/assets/room-spring.webp") 18.1818% 20% / 294.1176% 250% no-repeat;
+  mask-image: radial-gradient(ellipse, #000 28%, transparent 70%);
+  animation: room-dapple-sway 8.4s ease-in-out infinite;
 }
 .room-reflection {
   position: absolute;
@@ -70,9 +81,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
   top: 78%;
   width: 44%;
   height: 19%;
-  background: radial-gradient(ellipse, #fff2bc55, transparent 67%);
+  background: radial-gradient(ellipse, #fff2bc80, transparent 67%);
   mix-blend-mode: screen;
-  animation: room-sun 9s ease-in-out infinite;
+  animation: room-sun 8.3s ease-in-out infinite;
 }
 .room-steam {
   position: absolute;
@@ -105,12 +116,18 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
   animation-delay: -3.2s;
 }
 .room-art[data-paused] .room-steam i,
-.room-art[data-paused] .room-reflection {
+.room-art[data-paused] .room-reflection,
+.room-art[data-paused] .room-dapple {
   animation-play-state: paused;
 }
+@keyframes room-dapple-sway {
+  0%, 100% { transform: none; filter: brightness(1); }
+  45% { transform: translate(4%, -3%) rotate(-1.6deg); filter: brightness(.94); }
+  74% { transform: translate(-2%, 1.5%) rotate(.9deg); filter: brightness(.98); }
+}
 @keyframes room-sun {
-  0%, 100% { transform: translate(0); opacity: .33; }
-  47% { transform: translate(-4%, -4%) rotate(-2deg); opacity: .64; }
+  0%, 100% { transform: translate(0); opacity: .22; }
+  47% { transform: translate(-9%, -5%) rotate(-3deg) scale(1.07); opacity: .86; }
 }
 @keyframes room-steam-rise {
   0% { transform: translate(-12%, 17%) rotate(-8deg) scale(.6); opacity: 0; }
@@ -119,7 +136,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
   100% { transform: translate(-11%, -135%) rotate(-15deg) scale(1.32); opacity: 0; }
 }
 @media (prefers-reduced-motion:reduce) {
-  .room-curtain,.room-reflection,.room-steam {display:none}
+  .room-curtain,.room-dapple,.room-reflection,.room-steam {display:none}
 }
 #avatar-container{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   overflow:hidden;z-index:1;pointer-events:none}

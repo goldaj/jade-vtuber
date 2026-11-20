@@ -88,3 +88,15 @@ Une illustration originale a été générée et présentée pour validation. La
 **Assistant — synthèse**
 
 Le cadrage soumis à validation montrait le modèle r20 à 150 % de sa taille précédente, décalé de 16 % de la hauteur de la scène vers le bas.
+
+## Ajustements du décor après essai
+
+**Utilisateur — extraits verbatim**
+
+> les mouvements du décors sont un peu trop subtils. Il faudrait que ça bouge un peu plus, notamment le rideau.
+> Jade devrait se décaler légèrement sur la droite pour qu'on voit la tasse en fonds.
+> Les ombres et effets de lumières devraient bouger un peu plus aussi.
+
+**Assistant — synthèse**
+
+Ajustements du cadrage, du rideau, des ombres et des reflets dans la PWA.

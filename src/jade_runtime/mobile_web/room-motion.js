@@ -15,15 +15,16 @@
   let elapsed = 0;
 
   function paint(seconds) {
-    const phase = seconds * (2 * Math.PI / 7.2);
+    const phase = seconds * (2 * Math.PI / 6.2);
     // Stretch two pieces of each band around the fold, keeping the edges
-    // aligned with the underlying static illustration.
+    // aligned with the still image. The patch extends below the hem,
+    // so the fabric can swing before the warp fades into the wall.
     for (let row = 0; row < patch.h; row += 5) {
       const band = Math.min(5, patch.h - row);
       const depth = row / patch.h;
       const fold = Math.round(161 - 49 * depth);
       const envelope = Math.sin(Math.PI * depth) * depth;
-      const shifted = fold + 14 * envelope * Math.sin(phase - depth * 2.4);
+      const shifted = fold + 38 * envelope * Math.sin(phase - depth * 2.1);
       context.drawImage(art, patch.x, patch.y + row, fold, band,
         0, row, shifted, band);
       context.drawImage(art, patch.x + fold, patch.y + row, patch.w - fold, band,

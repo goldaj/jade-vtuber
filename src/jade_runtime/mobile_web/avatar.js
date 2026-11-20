@@ -94,7 +94,8 @@
     const scale = Math.min((width * .95) / naturalWidth, (height * 1.32) / naturalHeight);
     // Close framing places the unfinished lower edges of r20 below the scene.
     model.scale.set(Math.max(.05, scale * 1.5));
-    model.position.set(width / 2, height * .79);
+    // Offset the close-up to keep the bedside cup visible.
+    model.position.set(width * .58, height * .79);
   }
 
   async function load() {
