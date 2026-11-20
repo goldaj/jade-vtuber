@@ -1,10 +1,18 @@
 """Strict, private, fail-closed runtime settings. No network on import."""
 from dataclasses import dataclass, field
 import math
+import os
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from src.utility.private_config import environ
+
+
+def _default_memory_db_path() -> str:
+    """Private, absolute storage outside the public repository."""
+    if os.name == "nt" and Path("D:/").is_dir():
+        return str(Path("D:/Jade/private/jade-memory.sqlite3"))
+    return str(Path.home() / ".jade" / "jade-memory.sqlite3")
 
 
 def _enabled(value: str) -> bool:
@@ -75,10 +83,10 @@ class Settings:
     reply_probability: float = 0.30
     timeout_seconds: float = 20.0
     latency_logging: bool = False  # Opt-in: technical timings only, no content.
-    # Optional, private persistent SQLite data; disabled unless explicitly enabled.
-    memory_enabled: bool = False
-    memory_curator_enabled: bool = False
-    memory_db_path: str = ""
+    # Private persistence is on for live Jade unless explicitly disabled.
+    memory_enabled: bool = True
+    memory_curator_enabled: bool = True
+    memory_db_path: str = field(default_factory=_default_memory_db_path)
     # Private PWA, opt-in via Tailscale Serve; separate HTTP secret from chat.
     billing_admin_key: str = field(default="", repr=False)
     mobile_enabled: bool = False
@@ -132,9 +140,9 @@ class Settings:
             reply_probability=float(environ("JADE_RANDOM_REPLY_RATE", "0.30")),
             timeout_seconds=float(environ("JADE_API_TIMEOUT", "20")),
             latency_logging=_enabled(str(environ("JADE_LATENCY_LOG", "0")).lower()),
-            memory_enabled=_enabled(str(environ("JADE_MEMORY_ENABLED", "0")).lower()),
-            memory_curator_enabled=_enabled(str(environ("JADE_MEMORY_CURATOR_ENABLED", "0")).lower()),
-            memory_db_path=str(environ("JADE_MEMORY_DB_PATH", "")),
+            memory_enabled=_enabled(str(environ("JADE_MEMORY_ENABLED", "1")).lower()),
+            memory_curator_enabled=_enabled(str(environ("JADE_MEMORY_CURATOR_ENABLED", "1")).lower()),
+            memory_db_path=str(environ("JADE_MEMORY_DB_PATH", "")).strip() or _default_memory_db_path(),
             billing_admin_key=str(environ("JADE_OPENAI_ADMIN_KEY", "")),
             mobile_enabled=_enabled(str(environ("JADE_MOBILE_ENABLED", "0")).lower()),
             mobile_token=str(environ("JADE_MOBILE_TOKEN", "")),
