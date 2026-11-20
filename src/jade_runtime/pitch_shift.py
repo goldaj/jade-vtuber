@@ -76,6 +76,16 @@ async def _close_audio(source):
         await close()
 
 
+async def _prefetched_pcm(source, first):
+    """Yield the already requested first fragment, then the rest of the source."""
+    try:
+        yield await first
+    except StopAsyncIteration:
+        return
+    async for chunk in source:
+        yield chunk
+
+
 async def shift_pcm(source, semitones: float):
     """Yield shifted PCM while consuming its input with bounded backpressure.
 
@@ -91,80 +101,91 @@ async def shift_pcm(source, semitones: float):
         finally:
             await _close_audio(source)
         return
-    available = await supports_pitch_shift()
-    if not available:
-        LOG.warning("FFmpeg Rubber Band unavailable; Jade pitch unchanged")
-        try:
-            async for part in source:
-                yield part
-        finally:
-            await _close_audio(source)
-        return
+    # Start at most one upstream read while checking FFmpeg and starting it.
+    # This overlaps provider startup without buffering the entire utterance.
+    original_source = source
+    iterator = aiter(source)
+    first = asyncio.ensure_future(anext(iterator))
+    source = _prefetched_pcm(iterator, first)
     try:
-        process = await asyncio.create_subprocess_exec(
-            *_command(semitones), stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL,
-            env=child_environment(os.environ),
-        )
-    except OSError:
-        # A removed executable between capability probe and spawn is harmless.
-        LOG.warning("Pitch processing cannot start; Jade pitch unchanged")
-        try:
+        available = await supports_pitch_shift()
+        if not available:
+            LOG.warning("FFmpeg Rubber Band unavailable; Jade pitch unchanged")
             async for part in source:
                 yield part
-        finally:
-            await _close_audio(source)
-        return
-
-    async def feed_input():
-        received = 0
+            return
         try:
-            async for chunk in source:
-                if not isinstance(chunk, bytes) or not chunk:
-                    raise ValueError("invalid source PCM fragment")
-                received += len(chunk)
-                if received > MAX_PCM:
-                    raise ValueError("synthesized PCM exceeds pitch-processing limit")
-                process.stdin.write(chunk)
-                await process.stdin.drain()  # never buffer unbounded input
-            if received % 2:
-                raise ValueError("incomplete PCM sample")
-        finally:
+            process = await asyncio.create_subprocess_exec(
+                *_command(semitones), stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL,
+                env=child_environment(os.environ),
+            )
+        except OSError:
+            # A removed executable between capability probe and spawn is harmless.
+            LOG.warning("Pitch processing cannot start; Jade pitch unchanged")
             try:
-                process.stdin.close()
-                await process.stdin.wait_closed()
-            except (BrokenPipeError, ConnectionResetError, OSError):
-                pass
-            await _close_audio(source)
+                async for part in source:
+                    yield part
+            finally:
+                await _close_audio(source)
+            return
 
-    feeder = asyncio.create_task(feed_input(), name="jade-pitch-input")
-    total = 0
-    try:
-        while True:
-            # Small PCM reads permit streaming and backpressure to Discord.
-            chunk = await process.stdout.read(4096)
-            if not chunk:
-                break
-            total += len(chunk)
-            if total > MAX_PCM + RATE * 4:  # bounded allowance for DSP tail
-                raise RuntimeError("pitch processing exceeded output limit")
-            yield chunk
-        await feeder  # preserve upstream provider failures and cancellations
-        status = await asyncio.wait_for(process.wait(), timeout=3)
-        if status != 0 or not total or total % 2:
-            raise RuntimeError("pitch processing failed")
-    finally:
-        if not feeder.done():
-            feeder.cancel()
-        # On early close, kill the DSP immediately; never let it continue to
-        # pull the potentially billable upstream Realtime speech response.
-        if process.returncode is None:
-            process.kill()
-        await asyncio.gather(feeder, return_exceptions=True)
+        async def feed_input():
+            received = 0
+            try:
+                async for chunk in source:
+                    if not isinstance(chunk, bytes) or not chunk:
+                        raise ValueError("invalid source PCM fragment")
+                    received += len(chunk)
+                    if received > MAX_PCM:
+                        raise ValueError("synthesized PCM exceeds pitch-processing limit")
+                    process.stdin.write(chunk)
+                    await process.stdin.drain()  # never buffer unbounded input
+                if received % 2:
+                    raise ValueError("incomplete PCM sample")
+            finally:
+                try:
+                    process.stdin.close()
+                    await process.stdin.wait_closed()
+                except (BrokenPipeError, ConnectionResetError, OSError):
+                    pass
+                await _close_audio(source)
+
+        feeder = asyncio.create_task(feed_input(), name="jade-pitch-input")
+        total = 0
         try:
-            await asyncio.wait_for(process.wait(), timeout=3)
-        except asyncio.TimeoutError:
-            LOG.warning("Pitch process shutdown exceeded deadline")
+            while True:
+                # Small PCM reads permit streaming and backpressure to Discord.
+                chunk = await process.stdout.read(4096)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > MAX_PCM + RATE * 4:  # bounded allowance for DSP tail
+                    raise RuntimeError("pitch processing exceeded output limit")
+                yield chunk
+            await feeder  # preserve upstream provider failures and cancellations
+            status = await asyncio.wait_for(process.wait(), timeout=3)
+            if status != 0 or not total or total % 2:
+                raise RuntimeError("pitch processing failed")
+        finally:
+            if not feeder.done():
+                feeder.cancel()
+            # Stop DSP before allowing any more billable upstream audio.
+            if process.returncode is None:
+                process.kill()
+            await asyncio.gather(feeder, return_exceptions=True)
+            try:
+                await asyncio.wait_for(process.wait(), timeout=3)
+            except asyncio.TimeoutError:
+                LOG.warning("Pitch process shutdown exceeded deadline")
+    finally:
+        if not first.done():
+            first.cancel()
+        await asyncio.gather(first, return_exceptions=True)
+        await _close_audio(source)
+        if iterator is not original_source:
+            await _close_audio(iterator)
+        await _close_audio(original_source)
 
 
 async def shift_wav(audio: bytes, semitones: float) -> bytes:

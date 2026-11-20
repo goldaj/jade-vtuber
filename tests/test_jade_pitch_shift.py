@@ -89,6 +89,57 @@ class PitchStreamingTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(result, [b"\x01\x00", b"\x02\x00"])
                 spawn.assert_not_called()
 
+    async def test_first_pcm_starts_during_filter_probe_without_duplication(self):
+        started = asyncio.Event()
+        reads = []
+        async def source():
+            for part in (b"\x01\x00", b"\x02\x00"):
+                reads.append(part)
+                started.set()
+                yield part
+        async def probe():
+            await asyncio.wait_for(started.wait(), 1)
+            self.assertEqual(len(reads), 1)
+            return False
+        with patch("src.jade_runtime.pitch_shift.supports_pitch_shift", new=probe):
+            self.assertEqual([p async for p in shift_pcm(source(), 2)], reads)
+        self.assertEqual(len(reads), 2)
+
+    async def test_cancel_during_probe_closes_upstream(self):
+        started = asyncio.Event()
+        closed = asyncio.Event()
+        async def source():
+            try:
+                started.set()
+                await asyncio.Event().wait()
+                yield b"\0\0"
+            finally:
+                closed.set()
+        async def probe():
+            await started.wait()
+            await asyncio.Event().wait()
+        with patch("src.jade_runtime.pitch_shift.supports_pitch_shift", new=probe):
+            stream = shift_pcm(source(), 2)
+            task = asyncio.create_task(anext(stream))
+            await asyncio.wait_for(started.wait(), 1)
+            task.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await task
+            self.assertTrue(closed.is_set())
+
+    async def test_failed_spawn_reuses_prefetched_audio(self):
+        reads = []
+        async def source():
+            for part in (b"\x01\x00", b"\x02\x00"):
+                reads.append(part)
+                yield part
+        with patch("src.jade_runtime.pitch_shift.supports_pitch_shift",
+                   new=AsyncMock(return_value=True)):
+            with patch("src.jade_runtime.pitch_shift.asyncio.create_subprocess_exec",
+                       new=AsyncMock(side_effect=OSError)):
+                self.assertEqual([p async for p in shift_pcm(source(), 2)], reads)
+        self.assertEqual(len(reads), 2)
+
     async def test_zero_shift_passes_pcm_unchanged(self):
         async def source():
             yield b"\x01\x00"

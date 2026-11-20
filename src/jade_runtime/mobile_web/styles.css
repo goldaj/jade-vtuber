@@ -224,3 +224,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
  .mark b{font-size:1rem}
 }
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.billing-panel {border-bottom:1px solid var(--line);padding:8px 15px;color:#d9caeb;font-size:.76rem}
+.billing-panel summary {cursor:pointer;font-weight:700}
+.billing-panel p {margin:8px 0}
+.billing-panel a {color:#e7c4f9}
+.billing-panel button {background:#c8b0e7;color:#21182f;border:0;padding:8px;border-radius:8px}

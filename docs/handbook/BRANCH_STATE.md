@@ -2,6 +2,10 @@
 
 **Référence :** sources de `goldaj/jade-vtuber`, branche `develop`, examinées le 19 novembre 2026 (quick wins en cours d'intégration). **Code raccordé = fonctionnalité implémentée**, sans catégorie supplémentaire « testé/non testé ». Le PC peut charger une configuration privée différente des défauts.
 
+## Avance locale non intégrée sur develop
+
+Sur la branche de travail `codex/backlog-prioritaire-20261120` uniquement : coûts API OpenAI de l’organisation dans la PWA (solde prépayé indisponible), audio mobile PCM progressif et préparation de pitch en parallèle. Tests réels et livraison sur develop restent à faire. Voir [passation](../operations/handoffs/2026-11-20-codex-couts-voix-mobile.md).
+
 ## Fonctions présentes
 
 | Domaine | État observé dans le code |

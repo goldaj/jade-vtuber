@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import unittest
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 import wave
 
 from src.jade_runtime.config import Settings
@@ -103,6 +104,22 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
     def headers(self, content_type):
         return {"Authorization": "Bearer " + "x" * 40,
                 "Content-Type": content_type}
+
+    async def test_billing_requires_auth_and_validates_requests(self):
+        self.mobile.billing.get = AsyncMock(return_value={"status": "ok", "month": {"usd": "1.25"}})
+        status, _, _ = await self.request("POST", "/api/billing", body=b"{}",
+                                         headers={"Content-Type": "application/json"})
+        self.assertEqual(status, 401)
+        self.mobile.billing.get.assert_not_awaited()
+        status, _, _ = await self.request("POST", "/api/billing", body=b'{"refresh":"yes"}',
+                                         headers=self.headers("application/json"))
+        self.assertEqual(status, 400)
+        status, body, raw = await self.request("POST", "/api/billing", body=b'{"refresh":true}',
+                                               headers=self.headers("application/json"))
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)["month"]["usd"], "1.25")
+        self.assertIn(b"Cache-Control: no-store", raw)
+        self.mobile.billing.get.assert_awaited_once_with(refresh=True)
 
     async def test_owner_link_endpoint_binds_target_without_public_token_issuance(self):
         store = MemoryStore(Path(self.temp.name) / "linked.sqlite3")

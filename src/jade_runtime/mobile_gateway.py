@@ -83,7 +83,7 @@ class MobileGateway:
                  web_root: Path | None = None, model_dir: Path | None = None,
                  vendor_dir: Path | None = None, owner_login: str | None = None,
                  public_origin: str | None = None,
-                 avatar_intent_enabled: bool = True):
+                 avatar_intent_enabled: bool = True, billing_admin_key: str = ""):
         if not isinstance(token, str) or len(token) < 32 or len(token) > 256:
             raise ValueError("JADE_MOBILE_TOKEN must contain 32-256 characters")
         if type(port) is not int or not 1024 <= port <= 65535:
@@ -114,6 +114,8 @@ class MobileGateway:
         self.max_connections = 10
         self.semaphore = asyncio.Semaphore(2)
         self.request_timeout = 75
+        from .billing import BillingCosts
+        self.billing = BillingCosts(billing_admin_key)
 
     def deliver(self, reply) -> None:
         """Called on the shared Runtime's response callback, before local TTS."""
@@ -153,6 +155,35 @@ class MobileGateway:
     async def _json(self, writer, code: int, value: dict):
         await self._send(writer, code, json.dumps(
             value, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+
+    async def _stream_event(self, writer, value):
+        payload = (json.dumps(value, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
+        writer.write(f"{len(payload):X}\r\n".encode("ascii") + payload + b"\r\n")
+        await asyncio.wait_for(writer.drain(), timeout=5)
+
+    async def _stream_reply(self, writer, payload, speak):
+        from .mobile_audio_stream import speech_events
+        headers = self._headers(200, "application/x-ndjson; charset=utf-8", 0)
+        headers = headers.replace(b"Content-Length: 0\r\n", b"Transfer-Encoding: chunked\r\n")
+        writer.write(headers)
+        await self._stream_event(writer, {"type": "reply", **payload})
+        if speak:
+            events = speech_events(self.services, payload["reply"], payload["intent"])
+            try:
+                async for event in events:
+                    await self._stream_event(writer, event)
+            except asyncio.CancelledError:
+                raise
+            except (ConnectionError, OSError):
+                raise
+            except Exception:
+                LOG.warning("Mobile streaming voice unavailable; text answer preserved")
+                await self._stream_event(writer, {"type": "audio_error"})
+            finally:
+                await events.aclose()
+        await self._stream_event(writer, {"type": "done"})
+        writer.write(b"0\r\n\r\n")
+        await asyncio.wait_for(writer.drain(), timeout=5)
 
     def _origin_allowed(self, headers: dict[str, str]) -> bool:
         origin = headers.get("origin")
@@ -313,7 +344,22 @@ class MobileGateway:
                 reply_future.cancel()
             self.pending.pop(incoming.message_id, None)
 
-    async def _post(self, writer, route: str, headers: dict, body: bytes):
+    async def _post(self, writer, route: str, headers: dict, body: bytes, *, streaming=False):
+        if route == "/api/billing":
+            if headers.get("content-type", "").split(";")[0].strip() != "application/json":
+                await self._json(writer, 400, {"error": "expected JSON"})
+                return
+            try:
+                request = json.loads(body)
+            except (ValueError, UnicodeDecodeError):
+                await self._json(writer, 400, {"error": "invalid JSON"})
+                return
+            if (type(request) is not dict or set(request) - {"refresh"}
+                    or type(request.get("refresh", False)) is not bool):
+                await self._json(writer, 400, {"error": "invalid billing request"})
+                return
+            await self._json(writer, 200, await self.billing.get(refresh=request.get("refresh", False)))
+            return
         if route == "/api/link":
             # This endpoint is restricted by the same Tailscale owner check and
             # Bearer authorization as chat. Never expose account-linking secrets
@@ -392,6 +438,7 @@ class MobileGateway:
             await self._json(writer, 429, {"error": "Jade est occupée"})
             return
         async with self.semaphore:
+            stream_started = False
             try:
                 async with asyncio.timeout(self.request_timeout):
                     if modality == "voice":
@@ -412,6 +459,10 @@ class MobileGateway:
                                "transcript": text if modality == "voice" else None,
                                "audio_wav_b64": None, "audio_unavailable": False}
                     speak = source.requested_speech
+                    if streaming:
+                        stream_started = True
+                        await self._stream_reply(writer, payload, speak)
+                        return
                     if speak:
                         try:
                             speech = await self.services.synthesize_speech(
@@ -434,12 +485,15 @@ class MobileGateway:
                             payload["audio_unavailable"] = True
                     await self._json(writer, 200, payload)
             except asyncio.TimeoutError:
-                await self._json(writer, 504, {"error": "Jade n'a pas répondu à temps"})
+                if not stream_started:
+                    await self._json(writer, 504, {"error": "Jade n'a pas répondu à temps"})
             except asyncio.QueueFull:
-                await self._json(writer, 429, {"error": "Jade est occupée"})
+                if not stream_started:
+                    await self._json(writer, 429, {"error": "Jade est occupée"})
             except Exception:
                 LOG.warning("Mobile turn failed; no transcript/secret logged")
-                await self._json(writer, 503, {"error": "Jade indisponible"})
+                if not stream_started:
+                    await self._json(writer, 503, {"error": "Jade indisponible"})
 
     async def _handle(self, reader, writer):
         try:
@@ -488,7 +542,7 @@ class MobileGateway:
             if method == "GET":
                 await self._static(writer, route)
                 return
-            if route not in ("/api/chat", "/api/voice", "/api/link"):
+            if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing"):
                 await self._json(writer, 404, {"error": "unknown route"})
                 return
             if (headers.get("transfer-encoding") or not self._origin_allowed(headers)
@@ -509,7 +563,26 @@ class MobileGateway:
                 await self._json(writer, 413, {"error": "request too large"})
                 return
             body = await asyncio.wait_for(reader.readexactly(size), timeout=10)
-            await self._post(writer, route, headers, body)
+            streaming = headers.get("x-jade-stream") == "1" and route in ("/api/chat", "/api/voice")
+            if not streaming:
+                await self._post(writer, route, headers, body)
+            else:
+                # Notice a disconnected phone even while STT/LLM is still
+                # running, before a response can be written to the socket.
+                work = asyncio.create_task(self._post(writer, route, headers, body, streaming=True))
+                disconnected = asyncio.create_task(reader.read(1))
+                try:
+                    done, _ = await asyncio.wait((work, disconnected), return_when=asyncio.FIRST_COMPLETED)
+                    if work in done:
+                        await work
+                    else:
+                        work.cancel()
+                        await asyncio.gather(work, return_exceptions=True)
+                finally:
+                    for task in (work, disconnected):
+                        if not task.done():
+                            task.cancel()
+                    await asyncio.gather(work, disconnected, return_exceptions=True)
         except (asyncio.TimeoutError, asyncio.IncompleteReadError):
             try:
                 await self._json(writer, 504, {"error": "request timeout"})

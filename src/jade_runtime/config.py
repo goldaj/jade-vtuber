@@ -79,6 +79,7 @@ class Settings:
     memory_curator_enabled: bool = False
     memory_db_path: str = ""
     # Private PWA, opt-in via Tailscale Serve; separate HTTP secret from chat.
+    billing_admin_key: str = field(default="", repr=False)
     mobile_enabled: bool = False
     mobile_token: str = field(default="", repr=False)
     mobile_owner_login: str = ""
@@ -132,6 +133,7 @@ class Settings:
             memory_enabled=_enabled(str(environ("JADE_MEMORY_ENABLED", "0")).lower()),
             memory_curator_enabled=_enabled(str(environ("JADE_MEMORY_CURATOR_ENABLED", "0")).lower()),
             memory_db_path=str(environ("JADE_MEMORY_DB_PATH", "")),
+            billing_admin_key=str(environ("JADE_OPENAI_ADMIN_KEY", "")),
             mobile_enabled=_enabled(str(environ("JADE_MOBILE_ENABLED", "0")).lower()),
             mobile_token=str(environ("JADE_MOBILE_TOKEN", "")),
             mobile_owner_login=str(environ("JADE_MOBILE_OWNER_LOGIN", "")).strip(),

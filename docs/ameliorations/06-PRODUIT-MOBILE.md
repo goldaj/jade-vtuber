@@ -25,3 +25,7 @@
 **Décision produit du 20 novembre 2026 :** l'accès mobile doit être utilisable sans intervention manuelle sur l'ordinateur à chaque lancement ; **le PC hébergeur peut rester allumé**. La migration future vers un serveur Jade 24 h/24 et 7 j/7 est prévue à terme, mais **ne conditionne ni le rendu 2D, ni le décor animé, ni l'authentification mobile**. L'application Authenticator gère la vérification d'identité, **pas l'hébergement ni la disponibilité du processus Jade**. Ces trois évolutions sont des demandes validées pour le catalogue, sans développement automatiquement engagé.
 
 **Sources :** [guide PC/Android](../history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), [audit PWA](../history/gpt6-jade/AUDIT-REVUE-MOBILE-MEMOIRE-20261115.md), [launcher](../operations/reference/LAUNCHER-WINDOWS-20261115.md), [roadmap MVP](../history/gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md), [priorités historiques](../history/gpt6-jade/NEXT-PRIORITIES.md) (ne pas reprendre ses statuts littéralement).
+
+### UX-18 — travail local du 20 novembre
+
+La branche `codex/backlog-prioritaire-20261120` ajoute l'affichage des coûts de l'organisation et leur actualisation. Le solde prépayé et l'alerte de seuil restent indisponibles sans source officielle ; configuration et limites dans [le guide](../operations/reference/OPENAI-COSTS.md). Intégration sur `develop` et essai réel à effectuer après autorisation.

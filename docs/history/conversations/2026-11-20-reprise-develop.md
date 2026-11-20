@@ -110,3 +110,16 @@ Ajustements du cadrage, du rideau, des ombres et des reflets dans la PWA.
 **Assistant — synthèse**
 
 Travail réalisé sur une branche isolée. Les sujets OBS et VTube Studio précédemment différés restent en attente.
+
+## Crédit OpenAI et fluidité vocale
+
+**Utilisateur — extrait verbatim**
+
+> On va commencer par ça :
+> * Suivi du crédit OpenAI dans l’appli
+> Puis ensuite tu enchaîneras directement sur ça :
+> * Conversation vocale plus fluide
+
+**Assistant — synthèse**
+
+Travail sur la branche isolée, dans l'ordre demandé. La livraison sur develop reste en attente.

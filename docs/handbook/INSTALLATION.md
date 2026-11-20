@@ -125,3 +125,7 @@ Avant la recette réelle, lancer `poetry run python -m unittest discover -s test
 **Audit de référence** : [revue DevOps develop du 15 novembre 2026](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Exécuter localement les tests et préflights décrits dans le guide technique. Le backup de mémoire SQLite supporte les schémas 1, 2 et 3, mais l'archive ZIP n'est **pas chiffrée** : la déplacer uniquement via un support chiffré et vérifier la restauration sur une base de test. Le launcher copié dans `D:\Jade\launcher` doit être **réinstallé** après toute modification de ses scripts ; pas de mise à jour automatique garantie. Les tests de GitHub Actions n'établissent pas le fonctionnement du PC réel.
 
 Les corrections historiques de CI sont conservées dans [l'audit DevOps](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Pour l'état actuel des fonctions codées : [BRANCH_STATE.md](BRANCH_STATE.md).
+
+## Suivi des dépenses OpenAI sur mobile
+
+Configuration et limites : [guide des dépenses OpenAI](../operations/reference/OPENAI-COSTS.md).

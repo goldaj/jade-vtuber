@@ -89,3 +89,10 @@ Ce document est **la seule pièce documentaire systématiquement exigée en CI**
 
 - L'export de prévisualisation inclut le script et le décor WebP de la PWA. Le binaire approuvé est vérifié avant la création de l'export.
 - La simulation microphone emploie une durée PCM adaptée au filtre audio. [Passation](handoffs/2026-11-20-codex-audit-ops.md).
+
+## 2026-11-20 — Dépenses OpenAI et voix mobile progressive (`codex/backlog-prioritaire-20261120`)
+
+- La PWA privée présente les coûts API du jour et du mois UTC par devise, via `billing.py` et la route authentifiée `/api/billing`. La clé administrateur est facultative et reste côté PC ; les valeurs périmées sont identifiées et les périodes échues masquées. Le solde prépayé et l'alerte associée restent indisponibles ; voir [configuration](reference/OPENAI-COSTS.md).
+- Le mobile reçoit le texte puis l'audio PCM au fil de la synthèse, avec repli WAV selon le modèle ou le navigateur, sans deuxième synthèse après erreur. La fermeture de la page interrompt le travail ; le pitch démarre en parallèle du premier fragment PCM. Les endpoints existants restent compatibles.
+- Risques et limites : aucune mesure de latence réelle ni recette Android/Discord ou connexion à l'API d'administration ; capture mobile et transcription restent tamponnées, et le dialogue n'est pas duplex. Aucune mise en service sur `develop`.
+- Contrôles et reprise : voir [passation du lot](handoffs/2026-11-20-codex-couts-voix-mobile.md).

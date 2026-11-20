@@ -58,6 +58,14 @@
           <button type="button" class="text-button" id="new-chat">Nouveau fil</button>
         </div>
       </div>
+      <details class="billing-panel" id="billing-panel">
+        <summary>Suivi OpenAI</summary>
+        <p>Solde prépayé : indisponible dans l’API ; aucune alerte de solde possible. <a href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" rel="noopener noreferrer">Voir la facturation OpenAI</a></p>
+        <p>Coûts de toute l’organisation API, éventuellement publiés avec retard.</p>
+        <p>Dépenses aujourd’hui (UTC) : <strong id="billing-today">—</strong><br>Dépenses du mois (UTC) : <strong id="billing-month">—</strong></p>
+        <p id="billing-status" role="status">Ouvre ce panneau pour consulter les dépenses.</p>
+        <button type="button" id="billing-refresh">Actualiser</button>
+      </details>
       <details class="identity-panel" id="identity-panel">
         <summary>Associer un compte Discord / Twitch</summary>
         <p>Le compte cible doit d'abord envoyer <code>!jade-memoire activer</code> puis <code>!jade-memoire identite</code> à Jade. Recopie l'identifiant numérique renvoyé, pas le pseudo.</p>

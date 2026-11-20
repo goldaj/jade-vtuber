@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Dépenses OpenAI et voix mobile progressive](2026-11-20-codex-couts-voix-mobile.md) · UX-18, LAT-06 et LAT-16, branche isolée non intégrée.
+
 - [Reprise du backlog et audit du poste](2026-11-20-codex-audit-ops.md) · DEV-009, OPS-005/006/007/008 et REC-009.
 
 - [Reconnexion du vocal Discord](2026-11-20-codex-reconnexion-vocale.md) · Diagnostic réel, reprise et REC-023.

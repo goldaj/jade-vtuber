@@ -32,3 +32,7 @@
 - Cible de recherche, **non contractuelle** : première réaction simple vers 0,5–1,5 s après fin de parole en conditions favorables, p95 mesuré séparément. L'atteindre dépend du backend et du réseau.
 
 **Sources :** [plan latence](../history/gpt6-jade/PLAN-LATENCE-20261110.md), [passation streaming](../history/gpt6-jade/HANDOFF-STREAMING-TTS-20261113.md), [voix/intention](../history/gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), [état de develop](../handbook/TECHNICAL.md), conversation du 16/11/2026.
+
+### Travail local du 20 novembre
+
+Sur `codex/backlog-prioritaire-20261120`, LAT-06/LAT-16 avancent avec la diffusion PCM progressive vers la PWA et la préparation parallèle du pitch ; le flux d'entrée reste un WAV complet et le LLM ne diffuse pas encore sa réponse avant sa fin. Gain réel et recette Android restent à mesurer ; aucun duplex n'est annoncé. Détails dans la [passation](../operations/handoffs/2026-11-20-codex-couts-voix-mobile.md).

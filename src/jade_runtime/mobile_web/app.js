@@ -23,6 +23,10 @@
   let audioContext = null;
   let playing = null;
   let playFrame = null;
+  let streamController = null;
+  const streamSources = new Set();
+  let streamAnalyser = null;
+  let streamNextTime = 0;
   let thread = newThread();
 
   function newThread() {
@@ -69,6 +73,10 @@
     log.scrollTop = log.scrollHeight;
   }
 
+  function setReplyIntent(intent) {
+    avatar().setIntent(intent || "neutral");
+  }
+
   async function makeRequest(path, body, extraHeaders) {
     const headers = Object.assign({"Authorization":"Bearer " + token}, extraHeaders);
     const response = await fetch(path, {
@@ -112,7 +120,129 @@
       playing = null;
       avatar().setSpeaking(false);
     }
+    for (const source of streamSources) {
+      try { source.stop(); } catch (_) {}
+    }
+    streamSources.clear();
+    if (streamAnalyser) { streamAnalyser.disconnect(); streamAnalyser = null; }
+    streamNextTime = 0;
+    avatar().setSpeaking(false);
     avatar().setMouth(0);
+  }
+
+  function abortMobileStream() {
+    if (streamController) streamController.abort();
+  }
+
+  async function playPcm(base64Audio, rate) {
+    if (!soundEnabled || document.hidden) return;
+    if (rate !== 24000 || base64Audio.length > 12000) throw new Error("Fragment audio invalide.");
+    const binary = atob(base64Audio);
+    if (!binary.length || binary.length % 2) throw new Error("Fragment audio incomplet.");
+    const context = await ensureAudioContext();
+    const buffer = context.createBuffer(1, binary.length / 2, rate);
+    const samples = buffer.getChannelData(0);
+    for (let i = 0; i < samples.length; i++) {
+      let value = binary.charCodeAt(i * 2) | (binary.charCodeAt(i * 2 + 1) << 8);
+      if (value >= 32768) value -= 65536;
+      samples[i] = value / 32768;
+    }
+    if (!streamAnalyser) {
+      streamAnalyser = context.createAnalyser();
+      streamAnalyser.fftSize = 1024;
+      streamAnalyser.connect(context.destination);
+      const analyser = streamAnalyser, data = new Uint8Array(analyser.fftSize);
+      const animate = () => {
+        if (streamAnalyser !== analyser) return;
+        analyser.getByteTimeDomainData(data);
+        let sum = 0;
+        for (const value of data) sum += ((value - 128) / 128) ** 2;
+        avatar().setMouth(Math.min(1, Math.sqrt(sum / data.length) * 7));
+        playFrame = requestAnimationFrame(animate);
+      };
+      animate();
+    }
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(streamAnalyser);
+    streamSources.add(source);
+    const start = Math.max(context.currentTime + 0.05, streamNextTime);
+    streamNextTime = start + buffer.duration;
+    avatar().setSpeaking(true);
+    source.onended = () => {
+      streamSources.delete(source);
+      source.disconnect();
+      if (!streamSources.size) {
+        if (streamAnalyser) streamAnalyser.disconnect();
+        streamAnalyser = null;
+        if (playFrame) cancelAnimationFrame(playFrame);
+        playFrame = null;
+        avatar().setMouth(0);
+        avatar().setSpeaking(false);
+      }
+    };
+    source.start(start);
+  }
+
+  async function makeStreamingRequest(path, body, extraHeaders) {
+    // Choose the legacy format before sending anything: retrying afterward
+    // could produce a second billable conversation and voice synthesis.
+    if (typeof ReadableStream === "undefined" || typeof TextDecoder === "undefined" ||
+        typeof AbortController === "undefined") {
+      await present(await makeRequest(path, body, extraHeaders));
+      return;
+    }
+    const controller = new AbortController();
+    streamController = controller;
+    try {
+      const headers = Object.assign({"Authorization":"Bearer " + token, "X-Jade-Stream":"1"}, extraHeaders);
+      const response = await fetch(path, {method:"POST", mode:"same-origin", credentials:"omit",
+        cache:"no-store", headers, body, signal:controller.signal});
+      if (response.status === 401) { authorizeAgain(); throw new Error("Jeton mobile incorrect : ressaisis-le."); }
+      if (response.status === 403) throw new Error("Accès réservé au propriétaire Tailscale.");
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || "Erreur de communication avec Jade.");
+      }
+      if (!response.body) throw new Error("La lecture progressive est indisponible sur ce navigateur.");
+      connection.textContent = "Connectée à Jade";
+      connection.classList.add("online");
+      const reader = response.body.getReader(), decoder = new TextDecoder();
+      let pending = "", receivedReply = false, done = false, audioFailed = false;
+      async function consume(line) {
+        const event = JSON.parse(line);
+        if (event.type === "reply") {
+          if (receivedReply) throw new Error("Réponse multiple inattendue.");
+          receivedReply = true;
+          if (event.transcript) addBubble(event.transcript, "me");
+          addBubble(String(event.reply || "…"), "jade");
+          setReplyIntent(event.intent);
+        } else if (event.type === "pcm") {
+          if (!receivedReply) throw new Error("Audio reçu avant la réponse.");
+          try { await playPcm(event.pcm_b64, event.sample_rate); } catch (_) { audioFailed = true; }
+        } else if (event.type === "wav") {
+          if (!receivedReply) throw new Error("Audio reçu avant la réponse.");
+          if (soundEnabled && !(await playWav(event.audio_wav_b64))) audioFailed = true;
+        } else if (event.type === "audio_error") audioFailed = true;
+        else if (event.type === "done") done = true;
+        else throw new Error("Réponse audio inattendue.");
+      }
+      while (true) {
+        const part = await reader.read();
+        pending += decoder.decode(part.value || new Uint8Array(), {stream:!part.done});
+        if (pending.length > 10_000_000) throw new Error("Réponse audio trop volumineuse.");
+        let newline;
+        while ((newline = pending.indexOf("\n")) !== -1) {
+          const line = pending.slice(0, newline); pending = pending.slice(newline + 1);
+          if (line) await consume(line);
+        }
+        if (part.done) break;
+      }
+      if (pending || !done || !receivedReply) throw new Error("Réponse audio interrompue.");
+      setStatus(audioFailed && soundEnabled ? "Réponse écrite reçue, mais la voix est indisponible." : "Prête.");
+    } finally {
+      if (streamController === controller) streamController = null;
+    }
   }
 
   async function playWav(base64Audio) {
@@ -167,7 +297,7 @@
   async function present(result) {
     if (result.transcript) addBubble(result.transcript, "me");
     addBubble(String(result.reply || "…"), "jade");
-    avatar().setIntent(result.intent || "neutral");
+    setReplyIntent(result.intent);
     if (result.audio_wav_b64 && soundEnabled) {
       const played = await playWav(result.audio_wav_b64);
       if (!played) {
@@ -195,10 +325,9 @@
     addBubble(text, "me");
     input.value = "";
     try {
-      const result = await makeRequest("/api/chat",
+      await makeStreamingRequest("/api/chat",
         JSON.stringify({text, session:thread, speak:soundEnabled}),
         {"Content-Type":"application/json"});
-      await present(result);
     } catch (error) {
       setStatus(error.message || "Impossible de joindre Jade.");
     } finally {
@@ -349,12 +478,11 @@
         return;
       }
       const wav = buildWav(current.chunks, rate, frames);
-      const result = await makeRequest("/api/voice", wav, {
+      await makeStreamingRequest("/api/voice", wav, {
         "Content-Type":"audio/wav",
         "X-Jade-Session": thread,
         "X-Jade-Speak": soundEnabled ? "1" : "0"
       });
-      await present(result);
     } catch (error) {
       setStatus(error.message || "Message vocal non transmis.");
     } finally {
@@ -412,6 +540,51 @@
     }
   });
 
+  const billingPanel = $("billing-panel"), billingRefresh = $("billing-refresh");
+  const billingStatus = $("billing-status"), billingToday = $("billing-today"), billingMonth = $("billing-month");
+  let billingPending = false;
+  function formatCosts(costs) {
+    if (costs === null || costs === undefined) return "—";
+    const entries = Object.entries(costs || {});
+    if (!entries.length) return "0 (aucune dépense déclarée)";
+    return entries.map(([currency, value]) => `${value} ${currency.toUpperCase()}`).join(" · ");
+  }
+  async function loadBilling(refresh = false) {
+    if (billingPending || !token) return;
+    billingPending = true;
+    billingRefresh.disabled = true;
+    billingStatus.textContent = "Chargement des dépenses…";
+    try {
+      const result = await makeRequest("/api/billing", JSON.stringify({refresh}), {"Content-Type":"application/json"});
+      if (result.status === "ok" || result.status === "stale") {
+        billingToday.textContent = formatCosts(result.today);
+        billingMonth.textContent = formatCosts(result.month);
+        const checked = new Date(result.checked_at).toLocaleString("fr-FR");
+        billingStatus.textContent = result.status === "stale"
+          ? `Dernière actualisation : ${checked}. Actualisation indisponible.`
+          : `Dernière actualisation : ${checked}. Les dépenses peuvent être reportées par OpenAI avec un délai.`;
+      } else {
+        billingToday.textContent = billingMonth.textContent = "—";
+        billingStatus.textContent = result.status === "not_configured"
+          ? "Suivi non configuré : une clé administrateur OpenAI est nécessaire sur le PC de Jade."
+          : result.status === "access_denied"
+            ? "Accès refusé : vérifie la clé administrateur de l’organisation OpenAI."
+            : "Dépenses momentanément indisponibles. Réessaie plus tard.";
+      }
+    } catch (error) {
+      billingToday.textContent = billingMonth.textContent = "—";
+      billingStatus.textContent = error.message || "Dépenses momentanément indisponibles.";
+    } finally {
+      billingPending = false;
+      billingRefresh.disabled = false;
+    }
+  }
+  billingPanel.addEventListener("toggle", () => { if (billingPanel.open) loadBilling(); });
+  billingRefresh.addEventListener("click", () => loadBilling(true));
+  setInterval(() => {
+    if (billingPanel.open && !document.hidden && token) loadBilling();
+  }, 300000);
+
   authForm.addEventListener("submit", event => {
     event.preventDefault();
     const value = authInput.value;
@@ -436,11 +609,13 @@
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       cancelRecording();
+      abortMobileStream();
       stopPlayback();
     }
   });
   window.addEventListener("pagehide", () => {
     cancelRecording();
+    abortMobileStream();
     stopPlayback();
   });
   soundToggle.addEventListener("click", () => {
