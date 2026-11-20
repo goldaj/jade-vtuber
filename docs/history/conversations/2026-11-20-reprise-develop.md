@@ -100,3 +100,13 @@ Le cadrage soumis à validation montrait le modèle r20 à 150 % de sa taille pr
 **Assistant — synthèse**
 
 Ajustements du cadrage, du rideau, des ombres et des reflets dans la PWA.
+
+## Reprise du backlog
+
+**Utilisateur — extrait verbatim**
+
+> Dépile la backlog et commence à réaliser les tâches prioritaires qui y sont. Ne livre pas sur develop pour l'instant
+
+**Assistant — synthèse**
+
+Travail réalisé sur une branche isolée. Les sujets OBS et VTube Studio précédemment différés restent en attente.

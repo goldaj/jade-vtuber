@@ -84,3 +84,8 @@ Ce document est **la seule pièce documentaire systématiquement exigée en CI**
 - La position de l'avatar est décalée de 8 % de la largeur de la scène vers la droite pour dégager la tasse sous le plan rapproché.
 - Le rideau se balance davantage et son ourlet dispose de plus de marge. Les ombres peintes près du chevet et les reflets sur le parquet bougent plus sensiblement. Les effets suivent la préférence de mouvement réduit.
 - [Passation](handoffs/2026-11-20-codex-chambre-mobile.md#ajustements-après-essai-mobile).
+
+## 2026-11-20 — Fiabilité de l'export et de la validation locale
+
+- L'export de prévisualisation inclut le script et le décor WebP de la PWA. Le binaire approuvé est vérifié avant la création de l'export.
+- La simulation microphone emploie une durée PCM adaptée au filtre audio. [Passation](handoffs/2026-11-20-codex-audit-ops.md).

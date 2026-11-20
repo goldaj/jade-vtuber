@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Reprise du backlog et audit du poste](2026-11-20-codex-audit-ops.md) · DEV-009, OPS-005/006/007/008 et REC-009.
+
 - [Reconnexion du vocal Discord](2026-11-20-codex-reconnexion-vocale.md) · Diagnostic réel, reprise et REC-023.
 
 - [Chambre de Jade dans la PWA](2026-11-20-codex-chambre-mobile.md) · Direction illustrée, étapes de validation et publication.
