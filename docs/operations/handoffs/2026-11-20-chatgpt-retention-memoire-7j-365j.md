@@ -1,0 +1,15 @@
+# Cycle de vie de la mémoire Jade : 7 jours / 365 jours / permanent
+
+- Décision du propriétaire : 20 novembre 2026, demande explicite de modification des trois niveaux.
+- Référence de départ : `develop` commit `4d4e60645f5940e7448b5499900fe63d30a0bfbe`.
+- Branche : `feat/memory-retention-7d-365d-24h-20261120`.
+- Niveau 1 : `conversation_turns` en SQLite, suppression des tours datés d'au moins **7 jours**, sur ouverture et toutes les heures tant que Jade tourne en réel. Les sessions RAM continuent de s'effacer après 30 minutes d'inactivité.
+- Reprise niveau 1 : `recent_conversation_turns`, `MemoryService.history_for`, `Runtime._execute` et `Dialogue.respond` relisent l'intégralité des échanges conservés des **dernières 24 heures**, pour la même identité vérifiée et le même scope, sans `LIMIT` SQL ni plafond de 24 échanges ni `maxlen=48` pour le contexte réhydraté.
+- Niveau 2 : les écritures ordinaires automatiques et explicites ont désormais un délai par défaut de **365 jours** ; `kind='ordinary'` reste contrôlé par l'expiration, le profil et le salon.
+- Migration SQLite **v3 vers v4** : recalcul des expirations existantes des mémoires ordinaires à partir de leur date d'origine, jamais à partir du jour de migration. Celles déjà supprimées auparavant ne peuvent pas être restaurées. Le nettoyage initial enlève les lignes de conversations dépassant 7 jours.
+- Niveau 3 : `memories.kind='core_relationship'` et `jade_self_core` n'ont **aucune purge temporelle automatique**. Les droits d'effacement explicite des utilisateurs et propriétaires restent possibles : il ne s'agit pas d'une interdiction légale de suppression.
+- Exploitation : `MemoryStore` nettoie à l'ouverture ; `main.py` réalise une purge périodique chaque heure avec arrêt propre de la tâche, sans service ou base supplémentaire. Le mode démo non persistant n'est pas affecté.
+- Vérifications : tests de plus de 100 tours en 24h, cloisonnement inter-salons, purge 7j, expiration 365j, stabilité Core, migration rétrocompatible et injection dans le dialogue, outre CI Linux/Windows et scan de secrets.
+- Limites : la présence de toutes les conversations dans le contexte LLM peut accroître les tokens consommés et atteindre le plafond de contexte du modèle OpenAI ; **aucun plafonnement en nombre de tours n'a été ajouté**. En cas de surcharge, prévoir un mécanisme de contexte adaptatif explicitement approuvé par le propriétaire, pas une troncature silencieuse. Un ZIP de sauvegarde antérieur peut conserver les contenus que Jade effacera ensuite. `VACUUM` n'est pas déclenché : suppression logique SQL, pas effacement sécurisé des octets.
+- Recette PC : sauvegarder `D:\Jade\private\jade-memory.sqlite3` sur un support privé avant mise à jour, arrêter Jade, récupérer `develop` et redémarrer. Vérifier la migration `PRAGMA user_version=4`, les échéances et la récupération 24h sans limite dans une base test ; ne pas transmettre la base réelle dans Git ou les logs.
+- Statut : prêt pour contrôle CI et recette PC. Aucun accès aux données privées du poste depuis cette intervention.
