@@ -14,7 +14,10 @@ import secrets
 import sqlite3
 import uuid
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
+CONVERSATION_RETENTION_DAYS = 7
+CONVERSATION_RELOAD_HOURS = 24
+ORDINARY_RETENTION_DAYS = 365
 KINDS = frozenset(("ordinary", "core_self", "core_relationship"))
 _ID = re.compile(r"^[1-9][0-9]{0,24}$")
 
@@ -65,7 +68,7 @@ class MemoryStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._db() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, SCHEMA_VERSION):
+            if version not in (0, 1, 2, 3, SCHEMA_VERSION):
                 raise RuntimeError("unsupported Jade memory schema; migrate before starting")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS persons (
@@ -141,8 +144,30 @@ class MemoryStore:
                 );
                 CREATE INDEX IF NOT EXISTS idx_conversation_turns_scope
                     ON conversation_turns(person_id,scope,id DESC);
+                CREATE INDEX IF NOT EXISTS idx_conversation_turns_recent
+                    ON conversation_turns(person_id,scope,created_at,id);
             """)
+            if version < SCHEMA_VERSION:
+                # One-time migration: extend existing ordinary memories from
+                # their ORIGINAL creation timestamp, never from migration day.
+                # Core rows are left untouched with NULL expiration.
+                rows = db.execute(
+                    "SELECT id,created_at FROM memories WHERE kind='ordinary'"
+                ).fetchall()
+                updates = []
+                for row in rows:
+                    created = datetime.fromisoformat(row["created_at"])
+                    if created.tzinfo is None:
+                        created = created.replace(tzinfo=timezone.utc)
+                    updates.append((
+                        (created + timedelta(days=ORDINARY_RETENTION_DAYS)).isoformat(),
+                        row["id"],
+                    ))
+                db.executemany(
+                    "UPDATE memories SET expires_at=? WHERE id=?", updates)
             db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
+        # Purge expired rows on open, including DBs created before this policy.
+        self.prune_expired()
 
     @contextmanager
     def _db(self):
@@ -304,7 +329,7 @@ class MemoryStore:
             return True
 
     def put(self, key: tuple[str, str], *, kind: str, scope: str, summary: str,
-            significance: str = "", message_id: str = "", ordinary_days: int = 90,
+            significance: str = "", message_id: str = "", ordinary_days: int = ORDINARY_RETENTION_DAYS,
             expected_person_id: str | None = None) -> bool:
         """No consent -> no write; Core always has an SQL-enforced NULL TTL."""
         _validate_key(key)
@@ -342,7 +367,7 @@ class MemoryStore:
     def put_requested_ordinary(self, key: tuple[str, str], *, scope: str,
                                summary: str, message_id: str = "",
                                expected_person_id: str | None = None,
-                               ordinary_days: int = 90) -> str:
+                               ordinary_days: int = ORDINARY_RETENTION_DAYS) -> str:
         """Persist an explicit memory request as ORDINARY, never Core.
 
         Consent, identity, duplicate check and insertion happen atomically.
@@ -498,6 +523,32 @@ class MemoryStore:
                 (_now().isoformat(),))
             return deleted.rowcount
 
+    def prune_conversation_turns(self) -> int:
+        """Delete raw conversations older than seven days; never Core rows."""
+        cutoff = (_now() - timedelta(days=CONVERSATION_RETENTION_DAYS)).isoformat()
+        with self._db() as db:
+            deleted = db.execute(
+                "DELETE FROM conversation_turns WHERE created_at<=?", (cutoff,))
+            return deleted.rowcount
+
+    def prune_expired(self) -> tuple[int, int]:
+        """Periodic housekeeping: expired level-1 turns and ordinary level-2.
+
+        Retention never deletes a Core Memory. Explicit user erasure remains
+        possible independently of these automatic timers.
+        """
+        now = _now()
+        with self._db() as db:
+            turns = db.execute(
+                "DELETE FROM conversation_turns WHERE created_at<=?",
+                ((now - timedelta(days=CONVERSATION_RETENTION_DAYS)).isoformat(),)
+            ).rowcount
+            ordinary = db.execute(
+                "DELETE FROM memories WHERE kind='ordinary' AND expires_at<=?",
+                (now.isoformat(),)
+            ).rowcount
+        return (turns, ordinary)
+
     def append_conversation_turn(self, key: tuple[str, str], scope: str, *,
                                  source_platform: str, message_id: str,
                                  user_content: str, assistant_content: str) -> bool:
@@ -529,11 +580,18 @@ class MemoryStore:
             return bool(changed)
 
     def recent_conversation_turns(self, key: tuple[str, str], scope: str,
-                                  *, limit: int = 24) -> list[dict]:
-        """Recover full turns in chronological order, without LLM summarization."""
+                                  *, within_hours: int = CONVERSATION_RELOAD_HOURS) -> list[dict]:
+        """Return ALL verified-account turns within a rolling 24h window.
+
+        No count-based SQL LIMIT; ordering and channel/identity isolation are
+        preserved. The database only retains seven days of full transcripts.
+        """
         _validate_key(key)
-        if not isinstance(scope, str) or not 1 <= len(scope) <= 256 or not 1 <= limit <= 50:
-            raise ValueError("invalid conversation history request")
+        if not isinstance(scope, str) or not 1 <= len(scope) <= 256:
+            raise ValueError("invalid conversation history scope")
+        if type(within_hours) is not int or not 1 <= within_hours <= 168:
+            raise ValueError("invalid history recovery window")
+        cutoff = (_now() - timedelta(hours=within_hours)).isoformat()
         with self._db() as db:
             row = db.execute(
                 "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
@@ -542,10 +600,11 @@ class MemoryStore:
                 return []
             turns = db.execute("""
                 SELECT user_content, assistant_content FROM conversation_turns
-                 WHERE person_id=? AND scope=? ORDER BY id DESC LIMIT ?
-            """, (row["person_id"],scope,limit)).fetchall()
+                WHERE person_id=? AND scope=? AND created_at>=?
+                ORDER BY created_at ASC,id ASC
+            """, (row["person_id"], scope, cutoff)).fetchall()
         result = []
-        for turn in reversed(turns):
+        for turn in turns:
             result.append({"role": "user", "content": turn["user_content"]})
             result.append({"role": "assistant", "content": turn["assistant_content"]})
         return result
