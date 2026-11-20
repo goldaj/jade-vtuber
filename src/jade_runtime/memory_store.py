@@ -234,8 +234,9 @@ class MemoryStore:
             if owner_present:
                 db.execute("""
                     DELETE FROM jade_self_core
-                    WHERE source_platform='microphone' AND source_account_id='goldaj'
-                    """)
+                    WHERE (source_platform,source_account_id) IN (
+                        SELECT platform,account_id FROM identities WHERE person_id=?)
+                    """, (row["person_id"],))
             db.execute("DELETE FROM persons WHERE id=?", (row["person_id"],))
             db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
             return True
@@ -256,6 +257,11 @@ class MemoryStore:
             ).fetchone()
             if row is None:
                 return False
+            # Erase owner-directed autobiography entries originating from this
+            # transport identity, without touching other linked accounts.
+            db.execute(
+                "DELETE FROM jade_self_core WHERE source_platform=? AND source_account_id=?",
+                key)
             person = row["person_id"]
             size = db.execute(
                 "SELECT COUNT(*) FROM identities WHERE person_id=?", (person,)
