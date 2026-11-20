@@ -86,6 +86,28 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             memory = MemoryService(store, chat,
                                    curator_enabled=bool(config.memory_curator_enabled and live))
             scopes.push_async_callback(memory.close)
+
+            # Retention is enforced even for a long-running, otherwise idle Jade.
+            # MemoryStore already prunes once during initialization.
+            async def memory_retention_loop():
+                while True:
+                    await asyncio.sleep(3600)
+                    try:
+                        await asyncio.to_thread(store.prune_expired)
+                    except Exception:
+                        LOG.warning("Periodic SQLite memory purge unavailable; no content logged")
+
+            retention_task = asyncio.create_task(
+                memory_retention_loop(), name="jade-memory-retention")
+
+            async def stop_memory_retention():
+                retention_task.cancel()
+                try:
+                    await retention_task
+                except asyncio.CancelledError:
+                    pass
+
+            scopes.push_async_callback(stop_memory_retention)
         avatar_client = None
         if avatar:
             from src.jade_runtime.avatar import Avatar
