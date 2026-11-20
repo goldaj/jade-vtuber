@@ -68,6 +68,9 @@ class EnvironmentTests(unittest.TestCase):
         self.assertNotIn("conversation-synthetic", contents)
 
     def test_shared_run_configurations_reference_only_the_launcher(self):
+        # The safe publication preview intentionally excludes private IDE profiles.
+        if not (runner.ROOT / ".run").is_dir():
+            self.skipTest("PyCharm profiles are excluded from the publication preview")
         for name in ("Jade - Discord mobile (test).run.xml",
                      "Jade - verification locale (sans connexion).run.xml"):
             root = ET.parse(runner.ROOT / ".run" / name).getroot()
