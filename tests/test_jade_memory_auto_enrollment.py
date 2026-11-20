@@ -1,5 +1,6 @@
 """Regressions for default persistence and command-free Discord enrollment."""
 import asyncio
+from contextlib import closing
 from pathlib import Path
 import sqlite3
 import tempfile
@@ -60,11 +61,12 @@ class AutoEnrollmentStoreTests(unittest.TestCase):
         self.assertTrue(self.store.auto_enable(account))
 
     def test_legacy_v3_sqlite_is_extended_without_reset(self):
-        with sqlite3.connect(self.path) as db:
+        with closing(sqlite3.connect(self.path)) as db:
             db.execute("PRAGMA user_version=3")
+            db.commit()
         reopened = MemoryStore(self.path)
         self.assertTrue(reopened.auto_enable(("discord", "999")))
-        with sqlite3.connect(self.path) as db:
+        with closing(sqlite3.connect(self.path)) as db:
             self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 3)
 
     def test_discord_accounts_remain_separate(self):
