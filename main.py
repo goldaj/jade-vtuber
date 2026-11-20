@@ -1,4 +1,4 @@
-"""Jade's new opt-in runtime. Offline demo is the safe default."""
+"""Jade runtime: live persistent memory on by default, offline demo isolated."""
 import argparse
 import asyncio
 import logging
@@ -76,7 +76,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                             max_messages=config.max_history_messages,
                             random_reply_rate=config.reply_probability)
         memory = None
-        if config.memory_enabled:
+        if config.memory_enabled and live:
             from src.jade_runtime.memory_store import MemoryStore
             from src.jade_runtime.memory_service import MemoryService
             store = MemoryStore(Path(config.memory_db_path))
