@@ -80,7 +80,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 12 | REC-004 | A | Microphone PC réel | [REC](02-RECETTE.md) |
 | 13 | REC-005 | A | Isolation des sorties et confidentialité | [REC](02-RECETTE.md) |
 | 14 | DEV-004 | A | Masquer les réponses privées dans les sous-titres OBS WAV | [DEV](01-DEVELOPPEMENT.md) |
-| 15 | DEV-011 | A | Ajouter une Core Memory sur demande explicite et authentifiée de Goldaj | [DEV](01-DEVELOPPEMENT.md) |
+| 15 | DEV-011 | A | Demande naturelle de souvenir ordinaire ; Jade décide seule des Core Memories | [DEV](01-DEVELOPPEMENT.md) |
 | 16 | REC-008 | A | Commandes silence/reprise et interruption | [REC](02-RECETTE.md) |
 | 17 | REC-006 | A | PCM Discord progressif sous --all-channels | [REC](02-RECETTE.md) |
 | 18 | REC-007 | A | Repli WAV et absence de double diffusion | [REC](02-RECETTE.md) |
