@@ -468,8 +468,8 @@ class MemoryStore:
             ).fetchone():
                 return False
             deleted = db.execute("""
-                DELETE FROM jade_self_core WHERE id=?
-                AND source_platform=? AND source_account_id=?""", (memory_id, *key))
+                DELETE FROM jade_self_core WHERE id=? AND visibility='owner_only'""",
+                (memory_id,))
             return deleted.rowcount > 0
 
     def recall(self, key: tuple[str, str], scope: str, *, limit: int = 8) -> list[dict]:
