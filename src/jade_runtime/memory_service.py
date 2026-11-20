@@ -11,6 +11,7 @@ import logging
 import re
 
 from .memory_store import MemoryStore, identity_of
+from .owner_core_intent import parse_owner_core_intent
 from .messages import Reply
 
 LOG = logging.getLogger("jade.memory")
@@ -120,6 +121,46 @@ class MemoryService:
             return False
 
     async def command(self, incoming) -> Reply | None:
+        core_intent = parse_owner_core_intent(incoming.text)
+        if core_intent is not None:
+            key = identity_of(incoming)
+            if key is None:
+                return Reply(incoming, "Seul le créateur authentifié peut ajouter une Core Memory.")
+            if not core_intent.summary:
+                return Reply(incoming, "Précise le souvenir à enregistrer après « Core Memories : ».")
+            if len(core_intent.summary) > 400:
+                return Reply(incoming, "Ce souvenir est trop long : limite de 400 caractères.")
+            if re.search(
+                r"(?i)(api[_ -]?key|mot de passe|password|token|"
+                r"code bancaire|carte bancaire|sk-[a-z0-9]+)",
+                core_intent.summary,
+            ):
+                return Reply(incoming, "Je ne peux pas enregistrer un secret d'accès dans mes souvenirs.")
+            try:
+                # Pin the account at request time; a later forget/link must
+                # not make an old, pending request write into a fresh identity.
+                person = await asyncio.to_thread(self.store.account, key)
+                outcome = await asyncio.to_thread(
+                    self.store.put_owner_core, key,
+                    kind=core_intent.kind,
+                    summary=core_intent.summary,
+                    significance="Souvenir fondateur enregistré à la demande explicite de Goldaj.",
+                    message_id=incoming.message_id,
+                    expected_person_id=person,
+                ) if person else "forbidden"
+                if outcome == "created":
+                    label = ("autobiographiques" if core_intent.kind == "core_self"
+                             else "relationnelles")
+                    answer = f"C'est enregistré dans mes Core Memories {label}."
+                elif outcome == "already_exists":
+                    answer = "Ce souvenir figure déjà dans mes Core Memories."
+                else:
+                    answer = ("Seul Goldaj authentifié, ou un compte qui lui est "
+                              "lié et vérifié, peut modifier mes Core Memories.")
+            except Exception:
+                LOG.warning("Explicit Core Memory write failed (no memory content logged)")
+                answer = "Je n'ai pas pu enregistrer ce souvenir dans SQLite."
+            return Reply(incoming, answer, intent="neutral")
         match = COMMAND.fullmatch(incoming.text.strip())
         if not match:
             return None
