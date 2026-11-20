@@ -17,3 +17,14 @@ Extraits des échanges visibles de la session Codex Jade. Les heures individuell
 ## Assistant — synthèse de la session
 
 Mise à jour en avance rapide de develop, installation sur D:, lancement d'une instance Discord écrit/vocal avec l'avatar r20 et préparation des prérequis mobiles. Les corrections OBS et VTube Studio sont différées. Le détail et les limites sont dans la [passation opérationnelle](../../operations/handoffs/2026-11-20-codex-validation-develop.md).
+
+
+## Suite après installation des prérequis
+
+**Utilisateur — extrait verbatim**
+
+> je crois que j'ai fait ce que t'as demandé. Tu peux vérifier et reprendre. Si besoin de quelque chose, dis le moi
+
+**Assistant — synthèse**
+
+Tailscale et le SDK téléchargé ont été vérifiés sur le poste. Activation de Serve en privé, ajout du mobile à l'instance Discord, vérification de la PWA et de ses contrôles HTTP depuis le PC. Recette réelle sur Android à faire.

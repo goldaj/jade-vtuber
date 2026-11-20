@@ -52,3 +52,11 @@ Compilation, vérification documentaire et tests ciblés réussis. Deux passages
 | test/intent-all-channels-20261115 | f447f2d |
 
 Main est restée à 632c687. Aucun code ni asset de ces branches n'a été réintégré.
+
+
+## Reprise mobile le 20 novembre
+
+- **OPS-009** · Installation de Tailscale sur D: confirmée. Le PC a été reconnecté sans changer de profil. Android était en ligne avec la même identité. Tailscale Serve HTTPS pointe exclusivement vers 127.0.0.1:8766, sans Funnel. La page PWA et le manifeste ont répondu 200 depuis le PC via Serve. L'identité, le port privé et la connexion Android au tailnet sont vérifiés. Le chargement depuis Android et le passage Wi-Fi/data restent à recetter.
+- **OPS-005** · Origine HTTPS et identité VPN réelles, jeton Bearer propre au mobile et configuration hors Git, sur D:. L'accès loopback sans identité renvoie 403, l'API via Serve sans jeton renvoie 401, un Origin incorrect renvoie 403 et un corps invalide avec le bon jeton renvoie 400. Cette vérification ne déclenche pas OpenAI.
+- **OPS-010** · Core installé depuis le ZIP Cubism SDK Web 5-r.5 du propriétaire. PixiJS 6.5.10 et pixi-live2d-display 0.4.0 installés après contrôle SHA-512 publié par npm. Les trois JS, le manifeste r20 et le fichier Idle répondent 200 via Serve. Le manifeste servi par le gateway ajoute bien le mouvement Idle si absent de l'export. Le Core a chargé le modèle et le paramètre de bouche hors ligne. Le navigateur de test Windows n'a pas fourni de rendu observable. La compatibilité adaptateur/Core et l'animation sous Chrome Android restent REC-019.
+- **Instance laissée ouverte** · Une console Jade develop sur D: avec une instance Discord écrit/vocal, PWA et avatar local r20. Présence vocale et port 8766 exclusivement sur loopback vérifiés après relance. Le même lanceur local démarre maintenant les deux canaux. Arrêt par Ctrl+C dans la console Jade develop, puis relance avec Lancer-Jade-develop.cmd.
