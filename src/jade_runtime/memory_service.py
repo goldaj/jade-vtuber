@@ -91,14 +91,14 @@ class MemoryService:
                 "Ne les révèle pas à des tiers et privilégie la correction récente.\n"
                 + "\n".join(lines))
 
-    async def history_for(self, incoming, *, limit: int = 24) -> list[dict[str, str]]:
-        """Only opted-in identities recover exact text turns, never summaries."""
+    async def history_for(self, incoming) -> list[dict[str, str]]:
+        """Recover every turn from the last 24h for the verified account/scope."""
         key = identity_of(incoming)
         if key is None:
             return []
         try:
             return await asyncio.to_thread(
-                self.store.recent_conversation_turns, key, _scope(incoming), limit=limit)
+                self.store.recent_conversation_turns, key, _scope(incoming))
         except Exception:
             LOG.warning("Conversation history unavailable; using volatile turns")
             return []

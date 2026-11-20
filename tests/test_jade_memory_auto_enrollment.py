@@ -67,7 +67,7 @@ class AutoEnrollmentStoreTests(unittest.TestCase):
         reopened = MemoryStore(self.path)
         self.assertTrue(reopened.auto_enable(("discord", "999")))
         with closing(sqlite3.connect(self.path)) as db:
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 3)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 4)
 
     def test_discord_accounts_remain_separate(self):
         one = ("discord", "123")

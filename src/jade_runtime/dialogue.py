@@ -83,7 +83,13 @@ class Dialogue:
                 if incoming.message_id and dedup_id in used:
                     return None
                 if key not in self.history:
-                    self.history[key] = deque(history_messages or (), maxlen=self.max_messages)
+                    # SQLite-backed sessions reload ALL turns from the last 24h.
+                    # Keep them intact while the session is active; the old
+                    # max_messages cap remains for non-persistent demo sessions.
+                    self.history[key] = deque(
+                        history_messages or (),
+                        maxlen=None if history_messages is not None else self.max_messages,
+                    )
                 history = self.history[key]
                 user = {"role": "user", "content": (
                     f"{incoming.author} ({incoming.platform}): {incoming.text}")}
