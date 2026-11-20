@@ -2,6 +2,13 @@
 
 Ce document est **la seule pièce documentaire systématiquement exigée en CI** pour les changements techniques. Les guides, atlas et passations sont révisés uniquement quand le comportement ou les procédures qu'ils décrivent changent. Une entrée indique les faits vérifiés ; un ancien journal ne remplace pas le code.
 
+## 2026-11-20 — DEV-011 Core Memories explicites par Goldaj (feat/dev-011-explicit-owner-core-memories-20261120)
+
+- **Code :** `owner_core_intent.py` (demande naturelle explicite), `memory_service.py` (interception prioritaire, confirmation réelle), `memory_store.py` (transaction Core propriétaire, catégorisation, refus des comptes non liés, déduplication et effacement des souvenirs autobiographiques de comptes liés, y compris par commande propriétaire), ainsi que commandes privées `lister-core`/`supprimer-core` pour les Core relationnelles.
+- **Comportement :** instruction texte ou voix de Goldaj authentifié ; écritures `core_self` et `core_relationship` pérennes sans attente du LLM ; réponses ne divulguant pas le contenu sur les salons publics. Refus des identités non reconnues, des textes vides ou trop longs et des secrets courants.
+- **Vérifications :** tests unitaires de parsing, identité, liaison, oubli, suppression, redémarrage, isolation, doublons, SQL en échec et runtime sans appel LLM ; CI GitHub Actions Linux et Windows réussie (run `44816114240`), contrôle des secrets réussi (run `44816114280`). Pas de recette physique sur le PC/Discord propriétaire depuis cet environnement.
+- **Risques :** l'interprétation des variantes non explicitement reconnues retombe sur le dialogue usuel ; ne pas confondre une réponse de langage avec une confirmation SQLite. La création d'une Core Memory par une instruction du propriétaire est volontaire, non une preuve indépendante des faits rapportés.
+
 ## 2026-11-20 — Mémoire persistante active et inscription Discord sans commande (branche feat/auto-memory-discord-20261120-v2)
 
 - **Configuration / runtime :** conserver les nouveaux défauts `JADE_MEMORY_ENABLED=1` et `JADE_MEMORY_CURATOR_ENABLED=1` apportés sur `develop`, ajouter un chemin SQLite privé et absolu par défaut (`D:\\Jade\\private\\jade-memory.sqlite3` si D: existe sous Windows ; `~/.jade/jade-memory.sqlite3` ailleurs), ne pas créer de base pendant la démo hors ligne. Les variables privées explicitement à `0` continuent de primer.

@@ -11,11 +11,12 @@ import logging
 import re
 
 from .memory_store import MemoryStore, identity_of
+from .owner_core_intent import parse_owner_core_intent
 from .messages import Reply
 
 LOG = logging.getLogger("jade.memory")
 COMMAND = re.compile(
-    r"^!jade-memoire(?:\s+(activer|oublier|etat|autobiographie|supprimer-self|confirmer|identite|delier)"
+    r"^!jade-memoire(?:\s+(activer|oublier|etat|autobiographie|supprimer-self|lister-core|supprimer-core|confirmer|identite|delier)"
     r"(?:\s+([A-Za-z0-9._-]{1,128}))?)?\s*$", re.I)
 _KINDS = frozenset(("none", "ordinary", "core_self", "core_relationship"))
 
@@ -120,6 +121,46 @@ class MemoryService:
             return False
 
     async def command(self, incoming) -> Reply | None:
+        core_intent = parse_owner_core_intent(incoming.text)
+        if core_intent is not None:
+            key = identity_of(incoming)
+            if key is None:
+                return Reply(incoming, "Seul le créateur authentifié peut ajouter une Core Memory.")
+            if not core_intent.summary:
+                return Reply(incoming, "Précise le souvenir à enregistrer après « Core Memories : ».")
+            if len(core_intent.summary) > 400:
+                return Reply(incoming, "Ce souvenir est trop long : limite de 400 caractères.")
+            if re.search(
+                r"(?i)(api[_ -]?key|mot de passe|password|token|"
+                r"code bancaire|carte bancaire|sk-[a-z0-9]+)",
+                core_intent.summary,
+            ):
+                return Reply(incoming, "Je ne peux pas enregistrer un secret d'accès dans mes souvenirs.")
+            try:
+                # Pin the account at request time; a later forget/link must
+                # not make an old, pending request write into a fresh identity.
+                person = await asyncio.to_thread(self.store.account, key)
+                outcome = await asyncio.to_thread(
+                    self.store.put_owner_core, key,
+                    kind=core_intent.kind,
+                    summary=core_intent.summary,
+                    significance="Souvenir fondateur enregistré à la demande explicite de Goldaj.",
+                    message_id=incoming.message_id,
+                    expected_person_id=person,
+                ) if person else "forbidden"
+                if outcome == "created":
+                    label = ("autobiographiques" if core_intent.kind == "core_self"
+                             else "relationnelles")
+                    answer = f"C'est enregistré dans mes Core Memories {label}."
+                elif outcome == "already_exists":
+                    answer = "Ce souvenir figure déjà dans mes Core Memories."
+                else:
+                    answer = ("Seul Goldaj authentifié, ou un compte qui lui est "
+                              "lié et vérifié, peut modifier mes Core Memories.")
+            except Exception:
+                LOG.warning("Explicit Core Memory write failed (no memory content logged)")
+                answer = "Je n'ai pas pu enregistrer ce souvenir dans SQLite."
+            return Reply(incoming, answer, intent="neutral")
         match = COMMAND.fullmatch(incoming.text.strip())
         if not match:
             return None
@@ -129,7 +170,7 @@ class MemoryService:
         if key is None:
             return Reply(incoming, "Je ne peux pas associer ce message à un compte vérifié.")
         try:
-            if memory_id and action not in ("supprimer-self", "confirmer"):
+            if memory_id and action not in ("supprimer-self", "supprimer-core", "confirmer"):
                 return Reply(incoming, "Cette commande n'attend pas d'identifiant.")
             if action == "identite":
                 text = f"Identifiant {key[0]} vérifié : {key[1]}."
@@ -161,6 +202,32 @@ class MemoryService:
                 removed = await asyncio.to_thread(self.store.delete_self_core, key, memory_id.lower())
                 text = ("Souvenir autobiographique supprimé." if removed
                         else "Souvenir introuvable ou déjà supprimé.")
+            elif action == "lister-core":
+                if key != ("microphone", "goldaj"):
+                    return Reply(incoming, "Les Core Memories privées du créateur ne sont consultables que sur son micro ou sa PWA.")
+                memories = await asyncio.to_thread(self.store.list_for_account, key)
+                found = [item for item in memories
+                         if item["kind"] == "core_relationship" and item["scope"] == "person"][:10]
+                text = ("Aucune Core Memory relationnelle." if not found
+                        else "Core Memories relationnelles privées :\n"
+                        + "\n".join(f"{m['id']} : {m['summary']}" for m in found))
+            elif action == "supprimer-core":
+                if key != ("microphone", "goldaj"):
+                    return Reply(incoming, "Seul Goldaj via son micro ou sa PWA peut supprimer ces Core Memories.")
+                if not re.fullmatch(r"[0-9a-f]{32}", memory_id.lower()):
+                    return Reply(incoming, "Indique un identifiant valide de Core Memory relationnelle.")
+                memories = await asyncio.to_thread(self.store.list_for_account, key)
+                candidate = next((item for item in memories
+                                  if item["id"] == memory_id.lower()
+                                  and item["kind"] == "core_relationship"
+                                  and item["scope"] == "person"), None)
+                if candidate is None:
+                    text = "Souvenir relationnel introuvable ou déjà supprimé."
+                else:
+                    erased = await asyncio.to_thread(
+                        self.store.delete_memory, key, memory_id.lower())
+                    text = ("Core Memory relationnelle supprimée." if erased
+                            else "Je n'ai pas pu supprimer ce souvenir.")
             elif action == "activer":
                 await asyncio.to_thread(self.store.enable, key)
                 text = ("Mémoire personnelle activée pour ce compte. "

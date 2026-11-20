@@ -60,6 +60,22 @@ Les nuances émotionnelles et la qualité sonore exigent un **test d'écoute ré
 
 ## 10. Mémoire persistante et Core Memories
 
+### Enregistrer une Core Memory à la demande de Goldaj (DEV-011)
+
+Sur le runtime réel, Jade reconnaît une instruction **explicite** du créateur, sans utiliser la curation automatique. Exemples à dicter ou écrire :
+
+- « Jade, ajoute à tes Core Memories : Goldaj est ton créateur. » (souvenir relationnel)
+- « Jade, enregistre dans tes souvenirs autobiographiques : notre première conversation sur Discord. » (autobiographie privée de Jade)
+- « Jade, je veux que tu gardes ceci dans tes Core Memories : notre première conversation sur Discord. »
+
+La demande doit commencer par un verbe clair (« ajoute », « enregistre », « garde », « mémorise »...) et mentionner les **Core Memories** ou un équivalent explicite (« mémoires fondatrices », « souvenirs autobiographiques »). Jade accepte aussi les formulations STT séparées par « que » au lieu d'un deux-points. **Ce n'est pas une promesse implicite du LLM** : l'opération passe directement par SQLite. Jade confirme uniquement une écriture réussie ; un doublon est signalé, une demande vide, trop longue (> 400 caractères), sensible ou non autorisée est refusée. Aucun appel au LLM n'est nécessaire à cette opération.
+
+Le micro local et la PWA mobile authentifiée sont Goldaj ; les comptes Discord ou Twitch doivent être **préalablement liés au même profil par vérification**, une simple déclaration orale ou un pseudonyme « Goldaj » ne suffit jamais. Les Core Memories autobiographiques sont conservées dans `jade_self_core` (privées au propriétaire), les Core Memories relationnelles dans `memories` avec `kind=core_relationship` et `scope=person`. Elles ne sont jamais injectées dans le contexte de salons Discord/Twitch publics. Le stockage est persistant sans expiration automatique et sans duplication entre canaux. Les commandes privées `!jade-memoire autobiographie` et `!jade-memoire supprimer-self <identifiant>` permettent au propriétaire de consulter/supprimer ses souvenirs autobiographiques. `!jade-memoire lister-core` et `!jade-memoire supprimer-core <identifiant>` permettent de gérer les Core Memories relationnelles depuis le micro local ou la PWA privée, jamais depuis un salon Discord/Twitch public. L'effacement d'un compte lié supprime ses souvenirs Core d'origine sans effacer ceux des autres comptes.
+
+Cette commande exige une mémoire active. Si une configuration privée force `JADE_MEMORY_ENABLED=0`, réactiver la mémoire et redémarrer Jade avant l'essai.
+
+
+
 En mode réel, la mémoire SQLite **et sa curation** sont activées par défaut. Le fichier privé est placé hors du dépôt : `D:\\Jade\\private\\jade-memory.sqlite3` sous Windows si D: existe, sinon `~/.jade/jade-memory.sqlite3`. Le chemin est personnalisable avec `JADE_MEMORY_DB_PATH`. **Les valeurs explicites `0` dans le `.env` privé ou les variables du processus restent prioritaires** ; les retirer ou les changer pour retrouver les valeurs par défaut, puis redémarrer Jade. Le mode démo hors ligne ne crée pas de base. Les souvenirs ordinaires expirent, contrairement aux Core Memories. Sur un **serveur Discord**, les intervenants identifiés sont inscrits à la mémoire dès leur première interaction effectivement traitée : aucune commande d'activation nécessaire. Cette politique suppose que les membres ont été informés de la conservation des échanges avant de participer. Les MP Discord et Twitch conservent l'activation explicite via `!jade-memoire activer`. Tout compte peut utiliser `!jade-memoire etat` et `!jade-memoire oublier` : sur Discord, l'effacement bloque durablement la réinscription automatique, jusqu'à un nouvel `!jade-memoire activer`. Le simple pseudo affiché ne vaut jamais preuve d'identité.
 
 Le microphone local et le client Android propriétaire authentifié peuvent retrouver le profil Goldaj commun. Le curation optionnelle par LLM peut générer un **appel supplémentaire** pour décider si un fait devient un souvenir ordinaire ou fondateur. Les souvenirs ne constituent pas une preuve objective que Jade a réellement « vécu » un événement. La sauvegarde/restauration SQLite se fait via `memory_transfer.py`, sans écraser un fichier existant. Plus d'informations dans `docs/history/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md`.

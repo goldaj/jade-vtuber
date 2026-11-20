@@ -234,8 +234,9 @@ class MemoryStore:
             if owner_present:
                 db.execute("""
                     DELETE FROM jade_self_core
-                    WHERE source_platform='microphone' AND source_account_id='goldaj'
-                    """)
+                    WHERE (source_platform,source_account_id) IN (
+                        SELECT platform,account_id FROM identities WHERE person_id=?)
+                    """, (row["person_id"],))
             db.execute("DELETE FROM persons WHERE id=?", (row["person_id"],))
             db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
             return True
@@ -256,6 +257,11 @@ class MemoryStore:
             ).fetchone()
             if row is None:
                 return False
+            # Erase owner-directed autobiography entries originating from this
+            # transport identity, without touching other linked accounts.
+            db.execute(
+                "DELETE FROM jade_self_core WHERE source_platform=? AND source_account_id=?",
+                key)
             person = row["person_id"]
             size = db.execute(
                 "SELECT COUNT(*) FROM identities WHERE person_id=?", (person,)
@@ -333,6 +339,72 @@ class MemoryStore:
                 ))
             return result.rowcount > 0
 
+    def put_owner_core(self, key: tuple[str, str], *, kind: str, summary: str,
+                       message_id: str = "", significance: str = "",
+                       expected_person_id: str | None = None) -> str:
+        """Owner-directed permanent memory, verified and committed atomically.
+
+        The actor must be the trusted local owner or an actively linked account.
+        Other accounts, even those named Goldaj, cannot write Core Memories.
+        Return created/already_exists/forbidden. Public channels cannot recall
+        owner-only memories written through this method.
+        """
+        _validate_key(key)
+        if kind not in ("core_self", "core_relationship"):
+            raise ValueError("only Core Memories may be explicitly written")
+        if (not isinstance(summary, str) or not 1 <= len(summary.strip()) <= 400
+                or not isinstance(significance, str) or len(significance) > 280
+                or not isinstance(message_id, str)):
+            raise ValueError("invalid explicit Core Memory contents")
+        summary = summary.strip()
+        fingerprint = _fingerprint(summary)
+        when = _now().isoformat()
+        with self._db() as db:
+            # Locks the permission check, deduplication and insertion together.
+            db.execute("BEGIN IMMEDIATE")
+            owner = db.execute(
+                "SELECT person_id FROM identities "
+                "WHERE platform='microphone' AND account_id='goldaj'"
+            ).fetchone()
+            actor = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
+            ).fetchone()
+            if (owner is None or actor is None
+                    or owner["person_id"] != actor["person_id"]
+                    or (expected_person_id is not None
+                        and expected_person_id != actor["person_id"])):
+                return "forbidden"
+            person_id = owner["person_id"]
+            if kind == "core_self":
+                if db.execute(
+                    "SELECT 1 FROM jade_self_core WHERE fingerprint=?", (fingerprint,)
+                ).fetchone():
+                    return "already_exists"
+                db.execute("""
+                    INSERT INTO jade_self_core
+                    (id,summary,significance,fingerprint,source_platform,
+                     source_account_id,source_message_id,created_at,visibility)
+                    VALUES (?,?,?,?,?,?,?,?, 'owner_only')
+                """, (uuid.uuid4().hex, summary, significance, fingerprint,
+                      *key, message_id[:128], when))
+            else:
+                if db.execute("""
+                    SELECT 1 FROM memories
+                    WHERE person_id=? AND kind='core_relationship'
+                      AND scope='person' AND fingerprint=?
+                """, (person_id, fingerprint)).fetchone():
+                    return "already_exists"
+                db.execute("""
+                    INSERT INTO memories
+                    (id,person_id,kind,scope,summary,significance,fingerprint,
+                     source_platform,source_account_id,source_message_id,
+                     created_at,expires_at)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,NULL)
+                """, (uuid.uuid4().hex, person_id, kind, "person",
+                      summary, significance, fingerprint, *key,
+                      message_id[:128], when))
+            return "created"
+
     def put_self_core(self, key: tuple[str, str], *, summary: str,
                       significance: str = "", message_id: str = "",
                       expected_person_id: str | None = None) -> bool:
@@ -396,8 +468,8 @@ class MemoryStore:
             ).fetchone():
                 return False
             deleted = db.execute("""
-                DELETE FROM jade_self_core WHERE id=?
-                AND source_platform=? AND source_account_id=?""", (memory_id, *key))
+                DELETE FROM jade_self_core WHERE id=? AND visibility='owner_only'""",
+                (memory_id,))
             return deleted.rowcount > 0
 
     def recall(self, key: tuple[str, str], scope: str, *, limit: int = 8) -> list[dict]:

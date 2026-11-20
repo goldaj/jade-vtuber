@@ -11,6 +11,7 @@
 | Discord | Texte, messages privés, vocal PCM/STT/TTS, sessions, stop/reprise, anti-écho, sélection par participants observés et reconnexion lors de la perte du vocal seul |
 | Twitch | IRC entrée/sortie, reconnexion/PING, un seul tour à la fois, solo actif 100 %, groupe 30 % et interpellations directes |
 | Dialogue | `prompt_chat.txt`, backend OpenAI configurable, défaut `gpt-6-luna` / `low` / 320 tokens, historique volatil 48 messages |
+| Core Memories explicites | Goldaj authentifié (micro, PWA, comptes vérifiés liés) peut écrire directement en `core_self` autobiographique privé ou `core_relationship` privé par instruction naturelle, sans décision de curation ; déduplication, contrôle transactionnel des droits et confirmation après SQLite |
 | Mémoire | SQLite v3 persistante et curation activées par défaut en mode réel, fichier privé hors Git, inscription automatique par interaction identifiée sur serveur Discord (effacement + refus persistant), activation manuelle MP/Twitch ; souvenirs ordinaires/Core, autobiographie privée, curation asynchrone, échanges complets et récupération des 24 derniers tours |
 | Identités | Profil Goldaj partagé par micro PC et PWA mobile authentifiée ; liaison Goldaj vers comptes Discord/Twitch par code vérifié à usage unique ; déliaison et effacement propres à l'identité vérifiée ; scopes de confidentialité |
 | Discord voix/texte | Même historique volatil pour un compte dans le vocal et **son chat textuel natif**, sous la même session ; autres salons distincts |
