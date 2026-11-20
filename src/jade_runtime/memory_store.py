@@ -79,6 +79,13 @@ class MemoryStore:
                     PRIMARY KEY(platform, account_id)
                 );
                 CREATE INDEX IF NOT EXISTS idx_identity_person ON identities(person_id);
+                -- A Discord user who erases memory must not be re-enrolled on next turn.
+                CREATE TABLE IF NOT EXISTS memory_auto_enrollment_blocks (
+                    platform TEXT NOT NULL,
+                    account_id TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    PRIMARY KEY(platform, account_id)
+                );
                 CREATE TABLE IF NOT EXISTS memories (
                     id TEXT PRIMARY KEY,
                     person_id TEXT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
@@ -157,10 +164,44 @@ class MemoryStore:
             ).fetchone()
         return row["person_id"] if row else None
 
+    def auto_enable(self, key: tuple[str, str]) -> bool:
+        """Enroll a verified Discord user unless they explicitly opted out."""
+        _validate_key(key)
+        if key[0] != "discord":
+            return False
+        with self._db() as db:
+            if db.execute(
+                "SELECT 1 FROM memory_auto_enrollment_blocks WHERE platform=? AND account_id=?",
+                key,
+            ).fetchone():
+                return False
+            if db.execute(
+                "SELECT 1 FROM identities WHERE platform=? AND account_id=?", key
+            ).fetchone():
+                return True
+            person = uuid.uuid4().hex
+            db.execute("INSERT INTO persons(id,created_at) VALUES (?,?)",
+                       (person, _now().isoformat()))
+            db.execute("INSERT INTO identities(platform,account_id,person_id) VALUES (?,?,?)",
+                       (*key, person))
+            return True
+
+    def block_auto_enrollment(self, key: tuple[str, str]) -> None:
+        """Persist a minimal verified account ID after a Discord erasure."""
+        _validate_key(key)
+        if key[0] != "discord":
+            return
+        with self._db() as db:
+            db.execute(
+                "INSERT OR IGNORE INTO memory_auto_enrollment_blocks VALUES (?,?,?)",
+                (*key, _now().isoformat()))
+
     def enable(self, key: tuple[str, str]) -> str:
-        """Called by an authenticated user's explicit opt-in, never automatically."""
+        """Explicit activation, including reactivation after an opt-out."""
         _validate_key(key)
         with self._db() as db:
+            db.execute(
+                "DELETE FROM memory_auto_enrollment_blocks WHERE platform=? AND account_id=?", key)
             row = db.execute(
                 "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
             ).fetchone()
