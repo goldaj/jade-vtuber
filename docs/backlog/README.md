@@ -32,13 +32,13 @@
 
 **Un backlog opérationnel unique et quatre vues de travail**, sans quatre listes indépendantes à synchroniser :
 
-| Type | Vue | Objet | Nombre initial |
+| Type | Vue | Objet | Nombre actuel |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Câblage r21, anomalies et quick wins autorisés le 19 novembre | 9 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Câblage r21, anomalies et quick wins autorisés le 19 novembre | 10 |
 | `REC` | [Recette](02-RECETTE.md) | Tests de validation sur machines et comptes réels des fonctionnalités **déjà implémentées** | 25 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 17 |
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 12 |
-| **Total** | | **Tâches uniques identifiées, incluant les quick wins du 19 novembre** | **63** |
+| **Total** | | **Tâches uniques identifiées, incluant les quick wins du 19 novembre** | **64** |
 
 **Definition of Done officielle :** [lire les règles de clôture](DEFINITION_OF_DONE.md). Toute carte n'est **Done** que si les cinq exigences sont satisfaites, dont validation explicite par **Codex (tous ses modèles et sous-agents) OU le propriétaire**, **au moins un des deux**. L'intervention humaine n'est plus obligatoire si Codex a validé. La présence du code ou d'une CI verte ne clôture pas à elle seule une recette physique.
 
@@ -129,7 +129,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 56 | DEV-008 | A | Jalons de latence multi-canaux sans contenu privé | [DEV](01-DEVELOPPEMENT.md) |
 | 57 | DEV-009 | A | Stabiliser le test micro synthétique avec Rubber Band | [DEV](01-DEVELOPPEMENT.md) |
 
-### P2 · 6 tâches
+### P2 · 7 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
@@ -139,6 +139,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 61 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
 | 62 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
 | 63 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
+| 64 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
 
 ## Workflow et statut canonique
 
