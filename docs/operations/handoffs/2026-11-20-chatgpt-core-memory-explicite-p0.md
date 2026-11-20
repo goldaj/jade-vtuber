@@ -1,5 +1,7 @@
 # Demande P0 : Core Memory explicite du créateur (20 novembre 2026)
 
+> **HISTORIQUE, EXIGENCES REMPLACÉES LE 20 NOVEMBRE 2026.** Nouvelle décision du propriétaire : les demandes humaines mémorisent uniquement en ordinaire, Jade choisit seule ses Core Memories. Voir [la nouvelle passation DEV-011](2026-11-20-chatgpt-dev011-ordinary-autonomous-core.md). Les comportements d’ajout Core décrits ci-dessous ne doivent pas être rétablis.
+
 - Mission : consigner dans le **backlog opérationnel** la demande de Goldaj, sans implémentation prématurée.
 - Branche : `docs/p0-explicit-core-memories-20261120`, base `develop` au commit `3325990c56d1f3f478c0e6394189b42b14de825f`.
 - Carte : **DEV-011**, **P0**, jalon A, **À faire**.
