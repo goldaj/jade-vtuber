@@ -1,5 +1,10 @@
 # Journal technique unique — develop
 
+## 2026-11-20 — ART-003 : atlas plein pied r21 sur copie de v31
+
+- Les [outils et commandes](handoffs/2026-11-20-codex-art003-atlas.md) construisent deux atlas de 4096×4096 à résolution d’origine. Une vérification distincte des pixels et des coordonnées couvre les 78 ArtMeshes ; aucun changement au runtime ni au paquet r20.
+- Risque restant : l’interprétation des régions de texture et l’export dans Cubism. Aucun rendu natif ni chargement VTube Studio n’est établi : ART-003 reste en cours.
+
 Ce document est **la seule pièce documentaire systématiquement exigée en CI** pour les changements techniques. Les guides, atlas et passations sont révisés uniquement quand le comportement ou les procédures qu'ils décrivent changent. Une entrée indique les faits vérifiés ; un ancien journal ne remplace pas le code.
 
 ## 2026-11-20 — Politique de conservation Jade : 7j / 365j / Core sans purge (feat/memory-retention-7d-365d-24h-20261120)

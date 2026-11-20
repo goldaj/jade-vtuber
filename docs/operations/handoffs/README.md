@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [ART-003 : atlas r21 plein pied](2026-11-20-codex-art003-atlas.md) · Outils hors ligne et contrôle des 78 maillages ; aperçu Cubism et export encore nécessaires.
+
 - [Rétention des mémoires Jade : 7 jours / 365 jours / Core permanentes](2026-11-20-chatgpt-retention-memoire-7j-365j.md) · Migration SQLite v4, reprise de tous les échanges des 24 dernières heures et purge automatique.
 
 - [**DEV-011 : demandes de souvenirs ordinaires, Core choisies par Jade**](2026-11-20-chatgpt-dev011-ordinary-autonomous-core.md) · Décision du propriétaire du 20/11 remplaçant l'ajout forcé Core ; tests, correctif et recette PC.

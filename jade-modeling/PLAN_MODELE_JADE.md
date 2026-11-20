@@ -31,7 +31,8 @@ Dernier jalon natif : **v30, matière arrière restaurée et raccords derrière 
 | À faire | Physiques cheveux/oreilles/vêtements | Retards et amortissement naturels, aucun tremblement ou collision gênante |
 | À faire | Expressions et raccourcis | Expressions combinables, retour au neutre fiable |
 | À faire | Idle vivant : blink, tête, souffle et tressautements d'oreilles espacés | Boucle discrète non mécanique, compatible avec suivi et expressions |
-| À faire | Export `.moc3`, `.model3.json`, textures et physiques | Bundle autonome complet installé dans VTube Studio |
+| Atlas construit et contrôlé hors ligne ; contrôle natif à faire | Comparer source et atlas en plein pied : jupe, deux jambes, deux chaussures et raccords aux épaules | Deux pages à résolution d’origine ; aucune texture manquante ou empruntée à une autre pièce dans Cubism |
+| À faire après contrôle natif | Export `.moc3`, `.model3.json`, textures et physiques | Bundle autonome complet installé dans VTube Studio, avec le corps entier |
 | À faire | Paramètres et lissages VTube Studio | Commandes et suivi effectifs, calibration stable |
 | À faire | Contrôle final et livraison | Visage/corps/cheveux/expressions vérifiés ensemble ; preuve finale et consignes d'utilisation |
 

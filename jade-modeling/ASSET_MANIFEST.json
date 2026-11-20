@@ -2,8 +2,8 @@
   {
     "path": "jade-modeling/CONTINUATION.md",
     "source_group": "current-documentation",
-    "bytes": 8848,
-    "sha256": "a2a353b66e7ba1e2965969b0aa7b1009463fdc263d2f921d7a094a1f1add3610",
+    "bytes": 2969,
+    "sha256": "8dfd0643d117cf9ef6d8785ad129ab8a73039b0463dfad02d0b20df686a2bbd1",
     "storage": "git",
     "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
   },
@@ -34,8 +34,8 @@
   {
     "path": "jade-modeling/PLAN_MODELE_JADE.md",
     "source_group": "current-documentation",
-    "bytes": 5532,
-    "sha256": "07eab620d2b95951caacc24d4ba71d120ac3d8ff295d4d63eb04c6cbe45615e7",
+    "bytes": 5865,
+    "sha256": "0a11dbe1554e9c4b010e0239b59c8acd75aaa4972e0018372c560f1ae23918d3",
     "storage": "git",
     "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
   },
@@ -1646,6 +1646,38 @@
     "sha256": "d8999c4818a3cef5834e150dd2c3e5729584337b6653e021c6853807ed40892d",
     "storage": "git",
     "selection_reason": "Current unvalidated working-model builder for per-part atlas crops"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_native_atlas_working.py",
+    "source_group": "current-tools",
+    "bytes": 16813,
+    "sha256": "2ad62ff29e3eefb5bc8c17d187759ff55efea319b3fb7933df3b09844d13532b",
+    "storage": "git",
+    "selection_reason": "Build used-image atlas from exact r21 cropped source"
+  },
+  {
+    "path": "jade-modeling/tools/check_jade_r21_atlas_mapping.py",
+    "source_group": "current-tools",
+    "bytes": 8479,
+    "sha256": "e0a1a0c107ed2f91c7af9425ccc389fdd53c354636e44e3a58a3a79bd8d3d361",
+    "storage": "git",
+    "selection_reason": "Independent serialized texture mapping and rig checks"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_texture_atlas_pack.py",
+    "source_group": "current-tools",
+    "bytes": 16468,
+    "sha256": "d8666204e88fd2609b82ec28405e9e761e5b7c6b66753fb2da2793a55ccf80ed",
+    "storage": "git",
+    "selection_reason": "Packing and PNG encoding dependency of r21 atlas builder"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_texture_atlas_xml.py",
+    "source_group": "current-tools",
+    "bytes": 30624,
+    "sha256": "8e45fc339d4b81e9c3c801184b38451484d9b156d00baac6c9ea711a2663e518",
+    "storage": "git",
+    "selection_reason": "Cubism atlas XML serialization dependency of r21 atlas builder"
   },
   {
     "path": "jade-modeling/tools/vts_toggle_matrix_r20.py",
