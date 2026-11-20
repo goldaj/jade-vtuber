@@ -39,17 +39,20 @@ class _UserAudio:
     last_voice_at: float = 0.0
     last_at: float = 0.0
     continued: bool = False
+    peak_rms: float = 0.0
+    silent_peak_rms: float = 0.0
 
 
 class PcmTurnSegmenter:
     """Isolated per-user buffers, explicit poll and fail-closed capacity.
 
-    Defaults: 700 ms end silence, 120 ms voiced samples, 12 s max,
-    RMS 350/32768, at most 16 speakers. Tune against real audio; the
-    fixed 20 ms energy windows are only a lightweight approximation.
+    Defaults: 500 ms end silence, 120 ms voiced samples, 12 s max,
+    RMS 350/32768, at most 16 speakers. A bounded relative threshold helps
+    recognise persistent background noise after louder speech. Tune against
+    real audio; energy windows are only a lightweight approximation.
     """
 
-    def __init__(self, *, end_silence_s: float = 0.7,
+    def __init__(self, *, end_silence_s: float = 0.5,
                  min_speech_s: float = 0.12, max_turn_s: float = 12.0,
                  rms_threshold: float = 350.0, max_users: int = 16,
                  clock: Callable[[], float] = time.monotonic) -> None:
@@ -67,12 +70,14 @@ class PcmTurnSegmenter:
         self._max_users = max_users
         self._clock = clock
         self._users: dict[str, _UserAudio] = {}
+        # Short-lived per-speaker background estimates, never persisted.
+        self._ambient: dict[str, tuple[float, float]] = {}
 
     @staticmethod
-    def _voiced(data: memoryview, threshold: float) -> bool:
+    def _rms(data: memoryview) -> float:
         samples = struct.iter_unpack('<h', data)
         count = len(data) // 2
-        return sum(value * value for (value,) in samples) >= threshold * threshold * count
+        return math.sqrt(sum(value * value for (value,) in samples) / count)
 
     def _finish(self, user_id: str, state: _UserAudio, *, partial: bool) -> list[AudioTurn]:
         result = []
@@ -80,6 +85,13 @@ class PcmTurnSegmenter:
             result.append(AudioTurn(user_id, bytes(state.data), partial))
         state.data.clear()
         state.speech_bytes = 0
+        if not partial:
+            if state.silent_peak_rms >= self._threshold:
+                if user_id not in self._ambient and len(self._ambient) >= self._max_users:
+                    self._ambient.pop(next(iter(self._ambient)))
+                self._ambient[user_id] = (state.silent_peak_rms, state.last_at + 5.0)
+            state.peak_rms = 0.0
+            state.silent_peak_rms = 0.0
         state.continued = partial and bool(result)
         if not state.continued:
             state.silent_bytes = 0
@@ -93,6 +105,7 @@ class PcmTurnSegmenter:
         at = self._clock() if now is None else now
         if not math.isfinite(at):
             raise ValueError('invalid timestamp')
+        self._ambient = {uid: value for uid, value in self._ambient.items() if value[1] > at}
         state = self._users.get(user_id)
         if state is not None and at < state.last_at:
             raise ValueError('timestamps must be monotonic per user')
@@ -110,16 +123,28 @@ class PcmTurnSegmenter:
             available = self._max_bytes - len(state.data)
             n = min(_WINDOW_BYTES, len(view) - offset, available)
             chunk = view[offset:offset + n]
-            voiced = self._voiced(chunk, self._threshold)
+            level = self._rms(chunk)
+            # A fan/open microphone can exceed the fixed threshold forever.
+            # Once clearly louder speech is present, compare the remaining
+            # energy to a slowly decaying peak as well as the fixed minimum.
+            state.peak_rms = max(level, state.peak_rms * 0.998)
+            relative = min(1500.0, state.peak_rms * 0.50) if state.peak_rms > self._threshold * 2 else 0.0
+            ambient = self._ambient.get(user_id)
+            ambient_threshold = 0.0 if ambient is None else min(1500.0, ambient[0] * 1.25)
+            voiced = level >= max(self._threshold, relative, ambient_threshold)
+            if ambient is not None and level <= ambient_threshold:
+                self._ambient[user_id] = (ambient[0], at + 5.0)
             offset += n
             if voiced:
                 state.data.extend(chunk)
                 state.speech_bytes += n
                 state.silent_bytes = 0
+                state.silent_peak_rms = 0.0
                 state.last_voice_at = at
             elif state.data or state.continued:
                 state.data.extend(chunk)
                 state.silent_bytes += n
+                state.silent_peak_rms = max(state.silent_peak_rms, level)
             if state.data and state.silent_bytes >= self._silence_s * _BYTES_PER_SECOND:
                 results.extend(self._finish(user_id, state, partial=False))
             elif state.data and len(state.data) >= self._max_bytes:
@@ -149,5 +174,7 @@ class PcmTurnSegmenter:
         """Drop one user's pending PCM, or all PCM on session shutdown."""
         if user_id is None:
             self._users.clear()
+            self._ambient.clear()
         else:
             self._users.pop(user_id, None)
+            self._ambient.pop(user_id, None)

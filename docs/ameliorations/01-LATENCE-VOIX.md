@@ -5,7 +5,7 @@
 | ID | Priorité / état | Amélioration proposée / condition de réussite |
 | --- | --- | --- |
 | LAT-01 | P0 / C | **Profiler tout le tour de bout en bout** : fin réelle de parole, VAD, début/fin STT, mémoire, file, IA, premier token, première trame TTS, premier son entendu et fin audio. Collecter médiane, p95, coût et durée, séparément pour Discord/PC/mobile. Pas de texte privé dans télémétrie exportable. |
-| LAT-02 | P1 / E | Remplacer les seuils fixes de silence Discord (fin de tour actuellement ~700 ms) par un **VAD adaptatif** ; mesurer ~450–500 ms comme candidats, sans couper les hésitations et phrases françaises. |
+| LAT-02 | P1 / E | Remplacer les seuils Discord actuels (~500 ms et seuil d’énergie relatif) par un **VAD plus adaptatif** si la recette le justifie ; mesurer les compromis, sans couper les hésitations et phrases françaises. |
 | LAT-03 | P1 / E | Abandonner la capture micro PC en fenêtres fixes d'environ 3 s au profit d'un VAD local qui déclenche STT dès la fin de la phrase ; préserver anti-écho et refus des bruits. |
 | LAT-04 | P2 / P | Essayer le **STT incrémental / streaming audio** pour préparer une réponse avant fin d'enregistrement ; gérer hypothèses de transcription révisées et conflits d'identité. |
 | LAT-05 | P1 / E | **Connexion Realtime partagée** : le pool est maintenant injecté dans la synthèse tamponnée (DEV-007) ; mesurer le bénéfice de reconnexion sur le PC. |
@@ -35,4 +35,4 @@
 
 ### Travail local du 20 novembre
 
-Sur `codex/backlog-prioritaire-20261120`, LAT-06/LAT-16 avancent avec la diffusion PCM progressive vers la PWA et la préparation parallèle du pitch ; le flux d'entrée reste un WAV complet et le LLM ne diffuse pas encore sa réponse avant sa fin. Gain réel et recette Android restent à mesurer ; aucun duplex n'est annoncé. Détails dans la [passation](../operations/handoffs/2026-11-20-codex-couts-voix-mobile.md).
+Sur `develop`, LAT-06/LAT-16 avancent avec la diffusion PCM progressive vers la PWA et la préparation parallèle du pitch ; le flux d'entrée reste un WAV complet et le LLM ne diffuse pas encore sa réponse avant sa fin. Gain réel et recette Android restent à mesurer ; aucun duplex n'est annoncé. Détails dans la [passation](../operations/handoffs/2026-11-20-codex-couts-voix-mobile.md).

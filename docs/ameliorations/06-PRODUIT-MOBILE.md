@@ -9,7 +9,7 @@
 | UX-05 | P2 / E | Remplacer la **PWA push-to-talk** (capture WAV complète, réponse JSON/Base64) par l'audio streaming / interruption, une fois le parcours simple confirmé en réel. |
 | UX-06 | P2 / E | Améliorer la **conversation mobile unifiée texte↔micro**, en conservant même session Goldaj, historique, intentions, option voix coupée et aucune sortie audio doublée sur PC. |
 | UX-07 | P2 / E | **PWA visibilité / contrôle** : étendre les vérifications de `document.hidden` déjà présentes à une suspension effective du rendu et des calculs Live2D quand l'avatar n'est pas affiché ; garantir le fond transparent, la reprise propre et un mode texte/voix sans rendu. |
-| UX-08 | P1 / C | Tester la **participation naturelle sans wake word** : 100 % de réponses attendues en solo admissible, 30 % de suivi spontané en groupe, sollicitations explicites prioritaires, silence/arrête/reprends, absence de gêne sociale. |
+| UX-08 | P1 / C | Tester la **participation naturelle sans wake word** : 100 % de réponses attendues en solo admissible, 20 % de suivi spontané en groupe Discord (30 % sur Twitch), sollicitations explicites prioritaires, silence/arrête/reprends, absence de gêne sociale. |
 | UX-09 | P1 / C | Vérifier Twitch IRC en vrai : scopes OAuth, renouvellement du token, reconnexions, chat écrit et rate limits ; les spectateurs silencieux ne sont pas observés comme participants actifs IRC. |
 | UX-10 | P2 / P | Panne réseau/mobile : affichage d'indisponibilité, reconnexion sans double génération payante, reprise du contexte autorisé, annulation lorsque client quitte l'écran. |
 | UX-11 | P2 / P | Interface de commande **« personnes prévues aujourd'hui »** dans l'application privée, état de préchargement mémoire, suppression d'une préparation et diagnostics lisibles. Voir MEM-05. |
@@ -28,4 +28,4 @@
 
 ### UX-18 — travail local du 20 novembre
 
-La branche `codex/backlog-prioritaire-20261120` ajoute l'affichage des coûts de l'organisation et leur actualisation. Le solde prépayé et l'alerte de seuil restent indisponibles sans source officielle ; configuration et limites dans [le guide](../operations/reference/OPENAI-COSTS.md). Intégration sur `develop` et essai réel à effectuer après autorisation.
+La branche `codex/backlog-prioritaire-20261120` ajoute l'affichage des coûts de l'organisation et leur actualisation. Le solde prépayé et l'alerte de seuil restent indisponibles sans source officielle ; configuration et limites dans [le guide](../operations/reference/OPENAI-COSTS.md). L’essai réel après configuration privée reste à effectuer.

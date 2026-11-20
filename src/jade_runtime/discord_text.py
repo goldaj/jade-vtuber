@@ -33,7 +33,7 @@ def parse_discord_message(message, *, own_user_id=None) -> Incoming | None:
 
 class DiscordText:
     def __init__(self, token: str, on_message, *, send_enabled=False,
-                 voice_bridge=None, bot_name="Jade", auto_rate=0.30,
+                 voice_bridge=None, bot_name="Jade", auto_rate=0.20,
                  cooldown_seconds=180):
         if not token or token == "example":
             raise ValueError("Discord token required")
@@ -79,17 +79,23 @@ class DiscordText:
                 return retry
 
             async def _reconnect_voice(self, bridge, delays):
-                for delay in delays:
+                # Keep one bounded-backoff retry alive while the Gateway is
+                # connected: a short outage can otherwise exhaust all retries
+                # and leave voice offline indefinitely. Cancellation on Gateway
+                # loss or shutdown interrupts both sleep and connection.
+                attempt = 0
+                while self._gateway_available and not self._shutting_down:
+                    delay = delays[min(attempt, len(delays) - 1)]
+                    attempt += 1
                     if delay:
                         await asyncio.sleep(delay)
                     try:
                         await bridge.connect(self)
                     except Exception as exc:
-                        LOG.warning("Discord voice reconnect failed: %s", type(exc).__name__)
+                        LOG.warning("Discord voice reconnect failed: %s; retry scheduled", type(exc).__name__)
                     else:
                         LOG.info("Discord voice reconnected")
                         return
-                LOG.warning("Discord voice reconnect attempts exhausted")
 
             async def on_ready(self):
                 if self._shutting_down:

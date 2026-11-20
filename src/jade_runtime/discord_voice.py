@@ -608,6 +608,11 @@ class DiscordVoiceBridge:
                         or not self._capture_authorized(item.user_id, item.generation, item.session_id,
                             None if self._open_voice and item.during_playback else item.audio_epoch)):
                     continue
+                # Speech captured over Jade's answer must never interrupt it.
+                # Discard it without sending it to STT; a turn already being
+                # transcribed when playback starts is discarded below as well.
+                if item.during_playback:
+                    continue
                 self._transcribing_generation = item.generation
                 self._transcribing_during_playback = item.during_playback
                 self._transcribing = asyncio.create_task(self._transcribe_authorized(item))
@@ -653,9 +658,9 @@ class DiscordVoiceBridge:
                         except Exception:
                             continue
                         participant_count = len(humans)
-                    # During playback, transcribe only to detect an interruption.
-                    # Other audible speech is never sent to the dialogue.
-                    if during_playback and not self._decider.is_stop_command(value):
+                    # Even a recognized stop word may belong to the surrounding
+                    # conversation. Finish Jade's answer before accepting commands.
+                    if during_playback:
                         continue
                     with self.buffers_lock:
                         if (not self.consent_confirmed or (self._playback_active and not self._open_voice)
@@ -831,8 +836,8 @@ class DiscordVoiceBridge:
             self.buffers.clear()
             self.buffer_updated.clear()
             if self._open_voice:
-                # A turn crossing a phrase boundary remains eligible only for
-                # an interruption command, never for a normal conversation.
+                # Mark any overlapping turn for discard, even if STT finishes
+                # after playback or another streaming phrase starts.
                 self._playback_turns.update(int(uid) for uid in self._segmenter._users)
                 self._playback_turns.update(self._assemblies)
             else:
@@ -1112,7 +1117,7 @@ class OpenVoiceBridge(DiscordVoiceBridge):
     _open_voice = True
 
     def __init__(self, services, runtime, channel_id, *, threshold=550,
-                 group_reply_rate=0.30):
+                 group_reply_rate=0.20):
         super().__init__(services, runtime, channel_id, threshold=threshold)
         self._decider = ConversationTurnDecider(group_reply_probability=group_reply_rate)
         self._awaiting_channel_update = False

@@ -43,6 +43,11 @@ PUBLIC_TOOLS = frozenset({
     "tools/jade_publication_export.py",
     "tools/jade_ci_preflight.py",
     "tools/jade_twitch_authorize.py",
+    "tools/jade_pycharm_runner.py",
+})
+PUBLIC_RUN_CONFIGS = frozenset({
+    ".run/Jade - Discord mobile.run.xml",
+    ".run/Jade - preflight.run.xml",
 })
 PUBLIC_TEMPLATES = frozenset({
     "docs/publication/README_PUBLIC_TEMPLATE.md",
@@ -62,7 +67,7 @@ WARNING = ("UNAPPROVED PRIVATE PREVIEW. NOT RELEASE-CLEARED.\n"
 def selected_paths(paths: list[str]) -> list[str]:
     """Explicit allowlist; the optional portrait is handled separately."""
     return sorted(p for p in paths if p in PUBLIC_FILES or p in PUBLIC_TOOLS
-                  or p in PUBLIC_TEMPLATES or p in MOBILE_WEB_PUBLIC
+                  or p in PUBLIC_TEMPLATES or p in MOBILE_WEB_PUBLIC or p in PUBLIC_RUN_CONFIGS
                   or (p.startswith(PUBLIC_PREFIXES) and p.endswith(".py"))
                   or (p.startswith("config/profiles/") and p.endswith(".toml")))
 

@@ -56,7 +56,8 @@ class Settings:
     discord_voice_consent: bool = False
     discord_voice_allowed_users: tuple[int, ...] = field(default=(), repr=False)
     discord_voice_channel: int = 0
-    discord_text_auto_rate: float = 0.30
+    discord_voice_auto_rate: float = 0.20
+    discord_text_auto_rate: float = 0.20
     discord_text_cooldown_seconds: int = 180
     avatar_intent_enabled: bool = True  # Facial/text reactions, not voice intent metadata.
     vts_enabled: bool = False
@@ -112,7 +113,8 @@ class Settings:
             # Obsolete Discord activation/broadcast/list/confirmation values are not
             # loaded: existing private files are preserved but have no effect.
             discord_voice_channel=int(environ("DISCORD_VOICE_CHANNEL", "0") or 0),
-            discord_text_auto_rate=float(environ("JADE_DISCORD_TEXT_AUTO_RATE", "0.30")),
+            discord_voice_auto_rate=float(environ("JADE_DISCORD_VOICE_AUTO_RATE", "0.20")),
+            discord_text_auto_rate=float(environ("JADE_DISCORD_TEXT_AUTO_RATE", "0.20")),
             discord_text_cooldown_seconds=int(environ("JADE_DISCORD_TEXT_COOLDOWN_SECONDS", "180")),
             avatar_intent_enabled=_enabled(str(environ("JADE_AVATAR_INTENT_ENABLED", "1")).lower()),
             vts_enabled=_enabled(str(environ("JADE_VTS_ENABLED", "0")).lower()),
@@ -167,7 +169,8 @@ class Settings:
                 or not 0 <= self.reply_probability <= 1
                 or not 1 <= self.timeout_seconds <= 120):
             raise ValueError("invalid runtime safety bounds")
-        if (not 0 <= self.discord_text_auto_rate <= 1
+        if (not 0 <= self.discord_voice_auto_rate <= 1
+                or not 0 <= self.discord_text_auto_rate <= 1
                 or not 30 <= self.discord_text_cooldown_seconds <= 3600):
             raise ValueError("invalid Discord text participation limits")
         if not 1024 <= self.http_port <= 65535:

@@ -123,3 +123,24 @@ Travail réalisé sur une branche isolée. Les sujets OBS et VTube Studio préc�
 **Assistant — synthèse**
 
 Travail sur la branche isolée, dans l'ordre demandé. La livraison sur develop reste en attente.
+
+## Retours de discussion vocale en groupe
+
+**Utilisateur — synthèse fidèle, horodatage exact indisponible**
+
+Sur la version `develop` antérieure au lot coûts et voix mobile, la détection de fin de parole attend trop ; couper le micro accélère la reprise. En groupe Discord, passer les interventions spontanées de 30 % à 20 %. Jade doit terminer sa réponse lorsque des personnes parlent par-dessus. Deux crashs observés : reprise après le premier, arrêt définitif après le second. Demande d'une console de logs en direct en plus de la console existante. Intégrer ces corrections et les travaux précédents sur `develop`, puis redémarrer Jade.
+
+**Assistant — action en cours**
+
+Diagnostic des journaux, du flux Discord et du lancement Windows ; vérification de la tête distante avant intégration. Ne pas fusionner `main`.
+
+**Utilisateur — précision sur les lancements**
+
+> quand tu lances jade à partir de maintenant, j'aimerais que tu la lances depuis mon IDE pycharm. Comme ça j'ai accès aux logs et au code directement.
+> mais tu fais ça que quand on est en phase de tests. Si je te dis qu'on part en prod, c'est pas via pycharm du coup
+
+**Utilisateur — nouveau choix sur le ton**
+
+> change le prompt de base de jade. On veut qu'elle soit moins politiquement correcte, et plus crue lorsqu'il s'agit d'humour et d'entertainment. Elle peut insulter avec de vraies insultes sans censure. Pas forcément d'elle-même, mais que le contexte fait que c'est drôle.
+
+Le propriétaire autorise explicitement cette modification du prompt, malgré la consigne antérieure de le conserver inchangé sans autorisation.

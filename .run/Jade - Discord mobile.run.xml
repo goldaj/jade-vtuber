@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Jade - Discord mobile (test)" type="PythonConfigurationType" factoryName="Python">
+    <module name="jade-officiel-public-20261102" />
+    <option name="INTERPRETER_OPTIONS" value="-u" />
+    <option name="PARENT_ENVS" value="true" />
+    <option name="SDK_HOME" value="D:\Codex\caches\venvs\jade-runtime-d-20261114\Scripts\python.exe" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="IS_MODULE_SDK" value="false" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tools/jade_pycharm_runner.py" />
+    <option name="PARAMETERS" value="" />
+    <option name="SHOW_COMMAND_LINE" value="false" />
+    <log_file alias="Jade - erreurs" path="D:\Codex\private\jade-runtime\logs\jade-pycharm-diagnostics.log" enabled="true" />
+    <method v="2" />
+  </configuration>
+</component>

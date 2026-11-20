@@ -30,7 +30,7 @@ class _Channel:
 class DiscordTextPolicy:
     """Channel-isolated context, direct addressing and measured participation."""
 
-    def __init__(self, *, bot_name="Jade", auto_rate=0.30, cooldown_seconds=180,
+    def __init__(self, *, bot_name="Jade", auto_rate=0.20, cooldown_seconds=180,
                  followup_seconds=90, max_channels=128, clock=time.monotonic, rng=None):
         if (not isinstance(bot_name, str) or not bot_name.strip()
                 or not 0 <= auto_rate <= 1
@@ -115,7 +115,7 @@ class DiscordTextPolicy:
                        and len(text) <= 500
                        and now - state.last_unsolicited_at >= self.cooldown_seconds
                        and self.rng.random() < self.auto_rate)
-        # In a group, only explicit addressing bypasses the 30% sampling.
+        # In a group, only explicit addressing bypasses the 20% sampling.
         # Contextual follow-ups are still sampled; solo conversations are not.
         selected = direct or solo or (followup and self.rng.random() < self.auto_rate) or unsolicited
         # Do not bill for very long messages, even when someone pings Jade.

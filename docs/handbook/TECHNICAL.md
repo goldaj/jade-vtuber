@@ -100,7 +100,7 @@ Flux : LLM → préfixe `[INTENT:...]` filtré par `intent_engine.py` → `Reply
 
 Le backend `OpenAIServices` transmet `reasoning_effort=low` et `max_completion_tokens=320` par défaut, en appel normal et en streaming. `MemoryStore` SQLite v3 conserve les tours complets des personnes consentantes et `MemoryService` restaure un historique borné (48 messages) sans résumé automatique ; la curation reste asynchrone.
 
-`DiscordTextPolicy` et le vocal utilisent 100 % de réponse en tête-à-tête observé et un tirage à 30 % des tours spontanés admissibles en groupe. `TwitchIRC` ignore les nouveaux messages pendant un tour Twitch en cours, force une réponse si un seul auteur est observé et passe par le dialogue pour les 30 % en groupe ; les spectateurs silencieux ne sont pas comptés.
+`DiscordTextPolicy` et le vocal utilisent 100 % de réponse en tête-à-tête observé et un tirage à 20 % des tours spontanés admissibles en groupe. `TwitchIRC` ignore les nouveaux messages pendant un tour Twitch en cours, force une réponse si un seul auteur est observé et passe par le dialogue pour les 30 % en groupe ; les spectateurs silencieux ne sont pas comptés.
 
 **Les variantes faciales/textuelles A/B des sept intentions sont codées**. Seules les 14 motions corporelles dédiées restent futures. Pour le détail : [dialogue et participation](../history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md), [contrat Live2D](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [inventaire actuel](BRANCH_STATE.md).
 

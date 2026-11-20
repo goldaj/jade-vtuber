@@ -30,7 +30,7 @@ Les priorités expriment la valeur de livraison et les dépendances, non un ordr
 | **REC-020** | P1 | A | **À faire** | À recetter | Variantes d'intention A/B | Provoquer deux réponses pour chacune des sept intentions ; valider 14 variantes faciales/textes, toggle, retour neutre et absence de texte de contrôle prononcé. | REC-018, REC-019 |
 | **REC-021** | P1 | A | **À faire** | À recetter | Mémoire SQLite, Core et autobiographie | Contrôler opt-in, conservation des tours, rappel par portée, curation, durabilité, suppression et absence de mémoire pour comptes non consentants. | OPS-012, REC-001 |
 | **REC-022** | P1 | A | **À faire** | [Liaison Discord OK, Twitch non validé](#complément-de-recette-du-20-novembre-2026) | Liaisons des comptes Discord/Twitch avec Goldaj | Tester preuve par code à cible, expiration, refus autre compte, association, déliaison, préservation des historiques et confidentialité. | REC-021, REC-002, REC-012 |
-| **REC-023** | P1 | A | **À faire** | [Tenue prolongée du vocal Discord validée par le propriétaire](#validation-partielle-rec-023-du-20-novembre-2026) ; autres tests de résilience ouverts | Résilience des canaux et arrêt propre | Tester déconnexion Discord/Twitch, interruption réseau, redémarrage, arrêt Ctrl+C, nettoyage ressources et absence de tours obsolètes. | REC-001, REC-003, REC-012, REC-014 |
+| **REC-023** | P1 | A | **À faire** | [Tenue prolongée précédemment validée](#validation-partielle-rec-023-du-20-novembre-2026) ; deux interruptions ultérieures signalées, nouvelle recette nécessaire | Résilience des canaux et arrêt propre | Tester déconnexion Discord/Twitch, interruption réseau, redémarrage, arrêt Ctrl+C, nettoyage ressources et absence de tours obsolètes. | REC-001, REC-003, REC-012, REC-014 |
 | **REC-024** | P2 | A | **À faire** | À recetter | Seule Démo Express distribuée | Sur Windows graphique, tester installateur, raccourci, lancement sans installation, désinstallation et simulation sans API réelle. | OPS-002, OPS-003 |
 | **REC-025** | P1 | A | **À faire** | À recetter | Sauvegarde/restauration et droit à l'effacement | Restaurer SQLite dans une copie privée, vérifier que supprimer/oubli n'efface pas d'autres identités et contrôler les fichiers de logs/archives. | REC-021, OPS-012 |
 
@@ -53,16 +53,16 @@ Les lignes correspondantes restent ouvertes pour leurs autres critères. Ce lot 
 
 | ID | Décision de suivi | Périmètre confirmé / réserve |
 | --- | --- | --- |
-| **REC-005** | **OK utilisateur, carte À valider** | Isolation des sorties annoncée OK ; ne pas clore avant preuve couvrant OBS réel et correction/qualification de **DEV-004** (mode vocal anticipé susceptible d'écrire des sous-titres Discord). |
-| **REC-006** | **Partiel, carte ouverte** | Absence de double réponse confirmée, mais PCM progressif, premier son et option early speech non explicitement confirmés. |
-| **REC-007** | **Partiel, carte ouverte** | Absence de double réponse confirmée, mais scénario d'indisponibilité PCM, repli WAV et annulation non explicitement confirmés. |
-| **REC-009** | **Done, validé par propriétaire** | Arbitrage multi-conversations déclaré OK ; pas de trace technique détaillée communiquée. |
-| **REC-010** | **OK utilisateur, carte À valider** | Comportement de latence/coût jugé OK ; aucune valeur STT/IA/TTS, p50/p95, CPU/GPU ou coût mesuré fournie. Conserver la mesure objective avant clôture. |
-| **REC-013** | **Done, validé par propriétaire** | API HTTP authentifiée déclarée OK. |
+| REC-005 | **OK utilisateur, carte À valider** | Isolation des sorties annoncée OK ; ne pas clore avant preuve couvrant OBS réel et correction/qualification de **DEV-004** (mode vocal anticipé susceptible d'écrire des sous-titres Discord). |
+| REC-006 | **Partiel, carte ouverte** | Absence de double réponse confirmée, mais PCM progressif, premier son et option early speech non explicitement confirmés. |
+| REC-007 | **Partiel, carte ouverte** | Absence de double réponse confirmée, mais scénario d'indisponibilité PCM, repli WAV et annulation non explicitement confirmés. |
+| REC-009 | **Done, validé par propriétaire** | Arbitrage multi-conversations déclaré OK ; pas de trace technique détaillée communiquée. |
+| REC-010 | **OK utilisateur, carte À valider** | Comportement de latence/coût jugé OK ; aucune valeur STT/IA/TTS, p50/p95, CPU/GPU ou coût mesuré fournie. Conserver la mesure objective avant clôture. |
+| REC-013 | **Done, validé par propriétaire** | API HTTP authentifiée déclarée OK. |
 | **REC-014, REC-015** | **Done, validés par propriétaire** | Texte et voix PWA Android déjà confirmés ; recette de ces deux fiches déclarée OK à nouveau. |
 | **REC-016, REC-017** | **Done, validés par propriétaire** | Reconnexion/arrière-plan/réseau et mode voix coupée déclarés OK. |
-| **REC-018** | **Done, validé par propriétaire** | Avatar r20 Windows déclaré OK. |
-| **REC-022** | **Partiel, carte ouverte** | Liaison d'identité via Discord déclarée OK ; liaison Twitch et les éventuels autres critères non couverts restent à valider. |
+| REC-018 | **Done, validé par propriétaire** | Avatar r20 Windows déclaré OK. |
+| REC-022 | **Partiel, carte ouverte** | Liaison d'identité via Discord déclarée OK ; liaison Twitch et les éventuels autres critères non couverts restent à valider. |
 
 **Traçabilité et limites :** le validateur est le propriétaire, le 20 novembre 2026. Aucun enregistrement audio, secret, capture ou donnée privée n'est joint. Ce relevé transcrit sa validation explicite, sans inventer de valeurs métriques ou d'observations de sous-scénarios. Les cartes marquées Done correspondent aux identifiants intégralement confirmés sans réserve explicite dans le message ; toute anomalie ou divergence reproductible ultérieure devra être consignée et entraîner la réouverture appropriée. Les cartes partielles et celles dont les critères non vérifiés sont connus restent ouvertes suivant la Definition of Done.
 
@@ -107,3 +107,7 @@ Un « OK » technique ne remplace pas les cinq conditions de la [DoD](DEFINITION
 - [Passation PCM/mémoire/mobile](../operations/handoffs/2026-11-16-chatgpt-pcm-memoire-mobile.md)
 
 Retour à l'[index opérationnel](README.md). Les [améliorations prospectives](../ameliorations/README.md) restent hors de ce backlog.
+
+### Nouveau signalement Discord postérieur à la validation prolongée
+
+Le propriétaire rapporte deux arrêts durant une discussion à plusieurs : reconnexion après le premier, arrêt définitif après le second. La validation précédente reste une preuve de sa session, mais ne couvre pas cet incident ultérieur. L'ancien journal n'étant pas disponible, la cause de l'arrêt complet n'est pas établie ; la limite de six tentatives vocales a été corrigée. Refaire une recette longue et relever les erreurs de l'instance PyCharm si l'incident revient.

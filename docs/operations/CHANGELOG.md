@@ -96,3 +96,13 @@ Ce document est **la seule pièce documentaire systématiquement exigée en CI**
 - Le mobile reçoit le texte puis l'audio PCM au fil de la synthèse, avec repli WAV selon le modèle ou le navigateur, sans deuxième synthèse après erreur. La fermeture de la page interrompt le travail ; le pitch démarre en parallèle du premier fragment PCM. Les endpoints existants restent compatibles.
 - Risques et limites : aucune mesure de latence réelle ni recette Android/Discord ou connexion à l'API d'administration ; capture mobile et transcription restent tamponnées, et le dialogue n'est pas duplex. Aucune mise en service sur `develop`.
 - Contrôles et reprise : voir [passation du lot](handoffs/2026-11-20-codex-couts-voix-mobile.md).
+
+## 2026-11-20 — Retours Discord et préparation des tests PyCharm
+
+- Discord : fin de parole à 500 ms avec seuil d'énergie relatif borné et mémoire temporaire du bruit, à régler après recette réelle ; participation spontanée 20 % en groupe pour voix et texte Discord, Twitch conservé à 30 %. La parole reçue pendant une réponse n'interrompt plus Jade et n'est pas transcrite pour rechercher un ordre d'arrêt.
+- Résilience : reconnexion vocale à délai progressif plafonné à 30 s tant que le Gateway est actif, au lieu d'abandonner après six essais. Deux arrêts ont été signalés ; faute de logs historiques, la cause du crash complet reste indéterminée et une nouvelle recette est nécessaire (REC-023).
+- Tests sur ce poste : profil Discord/mobile PyCharm avec configuration privée chargée localement et instance unique ; la production reste lancée hors PyCharm. Voir [guide](reference/PYCHARM-LOCAL.md).
+- Vérifications et limites dans [la passation](handoffs/2026-11-20-codex-retours-discord.md).
+
+- Ajustement de personnalité demandé : `prompt_chat.txt` autorise un humour plus cru et des insultes non édulcorées lorsque le contexte s'y prête, sans vulgarité systématique ; le profil privé actif ne surcharge pas ce prompt. Une visionneuse de diagnostics permet aussi le lancement autonome demandé pour cette session.
+- L'export de prévisualisation emporte le lanceur et ses configurations de test ; les tableaux documentaires conservent leurs informations sans être pris à tort pour des cartes du backlog.
