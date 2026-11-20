@@ -68,7 +68,8 @@ class EnvironmentTests(unittest.TestCase):
         self.assertNotIn("conversation-synthetic", contents)
 
     def test_shared_run_configurations_reference_only_the_launcher(self):
-        for name in ("Jade - Discord mobile.run.xml", "Jade - preflight.run.xml"):
+        for name in ("Jade - Discord mobile (test).run.xml",
+                     "Jade - verification locale (sans connexion).run.xml"):
             root = ET.parse(runner.ROOT / ".run" / name).getroot()
             options = {option.get("name"): option.get("value") for option in root.findall(".//option")}
             self.assertEqual(options["SCRIPT_NAME"], "$PROJECT_DIR$/tools/jade_pycharm_runner.py")
