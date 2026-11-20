@@ -339,6 +339,13 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         status, page, headers = await self.request("GET", "/")
         self.assertEqual(status, 200)
         self.assertIn(b'id="avatar-container"', page)
+        self.assertIn(b'/assets/room-motion.js', page)
+        self.assertIn(b'/assets/room-spring.webp', page)
+        status, image, response = await self.request("GET", "/assets/room-spring.webp")
+        self.assertEqual(status, 200)
+        self.assertEqual(image[:4], b"RIFF")
+        self.assertEqual(image[8:12], b"WEBP")
+        self.assertIn(b"Content-Type: image/webp", response)
         self.assertIn(b"frame-ancestors 'none'", headers)
         self.assertIn(b"script-src 'self' 'wasm-unsafe-eval'", headers)
         self.assertNotIn(b" 'unsafe-eval'", headers)
@@ -407,7 +414,7 @@ class MobileAppAssetsTests(unittest.TestCase):
         node = shutil.which("node")
         if node is None:
             self.skipTest("Node.js not installed")
-        for name in ("avatar.js", "app.js", "sw.js"):
+        for name in ("avatar.js", "app.js", "room-motion.js", "sw.js"):
             with self.subTest(name=name):
                 process = subprocess.run(
                     [node, "--check", str(WEB_ROOT / name)],

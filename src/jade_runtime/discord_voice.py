@@ -1160,7 +1160,11 @@ class OpenVoiceBridge(DiscordVoiceBridge):
 
     async def _connect_locked(self, client):
         if self.connection is not None:
-            return
+            with self.buffers_lock:
+                active = self.consent_confirmed and self.session_id is not None
+            if active:
+                return
+            await self._close_locked()
         own_bot_id = getattr(getattr(client, "user", None), "id", None)
         if type(own_bot_id) is not int or own_bot_id <= 0:
             raise ValueError("Discord bot identity is not available")
@@ -1174,7 +1178,19 @@ class OpenVoiceBridge(DiscordVoiceBridge):
             raise ValueError("Discord voice channel is not available")
         with self.buffers_lock:
             connecting_generation = self.generation
-        connection = await channel.connect(cls=DaveVoiceRecvClient)
+        try:
+            connection = await channel.connect(cls=DaveVoiceRecvClient)
+        except asyncio.CancelledError:
+            # discord.py caches the protocol before the handshake. A cancelled
+            # connect only soft-disconnects, so explicit cleanup frees that slot.
+            pending = getattr(getattr(channel, "guild", None), "voice_client", None)
+            if isinstance(pending, DaveVoiceRecvClient):
+                try:
+                    await asyncio.wait_for(pending.disconnect(force=True), timeout=2)
+                except Exception:
+                    import logging
+                    logging.getLogger("jade.discord.voice").warning("Pending voice connection cleanup failed")
+            raise
         loop = asyncio.get_running_loop()
         with self.buffers_lock:
             stale = self.generation != connecting_generation or self.connection is not None

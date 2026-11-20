@@ -58,3 +58,19 @@ Quatre parcours texte et voix portent la décision **Done** dans la [recette](..
 **Assistant — synthèse**
 
 Une illustration originale a été générée et présentée pour validation. La demande et les étapes restent dans la [passation](../../operations/handoffs/2026-11-20-codex-chambre-mobile.md).
+
+## Déploiement de la chambre printanière
+
+**Utilisateur — extraits verbatim**
+
+> L'idée est bien, mais j'aimerais quelque chose de plus joyeux quand même. Jade est pétillante !
+
+> Ça serait bien que ça soit dans le style graphique du modèle de référence de Jade aussi.
+
+> Ok pour l'image.
+
+> Non mais laisse tomber. J'accepte et mets le tout de suite sur develop et sur l'appli que j'utilise actuellement. J'accepte de ne pas l'avoir checké avant.
+
+> Ah et Jade utilise beaucoup beaucoup trop le mot Papa. Ça doit être vraiment exceptionnel normalement. Corrige son prompt de personnalité en ce sens.
+
+> Je constate aussi qu'après plusieurs heures, Jade se fait déconnecter automatiquement du vocal discord. Pourquoi ? Est-ce qu'on peut régler ça ?

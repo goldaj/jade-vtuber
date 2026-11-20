@@ -15,6 +15,7 @@
   <script src="/vendor/pixi-unsafe-eval.min.js" defer></script>
   <script src="/vendor/live2dcubismcore.min.js" defer></script>
   <script src="/vendor/cubism4.min.js" defer></script>
+  <script src="/assets/room-motion.js" defer></script>
   <script src="/assets/avatar.js" defer></script>
   <script src="/assets/app.js" defer></script>
 </head>
@@ -28,15 +29,14 @@
       </div>
     </header>
     <section class="room" aria-label="Jade et son décor animé">
-      <div class="room-halo" aria-hidden="true"></div>
-      <div class="window" aria-hidden="true">
-        <span class="moon"></span><span class="star star-1"></span><span class="star star-2"></span><span class="star star-3"></span>
-        <span class="mountain mountain-far"></span><span class="mountain mountain-near"></span>
+      <div class="room-art" data-paused aria-hidden="true">
+        <div class="room-plane">
+          <img src="/assets/room-spring.webp" width="1448" height="1086" alt="">
+          <canvas class="room-curtain" width="272" height="315"></canvas>
+          <div class="room-reflection"></div>
+          <div class="room-steam"><i></i><i></i><i></i></div>
+        </div>
       </div>
-      <div class="wall-lamp" aria-hidden="true"></div>
-      <div class="bookshelf" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="plant" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-      <div class="floor" aria-hidden="true"></div>
       <div id="avatar-container" aria-label="Avatar Live2D de Jade">
         <div id="avatar-fallback" class="avatar-fallback" role="status">
           <span class="avatar-sigil" aria-hidden="true">✧</span>
@@ -45,7 +45,7 @@
       </div>
       <div class="room-bottom">
         <div class="character-label"><span class="tiny-star">✧</span> Jade <span class="label-small">· à tes côtés</span></div>
-        <div class="mood-line" id="mood-line" aria-live="off">Je suis là, papa.</div>
+        <div class="mood-line" id="mood-line" aria-live="off">Je suis là.</div>
       </div>
     </section>
 

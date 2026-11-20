@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Reconnexion du vocal Discord](2026-11-20-codex-reconnexion-vocale.md) · Diagnostic réel, reprise et REC-023.
+
 - [Chambre de Jade dans la PWA](2026-11-20-codex-chambre-mobile.md) · Direction illustrée, étapes de validation et publication.
 
 - [Rendu r20 dans la PWA du 20 novembre](2026-11-20-codex-avatar-mobile-r20.md) · Correctif DEV-002, résultat Chromium et recette Android.

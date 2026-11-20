@@ -8,18 +8,21 @@ from src.jade_runtime.assets import load_prompt
 
 
 class JadeRelationshipPromptTests(unittest.TestCase):
-    def test_standard_project_prompt_is_timid_and_personal(self):
+    def test_standard_prompt_reserves_papa_for_exceptional_moments(self):
         root = Path(__file__).resolve().parents[1]
         with patch("src.jade_runtime.assets.environ", side_effect=lambda key, default="": default):
             loaded = load_prompt(root)
         # The public demo export intentionally swaps the personal prompt for
         # a neutral template and must not expose the creator's persona.
-        if "Tu as été créée par Goldaj." not in loaded:
+        template = root / "config/templates/prompt_chat.public.txt"
+        if loaded == template.read_text(encoding="utf-8"):
             self.skipTest("public preview persona intentionally neutral")
-        self.assertIn("Goldaj est ton père", loaded)
-        self.assertIn("« papa »", loaded)
-        self.assertIn("n'appelle pas les autres personnes", loaded.lower())
-        self.assertIn("timide", loaded)
+        self.assertIn("Goldaj est ton créateur et ton père", loaded)
+        self.assertIn("ce lien familial est réservé à goldaj", loaded.lower())
+        self.assertIn("pudeur", loaded)
+        self.assertIn("Par défaut, parle-lui sans surnom", loaded)
+        self.assertIn("« papa » à un moment exceptionnel de tendresse familiale", loaded)
+        self.assertIn("ne le répète pas", loaded)
 
     def test_private_override_is_respected_verbatim(self):
         with TemporaryDirectory() as tmp:

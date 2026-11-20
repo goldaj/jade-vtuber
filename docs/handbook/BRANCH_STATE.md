@@ -8,13 +8,13 @@
 | --- | --- |
 | Lancement | `main.py --all-channels`, launcher Windows, préflight, tous les connecteurs en une instance, sans choix de plateforme |
 | Orchestration | `ArbitratingQueue`, `TurnArbiter`, file bornée, équité, **un tour principal à la fois** |
-| Discord | Texte, messages privés, vocal PCM/STT/TTS, sessions, stop/reprise, anti-écho, sélection par participants observés |
+| Discord | Texte, messages privés, vocal PCM/STT/TTS, sessions, stop/reprise, anti-écho, sélection par participants observés et reconnexion lors de la perte du vocal seul |
 | Twitch | IRC entrée/sortie, reconnexion/PING, un seul tour à la fois, solo actif 100 %, groupe 30 % et interpellations directes |
 | Dialogue | `prompt_chat.txt`, backend OpenAI configurable, défaut `gpt-6-luna` / `low` / 320 tokens, historique volatil 48 messages |
 | Mémoire | SQLite v3 optionnelle, consentement opt-in, souvenirs ordinaires/Core, autobiographie privée, curation asynchrone, échanges complets et récupération des 24 derniers tours |
 | Identités | Profil Goldaj partagé par micro PC et PWA mobile authentifiée ; liaison Goldaj vers comptes Discord/Twitch consentants par code vérifié à usage unique ; déliaison et effacement propres à l'identité vérifiée ; scopes de confidentialité |
 | Discord voix/texte | Même historique volatil pour un compte dans le vocal et **son chat textuel natif**, sous la même session ; autres salons distincts |
-| Mobile | PWA privée/Tailscale Serve, texte, capture WAV, TTS à la demande, modèle Live2D Web via assets/SDK installés |
+| Mobile | PWA privée/Tailscale Serve, texte, capture WAV, TTS à la demande, modèle Live2D Web via assets/SDK installés, chambre illustrée avec animations locales |
 | Audio | STT/TTS OpenAI, PCM progressif sous conditions, voix Étincelle `shimmer` 1,25×, pitch optionnel via FFmpeg Rubber Band ; pool Realtime partagé WAV/PCM |
 | Émotions | Sept intentions ; **deux expressions faciales r20 + deux libellés PWA par intention**, synchronisation expression/bouche, toggle global |
 | Observabilité | Jalons `jade.latency` sans contenu ni identité sur tous les canaux, activables par `JADE_LATENCY_LOG=1` (défaut 0) ; mesures physiques STT/premier son/coût restantes |

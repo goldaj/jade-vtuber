@@ -40,7 +40,7 @@ La PWA permet :
 - **Texte** : rédiger/envoyer un message et voir la réponse ; session de discussion conservée pendant l'usage de la page.
 - **Voix** : appuyer pour enregistrer, toucher à nouveau pour envoyer, durée maximale 20 s ; permission microphone Chrome/Android obligatoire ; STT et TTS exécutés par le PC. **Pas d'écoute continue/interruptions WebRTC**.
 - **Synthèse vocale** : bouton « Voix activée / Voix coupée ». Couper la voix évite un TTS mobile inutile.
-- **Avatar** : visage r20 sur fond transparent avec décor CSS, expressions et bouche approximativement animées par l'audio **si le SDK Web compatible est installé sur D:**. Si le SDK manque ou n'est pas compatible, le chat peut rester accessible mais l'avatar sera absent.
+- **Avatar** : visage r20 sur fond transparent avec décor illustré et animé, expressions et bouche approximativement animées par l'audio **si le SDK Web compatible est installé sur D:**. Si le SDK manque ou n'est pas compatible, le chat peut rester accessible mais l'avatar sera absent.
 - **Nouveau fil / plein écran** : nouveau contexte de dialogue mobile ou affichage agrandi.
 - **Sécurité** : réseau privé Tailscale, identité utilisateur vérifiée et jeton Bearer ; sans ces deux éléments, refus 403/401. Ne pas activer Funnel ni modifier le VPS Hyperliquid.
 

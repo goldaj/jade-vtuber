@@ -11,6 +11,7 @@ from .messages import Incoming
 from .discord_text_policy import DiscordTextPolicy
 
 LOG = logging.getLogger("jade.discord")
+_VOICE_RECONNECT_DELAYS = (1, 2, 4, 8, 16, 30)
 
 
 def parse_discord_message(message, *, own_user_id=None) -> Incoming | None:
@@ -55,14 +56,56 @@ class DiscordText:
         parent = self
 
         class JadeClient(discord.Client):
+            _gateway_available = False
+            _shutting_down = False
+            _voice_retry = None
+
+            def _schedule_voice_retry(self, bridge, *, join_now=False):
+                if not self._gateway_available:
+                    return None
+                if self._voice_retry is None or self._voice_retry.done():
+                    delays = _VOICE_RECONNECT_DELAYS
+                    if join_now:
+                        delays = (0, *delays)
+                    self._voice_retry = asyncio.create_task(
+                        self._reconnect_voice(bridge, delays), name="jade-discord-voice-reconnect")
+                return self._voice_retry
+
+            def _cancel_voice_retry(self):
+                self._gateway_available = False
+                retry, self._voice_retry = self._voice_retry, None
+                if retry is not None:
+                    retry.cancel()
+                return retry
+
+            async def _reconnect_voice(self, bridge, delays):
+                for delay in delays:
+                    if delay:
+                        await asyncio.sleep(delay)
+                    try:
+                        await bridge.connect(self)
+                    except Exception as exc:
+                        LOG.warning("Discord voice reconnect failed: %s", type(exc).__name__)
+                    else:
+                        LOG.info("Discord voice reconnected")
+                        return
+                LOG.warning("Discord voice reconnect attempts exhausted")
+
             async def on_ready(self):
-                if parent.voice_bridge is not None:
-                    await parent.voice_bridge.connect(self)
+                if self._shutting_down:
+                    return
+                self._gateway_available = True
+                bridge = parent.voice_bridge
+                if bridge is None:
+                    return
+                if getattr(bridge, "_open_voice", False) is True:
+                    await self._schedule_voice_retry(bridge, join_now=True)
+                else:
+                    await bridge.connect(self)
 
             async def on_resumed(self):
                 # A resumed Gateway session does not emit on_ready again.
-                if parent.voice_bridge is not None:
-                    await parent.voice_bridge.connect(self)
+                await self.on_ready()
 
             async def on_message(self, message):
                 incoming = parse_discord_message(
@@ -97,26 +140,47 @@ class DiscordText:
                             replace(incoming, conversation_id=linked))
 
             async def on_voice_state_update(self, member, before, after):
-                if parent.voice_bridge is not None:
-                    own_user = getattr(self, "user", None)
-                    await parent.voice_bridge.voice_state_changed(
-                        member, before, after, own_bot_id=getattr(own_user, "id", None))
+                bridge = parent.voice_bridge
+                if bridge is None:
+                    return
+                own_bot_id = getattr(getattr(self, "user", None), "id", None)
+                lost_voice = (
+                    getattr(bridge, "_open_voice", False) is True
+                    and own_bot_id is not None and getattr(member, "id", None) == own_bot_id
+                    and getattr(before, "channel", None) is not None
+                    and getattr(after, "channel", None) is None
+                )
+                try:
+                    await bridge.voice_state_changed(member, before, after, own_bot_id=own_bot_id)
+                finally:
+                    if lost_voice and self._gateway_available:
+                        LOG.warning("Discord voice left while Gateway is available; scheduling reconnect")
+                        self._schedule_voice_retry(bridge)
 
             async def on_disconnect(self):
+                retry = self._cancel_voice_retry()
                 bridge = parent.voice_bridge
-                if bridge is not None:
-                    # Revoke immediately, but never let cleanup from this
-                    # disconnect close a session established in the meantime.
-                    with bridge.buffers_lock:
-                        expected = (bridge.generation, bridge.session_id)
-                    if bridge.set_session([], consent_confirmed=False, _expected=expected):
-                        await bridge._close_if_revoked(expected[0] + 1)
+                try:
+                    if bridge is not None:
+                        # Revoke immediately, but never let cleanup from this
+                        # disconnect close a session established in the meantime.
+                        with bridge.buffers_lock:
+                            expected = (bridge.generation, bridge.session_id)
+                        if bridge.set_session([], consent_confirmed=False, _expected=expected):
+                            await bridge._close_if_revoked(expected[0] + 1)
+                finally:
+                    if retry is not None:
+                        await asyncio.gather(retry, return_exceptions=True)
 
         self.client = JadeClient(intents=intents, allowed_mentions=discord.AllowedMentions.none())
         try:
             await self.client.start(self.token)
         finally:
+            self.client._shutting_down = True
+            retry = self.client._cancel_voice_retry()
             try:
+                if retry is not None:
+                    await asyncio.gather(retry, return_exceptions=True)
                 if self.voice_bridge is not None:
                     await asyncio.wait_for(self.voice_bridge.close(), timeout=4)
             finally:

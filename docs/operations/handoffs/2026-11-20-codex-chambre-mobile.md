@@ -11,3 +11,9 @@ Chambre de nuit pluvieuse, bois chaud, murs lilas assourdis et lumière ambrée.
 1. Valider le décor fixe présenté dans le chat. Sur le poste, la version de travail et le prompt sont sur D: sous le dossier temporaire jade-chambre-lofi-20261120.
 2. Après accord, montrer une boucle de revue sur l'illustration validée. Essayer la pluie dans les carreaux, la vapeur au-dessus de la tasse et de légers reflets près de la lampe. Conserver le cadrage de la chambre, et tenir compte des recadrages téléphone et bureau.
 3. Après accord sur ces mouvements, préparer l'intégration sur une branche de travail et tester l'aperçu au format mobile avec r20. Le push sur develop est conditionné à la validation finale explicite du propriétaire.
+
+## Version livrée
+
+La deuxième image, validée par le propriétaire, montre une chambre printanière ensoleillée dans le style du maître graphique r21. Les deux livres et la breloque étoilée sont conservés. Le WebP de 214 Ko est servi par la même liste de ressources locales que le reste de la PWA. Le rideau, la vapeur et les reflets reprennent les mouvements de l'aperçu. Les animations s'arrêtent en arrière-plan, hors de la zone visible ou si le système demande de réduire les mouvements. L'avatar Live2D utilise son propre canvas.
+
+Le propriétaire a demandé le déploiement direct sur develop et sur son instance, en acceptant de passer l'étape de revue de l'aperçu à distance. [Décision](../../history/conversations/2026-11-20-reprise-develop.md#déploiement-de-la-chambre-printanière).

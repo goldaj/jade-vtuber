@@ -312,6 +312,75 @@ class OpenVoiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.channel.connect.await_count, 3)  # setup, ready, resume
         self.assertEqual(self.connection.listen.call_count, 3)
 
+    async def test_voice_only_loss_retries_and_rejoins_with_a_fresh_session(self):
+        test = self
+
+        class Client:
+            def __init__(self, **kwargs):
+                self.user = types.SimpleNamespace(id=100)
+
+            async def start(self, token):
+                await self.on_ready()
+                old_context = test.bridge.delivery_context()
+                test.channel.connect.side_effect = [OSError("synthetic"), test.connection]
+                await self.on_voice_state_update(
+                    self.user, types.SimpleNamespace(channel=test.channel),
+                    types.SimpleNamespace(channel=None))
+                test.assertIsNone(test.bridge.delivery_context())
+                await asyncio.wait_for(self._voice_retry, timeout=1)
+                test.assertIsNotNone(test.bridge.delivery_context())
+                test.assertFalse(test.bridge.delivery_context_valid(old_context))
+
+            def get_channel(self, channel_id):
+                return test.channel
+
+            async def close(self):
+                pass
+
+        discord = __import__("discord")
+        discord.Client = Client
+        discord.Intents = types.SimpleNamespace(default=lambda: types.SimpleNamespace())
+        discord.AllowedMentions = types.SimpleNamespace(none=lambda: None)
+        await self.bridge.close()
+        connector = DiscordText("synthetic", AsyncMock(), voice_bridge=self.bridge)
+        with patch("src.jade_runtime.discord_text._VOICE_RECONNECT_DELAYS", (0, 0)):
+            with self.assertLogs("jade.discord", level="INFO") as log:
+                await connector.connect_forever()
+        self.assertEqual(self.channel.connect.await_count, 4)  # setup, ready, failed retry, retry
+        self.assertTrue(any("Discord voice reconnected" in line for line in log.output))
+
+    async def test_shutdown_cancels_pending_voice_rejoin(self):
+        test = self
+        retries = []
+
+        class Client:
+            def __init__(self, **kwargs):
+                self.user = types.SimpleNamespace(id=100)
+
+            async def start(self, token):
+                await self.on_ready()
+                await self.on_voice_state_update(
+                    self.user, types.SimpleNamespace(channel=test.channel),
+                    types.SimpleNamespace(channel=None))
+                retries.append(self._voice_retry)
+
+            def get_channel(self, channel_id):
+                return test.channel
+
+            async def close(self):
+                pass
+
+        discord = __import__("discord")
+        discord.Client = Client
+        discord.Intents = types.SimpleNamespace(default=lambda: types.SimpleNamespace())
+        discord.AllowedMentions = types.SimpleNamespace(none=lambda: None)
+        await self.bridge.close()
+        connector = DiscordText("synthetic", AsyncMock(), voice_bridge=self.bridge)
+        with patch("src.jade_runtime.discord_text._VOICE_RECONNECT_DELAYS", (30,)):
+            await asyncio.wait_for(connector.connect_forever(), timeout=1)
+        self.assertTrue(retries[0].cancelled())
+        self.assertEqual(self.channel.connect.await_count, 2)  # setup and ready
+
     async def test_ffmpeg_child_environment_excludes_credentials(self):
         seen = {}
 
