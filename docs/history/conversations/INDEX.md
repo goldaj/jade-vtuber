@@ -25,6 +25,7 @@ Cet index est créé le 2 novembre 2026, avant les modifications documentaires d
 | [Cadrage mémoire persistante / Core Memories du 15 novembre](2026-11-15-persistant-memory-core.md) | Demande de reconnaissance durable des personnes, contexte et choix autonome par Jade de souvenirs fondateurs sans purge automatique | Verbatim des demandes et synthèse documentaire ; pas d'implémentation |
 | [Journalisation du 15 novembre](2026-11-15-conversation-logs.md) | Demande de provenance, contenu, intention et modalités de réponse dans les logs | Verbatim utilisateur et résumé assistant ; aucune conversation privée journalisée dans Git |
 | [Plan professionnel du modèle du 13 novembre](2026-11-13-modele-plan-pro.md) | Nouvelle direction, recherche et feuille de route modèle et utilisation | Résumé des échanges accessibles ; vidéo non transcrite intégralement |
+| [Reprise develop sur Windows du 20 novembre](2026-11-20-reprise-develop.md) | Extraits de la demande de lancement et des priorités Discord, mobile et backlog | Extraits visibles, heures individuelles indisponibles ; synthèse assistant étiquetée |
 | Documents supplémentaires de `develop` | Audits du 30 octobre et pistes migrées du 1er novembre : à conserver lors de l’intégration | Ces documents sont encore sur la branche cible ; leur provenance est décrite dans le dossier de migration |
 
 ## Relais technique en cours — voix et intentions
