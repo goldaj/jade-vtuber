@@ -342,6 +342,13 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(b"frame-ancestors 'none'", headers)
         self.assertIn(b"script-src 'self' 'wasm-unsafe-eval'", headers)
         self.assertNotIn(b" 'unsafe-eval'", headers)
+        patch_url = "/vendor/pixi-unsafe-eval.min.js"
+        self.assertLess(page.index(b"/vendor/pixi.min.js"), page.index(patch_url.encode()))
+        self.assertLess(page.index(patch_url.encode()), page.index(b"/assets/avatar.js"))
+        self.mobile.vendor_dir = Path(self.temp.name)
+        (self.mobile.vendor_dir / "pixi-unsafe-eval.min.js").write_bytes(b"/* local patch */")
+        status, patch, _ = await self.request("GET", patch_url)
+        self.assertEqual((status, patch), (200, b"/* local patch */"))
         status, _, _ = await self.request("GET", "/assets/app.js")
         self.assertEqual(status, 200)
         model_dir = Path(self.temp.name) / "model"

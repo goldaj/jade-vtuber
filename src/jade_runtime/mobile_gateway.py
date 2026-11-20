@@ -31,7 +31,9 @@ SESSION = re.compile(r"[A-Za-z0-9_-]{8,64}\Z")
 MODEL_FILE = re.compile(r"[A-Za-z0-9_./-]{1,140}\Z")
 MAX_WAV = 1_000_000  # 20s of 16kHz mono PCM16, plus a small header.
 MAX_RESPONSE_AUDIO = 7_000_000
-VENDOR_NAMES = frozenset(("pixi.min.js", "live2dcubismcore.min.js", "cubism4.min.js"))
+VENDOR_NAMES = frozenset((
+    "pixi.min.js", "pixi-unsafe-eval.min.js", "live2dcubismcore.min.js", "cubism4.min.js",
+))
 WEB_FILES = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/assets/styles.css": ("styles.css", "text/css; charset=utf-8"),

@@ -134,7 +134,7 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
             "Tailscale (option téléphone)", which("tailscale") is not None,
             "Optionnel, configuration Serve / ACL non testées", required=False))
     if mobile:
-        from .mobile_gateway import DEFAULT_MODEL, WEB_ROOT
+        from .mobile_gateway import DEFAULT_MODEL, VENDOR_NAMES, WEB_ROOT
         from pathlib import Path
         model_dir = Path(settings.mobile_model_dir) if settings.mobile_model_dir else DEFAULT_MODEL
         vendor_dir = Path(settings.mobile_vendor_dir) if settings.mobile_vendor_dir else None
@@ -150,8 +150,7 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
                             "Package Live2D présent ; git lfs, rendu Android non testés",
                             required=False))
         checks.append(Check("SDK Web Live2D local", bool(vendor_dir) and all(
-            (vendor_dir / name).is_file() for name in (
-                "pixi.min.js", "live2dcubismcore.min.js", "cubism4.min.js")),
+            (vendor_dir / name).is_file() for name in VENDOR_NAMES),
             "Bibliothèques à installer sur D: après contrôle de licence ; pas dans Git",
             required=False))
         checks.append(Check("Tailscale Serve", which("tailscale") is not None,

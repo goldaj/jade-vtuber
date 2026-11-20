@@ -3,6 +3,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string]$PixiJs,
+    [Parameter(Mandatory = $true)][string]$PixiCspJs,
     [Parameter(Mandatory = $true)][string]$CubismCoreJs,
     [Parameter(Mandatory = $true)][string]$CubismAdapterJs,
     [string]$Destination = 'D:\Jade\private\mobile-sdk'
@@ -10,6 +11,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $mapping = @{
     'pixi.min.js' = $PixiJs
+    'pixi-unsafe-eval.min.js' = $PixiCspJs
     'live2dcubismcore.min.js' = $CubismCoreJs
     'cubism4.min.js' = $CubismAdapterJs
 }
@@ -25,7 +27,7 @@ if (Test-Path -LiteralPath $target) {
 } else {
     New-Item -ItemType Directory -Path $target -Force | Out-Null
 }
-foreach ($name in @('pixi.min.js', 'live2dcubismcore.min.js', 'cubism4.min.js')) {
+foreach ($name in @('pixi.min.js', 'pixi-unsafe-eval.min.js', 'live2dcubismcore.min.js', 'cubism4.min.js')) {
     $source = [System.IO.Path]::GetFullPath($mapping[$name])
     if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
         throw "Fichier absent : $name"

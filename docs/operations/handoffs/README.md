@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Rendu r20 dans la PWA du 20 novembre](2026-11-20-codex-avatar-mobile-r20.md) · Correctif DEV-002, résultat Chromium et recette Android.
+
 - [Validation et lancement Windows du 20 novembre](2026-11-20-codex-validation-develop.md) · PR #26, lancement Discord, prérequis mobiles, anomalies différées et revue des branches.
 - [Quick wins voix/routage/latence du 19 novembre](2026-11-19-chatgpt-quickwins-voice-routing.md) : DEV-003/005–008, preuves et relais de validation.
 

@@ -28,3 +28,13 @@ Mise à jour en avance rapide de develop, installation sur D:, lancement d'une i
 **Assistant — synthèse**
 
 Tailscale et le SDK téléchargé ont été vérifiés sur le poste. Activation de Serve en privé, ajout du mobile à l'instance Discord, vérification de la PWA et de ses contrôles HTTP depuis le PC. Recette réelle sur Android à faire.
+
+## Retour sur la recette mobile
+
+**Utilisateur — extrait verbatim**
+
+> je vois les réponses de jade sur mobile et je l'entends, mais je ne vois pas son modele dans l'appli. Corrige ça
+
+**Assistant — synthèse**
+
+Reproduction de deux erreurs du moteur de rendu et confirmation de l'affichage r20 dans un navigateur au format téléphone. Voir la [passation](../../operations/handoffs/2026-11-20-codex-avatar-mobile-r20.md).

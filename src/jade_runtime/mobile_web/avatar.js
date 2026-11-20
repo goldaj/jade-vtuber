@@ -126,6 +126,16 @@
       model = await PIXI.live2d.Live2DModel.from("/model/Jade.model3.json", {
         autoInteract: false
       });
+      // Core 6 moved render orders off drawables; the legacy renderer still
+      // reads them through the adapter. r20 draws only drawable meshes.
+      const cubism = model.internalModel.coreModel;
+      if (!cubism.getDrawableRenderOrders()) {
+        const core = cubism.getModel();
+        if (core.getRenderOrders?.()?.length !== cubism.getDrawableCount()) {
+          throw new Error("Cubism render order is incompatible with this model");
+        }
+        cubism.getDrawableRenderOrders = () => core.getRenderOrders();
+      }
       model.anchor.set(.5, .5);
       pixi.stage.addChild(model);
       resize();
@@ -149,7 +159,8 @@
       // Reapply the SAME chosen reaction after slow SDK loading, not the
       // next variant. One reply must never count as two emotional turns.
       if (activeChoice && palette?.enabled) applyExpression(activeChoice.expression);
-    } catch (_) {
+    } catch (error) {
+      console.warn("Jade Live2D:", error);
       if (observer) observer.disconnect();
       if (pixi) { try { pixi.destroy(true, {children: true}); } catch (_) {} }
       pixi = null;
