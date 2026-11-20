@@ -30,14 +30,14 @@ _PREFIX = re.compile(
     re.I,
 )
 _MEMORY_MARKER = re.compile(
-    r"(?:\b(?:dans|à|en|comme)\s+(?:tes?|ta|la|mes?)?\s*"
-    r"(?:core[\s-]*memor(?:y|ies)|core[\s-]*m[ée]moir(?:e|es)|"
-    r"m[ée]moir(?:e|es)(?:\s+(?:ordinaire|profond(?:e|es)?|"
-    r"fondatric(?:e|es)|essentiell(?:e|es)|autobiographiques?))?|"
-    r"souvenirs?(?:\s+(?:ordinaires?|fondateurs?|"
-    r"fondamentaux?|autobiographiques?))?))"
+    r"\b(?:dans|à|en|comme)\s+(?:(?:tes?|ta|la|mes?)\s+)?"
+    r"(?:(?:core[\s-]*memor(?:y|ies)|core[\s-]*m[ée]moir(?:e|es))|"
+    r"(?:m[ée]moir(?:e|es)|souvenirs?)"
+    r"(?:\s+(?:ordinaires?|profond(?:e|es)?|fondatric(?:e|es)|"
+    r"essentiell(?:e|es)|autobiographiques?|fondateurs?|fondamentaux?))?"
+    r")"
     r"|\b(?:un|ce|ces)\s+souvenirs?\b"
-    r"|\bpour\s+(?:plus\s+tard|t'en\s+souvenir)\b)",
+    r"|\bpour\s+(?:plus\s+tard|t'en\s+souvenir)\b",
     re.I,
 )
 _CORE_MARKER = re.compile(
