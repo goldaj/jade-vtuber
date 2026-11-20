@@ -11,8 +11,8 @@
 | Discord | Texte, messages privés, vocal PCM/STT/TTS, sessions, stop/reprise, anti-écho, sélection par participants observés et reconnexion lors de la perte du vocal seul |
 | Twitch | IRC entrée/sortie, reconnexion/PING, un seul tour à la fois, solo actif 100 %, groupe 30 % et interpellations directes |
 | Dialogue | `prompt_chat.txt`, backend OpenAI configurable, défaut `gpt-6-luna` / `low` / 320 tokens, historique volatil 48 messages |
-| Mémoire | SQLite v3 optionnelle, consentement opt-in, souvenirs ordinaires/Core, autobiographie privée, curation asynchrone, échanges complets et récupération des 24 derniers tours |
-| Identités | Profil Goldaj partagé par micro PC et PWA mobile authentifiée ; liaison Goldaj vers comptes Discord/Twitch consentants par code vérifié à usage unique ; déliaison et effacement propres à l'identité vérifiée ; scopes de confidentialité |
+| Mémoire | SQLite v3 persistante et curation activées par défaut en mode réel, fichier privé hors Git, inscription automatique par interaction identifiée sur serveur Discord (effacement + refus persistant), activation manuelle MP/Twitch ; souvenirs ordinaires/Core, autobiographie privée, curation asynchrone, échanges complets et récupération des 24 derniers tours |
+| Identités | Profil Goldaj partagé par micro PC et PWA mobile authentifiée ; liaison Goldaj vers comptes Discord/Twitch par code vérifié à usage unique ; déliaison et effacement propres à l'identité vérifiée ; scopes de confidentialité |
 | Discord voix/texte | Même historique volatil pour un compte dans le vocal et **son chat textuel natif**, sous la même session ; autres salons distincts |
 | Mobile | PWA privée/Tailscale Serve, texte, capture WAV, TTS progressif selon modèle/navigateur, coûts API de l’organisation (solde prépayé indisponible), modèle Live2D Web et chambre animée |
 | Audio | STT/TTS OpenAI, PCM progressif sous conditions, voix Étincelle `shimmer` 1,25×, pitch optionnel via FFmpeg Rubber Band ; pool Realtime partagé WAV/PCM |
