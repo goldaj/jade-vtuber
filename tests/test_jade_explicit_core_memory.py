@@ -121,7 +121,16 @@ class CoreMemoryRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(self.store.list_for_account(OWNER)), 1)
         self.assertEqual(self.store.recall(("discord", "123"), "discord:public"), [])
         self.assertEqual(len(MemoryStore(self.path).recall(OWNER, "person")), 1)
-        self.assertTrue(self.store.delete_memory(OWNER, self.store.list_for_account(OWNER)[0]["id"]))
+        listed = await self.svc.command(self.request("!jade-memoire lister-core"))
+        item_id = self.store.list_for_account(OWNER)[0]["id"]
+        self.assertIn(item_id, listed.text)
+        public_list = await self.svc.command(self.request(
+            "!jade-memoire lister-core", platform="discord",
+            author="Goldaj", account="123", channel="public"))
+        self.assertIn("micro ou sa PWA", public_list.text)
+        deleted = await self.svc.command(self.request(
+            f"!jade-memoire supprimer-core {item_id}"))
+        self.assertIn("supprimée", deleted.text)
         self.assertEqual(self.store.recall(OWNER, "person"), [])
 
     async def test_verified_link_discord_voice_and_twitch_can_write(self):
@@ -184,6 +193,20 @@ class CoreMemoryRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(self.store.recall_self_core(OWNER)), 1)
         self.assertIsNone(self.store.account(linked))
         self.assertFalse(self.store.auto_enable(linked))
+
+    async def test_owner_can_delete_self_core_originally_written_via_discord(self):
+        self.link(account="123")
+        message = self.request(
+            "Jade, enregistre dans tes souvenirs autobiographiques : "
+            "Tu as vécu une discussion avec Goldaj.",
+            platform="discord", author="Goldaj", account="123", channel="public")
+        self.assertIn("enregistré", (await self.svc.command(message)).text)
+        found = self.store.recall_self_core(OWNER)
+        self.assertEqual(len(found), 1)
+        erased = await self.svc.command(self.request(
+            f"!jade-memoire supprimer-self {found[0]['id']}"))
+        self.assertIn("supprimé", erased.text)
+        self.assertEqual(self.store.recall_self_core(OWNER), [])
 
     async def test_invalid_incomplete_sensitive_and_failed_write_are_not_acknowledged(self):
         for text in (
