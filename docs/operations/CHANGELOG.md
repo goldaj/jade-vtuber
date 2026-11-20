@@ -2,6 +2,14 @@
 
 Ce document est **la seule pièce documentaire systématiquement exigée en CI** pour les changements techniques. Les guides, atlas et passations sont révisés uniquement quand le comportement ou les procédures qu'ils décrivent changent. Une entrée indique les faits vérifiés ; un ancien journal ne remplace pas le code.
 
+## 2026-11-20 — Politique de conservation Jade : 7j / 365j / Core sans purge (feat/memory-retention-7d-365d-24h-20261120)
+
+- **Stockage :** migration SQLite v3→v4, niveau 1 `conversation_turns` purgé après 7 jours, souvenirs ordinaires `memories.kind=ordinary` expirant après 365 jours depuis `created_at`, même pour les anciennes lignes v3. Core Memories relationnelles et autobiographiques jamais purgées par la politique temporelle ; correction/effacement explicite préservé.
+- **Reprise :** récupération de tous les tours datés des 24 dernières heures, pour la même identité et le même salon ; suppression des limites numériques 24 échanges / 48 messages sur les sessions réhydratées. Le modèle peut atteindre sa fenêtre de contexte et augmenter la consommation de tokens, mais Jade ne tronque plus arbitrairement en nombre de messages.
+- **Exploitation :** nettoyage immédiat à l'ouverture de la base et périodique toutes les heures en mode réel, avec arrêt propre de la tâche asynchrone ; la démo hors ligne reste non persistante.
+- **Qualité :** tests de purge 7 jours, expiration 365 jours, non-expiration Core, compatibilité de sauvegarde v4, récupération de plus de 100 tours, isolation, réhydratation dans le runtime ; résultats CI à valider au SHA de la PR.
+- **Attention migration :** sauvegarder le fichier SQLite privé avant redémarrage ; cette purge supprime effectivement les anciens tours, sans garantie d'effacement physique des copies de sauvegarde.
+
 ## 2026-11-20 — DEV-011 révisée : souvenirs ordinaires sur demande, Core Memories autonomes (fix/dev-011-ordinary-only-autonomous-core-20261120)
 
 - **Décision du propriétaire (postérieure à la PR #29) :** aucune personne, y compris Goldaj, ne peut imposer de Core Memory profonde. Le développement de la PR #29 permettant à Goldaj de créer directement `core_self`/`core_relationship` est **remplacé** par ce correctif ; les anciennes notes de la PR sont historiques, pas le comportement attendu.
