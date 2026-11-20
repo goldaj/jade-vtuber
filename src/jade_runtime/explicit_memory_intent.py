@@ -49,7 +49,7 @@ _CORE_MARKER = re.compile(
 )
 _DELIMITER = re.compile(
     r"^\s*(?:(?:[:：,;=–-]+\s*)|"
-    r"(?:(?:ceci|cela|[çc]a|le\s+fait)\s+)?que\s+|"
+    r"(?:(?:ceci|cela|[çc]a|le\s+fait)\s+)?que(?:\s+|$)|"
     r"(?:bien\s+que\s+)|"
     r"(?:(?:ceci|cela|[çc]a)\s*[:：]\s*))",
     re.I,
