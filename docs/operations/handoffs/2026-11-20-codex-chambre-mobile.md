@@ -17,3 +17,7 @@ Chambre de nuit pluvieuse, bois chaud, murs lilas assourdis et lumière ambrée.
 La deuxième image, validée par le propriétaire, montre une chambre printanière ensoleillée dans le style du maître graphique r21. Les deux livres et la breloque étoilée sont conservés. Le WebP de 214 Ko est servi par la même liste de ressources locales que le reste de la PWA. Le rideau, la vapeur et les reflets reprennent les mouvements de l'aperçu. Les animations s'arrêtent en arrière-plan, hors de la zone visible ou si le système demande de réduire les mouvements. L'avatar Live2D utilise son propre canvas.
 
 Le propriétaire a demandé le déploiement direct sur develop et sur son instance, en acceptant de passer l'étape de revue de l'aperçu à distance. [Décision](../../history/conversations/2026-11-20-reprise-develop.md#déploiement-de-la-chambre-printanière).
+
+## Cadrage du modèle r20
+
+Le propriétaire a validé l'aperçu au format téléphone avec un zoom relatif de 50 % et un déplacement vertical de 16 % de la hauteur de la scène. Le point d'ancrage passe de 63 % à 79 %. Le fichier avatar.js applique ces valeurs à chaque redimensionnement. La chambre constitue un plan distinct. [Accord de déploiement](../../history/conversations/2026-11-20-reprise-develop.md#validation-du-cadrage-mobile).

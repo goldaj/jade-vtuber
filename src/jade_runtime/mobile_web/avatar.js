@@ -92,8 +92,9 @@
     const naturalWidth = Math.max(model.width / (model.scale.x || 1), 1);
     const naturalHeight = Math.max(model.height / (model.scale.y || 1), 1);
     const scale = Math.min((width * .95) / naturalWidth, (height * 1.32) / naturalHeight);
-    model.scale.set(Math.max(.05, scale));
-    model.position.set(width / 2, height * .63);
+    // Close framing places the unfinished lower edges of r20 below the scene.
+    model.scale.set(Math.max(.05, scale * 1.5));
+    model.position.set(width / 2, height * .79);
   }
 
   async function load() {

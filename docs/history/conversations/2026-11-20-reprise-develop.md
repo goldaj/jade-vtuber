@@ -74,3 +74,17 @@ Une illustration originale a été générée et présentée pour validation. La
 > Ah et Jade utilise beaucoup beaucoup trop le mot Papa. Ça doit être vraiment exceptionnel normalement. Corrige son prompt de personnalité en ce sens.
 
 > Je constate aussi qu'après plusieurs heures, Jade se fait déconnecter automatiquement du vocal discord. Pourquoi ? Est-ce qu'on peut régler ça ?
+
+## Validation du cadrage mobile
+
+**Utilisateur — extraits verbatim**
+
+> Non il faut la zoomer vraiment plus encore
+
+> Genre 50%
+
+> Yes on est bons. Tu peux le coder tel quel et redéployer
+
+**Assistant — synthèse**
+
+Le cadrage soumis à validation montrait le modèle r20 à 150 % de sa taille précédente, décalé de 16 % de la hauteur de la scène vers le bas.
