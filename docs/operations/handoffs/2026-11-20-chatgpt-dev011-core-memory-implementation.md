@@ -1,7 +1,7 @@
 # DEV-011 : Core Memories sur instruction explicite de Goldaj (20/11/2026)
 
 - Agent / rôle : ChatGPT, auteur du changement sur branche dédiée.
-- Carte : **DEV-011**, P0, jalon A ; statut **À faire** jusqu'aux résultats CI, revue et intégration, puis **À valider** pour la recette PC par Goldaj.
+- Carte : **DEV-011**, P0, jalon A ; statut **À valider** pour la recette PC par Goldaj après tests automatisés réussis. Ne pas classer Done sans recette réelle et validation explicitement enregistrées.
 - Départ : `develop` commit `209807c4a2de40f1604d63031e45cf732488cb7b`. Branche `feat/dev-011-explicit-owner-core-memories-20261120`.
 - Objectif : demander oralement ou par texte à Jade de placer un souvenir en Core Memory, et obtenir une garantie réelle d'écriture SQLite.
 - Implémentation :
