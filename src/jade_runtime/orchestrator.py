@@ -172,6 +172,7 @@ class Runtime:
         try:
             if self.memory_service is not None:
                 self.mark_timing("memory_start")
+                await self.memory_service.ensure_auto_enrolled(item.message)
                 command_reply = await self.memory_service.command(item.message)
                 if command_reply is None:
                     memory_context = await self.memory_service.context_for(item.message)
