@@ -38,3 +38,23 @@ Tailscale et le SDK téléchargé ont été vérifiés sur le poste. Activation 
 **Assistant — synthèse**
 
 Reproduction de deux erreurs du moteur de rendu et confirmation de l'affichage r20 dans un navigateur au format téléphone. Voir la [passation](../../operations/handoffs/2026-11-20-codex-avatar-mobile-r20.md).
+
+## Validation Discord et mobile
+
+**Utilisateur — extrait verbatim**
+
+> Je valide que tous les tests de lecture/écriture et écoute/réponse orale fonctionnent sur discord et sur l'appli mobile. Tu peux les valider à done explicitement.
+
+**Assistant — synthèse**
+
+Quatre parcours texte et voix portent la décision **Done** dans la [recette](../../backlog/02-RECETTE.md#validation-propriétaire-du-20-novembre-2026).
+
+## Chambre de Jade dans la PWA
+
+**Utilisateur — extrait verbatim**
+
+> Tu me feras valider l'image, puis les animations, et une fois développé tu me préviens, on ne pushera sur develop qu'après ma validation finale.
+
+**Assistant — synthèse**
+
+Une illustration originale a été générée et présentée pour validation. La demande et les étapes restent dans la [passation](../../operations/handoffs/2026-11-20-codex-chambre-mobile.md).
