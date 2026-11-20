@@ -40,6 +40,25 @@ class MemoryService:
         self.tasks: set[asyncio.Task] = set()
         self._closed = False
 
+    async def ensure_auto_enrolled(self, incoming) -> bool:
+        """Enroll verified Discord server speakers without an explicit command.
+
+        DMs, Twitch and unidentified accounts remain command-only. Discord voice
+        speakers have already passed the connector's consent/identity controls.
+        """
+        if incoming.platform == "discord" and incoming.private_channel:
+            return False
+        if incoming.platform not in ("discord", "discord_voice"):
+            return False
+        key = identity_of(incoming)
+        if key is None:
+            return False
+        try:
+            return await asyncio.to_thread(self.store.auto_enable, key)
+        except Exception:
+            LOG.warning("Discord memory auto-enrollment unavailable; no identity logged")
+            return False
+
     async def context_for(self, incoming) -> str:
         key = identity_of(incoming)
         if key is None:
@@ -153,9 +172,13 @@ class MemoryService:
                         "Ce compte n'est pas lié à un autre profil ou la séparation exige une revue.")
             elif action == "oublier":
                 removed = await asyncio.to_thread(self.store.forget_own_identity, key)
+                if key[0] == "discord":
+                    await asyncio.to_thread(self.store.block_auto_enrollment, key)
                 text = ("J'ai supprimé les souvenirs et échanges de ce compte, "
                         "sans effacer ceux des autres comptes associés."
                         if removed else "Aucune mémoire personnelle active pour ce compte.")
+                if key[0] == "discord":
+                    text += " Mémorisation automatique désactivée ; !jade-memoire activer pour la rétablir."
             else:
                 exists = await asyncio.to_thread(self.store.account, key)
                 text = ("Mémoire personnelle active." if exists
