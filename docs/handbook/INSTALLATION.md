@@ -59,7 +59,7 @@ JADE_MOBILE_PORT=8766
 JADE_MOBILE_VENDOR_DIR=D:\Jade\private\mobile-sdk
 ~~~
 
-Les valeurs ci-dessus proviennent des champs de `Settings.load()` et du contrat de démarrage global. Les secrets HTTP et mobile **doivent être différents**. VTube Studio est **facultatif** et ne remplace pas l'avatar autonome ; pour l'activer, configurer `JADE_VTS_ENABLED=1` et son jeton local. La mémoire SQLite personnelle est également opt-in : `JADE_MEMORY_ENABLED=1`, `JADE_MEMORY_DB_PATH` absolu privé finissant en `.sqlite3` et éventuellement `JADE_MEMORY_CURATOR_ENABLED=1`. Éviter de déplacer/réinitialiser une base de mémoire existante.
+Les valeurs ci-dessus proviennent des champs de `Settings.load()` et du contrat de démarrage global. Les secrets HTTP et mobile **doivent être différents**. VTube Studio est **facultatif** et ne remplace pas l'avatar autonome ; pour l'activer, configurer `JADE_VTS_ENABLED=1` et son jeton local. La mémoire SQLite et sa curation sont activées par défaut en mode réel ; sans `JADE_MEMORY_DB_PATH`, Jade utilise `D:\\Jade\\private\\jade-memory.sqlite3` si le lecteur D: Windows est présent, sinon `~/.jade/jade-memory.sqlite3`. Les dossiers et tables sont créés au lancement réel, jamais pendant la démo hors ligne. `JADE_MEMORY_ENABLED=0` ou `JADE_MEMORY_CURATOR_ENABLED=0` dans un fichier privé restent prioritaires. Conserver le chemin d'une éventuelle ancienne base pour éviter une mémoire apparemment vide. Informer les membres Discord de la conservation avant leur participation et de la commande `!jade-memoire oublier`.
 
 ## 4. Configurer Android privé et le Live2D Web
 
@@ -114,7 +114,7 @@ Dans le fichier privé `JADE_SECRETS_FILE`, le réglage `JADE_AVATAR_INTENT_ENAB
 
 ## Réglages de dialogue et conservation (develop, 15 novembre 2026)
 
-Dans la configuration privée, `JADE_LLM_MODEL=gpt-6-luna`, `JADE_LLM_REASONING_EFFORT=low`, `JADE_MAX_COMPLETION_TOKENS=320` et `JADE_HISTORY_LIMIT=48` correspondent aux nouveaux défauts, qui peuvent être remplacés par des variables d'environnement existantes. Pour la conservation SQLite : activer `JADE_MEMORY_ENABLED=1` et fournir `JADE_MEMORY_DB_PATH` vers un chemin absolu `.sqlite3` privé. Chaque personne doit ensuite opter pour sa mémoire via `!jade-memoire activer` si son identité de transport est reconnue. Ne pas stocker une base SQLite privée dans Git.
+Dans la configuration privée, `JADE_LLM_MODEL=gpt-6-luna`, `JADE_LLM_REASONING_EFFORT=low`, `JADE_MAX_COMPLETION_TOKENS=320` et `JADE_HISTORY_LIMIT=48` restent configurables. La mémoire et la curation sont désormais actives par défaut en mode réel, avec chemin SQLite privé automatique. Les échanges de serveur Discord traités par Jade inscrivent automatiquement un compte vérifié ; les MP Discord et Twitch restent sur `!jade-memoire activer`. Sur Discord, `!jade-memoire oublier` efface les données du compte et empêche toute réinscription automatique ; seul `!jade-memoire activer` la rétablit. Ne pas stocker la base SQLite privée dans Git.
 
 Le schéma passe de la version 2 à la version 3 ; **sauvegarder le fichier SQLite avant la première ouverture par le nouveau programme**, car une vieille version du code peut refuser la base migrée. L'historique restauré contient des messages complets, sans résumé, mais seulement les 48 plus récents dans le contexte. Le reste reste en base. Les conversations d'autres utilisateurs ne sont pas enregistrées automatiquement sans consentement.
 
