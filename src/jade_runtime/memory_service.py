@@ -16,7 +16,7 @@ from .messages import Reply
 
 LOG = logging.getLogger("jade.memory")
 COMMAND = re.compile(
-    r"^!jade-memoire(?:\s+(activer|oublier|etat|autobiographie|supprimer-self|confirmer|identite|delier)"
+    r"^!jade-memoire(?:\s+(activer|oublier|etat|autobiographie|supprimer-self|lister-core|supprimer-core|confirmer|identite|delier)"
     r"(?:\s+([A-Za-z0-9._-]{1,128}))?)?\s*$", re.I)
 _KINDS = frozenset(("none", "ordinary", "core_self", "core_relationship"))
 
@@ -170,7 +170,7 @@ class MemoryService:
         if key is None:
             return Reply(incoming, "Je ne peux pas associer ce message à un compte vérifié.")
         try:
-            if memory_id and action not in ("supprimer-self", "confirmer"):
+            if memory_id and action not in ("supprimer-self", "supprimer-core", "confirmer"):
                 return Reply(incoming, "Cette commande n'attend pas d'identifiant.")
             if action == "identite":
                 text = f"Identifiant {key[0]} vérifié : {key[1]}."
@@ -202,6 +202,32 @@ class MemoryService:
                 removed = await asyncio.to_thread(self.store.delete_self_core, key, memory_id.lower())
                 text = ("Souvenir autobiographique supprimé." if removed
                         else "Souvenir introuvable ou déjà supprimé.")
+            elif action == "lister-core":
+                if key != ("microphone", "goldaj"):
+                    return Reply(incoming, "Les Core Memories privées du créateur ne sont consultables que sur son micro ou sa PWA.")
+                memories = await asyncio.to_thread(self.store.list_for_account, key)
+                found = [item for item in memories
+                         if item["kind"] == "core_relationship" and item["scope"] == "person"][:10]
+                text = ("Aucune Core Memory relationnelle." if not found
+                        else "Core Memories relationnelles privées :\n"
+                        + "\n".join(f"{m['id']} : {m['summary']}" for m in found))
+            elif action == "supprimer-core":
+                if key != ("microphone", "goldaj"):
+                    return Reply(incoming, "Seul Goldaj via son micro ou sa PWA peut supprimer ces Core Memories.")
+                if not re.fullmatch(r"[0-9a-f]{32}", memory_id.lower()):
+                    return Reply(incoming, "Indique un identifiant valide de Core Memory relationnelle.")
+                memories = await asyncio.to_thread(self.store.list_for_account, key)
+                candidate = next((item for item in memories
+                                  if item["id"] == memory_id.lower()
+                                  and item["kind"] == "core_relationship"
+                                  and item["scope"] == "person"), None)
+                if candidate is None:
+                    text = "Souvenir relationnel introuvable ou déjà supprimé."
+                else:
+                    erased = await asyncio.to_thread(
+                        self.store.delete_memory, key, memory_id.lower())
+                    text = ("Core Memory relationnelle supprimée." if erased
+                            else "Je n'ai pas pu supprimer ce souvenir.")
             elif action == "activer":
                 await asyncio.to_thread(self.store.enable, key)
                 text = ("Mémoire personnelle activée pour ce compte. "
