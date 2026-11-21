@@ -38,8 +38,8 @@
 
 | Type | Vue | Objet | Nombre actuel |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Câblage r21, anomalies, mémoire explicite, quick wins et six évolutions économiques | 20 |
-| `REC` | [Recette](02-RECETTE.md) | Tests de validation sur machines et comptes réels des fonctionnalités **déjà implémentées** | 25 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 15 |
+| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, y compris cinq anciennes cartes DEV | 30 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 17 |
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 12 |
 | **Total** | | **Tâches uniques identifiées, dont les six évolutions économiques de la PR #34** | **74** |
@@ -47,6 +47,8 @@
 **Definition of Done officielle :** [lire les règles de clôture](DEFINITION_OF_DONE.md). Toute carte n'est **Done** que si les cinq exigences sont satisfaites, dont validation explicite par **Codex (tous ses modèles et sous-agents) OU le propriétaire**, **au moins un des deux**. L'intervention humaine n'est plus obligatoire si Codex a validé. La présence du code ou d'une CI verte ne clôture pas à elle seule une recette physique.
 
 Les sous-tâches de recette et les étapes matérielles restent séparées lorsqu'elles fournissent une preuve indépendante. Une anomalie constatée ouvre une carte `DEV` liée à `REC` ; pas de duplication du développement livré. Les fichiers thématiques sont **canoniques pour le détail et le statut de chaque carte** ; la présente vue fournit le classement global. Lorsqu'une carte change de priorité, mettre à jour le détail puis le rang ici.
+
+**Règle simple du propriétaire (21/11/2026) :** si une fonctionnalité est déjà développée et que seule son acceptation reste à faire, une **seule carte REC** porte le statut `À valider`. Pas de double suivi DEV Done / REC À valider. Anciens identifiants : `DEV-011 → REC-026`, `DEV-015 → REC-027`, `DEV-016 → REC-028`, `DEV-017 → REC-029`, `DEV-018 → REC-030`. Les cartes DEV encore à développer, bloquées ou Done restent inchangées.
 
 ## Deux jalons produit
 
@@ -85,7 +87,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 13 | REC-004 | A | Microphone PC réel | [REC](02-RECETTE.md) |
 | 14 | REC-005 | A | Isolation des sorties et confidentialité | [REC](02-RECETTE.md) |
 | 15 | DEV-004 | A | Masquer les réponses privées dans les sous-titres OBS WAV | [DEV](01-DEVELOPPEMENT.md) |
-| 16 | DEV-011 | A | Demande naturelle de souvenir ordinaire ; Jade décide seule des Core Memories | [DEV](01-DEVELOPPEMENT.md) |
+| 16 | REC-026 | A | Demande naturelle de souvenir ordinaire ; Jade décide seule des Core Memories | [REC](02-RECETTE.md) |
 | 17 | REC-008 | A | Commandes silence/reprise et interruption | [REC](02-RECETTE.md) |
 | 18 | REC-006 | A | PCM Discord progressif sous --all-channels | [REC](02-RECETTE.md) |
 | 19 | REC-007 | A | Repli WAV et absence de double diffusion | [REC](02-RECETTE.md) |
@@ -137,10 +139,10 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 60 | DEV-009 | A | Stabiliser le test micro synthétique avec Rubber Band | [DEV](01-DEVELOPPEMENT.md) |
 | 61 | DEV-013 | ECO | Contexte historique 24 h sélectif et curation mémoire par lots | [DEV](01-DEVELOPPEMENT.md) |
 | 62 | DEV-014 | ECO | Personnalité évolutive tirée des souvenirs autorisés | [DEV](01-DEVELOPPEMENT.md) |
-| 63 | DEV-015 | ECO | Participation sociale hybride locale et LLM optionnel | [DEV](01-DEVELOPPEMENT.md) |
-| 64 | DEV-016 | ECO | Initiatives spontanées sur événement sans relance si ignorée | [DEV](01-DEVELOPPEMENT.md) |
-| 65 | DEV-017 | ECO | Audio mobile PCM WebSocket et réponse progressive | [DEV](01-DEVELOPPEMENT.md) |
-| 66 | DEV-018 | ECO | VAD locale et annulation mobile | [DEV](01-DEVELOPPEMENT.md) |
+| 63 | REC-027 | ECO | Participation sociale hybride locale et LLM optionnel | [REC](02-RECETTE.md) |
+| 64 | REC-028 | ECO | Initiatives spontanées sur événement sans relance si ignorée | [REC](02-RECETTE.md) |
+| 65 | REC-029 | ECO | Audio mobile PCM WebSocket et réponse progressive | [REC](02-RECETTE.md) |
+| 66 | REC-030 | ECO | VAD locale et annulation mobile | [REC](02-RECETTE.md) |
 
 ### P2 · 8 tâches
 

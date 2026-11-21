@@ -2,6 +2,8 @@
 
 **Statut : ADOPTÉE par le propriétaire le 18 novembre 2026.** Applicable aux tâches du [backlog opérationnel](README.md) sur `develop` (`DEV`, `REC`, `OPS`, `ART`). Ne pas confondre cette règle avec les critères d'acceptation individuels d'une carte, ni avec le [catalogue des améliorations futures](../ameliorations/README.md).
 
+**Arbitrage du propriétaire du 21/11/2026 :** pour une fonctionnalité déjà implémentée dont seule la validation reste à faire, utiliser **une unique carte REC `À valider`** ; transférer l'ancienne carte DEV au lieu de dupliquer les statuts. Conserver les anciens ID comme références historiques et les résultats des tests déjà réalisés. Cette règle ne clôture pas les anomalies ou fonctionnalités non acceptées.
+
 ## Principe non négociable
 
 Une tâche est **Done** uniquement quand **les cinq conditions ci-dessous sont remplies**, chacune selon sa nature :
@@ -46,7 +48,7 @@ Une tâche est **Done** uniquement quand **les cinq conditions ci-dessous sont r
 | **À qualifier** | Périmètre, fait matériel ou défaut allégué à confirmer. |
 | **À faire** | Travail connu, non commencé ; prérequis éventuellement encore à préparer. |
 | **En cours** | Réalisation et tests engagés ; relever l'agent et la version. |
-| **À valider** | Pour DEV/OPS/ART : réalisation et preuves disponibles, acceptation attendue. **Pour REC non automatisable : recette manuelle à effectuer par le validateur**, même en l'absence de nouvelle preuve matérielle ; ce statut ne préjuge pas du résultat. Dans tous les cas, attend validation explicite de Codex ou du propriétaire, selon les preuves adaptées, avant Done. |
+| **À valider** | Pour une fonctionnalité à accepter, ce statut est porté **uniquement par une carte REC**. La recette manuelle ou sa décision reste à faire ; ne pas présumer un résultat positif. Aucun second statut DEV/REC en parallèle pour cette fonctionnalité. |
 | **Bloqué** | Dépendance réelle ou suspension explicite du propriétaire jusqu'à nouvel ordre ; consigner cause, portée et condition de reprise. Ce statut ne prouve pas un échec de test. |
 | **Done** | Les **cinq conditions** ci-dessus sont vérifiées et la preuve de validation est consignée. |
 | **Classée sans suite** | Cas exceptionnel pour tâche devenue sans objet/abandonnée après justification ; **ne signifie pas Done**. |
