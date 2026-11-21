@@ -19,6 +19,8 @@
 
 ## Definition of Done et validation des tâches
 
+**Routage REC (21/11/2026) :** en priorité, l'agent exécute les recettes automatisables. Si un contrôle de bout en bout ne peut pas être réalisé automatiquement dans l'environnement autorisé, placer directement la carte **`À valider`** en précisant l'essai manuel et les limites ; elle n'est ni exécutée, ni approuvée du seul fait de ce reclassement. Ne pas masquer sous `À valider` les vrais blocages ou les anomalies. Les conditions de `Done` sont inchangées.
+
 La [DoD adoptée](../backlog/DEFINITION_OF_DONE.md) vaut pour toute tâche **DEV, REC, OPS ou ART**. Elle exige cinq conditions : **réalisation complète**, **tests/preuves pertinents**, **validation positive explicite par Codex OU le propriétaire**, **intégration dans develop ou application sur l'environnement concerné**, **traçabilité/documentation impactée**. Il ne faut **ni double approbation ni validation humaine systématique**.
 
 **Codex** comprend ses modèles Terra/Astra/Sol et ses sous-agents, non plusieurs systèmes d'approbation obligatoires. La passe de vérification doit être **explicite et distincte** de la réalisation ; un agent Codex auteur peut également réaliser cette vérification, une contre-revue indépendante restant recommandée seulement pour les tâches risquées. **ChatGPT en mode chat n'est pas une validation Codex implicite.** Un propriétaire peut valider directement à partir des résultats suffisants. Pour un lot, citer explicitement chaque ID validé et les preuves correspondantes.

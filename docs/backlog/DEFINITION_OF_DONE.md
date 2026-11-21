@@ -27,10 +27,12 @@ Une tâche est **Done** uniquement quand **les cinq conditions ci-dessous sont r
 | **OPS — Installation/exploitation** | Configuration, opération ou analyse effectivement effectuée et résultat démontré ; secrets conservés hors du dépôt | Commande/vérification non sensible, état avant/après, preuve d'intégrité et de non-régression si pertinente |
 | **ART — Production 2D** | Source, rig, motion ou export demandé(e) produit(e), conservé(e) et utilisable conformément aux critères de la carte | Rendu observé, validation native Cubism/VTS quand requise, inventaire d'assets, version du modèle, captures non sensibles ou résultat équivalent |
 
+**Règle de routage des recettes adoptée le 21 novembre 2026 :** pour les cartes `REC`, tenter ou planifier d'abord la recette automatisée lorsque les scénarios sont automatisables dans un environnement autorisé. Si une recette nécessite inévitablement une observation humaine, du matériel ou des comptes réels impossibles à contrôler automatiquement pour cette validation, mettre **directement `À valider`** sans créer une attente fictive `À faire`. Préciser les scénarios à réaliser par le validateur, le motif du routage, les tests automatiques éventuellement disponibles et les limites. **`À valider` indique alors une action de recette manuelle encore à réaliser, pas une recette déjà exécutée ni une approbation.** Ne jamais substituer ce routage à la correction d'un bug ou au déblocage d'un prérequis. Une partie automatisable restante peut être exécutée sans créer de seconde carte. Les cinq conditions de `Done` restent inchangées.
+
 **Cas particuliers** :
 - Une tâche de **recette en attente** n'annule pas le statut « fonctionnalité codée » sur `develop` : seule la carte de recette reste ouverte.
 - Si la carte **conditionnelle** concerne une anomalie non reproductible/absente, la requalifier et la **classer sans suite avec justification** ; ne pas inventer une correction et ne pas marquer « Done » comme si du développement avait été réalisé.
-- Si un critère obligatoire ne peut pas être testé à cause de l'environnement, du SDK, du compte, d'un appareil ou d'une autorisation, conserver la tâche **ouverte ou Bloquée**, préciser qui/quoi débloque. Une CI verte ne remplace pas la recette matérielle prévue.
+- Si le scénario `REC` nécessite une vérification humaine non automatisable, laisser la carte **ouverte en `À valider`** avec le test manuel attendu et les limites de preuve. Si une dépendance indispensable empêche même sa réalisation manuelle, utiliser **Bloqué** et documenter le déblocage. Une CI verte ne remplace pas la recette matérielle prévue.
 - Si le périmètre ou les critères doivent changer, le consigner/faire arbitrer avant clôture ; ne pas transformer silencieusement un échec en réussite.
 - La vérification indépendante est **recommandée** pour les risques de confidentialité, de données, de coût, de déploiement ou les changements structurels, mais **pas une sixième condition obligatoire**.
 - Un accord pour classer Done n'est **pas** une autorisation implicite d'activer un microphone, d'appeler une API payante, de supprimer des fichiers/branches ou de déployer vers main.
@@ -42,7 +44,7 @@ Une tâche est **Done** uniquement quand **les cinq conditions ci-dessous sont r
 | **À qualifier** | Périmètre, fait matériel ou défaut allégué à confirmer. |
 | **À faire** | Travail connu, non commencé ; prérequis éventuellement encore à préparer. |
 | **En cours** | Réalisation et tests engagés ; relever l'agent et la version. |
-| **À valider** | Réalisation et vérifications disponibles ; attend **la validation explicite d'au moins un des deux : Codex ou propriétaire**, et, si nécessaire, la dernière intégration ou documentation avant Done. |
+| **À valider** | Pour DEV/OPS/ART : réalisation et preuves disponibles, acceptation attendue. **Pour REC non automatisable : recette manuelle à effectuer par le validateur**, même en l'absence de nouvelle preuve matérielle ; ce statut ne préjuge pas du résultat. Dans tous les cas, attend validation explicite de Codex ou du propriétaire, selon les preuves adaptées, avant Done. |
 | **Bloqué** | Dépendance réelle empêche la suite ; enregistrer cause, impact et prochain déblocage. Peut survenir à toute phase. |
 | **Done** | Les **cinq conditions** ci-dessus sont vérifiées et la preuve de validation est consignée. |
 | **Classée sans suite** | Cas exceptionnel pour tâche devenue sans objet/abandonnée après justification ; **ne signifie pas Done**. |

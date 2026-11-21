@@ -8,7 +8,7 @@
 | ---: | --- | --- |
 | **1** | **OPS-001** | Sur le vrai PC Windows, vérifier `git status`, travaux locaux des agents, chemins sur D:, processus Jade et fichiers privés **avant toute synchronisation** ; ne rien effacer ni écraser. |
 | **2** | **OPS-002, OPS-003, OPS-004, OPS-005, OPS-006** | Mettre à jour `develop` en avance rapide, vérifier Git LFS, dépendances, launcher installé et configuration privée, puis exécuter les tests et `--preflight --all-channels`. Ne pas afficher les secrets ni lancer des appels payants sans autorisation. |
-| **3** | **REC-001 à REC-010, puis REC-011 à REC-025 selon dépendances** | Faire la **recette matérielle réelle** : Discord écrit/vocal, micro, streaming/repli audio et confidentialité en premier ; ensuite Twitch, SQLite, Android/Tailscale/SDK, r20, latence/coût. Utiliser le [format de preuve rapide](02-RECETTE.md#compte-rendu-de-recette-rapide) ; les tests simulés de CI ne suffisent pas. Une fuite constatée conditionne **DEV-003**, une incompatibilité Web r20 constatée conditionne **DEV-002**. |
+| **3** | **REC ouvertes, selon dépendances** | **Automatiser ce qui peut l'être** (notamment démarrage, mémoire et restauration) ; pour les recettes nécessitant l'observation humaine / des comptes réels non pilotables, appliquer la règle du 21/11 : **passage direct `À valider`**, sans déclarer les essais effectués. Exécuter les scénarios manuels sur la vraie instance et documenter les résultats avec le [format de preuve rapide](02-RECETTE.md#compte-rendu-de-recette-rapide). Un défaut confirmé ouvre ou maintient le DEV lié. |
 | **4** | **OPS-013, OPS-014** | Nettoyer les **branches Git distantes** via une session Codex ayant les permissions : [audit du 18 novembre](../handbook/BRANCH_MAINTENANCE.md#audit-cible-du-18-novembre-2026). **14 branches ancêtres vérifiées**, 8 divergentes à examiner, 1 résultat indéterminé. Recontrôler pointes et PR avant chaque suppression ; ne jamais supprimer `develop`, `main` ou du travail unique. |
 | **5** | **OPS-017** | Examiner avec droits d'administration la **protection minimale de `main`** (par exemple éviter suppression et force-push accidentels), sans imposer automatiquement une PR obligatoire et **sans modifier la visibilité publique**. Confirmer le réglage souhaité avec le propriétaire avant toute mutation de gouvernance ; le connecteur chat n'a pas l'action d'administration. |
 | **6** | **OPS-015, OPS-016** | Sur D: et les objets Git LFS réels, examiner redondances artistiques, fichiers historiquement sensibles et provenance/licences ; éviter les suppressions sans preuve et toute exposition de secrets. |
@@ -153,6 +153,8 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 
 ## Workflow et statut canonique
 
+**Règle de tri des recettes (décision propriétaire du 21/11/2026) :** automatisable → `À faire` / `En cours` puis preuves ; non automatisable dans l'environnement autorisé → **`À valider` directement** avec protocole manuel et limites renseignés. `À valider` n'affirme pas une recette réussie et ne vaut jamais `Done`. Les dépendances réellement bloquantes restent `Bloqué`. [Règle détaillée](DEFINITION_OF_DONE.md#application-par-type-de-carte).
+
 La [Definition of Done officielle](DEFINITION_OF_DONE.md) est obligatoire sur **DEV, REC, OPS et ART**. La colonne **Statut** de chaque vue thématique est la **seule source de vérité opérationnelle du statut** ; ce tableau central est une vue de priorités. Chaque carte conserve aussi une *situation initiale* (à recetter, besoin de PC, conditionnelle, etc.), qui n'est pas son avancement.
 
 | Statut | Règle |
@@ -160,7 +162,7 @@ La [Definition of Done officielle](DEFINITION_OF_DONE.md) est obligatoire sur **
 | **À qualifier** | Fait matériel, périmètre ou anomalie encore à établir. |
 | **À faire** | Travail recensé mais non démarré ; prérequis parfois manquants. |
 | **En cours** | Réalisation ou tests réellement engagés. |
-| **À valider** | Réalisation et preuves disponibles ; validation Codex **OU** propriétaire attendue, ainsi que l'intégration/traçabilité encore applicable. |
+| **À valider** | Validation Codex **OU** propriétaire attendue ; pour les cartes `REC` non automatisables, **test manuel à exécuter** et décision attendue, sans prétendre disposer déjà des preuves. |
 | **Bloqué** | Dépendance empêchant de progresser ; consigner le blocage et son déblocage prévu. |
 | **Done** | Cinq conditions de la [DoD](DEFINITION_OF_DONE.md) réunies, dont validation positive par au moins un des deux validateurs autorisés. |
 | **Classée sans suite** | Cas devenu sans objet, abandonné ou non reproductible, avec justification ; ne vaut **pas** Done. |
