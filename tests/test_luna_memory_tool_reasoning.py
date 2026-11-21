@@ -322,12 +322,15 @@ def test_dialogue_preserves_intent_with_asynchronous_tool():
     assert seen == ['{"kind":"ordinary"}']
 
 
-def test_explicit_human_memory_request_is_queued_without_waiting_for_write():
+def test_explicit_goldaj_memory_request_is_queued_without_waiting_for_write():
     release = threading.Event()
     called = threading.Event()
     writes = []
 
     class Store:
+        def is_goldaj(self, key):
+            return key == ("microphone", "goldaj")
+
         def account(self, key):
             return "verified-person"
 
@@ -337,8 +340,7 @@ def test_explicit_human_memory_request_is_queued_without_waiting_for_write():
             release.wait(timeout=2)
             return "created"
 
-    store = Store()
-    memory = MemoryService(store, backend=object())
+    memory = MemoryService(Store(), backend=object())
     incoming = Incoming("mobile", "Goldaj",
                         "Retiens que je commence le piano.",
                         channel="private", force_reply=True,
@@ -361,11 +363,13 @@ def test_explicit_human_memory_request_is_queued_without_waiting_for_write():
     assert writes[0][1]["expected_person_id"] == "verified-person"
 
 
-
 def test_goldaj_cannot_force_core_even_with_async_memory():
     writes = []
 
     class Store:
+        def is_goldaj(self, key):
+            return key == ("microphone", "goldaj")
+
         def account(self, key):
             return "owner-profile"
 
@@ -391,13 +395,13 @@ def test_goldaj_cannot_force_core_even_with_async_memory():
     assert writes[0]["expected_person_id"] == "owner-profile"
 
 
-def test_anonymous_user_cannot_queue_personal_memory():
+def test_anonymous_user_suggestion_reaches_dialogue_without_direct_write():
     class Store:
-        def account(self, key):
-            return None
+        def is_goldaj(self, key):
+            raise AssertionError("No owner lookup for anonymous messages")
 
         def put_requested_ordinary(self, key, **kwargs):
-            raise AssertionError("No write without active identity")
+            raise AssertionError("Anonymous message must never force an insert")
 
     memory = MemoryService(Store(), backend=object())
     incoming = Incoming("discord", "Anonymous",
@@ -406,14 +410,117 @@ def test_anonymous_user_cannot_queue_personal_memory():
 
     async def run():
         try:
-            reply = await memory.command(incoming)
-            assert "ne peux mémoriser" in reply.text or "inactive" in reply.text
+            assert await memory.command(incoming) is None
             assert not memory._explicit_writes
         finally:
             await memory.close()
 
     asyncio.run(run())
 
+
+def test_nonowner_verified_discord_request_is_only_a_suggestion():
+    """Never force an L2 insert because any Discord user used an imperative."""
+    import json
+
+    writes = []
+
+    class Store:
+        def is_goldaj(self, key):
+            return False
+
+        def account(self, key):
+            return "other-person"
+
+        def put_requested_ordinary(self, *args, **kwargs):
+            raise AssertionError("Non-owner cannot force a level-2 write")
+
+        def put(self, key, **kwargs):
+            writes.append((key, kwargs))
+            return True
+
+    memory = MemoryService(Store(), backend=object())
+    incoming = Incoming(
+        "discord", "Someone", "Retiens que je commence le piano.",
+        account_id="12345678901234567", channel="private", private_channel=True,
+        force_reply=True, message_id="other-user-request")
+    payload = json.dumps({
+        "kind": "ordinary",
+        "summary": "Cette personne apprend le piano.",
+        "significance": "Jade choisit ce souvenir librement.",
+    }, ensure_ascii=False)
+
+    async def run():
+        try:
+            # No direct response or write. Jade receives the request normally.
+            assert await memory.command(incoming) is None
+            assert not memory._explicit_writes
+            action = await memory.prepare_memory_action(incoming)
+            assert action is not None
+            # Only an actual autonomous tool invocation can write.
+            outcome = await action(payload)
+            assert outcome["status"] == "enregistré"
+        finally:
+            await memory.close()
+
+    asyncio.run(run())
+    assert len(writes) == 1
+    assert writes[0][1]["expected_person_id"] == "other-person"
+
+
+def test_spoofed_goldaj_display_name_has_no_owner_privilege():
+    class Store:
+        def is_goldaj(self, key):
+            return False
+
+        def put_requested_ordinary(self, *args, **kwargs):
+            raise AssertionError("Display name cannot grant owner memory rights")
+
+    memory = MemoryService(Store(), backend=object())
+    incoming = Incoming(
+        "discord", "Goldaj", "Retiens que je commence le piano.",
+        account_id="23456789012345678", channel="guild",
+        force_reply=True, message_id="spoofed-name")
+    async def run():
+        assert await memory.command(incoming) is None
+        assert not memory._explicit_writes
+    asyncio.run(run())
+
+
+def test_goldaj_verified_linked_discord_account_can_force_l2(tmp_path):
+    """Only proven identity linkage, not nickname matching, grants ownership."""
+    from src.jade_runtime.memory_store import MemoryStore
+
+    store = MemoryStore(tmp_path / "memory-owner-link.sqlite3")
+    owner = ("microphone", "goldaj")
+    discord = ("discord", "34567890123456789")
+    other = ("discord", "45678901234567890")
+    store.enable(owner)
+    store.enable(discord)
+    store.enable(other)
+    assert store.is_goldaj(owner)
+    assert not store.is_goldaj(discord)
+    assert not store.is_goldaj(other)
+
+    code = store.begin_link(owner, target=discord)
+    assert store.complete_link(discord, code)
+    assert store.is_goldaj(discord)
+    assert not store.is_goldaj(other)
+
+    memory = MemoryService(store, backend=object())
+    incoming = Incoming("discord", "Not-important-nickname",
+                        "Retiens que je commence le piano.",
+                        account_id=discord[1], channel="private",
+                        private_channel=True, force_reply=True,
+                        message_id="owner-discord")
+    async def run():
+        try:
+            reply = await memory.command(incoming)
+            assert reply is not None and "enregistré" in reply.text
+        finally:
+            await memory.close()
+    asyncio.run(run())
+    assert any(m["summary"] == "je commence le piano."
+               for m in store.list_for_account(discord))
 
 
 def test_log_event_accepts_tool_name_without_crashing(monkeypatch):
