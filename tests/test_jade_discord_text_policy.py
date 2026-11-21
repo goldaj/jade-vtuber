@@ -190,6 +190,25 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(connector.policy.channels["10"].last_reply_author, 7)
         self.assertIn(700, connector.policy.channels["10"].sent_ids)
 
+    async def test_dm_reply_uses_only_verified_incoming_channel_on_cache_miss(self):
+        target = SimpleNamespace(id=900, send=AsyncMock(
+            return_value=SimpleNamespace(id=42)))
+        connector = DiscordText("test", AsyncMock(), send_enabled=True)
+        connector.client = SimpleNamespace(get_channel=lambda channel_id: None)
+        received = parse_discord_message(msg(
+            "Bonjour Jade", guild=None, channel=900, author_id=41))
+        self.assertTrue(received.private_channel)
+        connector._remember_dm_channel(received, target)
+        fake = SimpleNamespace(AllowedMentions=SimpleNamespace(none=lambda: "none"))
+        with patch.dict("sys.modules", {"discord": fake}):
+            self.assertTrue(await connector.send_chat("900", "Bonjour."))
+            self.assertFalse(await connector.send_chat("901", "Interdit."))
+        target.send.assert_awaited_once()
+        self.assertEqual(len(connector._dm_channels), 1)
+        connector._remember_dm_channel(parse_discord_message(
+            msg("Message en salon", guild=1, channel=901)), target)
+        self.assertEqual(len(connector._dm_channels), 1)
+
     async def test_text_reply_can_span_multiple_discord_messages(self):
         target = SimpleNamespace(send=AsyncMock(return_value=SimpleNamespace(id=99)))
         fake = SimpleNamespace(AllowedMentions=SimpleNamespace(none=lambda: "disabled"))

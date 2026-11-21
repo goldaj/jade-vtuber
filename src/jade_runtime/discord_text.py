@@ -6,6 +6,7 @@ alone never joins voice channels or records other users.
 import asyncio
 import logging
 import re
+from collections import OrderedDict
 from dataclasses import replace
 
 from .messages import Incoming
@@ -47,8 +48,20 @@ class DiscordText:
         self.social_policy = social_policy
         self.initiatives = initiatives
         self.dropped = 0
+        # A real inbound DM provides an authenticated reply destination.
+        # Cache only verified DM channels and bound the reference count.
+        self._dm_channels = OrderedDict()
         self.policy = DiscordTextPolicy(bot_name=bot_name, auto_rate=auto_rate,
                                         cooldown_seconds=cooldown_seconds)
+
+    def _remember_dm_channel(self, incoming: Incoming, channel) -> None:
+        if (not incoming.private_channel
+                or str(getattr(channel, "id", "")) != incoming.channel):
+            return
+        self._dm_channels[incoming.channel] = channel
+        self._dm_channels.move_to_end(incoming.channel)
+        while len(self._dm_channels) > 128:
+            self._dm_channels.popitem(last=False)
 
     async def connect_forever(self):
         try:
@@ -121,6 +134,7 @@ class DiscordText:
                 incoming = parse_discord_message(
                     message, own_user_id=self.user.id if self.user else None)
                 if incoming is not None:
+                    parent._remember_dm_channel(incoming, message.channel)
                     if (parent.initiatives is not None
                             and incoming.account_id
                             and getattr(message.author, "bot", True) is False):
@@ -242,6 +256,7 @@ class DiscordText:
                 if self.voice_bridge is not None:
                     await asyncio.wait_for(self.voice_bridge.close(), timeout=4)
             finally:
+                self._dm_channels.clear()
                 await self.client.close()
 
     async def send_chat(self, channel: str, text: str, *,
@@ -253,6 +268,8 @@ class DiscordText:
         except ValueError:
             return False
         target = self.client.get_channel(channel_id)
+        if target is None:
+            target = self._dm_channels.get(str(channel_id))
         if target is None:
             return False  # Never guess a destination or fetch unknown IDs.
         import discord
