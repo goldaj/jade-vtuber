@@ -16,8 +16,8 @@ from src.jade_runtime.memory_store import (
 from src.jade_runtime.memory_transfer import export_memory, import_memory
 
 OWNER = ("microphone", "goldaj")  # Synthetic identity, no audio hardware used.
-ALICE = ("discord", "synthetic-alice")
-BOB = ("discord", "synthetic-bob")
+ALICE = ("discord", "20121")
+BOB = ("discord", "20122")
 
 
 class MemoryAcceptance(unittest.TestCase):
