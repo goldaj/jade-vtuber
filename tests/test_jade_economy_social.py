@@ -80,12 +80,23 @@ class SpontaneousEngagement(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(await self.scheduler.voice_join(
             *join(14), channel_id=77))
         self.time += 61
-        self.assertIsNone(await self.scheduler.voice_join(*event, channel_id=77),
-                          "Same join event cannot be billed twice after cooldown")
+        self.assertIsNone(await self.scheduler.voice_join(*join(14), channel_id=77),
+                          "Even a new join cannot restart Jade if no one answered")
         self.assertTrue(self.scheduler.human_replied("77", verified=True))
         self.assertFalse(self.scheduler.waiting_for_reply("77"))
         self.assertIsNotNone(await self.scheduler.voice_join(
             *join(14), channel_id=77))
+        self.assertEqual(self.guard.reserved_usd("initiative"), Decimal(".20"))
+
+    async def test_room_empty_rearms_new_visit_without_human_reply(self):
+        member = join(21)
+        first = await self.scheduler.voice_join(*member, channel_id=77)
+        self.assertIsNotNone(first)
+        self.assertIsNone(await self.scheduler.voice_join(*member, channel_id=77))
+        self.scheduler.room_emptied("77")
+        self.assertFalse(self.scheduler.waiting_for_reply("77"))
+        second = await self.scheduler.voice_join(*member, channel_id=77)
+        self.assertIsNotNone(second)
         self.assertEqual(self.guard.reserved_usd("initiative"), Decimal(".20"))
 
     async def test_no_self_followup_without_response(self):
