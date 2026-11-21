@@ -1,7 +1,8 @@
 """Private, durable USD reservations for optional API calls.
 
 Reservations are conservative estimates, not the provider's final invoice.
-Default limits of zero disable paid initiatives and classifier calls.
+Zero dollar limits allow initiatives without a monetary cap, but do disable
+optional paid social classification by default.
 """
 from __future__ import annotations
 from datetime import datetime
@@ -9,9 +10,15 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 import hashlib
 import sqlite3
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-_PARIS = ZoneInfo("Europe/Paris")
+# Windows images without the optional IANA tzdata package do not expose
+# Europe/Paris. The user's Windows clock should then be configured for Paris.
+# CI installs tzdata for deterministic DST regression tests.
+try:
+    _PARIS = ZoneInfo("Europe/Paris")
+except ZoneInfoNotFoundError:
+    _PARIS = datetime.now().astimezone().tzinfo
 
 
 def money(value):

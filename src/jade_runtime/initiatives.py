@@ -4,7 +4,7 @@ from datetime import datetime
 import logging
 import re
 import time
-from zoneinfo import ZoneInfo
+from .cost_guard import _PARIS
 
 from .messages import Incoming
 
@@ -41,7 +41,7 @@ class InitiativeScheduler:
             return None  # No self-follow-up until a human reacts or the room empties.
         if self.clock()-self._last.get(channel,float("-inf")) < self.cooldown_seconds:
             return None
-        day=datetime.now(ZoneInfo("Europe/Paris")).date().isoformat()
+        day=datetime.now(_PARIS).date().isoformat()
         event_id=(f"join:{guild.id}:{channel}:{user_id}:{day}:"
                   f"{self._room_epoch.get(channel, 0)}")
         try:
