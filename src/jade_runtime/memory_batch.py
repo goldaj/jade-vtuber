@@ -39,7 +39,16 @@ class MemoryBatcher:
     def schedule(self, key, scope, incoming, reply) -> bool:
         if self._closed or not candidate_is_meaningful(incoming.text):
             return False
-        bucket = (key, scope)
+        # Pin the exact consenting profile BEFORE queueing, not when the
+        # delayed worker eventually starts: erasure + re-enrollment cannot
+        # resurrect a prior person\u0027s conversation.
+        try:
+            person_id = self.store.account(key)
+        except Exception:
+            return False
+        if not person_id:
+            return False
+        bucket = (key, scope, person_id)
         if bucket not in self._queues:
             if len(self._queues) >= self.max_workers:
                 return False
@@ -65,7 +74,7 @@ class MemoryBatcher:
                 LOG.warning("Memory batch rejected; no personal contents logged")
 
     async def _worker(self, bucket):
-        key, scope = bucket
+        key, scope, pinned_person = bucket
         try:
             while not self._closed:
                 event = self._wake[bucket]
@@ -78,17 +87,17 @@ class MemoryBatcher:
                 items = pending[:self.batch_size]
                 del pending[:len(items)]
                 if items:
-                    await self._curate(key, scope, items)
+                    await self._curate(key, scope, items, pinned_person)
                 if not pending:
                     break
         finally:
             self._queues.pop(bucket, None)
             self._wake.pop(bucket, None)
 
-    async def _curate(self, key, scope, items):
+    async def _curate(self, key, scope, items, pinned_person):
         try:
             person_id = await asyncio.to_thread(self.store.account, key)
-            if not person_id:
+            if person_id != pinned_person:
                 return
             prompt_items = []
             for index, (incoming, reply) in enumerate(items):
