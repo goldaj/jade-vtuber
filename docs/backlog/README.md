@@ -34,11 +34,11 @@
 
 | Type | Vue | Objet | Nombre actuel |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Câblage r21, anomalies, mémoire explicite, quick wins et six évolutions économiques | 19 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Câblage r21, anomalies, mémoire explicite, quick wins et six évolutions économiques | 20 |
 | `REC` | [Recette](02-RECETTE.md) | Tests de validation sur machines et comptes réels des fonctionnalités **déjà implémentées** | 25 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 17 |
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 12 |
-| **Total** | | **Tâches uniques identifiées, dont les six évolutions économiques de la PR #34** | **73** |
+| **Total** | | **Tâches uniques identifiées, dont les six évolutions économiques de la PR #34** | **74** |
 
 **Definition of Done officielle :** [lire les règles de clôture](DEFINITION_OF_DONE.md). Toute carte n'est **Done** que si les cinq exigences sont satisfaites, dont validation explicite par **Codex (tous ses modèles et sous-agents) OU le propriétaire**, **au moins un des deux**. L'intervention humaine n'est plus obligatoire si Codex a validé. La présence du code ou d'une CI verte ne clôture pas à elle seule une recette physique.
 
@@ -138,7 +138,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 65 | DEV-017 | ECO | Audio mobile PCM WebSocket et réponse progressive | [DEV](01-DEVELOPPEMENT.md) |
 | 66 | DEV-018 | ECO | VAD locale et annulation mobile | [DEV](01-DEVELOPPEMENT.md) |
 
-### P2 · 7 tâches
+### P2 · 8 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
@@ -149,6 +149,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 71 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
 | 72 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
 | 73 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
+| 74 | DEV-020 | Transverse | Choisir une branche Git et redéployer/redémarrer Jade depuis l'application mobile | [DEV](01-DEVELOPPEMENT.md) |
 
 ## Workflow et statut canonique
 
