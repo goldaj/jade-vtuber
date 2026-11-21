@@ -1,0 +1,27 @@
+name: Jade economic interaction offline tests
+on:
+  pull_request:
+    paths:
+      - "src/jade_runtime/**"
+      - "src/utility/**"
+      - "main.py"
+      - "tests/**"
+      - ".github/workflows/jade-economy-tests.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile Python
+        run: python -m compileall -q src main.py tests
+      - name: Offline unit and contract tests
+        run: python -m unittest discover -s tests -v
