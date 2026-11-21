@@ -190,7 +190,10 @@ class DiscordText:
                 if parent.initiatives is not None and self._gateway_available:
                     source = await parent.initiatives.voice_join(
                         member, before, after, channel_id=bridge.channel_id,
-                        own_bot_id=own_bot_id)
+                        own_bot_id=own_bot_id,
+                        voice_session_id=(bridge.session_id
+                                          if getattr(bridge, "connection", None) is not None
+                                          else ""))
                     if source is not None:
                         try:
                             await parent.on_message(source)
