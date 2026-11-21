@@ -49,7 +49,7 @@ class IntentParsingTests(unittest.TestCase):
         self.assertEqual(parse_reply("[INTENT=excited] Bonjour.").text, "Bonjour.")
         self.assertEqual(parse_reply("[INTENT=excited] Bonjour.").intent, "neutral")
         self.assertEqual(parse_reply("[une annotation normale] Bonjour.").text,
-                         "[une annotation normale] Bonjour.")
+                         "Bonjour.")
 
     def test_second_tag_never_reaches_visible_or_spoken_text(self):
         raw = "[INTENT:playful] Salut ! [INTENT:tender] Bravo."
@@ -84,12 +84,32 @@ class IntentParsingTests(unittest.TestCase):
         spoken = "".join(parser.feed(char) for char in raw) + parser.finish()
         self.assertEqual(spoken, "Un exemple, rien de plus.")
 
-    def test_no_valid_intent_preserves_ordinary_brackets(self):
-        for raw in ("[playful] Bonjour.", "[une annotation normale] Bonjour.",
-                    "Bonjour [entre crochets]."):
+    def test_no_valid_intent_still_removes_every_bracket_group(self):
+        cases = (
+            ("[playful] Bonjour.", "Bonjour."),
+            ("[une annotation normale] Bonjour.", "Bonjour."),
+            ("Bonjour [entre crochets].", "Bonjour."),
+            ("Bonjour [rires] !", "Bonjour !"),
+            ("Je [souris] suis là.", "Je suis là."),
+            ("[[rires]] Bonjour.", "Bonjour."),
+            ("[INTENT:unknown] [excited] Bonjour", "Bonjour"),
+            ("[INTENT=excited] Bonjour.", "Bonjour."),
+            ("Bonjour [rires", "Bonjour"),
+        )
+        for raw, expected in cases:
             with self.subTest(raw=raw):
-                self.assertEqual(parse_reply(raw).text, raw)
-                self.assertEqual(parse_reply(raw).intent, "neutral")
+                self.assertEqual((parse_reply(raw).intent, parse_reply(raw).text),
+                                 ("neutral", expected))
+                for cut in range(len(raw) + 1):
+                    parser = IntentStreamParser()
+                    visible = (parser.feed(raw[:cut]) + parser.feed(raw[cut:])
+                               + parser.finish())
+                    self.assertEqual((parser.intent, visible.strip()),
+                                     ("neutral", expected))
+                parser = IntentStreamParser()
+                visible = "".join(parser.feed(char) for char in raw) + parser.finish()
+                self.assertEqual((parser.intent, visible.strip()),
+                                 ("neutral", expected))
 
     def test_duplicate_nested_and_stage_directions_all_split_positions(self):
         cases = (
@@ -182,6 +202,42 @@ class IntentDialogueTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(announced, ["playful"])
         self.assertFalse(any("INTENT" in s for s in captured))
         self.assertEqual(dialogue.history[self.incoming().session][-1]["content"], reply.text)
+
+    async def test_missing_intent_cleans_text_for_stream_and_history(self):
+        announced = []
+        spoken = []
+
+        class Backend:
+            async def complete_stream(self, messages):
+                for fragment in ("Coucou ", "[ri", "res] !", " Encore un essai."):
+                    yield fragment
+
+        dialogue = Dialogue(Backend(), "Jade")
+        reply = await dialogue.respond(
+            self.incoming(), on_sentence=lambda s: self._emit(spoken, s),
+            on_intent=announced.append,
+        )
+        self.assertEqual((reply.intent, reply.text),
+                         ("neutral", "Coucou ! Encore un essai."))
+        self.assertEqual(announced, ["neutral"])
+        self.assertEqual(" ".join(spoken).strip(), reply.text)
+        self.assertEqual(
+            dialogue.history[self.incoming().session][-1]["content"],
+            reply.text,
+        )
+
+    async def test_missing_intent_cleans_text_for_nonstream_and_history(self):
+        class Backend:
+            async def complete(self, messages):
+                return "[sourire] Coucou [rires] !"
+
+        dialogue = Dialogue(Backend(), "Jade")
+        reply = await dialogue.respond(self.incoming())
+        self.assertEqual((reply.intent, reply.text), ("neutral", "Coucou !"))
+        self.assertEqual(
+            dialogue.history[self.incoming().session][-1]["content"],
+            reply.text,
+        )
 
     @staticmethod
     async def _emit(target, sentence):

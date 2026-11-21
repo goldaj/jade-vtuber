@@ -55,12 +55,12 @@ curious for interest or questions, tender for rare shy affection,
 reassuring for comfort, serious for weighty matters, neutral otherwise.
 The tag is metadata only and is removed before delivery. Never include it
 in speech, visible text, quotes, code or the reply body. Do not invent labels.
+Do not include any other bracketed stage direction such as [playful] or [rires].
 Never add a tender or familial phrase merely to justify an intention.
 For mixed moods choose the predominant intention. Keep the existing persona.
 """
 
 _INTENT_TAG = re.compile(r"\[\s*intent\s*:\s*([a-z]+)\s*\]", re.I | re.ASCII)
-_SUSPECT = re.compile(r"^\[\s*intent\b", re.I | re.ASCII)
 _ANY_INTENT = re.compile(r"\[\s*intent\b", re.I | re.ASCII)
 _MAX_HEAD = 128
 
@@ -82,28 +82,25 @@ class IntentReply:
 
 
 class IntentStreamParser:
-    """Extract one leading intent, then remove all bracketed stage directions.
+    """Extract one leading intent; never publish bracketed annotations.
 
-    Leading groups are buffered: [playful] [INTENT:curious] can still select
-    curious. Without a valid intent, ordinary brackets remain literal. Once
-    selected, nested, repeated and unfinished annotations are held back even
-    when the model stream splits them between individual characters.
+    Leading groups are buffered: [playful] [INTENT:curious] selects curious.
+    Without any valid intent, neutral is used and brackets are STILL removed.
+    Nested, repeated and unfinished groups are held back across stream chunks.
     """
 
     def __init__(self):
         self.intent = "neutral"
         self.resolved = False
-        self._selected = False
         self._head = ""
-        self._body_pending = ""
         self._bracket_depth = 0
         self._bracket_sample = ""
         self._gap = ""
         self._removed = False
         self._has_visible = False
 
-    def _clean_selected(self, chunk: str, *, final=False) -> str:
-        """Discard every balanced bracket group, with bounded nested state."""
+    def _visible_body(self, chunk: str, *, final=False) -> str:
+        """Discard bracket groups regardless of whether an intent was found."""
         visible = []
         for char in chunk:
             if char == "[":
@@ -146,36 +143,6 @@ class IntentStreamParser:
             self._gap = ""
         return "".join(visible)
 
-    def _visible_body(self, chunk: str, *, final=False) -> str:
-        if self._selected:
-            return self._clean_selected(chunk, final=final)
-        # No valid leading intent: retain literal brackets, but still suppress
-        # legacy/malformed INTENT metadata as before.
-        pending = self._body_pending + chunk
-        self._body_pending = ""
-        visible = []
-        while pending:
-            start = pending.find("[")
-            if start < 0:
-                visible.append(pending)
-                break
-            visible.append(pending[:start])
-            pending = pending[start:]
-            close = pending.find("]")
-            if close < 0:
-                if _SUSPECT.match(pending):
-                    if final or len(pending) > _MAX_HEAD:
-                        raise ValueError("unfinished inline intent metadata")
-                if not final and len(pending) <= _MAX_HEAD:
-                    self._body_pending = pending
-                else:
-                    visible.append(pending)
-                break
-            candidate = pending[:close + 1]
-            if not _SUSPECT.match(candidate):
-                visible.append(candidate)
-            pending = pending[close + 1:]
-        return "".join(visible)
 
     def feed(self, chunk: str) -> str:
         if not isinstance(chunk, str):
@@ -215,7 +182,6 @@ class IntentStreamParser:
             tag = _INTENT_TAG.search(group)
             if tag is not None and tag.group(1).lower() in INTENTS:
                 self.intent = tag.group(1).lower()
-                self._selected = True
                 break
             cursor = end + 1
             if len(self._head) > _MAX_HEAD:
