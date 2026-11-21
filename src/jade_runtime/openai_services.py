@@ -21,9 +21,14 @@ class OpenAIServices:
 
     async def close(self):
         try:
-            await self._stream_pool.close()
+            # Finish any scheduled local SQLite writes before closing provider
+            # resources. Dialogue turns never await these writes.
+            await self._responses.close()
         finally:
-            await self.client.close()
+            try:
+                await self._stream_pool.close()
+            finally:
+                await self.client.close()
 
     async def complete(self, messages: list[dict[str, str]]) -> str:
         return await self._responses.complete(messages)
