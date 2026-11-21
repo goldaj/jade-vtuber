@@ -12,7 +12,7 @@ from src.jade_runtime.messages import Incoming
 from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.orchestrator import Runtime
 from src.jade_runtime.turn_logging import enable_console_logs, planned_destinations
-from src.jade_runtime.session_logging import start_session_logging
+from src.jade_runtime.session_logging import start_session_logging, event, summary
 from src.jade_runtime.output import AudioOutput, SpeechOutput
 from src.jade_runtime.twitch_token import validate_twitch_token
 from src.jade_runtime.voice_pipeline import VoiceInput
@@ -31,6 +31,14 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     config = Settings.load()
     config.validate()
     enable_console_logs(enable_latency=config.latency_logging)
+    summary("runtime_configuration", live=live, discord=discord, discord_voice=discord_voice,
+            mobile=mobile, microphone=mic, twitch=twitch, memory=config.memory_enabled,
+            early_voice=config.early_voice, llm_model=config.model)
+    event("runtime_configuration", live=live, discord=discord, discord_voice=discord_voice,
+          mobile=mobile, microphone=mic, twitch=twitch, memory=config.memory_enabled,
+          memory_curator=config.memory_curator_enabled,
+          early_voice=config.early_voice, llm_model=config.model,
+          reasoning_effort=config.reasoning_effort, tts_model=config.tts_model)
     if (voice or mic or twitch or discord or vts or discord_voice or http or mobile) and not live:
         raise ValueError("external services require --live; demo never bills OpenAI")
     if live:
