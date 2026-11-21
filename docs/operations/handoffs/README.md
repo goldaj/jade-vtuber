@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [OPS-017 : décision de protection de `main` et suivi des passations (21/11)](2026-11-21-chatgpt-ops017-protection-branches.md) · choix propriétaire validé ; réglage GitHub non appliqué faute d'action d'administration, carte `À faire`.
+
 - [Qualification DEV-010, fenêtre et rideau mobile (21/11)](2026-11-21-chatgpt-qualification-dev010-fenetre-rideau.md) · choix du propriétaire : reconstruction en calques séparés ; carte P2 passée de `À qualifier` à `À faire` sans développement.
 
 - [Validation propriétaire de Discord écrit DEV-019 et REC-002 (21/11)](2026-11-21-chatgpt-validation-discord-ecrit.md) · essai réel déclaré et US acceptée, deux cartes Done ; la recette OBS REC-005 reste suspendue.
