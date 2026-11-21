@@ -20,6 +20,7 @@ class InitiativeScheduler:
         self._last={}
         # Waiting for a HUMAN reaction: no self-follow-up while unanswered.
         self._awaiting_reply = {}
+        self._room_epoch = {}
 
     async def voice_join(self, member, before, after, *, channel_id,
                          own_bot_id=None):
@@ -40,7 +41,8 @@ class InitiativeScheduler:
         if self.clock()-self._last.get(channel,float("-inf")) < self.cooldown_seconds:
             return None
         day=datetime.now(ZoneInfo("Europe/Paris")).date().isoformat()
-        event_id=f"join:{guild.id}:{channel}:{user_id}:{day}"
+        event_id=(f"join:{guild.id}:{channel}:{user_id}:{day}:"
+                  f"{self._room_epoch.get(channel, 0)}")
         try:
             allowed=await asyncio.to_thread(
                 self.guard.reserve,"initiative",event_id,
@@ -81,3 +83,4 @@ class InitiativeScheduler:
         """A future distinct visit is a new event, not a self-follow-up."""
         self._awaiting_reply.pop(channel, None)
         self._last.pop(channel, None)
+        self._room_epoch[channel] = self._room_epoch.get(channel, 0) + 1
