@@ -25,5 +25,10 @@ jobs:
         run: python -m pip install -e .
       - name: Compile Python
         run: python -m compileall -q src main.py tests
+      - name: Browser JavaScript syntax and streaming behavior
+        run: |
+          node --check src/jade_runtime/mobile_web/app.js
+          node --check src/jade_runtime/mobile_web/duplex-client.js
+          node tests/mobile_stream_client_test.js
       - name: Offline unit and contract tests
         run: python -m unittest discover -s tests -v
