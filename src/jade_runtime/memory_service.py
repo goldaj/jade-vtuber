@@ -353,15 +353,22 @@ class MemoryService:
     async def _execute_memory_action(self, key, pinned_person, incoming, raw):
         """Server-owned policy: validate, write and report only a committed outcome."""
         refused = {"status": "refusé", "level": None}
-        if not isinstance(raw, str) or len(raw) > 2400:
+
+        def reject(reason):
+            # Only a categorical reason goes into the log; no secret, identity
+            # or untrusted payload should be included in rejected candidates.
+            event("memory_write_rejected", reason=reason, scope=_scope(incoming))
             return refused
+
+        if not isinstance(raw, str) or len(raw) > 2400:
+            return reject("invalid_argument_length")
         try:
             data = json.loads(raw)
         except (ValueError, TypeError):
-            return refused
+            return reject("invalid_json")
         if not isinstance(data, dict) or set(data) != {
                 "kind", "summary", "significance", "evidence"}:
-            return refused
+            return reject("invalid_schema")
         kind = data["kind"]
         summary, significance, evidence = (
             data["summary"], data["significance"], data["evidence"])
@@ -369,20 +376,21 @@ class MemoryService:
                 or not all(isinstance(x, str) for x in (summary, significance, evidence))
                 or not 1 <= len(summary.strip()) <= 400
                 or len(significance) > 280
-                or not 8 <= len(evidence.strip()) <= 180
-                or evidence.casefold() not in incoming.text.casefold()):
-            return refused
+                or not 8 <= len(evidence.strip()) <= 180):
+            return reject("invalid_memory_fields")
+        if evidence.casefold() not in incoming.text.casefold():
+            return reject("evidence_not_in_current_message")
         # DEV-011 owns ALL explicit human memory requests, including Core requests.
         if parse_explicit_memory_intent(incoming.text) is not None:
-            return refused
+            return reject("explicit_request_uses_ordinary_path")
         if re.search(
             r"(?i)(api[_ -]?key|mot de passe|password|token|"
             r"code bancaire|carte bancaire|sk-[a-z0-9]+)",
             summary + "\n" + significance + "\n" + evidence,
         ):
-            return refused
+            return reject("secret_detected")
         if kind == "core_self" and key != ("microphone", "goldaj"):
-            return refused
+            return reject("core_self_not_authorized")
         level = 2 if kind == "ordinary" else 3
         try:
             if kind == "core_self":
@@ -403,7 +411,7 @@ class MemoryService:
             # as a duplicate from the same person.
             current = await asyncio.to_thread(self.store.account, key)
             return ({"status": "déjà présent", "level": level, "kind": kind}
-                    if current == pinned_person else refused)
+                    if current == pinned_person else reject("profile_changed"))
         except Exception:
             LOG.exception("Jade autonomous memory write failed (no content logged)")
             return {"status": "échec", "level": level, "kind": kind}
