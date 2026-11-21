@@ -2,7 +2,7 @@
 
 Parsing is deliberately deterministic: no user (including Goldaj) can force
 core_self or core_relationship through a natural-language instruction. Any
-recognized request is stored, if consented, as a 90-day ordinary memory.
+recognized request is scheduled, if consented, as a 365-day ordinary memory.
 """
 from __future__ import annotations
 
