@@ -292,6 +292,87 @@ class MemoryService:
             text = "Je n'ai pas pu appliquer cette opération de mémoire."
         return Reply(incoming, text, intent="neutral")
 
+    async def prepare_memory_action(self, incoming):
+        """Pin the verified, consenting identity before Jade's LLM decides.
+
+        The optional action is never exposed for unidentified/opted-out accounts.
+        The pin prevents an older request from resurrecting data after erasure.
+        """
+        key = identity_of(incoming)
+        if key is None or self._closed:
+            return None
+        try:
+            person_id = await asyncio.to_thread(self.store.account, key)
+        except Exception:
+            LOG.warning("Memory action identity lookup failed (no personal data logged)")
+            return None
+        if not person_id:
+            return None
+
+        async def action(raw_arguments: str) -> dict:
+            action.used = True
+            return await self._execute_memory_action(
+                key, person_id, incoming, raw_arguments)
+
+        action.used = False
+        return action
+
+    async def _execute_memory_action(self, key, pinned_person, incoming, raw):
+        """Server-owned policy: validate, write and report only a committed outcome."""
+        refused = {"status": "refusé", "level": None}
+        if not isinstance(raw, str) or len(raw) > 2400:
+            return refused
+        try:
+            data = json.loads(raw)
+        except (ValueError, TypeError):
+            return refused
+        if not isinstance(data, dict) or set(data) != {
+                "kind", "summary", "significance", "evidence"}:
+            return refused
+        kind = data["kind"]
+        summary, significance, evidence = (
+            data["summary"], data["significance"], data["evidence"])
+        if (kind not in ("ordinary", "core_self", "core_relationship")
+                or not all(isinstance(x, str) for x in (summary, significance, evidence))
+                or not 1 <= len(summary.strip()) <= 400
+                or len(significance) > 280
+                or not 8 <= len(evidence.strip()) <= 180
+                or evidence.casefold() not in incoming.text.casefold()):
+            return refused
+        # DEV-011 owns ALL explicit human memory requests, including Core requests.
+        if parse_explicit_memory_intent(incoming.text) is not None:
+            return refused
+        if re.search(
+            r"(?i)(api[_ -]?key|mot de passe|password|token|"
+            r"code bancaire|carte bancaire|sk-[a-z0-9]+)",
+            summary + "\n" + significance + "\n" + evidence,
+        ):
+            return refused
+        if kind == "core_self" and key != ("microphone", "goldaj"):
+            return refused
+        level = 2 if kind == "ordinary" else 3
+        try:
+            if kind == "core_self":
+                created = await asyncio.to_thread(
+                    self.store.put_self_core, key, summary=summary.strip(),
+                    significance=significance.strip(), message_id=incoming.message_id,
+                    expected_person_id=pinned_person)
+            else:
+                created = await asyncio.to_thread(
+                    self.store.put, key, kind=kind, scope=_scope(incoming),
+                    summary=summary.strip(), significance=significance.strip(),
+                    message_id=incoming.message_id, expected_person_id=pinned_person)
+            if created:
+                return {"status": "enregistré", "level": level, "kind": kind}
+            # A failed insert after account erasure must NEVER be interpreted
+            # as a duplicate from the same person.
+            current = await asyncio.to_thread(self.store.account, key)
+            return ({"status": "déjà présent", "level": level, "kind": kind}
+                    if current == pinned_person else refused)
+        except Exception:
+            LOG.warning("Jade autonomous memory write failed (no content logged)")
+            return {"status": "échec", "level": level, "kind": kind}
+
     def schedule(self, incoming, reply: Reply) -> bool:
         """Evaluate each successfully generated, eligible event without slowing speech.
 

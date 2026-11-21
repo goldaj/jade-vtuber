@@ -1,6 +1,9 @@
 """The **only** speech/voice AI provider: OpenAI. Lazy SDK initialization."""
 from io import BytesIO
 import inspect
+import json
+
+from .memory_actions import MEMORY_TOOL
 
 from .config import Settings
 from .openai_client import isolated_openai_client
@@ -61,6 +64,116 @@ class OpenAIServices:
             if not completed:
                 # An EOF without finish_reason=stop can follow a broken
                 # connection after some text was already sent to the speaker.
+                raise ValueError("OpenAI dialogue stream ended without completion")
+        finally:
+            close = getattr(stream, "close", None)
+            if callable(close):
+                closing = close()
+                if inspect.isawaitable(closing):
+                    await closing
+
+    def _chat_arguments(self, messages):
+        return {
+            "model": self.settings.model,
+            "messages": messages,
+            "max_completion_tokens": self.settings.max_completion_tokens,
+            "reasoning_effort": self.settings.reasoning_effort,
+        }
+
+    @staticmethod
+    async def _finish_memory_tool(messages, calls, action):
+        """Append the model's tool call and an actual backend result.
+
+        The server processes at most one write; parallel/unknown calls are
+        refused without executing arbitrary operations.
+        """
+        if not calls or len(calls) > 4:
+            raise ValueError("invalid memory tool calls")
+        if any(not call["id"] or not call["name"] for call in calls):
+            raise ValueError("missing function call identifier")
+        continuation = list(messages)
+        continuation.append({
+            "role": "assistant", "content": None, "tool_calls": [
+                {"id": call["id"], "type": "function", "function": {
+                    "name": call["name"], "arguments": call["arguments"]}}
+                for call in calls
+            ],
+        })
+        for index, call in enumerate(calls):
+            if (index == 0 and call["name"] == "jade_save_memory"
+                    and len(call["arguments"]) <= 2400):
+                try:
+                    outcome = await action(call["arguments"])
+                except Exception:
+                    outcome = {"status": "échec", "level": None}
+            else:
+                outcome = {"status": "refusé", "level": None}
+            continuation.append({
+                "role": "tool", "tool_call_id": call["id"],
+                "content": json.dumps(outcome, ensure_ascii=False),
+            })
+        return continuation
+
+    async def complete_with_tools(self, messages, memory_action) -> str:
+        """One call if unused, an additional completion only after tool use."""
+        response = await self.client.chat.completions.create(
+            **self._chat_arguments(messages), tools=[MEMORY_TOOL],
+            tool_choice="auto", parallel_tool_calls=False)
+        choice = response.choices[0]
+        if choice.finish_reason == "stop":
+            value = choice.message.content
+            if not isinstance(value, str) or not value:
+                raise ValueError("OpenAI returned no dialogue text")
+            return value
+        if choice.finish_reason != "tool_calls":
+            raise ValueError("OpenAI dialogue ended without completion")
+        calls = [{
+            "id": item.id, "name": item.function.name,
+            "arguments": item.function.arguments,
+        } for item in (choice.message.tool_calls or ())]
+        followup = await self._finish_memory_tool(messages, calls, memory_action)
+        return await self.complete(followup)
+
+    async def complete_stream_with_tools(self, messages, memory_action):
+        """Support streamed function arguments without speaking any tool payload."""
+        stream = await self.client.chat.completions.create(
+            **self._chat_arguments(messages), tools=[MEMORY_TOOL],
+            tool_choice="auto", parallel_tool_calls=False, stream=True)
+        calls = {}
+        finish = None
+        try:
+            async for chunk in stream:
+                for choice in getattr(chunk, "choices", ()):
+                    if getattr(choice, "index", 0) != 0:
+                        continue
+                    reason = getattr(choice, "finish_reason", None)
+                    if reason not in (None, "stop", "tool_calls"):
+                        raise ValueError("OpenAI dialogue stream ended incompletely")
+                    if reason:
+                        finish = reason
+                    delta = getattr(choice, "delta", None)
+                    for tool in (getattr(delta, "tool_calls", None) or ()):
+                        index = tool.index
+                        if type(index) is not int or index not in range(4):
+                            raise ValueError("invalid tool call index")
+                        call = calls.setdefault(index, {"id": "", "name": "", "arguments": ""})
+                        call["id"] += getattr(tool, "id", None) or ""
+                        function = getattr(tool, "function", None)
+                        if function is not None:
+                            call["name"] += getattr(function, "name", None) or ""
+                            call["arguments"] += getattr(function, "arguments", None) or ""
+                        if len(call["arguments"]) > 2400:
+                            raise ValueError("tool arguments exceed local limit")
+                    fragment = getattr(delta, "content", None)
+                    if isinstance(fragment, str) and fragment and not calls:
+                        yield fragment
+            if finish == "tool_calls":
+                ordered = [calls[index] for index in sorted(calls)]
+                followup = await self._finish_memory_tool(
+                    messages, ordered, memory_action)
+                async for fragment in self.complete_stream(followup):
+                    yield fragment
+            elif finish != "stop":
                 raise ValueError("OpenAI dialogue stream ended without completion")
         finally:
             close = getattr(stream, "close", None)

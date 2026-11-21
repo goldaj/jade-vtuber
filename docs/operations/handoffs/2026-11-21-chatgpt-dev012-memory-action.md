@@ -1,0 +1,12 @@
+# DEV-012 — Action autonome de mémoire depuis le LLM conversationnel
+
+- **Agent / mission :** ChatGPT, perspectives PO, tech lead/backend Python, fournisseur API, confidentialité, QA. DEV-012 P1.
+- **Branche / base :** `develop`, base `fcd2a2f9922bc249169185d2b497c2642b79b9b5`. Aucun changement de `main`.
+- **Décision propriétaire du 21/11 :** assouplissement accepté sur la connaissance obligatoire du résultat. La version conserve pourtant un retour natif dans le même tour, sans système de notification asynchrone de curation.
+- **Architecture :** l'outil natif facultatif `jade_save_memory` est proposé au modèle conversationnel uniquement si l'identité de transport et la mémoire active sont confirmées. Lorsque Jade n'en a pas besoin, le dialogue utilise un seul appel API. Lorsqu'elle appelle l'outil, un appel de continuation peut produire la réponse naturelle après réception du résultat SQLite, sans démarrer un deuxième censeur LLM.
+- **Faits mémorisables :** `ordinary` dans `memories`, TTL 365 jours ; `core_relationship` dans `memories`, sans TTL ; `core_self` dans `jade_self_core`, propriétaire authentifié uniquement. Les utilisateurs ne peuvent toujours pas imposer de Core Memories (DEV-011), pas d'écriture pour les comptes sans consentement, refus secrets, doublons et absence de preuve textuelle.
+- **Qualité du streaming :** le flux vocal accepte les deltas d'appel d'outil et ne les envoie pas à la sortie audio ; la continuation seule donne le texte visible. L'ancien chemin `complete_stream` reste utilisé sans action disponible.
+- **Régressions :** tests nouveaux sans API payante couvrant décision sans outil, L2/L3, redémarrage, secrets, absence d'identité, effacement pendant génération, erreur SQLite, appel natif, arguments fractionnés en streaming et absence de diffusion du contenu d'outil.
+- **Passe de validation :** vérification séparée attendue dans la CI GitHub et en recette réelle sur PC/micro/Discord/PWA. Conserver DEV-012 en **À valider** ; ne pas conclure Done sans validation Codex ou du propriétaire et les autres conditions de la DoD.
+- **Risques restants :** latence perceptible lors d'une écriture volontaire, prompt et compatibilité fournisseur à essayer sur modèle réel ; curation asynchrone non notifiée au modèle conversationnel, comme autorisé par le propriétaire. Aucun résultat d'exécution physique ici.
+- **Documentation :** `docs/backlog/01-DEVELOPPEMENT.md`, `docs/handbook/BRANCH_STATE.md`, `docs/operations/CHANGELOG.md`.

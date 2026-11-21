@@ -9,6 +9,7 @@ from .messages import Incoming, Reply
 from .context_selection import select_context
 from .sentence_stream import SentenceAccumulator
 from .intent_engine import INTENT_PROMPT, IntentStreamParser, parse_reply
+from .memory_actions import MEMORY_PROMPT
 
 
 class ChatBackend(Protocol):
@@ -71,7 +72,8 @@ class Dialogue:
 
     async def respond(self, incoming: Incoming, *, valid=lambda: True,
                       on_sentence=None, on_timing=None, defer_history=False,
-                      on_intent=None, memory_context="", history_messages=None) -> Reply | None:
+                      on_intent=None, memory_context="", history_messages=None,
+                      memory_action=None) -> Reply | None:
         # Reject stale duplicates by transport ID, not by repeated message text.
         if len(incoming.text) > 1200 or not self.should_reply(incoming):
             return None
@@ -112,7 +114,15 @@ class Dialogue:
                     + memory_context[:3500]}] if memory_context else [])
                 selected_history = (select_context(history, incoming.text)
                                     if self.selective_context else history)
-                messages = [{"role": "system", "content": self.prompt + "\n\n" + INTENT_PROMPT + owner_note},
+                can_use_memory_tool = (
+                    memory_action is not None
+                    and callable(getattr(self.backend, "complete_with_tools", None))
+                    and (on_sentence is None or callable(getattr(
+                        self.backend, "complete_stream_with_tools", None)))
+                )
+                system_prompt = (self.prompt + "\n\n" + INTENT_PROMPT + owner_note
+                                 + (MEMORY_PROMPT if can_use_memory_tool else ""))
+                messages = [{"role": "system", "content": system_prompt},
                             *selected_history, *memory_notes, *context, user]
                 if on_timing is not None:
                     on_timing("llm_start")
@@ -121,7 +131,9 @@ class Dialogue:
                     sentence_buffer = SentenceAccumulator()
                     intent_parser = IntentStreamParser()
                     answer_parts = []
-                    stream = self.backend.complete_stream(messages)
+                    stream = (self.backend.complete_stream_with_tools(
+                                  messages, memory_action) if can_use_memory_tool
+                              else self.backend.complete_stream(messages))
                     first_fragment = True
                     intent_announced = False
                     try:
@@ -157,7 +169,10 @@ class Dialogue:
                     answer = "".join(answer_parts)
                     selected_intent = intent_parser.intent
                 else:
-                    decoded = parse_reply(await self.backend.complete(messages))
+                    response = (await self.backend.complete_with_tools(
+                                    messages, memory_action) if can_use_memory_tool
+                                else await self.backend.complete(messages))
+                    decoded = parse_reply(response)
                     answer, selected_intent = decoded.text, decoded.intent
                 if on_timing is not None:
                     on_timing("llm_end")

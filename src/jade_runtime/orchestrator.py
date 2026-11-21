@@ -169,6 +169,7 @@ class Runtime:
         command_reply = None
         memory_context = ""
         history_messages = None
+        memory_action = None
         try:
             if self.memory_service is not None:
                 self.mark_timing("memory_start")
@@ -178,6 +179,9 @@ class Runtime:
                 command_reply = await self.memory_service.command(item.message)
                 if command_reply is None:
                     memory_context = await self.memory_service.context_for(item.message)
+                    prepare = getattr(self.memory_service, "prepare_memory_action", None)
+                    if callable(prepare):
+                        memory_action = await prepare(item.message)
                     if (isinstance(self.dialogue, Dialogue)
                             and item.message.history_key not in self.dialogue.history):
                         history_messages = await self.memory_service.history_for(item.message)
@@ -193,7 +197,8 @@ class Runtime:
                     reply = await self.dialogue.respond(item.message, valid=item.valid,
                                                         on_timing=self.mark_timing,
                                                         memory_context=memory_context,
-                                                        history_messages=history_messages)
+                                                        history_messages=history_messages,
+                                                        memory_action=memory_action)
                 else:
                     reply = await self.dialogue.respond(item.message, valid=item.valid)
             else:
@@ -202,7 +207,7 @@ class Runtime:
                     on_timing=self.mark_timing, defer_history=True,
                     on_intent=getattr(turn, "set_intent", None),
                     memory_context=memory_context,
-                    history_messages=history_messages)
+                    history_messages=history_messages, memory_action=memory_action)
             if not item.valid():
                 raise TimeoutError("message expired")
             if reply is None and turn is not None:
@@ -237,7 +242,8 @@ class Runtime:
             if (reply is not None and played and command_reply is None and item.valid()
                     and self.memory_service is not None):
                 await self.memory_service.remember_turn(item.message, reply)
-                self.memory_service.schedule(item.message, reply)
+                if not getattr(memory_action, "used", False):
+                    self.memory_service.schedule(item.message, reply)
             self.mark_timing("turn_complete")
         except BaseException as exc:
             self.mark_timing("turn_cancelled" if isinstance(

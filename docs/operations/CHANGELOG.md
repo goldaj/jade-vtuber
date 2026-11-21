@@ -2,6 +2,14 @@
 
 Ce document est **la seule pièce documentaire systématiquement exigée en CI** pour les changements techniques. Les guides, atlas et passations sont révisés uniquement quand le comportement ou les procédures qu'ils décrivent changent. Une entrée indique les faits vérifiés ; un ancien journal ne remplace pas le code.
 
+## 2026-11-21 — DEV-012 : action volontaire de mémoire L2/L3 dans le dialogue (develop)
+
+- **Produit / architecture :** Jade conversationnelle connaît l'action native et facultative OpenAI `jade_save_memory` (niveau 2 ordinaire 365 jours, niveau 3 Core sans purge). Le modèle décide s'il l'appelle ; la couche `Dialogue` et le service `OpenAIServices` gèrent les appels d'outils en texte comme en streaming vocal, puis une réponse finale. Aucune requête API supplémentaire quand le modèle n'utilise pas l'outil ; une requête additionnelle de continuation lorsqu'il l'appelle.
+- **Confidentialité et preuve :** `MemoryService.prepare_memory_action` épingle l'identité consentante avant génération, vérifie la citation littérale, les longueurs, les secrets et la portée imposée par le transport. La base SQLite existante écrit réellement via `put`/`put_self_core` et filtre les doublons. Une demande explicite humaine demeure exclusivement ordinaire via DEV-011 ; la création de Core autobiographique ne concerne que le profil propriétaire vérifié.
+- **Retour d'exécution :** le LLM reçoit le statut réel de l'outil avant sa réponse finale (`enregistré`, `déjà présent`, `refusé`, `échec`). Une action tentée n'est pas reprise par la curation asynchrone sur le même tour ; la curation différée d'origine continue indépendamment sans réinjection de résultats, conformément à l'assouplissement accepté par le propriétaire le 21/11.
+- **Code et tests :** `memory_actions.py`, `memory_service.py`, `openai_services.py`, `dialogue.py`, `orchestrator.py`, tests `test_jade_voluntary_memory_tools.py` et `test_jade_openai_memory_tools.py`. Documentation DEV-012 et état fonctionnel adaptés. Aucun changement du schéma SQLite ni activation de connecteur.
+- **Limites et vérifications :** tests automatiques sans appels facturés et CI Linux/Windows à contrôler sur le SHA d'intégration ; pas de preuve sur le PC réel, Discord, Android, TTS ou factures. Tester le temps de continuation si Jade décide d'utiliser l'outil ; un appel d'outil pendant une réponse vocale peut retarder le premier mot.
+
 ## 2026-11-21 — Revue transversale de mémoire, initiatives, budget et MP Discord (PR #35)
 
 - **Architecture et produit :** audit de la PR #34 sous les angles PO, coûts API, Python/SQLite, confidentialité, Discord et audio mobile. Initiatives toujours actives par défaut, sans quota numérique ni polling LLM de veille. Une discussion entre tiers n'efface plus l'état « Jade ignorée » ; il faut une adresse directe ou un bref acquiescement dans les deux minutes.
