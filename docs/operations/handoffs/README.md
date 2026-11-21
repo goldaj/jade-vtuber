@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Validation propriétaire de Discord écrit DEV-019 et REC-002 (21/11)](2026-11-21-chatgpt-validation-discord-ecrit.md) · essai réel déclaré et US acceptée, deux cartes Done ; la recette OBS REC-005 reste suspendue.
+
 - [Recettes automatisées REC-021 et REC-025 (21/11)](2026-11-21-chatgpt-rec021-rec025-auto.md) · 5 scénarios nouveaux réussis dans la CI Linux/Windows, cartes transmises en `À valider` et vérification des archives réelles encore à faire.
 
 - [Suspension ciblée micro PC / Twitch / OBS (21/11)](2026-11-21-chatgpt-suspension-micro-twitch-obs.md) · report jusqu'à nouvel ordre sans suspendre toutes les cartes sur Windows.
