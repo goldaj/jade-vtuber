@@ -13,6 +13,7 @@ from src.jade_runtime.initiatives import InitiativeScheduler
 from src.jade_runtime.personality_evolution import personality_cues
 from src.jade_runtime.social_intelligence import HybridSocialPolicy
 from src.jade_runtime.messages import Incoming
+from src.jade_runtime.memory_store import identity_of
 
 
 def join(user_id=13, channel_id=77):
@@ -98,6 +99,19 @@ class SpontaneousEngagement(unittest.IsolatedAsyncioTestCase):
         second = await self.scheduler.voice_join(*member, channel_id=77)
         self.assertIsNotNone(second)
         self.assertEqual(self.guard.reserved_usd("initiative"), Decimal(".20"))
+
+    async def test_connected_vocal_greeting_uses_tts_without_user_memory(self):
+        member, before, after = join(19)
+        after.channel.members = [member]
+        source = await self.scheduler.voice_join(
+            member, before, after, channel_id=77, voice_session_id="v" * 24)
+        self.assertIsNotNone(source)
+        self.assertEqual(source.platform, "discord_voice")
+        self.assertEqual(source.speaker_id, 19)
+        self.assertTrue(source.system_initiative)
+        self.assertIsNone(identity_of(source),
+                          "Jade's autonomous greeting is not the entrant's memory")
+        self.assertTrue(self.scheduler.waiting_for_reply("77"))
 
     async def test_no_self_followup_without_response(self):
         await self.scheduler.voice_join(*join(), channel_id=77)
