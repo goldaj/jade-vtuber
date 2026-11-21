@@ -366,20 +366,22 @@ class MemoryService:
             data = json.loads(raw)
         except (ValueError, TypeError):
             return reject("invalid_json")
-        if not isinstance(data, dict) or set(data) != {
-                "kind", "summary", "significance", "evidence"}:
+        required_fields = {"kind", "summary", "significance"}
+        # The old tool supplied a mandatory evidence quote. Accept it for
+        # compatibility, but never require a quote from the latest message:
+        # Jade may remember earlier context or her own observations.
+        if (not isinstance(data, dict)
+                or not required_fields.issubset(data)
+                or set(data) - required_fields - {"evidence"}):
             return reject("invalid_schema")
         kind = data["kind"]
-        summary, significance, evidence = (
-            data["summary"], data["significance"], data["evidence"])
+        summary, significance = data["summary"], data["significance"]
+        evidence = data.get("evidence", "")
         if (kind not in ("ordinary", "core_self", "core_relationship")
                 or not all(isinstance(x, str) for x in (summary, significance, evidence))
                 or not 1 <= len(summary.strip()) <= 400
-                or len(significance) > 280
-                or not 8 <= len(evidence.strip()) <= 180):
+                or len(significance) > 280):
             return reject("invalid_memory_fields")
-        if evidence.casefold() not in incoming.text.casefold():
-            return reject("evidence_not_in_current_message")
         # DEV-011 owns ALL explicit human memory requests, including Core requests.
         if parse_explicit_memory_intent(incoming.text) is not None:
             return reject("explicit_request_uses_ordinary_path")
