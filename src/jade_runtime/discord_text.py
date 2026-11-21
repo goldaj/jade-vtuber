@@ -18,6 +18,9 @@ _VOICE_RECONNECT_DELAYS = (1, 2, 4, 8, 16, 30)
 
 def parse_discord_message(message, *, own_user_id=None) -> Incoming | None:
     author = message.author
+    # Prevent another bot from creating a costly autonomous feedback loop.
+    if getattr(author, "bot", False) is True:
+        return None
     if own_user_id is not None and getattr(author, "id", None) == own_user_id:
         return None
     text = getattr(message, "content", "")
