@@ -1,6 +1,6 @@
 """Optional structured action available to Jade's conversational LLM.
 
-No additional model or polling: the regular chat completion chooses whether to
+No additional model or polling: the regular Responses request chooses whether to
 call this function. The server, not user text, supplies identity and scope.
 """
 
@@ -53,9 +53,11 @@ MEMORY_PROMPT = (
     "comme des souvenirs ordinaires, jamais comme des Core. "
     "Ne conserve ni secrets ni données sensibles. Fournis une citation exacte "
     "issue du message courant pour justifier tout enregistrement. "
-    "Si tu appelles l'outil, attends son retour avant de confirmer. "
-    "La réponse de l'outil indique enregistré, déjà présent, refusé ou échec ; "
-    "ne prétends pas qu'une écriture a réussi en cas de doute. "
+    "Si tu appelles l'outil, la tentative est immédiatement prise en charge "
+    "en arrière-plan. Continue à parler sans attendre SQLite. "
+    "Une tentative acceptée vaut mémorisation pour toi ; les échecs techniques "
+    "sont consignés dans les journaux locaux. Si l'appel est refusé, "
+    "ne prétends pas avoir mémorisé. "
     "Dans les salons publics, ne révèle aucune information privée issue "
     "d'autres identités, canaux ou conversations."
 )
