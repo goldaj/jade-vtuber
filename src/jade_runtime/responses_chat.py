@@ -7,6 +7,7 @@ Jade and never recovered from an OpenAI conversation identifier.
 """
 from __future__ import annotations
 
+import asyncio
 import inspect
 import json
 import logging
@@ -99,6 +100,69 @@ class ResponsesChat:
     def __init__(self, client, settings):
         self.client = client
         self.settings = settings
+        self._pending_writes = set()
+        self._closing = False
+
+    async def close(self):
+        """Allow queued SQLite writes to finish during graceful shutdown."""
+        self._closing = True
+        tasks = tuple(self._pending_writes)
+        if not tasks:
+            return
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(*tasks, return_exceptions=True), timeout=5)
+        except asyncio.TimeoutError:
+            LOG.warning("Local memory writes did not finish before shutdown")
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+
+    def _completed_write(self, task):
+        self._pending_writes.discard(task)
+        if task.cancelled():
+            LOG.warning("Deferred Jade memory write cancelled")
+        else:
+            try:
+                task.result()
+            except Exception:
+                LOG.exception("Deferred Jade memory write crashed")
+
+    def _queue_memory_write(self, action, arguments, *, call_id):
+        """Start local persistence without blocking the LLM or the voice."""
+        if self._closing or len(self._pending_writes) >= 64:
+            LOG.error("Unable to queue a local memory write")
+            event("memory_write_queue_rejected", call_id=call_id)
+            return False
+        if not callable(action):
+            LOG.error("Unavailable memory action")
+            event("memory_write_queue_rejected", call_id=call_id, reason="missing_action")
+            return False
+        # Avoid double curation of a turn if the SQLite write is deferred.
+        if hasattr(action, "used"):
+            action.used = True
+
+        async def write():
+            event("memory_write_started", call_id=call_id)
+            try:
+                result = await action(arguments)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                LOG.exception("Deferred Jade memory write failed")
+                event("memory_write_failed", call_id=call_id, reason="exception")
+                return
+            event("memory_write_finished", call_id=call_id, outcome=result)
+            if not isinstance(result, dict) or result.get("status") not in (
+                    "enregistré", "déjà présent"):
+                LOG.warning("Local Jade memory write was refused or failed: %s",
+                            result.get("status") if isinstance(result, dict) else "invalid")
+
+        task = asyncio.create_task(write(), name="jade-memory-write")
+        self._pending_writes.add(task)
+        task.add_done_callback(self._completed_write)
+        event("memory_write_scheduled", call_id=call_id)
+        return True
 
     def _arguments(self, messages, *, with_tools=False, stream=False):
         params = {
@@ -156,35 +220,31 @@ class ResponsesChat:
             raise ValueError("OpenAI returned no dialogue text")
         return value
 
-    @staticmethod
-    async def _execute_tools(response, action) -> list[dict]:
-        """One authorized local memory write at most, plus refused call outputs."""
-        calls = _tool_calls(response)
-        results = []
-        for index, call in enumerate(calls):
+    def _prepare_tool_outputs(self, response, action):
+        """Accept a local write request immediately; actual result goes to logs."""
+        outputs = []
+        for index, call in enumerate(_tool_calls(response)):
             if (index == 0 and call["name"] == "jade_save_memory"
-                    and len(call["arguments"]) <= 2400):
-                try:
-                    result = await action(call["arguments"])
-                except Exception:
-                    LOG.exception("Local memory action failed")
-                    result = {"status": "échec", "level": None}
+                    and len(call["arguments"]) <= 2400
+                    and self._queue_memory_write(
+                        action, call["arguments"], call_id=call["call_id"])):
+                # Product decision DEV-012: Jade treats an accepted attempt as
+                # successful without waiting for a SQLite confirmation.
+                outcome = {"status": "enregistré", "confirmation": "non vérifiée"}
             else:
-                result = {"status": "refusé", "level": None}
-            event("memory_tool_result", call_index=index, name=call["name"],
-                  call_id=call["call_id"], outcome=result)
-            results.append({
+                outcome = {"status": "refusé", "level": None}
+            event("memory_tool_result", call_index=index,
+                  name=call["name"], call_id=call["call_id"],
+                  outcome=outcome, confirmation_waited=False)
+            outputs.append({
                 "type": "function_call_output",
                 "call_id": call["call_id"],
-                "output": json.dumps(result, ensure_ascii=False),
+                "output": json.dumps(outcome, ensure_ascii=False),
             })
-        return results
+        return outputs
 
-    async def _after_tool(self, messages, response, action) -> list:
-        outputs = await self._execute_tools(response, action)
-        # Stateless continuation: replay the complete output (including
-        # encrypted reasoning items) and matched function_call_output items.
-        # This is NEVER a shared provider-side conversation or stored session.
+    def _after_tool(self, messages, response, action):
+        outputs = self._prepare_tool_outputs(response, action)
         return [*messages, *_output_items(response), *outputs]
 
     async def complete_with_tools(self, messages, memory_action) -> str:
@@ -196,9 +256,14 @@ class ResponsesChat:
             if not value:
                 raise ValueError("OpenAI returned no dialogue text")
             return value
-        continuation = await self._after_tool(messages, response, memory_action)
-        # The continuation cannot use tools again, preventing loops and repeat
-        # writes. It still has the original 'low' reasoning configuration.
+        # Model may provide text and function call in the same response. In
+        # that case there is nothing to wait for and no reason to answer twice.
+        continuation = self._after_tool(messages, response, memory_action)
+        value = _text(response)
+        if value:
+            return value
+        # A tool-only response needs a second LLM call to produce a sentence.
+        # Crucially, the SQLite write is already running independently.
         return await self.complete(continuation)
 
     async def _stream_text(self, messages, *, operation):
@@ -244,21 +309,53 @@ class ResponsesChat:
             yield fragment
 
     async def complete_stream_with_tools(self, messages, memory_action):
-        # Deliberate safety boundary: no text is spoken before we know whether
-        # the model requested a local write. Otherwise a mixed text/tool
-        # response could announce a memory commit BEFORE SQLite confirms it.
-        # Most Jade voice calls do not use early streaming; this impacts only
-        # first-token latency when streaming is explicitly enabled.
-        response = await self._create(
-            messages, operation="responses.stream_with_tools.prepare", with_tools=True)
-        calls = _tool_calls(response)
-        if not calls:
-            value = _text(response)
-            if not value:
+        """Stream immediately even with tools; do not await local persistence.
+
+        The first response may contain text, calls, or both. If it contains
+        text, never synthesize a second, duplicate answer. If it contains only
+        a function call, a follow-up LLM request is inherently necessary to
+        obtain speech, but the SQLite write runs in the background.
+        """
+        operation = "responses.stream_with_tools"
+        self._request_log(operation, with_tools=True, stream=True)
+        stream = await self.client.responses.create(
+            **self._arguments(messages, with_tools=True, stream=True))
+        completed = None
+        fragments = []
+        try:
+            async for update in stream:
+                kind = _field(update, "type")
+                if kind == "response.output_text.delta":
+                    fragment = _field(update, "delta")
+                    if isinstance(fragment, str) and fragment:
+                        fragments.append(fragment)
+                        yield fragment
+                elif kind == "response.completed":
+                    completed = _field(update, "response")
+                    _require_completed(completed)
+                elif kind in ("response.failed", "response.incomplete", "error"):
+                    details = (_field(update, "response") or
+                               _field(update, "error") or _field(update, "message"))
+                    raise RuntimeError(f"Responses stream failed ({kind}): {details}")
+            if completed is None:
+                raise RuntimeError("Responses stream ended without response.completed")
+            self._response_log(operation, completed)
+            value = _text(completed)
+            if fragments and "".join(fragments) != value:
+                raise ValueError("Responses stream text differs from final response")
+            calls = _tool_calls(completed)
+            continuation = (self._after_tool(messages, completed, memory_action)
+                            if calls else None)
+            if value:
+                if not fragments:
+                    yield value
+                # Already spoken progressively: no duplicate follow-up.
+                return
+            if not calls:
                 raise ValueError("OpenAI returned no dialogue text")
-            yield value
-            return
-        continuation = await self._after_tool(messages, response, memory_action)
+        finally:
+            await _close_stream(stream)
+        # The only unavoidable extra LLM call is for a tool-only response.
         async for fragment in self._stream_text(
                 continuation, operation="responses.stream_with_tools.followup"):
             yield fragment
