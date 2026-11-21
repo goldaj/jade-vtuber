@@ -29,6 +29,16 @@ Chaque requête transmet le modèle configuré, reasoning.effort = low, max_outp
 
 La description d'outil utilise la structure plate Responses avec strict=true. Le raisonnement conservé pour la continuation est inclus avec include=reasoning.encrypted_content. store=false empêche de créer une conversation hébergée persistante pour les tours.
 
+## Autorité des utilisateurs et autonomie de Jade
+
+- Les tours de conversation du niveau 1 sont enregistrés automatiquement pour les comptes autorisés, sans décision de Jade.
+- Les souvenirs volontaires de niveau 2 et les Core Memories de niveau 3 sont décidés par Jade via le modèle conversationnel et son outil local.
+- Un message « Retiens que... » provenant d'un utilisateur ordinaire est **une proposition**, jamais un ordre technique : il continue dans le dialogue normal. Jade peut appeler son outil ou décider de ne rien enregistrer.
+- Seul Goldaj, identifié via le mobile ou micro propriétaire authentifié ou via un compte de transport réellement lié au profil propriétaire SQLite, peut **imposer** un souvenir ordinaire de niveau 2. Le nom affiché ne suffit jamais.
+- Aucun utilisateur, même Goldaj, ne peut imposer un souvenir de niveau 3. Une demande explicite du propriétaire visant une Core Memory ne force qu'un souvenir de niveau 2.
+- L'autorisation du propriétaire est contrôlée par MemoryService **et à nouveau au moment de l'écriture dans la transaction SQLite**. La déliaison révoque ce droit.
+- La prise en charge d'une écriture reste asynchrone, non bloquante pour la conversation, avec le résultat réel en logs.
+
 ## Streaming et latence
 
 - Sans outil : les fragments response.output_text.delta alimentent progressivement le traitement d'intentions et la diffusion ; response.completed est obligatoire.
