@@ -11,6 +11,8 @@ import pytest
 
 from src.jade_runtime.config import Settings
 from src.jade_runtime.openai_services import OpenAIServices
+from src.jade_runtime.dialogue import Dialogue
+from src.jade_runtime.messages import Incoming
 
 
 def text_response(text="[INTENT:neutral] Bonjour", *, status="completed"):
@@ -279,3 +281,54 @@ def test_provider_exception_propagates_without_retry():
         asyncio.run(service.complete_with_tools(
             [{"role": "user", "content": "Bonjour"}], no_tool))
     assert len(fake.calls) == 1
+
+
+
+def test_end_to_end_dialogue_with_memory_tool_and_intent_parser():
+    service, fake = service_with(tool_response(), text_response(
+        "[INTENT:playful] Je retiendrai ce souvenir."))
+    invoked = []
+
+    async def action(arguments):
+        invoked.append(arguments)
+        return {"status": "enregistré", "level": 2}
+
+    source = Incoming(
+        "mobile", "Goldaj", "Je commence le piano.",
+        channel="private", force_reply=True, message_id="mobile-test-01")
+    response = asyncio.run(
+        Dialogue(service, "Tu es Jade.").respond(source, memory_action=action))
+    assert response.text == "Je retiendrai ce souvenir."
+    assert response.intent == "playful"
+    assert len(invoked) == 1
+    assert fake.calls[0]["input"][0]["role"] == "system"
+    assert "Tu es Jade" in fake.calls[0]["input"][0]["content"]
+    assert fake.calls[0]["store"] is fake.calls[1]["store"] is False
+
+
+def test_end_to_end_dialogue_streaming_sends_only_final_text():
+    service, fake = service_with(tool_response(), streaming_text(
+        "[INTENT:neutral] Bonjour depuis Jade."))
+    invoked = []
+    spoken = []
+
+    async def action(arguments):
+        invoked.append(arguments)
+        return {"status": "enregistré", "level": 2}
+
+    async def on_sentence(sentence):
+        spoken.append(sentence)
+
+    source = Incoming(
+        "discord_voice", "Goldaj", "J'apprends le piano depuis hier.",
+        channel="voice-123", force_reply=True, message_id="discord-voice-test")
+    response = asyncio.run(Dialogue(service, "Tu es Jade.").respond(
+        source, memory_action=action, on_sentence=on_sentence))
+    assert response.text == "Bonjour depuis Jade."
+    assert response.intent == "neutral"
+    assert len(invoked) == 1
+    assert " ".join(spoken).strip() == "Bonjour depuis Jade."
+    assert all("jade_save_memory" not in sentence for sentence in spoken)
+    assert all("[INTENT:" not in sentence for sentence in spoken)
+    assert fake.calls[0]["reasoning"]["effort"] == "low"
+    assert fake.calls[1]["reasoning"]["effort"] == "low"
