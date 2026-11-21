@@ -178,8 +178,6 @@ def test_unknown_and_duplicate_tools_are_not_executed():
 
 
 def test_incomplete_result_and_provider_failure_do_not_schedule_writes():
-    service, _ = make_service(tool_response(text="", ).__class__(
-        **vars(tool_response()).copy()))  # Replaced below with incomplete.
     response = tool_response()
     response.status = "incomplete"
     service, _ = make_service(response)
@@ -294,10 +292,11 @@ def test_stream_incomplete_and_text_mismatch_are_errors():
 
     service, _ = make_service(stream_response(text_response("Version B"),
                                                    pieces=["Version A"]))
+    async def run_mismatch():
+        return [piece async for piece in service.complete_stream_with_tools(
+            [{"role": "user", "content": "hello"}], forbidden_action)]
     with pytest.raises(ValueError, match="differs"):
-        asyncio.run(service.complete_stream_with_tools(
-            [{"role": "user", "content": "hello"}], forbidden_action).__anext__())
-        # The first streamed fragment is already visible; consume all instead.
+        asyncio.run(run_mismatch())
 
 
 def test_dialogue_preserves_intent_with_asynchronous_tool():
