@@ -184,6 +184,9 @@ class MemoryService:
                     message_id=incoming.message_id,
                     expected_person_id=person,
                 ) if person else "inactive")
+                event("requested_memory_write", source_platform=incoming.platform,
+                      scope=_scope(incoming), kind="ordinary",
+                      outcome=outcome, summary=request.summary)
                 if outcome == "created":
                     answer = ("C'est enregistré dans ma mémoire ordinaire, "
                               "pas dans mes Core Memories. Celles-ci restent mon choix."
@@ -471,16 +474,18 @@ class MemoryService:
             if kind == "core_self":
                 if key != ("microphone", "goldaj"):
                     return  # Autobiography never becomes a third-party memory.
-                await asyncio.to_thread(
+                persisted = await asyncio.to_thread(
                     self.store.put_self_core, key, summary=summary,
                     significance=significance, message_id=incoming.message_id,
                     expected_person_id=person_id)
             else:
-                await asyncio.to_thread(
+                persisted = await asyncio.to_thread(
                     self.store.put, key, kind=kind, scope=_scope(incoming),
                     summary=summary, significance=significance,
                     message_id=incoming.message_id, expected_person_id=person_id,
                 )
+            event("memory_curator_write", kind=kind, scope=_scope(incoming),
+                  persisted=persisted, summary=summary)
         except asyncio.CancelledError:
             raise
         except Exception:
