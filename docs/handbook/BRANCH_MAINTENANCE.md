@@ -2,7 +2,7 @@
 
 ## Arbitrage de protection — 21 novembre 2026
 
-**Décision validée par le propriétaire (OPS-017)** : protéger uniquement `main` contre suppression et force-push, garder `develop` sans nouvelle restriction et ne pas rendre les PR obligatoires. La protection **n'a pas été appliquée** : dernier contrôle GitHub `main.protected=false`, `develop.protected=false`, aucun ruleset, et aucune action administrative GitHub n'est disponible dans cette connexion. Une intervention dans les paramètres GitHub est encore requise ; vérifier l'état après activation avant Done. [Passation](../operations/handoffs/2026-11-21-chatgpt-ops017-protection-branches.md).
+**Décision validée par le propriétaire (OPS-017)** : protéger uniquement `main` contre suppression et force-push, garder `develop` sans nouvelle restriction et ne pas rendre les PR obligatoires. La protection **n'a pas été appliquée** : dernier contrôle GitHub `main.protected=false`, `develop.protected=false`, aucun ruleset, et aucune action administrative GitHub n'est disponible dans cette connexion. Une intervention dans les paramètres GitHub reste requise pour obtenir cette protection. **OPS-017 est néanmoins notée Done sur demande expresse du propriétaire le 21/11/2026**, en acceptant explicitement que le réglage n'ait pas été appliqué ; ce statut ne prouve donc pas une protection active. [Passation](../operations/handoffs/2026-11-21-chatgpt-ops017-protection-branches.md).
 
 ## Audit ciblé du 18 novembre 2026
 
