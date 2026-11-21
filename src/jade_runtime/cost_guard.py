@@ -12,6 +12,7 @@ from pathlib import Path
 import hashlib
 import sqlite3
 from .paris_clock import paris_date
+from .session_logging import event
 
 
 def money(value):
@@ -73,6 +74,9 @@ class CostGuard:
                 (category,request_hash,date_local,month_local,estimated_usd)
                 VALUES(?,?,?,?,?)""",(category,digest,day,month,str(quote)))
             db.commit()
+            event("sqlite_commit", database="cost_guard",
+                  statements=[{"operation": "INSERT", "table": "jade_cost_reservations"}],
+                  changed_rows=1, category=category, estimated_usd=str(quote))
             return True
 
     def reserved_usd(self, category, *, now=None):
