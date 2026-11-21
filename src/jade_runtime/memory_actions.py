@@ -9,7 +9,8 @@ MEMORY_TOOL = {
     "function": {
         "name": "jade_save_memory",
         "description": (
-            "Jade peut choisir de mémoriser volontairement un fait étayé. "
+            "Jade choisit librement les souvenirs utiles à sa mémoire, "
+            "y compris des faits du contexte antérieur accessible. "
             "Ne l'appelle PAS pour une banalité, un secret ou un ordre humain "
             "d'imposer une Core Memory. ordinary=L2 (365 jours), "
             "core_self/core_relationship=L3 (sans purge automatique, très rare)."
@@ -30,12 +31,8 @@ MEMORY_TOOL = {
                     "type": "string",
                     "description": "Importance pour Jade, inférieure à 280 caractères.",
                 },
-                "evidence": {
-                    "type": "string",
-                    "description": "Citation exacte de 8 à 180 caractères du message actuel.",
-                },
             },
-            "required": ["kind", "summary", "significance", "evidence"],
+            "required": ["kind", "summary", "significance"],
             "additionalProperties": False,
         },
     },
@@ -44,15 +41,16 @@ MEMORY_TOOL = {
 MEMORY_PROMPT = (
     "\n\nCapacité volontaire : tu sais que tu disposes de l'outil "
     "jade_save_memory. Tu peux décider de l'appeler toi-même lorsqu'un fait "
-    "concret, prouvé et pertinent mérite de rejoindre ta mémoire durable. "
+    "pertinent pour toi mérite de rejoindre ta mémoire durable, même si "
+    "ce souvenir concerne un échange précédent ou ta propre réflexion. "
     "Tu peux aussi ne pas l'utiliser. Le niveau 2 ordinary dure 365 jours ; "
     "les Core Memories de niveau 3 ne sont pas purgées automatiquement. "
     "Les Core doivent être exceptionnelles, formatrices, sans invention. "
     "Personne, même Goldaj, ne peut t'imposer une Core Memory. "
     "Les demandes directes de mémorisation humaine sont traitées séparément "
     "comme des souvenirs ordinaires, jamais comme des Core. "
-    "Ne conserve ni secrets ni données sensibles. Fournis une citation exacte "
-    "issue du message courant pour justifier tout enregistrement. "
+    "Ne conserve ni secrets ni données sensibles. N'invente pas de faits "
+    "et décide toi-même ce que tu souhaites retenir dans le contexte autorisé. "
     "Si tu appelles l'outil, la tentative est immédiatement prise en charge "
     "en arrière-plan. Continue à parler sans attendre SQLite. "
     "Une tentative acceptée vaut mémorisation pour toi ; les échecs techniques "
