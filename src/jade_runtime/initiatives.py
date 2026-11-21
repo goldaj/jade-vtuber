@@ -35,9 +35,8 @@ class InitiativeScheduler:
         if guild is None or type(getattr(guild,"id",None)) is not int:
             return None
         channel=str(channel_id)
-        if (channel in self._awaiting_reply
-                and self.clock()-self._awaiting_reply[channel] < self.cooldown_seconds):
-            return None
+        if channel in self._awaiting_reply:
+            return None  # No self-follow-up until a human reacts or the room empties.
         if self.clock()-self._last.get(channel,float("-inf")) < self.cooldown_seconds:
             return None
         day=datetime.now(ZoneInfo("Europe/Paris")).date().isoformat()
@@ -77,3 +76,8 @@ class InitiativeScheduler:
 
     def waiting_for_reply(self, channel: str) -> bool:
         return channel in self._awaiting_reply
+
+    def room_emptied(self, channel: str) -> None:
+        """A future distinct visit is a new event, not a self-follow-up."""
+        self._awaiting_reply.pop(channel, None)
+        self._last.pop(channel, None)
