@@ -11,6 +11,7 @@ import logging
 import re
 
 from .memory_store import MemoryStore, identity_of
+from .session_logging import event
 from .explicit_memory_intent import parse_explicit_memory_intent
 from .messages import Reply
 from .memory_batch import MemoryBatcher
@@ -67,7 +68,7 @@ class MemoryService:
         try:
             return await asyncio.to_thread(self.store.auto_enable, key)
         except Exception:
-            LOG.warning("Discord memory auto-enrollment unavailable; no identity logged")
+            LOG.exception("Discord memory auto-enrollment unavailable; no identity logged")
             return False
 
     async def context_for(self, incoming) -> str:
@@ -140,14 +141,17 @@ class MemoryService:
             return False
         try:
             user_content = f"{incoming.author} ({incoming.platform}): {incoming.text}"
-            return await asyncio.to_thread(
+            stored = await asyncio.to_thread(
                 self.store.append_conversation_turn, key, _scope(incoming),
                 source_platform=incoming.platform,
                 message_id=incoming.message_id,
                 user_content=user_content,
                 assistant_content=reply.text)
+            event("conversation_saved", source_platform=incoming.platform,
+                  scope=_scope(incoming), persisted=stored)
+            return stored
         except Exception:
-            LOG.warning("Conversation history write failed; no text logged")
+            LOG.exception("Conversation history write failed; no text logged")
             return False
 
     async def command(self, incoming) -> Reply | None:
@@ -362,6 +366,8 @@ class MemoryService:
                     self.store.put, key, kind=kind, scope=_scope(incoming),
                     summary=summary.strip(), significance=significance.strip(),
                     message_id=incoming.message_id, expected_person_id=pinned_person)
+            event("memory_write", kind=kind, level=level,
+                  scope=_scope(incoming), persisted=created, summary=summary)
             if created:
                 return {"status": "enregistré", "level": level, "kind": kind}
             # A failed insert after account erasure must NEVER be interpreted
