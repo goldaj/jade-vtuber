@@ -74,7 +74,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                                        else chat.client.close)
         dialogue = Dialogue(chat, prompt, bot_name=config.bot_name,
                             max_messages=config.max_history_messages,
-                            random_reply_rate=config.reply_probability)
+                            random_reply_rate=config.reply_probability,
+                            selective_context=live)
         memory = None
         if config.memory_enabled and live:
             from src.jade_runtime.memory_store import MemoryStore
@@ -84,7 +85,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 # Private microphone and authenticated mobile gateway are Goldaj.
                 await asyncio.to_thread(store.enable, ("microphone", "goldaj"))
             memory = MemoryService(store, chat,
-                                   curator_enabled=bool(config.memory_curator_enabled and live))
+                                   curator_enabled=bool(config.memory_curator_enabled and live),
+                                   curation_mode="batch")
             scopes.push_async_callback(memory.close)
 
             # Retention is enforced even for a long-running, otherwise idle Jade.

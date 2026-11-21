@@ -13,6 +13,7 @@ import re
 from .memory_store import MemoryStore, identity_of
 from .explicit_memory_intent import parse_explicit_memory_intent
 from .messages import Reply
+from .memory_batch import MemoryBatcher
 
 LOG = logging.getLogger("jade.memory")
 COMMAND = re.compile(
@@ -37,12 +38,16 @@ def _private_recall_allowed(incoming) -> bool:
 
 class MemoryService:
     def __init__(self, store: MemoryStore, backend, *, max_pending=4,
-                 curator_enabled=False):
+                 curator_enabled=False, curation_mode="single"):
         if not 1 <= max_pending <= 16:
             raise ValueError("invalid memory backlog")
         self.store = store
         self.backend = backend
         self.curator_enabled = curator_enabled
+        if curation_mode not in ("single", "batch"):
+            raise ValueError("invalid curation mode")
+        self.batch = (MemoryBatcher(store, backend, max_workers=max_pending)
+                      if curation_mode == "batch" else None)
         self.max_pending = max_pending
         self.tasks: set[asyncio.Task] = set()
         self._closed = False
@@ -287,6 +292,8 @@ class MemoryService:
         if (key is None or COMMAND.fullmatch(incoming.text.strip())
                 or parse_explicit_memory_intent(incoming.text) is not None):
             return False
+        if self.batch is not None:
+            return self.batch.schedule(key, _scope(incoming), incoming, reply)
         task = asyncio.create_task(self._curate(key, incoming, reply), name="jade-memory-curator")
         self.tasks.add(task)
         task.add_done_callback(self._done)
@@ -381,6 +388,8 @@ class MemoryService:
 
     async def close(self):
         self._closed = True
+        if self.batch is not None:
+            await self.batch.close()
         pending = tuple(self.tasks)
         for task in pending:
             task.cancel()
