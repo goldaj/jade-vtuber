@@ -2,6 +2,7 @@
 import asyncio
 from datetime import datetime
 import logging
+import re
 import time
 from zoneinfo import ZoneInfo
 
@@ -23,7 +24,7 @@ class InitiativeScheduler:
         self._room_epoch = {}
 
     async def voice_join(self, member, before, after, *, channel_id,
-                         own_bot_id=None):
+                         own_bot_id=None, voice_session_id=""):
         dest=getattr(after,"channel",None)
         previous=getattr(before,"channel",None)
         user_id=getattr(member,"id",None)
@@ -57,13 +58,22 @@ class InitiativeScheduler:
             return None
         self._last[channel]=self.clock()
         self._awaiting_reply[channel] = self.clock()
+        members = getattr(dest, "members", None)
+        audible = (isinstance(members, (list, tuple))
+                   and any(getattr(p, "id", None) == user_id
+                           and getattr(p, "bot", True) is False for p in members)
+                   and isinstance(voice_session_id, str)
+                   and re.fullmatch(r"[A-Za-z0-9_-]{16,128}", voice_session_id))
         return Incoming(
-            platform="discord",author="Événement système Jade",
+            platform="discord_voice" if audible else "discord",
+            author="Événement système Jade",
             text=("Une personne vient d'entrer dans ton salon vocal Discord. "
-                  "Tu peux proposer un salut bref dans le chat de CE salon, "
+                  "Tu peux proposer un salut bref à l\u0027oral dans CE salon "
                   "sans aucun souvenir privé ni prétendre connaître l'arrivant."),
             channel=channel,message_id="jade-initiative-"+str(user_id)+"-"+day,
-            force_reply=True)
+            speaker_id=user_id if audible else None,
+            voice_session_id=voice_session_id if audible else "",
+            system_initiative=True, force_reply=True)
 
     def human_replied(self, channel: str, *, verified: bool = True) -> bool:
         """A real human interaction ends the unanswered initiative.
