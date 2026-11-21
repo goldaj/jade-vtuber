@@ -2,6 +2,13 @@
 
 Ce document est **la seule pièce documentaire systématiquement exigée en CI** pour les changements techniques. Les guides, atlas et passations sont révisés uniquement quand le comportement ou les procédures qu'ils décrivent changent. Une entrée indique les faits vérifiés ; un ancien journal ne remplace pas le code.
 
+## 2026-11-21 — Souvenirs transversaux privés pour les comptes liés (develop)
+
+- **Produit :** dans la PWA, le micro PC et les MP Discord, Jade retrouve les souvenirs condensés des autres portées d'un même profil ayant au moins deux identités authentifiées liées. Maximum huit souvenirs dans le contexte dont quatre d'autres portées ; la mémoire locale de salon reste prioritaire.
+- **Garde-fou léger :** aucun souvenir d'une autre portée n'est chargé dans les salons publics Discord/vocaux ou Twitch. L'historique complet de niveau 1 reste par salon ; seuls les résumés de niveau 2 et les Core relationnelles stockées dans `memories` circulent en privé. L'autobiographie `jade_self_core` reste propriétaire.
+- **Technique :** nouvelle lecture SQL `MemoryStore.recall_linked` appelée conditionnellement par `MemoryService.context_for`, sans migration SQLite, réécriture des enregistrements ni appels IA supplémentaires. Conservation 7j/365j/Core, code de liaison 5 minutes, autonomie Core, effacement et déliaison inchangés.
+- **Fichiers et QA :** `memory_store.py`, `memory_service.py`, texte de la PWA, tests `test_jade_cross_channel_memory.py`, guides/état de develop et passation. Exécution des tests CI sur le commit à vérifier ; recette réelle PC/Discord/Android par le propriétaire.
+
 ## 2026-11-21 — Mémoire automatique en MP Discord et clarification de la liaison mobile (develop)
 
 - **Produit :** inscription mémoire automatique pour un compte Discord vérifié dès un tour traité en MP, comme en serveur et en vocal ; aucun pseudonyme ne vaut identification et Twitch reste sur activation explicite. L'opt-out durable Discord via `!jade-memoire oublier` et le retour volontaire via `!jade-memoire activer` restent prioritaires.

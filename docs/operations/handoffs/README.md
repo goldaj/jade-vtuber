@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Mémoire transversale privée des comptes liés (21/11)](2026-11-21-chatgpt-memoire-transversale-privee.md) · Résumés mémoriels réutilisables entre supports privés, salons publics et historiques bruts isolés, recette physique par le propriétaire.
+
 - [Mémoire MP Discord automatique et libellés de liaison mobile (21/11)](2026-11-21-chatgpt-discord-mp-memoire-liaison.md) · Activation par compte Discord vérifié sur MP/serveur, opt-out durable et parcours explicite ; code limité à 5 minutes, liaison durable.
 
 - [Rétention des mémoires Jade : 7 jours / 365 jours / Core permanentes](2026-11-20-chatgpt-retention-memoire-7j-365j.md) · Migration SQLite v4, reprise de tous les échanges des 24 dernières heures et purge automatique.

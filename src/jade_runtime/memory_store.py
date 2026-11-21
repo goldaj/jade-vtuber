@@ -495,6 +495,39 @@ class MemoryStore:
                 """, (*key, scope, _now().isoformat(), limit)).fetchall()
         return [dict(row) for row in rows]
 
+    def recall_linked(self, key: tuple[str, str], scope: str, *,
+                      limit: int = 4) -> list[dict]:
+        """Curated memories from other scopes of explicitly linked accounts.
+
+        Call only from a verified PRIVATE conversation. Public channels must
+        continue to use recall() alone. Raw conversation history stays scoped.
+        """
+        _validate_key(key)
+        if (not isinstance(scope, str) or not 1 <= len(scope) <= 256
+                or type(limit) is not int or not 1 <= limit <= 16):
+            raise ValueError("invalid linked memory recall")
+        with self._db() as db:
+            identity = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?",
+                key).fetchone()
+            if identity is None:
+                return []
+            person_id = identity["person_id"]
+            linked = db.execute(
+                "SELECT COUNT(*) FROM identities WHERE person_id=?",
+                (person_id,)).fetchone()[0]
+            if linked < 2:
+                return []  # Standalone accounts keep channel isolation.
+            rows = db.execute("""
+                SELECT kind,scope,summary,significance,created_at,source_platform
+                FROM memories
+                WHERE person_id=? AND scope<>?
+                  AND (expires_at IS NULL OR expires_at>?)
+                ORDER BY CASE WHEN kind='ordinary' THEN 1 ELSE 0 END,
+                         created_at DESC LIMIT ?
+            """, (person_id, scope, _now().isoformat(), limit)).fetchall()
+        return [dict(row) for row in rows]
+
     def list_for_account(self, key: tuple[str, str]) -> list[dict]:
         _validate_key(key)
         with self._db() as db:
