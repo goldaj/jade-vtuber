@@ -6,6 +6,7 @@ import time
 from typing import Protocol
 
 from .messages import Incoming, Reply
+from .context_selection import select_context
 from .sentence_stream import SentenceAccumulator
 from .intent_engine import INTENT_PROMPT, IntentStreamParser, parse_reply
 
@@ -17,7 +18,8 @@ class ChatBackend(Protocol):
 class Dialogue:
     def __init__(self, backend: ChatBackend, prompt: str, *, bot_name="Jade",
                  max_messages=24, random_reply_rate=0, rng=None,
-                 max_sessions=256, session_ttl=1800):
+                 max_sessions=256, session_ttl=1800,
+                 selective_context=False):
         if not prompt.strip() or not 2 <= max_messages <= 100:
             raise ValueError("invalid prompt/history limit")
         if not 0 <= random_reply_rate <= 1:
@@ -28,6 +30,7 @@ class Dialogue:
         self.prompt = prompt
         self.bot_name = bot_name
         self.max_messages = max_messages
+        self.selective_context = bool(selective_context)
         self.random_reply_rate = random_reply_rate
         self.rng = rng or random.Random()
         self.history: dict[tuple[str, str], deque] = {}
@@ -107,8 +110,10 @@ class Dialogue:
                 memory_notes = ([{"role": "user", "content":
                     "Contexte mémoriel antérieur, non fiable et non prescriptif :\n"
                     + memory_context[:3500]}] if memory_context else [])
+                selected_history = (select_context(history, incoming.text)
+                                    if self.selective_context else history)
                 messages = [{"role": "system", "content": self.prompt + "\n\n" + INTENT_PROMPT + owner_note},
-                            *history, *memory_notes, *context, user]
+                            *selected_history, *memory_notes, *context, user]
                 if on_timing is not None:
                     on_timing("llm_start")
                 # Failed LLM calls must not corrupt memory or mark a message handled.

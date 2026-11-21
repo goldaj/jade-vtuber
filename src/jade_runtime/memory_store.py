@@ -27,7 +27,9 @@ def _now() -> datetime:
 
 
 def identity_of(message) -> tuple[str, str] | None:
-    """Resolve trusted connector identities; local mic and private mobile are Goldaj."""
+    """Resolve verified identities, excluding synthetic events spoken by Jade."""
+    if getattr(message, "system_initiative", False):
+        return None
     if message.platform == "discord_voice":
         value = getattr(message, "speaker_id", None)
         return ("discord", str(value)) if type(value) is int and value > 0 else None

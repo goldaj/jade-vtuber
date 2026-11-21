@@ -658,6 +658,11 @@ class DiscordVoiceBridge:
                         except Exception:
                             continue
                         participant_count = len(humans)
+                    # A real voice response ends unanswered spontaneous outreach.
+                    # Only post-STT, authorized, non-echo human speech can do this.
+                    initiative_tracker = getattr(self, "initiatives", None)
+                    if initiative_tracker is not None and item.user_id != self.own_bot_id:
+                        initiative_tracker.human_replied(str(self.channel_id))
                     # Even a recognized stop word may belong to the surrounding
                     # conversation. Finish Jade's answer before accepting commands.
                     if during_playback:
@@ -1333,6 +1338,13 @@ class OpenVoiceBridge(DiscordVoiceBridge):
             if (connection is None or self.session_id != session_id
                     or not self._speaker_allowed_locked(speaker_id)):
                 return False
+        if getattr(source, "system_initiative", False):
+            members = getattr(getattr(connection, "channel", None), "members", None)
+            if not isinstance(members, (list, tuple)) or not any(
+                    type(getattr(person, "id", None)) is int
+                    and person.id == speaker_id and getattr(person, "bot", True) is False
+                    for person in members):
+                return False  # Never speak if the joining human already left.
         if not self._playback_authorized(connection, generation, session_id):
             return False
         with self.buffers_lock:

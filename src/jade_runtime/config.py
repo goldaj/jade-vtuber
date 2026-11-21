@@ -67,6 +67,12 @@ class Settings:
     discord_voice_auto_rate: float = 0.20
     discord_text_auto_rate: float = 0.20
     discord_text_cooldown_seconds: int = 180
+    social_hybrid_enabled: bool = True
+    initiatives_enabled: bool = True
+    social_budget_daily_usd: float = 0.0
+    social_budget_monthly_usd: float = 0.0
+    initiative_budget_daily_usd: float = 0.0
+    initiative_budget_monthly_usd: float = 0.0
     avatar_intent_enabled: bool = True  # Facial/text reactions, not voice intent metadata.
     vts_enabled: bool = False
     vts_token: str = ""
@@ -86,6 +92,8 @@ class Settings:
     # Persistent memory and its curator enabled by default for the live runtime.
     memory_enabled: bool = True
     memory_curator_enabled: bool = True
+    memory_batch_enabled: bool = True
+    selective_context_enabled: bool = True
     memory_db_path: str = field(default_factory=_default_memory_db_path)
     # Private PWA, opt-in via Tailscale Serve; separate HTTP secret from chat.
     billing_admin_key: str = field(default="", repr=False)
@@ -124,6 +132,12 @@ class Settings:
             discord_voice_auto_rate=float(environ("JADE_DISCORD_VOICE_AUTO_RATE", "0.20")),
             discord_text_auto_rate=float(environ("JADE_DISCORD_TEXT_AUTO_RATE", "0.20")),
             discord_text_cooldown_seconds=int(environ("JADE_DISCORD_TEXT_COOLDOWN_SECONDS", "180")),
+            social_hybrid_enabled=_enabled(str(environ("JADE_SOCIAL_HYBRID_ENABLED", "1")).lower()),
+            initiatives_enabled=_enabled(str(environ("JADE_INITIATIVES_ENABLED", "1")).lower()),
+            social_budget_daily_usd=float(environ("JADE_SOCIAL_BUDGET_DAILY_USD", "0")),
+            social_budget_monthly_usd=float(environ("JADE_SOCIAL_BUDGET_MONTHLY_USD", "0")),
+            initiative_budget_daily_usd=float(environ("JADE_INITIATIVE_BUDGET_DAILY_USD", "0")),
+            initiative_budget_monthly_usd=float(environ("JADE_INITIATIVE_BUDGET_MONTHLY_USD", "0")),
             avatar_intent_enabled=_enabled(str(environ("JADE_AVATAR_INTENT_ENABLED", "1")).lower()),
             vts_enabled=_enabled(str(environ("JADE_VTS_ENABLED", "0")).lower()),
             vts_token=str(environ("JADE_VTS_TOKEN", "")),
@@ -142,6 +156,8 @@ class Settings:
             latency_logging=_enabled(str(environ("JADE_LATENCY_LOG", "0")).lower()),
             memory_enabled=_enabled(str(environ("JADE_MEMORY_ENABLED", "1")).lower()),
             memory_curator_enabled=_enabled(str(environ("JADE_MEMORY_CURATOR_ENABLED", "1")).lower()),
+            memory_batch_enabled=_enabled(str(environ("JADE_MEMORY_BATCH_ENABLED", "1")).lower()),
+            selective_context_enabled=_enabled(str(environ("JADE_SELECTIVE_CONTEXT_ENABLED", "1")).lower()),
             memory_db_path=str(environ("JADE_MEMORY_DB_PATH", "")).strip() or _default_memory_db_path(),
             billing_admin_key=str(environ("JADE_OPENAI_ADMIN_KEY", "")),
             mobile_enabled=_enabled(str(environ("JADE_MOBILE_ENABLED", "0")).lower()),
@@ -177,6 +193,10 @@ class Settings:
                 or not 0 <= self.reply_probability <= 1
                 or not 1 <= self.timeout_seconds <= 120):
             raise ValueError("invalid runtime safety bounds")
+        if any(not math.isfinite(value) or not 0 <= value <= 10000 for value in (
+                self.social_budget_daily_usd, self.social_budget_monthly_usd,
+                self.initiative_budget_daily_usd, self.initiative_budget_monthly_usd)):
+            raise ValueError("invalid optional API budget")
         if (not 0 <= self.discord_voice_auto_rate <= 1
                 or not 0 <= self.discord_text_auto_rate <= 1
                 or not 30 <= self.discord_text_cooldown_seconds <= 3600):

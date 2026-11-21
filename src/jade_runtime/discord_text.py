@@ -34,7 +34,8 @@ def parse_discord_message(message, *, own_user_id=None) -> Incoming | None:
 class DiscordText:
     def __init__(self, token: str, on_message, *, send_enabled=False,
                  voice_bridge=None, bot_name="Jade", auto_rate=0.20,
-                 cooldown_seconds=180):
+                 cooldown_seconds=180, social_policy=None,
+                 initiatives=None):
         if not token or token == "example":
             raise ValueError("Discord token required")
         self.token = token
@@ -42,6 +43,8 @@ class DiscordText:
         self.send_enabled = send_enabled
         self.client = None
         self.voice_bridge = voice_bridge
+        self.social_policy = social_policy
+        self.initiatives = initiatives
         self.dropped = 0
         self.policy = DiscordTextPolicy(bot_name=bot_name, auto_rate=auto_rate,
                                         cooldown_seconds=cooldown_seconds)
@@ -117,6 +120,10 @@ class DiscordText:
                 incoming = parse_discord_message(
                     message, own_user_id=self.user.id if self.user else None)
                 if incoming is not None:
+                    if (parent.initiatives is not None
+                            and incoming.account_id
+                            and getattr(message.author, "bot", True) is False):
+                        parent.initiatives.human_replied(incoming.channel)
                     selected = parent.policy.observe(
                         message, incoming, own_user_id=self.user.id if self.user else None)
                     # Native text chat of the current voice channel has the
@@ -130,6 +137,15 @@ class DiscordText:
                         if type(guild_id) is int and type(message.channel.id) is int:
                             linked = bridge.linked_text_conversation_id(
                                 guild_id, message.channel.id, message.author.id)
+                    if selected is not None and parent.social_policy is not None:
+                        state = parent.policy.channels.get(incoming.channel)
+                        count = len(state.participants) if state is not None else 0
+                        if not await parent.social_policy.allow(
+                                message, selected,
+                                own_user_id=self.user.id if self.user else None,
+                                active_participants=count):
+                            parent.policy.forget_pending(selected.channel, selected.message_id)
+                            selected = None
                     if selected is not None:
                         if linked:
                             selected = replace(selected, conversation_id=linked)
@@ -162,6 +178,27 @@ class DiscordText:
                     if lost_voice and self._gateway_available:
                         LOG.warning("Discord voice left while Gateway is available; scheduling reconnect")
                         self._schedule_voice_retry(bridge)
+                if parent.initiatives is not None:
+                    previous = getattr(before, "channel", None)
+                    current = getattr(after, "channel", None)
+                    if previous is not None and previous != current:
+                        members = getattr(previous, "members", None)
+                        if isinstance(members, (list, tuple)) and not any(
+                                getattr(person, "bot", True) is False
+                                for person in members):
+                            parent.initiatives.room_emptied(str(previous.id))
+                if parent.initiatives is not None and self._gateway_available:
+                    source = await parent.initiatives.voice_join(
+                        member, before, after, channel_id=bridge.channel_id,
+                        own_bot_id=own_bot_id,
+                        voice_session_id=(bridge.session_id
+                                          if getattr(bridge, "connection", None) is not None
+                                          else ""))
+                    if source is not None:
+                        try:
+                            await parent.on_message(source)
+                        except (asyncio.QueueFull, RuntimeError):
+                            parent.dropped += 1
 
             async def on_disconnect(self):
                 retry = self._cancel_voice_retry()

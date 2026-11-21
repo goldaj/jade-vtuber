@@ -24,6 +24,8 @@ class Incoming:
     # Mobile PWA requests use the trusted gateway, not the Discord session.
     input_modality: str = field(default="text", repr=False)
     requested_speech: bool = field(default=False, repr=False)
+    # Only runtime-created events; never attribute Jade\u0027s speech to a human.
+    system_initiative: bool = field(default=False, repr=False)
 
     def __post_init__(self):
         if (not self.platform.strip() or not self.author.strip()
@@ -33,6 +35,8 @@ class Incoming:
         if (self.input_modality not in ("text", "voice")
                 or type(self.requested_speech) is not bool):
             raise ValueError("invalid input/output modality")
+        if type(self.system_initiative) is not bool:
+            raise ValueError("invalid system event flag")
         if type(self.private_channel) is not bool:
             raise ValueError("invalid private channel flag")
         if len(self.text) > 4000:
