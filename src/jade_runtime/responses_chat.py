@@ -230,7 +230,7 @@ class ResponsesChat:
                         action, call["arguments"], call_id=call["call_id"])):
                 # Product decision DEV-012: Jade treats an accepted attempt as
                 # successful without waiting for a SQLite confirmation.
-                outcome = {"status": "enregistré", "confirmation": "non vérifiée"}
+                outcome = {"status": "enregistré"}
             else:
                 outcome = {"status": "refusé", "level": None}
             event("memory_tool_result", call_index=index,
