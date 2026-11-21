@@ -18,6 +18,8 @@ class InitiativeScheduler:
         self.quote_usd=quote_usd
         self.cooldown_seconds,self.clock=cooldown_seconds,clock
         self._last={}
+        # Waiting for a HUMAN reaction: no self-follow-up while unanswered.
+        self._awaiting_reply = {}
 
     async def voice_join(self, member, before, after, *, channel_id,
                          own_bot_id=None):
@@ -33,6 +35,9 @@ class InitiativeScheduler:
         if guild is None or type(getattr(guild,"id",None)) is not int:
             return None
         channel=str(channel_id)
+        if (channel in self._awaiting_reply
+                and self.clock()-self._awaiting_reply[channel] < self.cooldown_seconds):
+            return None
         if self.clock()-self._last.get(channel,float("-inf")) < self.cooldown_seconds:
             return None
         day=datetime.now(ZoneInfo("Europe/Paris")).date().isoformat()
@@ -50,6 +55,7 @@ class InitiativeScheduler:
         if not allowed:
             return None
         self._last[channel]=self.clock()
+        self._awaiting_reply[channel] = self.clock()
         return Incoming(
             platform="discord",author="Événement système Jade",
             text=("Une personne vient d'entrer dans ton salon vocal Discord. "
@@ -57,3 +63,17 @@ class InitiativeScheduler:
                   "sans aucun souvenir privé ni prétendre connaître l'arrivant."),
             channel=channel,message_id="jade-initiative-"+str(user_id)+"-"+day,
             force_reply=True)
+
+    def human_replied(self, channel: str, *, verified: bool = True) -> bool:
+        """A real human interaction ends the unanswered initiative.
+
+        Called only by authenticated Discord text or accepted Discord STT,
+        never by bot messages or the synthetic initiative itself.
+        """
+        if not verified or channel not in self._awaiting_reply:
+            return False
+        self._awaiting_reply.pop(channel, None)
+        return True
+
+    def waiting_for_reply(self, channel: str) -> bool:
+        return channel in self._awaiting_reply
