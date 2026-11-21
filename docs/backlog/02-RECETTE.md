@@ -1,6 +1,6 @@
 # Recette fonctionnelle du code existant — backlog opérationnel
 
-**Branche :** develop · **Révision :** 20 novembre 2026 · **Type :** REC · **État de référence :** lecture GitHub, pas recette locale.
+**Branche :** develop · **Révision :** 21 novembre 2026 · **Type :** REC · **État de référence :** lecture GitHub, pas recette locale.
 
 Ces tâches vérifient sur appareils et services réels des fonctionnalités déjà codées. Elles ne doivent jamais être transformées en développement à refaire par défaut. Une anomalie reproductible génère une carte DEV liée.
 
@@ -9,7 +9,7 @@ Les priorités expriment la valeur de livraison et les dépendances, non un ordr
 | ID | Prio | Jalon | Statut | Situation initiale | Tâche | Résultat attendu / vérification | Dépend de |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | **REC-001** | P0 | A | **À faire** | À faire sur PC | Démarrer Jade entière en une instance | Lancer --all-channels et relever les connexions actives Discord, Twitch, micro, HTTP, PWA et avatar sans choisir de mode. | OPS-004, OPS-006, OPS-008 |
-| **REC-002** | P0 | A | **À faire** | [Lecture et réponse écrites **Done**](#validation-propriétaire-du-20-novembre-2026) | Discord écrit et messages privés | Vérifier réception, réponse dans le salon source, mentions, DM, participants observés et rythme solo/groupe 30 % sans divulgation externe. | REC-001 |
+| **REC-002** | P0 | A | **À faire** | [Lecture et réponse écrites en salon validées le 20/11](#validation-propriétaire-du-20-novembre-2026) ; **le 21/11, le propriétaire constate une absence de réponse en MP Discord**, traitée par DEV-019. La validation des salons ne couvre pas les MP. | Discord écrit et messages privés | Vérifier réception et réponse dans le salon source ; pour les MP, répondre sans mention au même auteur, identité Discord réelle et non Goldaj par défaut, historique/mémoire isolés ; tester plusieurs auteurs, consentement et absence de sortie publique/OBS/TTS. Contrôler aussi mentions, participants observés et rythme solo/groupe 30 %. | REC-001, DEV-019 |
 | **REC-003** | P0 | A | **À faire** | [Écoute et réponse orales **Done**](#validation-propriétaire-du-20-novembre-2026) | Discord vocal réel | Vérifier capture PCM/DAVE, STT, génération, TTS, changement de canal, autorisations de participants et conversation naturelle. | REC-001, OPS-007 |
 | **REC-004** | P0 | A | **À faire** | À recetter | Microphone PC réel | Vérifier transcription, lecture locale, silence de fin de phrase et anti-écho, même lorsque les autres canaux sont actifs. | REC-001, OPS-007 |
 | **REC-005** | P0 | A | **À valider** | [OK propriétaire, réserve OBS DEV-004](#complément-de-recette-du-20-novembre-2026) | Isolation des sorties et confidentialité | Exercer Discord public/DM, Twitch, micro, HTTP et mobile ; vérifier DEV-004 (aucun sous-titre OBS pour DM, sous-titres publics préservés) ainsi que le mixage audio OBS réel : aucun texte, son, sous-titre ou effet visuel privé hors de son audience autorisée. | REC-001, REC-002, REC-003, REC-004 |
@@ -40,7 +40,7 @@ Base de recette réellement déployée sur Windows et Android · develop b4fdd70
 
 | Carte | Sous-recette | Statut | Résultat confirmé |
 | --- | --- | --- | --- |
-| REC-002 | Discord écrit | **Done** | Jade lit les messages et répond par écrit dans le parcours testé. |
+| REC-002 | Discord écrit (salon) | **Done sur le parcours salon testé** | Jade lit et répond par écrit dans le salon testé le 20/11 ; **MP non validé, anomalie signalée le 21/11 (DEV-019)**. |
 | REC-003 | Discord vocal | **Done** | Jade entend la parole et répond oralement dans le vocal testé. |
 | REC-014 | PWA Android texte | **Done** | Accès à la PWA privée et échange de messages dans la session testée. |
 | REC-015 | PWA Android voix et micro | **Done** | Jade entend la parole depuis le téléphone et l'utilisateur entend la réponse dans la PWA. |
