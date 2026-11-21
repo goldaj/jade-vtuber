@@ -81,12 +81,17 @@ class OpenAIServices:
                 if inspect.isawaitable(closing):
                     await closing
 
-    def _chat_arguments(self, messages):
+    def _chat_arguments(self, messages, *, with_tools=False):
+        # The Chat Completions endpoint rejects function tools combined with
+        # reasoning_effort != "none" for gpt-6-luna. Keep the configured effort
+        # on plain chat completions; only tool-enabled requests need the override.
+        effort = ("none" if with_tools and self.settings.model.startswith("gpt-6-luna")
+                  else self.settings.reasoning_effort)
         return {
             "model": self.settings.model,
             "messages": messages,
             "max_completion_tokens": self.settings.max_completion_tokens,
-            "reasoning_effort": self.settings.reasoning_effort,
+            "reasoning_effort": effort,
         }
 
     @staticmethod
@@ -128,9 +133,10 @@ class OpenAIServices:
     async def complete_with_tools(self, messages, memory_action) -> str:
         """One call if unused, an additional completion only after tool use."""
         event("openai_request", operation="chat.complete_with_tools",
-              model=self.settings.model, tools_enabled=True, streaming=False)
+              model=self.settings.model, tools_enabled=True, streaming=False,
+              effective_reasoning_effort=self._chat_arguments(messages, with_tools=True)["reasoning_effort"])
         response = await self.client.chat.completions.create(
-            **self._chat_arguments(messages), tools=[MEMORY_TOOL],
+            **self._chat_arguments(messages, with_tools=True), tools=[MEMORY_TOOL],
             tool_choice="auto", parallel_tool_calls=False)
         choice = response.choices[0]
         event("openai_response", operation="chat.complete_with_tools",
@@ -156,9 +162,10 @@ class OpenAIServices:
     async def complete_stream_with_tools(self, messages, memory_action):
         """Support streamed function arguments without speaking any tool payload."""
         event("openai_request", operation="chat.stream_with_tools",
-              model=self.settings.model, tools_enabled=True, streaming=True)
+              model=self.settings.model, tools_enabled=True, streaming=True,
+              effective_reasoning_effort=self._chat_arguments(messages, with_tools=True)["reasoning_effort"])
         stream = await self.client.chat.completions.create(
-            **self._chat_arguments(messages), tools=[MEMORY_TOOL],
+            **self._chat_arguments(messages, with_tools=True), tools=[MEMORY_TOOL],
             tool_choice="auto", parallel_tool_calls=False, stream=True)
         calls = {}
         finish = None
