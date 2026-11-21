@@ -199,8 +199,8 @@ def test_first_voice_fragment_arrives_before_model_completion():
     first_sent = asyncio.Event()
 
     async def events():
-        yield NS(type="response.output_text.delta", delta="[INTENT:neutral] Bonjour.")
         first_sent.set()
+        yield NS(type="response.output_text.delta", delta="[INTENT:neutral] Bonjour.")
         await gate.wait()
         yield NS(type="response.completed", response=text_response(
             "[INTENT:neutral] Bonjour."))
