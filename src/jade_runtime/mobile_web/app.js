@@ -24,6 +24,7 @@
   let playing = null;
   let playFrame = null;
   let streamController = null;
+  let activeDuplex = null;
   const streamSources = new Set();
   let streamAnalyser = null;
   let streamNextTime = 0;
@@ -43,7 +44,7 @@
     send.disabled = working;
     newChat.disabled = working;
     input.disabled = working;
-    mic.disabled = working && !recording;
+    mic.disabled = working && !recording && !activeDuplex;
   }
 
   function authorizeAgain() {
@@ -381,6 +382,7 @@
       return;
     }
     stopPlayback();
+    if (activeDuplex) { activeDuplex.cancel(); activeDuplex = null; }
     // Android may auto-stop after 20 seconds (no further user gesture).
     // Unlock the output context on the initial microphone tap too.
     if (soundEnabled) ensureAudioContext().catch(() => {});
@@ -403,6 +405,28 @@
       silent.gain.value = 0;
       const chunks = [];
       let frames = 0;
+      let duplex = null;
+      if (window.JadeDuplex?.supported()) {
+        duplex = window.JadeDuplex.create({
+          token, session:thread, speak:soundEnabled,
+          onEvent:async event => {
+            if (event.type === "reply") {
+              if (event.transcript) addBubble(event.transcript, "me");
+              addBubble(String(event.reply || "…"), "jade");
+              setReplyIntent(event.intent);
+            } else if (event.type === "pcm") {
+              await playPcm(event.pcm_b64, event.sample_rate);
+            } else if (event.type === "wav") {
+              if (soundEnabled) await playWav(event.audio_wav_b64);
+            } else if (event.type === "audio_error") {
+              setStatus("Réponse écrite reçue, mais la voix est indisponible.");
+            } else if (event.type === "done") {
+              setStatus("Prête.");
+            }
+          }
+        });
+        activeDuplex = duplex;
+      }
       processor.onaudioprocess = event => {
         if (!recording || recording.context !== context) return;
         const sample = event.inputBuffer.getChannelData(0);
@@ -413,11 +437,19 @@
         const part = new Float32Array(sample);
         chunks.push(part);
         frames += part.length;
+        if (duplex) {
+          try { duplex.push(part, context.sampleRate); }
+          catch (error) {
+            if (recording) recording.duplexFailed = error;
+            duplex.cancel();
+            stopRecording();
+          }
+        }
       };
       source.connect(processor);
       processor.connect(silent);
       silent.connect(context.destination);
-      recording = {stream, context, source, processor, silent, chunks,
+      recording = {stream, context, source, processor, silent, chunks, duplex,
                    get frames() {return frames;}, started:Date.now()};
       mic.classList.add("recording");
       mic.setAttribute("aria-pressed", "true");
@@ -426,6 +458,7 @@
       // Avoid leaving the microphone open after 20 seconds.
       recording.timer = setTimeout(stopRecording, 20000);
     } catch (_) {
+      if (activeDuplex) { activeDuplex.cancel(); activeDuplex = null; }
       if (stream) stream.getTracks().forEach(track => track.stop());
       if (context) await context.close().catch(() => {});
       setStatus("Accès au micro refusé ou indisponible.");
@@ -457,6 +490,8 @@
     recording = null;
     resetMicButton();
     // Backgrounding the app must discard, never send, microphone data.
+    if (current.duplex) current.duplex.cancel();
+    if (activeDuplex === current.duplex) activeDuplex = null;
     releaseRecording(current).catch(() => {});
     setStatus("Enregistrement interrompu, aucun audio envoyé.");
   }
@@ -474,18 +509,25 @@
     try {
       await releaseRecording(current);
       if (Date.now() - current.started < 250 || frames < 4000) {
+        if (current.duplex) current.duplex.cancel();
         setStatus("Enregistrement trop court.");
         return;
       }
-      const wav = buildWav(current.chunks, rate, frames);
-      await makeStreamingRequest("/api/voice", wav, {
-        "Content-Type":"audio/wav",
-        "X-Jade-Session": thread,
-        "X-Jade-Speak": soundEnabled ? "1" : "0"
-      });
+      if (current.duplexFailed) throw current.duplexFailed;
+      if (current.duplex) {
+        await current.duplex.finish();
+      } else {
+        const wav = buildWav(current.chunks, rate, frames);
+        await makeStreamingRequest("/api/voice", wav, {
+          "Content-Type":"audio/wav",
+          "X-Jade-Session": thread,
+          "X-Jade-Speak": soundEnabled ? "1" : "0"
+        });
+      }
     } catch (error) {
       setStatus(error.message || "Message vocal non transmis.");
     } finally {
+      if (activeDuplex === current.duplex) activeDuplex = null;
       busy = false;
       send.disabled = false;
       newChat.disabled = false;
@@ -604,12 +646,18 @@
   });
   mic.addEventListener("click", () => {
     if (recording) stopRecording();
-    else if (!starting) startRecording();
+    else if (activeDuplex && busy) {
+      activeDuplex.cancel();
+      activeDuplex = null;
+      stopPlayback();
+      setStatus("Réponse vocale interrompue.");
+    } else if (!starting && !busy) startRecording();
   });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       cancelRecording();
       abortMobileStream();
+      if (activeDuplex) { activeDuplex.cancel(); activeDuplex = null; }
       stopPlayback();
     }
   });
