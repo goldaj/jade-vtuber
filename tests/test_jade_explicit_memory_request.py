@@ -3,6 +3,8 @@
 No OpenAI, real microphone, Discord connection or private user data.
 """
 import asyncio
+from contextlib import closing
+import sqlite3
 import json
 from pathlib import Path
 import tempfile
@@ -166,7 +168,10 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
     async def test_profile_changes_revoke_pending_write(self):
         key = ("discord", "123")
         old_id = self.store.enable(key)
-        self.assertTrue(self.store.forget_own_identity(key))
+        with closing(sqlite3.connect(self.path)) as db:
+            db.execute("PRAGMA foreign_keys=ON")
+            db.execute("DELETE FROM persons WHERE id=?", (old_id,))
+            db.commit()
         self.store.enable(key)
         self.assertNotEqual(self.store.account(key), old_id)
         result = self.store.put_requested_ordinary(
@@ -193,14 +198,15 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("pas pu enregistrer", result.text)
         self.assertEqual(self.store.recall_self_core(OWNER), [])
 
-    async def test_account_forget_removes_ordinary_without_touching_owner(self):
+    async def test_targeted_deletion_keeps_owner_memory_isolated(self):
         outsider = ("discord", "123")
         self.store.enable(outsider)
         request = self.request("Jade, retiens que ma couleur est verte.",
                                platform="discord", author="Goldaj", account="123")
         self.assertIn("enregistré", (await self.svc.command(request)).text)
         self.assertEqual(self.store.recall(OWNER, "person"), [])
-        self.assertTrue(self.store.forget_own_identity(outsider))
+        memory_id = self.store.list_for_account(outsider)[0]["id"]
+        self.assertTrue(self.store.delete_memory(outsider, memory_id))
         self.assertEqual(self.store.list_for_account(outsider), [])
         self.assertEqual(self.store.recall_self_core(OWNER), [])
 

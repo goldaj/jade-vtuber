@@ -172,48 +172,7 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertFalse(self.store.complete_link(twitch, first))
         self.assertTrue(self.store.complete_link(twitch, second))
 
-    def test_public_forget_erases_only_target_account_in_linked_profile(self):
-        owner, twitch = ("microphone", "goldaj"), ("twitch", "6001")
-        self.store.enable(owner)
-        self.store.enable(twitch)
-        self.store.put(owner, kind="core_relationship", scope="person",
-                       summary="Private Goldaj owner note")
-        self.store.put(twitch, kind="core_relationship", scope="twitch:live",
-                       summary="Twitch participant note")
-        self.store.put_self_core(owner, summary="Jade has remembered a family moment")
-        self.assertTrue(self.store.append_conversation_turn(
-            owner, "person", source_platform="mobile", message_id="m-1",
-            user_content="Private mobile note", assistant_content="Private response"))
-        self.assertTrue(self.store.append_conversation_turn(
-            twitch, "twitch:live", source_platform="twitch", message_id="t-1",
-            user_content="Public Twitch note", assistant_content="Public response"))
-        code = self.store.begin_link(owner, target=twitch)
-        self.assertTrue(self.store.complete_link(twitch, code))
-        self.assertTrue(self.store.forget_own_identity(twitch))
-        self.assertIsNone(self.store.account(twitch))
-        self.assertIsNotNone(self.store.account(owner))
-        self.assertEqual(len(self.store.list_for_account(owner)), 1)
-        self.assertEqual(len(self.store.recall_self_core(owner)), 1)
-        self.assertEqual(len(self.store.recent_conversation_turns(owner, "person")), 2)
-        self.assertEqual(self.store.recent_conversation_turns(owner, "twitch:live"), [])
-
-    def test_public_forget_owner_preserves_linked_external_account(self):
-        owner, twitch = ("microphone", "goldaj"), ("twitch", "6001")
-        self.store.enable(owner)
-        self.store.enable(twitch)
-        self.store.put(owner, kind="core_relationship", scope="person",
-                       summary="Private Goldaj owner note")
-        self.store.put(twitch, kind="core_relationship", scope="twitch:live",
-                       summary="Twitch participant note")
-        self.store.put_self_core(owner, summary="Jade has remembered a family moment")
-        code = self.store.begin_link(owner, target=twitch)
-        self.assertTrue(self.store.complete_link(twitch, code))
-        self.assertTrue(self.store.forget_own_identity(owner))
-        self.assertIsNone(self.store.account(owner))
-        self.assertEqual(len(self.store.list_for_account(twitch)), 1)
-        self.assertEqual(len(self.store.recall_self_core(owner)), 0)
-
-    def test_cross_platform_link_unlink_and_explicit_erasure(self):
+    def test_cross_platform_link_unlink_and_targeted_deletion(self):
         twitch = ("twitch", "6001")
         self.store.enable(self.alice)
         self.store.enable(twitch)
@@ -231,10 +190,12 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertNotEqual(self.store.account(twitch), self.store.account(self.alice))
         self.assertEqual(len(self.store.list_for_account(twitch)), 1)
         self.assertEqual(len(self.store.list_for_account(self.alice)), 1)
-        self.assertTrue(self.store.forget(self.alice))
+        alice_id = self.store.list_for_account(self.alice)[0]["id"]
+        twitch_id = self.store.list_for_account(twitch)[0]["id"]
+        self.assertTrue(self.store.delete_memory(self.alice, alice_id))
         self.assertEqual(self.store.list_for_account(self.alice), [])
         self.assertEqual(len(self.store.list_for_account(twitch)), 1)
-        self.assertTrue(self.store.forget(twitch))
+        self.assertTrue(self.store.delete_memory(twitch, twitch_id))
         self.assertEqual(self.store.list_for_account(twitch), [])
 
     def test_owner_only_deletion_and_migration(self):
@@ -281,9 +242,8 @@ class MemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.addCleanup(self.tmp.cleanup)
         self.store = MemoryStore(Path(self.tmp.name) / "jade.sqlite3")
 
-    async def test_public_forget_and_unlink_commands_are_account_scoped(self):
-        owner = ("microphone", "goldaj")
-        twitch = ("twitch", "6001")
+    async def test_retired_forget_command_does_not_erase_linked_profiles(self):
+        owner, twitch = ("microphone", "goldaj"), ("twitch", "6001")
         self.store.enable(owner)
         self.store.enable(twitch)
         self.store.put(owner, kind="core_relationship", scope="person",
@@ -293,21 +253,21 @@ class MemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         code = self.store.begin_link(owner, target=twitch)
         self.assertTrue(self.store.complete_link(twitch, code))
         service = MemoryService(self.store, AsyncMock())
-        command = Incoming("twitch", "Viewer", "!jade-memoire oublier",
-                           channel="live", account_id="6001")
-        reply = await service.command(command)
-        self.assertIn("sans effacer", reply.text)
-        self.assertIsNone(self.store.account(twitch))
-        self.assertEqual(len(self.store.list_for_account(owner)), 1)
-        self.store.enable(twitch)
-        code = self.store.begin_link(owner, target=twitch)
-        self.assertTrue(self.store.complete_link(twitch, code))
-        separated = await service.command(Incoming(
-            "twitch", "Viewer", "!jade-memoire delier",
-            channel="live", account_id="6001"))
-        self.assertIn("séparé", separated.text)
-        self.assertNotEqual(self.store.account(owner), self.store.account(twitch))
-        await service.close()
+        try:
+            command = Incoming("twitch", "Viewer", "!jade-memoire oublier",
+                               channel="live", account_id="6001")
+            self.assertIsNone(await service.command(command))
+            self.assertEqual(len(self.store.list_for_account(owner)), 2)
+            self.assertEqual(len(self.store.list_for_account(twitch)), 2)
+            separated = await service.command(Incoming(
+                "twitch", "Viewer", "!jade-memoire delier",
+                channel="live", account_id="6001"))
+            self.assertIn("séparé", separated.text)
+            self.assertNotEqual(self.store.account(owner), self.store.account(twitch))
+            self.assertEqual(len(self.store.list_for_account(owner)), 1)
+            self.assertEqual(len(self.store.list_for_account(twitch)), 1)
+        finally:
+            await service.close()
 
     async def test_opt_in_and_runtime_recall_after_restart(self):
         key = ("discord", "101")
@@ -342,7 +302,7 @@ class MemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         await svc.close()
         self.assertTrue(self.store.list_for_account(key))
 
-    async def test_curator_selects_core_autonomously_then_forgets(self):
+    async def test_curator_selects_core_then_targeted_deletion(self):
         key = ("microphone", "goldaj")
         self.store.enable(key)
         mock = AsyncMock()
@@ -363,7 +323,8 @@ class MemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.store.recall_self_core(key)[0]["summary"],
                          "Jade et Goldaj ont achevé leur premier jeu.")
         await svc.close()
-        self.assertTrue(self.store.forget(key))
+        saved_id = self.store.recall_self_core(key)[0]["id"]
+        self.assertTrue(self.store.delete_self_core(key, saved_id))
         self.assertEqual(self.store.list_for_account(key), [])
         self.assertEqual(self.store.recall_self_core(key), [])
 

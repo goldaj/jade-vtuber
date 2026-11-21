@@ -3,6 +3,8 @@
 No provider calls, real user content or persistent disk outside TemporaryDirectory.
 """
 import asyncio
+from contextlib import closing
+import sqlite3
 import json
 from pathlib import Path
 import tempfile
@@ -48,14 +50,17 @@ class CuratorRevocation(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(svc.schedule(self.source, self.reply))
             await asyncio.wait_for(backend.entered.wait(), 2)
             if forget_and_reenable:
-                self.assertTrue(self.store.forget(self.key))
+                with closing(sqlite3.connect(self.store.path)) as db:
+                    db.execute("PRAGMA foreign_keys=ON")
+                    db.execute("DELETE FROM persons WHERE id=?", (self.store.account(self.key),))
+                    db.commit()
                 self.store.enable(self.key)
             backend.release.set()
             await asyncio.wait_for(asyncio.gather(*list(svc.tasks)), 2)
         finally:
             await svc.close()
 
-    async def test_forget_reenable_does_not_resurrect_pending_memory(self):
+    async def test_replaced_profile_cannot_persist_queued_memory(self):
         backend = DelayedModel()
         await self._run_model(backend, forget_and_reenable=True)
         self.assertEqual(self.store.list_for_account(self.key), [])

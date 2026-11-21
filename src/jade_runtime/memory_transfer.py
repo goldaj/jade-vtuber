@@ -30,7 +30,7 @@ def _check(path: Path) -> int:
         version = db.execute("PRAGMA user_version").fetchone()[0]
     if status != ("ok",) or foreign is not None:
         raise ValueError("corrupt memory database")
-    if version not in (1, 2, 3, 4):
+    if version not in (1, 2, 3, 4, 5):
         raise ValueError("unsupported Jade memory schema version")
     return version
 

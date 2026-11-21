@@ -100,27 +100,21 @@ class MemoryAcceptance(unittest.TestCase):
         self.assertEqual(datetime.fromisoformat(expires) -
                          datetime.fromisoformat(created), timedelta(days=365))
 
-    def test_rec021_erasure_optout_does_not_delete_other_account(self):
+    def test_rec021_targeted_deletion_preserves_other_account(self):
         self.assertTrue(self.store.auto_enable(ALICE))
         self.store.enable(BOB)
         self.store.put(ALICE, kind="ordinary", scope="discord:10",
-                       summary="Alice should disappear")
+                       summary="Alice can delete her memory")
         self.store.put(BOB, kind="ordinary", scope="discord:10",
                        summary="Bob should survive")
-        self.store.append_conversation_turn(ALICE, "discord:10",
-            source_platform="discord", message_id="a-1",
-            user_content="Alice history", assistant_content="Jade response")
-        self.store.block_auto_enrollment(ALICE)
-        self.assertTrue(self.store.forget_own_identity(ALICE))
+        memory_id = self.store.list_for_account(ALICE)[0]["id"]
+        self.assertTrue(self.store.delete_memory(ALICE, memory_id))
         fresh = MemoryStore(self.path)
-        self.assertFalse(fresh.auto_enable(ALICE))
+        self.assertTrue(fresh.auto_enable(ALICE))
         self.assertEqual(fresh.recall(ALICE, "discord:10"), [])
-        self.assertEqual(fresh.recent_conversation_turns(ALICE, "discord:10"), [])
         self.assertEqual(len(fresh.recall(BOB, "discord:10")), 1)
-        fresh.enable(ALICE)
-        self.assertEqual(fresh.recall(ALICE, "discord:10"), [])
 
-    def test_rec025_wal_backup_restore_and_scoped_erasure(self):
+    def test_rec025_wal_backup_restore_and_scoped_deletion(self):
         for key in (ALICE, BOB, OWNER):
             self.store.enable(key)
         with closing(sqlite3.connect(self.path)) as db:
@@ -149,10 +143,11 @@ class MemoryAcceptance(unittest.TestCase):
         self.assertEqual(len(restored.recall_self_core(OWNER)), 1)
         self.assertEqual(len(restored.recent_conversation_turns(
             ALICE, "discord:10")), 2)
-        self.assertTrue(restored.forget_own_identity(ALICE))
+        restored_id = restored.list_for_account(ALICE)[0]["id"]
+        self.assertTrue(restored.delete_memory(ALICE, restored_id))
         self.assertEqual(restored.recall(ALICE, "discord:10"), [])
-        self.assertEqual(restored.recent_conversation_turns(
-            ALICE, "discord:10"), [])
+        self.assertEqual(len(restored.recent_conversation_turns(
+            ALICE, "discord:10")), 2)
         self.assertEqual(len(restored.recall(BOB, "discord:10")), 1)
         self.assertEqual(len(restored.recall_self_core(OWNER)), 1)
         self.assertEqual(len(self.store.recall(ALICE, "discord:10")), 1,

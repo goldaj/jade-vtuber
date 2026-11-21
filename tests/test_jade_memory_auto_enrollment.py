@@ -38,28 +38,6 @@ class AutoEnrollmentStoreTests(unittest.TestCase):
         self.assertTrue(self.store.auto_enable(("discord", "123")))
         self.assertEqual(len(self.store.list_for_account(("discord", "123"))), 0)
 
-    def test_erasure_optout_survives_reopening_db(self):
-        account = ("discord", "123")
-        self.assertTrue(self.store.auto_enable(account))
-        self.assertTrue(self.store.put(
-            account, kind="ordinary", scope="discord:789", summary="Fait de test"))
-        self.assertTrue(self.store.forget_own_identity(account))
-        self.store.block_auto_enrollment(account)
-        reopened = MemoryStore(self.path)
-        self.assertFalse(reopened.auto_enable(account))
-        self.assertIsNone(reopened.account(account))
-        self.assertEqual(reopened.list_for_account(account), [])
-        reopened.enable(account)
-        self.assertTrue(reopened.auto_enable(account))
-        self.assertIsNotNone(reopened.account(account))
-
-    def test_optout_blocks_first_enrollment_too(self):
-        account = ("discord", "123")
-        self.store.block_auto_enrollment(account)
-        self.assertFalse(self.store.auto_enable(account))
-        self.store.enable(account)
-        self.assertTrue(self.store.auto_enable(account))
-
     def test_legacy_v3_sqlite_is_extended_without_reset(self):
         with closing(sqlite3.connect(self.path)) as db:
             db.execute("PRAGMA user_version=3")
@@ -67,7 +45,28 @@ class AutoEnrollmentStoreTests(unittest.TestCase):
         reopened = MemoryStore(self.path)
         self.assertTrue(reopened.auto_enable(("discord", "999")))
         with closing(sqlite3.connect(self.path)) as db:
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 4)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 5)
+
+    def test_v4_legacy_block_table_migrates_without_losing_memories(self):
+        account = ("discord", "123")
+        self.store.enable(account)
+        self.store.put(account, kind="ordinary", scope="discord:789",
+                       summary="Souvenir conservé pendant migration")
+        with closing(sqlite3.connect(self.path)) as db:
+            db.execute("CREATE TABLE memory_auto_enrollment_blocks "
+                       "(platform TEXT NOT NULL, account_id TEXT NOT NULL, "
+                       "created_at TEXT NOT NULL, PRIMARY KEY(platform, account_id))")
+            db.execute("INSERT INTO memory_auto_enrollment_blocks VALUES "
+                       "('discord', '456', '2026-11-20T00:00:00+00:00')")
+            db.execute("PRAGMA user_version=4")
+            db.commit()
+        reopened = MemoryStore(self.path)
+        self.assertTrue(reopened.auto_enable(("discord", "456")))
+        self.assertEqual(len(reopened.list_for_account(account)), 1)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 5)
+            self.assertIsNone(db.execute("SELECT name FROM sqlite_master "
+                "WHERE type='table' AND name='memory_auto_enrollment_blocks'").fetchone())
 
     def test_discord_accounts_remain_separate(self):
         one = ("discord", "123")
@@ -96,19 +95,15 @@ class AutoEnrollmentServiceTests(unittest.IsolatedAsyncioTestCase):
                         account_id=account, channel="789",
                         private_channel=private, speaker_id=speaker_id)
 
-    async def test_server_discord_persists_and_forget_remains_effective(self):
+    async def test_discord_history_persists_and_old_forget_command_is_unsupported(self):
         incoming = self.incoming()
         self.assertTrue(await self.service.ensure_auto_enrolled(incoming))
         self.assertTrue(await self.service.remember_turn(incoming, Reply(incoming, "Noté.")))
         self.assertEqual(len(await self.service.history_for(incoming)), 2)
-        forgotten = self.incoming(text="!jade-memoire oublier")
-        result = await self.service.command(forgotten)
-        self.assertIn("désactivée", result.text)
-        self.assertFalse(await self.service.ensure_auto_enrolled(incoming))
-        self.assertIsNone(self.store.account(("discord", "123")))
-        activated = await self.service.command(self.incoming(text="!jade-memoire activer"))
-        self.assertIn("activée", activated.text)
+        self.assertIsNone(await self.service.command(
+            self.incoming(text="!jade-memoire oublier")))
         self.assertTrue(await self.service.ensure_auto_enrolled(incoming))
+        self.assertEqual(len(await self.service.history_for(incoming)), 2)
 
     async def test_private_discord_auto_enrolled_but_twitch_unknown_not(self):
         self.assertTrue(await self.service.ensure_auto_enrolled(self.incoming(private=True)))
@@ -118,23 +113,6 @@ class AutoEnrollmentServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(await self.service.ensure_auto_enrolled(
             self.incoming(account="")))
         self.assertIsNone(self.store.account(("twitch", "123")))
-
-    async def test_private_discord_forget_blocks_dm_and_server_until_reactivation(self):
-        private = self.incoming(private=True)
-        server = self.incoming()
-        self.assertTrue(await self.service.ensure_auto_enrolled(private))
-        self.assertTrue(await self.service.remember_turn(private, Reply(private, "Privé.")))
-        forgotten = await self.service.command(
-            self.incoming(private=True, text="!jade-memoire oublier"))
-        self.assertIn("désactivée", forgotten.text)
-        self.assertFalse(await self.service.ensure_auto_enrolled(private))
-        self.assertFalse(await self.service.ensure_auto_enrolled(server))
-        self.assertIsNone(self.store.account(("discord", "123")))
-        activated = await self.service.command(
-            self.incoming(private=True, text="!jade-memoire activer"))
-        self.assertIn("activée", activated.text)
-        self.assertTrue(await self.service.ensure_auto_enrolled(private))
-        self.assertTrue(await self.service.ensure_auto_enrolled(server))
 
     async def test_private_discord_can_confirm_mobile_link_without_manual_activation(self):
         owner = ("microphone", "goldaj")

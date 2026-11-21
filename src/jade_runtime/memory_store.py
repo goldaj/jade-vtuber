@@ -1,7 +1,7 @@
 """Private, opt-in, portable SQLite memory for Jade (no cloud dependency).
 
 Identity comes from trusted transport IDs, NEVER nickname or spoken claim.
-Core memories have no TTL; explicit user erasure remains possible.
+Core memories have no TTL; individual memories remain removable by authorized owners.
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import uuid
 
 from .session_logging import event
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 CONVERSATION_RETENTION_DAYS = 7
 CONVERSATION_RELOAD_HOURS = 24
 ORDINARY_RETENTION_DAYS = 365
@@ -72,7 +72,7 @@ class MemoryStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._db() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, SCHEMA_VERSION):
+            if version not in (0, 1, 2, 3, 4, SCHEMA_VERSION):
                 raise RuntimeError("unsupported Jade memory schema; migrate before starting")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS persons (
@@ -86,13 +86,6 @@ class MemoryStore:
                     PRIMARY KEY(platform, account_id)
                 );
                 CREATE INDEX IF NOT EXISTS idx_identity_person ON identities(person_id);
-                -- A Discord user who erases memory must not be re-enrolled on next turn.
-                CREATE TABLE IF NOT EXISTS memory_auto_enrollment_blocks (
-                    platform TEXT NOT NULL,
-                    account_id TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    PRIMARY KEY(platform, account_id)
-                );
                 CREATE TABLE IF NOT EXISTS memories (
                     id TEXT PRIMARY KEY,
                     person_id TEXT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
@@ -151,8 +144,8 @@ class MemoryStore:
                 CREATE INDEX IF NOT EXISTS idx_conversation_turns_recent
                     ON conversation_turns(person_id,scope,created_at,id);
             """)
-            if version < SCHEMA_VERSION:
-                # One-time migration: extend existing ordinary memories from
+            if version < 4:
+                # One-time v4 migration: extend existing ordinary memories from
                 # their ORIGINAL creation timestamp, never from migration day.
                 # Core rows are left untouched with NULL expiration.
                 rows = db.execute(
@@ -169,6 +162,9 @@ class MemoryStore:
                     ))
                 db.executemany(
                     "UPDATE memories SET expires_at=? WHERE id=?", updates)
+            if version < 5:
+                # Retire obsolete opt-out state without touching saved memories.
+                db.execute("DROP TABLE IF EXISTS memory_auto_enrollment_blocks")
             db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
         # Purge expired rows on open, including DBs created before this policy.
         self.prune_expired()
@@ -240,16 +236,11 @@ class MemoryStore:
         return row is not None
 
     def auto_enable(self, key: tuple[str, str]) -> bool:
-        """Enroll a verified Discord user unless they explicitly opted out."""
+        """Enroll verified Discord users without an opt-out registry."""
         _validate_key(key)
         if key[0] != "discord":
             return False
         with self._db() as db:
-            if db.execute(
-                "SELECT 1 FROM memory_auto_enrollment_blocks WHERE platform=? AND account_id=?",
-                key,
-            ).fetchone():
-                return False
             if db.execute(
                 "SELECT 1 FROM identities WHERE platform=? AND account_id=?", key
             ).fetchone():
@@ -261,22 +252,10 @@ class MemoryStore:
                        (*key, person))
             return True
 
-    def block_auto_enrollment(self, key: tuple[str, str]) -> None:
-        """Persist a minimal verified account ID after a Discord erasure."""
-        _validate_key(key)
-        if key[0] != "discord":
-            return
-        with self._db() as db:
-            db.execute(
-                "INSERT OR IGNORE INTO memory_auto_enrollment_blocks VALUES (?,?,?)",
-                (*key, _now().isoformat()))
-
     def enable(self, key: tuple[str, str]) -> str:
-        """Explicit activation, including reactivation after an opt-out."""
+        """Explicit activation for authenticated accounts."""
         _validate_key(key)
         with self._db() as db:
-            db.execute(
-                "DELETE FROM memory_auto_enrollment_blocks WHERE platform=? AND account_id=?", key)
             row = db.execute(
                 "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
             ).fetchone()
@@ -288,95 +267,6 @@ class MemoryStore:
             db.execute("INSERT INTO identities(platform,account_id,person_id) VALUES (?,?,?)",
                        (*key, person))
             return person
-
-    def forget(self, key: tuple[str, str]) -> bool:
-        """Erase linked person and ALL ordinary/core memories explicitly."""
-        _validate_key(key)
-        with self._db() as db:
-            row = db.execute(
-                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
-            ).fetchone()
-            if not row:
-                return False
-            # Deleting *any* identity in the linked owner profile erases
-            # autobiography sourced by Goldaj too. Otherwise an erasure from
-            # a linked Discord/Twitch account leaves orphan core memories
-            # which can reappear when the local owner is enabled again.
-            owner_present = db.execute("""
-                SELECT 1 FROM identities WHERE person_id=?
-                  AND platform='microphone' AND account_id='goldaj'
-                """, (row["person_id"],)).fetchone()
-            if owner_present:
-                db.execute("""
-                    DELETE FROM jade_self_core
-                    WHERE (source_platform,source_account_id) IN (
-                        SELECT platform,account_id FROM identities WHERE person_id=?)
-                    """, (row["person_id"],))
-            db.execute("DELETE FROM persons WHERE id=?", (row["person_id"],))
-            db.execute("DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
-            return True
-
-    def forget_own_identity(self, key: tuple[str, str]) -> bool:
-        """Erase only data originating from the verified account.
-
-        The legacy forget() API intentionally deletes an entire linked person.
-        Public Discord/Twitch commands MUST use this narrower operation so an
-        external account cannot wipe Goldaj's private memories or another
-        account's data. Old turn rows lack account_id, so ambiguous same-provider
-        detachments are refused rather than deleting another user's history.
-        """
-        _validate_key(key)
-        with self._db() as db:
-            row = db.execute(
-                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
-            ).fetchone()
-            if row is None:
-                return False
-            # Erase owner-directed autobiography entries originating from this
-            # transport identity, without touching other linked accounts.
-            db.execute(
-                "DELETE FROM jade_self_core WHERE source_platform=? AND source_account_id=?",
-                key)
-            person = row["person_id"]
-            size = db.execute(
-                "SELECT COUNT(*) FROM identities WHERE person_id=?", (person,)
-            ).fetchone()[0]
-            if size == 1:
-                # Isolated account: preserve existing complete-erasure behavior.
-                if key == ("microphone", "goldaj"):
-                    db.execute("""
-                        DELETE FROM jade_self_core
-                        WHERE source_platform='microphone' AND source_account_id='goldaj'
-                    """)
-                db.execute("DELETE FROM persons WHERE id=?", (person,))
-            else:
-                same_provider = db.execute(
-                    "SELECT COUNT(*) FROM identities WHERE person_id=? AND platform=?",
-                    (person, key[0])).fetchone()[0]
-                if same_provider != 1:
-                    raise ValueError("cannot safely erase an ambiguous linked account")
-                if key == ("microphone", "goldaj"):
-                    db.execute("""
-                        DELETE FROM jade_self_core
-                        WHERE source_platform='microphone' AND source_account_id='goldaj'
-                    """)
-                db.execute("""
-                    DELETE FROM memories WHERE person_id=?
-                    AND source_platform=? AND source_account_id=?
-                """, (person, *key))
-                platforms = (("microphone", "mobile") if key == ("microphone", "goldaj")
-                             else ("discord", "discord_voice") if key[0] == "discord"
-                             else (key[0],))
-                db.execute(
-                    "DELETE FROM conversation_turns WHERE person_id=? "
-                    "AND source_platform IN (" +
-                    ",".join("?" for _ in platforms) + ")",
-                    (person, *platforms))
-                db.execute(
-                    "DELETE FROM identities WHERE platform=? AND account_id=?", key)
-            db.execute(
-                "DELETE FROM link_challenges WHERE platform=? AND account_id=?", key)
-            return True
 
     def put(self, key: tuple[str, str], *, kind: str, scope: str, summary: str,
             significance: str = "", message_id: str = "", ordinary_days: int = ORDINARY_RETENTION_DAYS,

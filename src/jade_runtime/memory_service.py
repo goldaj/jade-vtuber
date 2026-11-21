@@ -1,7 +1,7 @@
 """Opt-in recall and autonomous memory curation, separate from Jade's voice path.
 
 Curator calls run after response delivery attempt, in bounded background tasks.
-No memory request is made for unknown or explicitly opted-out accounts.
+No memory request is made for unknown or inactive accounts.
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from .personality_evolution import personality_cues
 
 LOG = logging.getLogger("jade.memory")
 COMMAND = re.compile(
-    r"^!jade-memoire(?:\s+(activer|oublier|etat|autobiographie|supprimer-self|lister-core|supprimer-core|confirmer|identite|delier)"
+    r"^!jade-memoire(?:\s+(activer|etat|autobiographie|supprimer-self|lister-core|supprimer-core|confirmer|identite|delier)"
     r"(?:\s+([A-Za-z0-9._-]{1,128}))?)?\s*$", re.I)
 _KINDS = frozenset(("none", "ordinary", "core_self", "core_relationship"))
 
@@ -93,8 +93,7 @@ class MemoryService:
     async def ensure_auto_enrolled(self, incoming) -> bool:
         """Enroll verified Discord speakers in servers, voice and DMs.
 
-        Twitch and unidentified accounts remain command-only. A Discord user
-        who erased their memory is not auto-enrolled again without opting in.
+        Twitch and unidentified accounts remain command-only.
         """
         if incoming.platform not in ("discord", "discord_voice"):
             return False
@@ -319,15 +318,6 @@ class MemoryService:
                 text = ("Ce compte a été séparé des autres profils, sans effacer ses souvenirs."
                         if separated else
                         "Ce compte n'est pas lié à un autre profil ou la séparation exige une revue.")
-            elif action == "oublier":
-                removed = await asyncio.to_thread(self.store.forget_own_identity, key)
-                if key[0] == "discord":
-                    await asyncio.to_thread(self.store.block_auto_enrollment, key)
-                text = ("J'ai supprimé les souvenirs et échanges de ce compte, "
-                        "sans effacer ceux des autres comptes associés."
-                        if removed else "Aucune mémoire personnelle active pour ce compte.")
-                if key[0] == "discord":
-                    text += " Mémorisation automatique désactivée ; !jade-memoire activer pour la rétablir."
             else:
                 exists = await asyncio.to_thread(self.store.account, key)
                 text = ("Mémoire personnelle active." if exists

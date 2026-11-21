@@ -1,5 +1,14 @@
 # Journal technique unique — develop
 
+## 2026-11-21 — Retrait de la commande d'oubli global et du blocage Discord (develop)
+
+- **Décision produit :** suppression complète de `!jade-memoire oublier` et du mécanisme de blocage de réinscription Discord. Les comptes Discord vérifiés continuent à s'inscrire automatiquement ; l'activation Twitch, la déliaison, les historiques L1, souvenirs L2/L3 et les commandes de suppression ciblée des Core sont préservés.
+- **Base :** SQLite passe du schéma v4 au v5. L'ouverture d'une base existante supprime exclusivement la table obsolète `memory_auto_enrollment_blocks` ; elle ne supprime aucun souvenir, identité, lien ou historique. La migration v4->v5 ne recalcule pas les dates d'expiration des souvenirs ordinaires. Les anciennes archives v1-v4 restent importables, le v5 est exportable.
+- **Code et tests :** retrait des commandes et fonctions d'oubli global dans `memory_service.py` et `memory_store.py`, mise en cohérence du sélecteur Discord, de `memory_transfer.py` et des tests mémoire ; ajout de contrôles migration v4, commande retirée et suppression ciblée.
+- **Effet opérationnel :** un utilisateur auparavant bloqué par la table legacy pourra de nouveau être inscrit automatiquement sur Discord après migration ; aucune donnée de mémoire privée n'est transférée à GitHub. Le retrait du libre-service d'effacement global implique de définir séparément une procédure humaine pour traiter les demandes légales de suppression des données.
+- **Vérifications :** contrôle statique des extraits modifiés ; la CI Linux/Windows et la recette sur l'instance personnelle doivent être observées sur le SHA d'intégration. Aucun test physique ni appel API facturé revendiqué.
+
+
 Ce document est **la seule pièce documentaire systématiquement exigée en CI** pour les changements techniques. Les guides, atlas et passations sont révisés uniquement quand le comportement ou les procédures qu'ils décrivent changent. Une entrée indique les faits vérifiés ; un ancien journal ne remplace pas le code.
 
 ## 2026-11-21 — DEV-012 : action volontaire de mémoire L2/L3 dans le dialogue (develop)

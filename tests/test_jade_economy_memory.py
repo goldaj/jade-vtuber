@@ -1,5 +1,7 @@
 """Offline regression tests for budgeted history and private memory batches."""
 import asyncio
+from contextlib import closing
+import sqlite3
 import json
 from pathlib import Path
 import tempfile
@@ -79,7 +81,7 @@ class BatchMemoryTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await batch.close()
 
-    async def test_forget_reenroll_before_batch_must_not_write(self):
+    async def test_stale_profile_before_batch_must_not_write(self):
         class Model:
             def __init__(self):
                 self.entered = asyncio.Event()
@@ -101,7 +103,10 @@ class BatchMemoryTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(batch.schedule(self.key, "discord:77", source,
                                             Reply(source, "Bravo !")))
             await asyncio.wait_for(model.entered.wait(), 2)
-            self.store.forget(self.key)
+            with closing(sqlite3.connect(self.store.path)) as db:
+                db.execute('PRAGMA foreign_keys=ON')
+                db.execute('DELETE FROM persons WHERE id=?', (self.store.account(self.key),))
+                db.commit()
             self.store.enable(self.key)
             model.release.set()
             await asyncio.wait_for(asyncio.gather(*list(batch.tasks)), 2)

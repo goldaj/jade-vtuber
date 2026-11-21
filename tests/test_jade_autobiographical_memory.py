@@ -64,7 +64,7 @@ class Autobiography(unittest.IsolatedAsyncioTestCase):
                      account_id="101"))).text)
         await svc.close()
 
-    async def test_manual_list_delete_and_full_owner_erasure(self):
+    async def test_manual_list_and_targeted_delete(self):
         self.store.enable(OWNER)
         self.store.put_self_core(OWNER, summary="Jade a fini son premier récit.")
         svc = MemoryService(self.store, AsyncMock())
@@ -77,29 +77,13 @@ class Autobiography(unittest.IsolatedAsyncioTestCase):
         self.assertIn("supprimé", result.text)
         self.assertEqual(self.store.recall_self_core(OWNER), [])
         self.store.put_self_core(OWNER, summary="Jade a repris le projet.")
-        self.assertIn("supprimé", (await svc.command(Incoming(
-            "microphone", "Goldaj", "!jade-memoire oublier"))).text)
+        self.assertIsNone(await svc.command(Incoming(
+            "microphone", "Goldaj", "!jade-memoire oublier")))
+        self.assertEqual(len(self.store.recall_self_core(OWNER)), 1)
+        active_id = self.store.recall_self_core(OWNER)[0]["id"]
+        self.assertTrue(self.store.delete_self_core(OWNER, active_id))
         self.assertEqual(self.store.recall_self_core(OWNER), [])
         await svc.close()
-
-    async def test_erasure_from_linked_discord_account_cannot_resurrect_self_core(self):
-        self.store.enable(OWNER)
-        self.store.enable(ALICE)
-        self.store.put_self_core(
-            OWNER, summary="Jade a vécu un moment marquant avec Goldaj.")
-        code = self.store.begin_link(OWNER)
-        self.assertTrue(self.store.complete_link(ALICE, code))
-        self.assertTrue(self.store.forget(ALICE))
-        self.assertEqual(self.store.recall_self_core(OWNER), [])
-        self.store.enable(OWNER)
-        self.assertEqual(self.store.recall_self_core(OWNER), [])
-
-    async def test_unlinked_discord_erasure_keeps_owner_autobiography(self):
-        self.store.enable(OWNER)
-        self.store.enable(ALICE)
-        self.store.put_self_core(OWNER, summary="Jade a remporté sa première partie.")
-        self.assertTrue(self.store.forget(ALICE))
-        self.assertEqual(len(self.store.recall_self_core(OWNER)), 1)
 
     async def test_v1_upgrade_and_portable_current_backup(self):
         self.store.enable(OWNER)
@@ -121,7 +105,7 @@ class Autobiography(unittest.IsolatedAsyncioTestCase):
         import_memory(archive, restored_v2)
         self.assertEqual(len(MemoryStore(restored_v2).recall_self_core(OWNER)), 1)
 
-    async def test_queued_core_self_does_not_resurface_after_owner_forget(self):
+    async def test_queued_core_self_does_not_resurface_after_profile_replacement(self):
         self.store.enable(OWNER)
         entered, release = asyncio.Event(), asyncio.Event()
 
@@ -145,7 +129,10 @@ class Autobiography(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(svc.schedule(source, Reply(source, "Fin du récit.")))
             await asyncio.wait_for(entered.wait(), 2)
             before = self.store.account(OWNER)
-            self.assertTrue(self.store.forget(OWNER))
+            with closing(sqlite3.connect(self.path)) as db:
+                db.execute("PRAGMA foreign_keys=ON")
+                db.execute("DELETE FROM persons WHERE id=?", (before,))
+                db.commit()
             self.assertNotEqual(self.store.enable(OWNER), before)
             release.set()
             await asyncio.wait_for(asyncio.gather(*list(svc.tasks)), 2)

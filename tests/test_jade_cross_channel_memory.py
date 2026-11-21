@@ -93,7 +93,7 @@ class CrossChannelMemoryTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("spécifique", await self.service.context_for(self.dm()))
         self.assertIn("spécifique", await self.service.context_for(self.mobile()))
 
-    async def test_expired_memories_and_erased_account_are_excluded(self):
+    async def test_expired_and_target_deleted_memories_are_excluded(self):
         self.store.put(DISCORD, kind="ordinary", scope="discord:server1",
                        summary="Souvenir ordinaire expiré.")
         self.store.put(DISCORD, kind="core_relationship", scope="discord:server1",
@@ -106,10 +106,11 @@ class CrossChannelMemoryTests(unittest.IsolatedAsyncioTestCase):
         context = await self.service.context_for(self.mobile())
         self.assertNotIn("ordinaire expiré", context)
         self.assertIn("fondateur non expiré", context)
-        self.assertTrue(self.store.forget_own_identity(DISCORD))
-        self.store.block_auto_enrollment(DISCORD)
+        memory_id = next(item["id"] for item in self.store.list_for_account(DISCORD)
+                         if item["kind"] == "core_relationship")
+        self.assertTrue(self.store.delete_memory(DISCORD, memory_id))
         self.assertNotIn("fondateur non expiré", await self.service.context_for(self.mobile()))
-        self.assertFalse(self.store.auto_enable(DISCORD))
+        self.assertTrue(self.store.auto_enable(DISCORD))
 
     async def test_raw_turns_and_jade_autobiography_do_not_cross(self):
         self.store.append_conversation_turn(

@@ -16,7 +16,7 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 - [Mémoire transversale privée des comptes liés (21/11)](2026-11-21-chatgpt-memoire-transversale-privee.md) · Résumés mémoriels réutilisables entre supports privés, salons publics et historiques bruts isolés, recette physique par le propriétaire.
 
-- [Mémoire MP Discord automatique et libellés de liaison mobile (21/11)](2026-11-21-chatgpt-discord-mp-memoire-liaison.md) · Activation par compte Discord vérifié sur MP/serveur, opt-out durable et parcours explicite ; code limité à 5 minutes, liaison durable.
+- [Mémoire MP Discord automatique et libellés de liaison mobile (21/11)](2026-11-21-chatgpt-discord-mp-memoire-liaison.md) · Activation par compte Discord vérifié sur MP/serveur, ancienne option opt-out retirée le 21/11 et parcours explicite ; code limité à 5 minutes, liaison durable.
 
 - [Rétention des mémoires Jade : 7 jours / 365 jours / Core permanentes](2026-11-20-chatgpt-retention-memoire-7j-365j.md) · Migration SQLite v4, reprise de tous les échanges des 24 dernières heures et purge automatique.
 
@@ -26,7 +26,7 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 - [DEV-011 (ancienne demande, annulée)](2026-11-20-chatgpt-core-memory-explicite-p0.md) · Référence historique remplacée par le refus d'écriture Core forcée.
 
-- [Mémoire SQLite par défaut et inscription Discord](2026-11-20-chatgpt-memoire-discord-auto.md) · Inscription automatique des intervenants vérifiés de serveur Discord et effacement durable, sans ouvrir la mémoire aux autres canaux.
+- [Mémoire SQLite par défaut et inscription Discord](2026-11-20-chatgpt-memoire-discord-auto.md) · Inscription automatique des intervenants vérifiés de serveur Discord et ancien effacement global désormais retiré, sans ouvrir la mémoire aux autres canaux.
 
 - [Retours Discord et lancement PyCharm](2026-11-20-codex-retours-discord.md) · coupures, fin de parole, reconnect et recette REC-023.
 

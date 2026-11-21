@@ -100,7 +100,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 23 | OPS-012 | A | Sauvegarder SQLite avant migration ou recette mémoire | [OPS](03-INSTALLATION-OPS.md) |
 | 24 | REC-021 | A | Mémoire SQLite, Core et autobiographie | [REC](02-RECETTE.md) |
 | 25 | DEV-012 | A | Donner au LLM de Jade le contrôle conscient et confirmé des écritures mémoire L2/L3 | [DEV](01-DEVELOPPEMENT.md) |
-| 26 | REC-025 | A | Sauvegarde/restauration et droit à l'effacement | [REC](02-RECETTE.md) |
+| 26 | REC-025 | A | Sauvegarde/restauration et suppression ciblée | [REC](02-RECETTE.md) |
 | 27 | OPS-009 | A | Configurer Tailscale Serve privé | [OPS](03-INSTALLATION-OPS.md) |
 | 28 | REC-014 | A | PWA Android texte et authentification | [REC](02-RECETTE.md) |
 | 29 | OPS-010 | A | Installer les dépendances Live2D Web de la PWA | [OPS](03-INSTALLATION-OPS.md) |
