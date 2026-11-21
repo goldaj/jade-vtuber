@@ -1,12 +1,9 @@
 """The **only** speech/voice AI provider: OpenAI. Lazy SDK initialization."""
 from io import BytesIO
-import inspect
-import json
 
-from .memory_actions import MEMORY_TOOL
-from .session_logging import event
 
 from .config import Settings
+from .responses_chat import ResponsesChat
 from .openai_client import isolated_openai_client
 from .realtime_tts import RealtimeTTS, SpokenAudio, RealtimeConnectionPool
 
@@ -19,6 +16,7 @@ class OpenAIServices:
             settings.require_openai()
             client = isolated_openai_client(settings)
         self.client = client
+        self._responses = ResponsesChat(client, settings)
         self._stream_pool = RealtimeConnectionPool(client)
 
     async def close(self):
@@ -28,189 +26,19 @@ class OpenAIServices:
             await self.client.close()
 
     async def complete(self, messages: list[dict[str, str]]) -> str:
-        event("openai_request", operation="chat.complete", model=self.settings.model,
-              tools_enabled=False, streaming=False)
-        response = await self.client.chat.completions.create(
-            model=self.settings.model,
-            messages=messages,
-            max_completion_tokens=self.settings.max_completion_tokens,
-            reasoning_effort=self.settings.reasoning_effort,
-        )
-        value = response.choices[0].message.content
-        event("openai_response", operation="chat.complete",
-              finish_reason=getattr(response.choices[0], "finish_reason", None), raw_output=value,
-              request_id=getattr(response, "id", None))
-        if not value:
-            raise ValueError("OpenAI returned no dialogue text")
-        return value
+        return await self._responses.complete(messages)
 
     async def complete_stream(self, messages: list[dict[str, str]]):
-        """Yield OpenAI chat token fragments; do not retry on partial output."""
-        event("openai_request", operation="chat.stream", model=self.settings.model,
-              tools_enabled=False, streaming=True)
-        stream = await self.client.chat.completions.create(
-            model=self.settings.model, messages=messages,
-            max_completion_tokens=self.settings.max_completion_tokens,
-            reasoning_effort=self.settings.reasoning_effort, stream=True,
-        )
-        completed = False
-        try:
-            async for chunk in stream:
-                for choice in getattr(chunk, "choices", ()):
-                    if getattr(choice, "index", 0) != 0:
-                        continue
-                    reason = getattr(choice, "finish_reason", None)
-                    if reason not in (None, "stop"):
-                        raise ValueError("OpenAI dialogue stream ended incompletely")
-                    delta = getattr(getattr(choice, "delta", None), "content", None)
-                    if isinstance(delta, str) and delta:
-                        if completed:
-                            raise ValueError("OpenAI dialogue text after completion")
-                        yield delta
-                    if reason == "stop":
-                        completed = True
-            if not completed:
-                # An EOF without finish_reason=stop can follow a broken
-                # connection after some text was already sent to the speaker.
-                raise ValueError("OpenAI dialogue stream ended without completion")
-        finally:
-            event("openai_stream_ended", operation="chat.stream", completed=completed)
-            close = getattr(stream, "close", None)
-            if callable(close):
-                closing = close()
-                if inspect.isawaitable(closing):
-                    await closing
-
-    def _chat_arguments(self, messages, *, with_tools=False):
-        # The Chat Completions endpoint rejects function tools combined with
-        # reasoning_effort != "none" for gpt-6-luna. Keep the configured effort
-        # on plain chat completions; only tool-enabled requests need the override.
-        effort = ("none" if with_tools and self.settings.model.startswith("gpt-6-luna")
-                  else self.settings.reasoning_effort)
-        return {
-            "model": self.settings.model,
-            "messages": messages,
-            "max_completion_tokens": self.settings.max_completion_tokens,
-            "reasoning_effort": effort,
-        }
-
-    @staticmethod
-    async def _finish_memory_tool(messages, calls, action):
-        """Append the model's tool call and an actual backend result.
-
-        The server processes at most one write; parallel/unknown calls are
-        refused without executing arbitrary operations.
-        """
-        if not calls or len(calls) > 4:
-            raise ValueError("invalid memory tool calls")
-        if any(not call["id"] or not call["name"] for call in calls):
-            raise ValueError("missing function call identifier")
-        continuation = list(messages)
-        continuation.append({
-            "role": "assistant", "content": None, "tool_calls": [
-                {"id": call["id"], "type": "function", "function": {
-                    "name": call["name"], "arguments": call["arguments"]}}
-                for call in calls
-            ],
-        })
-        for index, call in enumerate(calls):
-            if (index == 0 and call["name"] == "jade_save_memory"
-                    and len(call["arguments"]) <= 2400):
-                try:
-                    outcome = await action(call["arguments"])
-                except Exception:
-                    outcome = {"status": "échec", "level": None}
-            else:
-                outcome = {"status": "refusé", "level": None}
-            event("memory_tool_result", name=call["name"],
-                  call_index=index, outcome=outcome)
-            continuation.append({
-                "role": "tool", "tool_call_id": call["id"],
-                "content": json.dumps(outcome, ensure_ascii=False),
-            })
-        return continuation
+        async for fragment in self._responses.complete_stream(messages):
+            yield fragment
 
     async def complete_with_tools(self, messages, memory_action) -> str:
-        """One call if unused, an additional completion only after tool use."""
-        event("openai_request", operation="chat.complete_with_tools",
-              model=self.settings.model, tools_enabled=True, streaming=False,
-              effective_reasoning_effort=self._chat_arguments(messages, with_tools=True)["reasoning_effort"])
-        response = await self.client.chat.completions.create(
-            **self._chat_arguments(messages, with_tools=True), tools=[MEMORY_TOOL],
-            tool_choice="auto", parallel_tool_calls=False)
-        choice = response.choices[0]
-        event("openai_response", operation="chat.complete_with_tools",
-              finish_reason=choice.finish_reason,
-              raw_output=choice.message.content,
-              tool_calls=[{"name": item.function.name, "arguments": item.function.arguments}
-                          for item in (choice.message.tool_calls or ())],
-              request_id=getattr(response, "id", None))
-        if choice.finish_reason == "stop":
-            value = choice.message.content
-            if not isinstance(value, str) or not value:
-                raise ValueError("OpenAI returned no dialogue text")
-            return value
-        if choice.finish_reason != "tool_calls":
-            raise ValueError("OpenAI dialogue ended without completion")
-        calls = [{
-            "id": item.id, "name": item.function.name,
-            "arguments": item.function.arguments,
-        } for item in (choice.message.tool_calls or ())]
-        followup = await self._finish_memory_tool(messages, calls, memory_action)
-        return await self.complete(followup)
+        return await self._responses.complete_with_tools(messages, memory_action)
 
     async def complete_stream_with_tools(self, messages, memory_action):
-        """Support streamed function arguments without speaking any tool payload."""
-        event("openai_request", operation="chat.stream_with_tools",
-              model=self.settings.model, tools_enabled=True, streaming=True,
-              effective_reasoning_effort=self._chat_arguments(messages, with_tools=True)["reasoning_effort"])
-        stream = await self.client.chat.completions.create(
-            **self._chat_arguments(messages, with_tools=True), tools=[MEMORY_TOOL],
-            tool_choice="auto", parallel_tool_calls=False, stream=True)
-        calls = {}
-        finish = None
-        try:
-            async for chunk in stream:
-                for choice in getattr(chunk, "choices", ()):
-                    if getattr(choice, "index", 0) != 0:
-                        continue
-                    reason = getattr(choice, "finish_reason", None)
-                    if reason not in (None, "stop", "tool_calls"):
-                        raise ValueError("OpenAI dialogue stream ended incompletely")
-                    if reason:
-                        finish = reason
-                    delta = getattr(choice, "delta", None)
-                    for tool in (getattr(delta, "tool_calls", None) or ()):
-                        index = tool.index
-                        if type(index) is not int or index not in range(4):
-                            raise ValueError("invalid tool call index")
-                        call = calls.setdefault(index, {"id": "", "name": "", "arguments": ""})
-                        call["id"] += getattr(tool, "id", None) or ""
-                        function = getattr(tool, "function", None)
-                        if function is not None:
-                            call["name"] += getattr(function, "name", None) or ""
-                            call["arguments"] += getattr(function, "arguments", None) or ""
-                        if len(call["arguments"]) > 2400:
-                            raise ValueError("tool arguments exceed local limit")
-                    fragment = getattr(delta, "content", None)
-                    if isinstance(fragment, str) and fragment and not calls:
-                        yield fragment
-            event("openai_stream_ended", operation="chat.stream_with_tools",
-                  finish_reason=finish, tool_calls=[calls[key] for key in sorted(calls)])
-            if finish == "tool_calls":
-                ordered = [calls[index] for index in sorted(calls)]
-                followup = await self._finish_memory_tool(
-                    messages, ordered, memory_action)
-                async for fragment in self.complete_stream(followup):
-                    yield fragment
-            elif finish != "stop":
-                raise ValueError("OpenAI dialogue stream ended without completion")
-        finally:
-            close = getattr(stream, "close", None)
-            if callable(close):
-                closing = close()
-                if inspect.isawaitable(closing):
-                    await closing
+        async for fragment in self._responses.complete_stream_with_tools(
+                messages, memory_action):
+            yield fragment
 
     async def transcribe_wav(self, audio: bytes) -> str:
         if not isinstance(audio, bytes) or not 44 <= len(audio) <= 20_000_000:
