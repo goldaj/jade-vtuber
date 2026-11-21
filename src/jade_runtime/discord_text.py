@@ -9,6 +9,7 @@ import re
 from collections import OrderedDict
 from dataclasses import replace
 
+from .session_logging import event
 from .messages import Incoming
 from .discord_text_policy import DiscordTextPolicy
 
@@ -138,6 +139,10 @@ class DiscordText:
                 if getattr(message.author, "bot", False) is True:
                     return
                 if incoming is not None:
+                    event("discord_transport_input", source_platform="discord",
+                          source_modality="text",
+                          source_channel="[privé]" if incoming.private_channel else incoming.channel,
+                          private_channel=incoming.private_channel, input_text=incoming.text)
                     parent._remember_dm_channel(incoming, message.channel)
                     if (parent.initiatives is not None
                             and incoming.account_id
@@ -159,6 +164,9 @@ class DiscordText:
                             incoming.channel, text=incoming.text, directed=directed)
                     selected = parent.policy.observe(
                         message, incoming, own_user_id=self.user.id if self.user else None)
+                    event("discord_policy_decision", source_platform="discord",
+                          source_channel="[privé]" if incoming.private_channel else incoming.channel,
+                          selected=selected is not None)
                     # Native text chat of the current voice channel has the
                     # same Discord permissions as that voice channel. We never
                     # merge a different channel, even within the same guild.
