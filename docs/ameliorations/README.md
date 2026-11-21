@@ -7,6 +7,10 @@ Ce dossier rassemble les idées des conversations des 16, 18 et 20 novembre 2026
 
 **Décision du propriétaire : effectuer d'abord les tests sur son PC, sauf les cinq quick wins expressément autorisés le 19 novembre (DEV-003/005–008) ; les autres idées restent prospectives.** Toute fonction déjà codée dans `develop` est considérée implémentée, indépendamment du programme de recette. **Révision de cohérence du 18 novembre : 149 entrées d'origine dans 10 thèmes** (LAT-12 retirée, intégrée à RTE-07 ; IDs conservés pour traçabilité). **Ajout validé par le propriétaire : 36 nouvelles propositions NEW-01 à NEW-36**, soit **185 entrées dans 11 thèmes** (état du 18 novembre). **Le 20 novembre, trois demandes produit UX-15 à UX-17** ajoutent le modèle Live2D visible sur Android, un vrai décor animé produit avec des outils artistiques adaptés et une connexion mobile via Authenticator : **188 entrées au total, dans 11 thèmes**. **Nouvelle idée UX-18 (20 novembre 2026)** : affichage sécurisé du crédit API OpenAI et des dépenses sur mobile, portant le catalogue à **189 entrées dans 11 thèmes** ; NEW-04, NEW-10, NEW-18, NEW-24 et NEW-36 en **P1** ; 29 autres en **P2** ; NEW-34 et NEW-35 en **P3** (classement initial conservé). **Ajout du 20 novembre 2026 : RTE-15 (P1 / P), conscience opérationnelle unique et commandes intercanaux autorisées sans mélange ni divulgation des conversations : 190 entrées dans 11 thèmes.**
 
+## Plan produit validé : profil économique du 21 novembre 2026
+
+[Configuration cible et plan d'exécution des six chantiers](PLAN-ECONOMIE-API-20261121.md) : curation groupée, plafond global de 10 initiatives/jour, décision sociale hybride, streaming réseau avec pipeline vocal actuel, contexte sélectif sur historique de 24 h et personnalité évolutive. **Plan uniquement ; aucun développement autorisé pour le moment.**
+
 ## Où trouver les idées
 
 | Thème | Document | Périmètre |
