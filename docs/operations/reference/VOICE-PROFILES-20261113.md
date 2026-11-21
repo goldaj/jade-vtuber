@@ -134,7 +134,9 @@ Le moteur d'inférence doit produire une réponse de ce format strict :
 
 Une balise **unique, en tête de réponse** ; l'intention vaut pour toute la réponse (y compris en early speech). Ce choix évite d'émettre un appel TTS supplémentaire à chaque changement d'émotion, ce qui préserverait mal le coût et la continuité. Une évolution vers la granularité par phrase exige une décision et une recette dédiées.
 
-**Aucune balise ne doit apparaître** dans Discord/Twitch, le retour HTTP, la console, les sous-titres, la sortie parlée ou l'historique du dialogue. Les métadonnées restent attachées à `Reply.intent`, séparées de `Reply.text`.
+**Aucune balise ne doit apparaître** dans Discord/Twitch, le retour HTTP, la console, les sous-titres, la sortie parlée ou l'historique du dialogue.
+
+**Tolérance du parseur (`develop`, 21 novembre 2026)** : la première intention valide en tête de réponse est conservée, même entourée de doubles crochets ou précédée d'une annotation `[playful]`. Une fois cette intention reconnue, toutes les séquences entre crochets, même imbriquées, répétées ou découpées par le streaming, sont éliminées avant texte, voix et historique. Sans intention valide, les crochets ordinaires restent du texte littéral ; les balises explicites `INTENT` mal formées continuent d'être neutralisées. Les marques techniques internes aux journaux et à la mémoire ne sont pas concernées. Les métadonnées restent attachées à `Reply.intent`, séparées de `Reply.text`.
 
 Le module source de vérité est [`src/jade_runtime/intent_engine.py`](../../../src/jade_runtime/intent_engine.py). Le `Dialogue` ajoute au **prompt système** un contrat stable, quel que soit le prompt privé de personnalité. Le parseur streaming retient les fragments initiaux jusqu'à avoir identifié ou écarté la balise, avant d'émettre le premier morceau de texte propre. La voie non-streaming suit la même règle.
 

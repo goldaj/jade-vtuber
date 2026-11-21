@@ -78,11 +78,56 @@ class IntentParsingTests(unittest.TestCase):
             with self.subTest(raw=raw), self.assertRaises(ValueError):
                 parse_reply(raw)
 
-    def test_literal_brackets_are_preserved_in_stream(self):
+    def test_selected_intent_removes_literal_brackets_in_stream(self):
         raw = "[INTENT:neutral] Un exemple [entre crochets], rien de plus."
         parser = IntentStreamParser()
         spoken = "".join(parser.feed(char) for char in raw) + parser.finish()
-        self.assertEqual(spoken, "Un exemple [entre crochets], rien de plus.")
+        self.assertEqual(spoken, "Un exemple, rien de plus.")
+
+    def test_no_valid_intent_preserves_ordinary_brackets(self):
+        for raw in ("[playful] Bonjour.", "[une annotation normale] Bonjour.",
+                    "Bonjour [entre crochets]."):
+            with self.subTest(raw=raw):
+                self.assertEqual(parse_reply(raw).text, raw)
+                self.assertEqual(parse_reply(raw).intent, "neutral")
+
+    def test_duplicate_nested_and_stage_directions_all_split_positions(self):
+        cases = (
+            ("[INTENT:playful] [playful] Bonjour !", "playful", "Bonjour !"),
+            ("[[INTENT:playful]] Bonjour", "playful", "Bonjour"),
+            ("[[[INTENT:playful]]] [rires] Bonjour", "playful", "Bonjour"),
+            ("[playful] [INTENT:curious] Bonjour", "curious", "Bonjour"),
+            ("[INTENT:playful][INTENT:tender] Bonjour", "playful", "Bonjour"),
+            ("[INTENT:playful] Bonjour [sourire] !", "playful", "Bonjour !"),
+            ("[INTENT:playful] Une [description [imbriquée]] phrase.",
+             "playful", "Une phrase."),
+            ("[INTENT:neutral] Bonjour [2026] !", "neutral", "Bonjour !"),
+            ("[INTENT:serious] Bonjour [sourire]", "serious", "Bonjour"),
+            ("[INTENT:playful] Bonjour [sourire], papa !",
+             "playful", "Bonjour, papa !"),
+        )
+        for raw, intent, expected_text in cases:
+            with self.subTest(raw=raw):
+                parsed = parse_reply(raw)
+                self.assertEqual((parsed.intent, parsed.text),
+                                 (intent, expected_text))
+                for cut in range(len(raw) + 1):
+                    parser = IntentStreamParser()
+                    fragments = (parser.feed(raw[:cut]), parser.feed(raw[cut:]),
+                                 parser.finish())
+                    result = "".join(fragments).strip()
+                    self.assertEqual((parser.intent, result),
+                                     (intent, expected_text))
+                    self.assertNotIn("[", result)
+                parser = IntentStreamParser()
+                charwise = "".join(parser.feed(char) for char in raw) + parser.finish()
+                self.assertEqual((parser.intent, charwise.strip()),
+                                 (intent, expected_text))
+
+    def test_nonintent_unclosed_annotation_never_becomes_speech(self):
+        result = parse_reply("[INTENT:playful] Bonjour [sourire")
+        self.assertEqual((result.intent, result.text), ("playful", "Bonjour"))
+
 
     def test_incomplete_intent_never_leaks_even_in_stream(self):
         for raw in ("[INTENT:playful", "[INTENT", " [intent:curious "):

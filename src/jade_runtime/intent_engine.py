@@ -59,8 +59,9 @@ Never add a tender or familial phrase merely to justify an intention.
 For mixed moods choose the predominant intention. Keep the existing persona.
 """
 
-_PREFIX = re.compile(r"^\[INTENT:([a-z]+)\]$", flags=re.ASCII)
-_SUSPECT = re.compile(r"^\[\s*intent\b", flags=re.IGNORECASE | re.ASCII)
+_INTENT_TAG = re.compile(r"\[\s*intent\s*:\s*([a-z]+)\s*\]", re.I | re.ASCII)
+_SUSPECT = re.compile(r"^\[\s*intent\b", re.I | re.ASCII)
+_ANY_INTENT = re.compile(r"\[\s*intent\b", re.I | re.ASCII)
 _MAX_HEAD = 128
 
 
@@ -81,27 +82,75 @@ class IntentReply:
 
 
 class IntentStreamParser:
-    """Parse one optional prefix without delaying the rest of the stream.
+    """Extract one leading intent, then remove all bracketed stage directions.
 
-    A missing or unknown label becomes neutral. A malformed [INTENT...] prefix
-    that ends without ']' fails closed rather than leaking private metadata.
-    Ordinary leading brackets (e.g. [bonjour]) stay in the user's text.
+    Leading groups are buffered: [playful] [INTENT:curious] can still select
+    curious. Without a valid intent, ordinary brackets remain literal. Once
+    selected, nested, repeated and unfinished annotations are held back even
+    when the model stream splits them between individual characters.
     """
 
     def __init__(self):
         self.intent = "neutral"
         self.resolved = False
+        self._selected = False
         self._head = ""
-        self._trim_next = False
         self._body_pending = ""
+        self._bracket_depth = 0
+        self._bracket_sample = ""
+        self._gap = ""
+        self._removed = False
+        self._has_visible = False
+
+    def _clean_selected(self, chunk: str, *, final=False) -> str:
+        """Discard every balanced bracket group, with bounded nested state."""
+        visible = []
+        for char in chunk:
+            if char == "[":
+                if self._bracket_depth == 0:
+                    self._removed = True
+                    self._bracket_sample = ""
+                self._bracket_depth += 1
+                continue
+            if char == "]" and self._bracket_depth:
+                self._bracket_depth -= 1
+                continue
+            if self._bracket_depth:
+                if len(self._bracket_sample) < _MAX_HEAD:
+                    self._bracket_sample += char
+                continue
+            if char == "]":
+                # A stray closer after metadata is never spoken.
+                continue
+            if char.isspace():
+                self._gap += char
+                continue
+            if self._gap:
+                if self._has_visible:
+                    if self._removed:
+                        if char not in ",.":
+                            visible.append(" ")
+                    else:
+                        visible.append(self._gap)
+                self._gap = ""
+            self._removed = False
+            visible.append(char)
+            self._has_visible = True
+        if final:
+            if self._bracket_depth and re.match(
+                r"\s*intent\b", self._bracket_sample, re.I | re.ASCII
+            ):
+                raise ValueError("unfinished inline intent metadata")
+            if self._gap and not self._removed:
+                visible.append(self._gap)
+            self._gap = ""
+        return "".join(visible)
 
     def _visible_body(self, chunk: str, *, final=False) -> str:
-        """Remove accidental later INTENT metadata without changing the mood.
-
-        A second tag is not allowed by the output contract. Never publish it,
-        even if it arrives split across streaming fragments. Unrelated brackets
-        remain ordinary literal reply text.
-        """
+        if self._selected:
+            return self._clean_selected(chunk, final=final)
+        # No valid leading intent: retain literal brackets, but still suppress
+        # legacy/malformed INTENT metadata as before.
         pending = self._body_pending + chunk
         self._body_pending = ""
         visible = []
@@ -134,43 +183,45 @@ class IntentStreamParser:
         if not chunk:
             return ""
         if self.resolved:
-            if self._trim_next:
-                chunk = chunk.lstrip()
-                if chunk:
-                    self._trim_next = False
             return self._visible_body(chunk)
         self._head += chunk
-        trimmed = self._head.lstrip()
-        if not trimmed:
-            if len(self._head) > _MAX_HEAD:
-                self.resolved = True
-                result, self._head = self._head, ""
-                return self._visible_body(result)
-            return ""
-        if not trimmed.startswith("["):
-            self.resolved = True
-            result, self._head = self._head, ""
-            return self._visible_body(result)
-        end = trimmed.find("]")
-        if end < 0:
-            if len(self._head) > _MAX_HEAD:
-                if _SUSPECT.match(trimmed):
+        cursor = 0
+        while True:
+            while cursor < len(self._head) and self._head[cursor].isspace():
+                cursor += 1
+            if cursor >= len(self._head):
+                if len(self._head) <= _MAX_HEAD:
+                    return ""
+                break
+            if self._head[cursor] != "[":
+                break
+            depth = 0
+            end = None
+            for pos in range(cursor, len(self._head)):
+                if self._head[pos] == "[":
+                    depth += 1
+                elif self._head[pos] == "]":
+                    depth -= 1
+                    if depth == 0:
+                        end = pos
+                        break
+            if end is None:
+                if len(self._head) <= _MAX_HEAD:
+                    return ""
+                if _ANY_INTENT.search(self._head):
                     raise ValueError("unfinished intent metadata")
-                self.resolved = True
-                result, self._head = self._head, ""
-                return self._visible_body(result)
-            return ""
-        prefix = trimmed[:end + 1]
-        suffix = trimmed[end + 1:]
-        if _SUSPECT.match(trimmed):
-            match = _PREFIX.fullmatch(prefix)
-            self.intent = normalize_intent(match.group(1) if match else "")
-            result = suffix.lstrip()
-            self._trim_next = not bool(result)
-        else:
-            result = self._head
-        self._head = ""
+                break
+            group = self._head[cursor:end + 1]
+            tag = _INTENT_TAG.search(group)
+            if tag is not None and tag.group(1).lower() in INTENTS:
+                self.intent = tag.group(1).lower()
+                self._selected = True
+                break
+            cursor = end + 1
+            if len(self._head) > _MAX_HEAD:
+                break
         self.resolved = True
+        result, self._head = self._head, ""
         return self._visible_body(result)
 
     def finish(self) -> str:
@@ -179,9 +230,10 @@ class IntentStreamParser:
         trailing = self._head
         self._head = ""
         self.resolved = True
-        if _SUSPECT.match(trailing.lstrip()):
+        if (_ANY_INTENT.search(trailing)
+                and trailing.count("[") > trailing.count("]")):
             raise ValueError("unfinished intent metadata")
-        return trailing
+        return self._visible_body(trailing, final=True)
 
 
 def parse_reply(answer: str) -> IntentReply:
