@@ -4,6 +4,7 @@ import inspect
 import json
 
 from .memory_actions import MEMORY_TOOL
+from .session_logging import event
 
 from .config import Settings
 from .openai_client import isolated_openai_client
@@ -27,6 +28,8 @@ class OpenAIServices:
             await self.client.close()
 
     async def complete(self, messages: list[dict[str, str]]) -> str:
+        event("openai_request", operation="chat.complete", model=self.settings.model,
+              tools_enabled=False, streaming=False)
         response = await self.client.chat.completions.create(
             model=self.settings.model,
             messages=messages,
@@ -34,12 +37,17 @@ class OpenAIServices:
             reasoning_effort=self.settings.reasoning_effort,
         )
         value = response.choices[0].message.content
+        event("openai_response", operation="chat.complete",
+              finish_reason=response.choices[0].finish_reason, raw_output=value,
+              request_id=getattr(response, "id", None))
         if not value:
             raise ValueError("OpenAI returned no dialogue text")
         return value
 
     async def complete_stream(self, messages: list[dict[str, str]]):
         """Yield OpenAI chat token fragments; do not retry on partial output."""
+        event("openai_request", operation="chat.stream", model=self.settings.model,
+              tools_enabled=False, streaming=True)
         stream = await self.client.chat.completions.create(
             model=self.settings.model, messages=messages,
             max_completion_tokens=self.settings.max_completion_tokens,
@@ -66,6 +74,7 @@ class OpenAIServices:
                 # connection after some text was already sent to the speaker.
                 raise ValueError("OpenAI dialogue stream ended without completion")
         finally:
+            event("openai_stream_ended", operation="chat.stream", completed=completed)
             close = getattr(stream, "close", None)
             if callable(close):
                 closing = close()
@@ -108,6 +117,8 @@ class OpenAIServices:
                     outcome = {"status": "échec", "level": None}
             else:
                 outcome = {"status": "refusé", "level": None}
+            event("memory_tool_result", name=call["name"],
+                  call_index=index, outcome=outcome)
             continuation.append({
                 "role": "tool", "tool_call_id": call["id"],
                 "content": json.dumps(outcome, ensure_ascii=False),
@@ -116,10 +127,18 @@ class OpenAIServices:
 
     async def complete_with_tools(self, messages, memory_action) -> str:
         """One call if unused, an additional completion only after tool use."""
+        event("openai_request", operation="chat.complete_with_tools",
+              model=self.settings.model, tools_enabled=True, streaming=False)
         response = await self.client.chat.completions.create(
             **self._chat_arguments(messages), tools=[MEMORY_TOOL],
             tool_choice="auto", parallel_tool_calls=False)
         choice = response.choices[0]
+        event("openai_response", operation="chat.complete_with_tools",
+              finish_reason=choice.finish_reason,
+              raw_output=choice.message.content,
+              tool_calls=[{"name": item.function.name, "arguments": item.function.arguments}
+                          for item in (choice.message.tool_calls or ())],
+              request_id=getattr(response, "id", None))
         if choice.finish_reason == "stop":
             value = choice.message.content
             if not isinstance(value, str) or not value:
@@ -136,6 +155,8 @@ class OpenAIServices:
 
     async def complete_stream_with_tools(self, messages, memory_action):
         """Support streamed function arguments without speaking any tool payload."""
+        event("openai_request", operation="chat.stream_with_tools",
+              model=self.settings.model, tools_enabled=True, streaming=True)
         stream = await self.client.chat.completions.create(
             **self._chat_arguments(messages), tools=[MEMORY_TOOL],
             tool_choice="auto", parallel_tool_calls=False, stream=True)
@@ -167,6 +188,8 @@ class OpenAIServices:
                     fragment = getattr(delta, "content", None)
                     if isinstance(fragment, str) and fragment and not calls:
                         yield fragment
+            event("openai_stream_ended", operation="chat.stream_with_tools",
+                  finish_reason=finish, tool_calls=[calls[key] for key in sorted(calls)])
             if finish == "tool_calls":
                 ordered = [calls[index] for index in sorted(calls)]
                 followup = await self._finish_memory_tool(
