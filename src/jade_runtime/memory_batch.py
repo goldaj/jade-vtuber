@@ -20,6 +20,13 @@ def candidate_is_meaningful(text: str) -> bool:
     if re.fullmatch(r"(?i)[\W_]*(?:salut|bonjour|hello|coucou|merci|ok|oui|non|"
                     r"bonne nuit|bonne journée)[\W_]*", stripped):
         return False
+    # Common social pleasantries are a poor reason to invoke a separate
+    # memory model, even if the sentence passes the 24-character threshold.
+    if len(stripped) <= 110 and re.fullmatch(
+            r"(?i)(?:merci(?: beaucoup| encore| jade)?(?: pour ton aide)?|"
+            r"bonne (?:journée|soirée|nuit)(?: à toi)?|"
+            r"ok merci|d'accord merci)[\s!.,?]*", stripped):
+        return False
     return True
 
 
@@ -59,6 +66,12 @@ class MemoryBatcher:
             task.add_done_callback(self._completed)
         pending = self._queues[bucket]
         if len(pending) >= self.batch_size * 2:
+            return False
+        # Repeating an identical statement in the same pending batch is not
+        # extra evidence and should not cause another paid curation request.
+        normalized = " ".join(incoming.text.casefold().split())
+        if any(" ".join(older.text.casefold().split()) == normalized
+               for older, _ in pending):
             return False
         pending.append((incoming, reply))
         if len(pending) >= self.batch_size:
@@ -152,7 +165,11 @@ class MemoryBatcher:
                             incoming.text + "\n" + reply.text).casefold()
                         or _SECRET.search(summary + "\n" + significance)):
                     continue
-                if kind == "core_self" and key == ("microphone", "goldaj"):
+                if kind == "core_self":
+                    # Jade's autobiography is owner-only. Never store this in
+                    # the personal memory table of a Discord/Twitch speaker.
+                    if key != ("microphone", "goldaj"):
+                        continue
                     await asyncio.to_thread(
                         self.store.put_self_core, key, summary=summary,
                         significance=significance, message_id=incoming.message_id,

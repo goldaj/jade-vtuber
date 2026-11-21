@@ -63,7 +63,9 @@ class CrossChannelMemoryTests(unittest.IsolatedAsyncioTestCase):
                        summary="Ce salon a son information locale.")
         self.link()
         public = await self.service.context_for(self.server())
-        self.assertIn("information locale", public)
+        # Person-scoped memories may be personal even when created in a room.
+        # Only a private conversation may re-inject them into the model.
+        self.assertEqual(public, "")
         self.assertNotIn("Confidentiel", public)
         self.assertNotIn("autre serveur", public)
         self.assertIn("Confidentiel", await self.service.context_for(self.dm()))
@@ -75,7 +77,7 @@ class CrossChannelMemoryTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("discussion Twitch", await self.service.context_for(self.mobile()))
         public = Incoming("twitch", "Goldaj", "Tu sais ?", channel="live",
                           account_id="202")
-        self.assertIn("discussion Twitch", await self.service.context_for(public))
+        self.assertEqual(await self.service.context_for(public), "")
         self.assertNotIn("discussion Twitch", await self.service.context_for(self.server()))
 
     async def test_unlinked_person_and_unlink_are_isolated(self):

@@ -9,6 +9,12 @@ from .paris_clock import paris_date
 from .messages import Incoming
 
 LOG=logging.getLogger("jade.initiatives")
+# Acknowledgements do not include unrelated group conversation.
+_ACKNOWLEDGE = re.compile(
+    r"(?i)^\s*(?:salut|bonjour|bonsoir|coucou|hello|hey|merci|"
+    r"oui|ouais|ok|okay|ça va|ca va|bienvenue|présent|"
+    r"je suis là|tu vas bien)(?:\s+jade)?\s*[!?.,]*\s*$"
+)
 
 
 class InitiativeScheduler:
@@ -75,13 +81,20 @@ class InitiativeScheduler:
             voice_session_id=voice_session_id if audible else "",
             system_initiative=True, force_reply=True)
 
-    def human_replied(self, channel: str, *, verified: bool = True) -> bool:
-        """A real human interaction ends the unanswered initiative.
+    def human_replied(self, channel: str, *, verified: bool = True,
+                      text: str = "", directed: bool = False) -> bool:
+        """Rearm only on a response to Jade, not unrelated channel traffic.
 
-        Called only by authenticated Discord text or accepted Discord STT,
-        never by bot messages or the synthetic initiative itself.
+        Short acknowledgements count only in the first two minutes following
+        the event. Direct requests and replies to Jade count at any time.
+        No periodic LLM evaluation or extra audio generation is involved.
         """
-        if not verified or channel not in self._awaiting_reply:
+        pending_at = self._awaiting_reply.get(channel)
+        if not verified or pending_at is None or not isinstance(text, str):
+            return False
+        greeting = (0 <= self.clock() - pending_at <= 120
+                    and bool(_ACKNOWLEDGE.fullmatch(text)))
+        if not directed and not greeting:
             return False
         self._awaiting_reply.pop(channel, None)
         return True

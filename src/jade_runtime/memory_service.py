@@ -74,6 +74,12 @@ class MemoryService:
         key = identity_of(incoming)
         if key is None:
             return ""
+        # A person's consent to store a memory does not authorize replaying
+        # it aloud to OTHER listeners of a public Discord channel. Ordinary
+        # public dialogue history still works independently of private recall.
+        if incoming.platform in ("discord_voice", "twitch") or (
+                incoming.platform == "discord" and not incoming.private_channel):
+            return ""
         try:
             scope = _scope(incoming)
             found = await asyncio.to_thread(self.store.recall, key, scope)
@@ -375,7 +381,9 @@ class MemoryService:
                 return
             # Public channels never recall memories originating in a different
             # channel, even if both messages come from the same account.
-            if kind == "core_self" and key == ("microphone", "goldaj"):
+            if kind == "core_self":
+                if key != ("microphone", "goldaj"):
+                    return  # Autobiography never becomes a third-party memory.
                 await asyncio.to_thread(
                     self.store.put_self_core, key, summary=summary,
                     significance=significance, message_id=incoming.message_id,

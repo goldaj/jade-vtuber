@@ -100,7 +100,11 @@ class SpontaneousEngagement(unittest.IsolatedAsyncioTestCase):
         self.time += 61
         self.assertIsNone(await self.scheduler.voice_join(*join(14), channel_id=77),
                           "Even a new join cannot restart Jade if no one answered")
-        self.assertTrue(self.scheduler.human_replied("77", verified=True))
+        self.assertFalse(self.scheduler.human_replied(
+            "77", text="Les développeurs sont encore en réunion."))
+        self.assertTrue(self.scheduler.waiting_for_reply("77"))
+        self.assertTrue(self.scheduler.human_replied(
+            "77", verified=True, text="Salut !"))
         self.assertFalse(self.scheduler.waiting_for_reply("77"))
         self.assertIsNotNone(await self.scheduler.voice_join(
             *join(14), channel_id=77))
@@ -135,8 +139,19 @@ class SpontaneousEngagement(unittest.IsolatedAsyncioTestCase):
         self.time += 30
         self.assertIsNone(await self.scheduler.voice_join(
             *join(14), channel_id=77))
-        self.assertFalse(self.scheduler.human_replied("77", verified=False))
+        self.assertFalse(self.scheduler.human_replied(
+            "77", verified=False, text="Salut !"))
         self.assertTrue(self.scheduler.waiting_for_reply("77"))
+
+    async def test_unrelated_chatter_never_rearms_without_real_response(self):
+        await self.scheduler.voice_join(*join(), channel_id=77)
+        self.time += 130
+        self.assertFalse(self.scheduler.human_replied("77", text="Bonjour"))
+        self.assertFalse(self.scheduler.human_replied("77", text="J'ai trouvé une autre solution."))
+        self.assertFalse(self.scheduler.human_replied("88", text="Jade, bonjour", directed=True))
+        self.assertTrue(self.scheduler.waiting_for_reply("77"))
+        self.assertTrue(self.scheduler.human_replied("77", text="Jade, tu m'entends ?", directed=True))
+        self.assertFalse(self.scheduler.waiting_for_reply("77"))
 
     async def test_bots_moving_or_other_voice_channel_do_not_trigger(self):
         m, before, after = join()
@@ -157,6 +172,9 @@ class PersonalityMemory(unittest.TestCase):
         ])
         self.assertIn("humour discret", cues)
         self.assertNotIn("légumes", cues)
+        self.assertEqual(personality_cues([
+            {"summary": "Alice préfère que Jade parle doucement.",
+             "significance": "Préférence personnelle d'Alice."}]), "")
         self.assertLess(len(cues), 700)
 
 

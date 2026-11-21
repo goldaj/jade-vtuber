@@ -109,6 +109,56 @@ class BatchMemoryTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await batch.close()
 
+    async def test_third_party_core_self_stays_out_of_all_memories(self):
+        class Model:
+            async def complete(self, messages):
+                text = json.loads(messages[1]["content"])[0]["text"]
+                return json.dumps([{"index": 0, "kind": "core_self",
+                    "summary": "Jade a découvert sa vocation de coautrice.",
+                    "significance": "Épisode personnel de Jade.",
+                    "evidence": text}])
+        batch = MemoryBatcher(self.store, Model(), batch_size=1)
+        incoming = Incoming("discord", "Alice",
+            "Nous avons partagé une discussion importante sur ton avenir.",
+            account_id="123", channel="77", message_id="foreign-self")
+        try:
+            self.assertTrue(batch.schedule(
+                self.key, "discord:77", incoming, Reply(incoming, "Je comprends.")))
+            await asyncio.wait_for(asyncio.gather(*list(batch.tasks)), 3)
+            self.assertEqual(self.store.list_for_account(self.key), [])
+        finally:
+            await batch.close()
+
+    async def test_local_prefilter_rejects_empty_pleasantries_and_duplicates(self):
+        class Model:
+            def __init__(self):
+                self.calls = 0
+
+            async def complete(self, messages):
+                self.calls += 1
+                return "[]"
+        model = Model()
+        batch = MemoryBatcher(self.store, model, batch_size=2, delay_seconds=0.1)
+        trivial = Incoming("discord", "Alice", "Merci beaucoup pour ton aide !",
+                           account_id="123", channel="77", message_id="thanks")
+        useful = Incoming("discord", "Alice",
+                          "J'ai terminé une formation importante cette semaine.",
+                          account_id="123", channel="77", message_id="useful")
+        repeat = Incoming("discord", "Alice",
+                          "  j'ai terminé   une formation importante cette semaine. ",
+                          account_id="123", channel="77", message_id="dup")
+        try:
+            self.assertFalse(batch.schedule(self.key, "discord:77", trivial,
+                                            Reply(trivial, "De rien")))
+            self.assertTrue(batch.schedule(self.key, "discord:77", useful,
+                                           Reply(useful, "Félicitations")))
+            self.assertFalse(batch.schedule(self.key, "discord:77", repeat,
+                                            Reply(repeat, "Bien")))
+            await asyncio.wait_for(asyncio.gather(*list(batch.tasks)), 2)
+            self.assertEqual(model.calls, 1)
+        finally:
+            await batch.close()
+
     async def test_short_greetings_do_not_bill(self):
         class Model:
             async def complete(self, messages):
