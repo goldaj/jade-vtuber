@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Clôture utilisateur des sept cartes REC/DEV du 21/11](2026-11-21-chatgpt-cloture-sept-cartes.md) · REC-003, REC-007, REC-011, DEV-002, DEV-009, DEV-013 et DEV-014 ; acceptation explicite du propriétaire, limites de preuve tracées.
+
 - [Mémoire transversale privée des comptes liés (21/11)](2026-11-21-chatgpt-memoire-transversale-privee.md) · Résumés mémoriels réutilisables entre supports privés, salons publics et historiques bruts isolés, recette physique par le propriétaire.
 
 - [Mémoire MP Discord automatique et libellés de liaison mobile (21/11)](2026-11-21-chatgpt-discord-mp-memoire-liaison.md) · Activation par compte Discord vérifié sur MP/serveur, opt-out durable et parcours explicite ; code limité à 5 minutes, liaison durable.
