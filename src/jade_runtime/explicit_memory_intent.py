@@ -1,8 +1,9 @@
 """Recognize explicit conversational memory requests, never Core write authority.
 
-Parsing is deliberately deterministic: no user (including Goldaj) can force
-core_self or core_relationship through a natural-language instruction. Any
-recognized request is scheduled, if consented, as a 365-day ordinary memory.
+Parsing is deliberately deterministic. Only the caller can establish
+the intent: MemoryService validates the authenticated owner identity before
+scheduling any mandatory level-2 write. Other users' requests are suggestions
+passed to Jade's LLM. No user (including Goldaj) can force level-3 memories.
 """
 from __future__ import annotations
 
