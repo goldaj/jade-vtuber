@@ -418,10 +418,10 @@ class MemoryStore:
                                summary: str, message_id: str = "",
                                expected_person_id: str | None = None,
                                ordinary_days: int = ORDINARY_RETENTION_DAYS) -> str:
-        """Persist an explicit memory request as ORDINARY, never Core.
+        """Persist Goldaj's authenticated mandatory L2 request, never Core.
 
-        Consent, identity, duplicate check and insertion happen atomically.
-        Neither Goldaj nor external users may pick a Core kind through here.
+        Authorization, consent, identity, duplicate check and insertion are
+        atomic. External users can only suggest memories to Jade's LLM.
         Returns created/already_exists/inactive after the transaction commits.
         """
         _validate_key(key)
@@ -444,6 +444,16 @@ class MemoryStore:
             ).fetchone()
             if person is None or (expected_person_id is not None
                                   and person["person_id"] != expected_person_id):
+                return "inactive"
+            # Recheck Goldaj's owner identity in the *same transaction* as the
+            # insert. A concurrent unlink must never turn a former owner-linked
+            # speaker into somebody allowed to force an L2 memory.
+            owner = db.execute("""
+                SELECT 1 FROM identities
+                WHERE platform='microphone' AND account_id='goldaj'
+                  AND person_id=?
+            """, (person["person_id"],)).fetchone()
+            if owner is None:
                 return "inactive"
             if db.execute("""
                 SELECT 1 FROM memories
