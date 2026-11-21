@@ -9,7 +9,7 @@ Ce dossier rassemble les idées des conversations des 16, 18 et 20 novembre 2026
 
 ## Plan produit validé : profil économique du 21 novembre 2026
 
-[Configuration cible et plan d'exécution des six chantiers](PLAN-ECONOMIE-API-20261121.md) : curation groupée, plafond global de 10 initiatives/jour, décision sociale hybride, streaming réseau avec pipeline vocal actuel, contexte sélectif sur historique de 24 h et personnalité évolutive. **Plan uniquement ; aucun développement autorisé pour le moment.**
+[Configuration cible et plan d'exécution des six chantiers](PLAN-ECONOMIE-API-20261121.md) : curation groupée, initiatives sans limite de nombre mais avec budget API et pertinence événementielle, décision sociale hybride, streaming réseau avec pipeline vocal actuel, contexte sélectif sur historique de 24 h et personnalité évolutive. **Plan uniquement ; aucun développement autorisé pour le moment.**
 
 ## Où trouver les idées
 
