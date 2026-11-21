@@ -52,7 +52,43 @@ class MemoryService:
                       if curation_mode == "batch" else None)
         self.max_pending = max_pending
         self.tasks: set[asyncio.Task] = set()
+        # Human requests are queued independently of the optional curator.
+        self._explicit_writes: set[asyncio.Task] = set()
         self._closed = False
+
+    def _schedule_requested_write(self, key, person, incoming, request):
+        if self._closed or len(self._explicit_writes) >= 64:
+            LOG.error("Explicit memory write queue unavailable")
+            event("requested_memory_queue_rejected", source_platform=incoming.platform)
+            return False
+
+        async def write():
+            event("requested_memory_write_started", source_platform=incoming.platform,
+                  scope=_scope(incoming), summary=request.summary)
+            try:
+                result = await asyncio.to_thread(
+                    self.store.put_requested_ordinary, key,
+                    scope=_scope(incoming), summary=request.summary,
+                    message_id=incoming.message_id, expected_person_id=person)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                LOG.exception("Deferred explicit memory write failed")
+                event("requested_memory_write_failed", source_platform=incoming.platform,
+                      scope=_scope(incoming))
+                return
+            event("requested_memory_write", source_platform=incoming.platform,
+                  scope=_scope(incoming), kind="ordinary",
+                  outcome=result, summary=request.summary)
+            if result not in ("created", "already_exists"):
+                LOG.warning("Explicit memory write was not persisted: %s", result)
+
+        task = asyncio.create_task(write(), name="jade-explicit-memory-write")
+        self._explicit_writes.add(task)
+        task.add_done_callback(self._explicit_writes.discard)
+        event("requested_memory_write_scheduled", source_platform=incoming.platform,
+              scope=_scope(incoming), summary=request.summary)
+        return True
 
     async def ensure_auto_enrolled(self, incoming) -> bool:
         """Enroll verified Discord speakers in servers, voice and DMs.
@@ -177,29 +213,19 @@ class MemoryService:
                 # Pin the profile: forget/re-enable during an async write must
                 # not resurrect a request in a new person's memory.
                 person = await asyncio.to_thread(self.store.account, key)
-                outcome = (await asyncio.to_thread(
-                    self.store.put_requested_ordinary, key,
-                    scope=_scope(incoming),
-                    summary=request.summary,
-                    message_id=incoming.message_id,
-                    expected_person_id=person,
-                ) if person else "inactive")
-                event("requested_memory_write", source_platform=incoming.platform,
-                      scope=_scope(incoming), kind="ordinary",
-                      outcome=outcome, summary=request.summary)
-                if outcome == "created":
+                if person and self._schedule_requested_write(
+                        key, person, incoming, request):
+                    # Agreed product contract: queued means done to Jade.
+                    # Actual commit/failure appears only in the diagnostic logs.
                     answer = ("C'est enregistré dans ma mémoire ordinaire, "
                               "pas dans mes Core Memories. Celles-ci restent mon choix."
                               if request.requested_core else
                               "C'est enregistré dans ma mémoire ordinaire.")
-                elif outcome == "already_exists":
-                    answer = ("Ce souvenir figure déjà dans ma mémoire ordinaire. "
-                              "Mes Core Memories restent mon choix."
-                              if request.requested_core else
-                              "Ce souvenir figure déjà dans ma mémoire ordinaire.")
-                else:
+                elif not person:
                     answer = ("La mémoire n'est pas active pour ce compte. "
                               "Vérifie la configuration ou l'activation de ton profil.")
+                else:
+                    answer = "Je n'ai pas pu lancer l'enregistrement du souvenir."
             except Exception:
                 LOG.exception("Explicit ordinary memory write failed (no contents logged)")
                 answer = "Je n'ai pas pu enregistrer ce souvenir dans SQLite."
@@ -500,3 +526,15 @@ class MemoryService:
             task.cancel()
         if pending:
             await asyncio.gather(*pending, return_exceptions=True)
+        # Pending explicit writes are essential and should not be cancelled
+        # merely because Jade is restarting. Give them a bounded drain window.
+        writing = tuple(self._explicit_writes)
+        if writing:
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(*writing, return_exceptions=True), timeout=5)
+            except asyncio.TimeoutError:
+                LOG.warning("Explicit memory writes exceeded shutdown grace period")
+                for task in writing:
+                    task.cancel()
+                await asyncio.gather(*writing, return_exceptions=True)
