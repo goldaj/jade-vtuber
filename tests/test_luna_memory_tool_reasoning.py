@@ -413,3 +413,84 @@ def test_anonymous_user_cannot_queue_personal_memory():
             await memory.close()
 
     asyncio.run(run())
+
+
+
+def test_log_event_accepts_tool_name_without_crashing(monkeypatch):
+    """Regression: the previous event(name, **fields) broke each memory call."""
+    import json
+    from src.jade_runtime import session_logging
+    logged = []
+    monkeypatch.setattr(
+        session_logging._AUDIT, "info",
+        lambda fmt, payload: logged.append(json.loads(payload)))
+    session_logging.event("memory_tool_result", call_index=0,
+                          name="jade_save_memory", call_id="call-01",
+                          outcome={"status": "enregistré"},
+                          confirmation_waited=False)
+    assert logged == [{
+        "event": "memory_tool_result", "call_index": 0,
+        "name": "jade_save_memory", "call_id": "call-01",
+        "outcome": {"status": "enregistré"},
+        "confirmation_waited": False,
+    }]
+
+
+def test_memory_tool_only_continuation_survives_audit_with_name_field():
+    """One call to write, then a normal Jade reply, without a TypeError."""
+    service, backend = make_service(
+        tool_response(), text_response("[INTENT:neutral] C'est noté."))
+    stored = []
+
+    async def write(arguments):
+        stored.append(arguments)
+        return {"status": "enregistré", "level": 2}
+
+    async def run():
+        try:
+            result = await service.complete_with_tools(
+                [{"role": "user", "content": "Je commence le piano"}], write)
+            assert "C'est noté" in result
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert stored == ['{"kind":"ordinary"}']
+    assert len(backend.calls) == 2
+    assert backend.calls[0]["reasoning"]["effort"] == "low"
+    assert backend.calls[1]["reasoning"]["effort"] == "low"
+
+
+def test_memory_rejection_explains_wrong_evidence_without_storing(monkeypatch):
+    """A historical quote fails the current-message policy, not SQLite."""
+    import json
+    from src.jade_runtime import memory_service as module
+    rejected = []
+    monkeypatch.setattr(
+        module, "event",
+        lambda event_type, **details: rejected.append((event_type, details)))
+
+    class Store:
+        def put(self, *args, **kwargs):
+            raise AssertionError("Rejected candidate must never touch SQLite")
+
+        def put_self_core(self, *args, **kwargs):
+            raise AssertionError("Rejected candidate must never touch SQLite")
+
+    service = MemoryService(Store(), backend=object())
+    incoming = Incoming(
+        "mobile", "Goldaj", "Choisis un souvenir à mémoriser.",
+        channel="private", force_reply=True, message_id="stale-evidence-test")
+    payload = json.dumps({
+        "kind": "ordinary",
+        "summary": "Une panne précédente est corrigée.",
+        "significance": "Épisode important.",
+        "evidence": "Une phrase prononcée au tour précédent.",
+    }, ensure_ascii=False)
+    result = asyncio.run(service._execute_memory_action(
+        ("microphone", "goldaj"), "verified-person", incoming, payload))
+    assert result["status"] == "refusé"
+    assert rejected == [(
+        "memory_write_rejected",
+        {"reason": "evidence_not_in_current_message", "scope": "person"},
+    )]
