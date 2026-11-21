@@ -6,7 +6,7 @@ import json
 import logging
 import re
 
-from .session_logging import event
+from .session_logging import event as log_event
 
 LOG = logging.getLogger("jade.memory.batch")
 _SECRET = re.compile(r"(?i)(api[_ -]?key|mot de passe|password|token|"
@@ -182,12 +182,12 @@ class MemoryBatcher:
                         summary=summary, significance=significance,
                         message_id=incoming.message_id,
                         expected_person_id=person_id)
-                event("memory_batch_write", kind=kind, scope=scope,
+                log_event("memory_batch_write", kind=kind, scope=scope,
                       persisted=persisted, summary=summary)
         except asyncio.CancelledError:
             raise
         except Exception:
-            LOG.warning("Memory batch candidate failed; no personal data logged")
+            LOG.exception("Memory batch candidate failed; no personal data logged")
 
     async def close(self):
         self._closed = True
