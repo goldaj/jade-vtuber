@@ -461,36 +461,88 @@ def test_memory_tool_only_continuation_survives_audit_with_name_field():
     assert backend.calls[1]["reasoning"]["effort"] == "low"
 
 
-def test_memory_rejection_explains_wrong_evidence_without_storing(monkeypatch):
-    """A historical quote fails the current-message policy, not SQLite."""
+def test_autonomous_l2_memory_accepts_prior_context_without_evidence():
+    """The current user message is not a citation requirement for Jade's L2."""
     import json
-    from src.jade_runtime import memory_service as module
-    rejected = []
-    monkeypatch.setattr(
-        module, "event",
-        lambda event_type, **details: rejected.append((event_type, details)))
+
+    writes = []
 
     class Store:
-        def put(self, *args, **kwargs):
-            raise AssertionError("Rejected candidate must never touch SQLite")
+        def put(self, key, **kwargs):
+            writes.append((key, kwargs))
+            return True
 
-        def put_self_core(self, *args, **kwargs):
-            raise AssertionError("Rejected candidate must never touch SQLite")
-
-    service = MemoryService(Store(), backend=object())
+    memory = MemoryService(Store(), backend=object())
     incoming = Incoming(
         "mobile", "Goldaj", "Choisis un souvenir à mémoriser.",
-        channel="private", force_reply=True, message_id="stale-evidence-test")
+        channel="private", force_reply=True, message_id="older-context")
     payload = json.dumps({
         "kind": "ordinary",
-        "summary": "Une panne précédente est corrigée.",
-        "significance": "Épisode important.",
-        "evidence": "Une phrase prononcée au tour précédent.",
+        "summary": "Une panne précédente a été corrigée.",
+        "significance": "Un épisode de notre histoire.",
     }, ensure_ascii=False)
-    result = asyncio.run(service._execute_memory_action(
+    result = asyncio.run(memory._execute_memory_action(
         ("microphone", "goldaj"), "verified-person", incoming, payload))
-    assert result["status"] == "refusé"
-    assert rejected == [(
-        "memory_write_rejected",
-        {"reason": "evidence_not_in_current_message", "scope": "person"},
-    )]
+
+    assert result == {"status": "enregistré", "level": 2, "kind": "ordinary"}
+    assert len(writes) == 1
+    assert writes[0][1]["summary"] == "Une panne précédente a été corrigée."
+    assert writes[0][1]["expected_person_id"] == "verified-person"
+
+
+def test_autonomous_l3_memory_accepts_reflection_without_latest_quote():
+    """Jade may voluntarily create a Core Memory from authorized context."""
+    import json
+
+    writes = []
+
+    class Store:
+        def put_self_core(self, key, **kwargs):
+            writes.append((key, kwargs))
+            return True
+
+    memory = MemoryService(Store(), backend=object())
+    incoming = Incoming(
+        "mobile", "Goldaj", "Prends du recul sur notre histoire.",
+        channel="private", force_reply=True, message_id="self-reflection")
+    payload = json.dumps({
+        "kind": "core_self",
+        "summary": "Jade attache de l'importance à la continuité de ses relations.",
+        "significance": "Une réflexion personnelle de Jade.",
+    }, ensure_ascii=False)
+    result = asyncio.run(memory._execute_memory_action(
+        ("microphone", "goldaj"), "verified-person", incoming, payload))
+
+    assert result == {"status": "enregistré", "level": 3, "kind": "core_self"}
+    assert len(writes) == 1
+    assert writes[0][1]["expected_person_id"] == "verified-person"
+
+
+def test_autonomous_memory_accepts_legacy_evidence_from_older_turn():
+    """Old function-call schema remains accepted without checking the quote."""
+    import json
+
+    writes = []
+
+    class Store:
+        def put(self, key, **kwargs):
+            writes.append(kwargs)
+            return True
+
+    memory = MemoryService(Store(), backend=object())
+    incoming = Incoming(
+        "mobile", "Goldaj", "Choisis ce que tu souhaites retenir.",
+        channel="private", force_reply=True, message_id="legacy-evidence")
+    payload = json.dumps({
+        "kind": "ordinary",
+        "summary": "Un échange précédent a été important pour Jade.",
+        "significance": "Souvenir autonome.",
+        "evidence": "Une citation provenant d'un ancien tour.",
+    }, ensure_ascii=False)
+    result = asyncio.run(memory._execute_memory_action(
+        ("microphone", "goldaj"), "verified-person", incoming, payload))
+
+    assert result["status"] == "enregistré"
+    assert result["level"] == 2
+    assert len(writes) == 1
+
