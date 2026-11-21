@@ -1,5 +1,7 @@
 # Backlog opérationnel de Jade — source de vérité
 
+**Arbitrage du 21/11/2026 :** les cartes exigeant le **microphone physique local du PC**, **Twitch** ou **OBS** sont suspendues en `Bloqué` jusqu'à nouvel ordre. Ce n'est **pas** une suspension générale des travaux sur Windows ni des tests Discord/Android/mémoire. Les sous-tests indépendants restent possibles, mais les cartes mixtes ne sont pas closes. [Passation](../operations/handoffs/2026-11-21-chatgpt-suspension-micro-twitch-obs.md).
+
 ## REPRISE PRIORITAIRE — première lecture au prochain token Codex
 
 **Demandé par le propriétaire le 18 novembre 2026.** Cette liste est un **point d'entrée de reprise**, pas un second backlog ni une modification des P0/P1/P2. **Les cartes et leurs statuts canoniques restent dans les quatre vues** ci-dessous ; les références sont les mêmes. Toute intervention suit la [DoD](DEFINITION_OF_DONE.md). Ne pas marquer Done sans preuves et validation explicite par Codex ou le propriétaire.
@@ -163,7 +165,7 @@ La [Definition of Done officielle](DEFINITION_OF_DONE.md) est obligatoire sur **
 | **À faire** | Travail recensé mais non démarré ; prérequis parfois manquants. |
 | **En cours** | Réalisation ou tests réellement engagés. |
 | **À valider** | Validation Codex **OU** propriétaire attendue ; pour les cartes `REC` non automatisables, **test manuel à exécuter** et décision attendue, sans prétendre disposer déjà des preuves. |
-| **Bloqué** | Dépendance empêchant de progresser ; consigner le blocage et son déblocage prévu. |
+| **Bloqué** | Dépendance empêchant de progresser ou suspension explicite du propriétaire, avec cause et condition de reprise ; ne signifie pas échec. |
 | **Done** | Cinq conditions de la [DoD](DEFINITION_OF_DONE.md) réunies, dont validation positive par au moins un des deux validateurs autorisés. |
 | **Classée sans suite** | Cas devenu sans objet, abandonné ou non reproductible, avec justification ; ne vaut **pas** Done. |
 

@@ -20,6 +20,8 @@ Une tâche est **Done** uniquement quand **les cinq conditions ci-dessous sont r
 
 ## Application par type de carte
 
+**Exception décidée le 21/11/2026 :** la règle automatique « recette non automatisable → À valider » ne réactive pas les cartes explicitement suspendues par le propriétaire (microphone physique du PC Jade, Twitch, OBS). Les autres travaux sur PC, Discord, Android et mémoire continuent selon leur statut. La suspension n'est pas une validation ni un échec de test.
+
 | Type | « Réalisée » signifie | Tests/preuves attendus (selon pertinence) |
 | --- | --- | --- |
 | **DEV — Développement** | Correctif/fonction prévu(e) effectivement codé(e), livré(e) et raccordé(e) au runtime ; tests ciblés et régressions pertinentes ; défaut réel établi pour une carte conditionnelle | Tests de code, comportements observables, diff/commit, résultat CI si applicable, limites connues |
@@ -45,7 +47,7 @@ Une tâche est **Done** uniquement quand **les cinq conditions ci-dessous sont r
 | **À faire** | Travail connu, non commencé ; prérequis éventuellement encore à préparer. |
 | **En cours** | Réalisation et tests engagés ; relever l'agent et la version. |
 | **À valider** | Pour DEV/OPS/ART : réalisation et preuves disponibles, acceptation attendue. **Pour REC non automatisable : recette manuelle à effectuer par le validateur**, même en l'absence de nouvelle preuve matérielle ; ce statut ne préjuge pas du résultat. Dans tous les cas, attend validation explicite de Codex ou du propriétaire, selon les preuves adaptées, avant Done. |
-| **Bloqué** | Dépendance réelle empêche la suite ; enregistrer cause, impact et prochain déblocage. Peut survenir à toute phase. |
+| **Bloqué** | Dépendance réelle ou suspension explicite du propriétaire jusqu'à nouvel ordre ; consigner cause, portée et condition de reprise. Ce statut ne prouve pas un échec de test. |
 | **Done** | Les **cinq conditions** ci-dessus sont vérifiées et la preuve de validation est consignée. |
 | **Classée sans suite** | Cas exceptionnel pour tâche devenue sans objet/abandonnée après justification ; **ne signifie pas Done**. |
 

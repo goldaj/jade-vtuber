@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Suspension ciblée micro PC / Twitch / OBS (21/11)](2026-11-21-chatgpt-suspension-micro-twitch-obs.md) · report jusqu'à nouvel ordre sans suspendre toutes les cartes sur Windows.
+
 - [Routage des recettes automatiques / manuelles (21/11)](2026-11-21-chatgpt-routage-recettes-manuelles.md) · décision produit : les recettes non automatisables passent directement `À valider`, neuf cartes REC reclassées sans prétendre avoir testé ou accepté les scénarios.
 
 - [Clôture utilisateur des sept cartes REC/DEV du 21/11](2026-11-21-chatgpt-cloture-sept-cartes.md) · REC-003, REC-007, REC-011, DEV-002, DEV-009, DEV-013 et DEV-014 ; acceptation explicite du propriétaire, limites de preuve tracées.
