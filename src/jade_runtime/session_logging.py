@@ -118,13 +118,13 @@ def reset_turn(token) -> None:
     _CONTEXT.reset(token)
 
 
-def event(name: str, **fields) -> None:
-    """Detailed JSON line in the session log, with no console duplication."""
-    payload = {"event": name, **_CONTEXT.get(), **fields}
+def event(event_type: str, **fields) -> None:
+    """Detailed JSON line; structured fields may safely include 'name'."""
+    payload = {"event": event_type, **_CONTEXT.get(), **fields}
     _AUDIT.info("%s", json.dumps(_safe(payload), ensure_ascii=False, separators=(",", ":")))
 
 
-def summary(name: str, **fields) -> None:
-    """Short structured milestone in PyCharm and the session file."""
-    payload = {"event": name, **fields}
+def summary(event_type: str, **fields) -> None:
+    """Concise console event, accepting ordinary 'name' metadata fields."""
+    payload = {"event": event_type, **fields}
     _SUMMARY.info("%s", json.dumps(_safe(payload), ensure_ascii=False, separators=(",", ":")))
