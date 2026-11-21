@@ -10,6 +10,7 @@ from .context_selection import select_context
 from .sentence_stream import SentenceAccumulator
 from .intent_engine import INTENT_PROMPT, IntentStreamParser, parse_reply
 from .memory_actions import MEMORY_PROMPT
+from .session_logging import event
 
 
 class ChatBackend(Protocol):
@@ -124,6 +125,8 @@ class Dialogue:
                                  + (MEMORY_PROMPT if can_use_memory_tool else ""))
                 messages = [{"role": "system", "content": system_prompt},
                             *selected_history, *memory_notes, *context, user]
+                event("llm_request", streaming=on_sentence is not None,
+                      tools_available=can_use_memory_tool, input_message_count=len(messages))
                 if on_timing is not None:
                     on_timing("llm_start")
                 # Failed LLM calls must not corrupt memory or mark a message handled.
@@ -131,6 +134,7 @@ class Dialogue:
                     sentence_buffer = SentenceAccumulator()
                     intent_parser = IntentStreamParser()
                     answer_parts = []
+                    raw_fragments = []
                     stream = (self.backend.complete_stream_with_tools(
                                   messages, memory_action) if can_use_memory_tool
                               else self.backend.complete_stream(messages))
@@ -138,6 +142,7 @@ class Dialogue:
                     intent_announced = False
                     try:
                         async for fragment in stream:
+                            raw_fragments.append(fragment)
                             if not valid():
                                 raise TimeoutError("message expired")
                             if first_fragment and fragment:
@@ -154,6 +159,7 @@ class Dialogue:
                             for sentence in sentence_buffer.feed(visible):
                                 await on_sentence(sentence)
                     finally:
+                        event("llm_raw", streaming=True, raw_output="".join(raw_fragments))
                         # Breaking out because Discord disconnected or the
                         # speech consumer failed must close the LLM response
                         # immediately, not wait for generator finalization.
@@ -172,8 +178,10 @@ class Dialogue:
                     response = (await self.backend.complete_with_tools(
                                     messages, memory_action) if can_use_memory_tool
                                 else await self.backend.complete(messages))
+                    event("llm_raw", streaming=False, raw_output=response)
                     decoded = parse_reply(response)
                     answer, selected_intent = decoded.text, decoded.intent
+                event("llm_parsed", intent=selected_intent, text=answer)
                 if on_timing is not None:
                     on_timing("llm_end")
                 if not valid():
