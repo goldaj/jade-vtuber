@@ -523,6 +523,49 @@ def test_goldaj_verified_linked_discord_account_can_force_l2(tmp_path):
                for m in store.list_for_account(discord))
 
 
+
+def test_mandatory_l2_store_rejects_external_user_even_when_called_directly(tmp_path):
+    """Store enforces owner privilege independently of the command router."""
+    from src.jade_runtime.memory_store import MemoryStore
+
+    store = MemoryStore(tmp_path / "mandatory-owner-boundary.sqlite3")
+    owner = ("microphone", "goldaj")
+    other = ("discord", "56789012345678901")
+    store.enable(owner)
+    store.enable(other)
+    # Even a direct store call by some other code must not force L2.
+    assert store.put_requested_ordinary(
+        other, scope="discord:123", summary="Un fait imposé",
+        expected_person_id=store.account(other)) == "inactive"
+    assert store.list_for_account(other) == []
+    # Goldaj can store a mandatory level-2 memory.
+    assert store.put_requested_ordinary(
+        owner, scope="person", summary="Un souvenir à retenir",
+        expected_person_id=store.account(owner)) == "created"
+    stored = store.list_for_account(owner)
+    assert len(stored) == 1 and stored[0]["kind"] == "ordinary"
+
+
+def test_owner_link_detachment_immediately_revokes_mandatory_privilege(tmp_path):
+    from src.jade_runtime.memory_store import MemoryStore
+
+    store = MemoryStore(tmp_path / "unlink-owner-boundary.sqlite3")
+    owner = ("microphone", "goldaj")
+    other = ("discord", "67890123456789012")
+    store.enable(owner)
+    store.enable(other)
+    token = store.begin_link(owner, target=other)
+    assert store.complete_link(other, token)
+    assert store.is_goldaj(other)
+    original_profile = store.account(other)
+    assert store.unlink(other)
+    assert not store.is_goldaj(other)
+    assert store.account(other) != original_profile
+    assert store.put_requested_ordinary(
+        other, scope="discord:123", summary="Interdiction après séparation",
+        expected_person_id=store.account(other)) == "inactive"
+
+
 def test_log_event_accepts_tool_name_without_crashing(monkeypatch):
     """Regression: the previous event(name, **fields) broke each memory call."""
     import json
