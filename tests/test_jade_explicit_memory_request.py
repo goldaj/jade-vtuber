@@ -149,20 +149,18 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("déjà", (await self.svc.command(text)).text)
         self.assertEqual(len(self.store.list_for_account(("discord", "123"))), 1)
 
-    async def test_dm_and_twitch_remain_manual_opt_in(self):
+    async def test_dm_auto_enrolled_but_twitch_remains_manual_opt_in(self):
         dm = self.request("Jade, mémorise que je viens de me connecter.",
                           platform="discord", account="123", channel="dm", private=True)
         twitch = self.request("Jade, retiens que je suis en ligne.",
                               platform="twitch", account="456", channel="stream")
-        self.assertFalse(await self.svc.ensure_auto_enrolled(dm))
+        self.assertTrue(await self.svc.ensure_auto_enrolled(dm))
         self.assertFalse(await self.svc.ensure_auto_enrolled(twitch))
-        self.assertIn("n'est pas active", (await self.svc.command(dm)).text)
-        self.assertIn("n'est pas active", (await self.svc.command(twitch)).text)
-        self.assertEqual(self.store.list_for_account(("discord", "123")), [])
-        self.assertEqual(self.store.list_for_account(("twitch", "456")), [])
-        self.store.enable(("discord", "123"))
-        self.store.enable(("twitch", "456"))
         self.assertIn("enregistré", (await self.svc.command(dm)).text)
+        self.assertIn("n'est pas active", (await self.svc.command(twitch)).text)
+        self.assertEqual(len(self.store.list_for_account(("discord", "123"))), 1)
+        self.assertEqual(self.store.list_for_account(("twitch", "456")), [])
+        self.store.enable(("twitch", "456"))
         self.assertIn("enregistré", (await self.svc.command(twitch)).text)
 
     async def test_profile_changes_revoke_pending_write(self):
