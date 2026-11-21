@@ -231,6 +231,19 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 vendor_dir=Path(config.mobile_vendor_dir) if config.mobile_vendor_dir else None,
                 model_dir=Path(config.mobile_model_dir) if config.mobile_model_dir else None,
                 avatar_intent_enabled=config.avatar_intent_enabled)
+        social_policy = None
+        initiatives = None
+        if discord and live and config.memory_enabled:
+            from src.jade_runtime.cost_guard import CostGuard
+            from src.jade_runtime.social_intelligence import HybridSocialPolicy
+            from src.jade_runtime.initiatives import InitiativeScheduler
+            guard = CostGuard(Path(config.memory_db_path))
+            social_policy = HybridSocialPolicy(
+                chat, guard, daily_usd=config.social_budget_daily_usd,
+                monthly_usd=config.social_budget_monthly_usd)
+            initiatives = InitiativeScheduler(
+                guard, daily_usd=config.initiative_budget_daily_usd,
+                monthly_usd=config.initiative_budget_monthly_usd)
         if discord_voice:
             from src.jade_runtime.discord_voice import OpenVoiceBridge
             discord_voice_bridge = OpenVoiceBridge(
@@ -274,7 +287,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     config.discord_token, accept, send_enabled=True,
                     voice_bridge=discord_voice_bridge, bot_name=config.bot_name,
                     auto_rate=config.discord_text_auto_rate,
-                    cooldown_seconds=config.discord_text_cooldown_seconds)
+                    cooldown_seconds=config.discord_text_cooldown_seconds,
+                    social_policy=social_policy, initiatives=initiatives)
 
             if twitch or discord or mic or http or mobile:
                 print("Jade connecteurs activés. Quitter avec Ctrl+C.")
