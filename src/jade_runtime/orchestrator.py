@@ -7,7 +7,7 @@ import time
 from .dialogue import Dialogue
 from .messages import Incoming, Reply
 from .turn_logging import record_input, record_reply, record_outcome, record_delivery
-from .session_logging import bind_turn, reset_turn, event, summary
+from .session_logging import bind_turn, reset_turn, event
 from .turn_arbitration import ArbitratingQueue, TurnArbiter
 
 
@@ -300,7 +300,9 @@ class Runtime:
                 if item.result is not None and not item.result.done():
                     item.result.set_exception(TimeoutError() if isinstance(exc, TimeoutError)
                                               else RuntimeError("message processing failed"))
-                self.log.exception("Message processing failed (%s)", self.errors)
+                self.log.exception(
+                    "Message processing failed (%s): turn=%s platform=%s modality=%s",
+                    self.errors, item.turn, item.message.platform, item.message.input_modality)
             finally:
                 if timer is not None:
                     timer.cancel()
