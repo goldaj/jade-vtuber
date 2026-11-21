@@ -152,7 +152,11 @@ class MemoryBatcher:
                             incoming.text + "\n" + reply.text).casefold()
                         or _SECRET.search(summary + "\n" + significance)):
                     continue
-                if kind == "core_self" and key == ("microphone", "goldaj"):
+                if kind == "core_self":
+                    # Jade's autobiography is owner-only. Never store this in
+                    # the personal memory table of a Discord/Twitch speaker.
+                    if key != ("microphone", "goldaj"):
+                        continue
                     await asyncio.to_thread(
                         self.store.put_self_core, key, summary=summary,
                         significance=significance, message_id=incoming.message_id,

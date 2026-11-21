@@ -662,7 +662,9 @@ class DiscordVoiceBridge:
                     # Only post-STT, authorized, non-echo human speech can do this.
                     initiative_tracker = getattr(self, "initiatives", None)
                     if initiative_tracker is not None and item.user_id != self.own_bot_id:
-                        initiative_tracker.human_replied(str(self.channel_id))
+                        initiative_tracker.human_replied(
+                            str(self.channel_id), text=value,
+                            directed=bool(re.search(r"(?<!\w)jade(?!\w)", value, re.I)))
                     # Even a recognized stop word may belong to the surrounding
                     # conversation. Finish Jade's answer before accepting commands.
                     if during_playback:

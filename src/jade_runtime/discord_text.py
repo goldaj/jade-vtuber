@@ -5,6 +5,7 @@ alone never joins voice channels or records other users.
 """
 import asyncio
 import logging
+import re
 from dataclasses import replace
 
 from .messages import Incoming
@@ -123,7 +124,21 @@ class DiscordText:
                     if (parent.initiatives is not None
                             and incoming.account_id
                             and getattr(message.author, "bot", True) is False):
-                        parent.initiatives.human_replied(incoming.channel)
+                        own_id = self.user.id if self.user else None
+                        mentions = getattr(message, "mentions", ()) or ()
+                        ref = getattr(message, "reference", None)
+                        resolved = getattr(ref, "resolved", None)
+                        state = parent.policy.channels.get(incoming.channel)
+                        directed = bool(
+                            (own_id is not None and
+                             (any(getattr(p, "id", None) == own_id for p in mentions)
+                              or getattr(getattr(resolved, "author", None), "id", None) == own_id
+                              or (state is not None and
+                                  getattr(ref, "message_id", None) in state.sent_ids)))
+                            or re.search(r"(?<!\w)" + re.escape(parent.policy.bot_name)
+                                         + r"(?!\w)", incoming.text, re.I))
+                        parent.initiatives.human_replied(
+                            incoming.channel, text=incoming.text, directed=directed)
                     selected = parent.policy.observe(
                         message, incoming, own_user_id=self.user.id if self.user else None)
                     # Native text chat of the current voice channel has the
