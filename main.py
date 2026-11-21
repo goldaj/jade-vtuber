@@ -12,6 +12,7 @@ from src.jade_runtime.messages import Incoming
 from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.orchestrator import Runtime
 from src.jade_runtime.turn_logging import enable_console_logs, planned_destinations
+from src.jade_runtime.session_logging import start_session_logging
 from src.jade_runtime.output import AudioOutput, SpeechOutput
 from src.jade_runtime.twitch_token import validate_twitch_token
 from src.jade_runtime.voice_pipeline import VoiceInput
@@ -359,6 +360,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
 
 
 def main():
+    start_session_logging()
     parser = argparse.ArgumentParser(description="Jade modular runtime")
     parser.add_argument("--live", action="store_true", help="Enable billed OpenAI requests")
     parser.add_argument("--voice", action="store_true", help="Billed OpenAI TTS via local ffplay")
@@ -409,6 +411,9 @@ def main():
         asyncio.run(console(**args))
     except KeyboardInterrupt:
         pass
+    except Exception:
+        LOG.exception("Jade startup/runtime failed")
+        raise
 
 
 if __name__ == "__main__":
