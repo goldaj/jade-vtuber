@@ -6,7 +6,8 @@ from collections.abc import Awaitable, Callable
 import time
 from .dialogue import Dialogue
 from .messages import Incoming, Reply
-from .turn_logging import record_input, record_reply, record_outcome
+from .turn_logging import record_input, record_reply, record_outcome, record_delivery
+from .session_logging import bind_turn, reset_turn, event, summary
 from .turn_arbitration import ArbitratingQueue, TurnArbiter
 
 
@@ -162,6 +163,7 @@ class Runtime:
     async def _execute(self, item):
         if not item.valid():
             raise TimeoutError("message expired")
+        context_token = bind_turn(item.turn, item.message)
         self.mark_timing("queue_start")
         record_input(item.turn, item.message)
         turn = None
@@ -170,8 +172,10 @@ class Runtime:
         memory_context = ""
         history_messages = None
         memory_action = None
+        destinations = ()
         try:
             if self.memory_service is not None:
+                event("turn_stage", stage="memory_start")
                 self.mark_timing("memory_start")
                 auto_enroll = getattr(self.memory_service, "ensure_auto_enrolled", None)
                 if callable(auto_enroll):
@@ -185,6 +189,7 @@ class Runtime:
                     if (isinstance(self.dialogue, Dialogue)
                             and item.message.history_key not in self.dialogue.history):
                         history_messages = await self.memory_service.history_for(item.message)
+                event("turn_stage", stage="memory_end", memory_tool_available=memory_action is not None)
                 self.mark_timing("memory_end")
             if (command_reply is None and self.on_stream_start is not None
                     and item.message.platform == "discord_voice"
@@ -231,6 +236,10 @@ class Runtime:
                 self.mark_timing("delivery_start")
                 try:
                     await self.on_reply(replace(reply, spoken=True) if turn is not None else reply)
+                    record_delivery(item.turn, "handoff_completed", destinations=destinations)
+                except Exception:
+                    record_delivery(item.turn, "failed", destinations=destinations)
+                    raise
                 finally:
                     self.mark_timing("delivery_end")
             played = True
@@ -244,6 +253,7 @@ class Runtime:
                 await self.memory_service.remember_turn(item.message, reply)
                 if not getattr(memory_action, "used", False):
                     self.memory_service.schedule(item.message, reply)
+            event("turn_complete", delivered=reply is not None and played)
             self.mark_timing("turn_complete")
         except BaseException as exc:
             self.mark_timing("turn_cancelled" if isinstance(
@@ -255,6 +265,8 @@ class Runtime:
                 if not committed and turn.has_submitted:
                     await self.dialogue.commit_stream_response(item.message, None)
             raise
+        finally:
+            reset_turn(context_token)
 
     async def _process(self):
         while True:
@@ -288,7 +300,7 @@ class Runtime:
                 if item.result is not None and not item.result.done():
                     item.result.set_exception(TimeoutError() if isinstance(exc, TimeoutError)
                                               else RuntimeError("message processing failed"))
-                self.log.warning("Message processing failed (%s)", self.errors)
+                self.log.exception("Message processing failed (%s)", self.errors)
             finally:
                 if timer is not None:
                     timer.cancel()
