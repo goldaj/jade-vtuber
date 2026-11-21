@@ -93,6 +93,7 @@ def start_session_logging(directory: str | Path | None = None) -> Path:
     root.setLevel(logging.INFO)
     root.addHandler(file_handler)
     root.addHandler(console_handler)
+    logging.captureWarnings(True)
     _SESSION_FILE = filepath
     summary("session_started", log_file=str(filepath), pid=os.getpid())
     event("session_started", log_file=str(filepath), pid=os.getpid())
