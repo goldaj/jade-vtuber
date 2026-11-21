@@ -120,6 +120,10 @@ class DiscordText:
                 incoming = parse_discord_message(
                     message, own_user_id=self.user.id if self.user else None)
                 if incoming is not None:
+                    if (parent.initiatives is not None
+                            and incoming.account_id
+                            and getattr(message.author, "bot", True) is False):
+                        parent.initiatives.human_replied(incoming.channel)
                     selected = parent.policy.observe(
                         message, incoming, own_user_id=self.user.id if self.user else None)
                     # Native text chat of the current voice channel has the
