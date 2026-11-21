@@ -467,6 +467,48 @@ def test_nonowner_verified_discord_request_is_only_a_suggestion():
     assert writes[0][1]["expected_person_id"] == "other-person"
 
 
+def test_nonowner_request_can_be_declined_by_jade_without_saving():
+    """The LLM can answer a non-owner's request without touching SQLite."""
+    class Store:
+        def is_goldaj(self, key):
+            return False
+
+        def account(self, key):
+            return "ordinary-user-profile"
+
+        def put_requested_ordinary(self, *args, **kwargs):
+            raise AssertionError("An ordinary user cannot force a write")
+
+        def put(self, *args, **kwargs):
+            raise AssertionError("Jade declined the optional write")
+
+    memory = MemoryService(Store(), backend=object())
+    service, requests = make_service(
+        text_response("[INTENT:neutral] Je préfère ne pas conserver ce souvenir."))
+    incoming = Incoming(
+        "discord", "Guest", "Retiens que je suis venu aujourd'hui.",
+        account_id="78901234567890123", channel="private", private_channel=True,
+        force_reply=True, message_id="guest-declined")
+
+    async def run():
+        try:
+            assert await memory.command(incoming) is None
+            action = await memory.prepare_memory_action(incoming)
+            assert action is not None
+            reply = await Dialogue(service, "Tu es Jade.").respond(
+                incoming, memory_action=action)
+            assert reply.text == "Je préfère ne pas conserver ce souvenir."
+            assert action.used is False
+            assert not memory._explicit_writes
+        finally:
+            await service._responses.close()
+            await memory.close()
+
+    asyncio.run(run())
+    assert len(requests.calls) == 1
+    assert requests.calls[0]["tools"][0]["name"] == "jade_save_memory"
+
+
 def test_spoofed_goldaj_display_name_has_no_owner_privilege():
     class Store:
         def is_goldaj(self, key):
