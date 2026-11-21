@@ -5,10 +5,19 @@
 ## Décision produit finale sur les initiatives
 
 - **Déclenchement permis dès un événement** : un humain rejoint le vocal, Jade peut saluer sans que quiconque lui ait encore parlé. Aucune limite de nombre par jour.
-- **Stop quand elle est ignorée** : après une initiative, Jade **n'enchaîne pas de relances autonomes** dans le même salon tant qu'une personne n'a pas réellement parlé ou réagi ; un salon vidé puis rejoint constitue une nouvelle session.
+- **Stop quand elle est ignorée** : après une initiative, Jade **n'enchaîne pas de relances autonomes** dans le même salon tant qu'une personne ne lui répond pas réellement (interpellation directe, réponse à son message, ou courte salutation dans les 120 secondes). Le bavardage entre tiers ne compte pas ; un salon vidé puis rejoint constitue une nouvelle session.
 - **Veille inactive gratuite pour les initiatives** : ni boucle LLM ni vérification temporelle payante. Les seuls déclencheurs sont des événements locaux, et la sélection n'appelle l'API que pour une vraie intervention.
 - **Budgets facultatifs, distincts** : les budgets d'initiatives `JADE_INITIATIVE_BUDGET_DAILY_USD` et `JADE_INITIATIVE_BUDGET_MONTHLY_USD` sont à zéro par défaut (= **aucun plafond monétaire**, pas « OFF »). Le propriétaire peut les fixer ; `CostGuard` conserve des **réservations estimées** et la déduplication dans SQLite, mais ces sommes ne sont pas des factures OpenAI définitives. La sécurité financière forte nécessite aussi un plafond côté fournisseur.
 - Le coût de la première intervention sur un événement de connexion est réel, même si personne ne répond ensuite. Les phases de silence sans nouvel événement ne déclenchent aucun coût d'initiative.
+
+## Contre-revue de la PR #35 : limites et arbitrages
+
+- **Mémoire publique :** un souvenir individuel stocké dans un salon public ne devient pas automatiquement une donnée publiquement redistribuable. La mémoire L2/Core personnelle n'est donc plus rechargée dans les prompts publics Discord/Twitch/vocal. Le contexte de conversation courante du salon est préservé ; les rappels privés restent disponibles sous identité vérifiée.
+- **Autobiographie et personnalité :** `core_self` d'un interlocuteur tiers est rejeté, sans requalification ; Jade choisit ses Core, le stockage autobiographique demeure réservé au propriétaire. Un goût rapporté par Alice n'est pas le goût de Jade ; les repères de personnalité ne concernent que Jade.
+- **Initiatives :** la reprise après un salut ne peut pas être déclenchée par un message humain quelconque. Une réponse dirigée ou une courte salutation locale sous deux minutes suffit ; pas de nouvelle requête IA en veille.
+- **Discord écrit P0 :** si `get_channel` n'a pas le DM en cache, un canal reçu auparavant dans un vrai message privé sert de destination certifiée, sans résolution par pseudonyme. L'absence d'accusé de livraison bloque la persistance du message comme remis, mais une réponse textuelle déjà générée reste potentiellement facturée.
+- **Économie :** un lot de curation d'un seul événement reste possible à la fin de la fenêtre d'attente (18 s) ; ce coût n'est pas nul. Les gardes USD sont facultatives pour les initiatives et leur estimation n'est pas un plafond strict d'OpenAI. Les autres événements, la persistance de l'état de salut entre redémarrages et les mesures de coût réel demeurent des compléments possibles.
+- **Audio :** le WebSocket PCM entrant et le TTS progressif sortant restent sur STT -> LLM -> TTS ; aucun nouveau flux audio Realtime continu n'est lancé. La vraie recette Android et Discord reste nécessaire.
 
 ## Composants et responsabilités
 

@@ -2,6 +2,15 @@
 
 Ce document est **la seule pièce documentaire systématiquement exigée en CI** pour les changements techniques. Les guides, atlas et passations sont révisés uniquement quand le comportement ou les procédures qu'ils décrivent changent. Une entrée indique les faits vérifiés ; un ancien journal ne remplace pas le code.
 
+## 2026-11-21 — Revue transversale de mémoire, initiatives, budget et MP Discord (PR #35)
+
+- **Architecture et produit :** audit de la PR #34 sous les angles PO, coûts API, Python/SQLite, confidentialité, Discord et audio mobile. Initiatives toujours actives par défaut, sans quota numérique ni polling LLM de veille. Une discussion entre tiers n'efface plus l'état « Jade ignorée » ; il faut une adresse directe ou un bref acquiescement dans les deux minutes.
+- **Confidentialité :** suppression du rappel de souvenirs individuels dans les prompts à destination des salons Discord publics, vocaux ou Twitch ; base de mémoire conservée et rappels privés autorisés en DM vérifié ou sur les canaux du propriétaire. Une sortie `core_self` de curation hors identité propriétaire est rejetée, jamais convertie en souvenir d'un tiers.
+- **Personnalité et coûts :** les préférences d'un tiers ne deviennent plus des traits de Jade ; repères limités aux souvenirs dont Jade est explicitement le sujet et à son autobiographie autorisée. La curation groupée ignore davantage de formules de politesse et répétitions locales avant appel payant. Les compteurs financiers restent des réservations estimatives, non une facture garantie.
+- **Discord MP, DEV-019 P0 :** le canal DM du message entrant, vérifié, est conservé dans un cache borné comme destination de secours si `get_channel` échoue. Une réponse non effectivement envoyée provoque un échec de livraison et n'est plus mémorisée comme conversation remise. Les MP ne sont plus affichés dans le terminal général. Le cycle de dépendances REC-002/REC-005/DEV-019 est retiré des prérequis, mais ces recettes demeurent liées.
+- **QA et limites :** tests locaux sans fournisseur, CI Linux/Windows et contrôle documentaire sur SHA final de la PR ; vrai Discord/Android/Tailscale et attribution réelle des factures restent à recetter, sans modifier `main`.
+- **Modules :** `initiatives.py`, `discord_text.py`, `discord_voice.py`, `memory_batch.py`, `memory_service.py`, `personality_evolution.py`, `main.py`, tests et documents métier/architecture.
+
 ## 2026-11-21 — Compatibilité Windows et concurrence du backlog pour la PR #34
 
 - Gestion du fuseau horaire des budgets et des événements : tests CI Windows installent `tzdata` pour des transitions heure été/hiver déterministes ; fallback vers la zone locale du PC Windows si les données IANA sont absentes, sans bloquer le lancement de Jade.
