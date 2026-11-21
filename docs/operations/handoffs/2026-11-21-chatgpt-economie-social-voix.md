@@ -1,7 +1,7 @@
 # Mission : Jade, six évolutions économiques et initiatives sans relance
 
 - **Agent / rôle :** ChatGPT, conception produit/architecture/développement/tests offline.
-- **Cartes du backlog :** DEV-012 à DEV-017, **À valider** ; programme ECO-00 à ECO-13 du [plan](../../ameliorations/PLAN-ECONOMIE-API-20261121.md), certains volets de métrique ou de recette physique restent ouverts.
+- **Cartes du backlog :** DEV-013 à DEV-018, **À valider** ; programme ECO-00 à ECO-13 du [plan](../../ameliorations/PLAN-ECONOMIE-API-20261121.md), certains volets de métrique ou de recette physique restent ouverts.
 - **Critères :** historique conservé 24 h, L1 7j/L2 365j/Core sans purge ; filtrage local puis curation groupée ; persona uniquement depuis souvenirs autorisés ; social hybride local+LLM avec budget optionnel ; événements de connexion pouvant provoquer un salut **sans parole préalable** ; **aucune initiative répétée si absence de réponse humaine** dans le même salon ; streaming réseau mobile STT/LLM/TTS existant, annulation et VAD local ; aucune génération LLM périodique en silence.
 - **Branche de départ :** `develop` SHA `c5b71906b0776b01a72d1fcf4d0aa924cad9e4b8`, branche `feat/jade-economie-social-memoire-voix-20261121`.
 - **PR :** https://github.com/goldaj/jade-vtuber/pull/34
@@ -16,3 +16,5 @@
 - **Limites importantes :** premier déclencheur d'initiative réagit à l'entrée dans un vocal Discord avec le **TTS existant** si le membre est encore présent et la session autorisée ; sinon repli dans le chat natif. La recette réelle du TTS événementiel et du comportement en salon occupé est encore requise. Les autres types d'événements, des heures de calme programmées, les mesures de coûts réels par fonctionnalité, les tests du vrai Tailscale Serve et une calibration VAD par téléphone restent à suivre. La sélection de mémoire est lexicale/limitée, pas une recherche sémantique profonde. Les limites USD sont des réservations conservatrices estimées, pas une garantie absolue de facture.
 - **Travail restant, ordre :** 1. contrôler CI finale et revue par diff ; 2. corriger les éventuelles régressions ; 3. intégration `develop` ; 4. recette Goldaj PC/Android/Discord (connexion, première initiative, silence, réponse, arrêt, 4G, annulation) ; 5. mesurer le coût réel et ajuster seuils de silence/pertinence ; 6. compléments vocationnels événementiels et autres canaux.
 - **Guides mis à jour :** [architecture](../../architecture/JADE-ECONOMY-20261121.md), [plan ECO](../../ameliorations/PLAN-ECONOMIE-API-20261121.md), [état branche](../../handbook/BRANCH_STATE.md), [backlog](../../backlog/01-DEVELOPPEMENT.md), [changelog](../CHANGELOG.md).
+
+- **Concurrence documentaire :** les nouvelles cartes ECO sont renumérotées **DEV-013 à DEV-018** pour préserver **DEV-012 (P1, mémoire consciente L2/L3)** arrivé sur `develop` pendant la réalisation ; ce dernier chantier n'est pas traité par cette PR.

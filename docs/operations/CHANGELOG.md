@@ -2,6 +2,12 @@
 
 Ce document est **la seule pièce documentaire systématiquement exigée en CI** pour les changements techniques. Les guides, atlas et passations sont révisés uniquement quand le comportement ou les procédures qu'ils décrivent changent. Une entrée indique les faits vérifiés ; un ancien journal ne remplace pas le code.
 
+## 2026-11-21 — Compatibilité Windows et concurrence du backlog pour la PR #34
+
+- Gestion du fuseau horaire des budgets et des événements : tests CI Windows installent `tzdata` pour des transitions heure été/hiver déterministes ; fallback vers la zone locale du PC Windows si les données IANA sont absentes, sans bloquer le lancement de Jade.
+- Les six cartes ECO passent à **DEV-013…DEV-018** ; la **DEV-012** P1 reçue indépendamment sur `develop` (écritures mémoire L2/L3 conscientes) est préservée, sans modification de son périmètre ni de son statut.
+- Vérifications : Linux déjà vert pour la PR ; Windows à recontrôler sur le SHA final ; aucune recette matérielle inventée.
+
 ## 2026-11-21 — Six évolutions économiques : mémoire, sociabilité, initiatives, voix et mobile (PR #34)
 
 - **Produit :** historique SQLite intégral 24 h **conservé**, avec sélection lexicale locale plafonnée pour le prompt ; L1 7 j, L2 ordinaire 365 j, Core sans expiration inchangés. Curation par lots de 3 événements au plus, délai court et validation autonome des Core. Personnalité enrichie uniquement des souvenirs autorisés, sans nouvel appel IA.
