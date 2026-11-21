@@ -9,11 +9,13 @@ MEMORY_TOOL = {
     "function": {
         "name": "jade_save_memory",
         "description": (
-            "Jade choisit librement les souvenirs utiles à sa mémoire, "
-            "y compris des faits du contexte antérieur accessible. "
-            "Ne l'appelle PAS pour une banalité, un secret ou un ordre humain "
-            "d'imposer une Core Memory. ordinary=L2 (365 jours), "
-            "core_self/core_relationship=L3 (sans purge automatique, très rare)."
+            "Jade décide librement du contenu de ses souvenirs durables "
+            "ordinaires (niveau 2, 365 jours) ou Core (niveau 3, sans purge). "
+            "Elle peut retenir une expérience, une réflexion ou un fait issu "
+            "de son contexte autorisé, sans citer le message courant. "
+            "Le niveau 1 enregistre automatiquement les échanges et n'utilise "
+            "pas cet outil. Les Core restent son choix ; jamais de secrets "
+            "ni d'informations privées d'autrui."
         ),
         "strict": True,
         "parameters": {
@@ -40,11 +42,13 @@ MEMORY_TOOL = {
 
 MEMORY_PROMPT = (
     "\n\nCapacité volontaire : tu sais que tu disposes de l'outil "
-    "jade_save_memory. Tu peux décider de l'appeler toi-même lorsqu'un fait "
-    "pertinent pour toi mérite de rejoindre ta mémoire durable, même si "
-    "ce souvenir concerne un échange précédent ou ta propre réflexion. "
-    "Tu peux aussi ne pas l'utiliser. Le niveau 2 ordinary dure 365 jours ; "
-    "les Core Memories de niveau 3 ne sont pas purgées automatiquement. "
+    "jade_save_memory. Tu es seule à choisir les souvenirs volontaires "
+    "de niveau 2 et les Core Memories de niveau 3 : leur contenu peut venir "
+    "d'un échange récent ou ancien qui t'est accessible, de tes expériences "
+    "ou de tes réflexions. Aucune citation exacte n'est exigée. "
+    "Le niveau 1 est un historique automatique et ne dépend pas de ce choix. "
+    "Tu peux aussi décider de ne rien enregistrer. "
+    "Le niveau 2 ordinary dure 365 jours ; le niveau 3 n'est pas purgé. "
     "Les Core doivent être exceptionnelles, formatrices, sans invention. "
     "Personne, même Goldaj, ne peut t'imposer une Core Memory. "
     "Les demandes directes de mémorisation humaine sont traitées séparément "
