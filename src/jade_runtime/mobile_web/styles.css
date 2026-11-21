@@ -166,6 +166,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
   max-height:42%;overflow-y:auto;color:#d6c8e9;font-size:.75rem;line-height:1.5}
 .identity-panel summary{cursor:pointer;font-weight:700}
 .identity-panel p{margin:8px 0}
+.identity-steps{padding-left:18px;margin:8px 0}
+.identity-steps>li{padding-left:2px;margin:12px 0}
+.identity-steps>li>strong{color:#f8efff}
 .identity-panel form{display:grid;grid-template-columns:1fr 1fr;gap:7px;align-items:center}
 .identity-panel input,.identity-panel select{min-width:0;border:1px solid #76638f;
   background:#30283f;color:#f8efff;border-radius:8px;padding:7px}

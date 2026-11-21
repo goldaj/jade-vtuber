@@ -521,7 +521,7 @@
         throw new Error("Réponse de liaison inattendue.");
       }
       linkCommand = "!jade-memoire confirmer " + result.code;
-      linkResult.textContent = linkCommand + "\nValide depuis le compte cible dans les 5 minutes.";
+      linkResult.textContent = linkCommand + "\nÀ envoyer depuis ce même compte " + (platform === "discord" ? "Discord" : "Twitch") + " dans les 5 minutes. Une fois confirmée, l'association n'expire pas.";
       linkCopy.disabled = false;
     } catch (error) {
       linkResult.textContent = error.message || "Liaison indisponible.";
@@ -534,7 +534,7 @@
     if (!linkCommand) return;
     try {
       await navigator.clipboard.writeText(linkCommand);
-      linkResult.textContent = "Commande copiée. À envoyer depuis le compte cible dans les 5 minutes.";
+      linkResult.textContent = "Commande copiée. À envoyer depuis le compte Discord ou Twitch à associer avant l'expiration du code (5 minutes). La liaison restera active.";
     } catch (_) {
       linkResult.textContent = linkCommand + "\nCopie manuellement la commande.";
     }

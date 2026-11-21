@@ -1,7 +1,7 @@
 """Opt-in recall and autonomous memory curation, separate from Jade's voice path.
 
 Curator calls run after response delivery attempt, in bounded background tasks.
-No memory request is made for unknown or non-consenting external accounts.
+No memory request is made for unknown or explicitly opted-out accounts.
 """
 from __future__ import annotations
 
@@ -42,13 +42,11 @@ class MemoryService:
         self._closed = False
 
     async def ensure_auto_enrolled(self, incoming) -> bool:
-        """Enroll verified Discord server speakers without an explicit command.
+        """Enroll verified Discord speakers in servers, voice and DMs.
 
-        DMs, Twitch and unidentified accounts remain command-only. Discord voice
-        speakers have already passed the connector's consent/identity controls.
+        Twitch and unidentified accounts remain command-only. A Discord user
+        who erased their memory is not auto-enrolled again without opting in.
         """
-        if incoming.platform == "discord" and incoming.private_channel:
-            return False
         if incoming.platform not in ("discord", "discord_voice"):
             return False
         key = identity_of(incoming)

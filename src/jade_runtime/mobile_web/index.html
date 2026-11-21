@@ -67,18 +67,35 @@
         <button type="button" id="billing-refresh">Actualiser</button>
       </details>
       <details class="identity-panel" id="identity-panel">
-        <summary>Associer un compte Discord / Twitch</summary>
-        <p>Le compte cible doit d'abord envoyer <code>!jade-memoire activer</code> puis <code>!jade-memoire identite</code> à Jade. Recopie l'identifiant numérique renvoyé, pas le pseudo.</p>
-        <form id="identity-link-form">
-          <label for="identity-platform">Service</label>
-          <select id="identity-platform"><option value="discord">Discord</option><option value="twitch">Twitch</option></select>
-          <label for="identity-id">Identifiant numérique du compte</label>
-          <input id="identity-id" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,24}" required maxlength="25" autocomplete="off">
-          <button type="submit">Créer un code de liaison (5 min)</button>
-        </form>
-        <p id="identity-result" role="status" class="identity-result"></p>
-        <button type="button" id="identity-copy" disabled>Copier la commande de confirmation</button>
-        <p>Envoie ensuite cette commande depuis le compte cible dans Discord ou Twitch. Le code est à usage unique et lié à cet identifiant. Pour séparer les comptes sans effacer les souvenirs : <code>!jade-memoire delier</code>. Pour effacer uniquement les données de ce compte : <code>!jade-memoire oublier</code>.</p>
+        <summary>Associer mon compte Discord ou Twitch</summary>
+        <p>Cette association sert à faire reconnaître ton compte Discord ou Twitch par Jade. Elle n'est pas nécessaire pour activer la mémoire de l'application mobile, déjà associée au profil privé du propriétaire lorsque la mémoire est activée.</p>
+        <ol class="identity-steps">
+          <li>
+            <strong>Sur Discord ou Twitch, depuis le compte à associer (pas dans cette application mobile) :</strong>
+            <p><strong>Discord (MP ou serveur) :</strong> la mémoire s'active automatiquement dès qu'un compte identifié interagit avec Jade. Envoie seulement <code>!jade-memoire identite</code> à Jade.</p>
+            <p><strong>Twitch (chat) :</strong> envoie d'abord <code>!jade-memoire activer</code>, puis <code>!jade-memoire identite</code> à Jade.</p>
+            <p>Recopie l'identifiant <strong>numérique</strong> renvoyé par Jade, pas le pseudo du compte.</p>
+          </li>
+          <li>
+            <strong>Dans cette application mobile :</strong>
+            <p>Choisis le service du compte à associer et saisis son identifiant numérique.</p>
+            <form id="identity-link-form">
+              <label for="identity-platform">Compte externe</label>
+              <select id="identity-platform"><option value="discord">Discord</option><option value="twitch">Twitch</option></select>
+              <label for="identity-id">Identifiant numérique renvoyé par Jade</label>
+              <input id="identity-id" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,24}" required maxlength="25" autocomplete="off">
+              <button type="submit">Générer le code de confirmation</button>
+            </form>
+            <p><strong>Le code de confirmation expire au bout de 5 minutes.</strong> Il est à usage unique et lié à ce compte. <strong>L'association, une fois confirmée, n'expire pas.</strong></p>
+            <p id="identity-result" role="status" class="identity-result"></p>
+            <button type="button" id="identity-copy" disabled>Copier la commande de confirmation</button>
+          </li>
+          <li>
+            <strong>Retour sur Discord ou Twitch, depuis ce même compte :</strong>
+            <p>Envoie à Jade la commande <code>!jade-memoire confirmer [code généré]</code> fournie par l'application mobile, avant l'expiration du code. Les souvenirs restent isolés par salon.</p>
+          </li>
+        </ol>
+        <p>Depuis Discord ou Twitch, <code>!jade-memoire delier</code> sépare les comptes sans effacer leurs souvenirs ; <code>!jade-memoire oublier</code> efface les données du compte concerné.</p>
       </details>
       <div class="messages" id="messages" role="log" aria-live="polite" aria-label="Historique de la discussion">
         <div class="welcome">Bienvenue chez nous. Parle-moi ou écris-moi, comme tu préfères.</div>

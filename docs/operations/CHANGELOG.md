@@ -2,6 +2,14 @@
 
 Ce document est **la seule pièce documentaire systématiquement exigée en CI** pour les changements techniques. Les guides, atlas et passations sont révisés uniquement quand le comportement ou les procédures qu'ils décrivent changent. Une entrée indique les faits vérifiés ; un ancien journal ne remplace pas le code.
 
+## 2026-11-21 — Mémoire automatique en MP Discord et clarification de la liaison mobile (develop)
+
+- **Produit :** inscription mémoire automatique pour un compte Discord vérifié dès un tour traité en MP, comme en serveur et en vocal ; aucun pseudonyme ne vaut identification et Twitch reste sur activation explicite. L'opt-out durable Discord via `!jade-memoire oublier` et le retour volontaire via `!jade-memoire activer` restent prioritaires.
+- **Mobile :** instructions en trois étapes distinguant précisément les commandes à exécuter sur Discord ou Twitch, la saisie de l'ID sur la PWA et la confirmation de retour sur le même compte. Le libellé précise que **seul le code à usage unique expire après cinq minutes**, tandis que la liaison confirmée reste sans limite de durée. Aucun changement du TTL, des règles de vérification des comptes ou de l'isolation par salon.
+- **Sources :** `memory_service.py`, PWA `index.html`/`app.js`/`styles.css`, tests d'inscription Discord/MP et liaison HTTP, consignes de projet, `BRANCH_STATE.md`, guides utilisateur/technique et passation.
+- **Contrôle :** régressions ajoutées pour MP Discord par défaut, effacement empêchant la réinscription en MP et en serveur, confirmation depuis un MP sans activation manuelle et isolation des historiques. Exécution Python locale, CI GitHub et recette PC/Android à vérifier ; ne pas les déclarer acquises avant leurs résultats.
+- **Vigilance :** informer les correspondants Discord, notamment en MP, du stockage et de la conservation ; les règles de confidentialité et la désactivation explicite ne changent pas.
+
 ## 2026-11-20 — Politique de conservation Jade : 7j / 365j / Core sans purge (feat/memory-retention-7d-365d-24h-20261120)
 
 - **Stockage :** migration SQLite v3→v4, niveau 1 `conversation_turns` purgé après 7 jours, souvenirs ordinaires `memories.kind=ordinary` expirant après 365 jours depuis `created_at`, même pour les anciennes lignes v3. Core Memories relationnelles et autobiographiques jamais purgées par la politique temporelle ; correction/effacement explicite préservé.

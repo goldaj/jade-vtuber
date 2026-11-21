@@ -140,6 +140,7 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status, 200)
         self.assertIn(b"Cache-Control: no-store", raw)
         code = json.loads(body)["code"]
+        self.assertEqual(json.loads(body)["expires_in_seconds"], 300)
         self.assertTrue(code.startswith("v1.twitch.6001."))
         unauthorized = await memory.command(Incoming(
             "twitch", "someone", "!jade-memoire confirmer " + code,

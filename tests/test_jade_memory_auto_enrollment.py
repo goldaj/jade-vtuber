@@ -110,13 +110,53 @@ class AutoEnrollmentServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("activée", activated.text)
         self.assertTrue(await self.service.ensure_auto_enrolled(incoming))
 
-    async def test_private_discord_twitch_unknown_not_auto_enrolled(self):
-        self.assertFalse(await self.service.ensure_auto_enrolled(self.incoming(private=True)))
+    async def test_private_discord_auto_enrolled_but_twitch_unknown_not(self):
+        self.assertTrue(await self.service.ensure_auto_enrolled(self.incoming(private=True)))
+        self.assertIsNotNone(self.store.account(("discord", "123")))
         self.assertFalse(await self.service.ensure_auto_enrolled(
             self.incoming(platform="twitch")))
         self.assertFalse(await self.service.ensure_auto_enrolled(
             self.incoming(account="")))
+        self.assertIsNone(self.store.account(("twitch", "123")))
+
+    async def test_private_discord_forget_blocks_dm_and_server_until_reactivation(self):
+        private = self.incoming(private=True)
+        server = self.incoming()
+        self.assertTrue(await self.service.ensure_auto_enrolled(private))
+        self.assertTrue(await self.service.remember_turn(private, Reply(private, "Privé.")))
+        forgotten = await self.service.command(
+            self.incoming(private=True, text="!jade-memoire oublier"))
+        self.assertIn("désactivée", forgotten.text)
+        self.assertFalse(await self.service.ensure_auto_enrolled(private))
+        self.assertFalse(await self.service.ensure_auto_enrolled(server))
         self.assertIsNone(self.store.account(("discord", "123")))
+        activated = await self.service.command(
+            self.incoming(private=True, text="!jade-memoire activer"))
+        self.assertIn("activée", activated.text)
+        self.assertTrue(await self.service.ensure_auto_enrolled(private))
+        self.assertTrue(await self.service.ensure_auto_enrolled(server))
+
+    async def test_private_discord_can_confirm_mobile_link_without_manual_activation(self):
+        owner = ("microphone", "goldaj")
+        self.store.enable(owner)
+        challenge = self.store.begin_link(owner, target=("discord", "123"))
+        confirmation = self.incoming(
+            private=True, text="!jade-memoire confirmer " + challenge)
+        self.assertTrue(await self.service.ensure_auto_enrolled(confirmation))
+        result = await self.service.command(confirmation)
+        self.assertIn("Comptes associés", result.text)
+        self.assertEqual(self.store.account(owner), self.store.account(("discord", "123")))
+        self.assertFalse(self.store.complete_link(("discord", "123"), challenge))
+
+    async def test_dm_and_server_history_stay_separate_after_auto_enrollment(self):
+        private = Incoming("discord", "Personne", "Secret du MP", channel="111",
+                           account_id="123", private_channel=True)
+        server = self.incoming(text="Message du serveur")
+        self.assertTrue(await self.service.ensure_auto_enrolled(private))
+        self.assertTrue(await self.service.remember_turn(
+            private, Reply(private, "Réponse privée.")))
+        self.assertEqual(len(await self.service.history_for(private)), 2)
+        self.assertEqual(await self.service.history_for(server), [])
 
     async def test_discord_voice_verified_id_shares_text_profile(self):
         text = self.incoming()
