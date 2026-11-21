@@ -38,7 +38,7 @@ class OpenAIServices:
         )
         value = response.choices[0].message.content
         event("openai_response", operation="chat.complete",
-              finish_reason=response.choices[0].finish_reason, raw_output=value,
+              finish_reason=getattr(response.choices[0], "finish_reason", None), raw_output=value,
               request_id=getattr(response, "id", None))
         if not value:
             raise ValueError("OpenAI returned no dialogue text")
