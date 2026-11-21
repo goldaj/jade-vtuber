@@ -1,6 +1,6 @@
 # OPS-017 — décision de protection de branches et suivi des passations
 
-**Date :** 21 novembre 2026. **Décideur :** propriétaire de Jade (confirmation explicite de la recommandation dans la conversation). **Branche documentaire :** `develop`. **État :** décision validée, application GitHub non effectuée.
+**Date :** 21 novembre 2026. **Décideur :** propriétaire de Jade (confirmation explicite de la recommandation dans la conversation). **Branche documentaire :** `develop`. **État :** **OPS-017 Done sur demande expresse du propriétaire** ; décision validée, application GitHub **non effectuée**.
 
 ## Décision produit et gouvernance
 
@@ -23,4 +23,4 @@ Les réponses GitHub `GET /branches/main`, `GET /branches/develop` et `GET /rule
 - Les fiches de recette avec éléments encore ouverts restent actives, notamment REC-021 et REC-025. Les validations Done déjà consignées n'ont pas à être refaites.
 - Les liens du présent document sont relatifs aux chemins existants ; aucun transfert/archivage de fiches n'a été effectué dans cette opération. Les fiches closes pourront être archivées individuellement, en mettant à jour leurs liens, après contrôle.
 
-**Décision de statut :** OPS-017 passe de `À qualifier` à `À faire`, **pas Done**, tant que la protection `main` n'est pas appliquée et que les passations concernées n'ont pas été clôturées ou explicitement reportées avec preuves. Aucun droit administrateur GitHub ni contrôle des postes privés revendiqué.
+**Actualisation de statut du 21/11/2026 :** le propriétaire demande explicitement **Done** pour OPS-017 en acceptant le reliquat hors carte ; le suivi documentaire et l'arbitrage sont terminés. **Cela ne signifie pas que la protection GitHub a été activée** : les réglages `main` restent à appliquer manuellement si le propriétaire veut obtenir l'effet décidé. Les autres passations encore actives restent suivies par leurs cartes respectives et ne sont pas réputées closes. Aucun droit administrateur GitHub ni contrôle des postes privés revendiqué.
