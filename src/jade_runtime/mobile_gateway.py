@@ -41,6 +41,7 @@ WEB_FILES = {
     "/assets/room-motion.js": ("room-motion.js", "text/javascript; charset=utf-8"),
     "/assets/room-spring.webp": ("room-spring.webp", "image/webp"),
     "/assets/app.js": ("app.js", "text/javascript; charset=utf-8"),
+    "/assets/duplex-client.js": ("duplex-client.js", "text/javascript; charset=utf-8"),
     "/manifest.webmanifest": ("manifest.webmanifest", "application/manifest+json"),
     "/sw.js": ("sw.js", "text/javascript; charset=utf-8"),
     "/icon.svg": ("icon.svg", "image/svg+xml"),
@@ -540,6 +541,13 @@ class MobileGateway:
                 await self._json(writer, 403, {"error": "private owner required"})
                 return
             if method == "GET":
+                if route == "/api/duplex":
+                    if not self._origin_allowed(headers) or not headers.get("host"):
+                        await self._json(writer, 403, {"error": "invalid websocket origin"})
+                        return
+                    from .mobile_duplex import duplex_session
+                    await duplex_session(self, reader, writer, headers)
+                    return
                 await self._static(writer, route)
                 return
             if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing"):
