@@ -5,6 +5,7 @@ Zero dollar limits allow initiatives without a monetary cap, but do disable
 optional paid social classification by default.
 """
 from __future__ import annotations
+from contextlib import closing
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -29,13 +30,14 @@ class CostGuard:
         if not self.path.is_absolute() or self.path.suffix != ".sqlite3":
             raise ValueError("use an absolute private SQLite path")
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(self.path, timeout=5) as db:
+        with closing(sqlite3.connect(self.path, timeout=5)) as db:
             db.execute("""CREATE TABLE IF NOT EXISTS jade_cost_reservations(
                 category TEXT NOT NULL, request_hash TEXT NOT NULL,
                 date_local TEXT NOT NULL, month_local TEXT NOT NULL,
                 estimated_usd TEXT NOT NULL, PRIMARY KEY(category,request_hash))""")
             db.execute("""CREATE INDEX IF NOT EXISTS idx_jade_cost_period
                 ON jade_cost_reservations(category,date_local,month_local)""")
+            db.commit()
 
     def reserve(self, category, event_key, *, quote_usd, daily_usd,
                 monthly_usd, now=None):
@@ -51,7 +53,7 @@ class CostGuard:
         day = paris_date(now).isoformat()
         month = day[:7]
         digest = hashlib.sha256(event_key.encode()).hexdigest()
-        with sqlite3.connect(self.path, timeout=5, isolation_level=None) as db:
+        with closing(sqlite3.connect(self.path, timeout=5, isolation_level=None)) as db:
             db.execute("BEGIN IMMEDIATE")
             if db.execute("""SELECT 1 FROM jade_cost_reservations
                 WHERE category=? AND request_hash=?""",
@@ -75,7 +77,7 @@ class CostGuard:
 
     def reserved_usd(self, category, *, now=None):
         day=paris_date(now).isoformat()
-        with sqlite3.connect(self.path, timeout=5) as db:
+        with closing(sqlite3.connect(self.path, timeout=5)) as db:
             amounts=db.execute("""SELECT estimated_usd FROM jade_cost_reservations
                 WHERE category=? AND date_local=?""",(category,day)).fetchall()
         return sum((money(a[0]) for a in amounts),Decimal(0))
