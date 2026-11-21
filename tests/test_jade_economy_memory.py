@@ -109,6 +109,26 @@ class BatchMemoryTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await batch.close()
 
+    async def test_third_party_core_self_stays_out_of_all_memories(self):
+        class Model:
+            async def complete(self, messages):
+                text = json.loads(messages[1]["content"])[0]["text"]
+                return json.dumps([{"index": 0, "kind": "core_self",
+                    "summary": "Jade a découvert sa vocation de coautrice.",
+                    "significance": "Épisode personnel de Jade.",
+                    "evidence": text}])
+        batch = MemoryBatcher(self.store, Model(), batch_size=1)
+        incoming = Incoming("discord", "Alice",
+            "Nous avons partagé une discussion importante sur ton avenir.",
+            account_id="123", channel="77", message_id="foreign-self")
+        try:
+            self.assertTrue(batch.schedule(
+                self.key, "discord:77", incoming, Reply(incoming, "Je comprends.")))
+            await asyncio.wait_for(asyncio.gather(*list(batch.tasks)), 3)
+            self.assertEqual(self.store.list_for_account(self.key), [])
+        finally:
+            await batch.close()
+
     async def test_short_greetings_do_not_bill(self):
         class Model:
             async def complete(self, messages):

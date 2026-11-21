@@ -316,12 +316,17 @@ class MemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         svc = MemoryService(self.store, model)
         source = Incoming("discord", "Alice", "Jade, bonjour",
                           channel="99", message_id="a", force_reply=True,
-                          account_id="101")
+                          account_id="101", private_channel=True)
         self.assertEqual(await svc.context_for(source), "")
         self.assertIn("activée", (await svc.command(Incoming(
             "discord", "Alice", "!jade-memoire activer", account_id="101"))).text)
         self.store.put(key, kind="core_relationship", scope="discord:99",
                        summary="Alice et Jade ont achevé un roman.")
+        public_source = Incoming("discord", "Alice", "Jade, bonjour",
+                                 channel="99", message_id="public-a",
+                                 force_reply=True, account_id="101")
+        self.assertEqual(await svc.context_for(public_source), "",
+                         "Private memories must never be injected in public rooms")
         delivered = []
         async def output(reply):
             delivered.append(reply)
