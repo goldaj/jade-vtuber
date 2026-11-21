@@ -1,6 +1,7 @@
 """Offline tests: spontaneous greeting waits for human engagement; dollars are optional."""
 import asyncio
 from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 import tempfile
@@ -34,7 +35,7 @@ class DollarGuard(unittest.TestCase):
                                            quote_usd=".10", daily_usd=0, monthly_usd=0))
         self.assertFalse(self.guard.reserve("initiative", "event-A",
                                             quote_usd=".10", daily_usd=0, monthly_usd=0))
-        self.assertEqual(self.guard.reserved_usd("initiative"), .10)
+        self.assertEqual(self.guard.reserved_usd("initiative"), Decimal(".10"))
 
     def test_financial_limit_if_owner_configures_one(self):
         self.assertTrue(self.guard.reserve("initiative", "first", quote_usd=".1",
@@ -75,7 +76,7 @@ class SpontaneousEngagement(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(first)
         self.assertTrue(first.force_reply)
         self.assertTrue(self.scheduler.waiting_for_reply("77"))
-        self.assertEqual(self.guard.reserved_usd("initiative"), .10)
+        self.assertEqual(self.guard.reserved_usd("initiative"), Decimal(".10"))
         self.assertIsNone(await self.scheduler.voice_join(
             *join(14), channel_id=77))
         self.time += 61
@@ -85,7 +86,7 @@ class SpontaneousEngagement(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(self.scheduler.waiting_for_reply("77"))
         self.assertIsNotNone(await self.scheduler.voice_join(
             *join(14), channel_id=77))
-        self.assertEqual(self.guard.reserved_usd("initiative"), .20)
+        self.assertEqual(self.guard.reserved_usd("initiative"), Decimal(".20"))
 
     async def test_no_self_followup_without_response(self):
         await self.scheduler.voice_join(*join(), channel_id=77)
@@ -136,7 +137,7 @@ class SocialHybrid(unittest.IsolatedAsyncioTestCase):
                 channel="77", message_id="some-human-question")
             self.assertFalse(await policy.allow(message, source, active_participants=3))
             self.assertEqual(backend.calls, 1)
-            self.assertEqual(guard.reserved_usd("social_review"), .03)
+            self.assertEqual(guard.reserved_usd("social_review"), Decimal(".03"))
             direct = Incoming("discord", "Alice", "Jade, tu en penses quoi ?",
                               channel="77", message_id="direct-question")
             self.assertTrue(await policy.allow(message, direct, active_participants=3))
