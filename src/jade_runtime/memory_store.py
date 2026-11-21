@@ -221,6 +221,24 @@ class MemoryStore:
             ).fetchone()
         return row["person_id"] if row else None
 
+    def is_goldaj(self, key: tuple[str, str]) -> bool:
+        """True for Goldaj's verified owner identity, including linked accounts.
+
+        A nickname, user-supplied author or merely similar account ID never
+        gives authority. The trusted account must actually be linked to the
+        private mobile/microphone owner's person in SQLite.
+        """
+        _validate_key(key)
+        with self._db() as db:
+            row = db.execute("""
+                SELECT 1 FROM identities AS actor
+                JOIN identities AS owner ON owner.person_id = actor.person_id
+                WHERE actor.platform=? AND actor.account_id=?
+                  AND owner.platform='microphone' AND owner.account_id='goldaj'
+                LIMIT 1
+            """, key).fetchone()
+        return row is not None
+
     def auto_enable(self, key: tuple[str, str]) -> bool:
         """Enroll a verified Discord user unless they explicitly opted out."""
         _validate_key(key)
