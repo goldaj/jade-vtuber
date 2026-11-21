@@ -249,6 +249,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             discord_voice_bridge = OpenVoiceBridge(
                 chat, runtime, config.discord_voice_channel,
                 group_reply_rate=config.discord_voice_auto_rate)
+            discord_voice_bridge.initiatives = initiatives
             speech.secondary_player = discord_voice_bridge
             if avatar_client is not None:
                 discord_voice_bridge.playback_observer = avatar_client.observer("discord")
