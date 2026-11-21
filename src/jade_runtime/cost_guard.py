@@ -45,8 +45,10 @@ class CostGuard:
         if not isinstance(event_key, str) or not 1 <= len(event_key) <= 500:
             raise ValueError("invalid event")
         quote, daily, monthly = money(quote_usd), money(daily_usd), money(monthly_usd)
-        if not quote or not daily or not monthly:
+        if not quote or (category == "social_review" and (not daily or not monthly)):
             return False
+        # Zero monetary cap means user-chosen unbounded initiatives, not OFF.
+        # Idempotency and event-driven activity gates still apply.
         day = (now or datetime.now(_PARIS)).astimezone(_PARIS).date().isoformat()
         month = day[:7]
         digest = hashlib.sha256(event_key.encode()).hexdigest()
@@ -63,7 +65,7 @@ class CostGuard:
                 (category,day,month)).fetchall()
             today = sum((money(amount) for d,m,amount in rows if d==day),Decimal(0))
             current = sum((money(amount) for d,m,amount in rows if m==month),Decimal(0))
-            if today+quote > daily or current+quote > monthly:
+            if (daily and today+quote > daily) or (monthly and current+quote > monthly):
                 db.rollback()
                 return False
             db.execute("""INSERT INTO jade_cost_reservations
