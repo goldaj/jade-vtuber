@@ -32,6 +32,7 @@ MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/room-spring.webp",
     "src/jade_runtime/mobile_web/intent-visuals.json",
     "src/jade_runtime/mobile_web/app.js",
+    "src/jade_runtime/mobile_web/duplex-client.js",
     "src/jade_runtime/mobile_web/manifest.webmanifest",
     "src/jade_runtime/mobile_web/sw.js",
     "src/jade_runtime/mobile_web/icon.svg",
