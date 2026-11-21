@@ -32,7 +32,24 @@ def select_context(history, question: str, *, max_chars: int = 12000,
     entries = [dict(m) for m in history if isinstance(m, dict)
                and m.get("role") in ("user", "assistant")
                and isinstance(m.get("content"), str)]
-    pairs = [entries[i:i + 2] for i in range(0, len(entries), 2)]
+    # Discord's linked voice/text context may contain unpaired passive user
+    # messages. Preserve their chronology without assigning a later answer
+    # to the wrong speaker.
+    pairs = []
+    current = []
+    for entry in entries:
+        if entry["role"] == "user":
+            if current:
+                pairs.append(current)
+            current = [entry]
+        elif current:
+            current.append(entry)
+            pairs.append(current)
+            current = []
+        else:
+            pairs.append([entry])
+    if current:
+        pairs.append(current)
     if not pairs:
         return []
     recent_indices = list(range(max(0, len(pairs) - recent_pairs), len(pairs)))
