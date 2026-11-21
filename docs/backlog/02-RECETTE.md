@@ -94,7 +94,7 @@ Le propriétaire indique : « j'ai pu tester le fonctionnement de jade en conver
 
 **Note historique du tri initial :** REC-001, REC-021 et REC-025 étaient initialement `À faire`. Depuis, **REC-001 est `Bloqué`** par décision propriétaire (micro physique PC / Twitch), tandis que **REC-021 et REC-025 ont été exécutées automatiquement et sont `À valider`** avec preuves CI. **REC-005 et REC-010 sont également `Bloqué`** après la suspension ciblée. Les statuts canoniques restent les lignes du tableau ci-dessus.
 
-**Important :** `REC-002` reste dépendante de `DEV-019` et `REC-023` conserve ses incidents déclarés ; leur passage en `À valider` ne signifie pas que l'anomalie est corrigée ni que la résilience a été démontrée. Aucun scénario réel supplémentaire n'a été exécuté lors de ce reclassement.
+**Note historique :** lors de ce tri, `REC-002` dépendait encore de `DEV-019` ; ces deux cartes ont depuis été **clôturées Done sur validation du propriétaire le 21/11**, voir la [passation Discord écrit](../operations/handoffs/2026-11-21-chatgpt-validation-discord-ecrit.md). `REC-023` conserve ses incidents déclarés et ne doit pas être considéré validé. Aucun scénario réel supplémentaire n'avait été exécuté *lors du reclassement initial*.
 
 ## Compte rendu des recettes automatiques REC-021 et REC-025 (21 novembre 2026)
 
