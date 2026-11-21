@@ -8,7 +8,7 @@
 | --- | --- |
 | Lancement | `main.py --all-channels`, launcher Windows, préflight, tous les connecteurs en une instance, sans choix de plateforme |
 | Orchestration | `ArbitratingQueue`, `TurnArbiter`, file bornée, équité, **un tour principal à la fois** |
-| Discord | Texte, MP, vocal PCM/STT/TTS, sessions, anti-écho et reconnexion ; classifieur social hybride facultatif (budget séparé) et initiatives de bienvenue **activées par défaut** sur entrée dans le vocal, en texte dans le chat natif ; **aucune relance autonome sans réaction humaine** |
+| Discord | Texte, MP, vocal PCM/STT/TTS, sessions, anti-écho et reconnexion ; classifieur social hybride facultatif (budget séparé) et initiatives de bienvenue **activées par défaut** sur entrée dans le vocal, à l'oral si la session et le membre restent présents, sinon en texte ; **aucune relance autonome sans réaction humaine** |
 | Twitch | IRC entrée/sortie, reconnexion/PING, un seul tour à la fois, solo actif 100 %, groupe 30 % et interpellations directes |
 | Dialogue | `prompt_chat.txt`, backend OpenAI configurable ; reprise SQLite intégrale des **24 dernières heures sans plafond de nombre de tours**, mais composition **sélective du prompt** par pertinence locale et budget caractères (réversible par `JADE_SELECTIVE_CONTEXT_ENABLED=0`) |
 | Demandes explicites de souvenirs | Texte ou voix : toute identité vérifiée avec mémoire active peut demander une mémorisation, enregistrée exclusivement en `kind=ordinary` (durée limitée et portée personnelle/salon) ; même une demande de Core est réduite à l’ordinaire. Jade choisit elle-même ses `core_self` et `core_relationship` via sa curation autonome, aucune commande humaine d’ajout Core. |
