@@ -89,7 +89,7 @@ class MemoryService:
             autobiography = (await asyncio.to_thread(self.store.recall_self_core, key)
                             if key == ("microphone", "goldaj") else [])
         except Exception:
-            LOG.warning("Memory lookup unavailable; using volatile dialogue only")
+            LOG.exception("Memory lookup unavailable; using volatile dialogue only")
             return ""
         if not found and not linked and not autobiography:
             return ""
@@ -131,7 +131,7 @@ class MemoryService:
             return await asyncio.to_thread(
                 self.store.recent_conversation_turns, key, _scope(incoming))
         except Exception:
-            LOG.warning("Conversation history unavailable; using volatile turns")
+            LOG.exception("Conversation history unavailable; using volatile turns")
             return []
 
     async def remember_turn(self, incoming, reply: Reply) -> bool:
@@ -198,7 +198,7 @@ class MemoryService:
                     answer = ("La mémoire n'est pas active pour ce compte. "
                               "Vérifie la configuration ou l'activation de ton profil.")
             except Exception:
-                LOG.warning("Explicit ordinary memory write failed (no contents logged)")
+                LOG.exception("Explicit ordinary memory write failed (no contents logged)")
                 answer = "Je n'ai pas pu enregistrer ce souvenir dans SQLite."
             return Reply(incoming, answer, intent="neutral")
         match = COMMAND.fullmatch(incoming.text.strip())
@@ -292,7 +292,7 @@ class MemoryService:
                 text = ("Mémoire personnelle active." if exists
                         else "Mémoire personnelle inactive. Utilise !jade-memoire activer.")
         except Exception:
-            LOG.warning("Memory command failed; no content logged")
+            LOG.exception("Memory command failed; no content logged")
             text = "Je n'ai pas pu appliquer cette opération de mémoire."
         return Reply(incoming, text, intent="neutral")
 
@@ -308,7 +308,7 @@ class MemoryService:
         try:
             person_id = await asyncio.to_thread(self.store.account, key)
         except Exception:
-            LOG.warning("Memory action identity lookup failed (no personal data logged)")
+            LOG.exception("Memory action identity lookup failed (no personal data logged)")
             return None
         if not person_id:
             return None
@@ -376,7 +376,7 @@ class MemoryService:
             return ({"status": "déjà présent", "level": level, "kind": kind}
                     if current == pinned_person else refused)
         except Exception:
-            LOG.warning("Jade autonomous memory write failed (no content logged)")
+            LOG.exception("Jade autonomous memory write failed (no content logged)")
             return {"status": "échec", "level": level, "kind": kind}
 
     def schedule(self, incoming, reply: Reply) -> bool:
@@ -403,7 +403,7 @@ class MemoryService:
             try:
                 task.result()
             except Exception:
-                LOG.warning("Memory curator failed; conversation contents withheld")
+                LOG.exception("Memory curator failed; conversation contents withheld")
 
     async def _curate(self, key, incoming, reply):
         try:
@@ -484,7 +484,7 @@ class MemoryService:
         except asyncio.CancelledError:
             raise
         except Exception:
-            LOG.warning("Memory candidate rejected or unavailable (no text logged)")
+            LOG.exception("Memory candidate rejected or unavailable (no text logged)")
 
     async def close(self):
         self._closed = True
