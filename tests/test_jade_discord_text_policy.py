@@ -149,8 +149,7 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(policy.observe(b, parse_discord_message(b), own_user_id=42))
         clock.now += 181
         c = msg("Est-ce possible ?", ident=3, bot=True)
-        self.assertIsNone(parse_discord_message(c),
-                          "A bot must never enter Jade's conversation queue")
+        self.assertIsNone(policy.observe(c, parse_discord_message(c), own_user_id=42))
         d = msg("Combien ?", ident=4)
         self.assertTrue(policy.observe(d, parse_discord_message(d), own_user_id=42).force_reply)
         policy0 = DiscordTextPolicy(auto_rate=0)

@@ -18,9 +18,6 @@ _VOICE_RECONNECT_DELAYS = (1, 2, 4, 8, 16, 30)
 
 def parse_discord_message(message, *, own_user_id=None) -> Incoming | None:
     author = message.author
-    # Prevent another bot from creating a costly autonomous feedback loop.
-    if getattr(author, "bot", False) is True:
-        return None
     if own_user_id is not None and getattr(author, "id", None) == own_user_id:
         return None
     text = getattr(message, "content", "")
@@ -136,6 +133,10 @@ class DiscordText:
             async def on_message(self, message):
                 incoming = parse_discord_message(
                     message, own_user_id=self.user.id if self.user else None)
+                # Keep parser contract for transport diagnostics, but prevent
+                # bot-to-bot LLM feedback loops in the actual connector.
+                if getattr(message.author, "bot", False) is True:
+                    return
                 if incoming is not None:
                     parent._remember_dm_channel(incoming, message.channel)
                     if (parent.initiatives is not None
