@@ -1,5 +1,7 @@
 """DEV-012: verify autonomous conversation tools without real API requests."""
 import json
+from contextlib import closing
+import sqlite3
 from pathlib import Path
 import tempfile
 import unittest
@@ -42,6 +44,13 @@ class VoluntaryMemoryTests(unittest.IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self):
         await self.service.close()
+
+    def _simulate_profile_removal(self):
+        """A database-profile replacement fixture; no public forget API."""
+        with closing(sqlite3.connect(self.path)) as db:
+            db.execute("PRAGMA foreign_keys=ON")
+            db.execute("DELETE FROM persons WHERE id=?", (self.store.account(OWNER),))
+            db.commit()
 
     async def test_actual_levels_persist_duplicates_and_reopen(self):
         action = await self.service.prepare_memory_action(incoming())
@@ -102,10 +111,10 @@ class VoluntaryMemoryTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual((await action(payload))["status"], "refusé")
         self.assertEqual(self.store.list_for_account(OWNER), [])
 
-    async def test_erasure_reactivation_and_sqlite_error(self):
+    async def test_replaced_profile_and_sqlite_error(self):
         action = await self.service.prepare_memory_action(incoming())
         old_id = self.store.account(OWNER)
-        self.store.forget(OWNER)
+        self._simulate_profile_removal()
         self.store.enable(OWNER)
         self.assertNotEqual(old_id, self.store.account(OWNER))
         self.assertEqual((await action(arguments()))["status"], "refusé")
@@ -115,7 +124,7 @@ class VoluntaryMemoryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.store.list_for_account(OWNER), [])
 
     async def test_disabled_account_cannot_write(self):
-        self.store.forget(OWNER)
+        self._simulate_profile_removal()
         self.assertIsNone(await self.service.prepare_memory_action(incoming()))
 
     async def test_runtime_exposes_tool_to_model_and_no_second_curator(self):

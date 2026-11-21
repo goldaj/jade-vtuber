@@ -1,5 +1,7 @@
 """Focused offline checks for approved Jade personality runtime changes."""
 import asyncio
+from contextlib import closing
+import sqlite3
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
@@ -91,7 +93,10 @@ class TestJadeRuntime20261115(unittest.TestCase):
             expected = [{"role": "user", "content": text},
                         {"role": "assistant", "content": "Réponse complète."}]
             self.assertEqual(store.recent_conversation_turns(key, "person"), expected)
-            self.assertTrue(store.forget(key))
+            with closing(sqlite3.connect(store.path)) as db:
+                db.execute("PRAGMA foreign_keys=ON")
+                db.execute("DELETE FROM persons WHERE id=?", (store.account(key),))
+                db.commit()
             self.assertEqual(store.recent_conversation_turns(key, "person"), [])
 
     def test_dialogue_uses_restored_history_without_summarization(self):

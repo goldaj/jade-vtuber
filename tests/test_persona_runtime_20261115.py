@@ -3,6 +3,8 @@
 No API, Discord, microphone or other external services are contacted.
 """
 import asyncio
+from contextlib import closing
+import sqlite3
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -39,7 +41,7 @@ class PersonaRuntimeTests(unittest.TestCase):
         self.assertEqual(settings.max_history_messages, 48)
         self.assertAlmostEqual(settings.reply_probability, 0.30)
 
-    def test_complete_transcript_is_opt_in_and_can_be_forgotten(self):
+    def test_complete_transcript_is_opt_in_and_removed_with_profile(self):
         with tempfile.TemporaryDirectory() as temp:
             store = MemoryStore(Path(temp) / "history.sqlite3")
             key = ("microphone", "goldaj")
@@ -55,7 +57,10 @@ class PersonaRuntimeTests(unittest.TestCase):
             self.assertEqual(len(turns), 2)
             self.assertEqual(turns[0]["content"], turn["user_content"])
             self.assertEqual(turns[1]["content"], turn["assistant_content"])
-            store.forget(key)
+            with closing(sqlite3.connect(store.path)) as db:
+                db.execute("PRAGMA foreign_keys=ON")
+                db.execute("DELETE FROM persons WHERE id=?", (store.account(key),))
+                db.commit()
             self.assertEqual(store.recent_conversation_turns(key, "person"), [])
 
     def test_restored_history_keeps_full_messages(self):
