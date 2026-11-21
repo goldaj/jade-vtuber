@@ -178,6 +178,15 @@ class DiscordText:
                     if lost_voice and self._gateway_available:
                         LOG.warning("Discord voice left while Gateway is available; scheduling reconnect")
                         self._schedule_voice_retry(bridge)
+                if parent.initiatives is not None:
+                    previous = getattr(before, "channel", None)
+                    current = getattr(after, "channel", None)
+                    if previous is not None and previous != current:
+                        members = getattr(previous, "members", None)
+                        if isinstance(members, (list, tuple)) and not any(
+                                getattr(person, "bot", True) is False
+                                for person in members):
+                            parent.initiatives.room_emptied(str(previous.id))
                 if parent.initiatives is not None and self._gateway_available:
                     source = await parent.initiatives.voice_join(
                         member, before, after, channel_id=bridge.channel_id,
