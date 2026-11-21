@@ -302,7 +302,9 @@ class Runtime:
                                               else RuntimeError("message processing failed"))
                 self.log.exception(
                     "Message processing failed (%s): turn=%s platform=%s modality=%s",
-                    self.errors, item.turn, item.message.platform, item.message.input_modality)
+                    self.errors, item.turn, item.message.platform,
+                    ("voice" if item.message.platform in ("discord_voice", "microphone")
+                     else item.message.input_modality))
             finally:
                 if timer is not None:
                     timer.cancel()
