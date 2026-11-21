@@ -8,7 +8,6 @@ packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.14"
-tzdata = ">=2025.3,<2028" # IANA Europe/Paris time zone on Windows
 openai = {version = "3.42.1", extras = ["realtime"]}
 python-decouple = ">=3.8,<4"
 python-dotenv = ">=1,<2"

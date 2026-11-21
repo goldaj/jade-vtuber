@@ -10,15 +10,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 import hashlib
 import sqlite3
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-
-# Windows images without the optional IANA tzdata package do not expose
-# Europe/Paris. The user's Windows clock should then be configured for Paris.
-# CI installs tzdata for deterministic DST regression tests.
-try:
-    _PARIS = ZoneInfo("Europe/Paris")
-except ZoneInfoNotFoundError:
-    _PARIS = datetime.now().astimezone().tzinfo
+from .paris_clock import paris_date
 
 
 def money(value):
@@ -56,7 +48,7 @@ class CostGuard:
             return False
         # Zero monetary cap means user-chosen unbounded initiatives, not OFF.
         # Idempotency and event-driven activity gates still apply.
-        day = (now or datetime.now(_PARIS)).astimezone(_PARIS).date().isoformat()
+        day = paris_date(now).isoformat()
         month = day[:7]
         digest = hashlib.sha256(event_key.encode()).hexdigest()
         with sqlite3.connect(self.path, timeout=5, isolation_level=None) as db:
@@ -82,7 +74,7 @@ class CostGuard:
             return True
 
     def reserved_usd(self, category, *, now=None):
-        day=(now or datetime.now(_PARIS)).astimezone(_PARIS).date().isoformat()
+        day=paris_date(now).isoformat()
         with sqlite3.connect(self.path, timeout=5) as db:
             amounts=db.execute("""SELECT estimated_usd FROM jade_cost_reservations
                 WHERE category=? AND date_local=?""",(category,day)).fetchall()
