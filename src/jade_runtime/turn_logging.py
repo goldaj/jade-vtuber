@@ -35,21 +35,27 @@ def _write(payload: dict) -> None:
     LOG.info("%s", json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
 
 
+def _is_private(incoming) -> bool:
+    return (incoming.platform in ("mobile", "microphone", "local_http")
+            or (incoming.platform == "discord" and incoming.private_channel))
+
+
 def record_input(turn: int, incoming) -> None:
     """Selected Runtime inputs only; no passive Discord channel traffic."""
     value = incoming.text
     if re.match(r"^!jade-memoire\s+confirmer(?:\s|$)", value.strip(), re.I):
         # Never copy the one-use identity proof into persistent diagnostic logs.
         value = "!jade-memoire confirmer [code masqué]"
+    private = _is_private(incoming)
     _write({
         "event": "input_selected", "turn": turn,
         "source_platform": incoming.platform,
         "source_modality": "voice" if incoming.platform in _VOICE_INPUTS or (
             incoming.platform == "mobile" and incoming.input_modality == "voice") else "text",
-        "source_channel": incoming.channel,
-        "source_author": incoming.author,
-        "source_message_id": incoming.message_id,
-        "input_text": value,
+        "source_channel": "[privé]" if private else incoming.channel,
+        "source_author": "[privé]" if private else incoming.author,
+        "source_message_id": "[privé]" if private else incoming.message_id,
+        "input_text": "[contenu privé masqué]" if private else value,
     })
 
 
@@ -85,9 +91,11 @@ def record_reply(turn: int, reply, destinations) -> None:
     targets = tuple(destinations)
     modes = [mode for mode, allowed in (("text", _TEXT_OUTPUTS), ("voice", _VOICE_OUTPUTS))
              if any(destination in allowed for destination in targets)]
+    rendered = ("[contenu privé masqué]" if _is_private(reply.source)
+                else reply.text)
     _write({
         "event": "reply_planned", "turn": turn,
-        "reply_with_intent": f"[INTENT:{reply.intent}] {reply.text}",
+        "reply_with_intent": f"[INTENT:{reply.intent}] {rendered}",
         "intent": reply.intent,
         "output_modalities": modes,
         "output_destinations": list(targets),

@@ -56,8 +56,12 @@ class TurnLoggingTests(unittest.TestCase):
             item = records(captured)[0]
             self.assertEqual(item["source_platform"], platform)
             self.assertEqual(item["source_modality"], modality)
-            self.assertEqual(item["source_author"], "Éloïse")
-            self.assertEqual(item["input_text"], "Salut\nJade")
+            if platform in ("microphone", "local_http"):
+                self.assertEqual(item["source_author"], "[privé]")
+                self.assertEqual(item["input_text"], "[contenu privé masqué]")
+            else:
+                self.assertEqual(item["source_author"], "Éloïse")
+                self.assertEqual(item["input_text"], "Salut\nJade")
             self.assertNotIn("\n", captured.records[0].message)
 
     def test_link_confirmation_code_is_masked_in_structured_input_logs(self):
@@ -84,6 +88,26 @@ class TurnLoggingTests(unittest.TestCase):
         self.assertEqual(item["output_destinations"], ["discord_text"])
         self.assertEqual(item["delivery_status"], "planned_not_confirmed")
         self.assertEqual(reply.text, "Bonjour !")
+
+    def test_private_dialogues_never_log_text_or_transport_identifiers(self):
+        samples = [
+            Incoming("discord", "Alice secrète", "Conversation privée confidentielle",
+                     channel="unique-dm", message_id="private-123",
+                     account_id="321", private_channel=True),
+            Incoming("mobile", "Goldaj", "Un secret personnel",
+                     channel="private-mobile", message_id="mobile-123"),
+        ]
+        for source in samples:
+            with self.subTest(platform=source.platform), self.assertLogs(
+                    "jade.conversation", level="INFO") as captured:
+                record_input(9, source)
+                record_reply(9, Reply(source, "Un contenu privé en réponse"),
+                             ("discord_text",))
+            emitted = "\n".join(rec.message for rec in captured.records)
+            for secret in (source.text, source.author, source.channel,
+                           source.message_id, "Un contenu privé en réponse"):
+                self.assertNotIn(secret, emitted)
+            self.assertIn("[contenu privé masqué]", emitted)
 
     def test_written_channels_never_plan_tts_with_all_voice_outputs_enabled(self):
         for platform, text_flag in (("discord", "discord_text"),
@@ -203,8 +227,11 @@ class RuntimeTurnLoggingTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIn("[INTENT:label]", model_messages[0][0]["content"])
                 self.assertEqual(delivered[0].intent, "serious")
                 self.assertEqual(delivered[0].text, "Une réponse vérifiée.")
+                expected = ("[contenu privé masqué]"
+                            if platform in ("microphone", "local_http")
+                            else "Une réponse vérifiée.")
                 self.assertEqual(events[1]["reply_with_intent"],
-                                 "[INTENT:serious] Une réponse vérifiée.")
+                                 f"[INTENT:serious] {expected}")
                 self.assertEqual(events[1]["intent"], "serious")
                 self.assertNotIn("[INTENT:", delivered[0].text)
 
