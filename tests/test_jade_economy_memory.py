@@ -26,6 +26,17 @@ class ContextBudgetTests(unittest.TestCase):
         self.assertIn("Message 39", content)
         self.assertNotIn("Message 10 discussion", content)
 
+    def test_unpaired_passive_discord_message_keeps_turn_order(self):
+        history = [
+            {"role": "user", "content": "un premier texte sans réponse"},
+            {"role": "user", "content": "une question posée à Jade"},
+            {"role": "assistant", "content": "la réponse à la question"},
+            {"role": "user", "content": "nouvelle question"},
+            {"role": "assistant", "content": "nouvelle réponse"},
+        ]
+        self.assertEqual(select_context(history, "question",
+                                        max_chars=1000, recent_pairs=4), history)
+
     def test_bounded_inactive_context(self):
         history = [{"role": "user", "content": "a" * 800},
                    {"role": "assistant", "content": "b" * 800}] * 30
