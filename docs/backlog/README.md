@@ -2,6 +2,8 @@
 
 **Arbitrage du 21/11/2026 :** les cartes exigeant le **microphone physique local du PC**, **Twitch** ou **OBS** sont suspendues en `Bloqué` jusqu'à nouvel ordre. Ce n'est **pas** une suspension générale des travaux sur Windows ni des tests Discord/Android/mémoire. Les sous-tests indépendants restent possibles, mais les cartes mixtes ne sont pas closes. [Passation](../operations/handoffs/2026-11-21-chatgpt-suspension-micro-twitch-obs.md).
 
+**Recettes automatisées du 21/11/2026 :** `REC-021` et `REC-025` ont maintenant **des tests d'acceptation exécutés avec succès sous Linux et Windows**, [CI sur le SHA `955ca2e255`](https://github.com/goldaj/jade-vtuber/actions/runs/44947197393). Les deux cartes sont **`À valider`**, et non `Done`, conformément à la DoD ; contrôle du stockage d'archives privées encore nécessaire pour REC-025. La vue [REC](02-RECETTE.md#compte-rendu-des-recettes-automatiques-rec-021-et-rec-025-21-novembre-2026) décrit les preuves.
+
 ## REPRISE PRIORITAIRE — première lecture au prochain token Codex
 
 **Demandé par le propriétaire le 18 novembre 2026.** Cette liste est un **point d'entrée de reprise**, pas un second backlog ni une modification des P0/P1/P2. **Les cartes et leurs statuts canoniques restent dans les quatre vues** ci-dessous ; les références sont les mêmes. Toute intervention suit la [DoD](DEFINITION_OF_DONE.md). Ne pas marquer Done sans preuves et validation explicite par Codex ou le propriétaire.
