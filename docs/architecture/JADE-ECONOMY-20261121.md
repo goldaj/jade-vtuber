@@ -18,7 +18,7 @@
 | Échanges consentis | `memory_batch.py` + `memory_service.py` | Filtrer les banalités, rassembler jusqu'à 3 candidats sur 18 secondes, un appel de curation par lot au maximum ; personne et portée épinglées à l'envoi, effacement vérifié à l'écriture. |
 | Souvenirs personnels et autobiographie réservée | `personality_evolution.py` | Fournir quelques repères autorisés au dialogue sans nouveau LLM ; seule Jade décide de ses Core Memories. |
 | Activité humaine Discord | `discord_text_policy.py` + `social_intelligence.py` | Décision locale prioritaire ; classifieur LLM facultatif sur certaines ambiguïtés, avec budget distinct et repli local. |
-| Entrée dans un vocal Discord | `initiatives.py` + `discord_text.py` | Une initiative de bienvenue possible sur événement d'arrivée, aucun sondage payant en silence, attente d'une réaction humaine ; déduplication persistante. **Cette première intégration émet du texte dans le chat natif du salon vocal**, pas encore une synthèse vocale événementielle. |
+| Entrée dans un vocal Discord | `initiatives.py` + `discord_text.py` | Une initiative de bienvenue possible sur événement d'arrivée, aucun sondage payant en silence, attente d'une réaction humaine ; déduplication persistante. **Si le vocal et la session sont actifs, cette première intégration utilise le TTS vocal existant** ; sinon elle peut se replier sur le chat natif du même salon. La présence du membre est revérifiée juste avant de parler, et le tour synthétique ne crée aucune mémoire au nom du participant. |
 | Plafonds facultatifs | `cost_guard.py` | Réservations USD à l'avance et idempotence SQLite. Le zéro d'initiative vaut budget illimité ; le zéro de classification sociale vaut classification payante désactivée. |
 | PWA Android + Tailscale Serve | `mobile_duplex.py`, `mobile_gateway.py`, `mobile_web/duplex-client.js`, `mobile_web/app.js` | WebSocket privé avec jeton en charge utile TLS, trames PCM16/16 kHz bornées (20 s), STT existant à la fin d'une prise de parole, TTS en flux, annulation, fin de phrase locale et repli WAV HTTP si WebSocket indisponible avant la session. |
 
@@ -40,7 +40,7 @@
     -> salon déjà en attente d'une réaction ? [oui = silence]
     -> cooldown / déduplication dans SQLite
     -> budget monétaire configuré ? [si oui, réserver une estimation]
-    -> un seul tour Jade dans le chat du salon autorisé
+    -> un seul tour Jade, vocal si la session est valable, sinon texte du salon
     -> ATTENTE : aucun polling IA, aucune auto-relance
     -> activité vocale humaine STT ou message Discord réel : réarmement
     -> salon entièrement vide : réarmement pour une nouvelle session
@@ -70,7 +70,7 @@ Le vieux `POST /api/voice` WAV reste présent. Une déconnexion après un appel 
 - `JADE_SELECTIVE_CONTEXT_ENABLED=0` restaure l'injection intégrale de l'historique chargé.
 - Le duplex mobile reste accessible par la PWA HTTPS sous Tailscale, avec le mode WAV historique si le navigateur ne gère pas WebSocket. Tests Android physiques et vérification du proxy requis avant toute déclaration de recette complète.
 - Pas de nouveau moteur Realtime voix, d'embeddings payants, de tâche de veille IA ou de modification de l'avatar 2D.
-- Des évolutions supplémentaires sont à prévoir : retour parlé au moment des événements, ajustement de la qualité VAD par appareil, pilotage des budgets depuis la PWA, mesure réelle du coût par fonctionnalité et relais vers d'autres types d'événements.
+- Des évolutions supplémentaires sont à prévoir : recette physique du salut parlé, ajustement de la qualité VAD par appareil, pilotage des budgets depuis la PWA, mesure réelle du coût par fonctionnalité et relais vers d'autres types d'événements.
 
 ## Preuves de validation
 
