@@ -116,9 +116,9 @@ class Dialogue:
                                     if self.selective_context else history)
                 can_use_memory_tool = (
                     memory_action is not None
-                    and callable(getattr(self.backend, "complete_with_tools", None))
+                    and callable(getattr(type(self.backend), "complete_with_tools", None))
                     and (on_sentence is None or callable(getattr(
-                        self.backend, "complete_stream_with_tools", None)))
+                        type(self.backend), "complete_stream_with_tools", None)))
                 )
                 system_prompt = (self.prompt + "\n\n" + INTENT_PROMPT + owner_note
                                  + (MEMORY_PROMPT if can_use_memory_tool else ""))
