@@ -11,16 +11,28 @@ Terminer Jade r21 professionnel, plein pied et fonctionnel dans VTube Studio. Mo
 
 # Étape en cours
 
-Cheveux A/B : candidat v30.TEST_hair_leaves_r02 créé (SHA68617D558A59593E54C2582AB7845FFA317D8A7E0676E25D5B5514B083C95F62), pas encore natif. Neuf feuilles, neuf paramètres indépendants et 45 poses ; deux LOWER reconnectés, deux bandes TEMPLE arrière ajoutées. VTS inchangé.
-Cubism 5.2.03 PRO même session ; r01 testé LockL ±1 puis fermé ; r02 en cours de chargement. Ne pas écraser v30 ni r01/r02.
+Étape 1 : v30, r02, KRA, PSD et maître comparés aux objets LFS ; `python jade-modeling/verify_assets.py` réussit après correction de l'empreinte du présent suivi dans le manifeste. Package r20 présent et 23 références vérifiées ; rendu VTube Studio non recetté.
+
+Cheveux A/B : candidat natif `assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_shoulder_underpaint_v31_candidate.cmo3`, 31 143 973 octets, SHA256 39C00ECC82468B70004590E6E8EC549C7C16150A03341A322CB5A223A7CEBA8C. Il dérive de r02, conserve ses neuf feuilles et ajoute deux sous-peintures effilées derrière les épaules. Neutre et HeadZ ±30 observés : les larges ouvertures sont réduites ; raccords fins et mouvements combinés encore à vérifier. Ce candidat n'est pas une validation professionnelle ni un export VTS. Les sources KRA/PSD ne sont pas synchronisées.
 
 # Prochaine action exacte
 
-Terminer le jalon natif r02 : observer raccords, une pose de frange et HeadZ±30, revenir au neutre puis Save As jade_cubism_v005_r21_hair_leaves_v31.cmo3. Ensuite feuilles arrière et physiques ; ne pas refaire LockL±1 déjà observé sur r01 (formes inchangées dans r02).
+Scène visage : après quatre essais non validés de fondu et d'alignement, le clignement conserve des cils gris, contours doubles ou un filet d'iris selon la variante. Le détail et les pistes sont consignés dans le [relais Astra](reports/Jade_r21_relais_Astra_yeux.md). Ne pas promouvoir ces essais ni déclarer le clignement validé.
+
+Priorité précisée par l'utilisateur : poursuivre vers un modèle complet utilisable même imparfait, sans rester bloqué sur les yeux. Partir du checkpoint natif v31, préparer un export candidat Cubism/VTS et ses physiques, avec défaut visuel explicitement signalé ; aucune validation finale. Suivre [le plan professionnel actualisé](PLAN_QUALITE_PRO_20261113.md), notamment synchronisation des sous-calques dans des copies KRA/PSD, rig, physiques et retour ultérieur sur les yeux. Le modèle Huohuo a servi uniquement de référence structurelle ; pas de copie de ses fichiers. Ne pas régénérer les anciens filtres PSD.
+
+Export en cours : la copie v31 avant atlas montre bien jambes et chaussures. Deux essais automatiques d'atlas 4096 (par Mesh puis Model Image) font disparaître le bas du corps : les coordonnées UV des pièces concernées sortent de [0,1]. Ces essais locaux sont non valides ; conserver v31 intact et corriger le remappage avant tout paquet VTS. La physique r20 comporte 37 sorties absentes de r21 ; ne pas la recopier sans adaptation.
+
+Essais suivants : restaurer les UV rétablit le plein pied en mode source mais pas l'atlas ; modifier l'affine optionnelle ne corrige pas le paquet. La copie `image_split_r01` a depuis été enregistrée avec l'atlas incorrect et ne correspond plus à son ancien audit ; ne pas l'écraser. Depuis le v31 intact, `tools/cmo3_r21_atlas_crop_working.py` prépare une copie de travail à sept textures recadrées, sans retouche des pixels ni changement de géométrie. Candidat local SHA256 `0DF71AF75A6B8C55A1E3ADF6D53CBC6DB3F206EF704D5B079802C8D83D1B9920` ; pas encore d'atlas ni de validation native ou VTube Studio. Construire l'atlas, vérifier tout le corps et les raccords, puis ajuster ; sept calques source et une physique initiale demeurent non intégrés. Après nettoyage, C: disposait d'environ 17,6 Go le 14 novembre.
+
+L'outil de contrôle de Cubism est indisponible dans la session actuelle ; l'utilisateur a été invité à ouvrir la copie locale et à envoyer une capture avant de créer l'atlas. L'ancien générateur hors ligne refuse les GUID d'images inline du modèle et la surface totale des images dépasse un atlas 4096². Cubism permet plusieurs textures ; une réduction de résolution modifie le rendu. Vérifier les compromis et le rendu natif plutôt que forcer un atlas incompatible. [Documentation Live2D](https://docs.live2d.com/en/cubism-editor-manual/texture-atlas-edit/), [chargement dans VTube Studio](https://github.com/DenchiSoft/VTubeStudio/wiki/Loading-your-own-Models).
+
+Le 14 novembre, l'utilisateur demande de travailler exclusivement sur D:, sans maintenir le chemin C: comme référence, et de conserver les seules versions utiles. Modèles et rapports étaient déjà sur D:. Les 85 sauvegardes Cubism ont été copiées et vérifiées sur D: ; l'archive est conservée sur D:. Plusieurs anciens exports Krita et essais r21 écartés ont été supprimés sur D: ; voir le journal de ménage dans le projet local D:. L'utilisateur indique que le nettoyage est terminé. Le projet de travail et le dépôt public utilisés pour la reprise se trouvent sur D:. Préserver les jalons v30/v31 et la piste `image_split_r01` ; utiliser une copie de travail évolutive et réserver les nouveaux checkpoints aux jalons utiles.
 
 # Fichiers importants
 
 - tools/cmo3_r21_hair_independent_leaves.py (--seam-roots) et cmo3_r21_hair_seam_roots.py ; reports/Jade_r21_v30_hair_leaves_r02.json.
+- `tools/cmo3_r21_shoulder_hair_underpaint.py` et `assets/live2d/r21_professional_art/Jade_r21_rear_hair_underpaint_candidate_v1.png` : image générée à partir du maître et bandes ajoutées au candidat ; détail dans [le rapport de travail](reports/Jade_r21_v31_epaules.md). La bitmap n'est pas la source KRA/PSD synchronisée.
 - select_hair(xml,{token:valeur}) fournit un miroir géométrique pour les neuf feuilles ; ne jamais le sérialiser en livrable. Feuilles parentes de HeadZ, compensées au neutre (anciens parents trop étroits pour l'amplitude).
 - tools/cmo3_r21_back_hair_master_restore.py ; reports/Jade_r21_v29_back_hair_r01.json : restauration v30, rasters intacts.
 - tools/cmo3_r21_tips_master_texture.py : r04→r05, utilise le maître intact pour les deux PAINTED_TIP ; audit reports/Jade_r21_v28_shoulders_r05.json.
@@ -45,4 +57,4 @@ Terminer le jalon natif r02 : observer raccords, une pose de frange et HeadZ±30
 - Vrais sprites fermés et iris stable au blink ; oreilles normales en Surprise ; plein pied obligatoire.
 - Objectif NON terminé : raccords/art, tête/regard, cheveux souples, oreilles, physiques, idle, expressions/toggles, sync source, export/mapping VTS et contrôle final restent.
 - ScreenToGif uniquement final. Aucun code applicatif modifié.
-- Relance continuer-jade-r21-toutes-les-5-h-10 ACTIVE (310 min), ne pas dupliquer ; désactiver à achèvement réel. Aucun crédit/reset.
+- État actuel de la relance automatique non revérifié ; ne pas dupliquer, désactiver à achèvement réel. Aucun crédit/reset.

@@ -1,0 +1,205 @@
+# Lanceur Windows personnel pour Jade. Fonctionne depuis D:\Jade\launcher.
+# Aucun token n'est stocke ici ; seule l'adresse optionnelle du fichier prive est conservee.
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+[System.Windows.Forms.Application]::EnableVisualStyles()
+
+$settingsPath = Join-Path $PSScriptRoot 'launcher.json'
+if (-not (Test-Path -LiteralPath $settingsPath -PathType Leaf)) {
+    [System.Windows.Forms.MessageBox]::Show('Configuration absente. Relancer Installer-Launcher-Jade.cmd depuis le depot.', 'Jade')
+    return
+}
+$settings = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+$script:repo = [string]$settings.repo
+if (-not (Test-Path -LiteralPath (Join-Path $script:repo '.git'))) {
+    [System.Windows.Forms.MessageBox]::Show('Depot Git Jade absent : ' + $script:repo, 'Jade')
+    return
+}
+$null = Get-Command git -ErrorAction Stop
+
+function Invoke-Local {
+    param([string]$Tool, [string[]]$Arguments)
+    Push-Location -LiteralPath $script:repo
+    $old = $ErrorActionPreference
+    try {
+        # Windows PowerShell 5.1 peut convertir stderr natif en ErrorRecord.
+        $ErrorActionPreference = 'Continue'
+        $lines = & $Tool @Arguments 2>&1
+        $code = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $old
+        Pop-Location
+    }
+    $output = ($lines | ForEach-Object { [string]$_ }) -join [Environment]::NewLine
+    if ($code -ne 0) {
+        throw ('Echec ' + $Tool + ' (code ' + $code + ') : ' + $output)
+    }
+    return $output.Trim()
+}
+function Git {
+    param([string[]]$Arguments)
+    return Invoke-Local 'git' (@('-C', $script:repo) + $Arguments)
+}
+
+$form = New-Object System.Windows.Forms.Form
+$form.Text = 'Jade | Launcher local'
+$form.ClientSize = New-Object System.Drawing.Size(730, 430)
+$form.StartPosition = 'CenterScreen'
+$form.FormBorderStyle = 'FixedDialog'
+$form.MaximizeBox = $false
+$form.Font = New-Object System.Drawing.Font('Segoe UI', 10)
+
+function LabelAt([string]$name, [int]$x, [int]$y, [int]$width) {
+    $label = New-Object System.Windows.Forms.Label
+    $label.Text = $name
+    $label.SetBounds($x, $y, $width, 24)
+    $form.Controls.Add($label)
+    return $label
+}
+function ButtonAt([string]$name, [int]$x, [int]$y, [int]$width) {
+    $button = New-Object System.Windows.Forms.Button
+    $button.Text = $name
+    $button.SetBounds($x, $y, $width, 33)
+    $form.Controls.Add($button)
+    return $button
+}
+
+$null = LabelAt 'Branche Git a lancer' 22 20 310
+$branchBox = New-Object System.Windows.Forms.ComboBox
+$branchBox.DropDownStyle = 'DropDownList'
+$branchBox.SetBounds(22, 45, 465, 32)
+$form.Controls.Add($branchBox)
+$refreshButton = ButtonAt 'Actualiser Git' 500 43 205
+
+$null = LabelAt 'Jade demarre avec tous les canaux simultanement : Discord, Twitch, PC et mobile.' 22 102 690
+
+$null = LabelAt 'Dependances Python et ressources Live2D verifiees automatiquement.' 22 150 690
+
+$null = LabelAt 'Chemin de configuration privee (facultatif, valeurs jamais affichees)' 22 203 660
+$secretBox = New-Object System.Windows.Forms.TextBox
+$secretBox.SetBounds(22, 230, 573, 28)
+$secretBox.Text = [string]$settings.secretsFile
+$form.Controls.Add($secretBox)
+$browseButton = ButtonAt 'Parcourir...' 602 228 103
+$browseButton.Add_Click({
+    $picker = New-Object System.Windows.Forms.OpenFileDialog
+    $picker.Filter = 'Fichiers de configuration (*.env;*.txt)|*.env;*.txt|Tous les fichiers (*.*)|*.*'
+    if ($picker.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        $secretBox.Text = $picker.FileName
+    }
+    $picker.Dispose()
+})
+
+$launchButton = ButtonAt 'Mettre a jour et lancer toute Jade' 22 282 683
+$launchButton.Height = 44
+$logBox = New-Object System.Windows.Forms.TextBox
+$logBox.Multiline = $true
+$logBox.ReadOnly = $true
+$logBox.ScrollBars = 'Vertical'
+$logBox.SetBounds(22, 334, 683, 75)
+$form.Controls.Add($logBox)
+function Info([string]$message) {
+    $logBox.AppendText($message + [Environment]::NewLine)
+    $logBox.SelectionStart = $logBox.TextLength
+    $logBox.ScrollToCaret()
+    $form.Refresh()
+}
+
+function Load-Branches {
+    $current = Git -Arguments @('branch', '--show-current')
+    $refs = Git -Arguments @('for-each-ref', '--format=%(refname:strip=3)', 'refs/remotes/origin')
+    $branches = @($refs -split '\r?\n' | Where-Object { $_ -and $_ -ne 'HEAD' } | Sort-Object -Unique)
+    $branchBox.Items.Clear()
+    foreach ($branch in $branches) { [void]$branchBox.Items.Add($branch) }
+    if ($branches -contains $current) { $branchBox.SelectedItem = $current }
+    elseif ($branches -contains 'develop') { $branchBox.SelectedItem = 'develop' }
+    elseif ($branches.Count -gt 0) { $branchBox.SelectedIndex = 0 }
+    Info ('Branche locale : ' + $current + ' | ' + $branches.Count + ' branches distantes.')
+}
+$refreshButton.Add_Click({
+    try {
+        Info 'Synchronisation de la liste des branches...'
+        [void](Git -Arguments @('fetch', '--prune', 'origin'))
+        Load-Branches
+    } catch {
+        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Git')
+        Info 'Actualisation impossible. Aucun changement de branche.'
+    }
+})
+
+function Active-Jade {
+    $marker = Join-Path $PSScriptRoot 'jade-active.pid'
+    if (-not (Test-Path -LiteralPath $marker)) { return $false }
+    $processId = 0
+    if (-not [int]::TryParse((Get-Content -LiteralPath $marker -Raw).Trim(), [ref]$processId)) { return $false }
+    return $null -ne (Get-Process -Id $processId -ErrorAction SilentlyContinue)
+}
+$launchButton.Add_Click({
+    $launchButton.Enabled = $false
+    try {
+        if (Active-Jade) {
+            throw 'Une console du launcher est deja ouverte. Fermer Jade avec Ctrl+C, puis la console avant de changer de branche.'
+        }
+        if ($branchBox.SelectedIndex -lt 0) { throw 'Aucune branche selectionnee. Actualiser Git.' }
+        $branch = [string]$branchBox.SelectedItem
+        $flags = @('--all-channels')
+        [void](Get-Command poetry -ErrorAction Stop)
+        $privatePath = $secretBox.Text.Trim()
+        if ($privatePath -and -not (Test-Path -LiteralPath $privatePath -PathType Leaf)) {
+            throw 'Fichier de configuration privee introuvable.'
+        }
+        Info ('Preparation de ' + $branch + '...')
+        [void](Git -Arguments @('fetch', '--prune', 'origin'))
+        # Les branches proviennent de Git, jamais d'une saisie libre.
+        $remoteRefs = @( (Git -Arguments @('for-each-ref', '--format=%(refname:strip=3)', 'refs/remotes/origin')) -split '\r?\n' )
+        if ($remoteRefs -notcontains $branch) { throw 'Branche distante introuvable.' }
+        $dirty = Git -Arguments @('status', '--porcelain')
+        if ($dirty) { throw 'Fichiers locaux modifies ou non suivis : commit/stash manuel requis. Rien ne sera ecrase.' }
+        $current = Git -Arguments @('branch', '--show-current')
+        if ($current -ne $branch) {
+            $localRefs = @( (Git -Arguments @('for-each-ref', '--format=%(refname:strip=2)', 'refs/heads')) -split '\r?\n' )
+            if ($localRefs -contains $branch) {
+                [void](Git -Arguments @('switch', $branch))
+            } else {
+                [void](Git -Arguments @('switch', '--track', '-c', $branch, ('origin/' + $branch)))
+            }
+        }
+        [void](Git -Arguments @('merge', '--ff-only', ('origin/' + $branch)))
+        Info ('Branche mise a jour sans reinitialisation destructive : ' + $branch)
+        Info 'Recuperation des assets Live2D...'
+        [void](Git -Arguments @('lfs', 'pull'))
+        Info 'Verification de toutes les dependances Poetry...'
+        [void](Invoke-Local 'poetry' @('sync','--only','main','-E','all'))
+        $previousSecrets = [Environment]::GetEnvironmentVariable('JADE_SECRETS_FILE','Process')
+        try {
+            if ($privatePath) { $env:JADE_SECRETS_FILE = $privatePath }
+            Info 'Preflight local, sans connexion ni facturation...'
+            $checks = Invoke-Local 'poetry' (@('run','python','main.py','--preflight') + $flags)
+            Info ((($checks -split '\r?\n') | Select-Object -Last 2 | Out-String).Trim())
+        } finally {
+            [Environment]::SetEnvironmentVariable('JADE_SECRETS_FILE',$previousSecrets,'Process')
+        }
+        $settings.secretsFile = $privatePath
+        $settings | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding UTF8
+        $runPath = Join-Path $PSScriptRoot 'jade-run.json'
+        @{ repo = $script:repo; branch = $branch; flags = $flags; secretsFile = $privatePath } |
+            ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $runPath -Encoding UTF8
+        $runner = Join-Path $PSScriptRoot 'JadeRunner.ps1'
+        $start = Start-Process -FilePath 'powershell.exe' -WorkingDirectory $script:repo -ArgumentList @(
+            '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',('"' + $runner + '"'),
+            '-RunConfig',('"' + $runPath + '"')
+        ) -PassThru
+        [string]$start.Id | Set-Content -LiteralPath (Join-Path $PSScriptRoot 'jade-active.pid') -Encoding ASCII
+        Info 'Console Jade lancee. Pour terminer : Ctrl+C dans sa console.'
+        Info 'Mobile : verifier Tailscale Serve sur le PC. Aucune route n est modifiee.'
+    } catch {
+        Info ('ECHEC : ' + $_.Exception.Message)
+        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Jade - demarrage impossible')
+    } finally {
+        $launchButton.Enabled = $true
+    }
+})
+try { Load-Branches } catch { Info ('Git non pret : ' + $_.Exception.Message) }
+[void]$form.ShowDialog()
+$form.Dispose()

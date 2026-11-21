@@ -1,17 +1,19 @@
-# Manuel de Jade : branche main
+# Manuel de Jade — develop
 
-**Périmètre :** ce dossier décrit le **code réellement présent sur cette branche Git**, pas une promesse de fonctionnalités disponibles dans `develop`.
+Les modules raccordés dans le code sont considérés comme **implémentés**. L'[inventaire des fonctionnalités](BRANCH_STATE.md) est la référence documentaire courante ; les rapports datés ne sont pas un deuxième état du produit.
 
-| Besoin | Document |
+| Objet | Document |
 | --- | --- |
-| Partir d'un Windows/Linux neuf et cloner le dépôt | [INSTALLATION.md](INSTALLATION.md) |
-| Installer une démonstration en quelques clics | [DEMO.md](DEMO.md) |
-| Utiliser chaque fonctionnalité disponible | [USER_GUIDE.md](USER_GUIDE.md) |
-| Architecture, flux, algorithmes, infrastructure et sécurité | [TECHNICAL.md](TECHNICAL.md) |
-| Consignes pour Codex et agents IA | [AI_HANDOFF.md](AI_HANDOFF.md) |
-| Périmètre des fonctionnalités réellement présentes ici | [BRANCH_STATE.md](BRANCH_STATE.md) |
-| Nettoyage prudent des branches intégrées | [BRANCH_MAINTENANCE.md](BRANCH_MAINTENANCE.md) |
+| Installer Jade depuis un poste Windows | [INSTALLATION.md](INSTALLATION.md) |
+| Démo Express, sans IA | [DEMO.md](DEMO.md) |
+| Utiliser les fonctionnalités | [USER_GUIDE.md](USER_GUIDE.md) |
+| Architecture, API et algorithmes | [TECHNICAL.md](TECHNICAL.md) |
+| Passation aux agents IA | [AI_HANDOFF.md](AI_HANDOFF.md) |
+| **État courant du code** | [BRANCH_STATE.md](BRANCH_STATE.md) |
+| Maintenance des branches | [BRANCH_MAINTENANCE.md](BRANCH_MAINTENANCE.md) |
+| Schémas fonctionnels | [Atlas de Jade](../architecture/atlas-fonctionnel-2026-11-16/README.md) |
+| **Travaux futurs classés par thème** | [Catalogue des améliorations](../ameliorations/README.md) |
 
-La branche `main` contient le moteur modulaire de Jade, une démo de dialogue hors ligne, des connecteurs opt-in et une démo Windows animée distincte. Elle **n'intègre pas** la PWA Android moderne, les mémoires SQLite/Core, le launcher tout-en-un ou l'arbitrage par IA de `develop`. La démo Express est une **simulation Windows autonome**, clairement distincte du moteur. Ne jamais transformer une possibilité d'intégration en succès matériel : les connexions réelles ont besoin de clés, autorisations, tests et parfois de coûts.
+`main.py --all-channels` lance les connecteurs Discord écrit/vocal, Twitch, PC et PWA privée simultanément, avec mémoire optionnelle, voix et avatar ; aucun sélecteur de plateforme. Pour la configuration PC/Android, utiliser la [passation opérationnelle](../history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md). Pour les intentions A/B r20 et les animations corporelles futures, consulter [Live2D](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
 
-La documentation de chaque branche est conservée **dans cette branche elle-même**. Pour une autre branche, ouvrir les mêmes chemins après avoir sélectionné la branche dans GitHub ou Git. Les instructions d'un autre commit ne s'appliquent pas automatiquement. Tous les documents et `AGENTS.md` doivent évoluer avec le code lors de chaque modification.
+Pour les agents : commencer par [AGENTS.md](../../AGENTS.md), puis [le centre opérationnel](../operations/README.md). Le contrôle CI ne requiert désormais qu'une entrée technique dans [CHANGELOG.md](../operations/CHANGELOG.md) lorsque le code ou les outils changent ; mettre à jour les autres guides uniquement s'ils sont impactés. Les archives sont dans [docs/history](../history/README.md).

@@ -8,6 +8,7 @@ import tempfile
 from .avatar import child_environment
 from .messages import Reply
 from .openai_services import OpenAIServices
+from .pitch_shift import shift_pcm, shift_wav
 
 LOG = logging.getLogger("jade.output")
 
@@ -85,6 +86,9 @@ class SpeechOutput:
                  subtitle_path: Path, secondary_player=None, audio_gate=None,
                  secondary_broadcast=False, early_timeout_seconds=180):
         self.services = services
+        # Real OpenAI services only; testing doubles retain existing semantics.
+        self.pitch_semitones = (services.settings.tts_pitch_semitones
+                                if isinstance(services, OpenAIServices) else 0.0)
         self.player = player
         self.subtitle_path = Path(subtitle_path)
         self.lock = asyncio.Lock()
@@ -97,8 +101,22 @@ class SpeechOutput:
         # to broadcast spoken responses whenever a voice bridge is connected.
         self.secondary_broadcast = True
 
-    def _delivery_context(self):
-        """Take a playback snapshot; an absent bridge leaves local output intact."""
+    @staticmethod
+    def _public_subtitles_allowed(source):
+        """Only public-origin replies may reach the shared OBS text file."""
+        platform = getattr(source, "platform", None)
+        return platform not in ("microphone", "local_http", "mobile", "discord_voice") and not (
+            platform == "discord" and getattr(source, "private_channel", False))
+
+    def _delivery_context(self, source=None):
+        """Take a playback snapshot, never promoting a private Discord DM to voice."""
+        if getattr(source, "platform", None) in ("microphone", "local_http", "mobile"):
+            # Local/owner input must not be broadcast into a public Discord
+            # voice channel merely because the connector is also running.
+            return None
+        if (getattr(source, "platform", None) == "discord"
+                and getattr(source, "private_channel", False)):
+            return None
         get_context = getattr(self.secondary_player, "delivery_context", None)
         if not callable(get_context):
             return None
@@ -144,7 +162,6 @@ class SpeechOutput:
     def start_early(self, source):
         """Create an opt-in early voice turn if the runtime can actually stream."""
         if (source.platform != "discord_voice"
-                or getattr(self.player, "mode", None) != "none"
                 or self.secondary_player is None
                 or not callable(getattr(self.secondary_player, "play_pcm_stream_for_reply", None))
                 or not callable(getattr(self.services, "stream_speech_pcm", None))):
@@ -162,8 +179,10 @@ class SpeechOutput:
         One PCM iterator feeds exactly one Discord player and is cancelled
         whenever that player stops or its voice session is revoked.
         """
-        if getattr(self.player, "mode", None) != "none":
+        if not discord_voice and getattr(self.player, "mode", None) != "none":
             return False
+        # Discord PCM streams directly to the voice bridge. The local ffplay
+        # setting is for microphone replies and must not block Discord streaming.
         stream_factory = getattr(self.services, "stream_speech_pcm", None)
         method_name = ("play_pcm_stream_for_reply" if discord_voice
                        else "play_pcm_stream_for_context")
@@ -172,9 +191,13 @@ class SpeechOutput:
             return False
         if not discord_voice and context is None:
             return False
-        stream = stream_factory(reply.text)
+        stream = (stream_factory(reply.text, intent=reply.intent)
+                  if isinstance(self.services, OpenAIServices)
+                  else stream_factory(reply.text))
         if stream is None:
             return False
+        if self.pitch_semitones:
+            stream = shift_pcm(stream, self.pitch_semitones)
 
         gated = False
         written = False
@@ -189,9 +212,12 @@ class SpeechOutput:
             if discord_voice:
                 require_session()
             path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_name(path.name + ".tmp")
-            tmp.write_text(reply.text, encoding="utf-8")
-            tmp.replace(path)
+            if self._public_subtitles_allowed(reply.source):
+                tmp = path.with_name(path.name + ".tmp")
+                tmp.write_text(reply.text, encoding="utf-8")
+                tmp.replace(path)
+            else:
+                path.write_text("", encoding="utf-8")
             written = True
             if discord_voice:
                 require_session()
@@ -225,7 +251,13 @@ class SpeechOutput:
     async def speak(self, reply: Reply):
         async with self.lock:
             discord_voice = reply.source.platform == "discord_voice"
-            context = None if discord_voice else self._delivery_context()
+            context = None if discord_voice else self._delivery_context(reply.source)
+            # A Discord DM may be answered in text (and locally if configured),
+            # but never broadcast into a potentially unrelated public voice call.
+            if (reply.source.platform == "discord"
+                    and reply.source.private_channel and context is None
+                    and getattr(self.player, "mode", None) == "none"):
+                return  # Do not pay for speech that has no permitted destination.
             muted = getattr(self.secondary_player, "voice_muted", None)
             if (not discord_voice and context is None and getattr(self.player, "mode", None) == "none"
                     and callable(muted) and muted()):
@@ -247,11 +279,17 @@ class SpeechOutput:
             # doubles still provide synthesize_wav only.
             rich_synthesis = getattr(type(self.services), "synthesize_speech", None)
             if callable(rich_synthesis):
-                spoken = await rich_synthesis(self.services, reply.text)
+                spoken = await rich_synthesis(
+                    self.services, reply.text, intent=reply.intent
+                ) if isinstance(self.services, OpenAIServices) else await rich_synthesis(
+                    self.services, reply.text
+                )
                 wav, spoken_text = spoken.audio, spoken.transcript
             else:
                 wav = await self.services.synthesize_wav(reply.text)
                 spoken_text = reply.text
+            if self.pitch_semitones:
+                wav = await shift_wav(wav, self.pitch_semitones)
             if discord_voice:
                 require_session()
             # OBS text source shows the whole phrase while the WAV plays.
@@ -268,28 +306,25 @@ class SpeechOutput:
                 if discord_voice:
                     require_session()
                 path.parent.mkdir(parents=True, exist_ok=True)
-                tmp = path.with_name(path.name + ".tmp")
-                tmp.write_text(spoken_text, encoding="utf-8")
-                tmp.replace(path)
+                if not self._public_subtitles_allowed(reply.source):
+                    # Keep private messages out of OBS text during local WAV playback.
+                    path.write_text("", encoding="utf-8")
+                else:
+                    tmp = path.with_name(path.name + ".tmp")
+                    tmp.write_text(spoken_text, encoding="utf-8")
+                    tmp.replace(path)
                 subtitle_written = True
                 if discord_voice:
                     require_session()
                     finished = asyncio.Event()
 
-                    async def play_local():
-                        require_session()
-                        await self.player.play(wav)
-
-                    async def play_both():
+                    async def play_discord_only():
                         nonlocal discord_played
                         try:
-                            async with asyncio.TaskGroup() as players:
-                                players.create_task(play_local())
-                                discord_task = players.create_task(
-                                    self.secondary_player.play_for_reply(wav, reply.source))
-                            # Only the bridge can attest that Discord actually
-                            # completed playback; a missing/false result is not success.
-                            discord_played = discord_task.result() is True
+                            # Discord voice WAV fallback never plays into ffplay
+                            # or local OBS audio.
+                            discord_played = (await self.secondary_player.play_for_reply(
+                                wav, reply.source)) is True
                         finally:
                             finished.set()
 
@@ -302,7 +337,7 @@ class SpeechOutput:
                                 continue
 
                     async with asyncio.TaskGroup() as tasks:
-                        tasks.create_task(play_both())
+                        tasks.create_task(play_discord_only())
                         tasks.create_task(watch_session())
                 else:
                     if context is None:

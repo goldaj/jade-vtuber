@@ -24,10 +24,10 @@ class AvatarTests(unittest.IsolatedAsyncioTestCase):
         callback = avatar.observer("discord")
         callback("pcm_start", None)
         callback("pcm_level", 1.0)
-        self.assertEqual(avatar._pending.get_nowait(), 1.0)
+        self.assertEqual(avatar._pending_mouth, 1.0)
         callback("pcm_end", None)
         callback("pcm_level", 1.0)
-        self.assertEqual(avatar._pending.get_nowait(), 0.0)
+        self.assertEqual(avatar._pending_mouth, 0.0)
         await avatar.close()
     def test_environment_allowlist_excludes_secrets(self):
         env = child_environment({"PATH": "bin", "SYSTEMROOT": "system", "OPENAI_API_KEY": "secret", "JADE_TOKEN": "secret", "PYTHONPATH": "secret", "HTTP_PROXY": "secret", "UNEXPECTED_SECRET": "secret"})
@@ -87,10 +87,10 @@ class AvatarTests(unittest.IsolatedAsyncioTestCase):
         local("end", data)
         await asyncio.sleep(.05)
         self.assertEqual(set(avatar._active), {"discord"})
-        self.assertGreater(avatar._pending.get_nowait(), .9)
+        self.assertGreater(avatar._pending_mouth, .9)
         discord("end", data)
         await avatar._animation
-        self.assertEqual(avatar._pending.get_nowait(), 0.0)
+        self.assertEqual(avatar._pending_mouth, 0.0)
         await avatar.close()
 
     async def test_ending_during_wav_analysis_never_reopens_mouth(self):
@@ -107,5 +107,5 @@ class AvatarTests(unittest.IsolatedAsyncioTestCase):
             callback("end", b"")
             release.set()
             await avatar._animation
-        self.assertEqual(avatar._pending.get_nowait(), 0.0)
+        self.assertEqual(avatar._pending_mouth, 0.0)
         await avatar.close()

@@ -1,26 +1,38 @@
 # Jade — un personnage virtuel capable de dialoguer
 
+**Architecture fonctionnelle détaillée (`develop`) :** [atlas visuel des cinq parcours](docs/architecture/atlas-fonctionnel-2026-11-16/README.md) et [contrat d'appels, décisions et parallélisme](docs/architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md), datés du 16 novembre 2026. Le code reste la source de vérité.
+
+**Pour les agents et la collaboration :** [AGENTS.md](AGENTS.md), [centre opérationnel](docs/operations/README.md), [passations actives](docs/operations/handoffs/README.md) et [historique](docs/history/README.md).
+
+**Documentation complète et spécifique à cette branche develop :** [installation depuis un poste neuf](docs/handbook/INSTALLATION.md), [Démo Express sans installation Python](docs/handbook/DEMO.md), [guide utilisateur de toutes les fonctions](docs/handbook/USER_GUIDE.md), [architecture et algorithmes](docs/handbook/TECHNICAL.md), [passation agents IA](docs/handbook/AI_HANDOFF.md), [état précis de develop](docs/handbook/BRANCH_STATE.md).
+
+**Travaux opérationnels et recettes en attente :** [backlog priorisé et file de reprise](docs/backlog/README.md) · [Definition of Done officielle](docs/backlog/DEFINITION_OF_DONE.md). Les agents y retrouvent les tâches réalisables et les validations réelles à effectuer.
+
+**Améliorations envisagées, distinctes du backlog opérationnel (pas de développement autorisé avant les tests PC) :** [catalogue central par thème](docs/ameliorations/README.md).
+
+**Démo immédiate Windows :** double-cliquer `Installer-Demo-Express.cmd` ou `Lancer-Demo-Express.cmd`. Démo **simulée** : aucune IA, aucune clé, aucun canal ni Live2D requis. **Produit réel :** installer/configurer tous les canaux puis utiliser le launcher unique `--all-channels`, voir les guides. 
+
 ![Jade en pied, avec jambes et chaussures](jade-modeling/assets/live2d/r21_professional_art/Jade_r21_fullbody_restoration_chroma_v2.png)
 
 *Référence artistique r21 en pied (fond magenta de détourage). Le rig Live2D r21 animé n'est pas encore validé comme modèle final.*
-
-**Guides à jour pour cette branche :** [installation depuis un poste neuf](docs/handbook/INSTALLATION.md), [Démo Express sans prérequis](docs/handbook/DEMO.md), [guide utilisateur de toutes les fonctions](docs/handbook/USER_GUIDE.md), [architecture et algorithmes](docs/handbook/TECHNICAL.md), [passation agents IA](docs/handbook/AI_HANDOFF.md), [état exact de main](docs/handbook/BRANCH_STATE.md).
-
-**Démonstration Windows immédiate :** double-cliquer `Installer-Demo-Express.cmd` dans le clone, puis ouvrir « Jade Demo Express » dans le menu Démarrer. C'est une **simulation locale** (ni IA, ni voix, ni Live2D, ni compte externe). Alternative portable : `Lancer-Demo-Express.cmd`. Pour de vraies fonctions IA, voir les guides et la configuration opt-in.
 
 Jade est un projet expérimental de VTuber IA : un personnage 2D conçu pour
 interagir par texte et par voix. Ce dépôt présente le moteur Python qui reçoit
 les messages, prépare une réponse et peut la transmettre à des outils de
 streaming. Le travail sur le personnage et son animation est mené séparément.
 
-> **État : prototype en cours de développement.** Le mode de démonstration
-> fonctionne hors ligne. Les connexions aux plateformes et les appareils audio
-> demandent encore une validation réelle.
+**Anniversaire officiel de Jade : 1er février 2025.** Date de référence fixée
+par le propriétaire le 20 novembre 2026, à partir des plus anciens fichiers
+locaux qu'il a retrouvés, datés du 1er février 2025. Il s'agit de la date
+symbolique retenue pour Jade, et non d'une date de création Git vérifiée.
+
+**État de develop :** les fonctions raccordées sont implémentées ; leur activation sur le PC dépend des paramètres privés, comptes et dépendances installés.
 
 ## Ce que fait le moteur
 
-- Reçoit du texte depuis une console et propose des connecteurs optionnels
-  pour Twitch, Discord et une interface HTTP locale.
+- Reçoit les messages depuis Discord écrit/vocal, Twitch, micro Windows,
+  API HTTP locale et PWA Android privée. Le launcher active tous ces canaux
+  simultanément via --all-channels, sans choix de mode.
 - Met les demandes dans une file bornée, maintient un historique limité par
   conversation et produit des réponses via une interface de dialogue modulaire.
 - Utilise **OpenAI exclusivement pour la transcription et la synthèse vocale** ;
@@ -30,12 +42,14 @@ streaming. Le travail sur le personnage et son animation est mené séparément.
   locale de VTube Studio. Ces intégrations sont désactivées par défaut.
 
 ```text
-Console / Twitch / Discord / HTTP ─────────┐
-Microphone → transcription OpenAI ─────────┤
-                                           ↓
-                                  File → Dialogue
-                                           ↓
-                   Texte / synthèse vocale / sous-titres
+Discord / Twitch / HTTP / Android PWA ─────┐
+Microphone / vocal → STT OpenAI ───────────┤
+                                            ↓
+                               File → Arbitre Jade
+                                            ↓
+                                  Dialogue + mémoire
+                                            ↓
+                      Réponse routée / TTS / avatar
 ```
 
 Le dialogue dispose d’une interface backend interchangeable dans le code ; seul
@@ -43,13 +57,9 @@ le backend OpenAI et le backend de démonstration sont fournis actuellement.
 
 ## Essayer la démo sans clé API
 
-Une démo Windows animée est préparée avec le modèle Live2D r20, dialogue et
-voix OpenAI : consultez son [guide](demo/reelle/GUIDE-DEMO.md) et sa
-[notice de construction](demo/reelle/README-BUILD.md). Elle demande une clé
-OpenAI personnelle et une connexion Internet pour les échanges réels.
-
-Une [ancienne démo statique hors ligne](demo/windows/README.md) reste disponible :
-elle utilise un portrait et un dialogue simulé, sans IA ni animation Live2D.
+La seule démonstration distribuée est désormais **Démo Express** (`demo/express/`),
+simulée et sans clé API. Le moteur Jade complet et son renderer Live2D r20
+restent disponibles dans `src/jade_runtime/` avec leurs prérequis normaux.
 
 Prérequis : Python 3.11 et Poetry 2.2.1. Depuis la racine de cette copie :
 
@@ -73,19 +83,9 @@ Le projet fournit un fichier de dépendances verrouillé `poetry.lock`. Installe
 Poetry et les dépendances nécessite un accès au registre de paquets ; une fois
 installées, la démo et les tests n’appellent pas de service IA distant.
 
-## Fonctionnalités et niveau de validation
+## Fonctions implémentées sur develop
 
-| Élément | État de la preuve |
-| --- | --- |
-| Console, file de messages et historique | Tests automatisés hors ligne ; démo locale disponible |
-| Texte OpenAI | Un essai réel court a réussi ; ce n’est pas une mesure de performance généralisable |
-| Chaîne micro → STT → dialogue → TTS | Services simulés et courts essais STT/TTS OpenAI sur audio synthétique ; micro réel non testé |
-| Twitch, Discord et Discord vocal | Authentification Twitch et connexion Discord vérifiées sans message ; vocal Discord réel non testé et expérimental |
-| Sous-titres et VTube Studio | Interfaces et tests simulés ; configuration OBS et interactions VTube Studio réelles à vérifier |
-| Personnage 2D | Sources et portrait inclus ; intégration et animation en cours |
-
-La simulation vérifie des comportements logiciels et ne remplace pas un essai
-matériel, une recette de diffusion ou une mesure de latence et de coût.
+Discord écrit/vocal, Twitch IRC, micro PC, API HTTP locale, PWA mobile, mémoire SQLite privée activée par défaut en mode réel (inscription automatique des comptes Discord vérifiés, suppression ciblée des souvenirs), intentions, voix OpenAI, r20 PC/PWA et orchestration sont raccordés au runtime. Voir **[l'inventaire actuel du code](docs/handbook/BRANCH_STATE.md)** pour leurs limites, sans tableau redondant d'état de recette.
 
 ## Options et configuration privée
 
@@ -95,20 +95,24 @@ peuvent utiliser un profil de `config/profiles/`. Le prompt du personnage peut
 être fourni séparément via `JADE_PROMPT_FILE` ou `JADE_ASSETS_ROOT` ; le prompt
 du projet est inclus dans ce dépôt.
 
-Le passage en mode réel exige explicitement `--live`, une configuration valide
-et peut générer des frais. Le microphone, Twitch, Discord, VTube Studio et
-l’interface HTTP s’activent séparément par leurs options ; l’envoi vers le
-chat Twitch demande son réglage dédié. `--discord` active l'envoi Discord.
-Les extras Poetry
-disponibles sont `mic`, `discord`, `discord-voice` et `vts`.
+La démo console reste hors ligne. Pour le vrai fonctionnement sur Windows,
+le launcher utilise `--all-channels` et active ensemble tous les supports
+configurés ; le préflight bloque le démarrage si l'un des services obligatoires
+manque. Cette exécution peut entraîner des frais OpenAI. Les anciens drapeaux
+individuels restent disponibles pour le diagnostic et le développement, mais
+ne constituent pas des profils de lancement utilisateur. Les extras Poetry
+s'installent avec `poetry sync --only main -E all`. L'envoi Twitch requiert
+`JADE_TWITCH_SEND=1` en plus du jeton et du salon.
 
 Pour Twitch, un jeton utilisateur valide et le canal sont requis ; le nom du
 bot est déduit du jeton si `TWITCH_BOT_LOGIN` est vide. La procédure pour obtenir
-un jeton sans exposer les secrets est décrite dans [l'aide Twitch](docs/gpt6-jade/TWITCH-AUTH.md).
+un jeton sans exposer les secrets est décrite dans [l'aide Twitch](docs/operations/reference/TWITCH-AUTH.md).
 Le renouvellement automatique est facultatif et exige une sauvegarde GitHub
 privée configurée ; ses garanties et limites sont détaillées dans cette aide.
-Lorsque Discord vocal est connecté, les réponses vocales de Jade, y compris
-celles issues d'autres sources, peuvent être diffusées dans le salon actif.
+Lorsque Discord vocal est connecté, certaines réponses vocales issues
+d'autres sources peuvent être diffusées dans le salon actif. **Les réponses
+locales privées (microphone du PC et API HTTP privée) ne doivent pas être
+diffusées automatiquement dans Discord ou les sous-titres OBS publics.**
 Le vocal ne demande ni liste de participants ni confirmation supplémentaire :
 toute source entendue peut interagir, y compris un autre bot. Jade ignore sa
 propre voix pour limiter les boucles. Le canal indiqué sert au raccordement
@@ -129,3 +133,17 @@ Les sources du personnage sont dans `jade-modeling/`. Après clonage, installer
 Git LFS puis lancer `git lfs pull` pour récupérer les ressources volumineuses.
 Le contrôle d’intégrité s’exécute avec `python jade-modeling/verify_assets.py`.
 Les documents de suivi du projet et l’index des conversations sont dans `docs/`.
+
+## Launcher local pour Windows
+
+Un [launcher Windows personnel](docs/operations/reference/LAUNCHER-WINDOWS-20261115.md) permet de choisir une branche et de lancer **tous les supports simultanément, sans choix de profil** : Discord vocal et écrit, Twitch, microphone local, HTTP local, application mobile privée, voix et avatar. Le moteur Jade arbitre les messages en attente, sans priorité fixe par support. Depuis le clone sur D:, exécuter `Installer-Launcher-Jade.cmd`, puis `D:\Jade\launcher\Lancer-Jade.cmd`. Il faut configurer tous les connecteurs dans la configuration privée ; un préflight incomplet bloque le démarrage plutôt que lancer un sous-ensemble invisible. Le démarrage peut facturer OpenAI. **Pour installer l'application Android avec l'aide de Codex : consulter le [guide opérationnel Windows + Android](docs/history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md)**. Il couvre Tailscale Serve sur le PC, les secrets privés, le SDK Web Live2D, la PWA Chrome, le diagnostic et les tests réels.
+
+## Intentions, mémoire et futurs travaux
+
+**Implémenté :** sept intentions avec **deux variantes faciales r20 et deux textes PWA par intention**, voix Étincelle, dialogue configurable (par défaut `gpt-6-luna`, `low`, 320 tokens), historique de 48 messages et mémoire SQLite v3 des échanges complets, activée par défaut en mode réel avec inscription automatique des participants identifiés d'un serveur Discord, MP Discord à inscription automatique, Twitch à activation manuelle et suppression ciblée des souvenirs. Voir [dialogue/mémoire](docs/history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md) et [Live2D](docs/history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+
+**À développer ultérieurement :** 14 motions corporelles r21, routage exclusif par canal d'origine, mémoire anticipée, avatar à visibilité conditionnelle et moteur Realtime léger sans Luna. Ces projets figurent dans [le backlog unique](docs/ameliorations/README.md).
+
+## Audits historiques
+
+Les audits et PR datés sont conservés dans [archives GPT-6/Jade](docs/history/gpt6-jade/). L'[audit du 16 novembre](docs/history/gpt6-jade/RECONCILIATION-CODE-CONFIG-DOCS-20261116.md) est un instantané ; l'état courant dépend du code et de [BRANCH_STATE.md](docs/handbook/BRANCH_STATE.md).

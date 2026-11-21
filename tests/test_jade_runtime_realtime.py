@@ -38,11 +38,24 @@ class RuntimeRealtimeTests(unittest.IsolatedAsyncioTestCase):
             service = OpenAIServices(settings, client=client)
             self.assertIs(await service.synthesize_speech("Il y a 3 chats."), response)
             adapter.assert_called_once_with(client, model=settings.tts_model, voice=settings.voice,
-                                            speed=1.5,
+                                            speed=1.25,
                                             timeout_seconds=settings.timeout_seconds,
-                                            verify_transcript=False)
+                                            verify_transcript=False, connection_pool=service._stream_pool)
             adapter.return_value.synthesize.assert_awaited_once_with("Il y a 3 chats.")
             client.audio.speech.create.assert_not_awaited()
+
+    async def test_buffered_and_streaming_use_the_same_connection_pool(self):
+        with patch("src.jade_runtime.openai_services.RealtimeTTS") as adapter:
+            adapter.return_value.synthesize = AsyncMock(
+                return_value=SpokenAudio(b"RIFFsynthetic", "Bonjour"))
+            adapter.return_value.stream_pcm.return_value = object()
+            service = OpenAIServices(Settings(), client=object())
+            await service.synthesize_speech("Bonjour")
+            buffered_pool = adapter.call_args.kwargs["connection_pool"]
+            service.stream_speech_pcm("Bonjour")
+            streaming_pool = adapter.call_args.kwargs["connection_pool"]
+            self.assertIs(buffered_pool, service._stream_pool)
+            self.assertIs(streaming_pool, buffered_pool)
 
     async def test_configured_speed_reaches_legacy_speech_api_once(self):
         create = AsyncMock(return_value=SimpleNamespace(content=b"RIFFsynthetic"))

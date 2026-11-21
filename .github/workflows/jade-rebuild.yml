@@ -1,10 +1,12 @@
 name: Jade rebuild offline tests
+
+# Superseded commits on the same PR/branch must not consume both runner pools.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 on:
   push:
     branches:
-      - codex/chat-gpt6-jade-rebuild
-      - research/gpt6-jade-publication-readiness-20261028
-      - codex/jade-runtime-integration-20261102
       - develop
       - main
   pull_request:
@@ -25,17 +27,36 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          # The documentation PR gate needs a true merge base with the target.
           fetch-depth: 0
+          persist-credentials: false
+      - name: Parse Windows launcher scripts
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $files = @('scripts/jade-launcher.ps1', 'scripts/jade-runner.ps1', 'scripts/install-jade-launcher.ps1')
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Join-Path $pwd $file), [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Host $_.ToString() }
+              exit 1
+            }
+          }
       - name: Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Fast tracked-source preflight (no dependencies or provider calls)
+        run: python tools/jade_ci_preflight.py
       - name: Install locked dependencies including optional transports
         run: |
           python -m pip install --disable-pip-version-check poetry==2.2.1
           poetry sync --only main --extras discord --extras mic --extras vts --extras discord-voice --no-interaction
+          poetry run python -m pip install --disable-pip-version-check tzdata
       - name: Compile Python
         run: poetry run python -m compileall -q src main.py
       - name: Run offline unit tests

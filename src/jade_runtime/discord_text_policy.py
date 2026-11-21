@@ -21,6 +21,7 @@ class _Channel:
     recent: deque[str] = field(default_factory=lambda: deque(maxlen=6))
     pending: OrderedDict[str, int | None] = field(default_factory=OrderedDict)
     sent_ids: deque[int] = field(default_factory=lambda: deque(maxlen=32))
+    participants: OrderedDict[str, float] = field(default_factory=OrderedDict)
     last_reply_at: float = float("-inf")
     last_reply_author: int | None = None
     last_unsolicited_at: float = float("-inf")
@@ -29,7 +30,7 @@ class _Channel:
 class DiscordTextPolicy:
     """Channel-isolated context, direct addressing and measured participation."""
 
-    def __init__(self, *, bot_name="Jade", auto_rate=0.30, cooldown_seconds=180,
+    def __init__(self, *, bot_name="Jade", auto_rate=0.20, cooldown_seconds=180,
                  followup_seconds=90, max_channels=128, clock=time.monotonic, rng=None):
         if (not isinstance(bot_name, str) or not bot_name.strip()
                 or not 0 <= auto_rate <= 1
@@ -67,6 +68,21 @@ class DiscordTextPolicy:
         text = incoming.text.strip()
         author = message.author
         author_id = getattr(author, "id", None)
+        # Active contributors, not all guild members or silent spectators.
+        # Solo means one verified non-bot speaker observed in this room recently.
+        stale = [uid for uid, seen in state.participants.items() if now - seen >= 600]
+        for uid in stale:
+            state.participants.pop(uid, None)
+        if (getattr(author, "bot", True) is False and type(author_id) is int
+                and author_id > 0):
+            uid = str(author_id)
+            state.participants[uid] = now
+            state.participants.move_to_end(uid)
+            while len(state.participants) > 64:
+                state.participants.popitem(last=False)
+        solo = (getattr(author, "bot", True) is False
+                and type(author_id) is int and str(author_id) in state.participants
+                and len(state.participants) == 1)
         recent = tuple(state.recent)  # Excludes the current message.
 
         mentions = getattr(message, "mentions", ()) or ()
@@ -78,9 +94,13 @@ class DiscordTextPolicy:
         ref_author = getattr(getattr(resolved, "author", None), "id", None)
         reply_to_jade = (own_user_id is not None and ref_author == own_user_id
                          or getattr(ref, "message_id", None) in state.sent_ids)
-        named = bool(re.search(r"(?<!\w)" + re.escape(self.bot_name) + r"(?!\w)",
-                               text, flags=re.IGNORECASE))
-        command = text.casefold().startswith(("!response", "!rsp"))
+        named = (not text.casefold().startswith("!jade-memoire")
+                 and bool(re.search(r"(?<!\w)" + re.escape(self.bot_name) + r"(?!\w)",
+                                    text, flags=re.IGNORECASE)))
+        command = (text.casefold().startswith(("!response", "!rsp"))
+                   or bool(re.fullmatch(
+                       r"!jade-memoire(?:\s+(?:activer|etat|autobiographie|supprimer-self|confirmer|identite|delier)(?:\s+[A-Za-z0-9._-]{1,128})?)?\s*",
+                       text, flags=re.IGNORECASE)))
         dm = getattr(message, "guild", None) is None
         direct = bool(ping or reply_to_jade or named or command or dm)
         question = text.rstrip().endswith(("?", "？"))
@@ -92,16 +112,22 @@ class DiscordTextPolicy:
                         ("et ", "mais ", "donc ", "pourquoi ", "comment ", "sinon "))))
         unsolicited = (not direct and not followup and not getattr(author, "bot", False)
                        and not text.startswith(("!", "/", "."))
-                       and question and len(text) <= 500
+                       and len(text) <= 500
                        and now - state.last_unsolicited_at >= self.cooldown_seconds
                        and self.rng.random() < self.auto_rate)
-        selected = direct or followup or unsolicited
+        # In a group, only explicit addressing bypasses the 20% sampling.
+        # Contextual follow-ups are still sampled; solo conversations are not.
+        selected = direct or solo or (followup and self.rng.random() < self.auto_rate) or unsolicited
         # Do not bill for very long messages, even when someone pings Jade.
         if len(text) > 1200:
             selected = False
 
         # Keep the source short, bounded and labelled as untrusted channel text.
-        snippet = " ".join(text.split())[:240]
+        # Confirmation tokens are one-use identity proofs, never context for
+        # later LLM turns or another speaker in this Discord room.
+        snippet = ("!jade-memoire confirmer [code masqué]"
+                   if re.match(r"^!jade-memoire\s+confirmer(?:\s|$)", text, re.I)
+                   else " ".join(text.split())[:240])
         state.recent.append(f"{incoming.author[:48]} : {snippet}")
         if not selected:
             return None

@@ -13,7 +13,7 @@ import wave
 
 LOG = logging.getLogger("jade.avatar")
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "demo/reelle/avatar.py"
+SCRIPT = ROOT / "src/jade_runtime/avatar_renderer.py"
 MODEL = ROOT / "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete"
 
 
@@ -49,15 +49,25 @@ def levels(wav):
 
 
 class Avatar:
-    def __init__(self):
+    def __init__(self, *, intent_enabled=True):
         self.process = None
         self._reader = None
         self._writer = None
         self._animation = None
-        self._pending = asyncio.Queue(maxsize=1)
+        self.intent_enabled = bool(intent_enabled)
+        # Two coalesced channels: high-frequency mouth levels cannot evict a
+        # low-frequency facial expression, and the child has only ONE writer.
+        self._wakeup = asyncio.Event()
+        self._pending_mouth = None
+        self._pending_expression = None
+        self._loop = None
+        self._intent_counts = {}
+        self._intent_generation = 0
+        self._reset_task = None
         self._active = {}
 
     async def start(self):
+        self._loop = asyncio.get_running_loop()
         if not SCRIPT.is_file() or not MODEL.is_dir():
             raise RuntimeError("Modèle r20 ou lanceur absent : utiliser un clone complet de Jade")
         options = dict(stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
@@ -86,19 +96,74 @@ class Avatar:
             raise
         return self
 
+    def _queue_mouth(self, value):
+        self._pending_mouth = max(0.0, min(1.0, float(value)))
+        self._wakeup.set()
+
     def _offer(self, value):
-        if self._pending.full():
-            self._pending.get_nowait()
-        self._pending.put_nowait(value)
+        # Discord PCM observers may run on the sound thread. Never touch an
+        # asyncio Event directly outside the renderer's owning event loop.
+        try:
+            if self._loop is not None:
+                self._loop.call_soon_threadsafe(self._queue_mouth, value)
+            else:
+                self._queue_mouth(value)
+        except RuntimeError:
+            pass  # Loop stopped during shutdown; audio still finishes safely.
+
+    def _queue_expression(self, value):
+        self._pending_expression = value
+        self._wakeup.set()
+
+    def set_intent(self, label):
+        """Show one of two known expressions, including for text-only replies."""
+        if not self.intent_enabled:
+            return
+        from .intent_engine import normalize_intent
+        from .intent_visuals import reaction_for_intent
+        label = normalize_intent(label)
+        index = self._intent_counts.get(label, 0)
+        try:
+            reaction = reaction_for_intent(label, index)
+        except (ValueError, OSError, TypeError, KeyError):
+            LOG.warning("Live2D expression palette unavailable")
+            return  # Never break text/audio delivery for an optional visual.
+        self._intent_counts[label] = index + 1
+        self._intent_generation += 1
+        self._queue_expression(reaction["expression"])
+        if self._reset_task is not None:
+            self._reset_task.cancel()
+        self._reset_task = asyncio.create_task(
+            self._reset_after_timeout(self._intent_generation))
+
+    async def _reset_after_timeout(self, generation):
+        try:
+            await asyncio.sleep(12)
+            # While an audio player is active, end/pcm_end resets the face.
+            if generation == self._intent_generation and not self._active:
+                self._queue_expression("Neutral")
+        except asyncio.CancelledError:
+            pass
 
     async def _write_loop(self):
         try:
             while True:
-                value = await self._pending.get()
-                self.process.stdin.write((json.dumps({"type": "mouth", "value": value}) + "\n").encode())
-                await asyncio.wait_for(self.process.stdin.drain(), 1)
+                await self._wakeup.wait()
+                expression, mouth = self._pending_expression, self._pending_mouth
+                self._pending_expression = None
+                self._pending_mouth = None
+                self._wakeup.clear()
+                frames = []
+                if expression is not None:
+                    frames.append({"type": "expression", "value": expression})
+                if mouth is not None:
+                    frames.append({"type": "mouth", "value": mouth})
+                if frames:
+                    packet = "".join(json.dumps(frame) + "\n" for frame in frames)
+                    self.process.stdin.write(packet.encode("utf-8"))
+                    await asyncio.wait_for(self.process.stdin.drain(), 1)
         except (BrokenPipeError, ConnectionError, OSError, TimeoutError):
-            LOG.warning("Avatar indisponible ; la voix continue sans animation")
+            LOG.warning("Avatar unavailable; voice continues without animation")
 
     def observer(self, source):
         def notify(event, wav):
@@ -118,6 +183,10 @@ class Avatar:
                 self._active.pop(source, None)
                 if not self._active:
                     self._offer(0.0)
+                    if self.intent_enabled:
+                        # Audio finished: return to neutral rather than holding
+                        # the previous emotional overlay indefinitely.
+                        self._queue_expression("Neutral")
         return notify
 
     async def _animate(self):
@@ -143,10 +212,10 @@ class Avatar:
 
     async def close(self):
         self._active.clear()
-        for task in (self._animation, self._writer):
+        for task in (self._animation, self._writer, self._reset_task):
             if task:
                 task.cancel()
-        await asyncio.gather(*(t for t in (self._animation, self._writer) if t), return_exceptions=True)
+        await asyncio.gather(*(t for t in (self._animation, self._writer, self._reset_task) if t), return_exceptions=True)
         if self.process is not None and self.process.returncode is None:
             try:
                 self.process.stdin.write(b'{"type":"stop"}\n')

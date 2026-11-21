@@ -1,0 +1,14 @@
+# Mission : mémoire Discord MP par défaut et clarification liaison PWA — 21/11/2026
+
+- **Agent / rôle :** ChatGPT, développement du service mémoire, PWA, tests et documentation.
+- **Demande directe du propriétaire :** mémoire activée par défaut pour les comptes identifiés sur Discord en serveur et en message privé ; libellés explicitant où effectuer chaque commande ; conserver le code de confirmation limité à cinq minutes et l'association durable.
+- **Backlog :** évolution explicitement demandée, sans carte existante à clôturer artificiellement ; recette physique Android/Discord à confirmer.
+- **Branche et SHA de départ :** `develop` sur `48128df80dcf096091ba38f407053e028afcb097`. Livraison directe sur `develop` demandée par le propriétaire, sans modification de `main`.
+- **Solution :** `MemoryService.ensure_auto_enrolled` accepte les MP Discord vérifiés, réutilise `MemoryStore.auto_enable` et son refus d'inscription persistant après `oublier`. Twitch demeure sur activation manuelle. Le filtrage des souvenirs et historiques par `person_id` et `scope` ne change pas.
+- **PWA :** trois étapes distinctes (commande depuis le compte Discord/Twitch, saisie sur PWA privée, confirmation depuis le même compte externe). Sur Discord la commande `identite` suffit ; sur Twitch elle suit `activer`. Le texte du bouton n'amalgame plus les cinq minutes du code à la liaison elle-même. La durée du code côté serveur reste **300 secondes**, jeton à usage unique lié à l'ID vérifié, association durable.
+- **Fichiers :** `memory_service.py`, `mobile_web/index.html`, `mobile_web/app.js`, `mobile_web/styles.css`, tests `test_jade_memory_auto_enrollment.py` et `test_jade_mobile_gateway.py`, `AGENTS.md`, `docs/handbook/{USER_GUIDE,TECHNICAL,BRANCH_STATE}.md`, changelog et cette passation.
+- **Contrôles ajoutés :** MP auto-enrôlé avec compte identifié ; refus Twitch/inconnu ; droit à l'effacement et opt-out à travers MP/serveur ; liaison depuis MP sans activation manuelle ; historiques privés distincts par salon ; vérification du TTL HTTP à 300 secondes. Les tests doivent être exécutés en CI sur le commit livré ; aucun test Discord/Tailscale/Android réel revendiqué.
+- **Passe de vérification distincte :** contrôler les changements GitHub après commit, les résultats CI, le maintien de l'effacement et le cloisonnement. Ne pas classer une recette matérielle Done sans preuve.
+- **Risques et suites :** informer les participants Discord, particulièrement les utilisateurs de MP, sur la conservation automatique. Les variables privées `JADE_MEMORY_ENABLED=0` continuent de désactiver le stockage. Une mise à jour et un redémarrage de Jade sur le PC restent nécessaires pour utiliser le code. Aucun secret, modèle Live2D ni infrastructure privée modifié.
+- **Intégration :** commit atomique prévu sur `develop`, sans fusion vers `main`.
+- **Références :** `docs/operations/CHANGELOG.md`, `docs/handbook/BRANCH_STATE.md`, `docs/handbook/USER_GUIDE.md`.

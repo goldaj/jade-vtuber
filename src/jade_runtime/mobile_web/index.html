@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1c172d">
+  <meta name="description" content="Jade, espace privé de conversation avec Goldaj.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="stylesheet" href="/assets/styles.css">
+  <title>Jade · Espace privé</title>
+  <!-- All SDK JS files must be installed LOCALLY on the PC after license review.
+       No remote CDNs or embedded proprietary Live2D libraries. -->
+  <script src="/vendor/pixi.min.js" defer></script>
+  <script src="/vendor/pixi-unsafe-eval.min.js" defer></script>
+  <script src="/vendor/live2dcubismcore.min.js" defer></script>
+  <script src="/vendor/cubism4.min.js" defer></script>
+  <script src="/assets/room-motion.js" defer></script>
+  <script src="/assets/avatar.js" defer></script>
+  <script src="/assets/duplex-client.js" defer></script>
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="mark"><span class="mark-gem">✧</span><span><b>Jade</b><small>Votre salon privé</small></span></div>
+      <div class="top-actions">
+        <span id="connection-status" class="connection" role="status">Hors connexion</span>
+        <button type="button" class="icon-button" id="fullscreen" aria-label="Plein écran" title="Plein écran">⛶</button>
+      </div>
+    </header>
+    <section class="room" aria-label="Jade et son décor animé">
+      <div class="room-art" data-paused aria-hidden="true">
+        <div class="room-plane">
+          <img src="/assets/room-spring.webp" width="1448" height="1086" alt="">
+          <div class="room-dapple"></div>
+          <canvas class="room-curtain" width="272" height="368"></canvas>
+          <div class="room-reflection"></div>
+          <div class="room-steam"><i></i><i></i><i></i></div>
+        </div>
+      </div>
+      <div id="avatar-container" aria-label="Avatar Live2D de Jade">
+        <div id="avatar-fallback" class="avatar-fallback" role="status">
+          <span class="avatar-sigil" aria-hidden="true">✧</span>
+          <span id="avatar-state">Chargement du modèle Live2D…</span>
+        </div>
+      </div>
+      <div class="room-bottom">
+        <div class="character-label"><span class="tiny-star">✧</span> Jade <span class="label-small">· à tes côtés</span></div>
+        <div class="mood-line" id="mood-line" aria-live="off">Je suis là.</div>
+      </div>
+    </section>
+
+    <section class="conversation" aria-label="Discussion">
+      <div class="chat-heading">
+        <span><span class="chat-pulse"></span> Conversation avec Jade</span>
+        <div class="chat-tools">
+          <button type="button" class="text-button" id="sound-toggle" aria-pressed="true">Voix activée</button>
+          <button type="button" class="text-button" id="new-chat">Nouveau fil</button>
+        </div>
+      </div>
+      <details class="billing-panel" id="billing-panel">
+        <summary>Suivi OpenAI</summary>
+        <p>Solde prépayé : indisponible dans l’API ; aucune alerte de solde possible. <a href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" rel="noopener noreferrer">Voir la facturation OpenAI</a></p>
+        <p>Coûts de toute l’organisation API, éventuellement publiés avec retard.</p>
+        <p>Dépenses aujourd’hui (UTC) : <strong id="billing-today">—</strong><br>Dépenses du mois (UTC) : <strong id="billing-month">—</strong></p>
+        <p id="billing-status" role="status">Ouvre ce panneau pour consulter les dépenses.</p>
+        <button type="button" id="billing-refresh">Actualiser</button>
+      </details>
+      <details class="identity-panel" id="identity-panel">
+        <summary>Associer mon compte Discord ou Twitch</summary>
+        <p>Cette association sert à faire reconnaître ton compte Discord ou Twitch par Jade. Elle n'est pas nécessaire pour activer la mémoire de l'application mobile, déjà associée au profil privé du propriétaire lorsque la mémoire est activée.</p>
+        <ol class="identity-steps">
+          <li>
+            <strong>Sur Discord ou Twitch, depuis le compte à associer (pas dans cette application mobile) :</strong>
+            <p><strong>Discord (MP ou serveur) :</strong> la mémoire s'active automatiquement dès qu'un compte identifié interagit avec Jade. Envoie seulement <code>!jade-memoire identite</code> à Jade.</p>
+            <p><strong>Twitch (chat) :</strong> envoie d'abord <code>!jade-memoire activer</code>, puis <code>!jade-memoire identite</code> à Jade.</p>
+            <p>Recopie l'identifiant <strong>numérique</strong> renvoyé par Jade, pas le pseudo du compte.</p>
+          </li>
+          <li>
+            <strong>Dans cette application mobile :</strong>
+            <p>Choisis le service du compte à associer et saisis son identifiant numérique.</p>
+            <form id="identity-link-form">
+              <label for="identity-platform">Compte externe</label>
+              <select id="identity-platform"><option value="discord">Discord</option><option value="twitch">Twitch</option></select>
+              <label for="identity-id">Identifiant numérique renvoyé par Jade</label>
+              <input id="identity-id" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,24}" required maxlength="25" autocomplete="off">
+              <button type="submit">Générer le code de confirmation</button>
+            </form>
+            <p><strong>Le code de confirmation expire au bout de 5 minutes.</strong> Il est à usage unique et lié à ce compte. <strong>L'association, une fois confirmée, n'expire pas.</strong></p>
+            <p id="identity-result" role="status" class="identity-result"></p>
+            <button type="button" id="identity-copy" disabled>Copier la commande de confirmation</button>
+          </li>
+          <li>
+            <strong>Retour sur Discord ou Twitch, depuis ce même compte :</strong>
+            <p>Envoie à Jade la commande <code>!jade-memoire confirmer [code généré]</code> fournie par l'application mobile, avant l'expiration du code. Les souvenirs condensés des comptes liés peuvent être retrouvés sur mobile, au micro PC et en MP Discord. Les salons publics et les historiques complets restent isolés.</p>
+          </li>
+        </ol>
+        <p>Depuis Discord ou Twitch, <code>!jade-memoire delier</code> sépare les comptes sans effacer leurs souvenirs ; <code>!jade-memoire oublier</code> efface les données du compte concerné.</p>
+      </details>
+      <div class="messages" id="messages" role="log" aria-live="polite" aria-label="Historique de la discussion">
+        <div class="welcome">Bienvenue chez nous. Parle-moi ou écris-moi, comme tu préfères.</div>
+      </div>
+      <form id="composer" class="composer">
+        <button type="button" id="mic" class="mic" aria-label="Démarrer l'enregistrement vocal" aria-pressed="false" title="Parler à Jade">🎙</button>
+        <label class="visually-hidden" for="message">Ton message</label>
+        <textarea id="message" rows="1" maxlength="1200" placeholder="Écris à Jade…" autocomplete="off"></textarea>
+        <button type="submit" id="send" class="send" aria-label="Envoyer le message">➤</button>
+      </form>
+      <div class="footer-status" id="status" role="status">Connecte-toi pour commencer.</div>
+    </section>
+  </main>
+  <div id="auth-modal" class="auth-layer" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+    <form id="auth-form" class="auth-card">
+      <div class="auth-icon" aria-hidden="true">✧</div>
+      <h1 id="auth-title">L'espace privé de Jade</h1>
+      <p>Réservé à Goldaj. Connecte ton téléphone à Tailscale, puis saisis le jeton privé du client mobile.</p>
+      <label for="auth-token">Jeton d'accès</label>
+      <input id="auth-token" type="password" required minlength="32" maxlength="256" autocomplete="off" spellcheck="false" placeholder="Jeton privé de Jade">
+      <button class="unlock" type="submit">Entrer dans le salon</button>
+      <small>Le jeton reste uniquement en mémoire pendant cette session. Il n'est jamais sauvegardé sur ton téléphone.</small>
+    </form>
+  </div>
+</body>
+</html>

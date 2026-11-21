@@ -1,58 +1,132 @@
-# Guide utilisateur complet : branche main
+# Guide utilisateur de toutes les fonctions : develop
 
-**Important :** seules les possibilités présentes dans le code de **main** sont décrites ici. Les commandes de `develop`, sa PWA et sa mémoire persistante ne s'appliquent pas. Avant le premier usage, suivre [INSTALLATION.md](INSTALLATION.md). Une fonction externe est opt-in : elle n'est ni ouverte ni connectée par défaut.
+**Documentation correspondant au runtime de develop.** [Installation](INSTALLATION.md), [démo Express](DEMO.md) et [état exact de cette branche](BRANCH_STATE.md). Le produit ne demande **jamais à l'utilisateur de choisir le support à activer** : le launcher démarre tous les canaux ensemble, Jade choisit l'ordre de traitement. Les drapeaux de services individuels demeurent dans le CLI pour les diagnostics, pas comme profils du launcher.
 
-## 1. Découvrir Jade sans connexion ni installation lourde
+## 1. Démonstration immédiate, sans compte
 
-- Sous Windows, double-cliquer `Installer-Demo-Express.cmd`, puis ouvrir « Jade Demo Express » dans le menu Démarrer : portrait stylisé et répliques pré-écrites, totalement hors ligne. Voir [DEMO.md](DEMO.md).
-- Pour essayer le *vrai moteur* avec dialogue simulé : `poetry run python main.py`, écrire un message et sortir par `/exit`. Les réponses portent « Mode démo » et sont générées localement, sans IA.
+Installer `Installer-Demo-Express.cmd` sur Windows, puis menu Démarrer → **Jade Demo Express**. Interface graphique, portrait dessiné et dialogues **simulés** ; aucun coût, voix, connexion ni données persistantes. Utilisation directe : `Lancer-Demo-Express.cmd`. Pour la simulation interne du vrai runtime, installer Python/Poetry et lancer `poetry run python main.py` (message « Mode démo »). Ces options sont des **démos**, pas une désactivation du multi-support dans le produit opérationnel.
 
-## 2. Discuter avec Jade en console via l'API OpenAI
+## 2. Démarrer la vraie Jade sur Windows
 
-**Prérequis :** `OPENAI_API_KEY` dans un fichier privé, `JADE_SECRETS_FILE` pointant vers ce fichier, internet et compte API avec crédit. `poetry run python main.py --preflight --live`, puis `poetry run python main.py --live`. Saisir un texte puis Entrée ; `/exit` ou `/quit` pour quitter. Un abonnement ChatGPT ne remplace pas un budget d'API.
+Après préparation de tous les connecteurs et validation locale, ouvrir `D:\Jade\launcher\Lancer-Jade.cmd`, choisir **la branche Git**, cliquer **« Mettre à jour et lancer toute Jade »**. Le launcher fait fetch/fast-forward, LFS, vérification Poetry, préflight puis démarre **une instance** de `poetry run python main.py --all-channels`. Pas de profils Discord/micro/mobile, pas de priorité accordée à un canal. Utiliser **Ctrl+C** dans la console pour arrêter proprement. Si Jade refuse de démarrer, relever le préflight et réparer le connecteur indiqué, pas sélectionner un mode partiel.
 
-**Comportement :** contexte tenu par session en mémoire du processus ; la console ne conserve pas une mémoire durable entre démarrages sur main. Les modèles sont paramétrés par `JADE_LLM_MODEL`, `JADE_STT_MODEL`, `JADE_TTS_MODEL`. Leur disponibilité réelle et leur tarification peuvent changer : le préflight ne valide pas l'accès distant à ces modèles.
+Un launcher installé hors Git ne se met pas à jour tout seul : réinstaller une fois via `Installer-Launcher-Jade.cmd` après modification de ses scripts. Il cible le disque **D:** du PC propriétaire ; un clone tiers peut utiliser la Démo Express ou une installation Python sans launcher.
 
-## 3. Personnalité, réponses et sessions
+## 3. Dialoguer sur Discord écrit
 
-La personnalité est chargée par `src/jade_runtime/assets.py`, depuis les fichiers de prompt autorisés. Les profils publics sont sous `config/profiles/` ; les paramètres privés peuvent prendre le dessus. Jade filtre les messages qu'elle doit traiter : demande forcée, préfixes `!response` / `!rsp`, mention du nom du bot ou réponse aléatoire si `JADE_RANDOM_REPLY_RATE` est supérieur à zéro. Par défaut, le taux aléatoire global du moteur est nul ; les politiques propres aux plateformes peuvent ajouter un comportement spécifique. Les conversations sont isolées selon leur session/salon et stockées **temporairement en RAM**, pas dans une base persistante.
+Ajouter le bot sur un serveur avec permissions/intents appropriés, configurer le token privé, activer le moteur complet. Jade reçoit et traite les messages écrits accessibles, répond dans le canal source quand c'est pertinent. Le comportement spontané Discord textuel est réglable via `JADE_DISCORD_TEXT_AUTO_RATE` (défaut 20 %) et `JADE_DISCORD_TEXT_COOLDOWN_SECONDS` (défaut 180 s). Mention, appel direct, contenu et politique interviennent. Le taux d'intervention n'est **pas une priorité d'ordonnancement sur le mobile ou le micro**.
 
-## 4. Lire et répondre sur Discord écrit
+Vérifier dans Discord que les messages privés ne sont pas diffusés oralement dans un canal public. La connexion n'est pas une preuve d'autorisation de lire ou diffuser tout contenu.
 
-**Prérequis :** bot Discord créé, token `DISCORD_TOKEN`, permissions suffisantes et extras `-E discord` ; démarrage `poetry run python main.py --live --discord`. Les événements de salons accessibles et les messages privés pris en charge sont transformés en `Incoming` ; le moteur décide si Jade répond. La participation automatique texte est réglable par `JADE_DISCORD_TEXT_AUTO_RATE` (base 30 %) et `JADE_DISCORD_TEXT_COOLDOWN_SECONDS` (base 180 s). La réponse est adressée au canal de la demande. Ne pas publier de jeton bot, ni faire entrer le bot dans un serveur sans autorisation. Contrôler intents/permissions réels dans Discord avant de conclure que cela fonctionne.
+## 4. Converser sur Discord vocal
 
-## 5. Recevoir la voix sur Discord et répondre oralement
+Configurer un salon vocal initial `DISCORD_VOICE_CHANNEL`, les droits du bot, le transport Discord et FFmpeg ; la voix de l'utilisateur est envoyée à STT OpenAI, la réponse suit le moteur puis TTS. Il n'est pas nécessaire de prononcer systématiquement « Jade » si les politiques du dialogue et du pont vocal autorisent la participation. Vérifier sur un vrai serveur la capture, les changements de canal, la lecture et le comportement à la déconnexion. Les canaux audio/écrit Discord peuvent partager une identité de conversation contrôlée par la session ; le pont ne prouve pas l'identité d'une personne par son pseudo seul.
 
-**Prérequis :** Discord configuré, salon vocal numérique `DISCORD_VOICE_CHANNEL`, permissions de rejoindre/parler, dépendances `-E discord-voice`, FFmpeg, compte OpenAI actif. Contrôle : `poetry run python main.py --preflight --live --discord --voice --discord-voice`. Exécution : mêmes drapeaux sans `--preflight`. L'application utilise le codec/transport Discord et la transcription OpenAI. La politique de session, les membres présents et la déconnexion sont à vérifier sur le serveur réel. Une mauvaise configuration, DAVE incompatible ou un changement de salon peut interrompre la réception. Les échanges audibles et transcriptions de tiers nécessitent leur information/consentement adapté.
+## 5. Twitch : lecture et réponse écrite
 
-## 6. Lire et répondre dans un chat Twitch
+Configurer `TWITCH_CHANNEL`, `TWITCH_TOKEN`, éventuellement `TWITCH_BOT_LOGIN`, et **`JADE_TWITCH_ENABLED=1`, `JADE_TWITCH_SEND=1`**. Jade lit les messages IRC du salon, sélectionne les messages auxquels répondre et envoie ses réponses avec une limitation de débit. L'activation d'un client IRC ne garantit pas l'envoi : vérifier OAuth, scope, token, profil du bot et ses droits réels. L'autorenouvellement est une configuration distincte documentée dans `docs/operations/reference/TWITCH-AUTH.md`.
 
-Configurer `JADE_TWITCH_ENABLED=1`, `TWITCH_TOKEN` et `TWITCH_CHANNEL`; `TWITCH_BOT_LOGIN` peut être indiqué explicitement. L'envoi des réponses nécessite en plus `JADE_TWITCH_SEND=1`. Exécuter `poetry run python main.py --preflight --live --twitch`, puis retirer `--preflight`. Le transport est IRC/TLS, les événements textuels sont filtrés, le rythme de sortie est limité par le code. Pour rotation OAuth, consulter `docs/gpt6-jade/TWITCH-AUTH.md`. Ne pas traiter un jeton expiré comme un problème du dialogue.
+## 6. Microphone et voix du PC
 
-## 7. Parler depuis le microphone Windows
+Le microphone local est considéré comme l'entrée du propriétaire Goldaj, à condition d'être employé dans l'environnement privé de son PC. Jade écoute et transcrit en OpenAI STT ; la synthèse vocale utilise OpenAI TTS avec sortie `JADE_AUDIO_OUTPUT=ffplay` pour le retour local. Vérifier le périphérique par défaut, les permissions Windows, les boucles d'écho et les droits du micro. La capture attend la fin de **sa propre réponse**, pas l'épuisement de toutes les conversations Twitch/Discord/mobile.
 
-Installer `-E mic`, autoriser l'accès au micro du système, fournir une clé OpenAI et un périphérique de capture. `poetry run python main.py --live --mic` démarre l'écoute ; l'audio qualifié est transmis au STT puis au dialogue. La démo Express n'ouvre jamais le micro. Les caractéristiques de capture (détection de voix, durée et seuils) sont dans `microphone.py` et `voice_pipeline.py` ; contrôler les retours d'écho et les appels API réels avant usage prolongé. Avec le paramètre `--voice`, configurer également `JADE_AUDIO_OUTPUT=ffplay` et le lecteur adéquat.
+Un son entendu dans un canal privé ne doit pas être lu publiquement sur Discord ni injecté dans les sous-titres OBS en raison de l'activation simultanée des sorties.
 
-## 8. Entendre la synthèse vocale et afficher les sous-titres OBS
+## 7. Application Android privée Jade
 
-`--voice` active la synthèse OpenAI ; `JADE_AUDIO_OUTPUT=ffplay` dirige la lecture locale (ou le système Discord vocal utilise son pont). La voix, la vitesse, le modèle se règlent par `JADE_TTS_VOICE`, `JADE_TTS_SPEED` et `JADE_TTS_MODEL` (valeurs de cette branche vérifiables dans `config.py`). La piste sonore est envoyée au lecteur configuré, non à tous les canaux de manière garantie. `JADE_SUBTITLE_PATH` définit un fichier de sous-titres utilisé par OBS (lecture d'un fichier texte) ; il doit être inscriptible et peut contenir temporairement des paroles. Vérifier la confidentialité avant une diffusion publique. Les erreurs STT/TTS peuvent coûter des requêtes déjà commencées.
+**Pas d'APK.** Installer Tailscale sur Android, rejoindre le même tailnet privé que le PC. Sur le PC, Codex doit configurer Tailscale Serve HTTPS vers le service mobile `127.0.0.1:8766`, l'identité propriétaire `JADE_MOBILE_OWNER_LOGIN`, l'origine HTTPS `JADE_MOBILE_PUBLIC_ORIGIN` et le token différent `JADE_MOBILE_TOKEN` (32-256 caractères). Ouvrir l'adresse Serve **réellement affichée** dans Chrome, saisir le jeton dans l'écran d'accès, menu `⋮` → **Installer l'application** ou **Ajouter à l'écran d'accueil**. Le jeton n'est pas conservé après rechargement complet. Il ne doit pas figurer dans l'URL.
 
-## 9. Avatar Live2D local autonome
+La PWA permet :
+- **Texte** : rédiger/envoyer un message et voir la réponse ; session de discussion conservée pendant l'usage de la page.
+- **Voix** : appuyer pour enregistrer, toucher à nouveau pour envoyer, durée maximale 20 s ; permission microphone Chrome/Android obligatoire ; STT et TTS exécutés par le PC. **Pas d'écoute continue/interruptions WebRTC**.
+- **Synthèse vocale** : bouton « Voix activée / Voix coupée ». Couper la voix évite un TTS mobile inutile.
+- **Avatar** : visage r20 sur fond transparent avec décor illustré et animé, expressions et bouche approximativement animées par l'audio **si le SDK Web compatible est installé sur D:**. Si le SDK manque ou n'est pas compatible, le chat peut rester accessible mais l'avatar sera absent.
+- **Nouveau fil / plein écran** : nouveau contexte de dialogue mobile ou affichage agrandi.
+- **Sécurité** : réseau privé Tailscale, identité utilisateur vérifiée et jeton Bearer ; sans ces deux éléments, refus 403/401. Ne pas activer Funnel ni modifier le VPS Hyperliquid.
 
-`--avatar` démarre le processus d'avatar via `src/jade_runtime/avatar.py` et le modèle r20. Installer les extras `-E avatar`, effectuer `git lfs pull`, vérifier `poetry run python jade-modeling/verify_assets.py` et le pilote OpenGL. Le composant reçoit des observations de lecture audio pour les mouvements. Il est séparé de la **Démo Express**, qui n'utilise pas Live2D, et du modèle r21 encore en travail. La présence des fichiers et l'import Python ne prouvent pas le rendu réel à l'écran.
+La PWA n'utilise pas le VPS de trading. **PC arrêté ou Jade non exécutée = application indisponible**, même si Tailscale Android est actif. Le guide pas-à-pas complet pour Codex sur le PC est `docs/history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md`.
 
-## 10. Relier VTube Studio
+## 8. Avatar Live2D Windows et affichage VTube Studio
 
-`--vts` parle à l'API WebSocket **locale** de VTube Studio. Le logiciel doit être installé et démarré séparément avec son API activée. Configurer `JADE_VTS_ENABLED=1`, `JADE_VTS_TOKEN`, facultativement `JADE_VTS_URL` (par défaut loopback) et `JADE_VTS_SPEAK_HOTKEY`. L'extra `-E vts` apporte WebSocket. On peut utiliser l'avatar r20 autonome sans VTube Studio. Ne pas publier le token VTS ni changer le bind vers internet.
+L'avatar autonome r20 Windows est lancé par `--all-channels`, dépend du modèle local restauré par `git lfs pull`, de `live2d-py`, Pygame/OpenGL et du GPU. Les mouvements sont liés aux événements audio. **VTube Studio est une autre sortie** : si `JADE_VTS_ENABLED=1` et `JADE_VTS_TOKEN` sont configurés et que son application est déjà ouverte, Jade peut piloter ses hotkeys. Ne pas installer VTube Studio juste pour faire fonctionner l'avatar autonome.
 
-## 11. Interface Web/API locale texte
+Le modèle r21 et certains assets artistiques en cours ne doivent pas être présentés comme un r20 validé en production.
 
-`--http` active un serveur **loopback seulement** sur `127.0.0.1:8765` par défaut. Configurer `JADE_HTTP_ENABLED=1`, un `JADE_HTTP_TOKEN` indépendant de **32 caractères minimum**, et éventuellement `JADE_HTTP_PORT`. Démarrer avec `poetry run python main.py --live --http`. Ouvrir la page locale sur le **PC** : elle possède un champ jeton privé en mémoire de session du navigateur, et envoie `POST /message` avec un JSON `text` / `session` et un en-tête `Authorization: Bearer`. Aucun token n'est placé en cookie ni dans localStorage. Pour accéder depuis un téléphone, un accès sécurisé supplémentaire est indispensable, mais ce n'est **pas** la PWA moderne de `develop`.
+## 9. Voix Étincelle, intentions et rendu émotionnel
 
-## 12. Diagnostic, changement de paramètres et reprise
+La branche contient un moteur `intent_engine.py` : Jade émet un préfixe strict `[INTENT:label]` qui est retiré avant affichage, prononciation et mémorisation. Une intention reconnue guide la prosodie de façon encadrée. La voix publique par défaut documentée est **Étincelle** avec `shimmer` et vitesse 1,25× ; le pitch +2 demi-tons est produit en traitement audio DSP lorsque FFmpeg prend en charge `rubberband`. Ne pas confondre pitch DSP avec un paramètre magique de l'API OpenAI. Des alternatives vocales Friponne/Rosée existent dans la documentation, pas forcément accessibles par un sélecteur utilisateur.
 
-- Toujours commencer par `poetry run python main.py --preflight` suivi, si nécessaire, des drapeaux activés. Aucun appel de fournisseur n'est effectué par le préflight.
-- Contrôler `JADE_SECRETS_FILE` et les variables de l'environnement du processus qui prennent priorité sur le fichier privé.
-- Installer un extra Poetry manquant ; ne pas désactiver silencieusement la sécurité d'un connecteur pour masquer une erreur.
-- À l'arrêt, vérifier que les tâches Discord/Twitch/audio se terminent ; le runtime impose une borne temporelle. Les messages encore en file peuvent être annulés.
-- Les tests automatiques ne valident pas le réseau et les périphériques physiques. En cas de problème, relever l'étape, l'heure, le message d'erreur **sans token** et consulter [TECHNICAL.md](TECHNICAL.md).
+Les nuances émotionnelles et la qualité sonore exigent un **test d'écoute réel**. Elles peuvent varier selon la réponse, le moteur TTS et la latence.
+
+## 10. Mémoire persistante et Core Memories
+
+### Demander à Jade de retenir un souvenir (DEV-011)
+
+Depuis le microphone, la PWA ou un canal de discussion autorisé, on peut demander en **langage naturel** à Jade de mémoriser un fait. Exemples, à dire ou écrire :
+
+- « Jade, retiens que notre projet a commencé aujourd’hui. »
+- « Jade, souviens-toi que nous avons trouvé une bonne idée. »
+- « Jade, garde ce souvenir : nous avons terminé le prototype. »
+- Même « Jade, ajoute à tes Core Memories : notre première conversation » crée **uniquement un souvenir ordinaire** ; Jade répond clairement qu’elle choisit elle-même ses Core Memories.
+
+**Règle fondamentale :** une demande humaine, y compris celle de Goldaj, ne crée **jamais** une Core Memory profonde (`core_self` ou `core_relationship`). Jade seule en décide au travers de son mécanisme de curation autonome, selon la valeur réelle du dialogue, indépendamment de toute consigne de l’interlocuteur. Une demande de souvenir reconnue est enregistrée en SQLite dans `memories` avec `kind=ordinary`, **durée de conservation de 365 jours par défaut** et isolement selon le profil et le salon. L’opération est déterministe et ne dépend pas du modèle de conversation ; Jade ne confirme que si l’écriture en base réussit, avec signalement des doublons ou des échecs. Le contenu secret ou manifestement sensible à l’accès est refusé.
+
+La mémoire du compte doit être active. Sur Discord, en serveur comme en message privé, elle s'active automatiquement lors des interactions admissibles pour les comptes identifiés ; sur Twitch il faut utiliser `!jade-memoire activer`. Le micro local et la PWA propriétaire partagent leur profil authentifié. Aucun surnom ne prouve une identité. Il n'existe plus de commande d'oubli global ni de blocage de réinscription Discord ; la suppression ciblée des Core Memories reste disponible.
+
+**Consultation et droit à l’effacement des Core Memories existantes :** le propriétaire peut toujours consulter les souvenirs autobiographiques privés via `!jade-memoire autobiographie` et les supprimer avec `!jade-memoire supprimer-self <identifiant>`. Les Core Memories relationnelles privées peuvent être listées avec `!jade-memoire lister-core` et supprimées avec `!jade-memoire supprimer-core <identifiant>`. Ces commandes n’autorisent pas à écrire de nouvelles Core Memories et ne rendent aucun contenu privé visible dans un salon public.
+
+Cette fonctionnalité suppose `JADE_MEMORY_ENABLED=1`. Toute valeur privée explicite `0` continue de désactiver la mémoire jusqu’à modification et redémarrage de Jade.
+
+
+En mode réel, la mémoire SQLite **et sa curation** sont activées par défaut. Le fichier privé est placé hors du dépôt : `D:\\Jade\\private\\jade-memory.sqlite3` sous Windows si D: existe, sinon `~/.jade/jade-memory.sqlite3`. Le chemin est personnalisable avec `JADE_MEMORY_DB_PATH`. **Les valeurs explicites `0` dans le `.env` privé ou les variables du processus restent prioritaires** ; les retirer ou les changer pour retrouver les valeurs par défaut, puis redémarrer Jade. Le mode démo hors ligne ne crée pas de base. Les souvenirs ordinaires expirent après **365 jours**, contrairement aux Core Memories du niveau 3 qui ne subissent aucune purge temporelle. Le niveau 1 en base est purgé après **7 jours** et les reprises chargent intégralement les **24 dernières heures** par profil/salon. La première ouverture de l'ancienne base SQLite étend les expirations ordinaires existantes à 365 jours depuis leur date de création (sans restaurer les souvenirs déjà supprimés). Sur **Discord (serveur, vocal ou message privé)**, les comptes identifiés sont inscrits à la mémoire dès leur première interaction effectivement traitée : aucune commande d'activation nécessaire. Cette politique suppose que les participants, y compris les correspondants en MP, ont été informés de la conservation des échanges. **Twitch** conserve l'activation explicite via `!jade-memoire activer`. Tout compte vérifié peut utiliser `!jade-memoire etat`. La commande d'oubli global et le blocage de réinscription Discord ont été retirés. Le simple pseudo affiché ne vaut jamais preuve d'identité.
+
+**Une fois les comptes liés**, les souvenirs sélectionnés (ordinaires et Core relationnelles) peuvent être rappelés d'un support à l'autre **en privé**. Exemple : Jade peut se souvenir dans la PWA d'un fait enregistré sur Discord, et retrouver en MP Discord un souvenir enregistré depuis le mobile. Le même utilisateur doit avoir été identifié et lié. **En serveur public ou sur Twitch, Jade ne charge pas les souvenirs issus d'autres salons**, notamment les confidences privées. Les échanges complets des dernières 24 h restent attachés à leur salon ; seuls les souvenirs résumés sont partagés en privé. L'autobiographie strictement privée de Jade demeure réservée au propriétaire.
+
+Pour **associer un compte Discord/Twitch au mobile**, envoyer `!jade-memoire identite` depuis le compte Discord à associer (MP ou serveur) ; sur Twitch, envoyer d'abord `!jade-memoire activer`, puis `!jade-memoire identite`. Dans la PWA privée, choisir la plateforme et coller l'ID numérique indiqué. Le mobile génère une commande `!jade-memoire confirmer [code]` à envoyer **depuis le compte Discord/Twitch correspondant**, dans les **5 minutes**. C'est le **code** qui expire, pas l'association confirmée : elle dure jusqu'à `!jade-memoire delier`. La liaison ne partage pas les souvenirs privés d'un salon avec un autre.
+
+Le microphone local et le client Android propriétaire authentifié peuvent retrouver le profil Goldaj commun. Le curation optionnelle par LLM peut générer un **appel supplémentaire** pour décider si un fait devient un souvenir ordinaire ou fondateur. Les souvenirs ne constituent pas une preuve objective que Jade a réellement « vécu » un événement. La sauvegarde/restauration SQLite se fait via `memory_transfer.py`, sans écraser un fichier existant. Plus d'informations dans `docs/history/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md`.
+
+## 11. Conversations unifiées et autobiographie
+
+Les améliorations de `develop` font correspondre certaines interventions Discord écrites/orales à un même contexte de session validé, sans ouvrir automatiquement l'historique privé à tous les canaux. Une déconnexion ou un changement de session peut créer une nouvelle clé. Des mécanismes d'autobiographie et de mémoire de Jade ont été intégrés, mais leur niveau de curation, origine et confidentialité doivent être vérifiés au code. Une discussion privée du propriétaire ne doit pas devenir une anecdote publique.
+
+## 12. Arbitrage autonome entre tous les canaux
+
+Tous les supports partagent une **file bornée**. Quand plusieurs conversations indépendantes attendent, Jade choisit l'identifiant du prochain tour selon contenu, attente et urgence **sans poids fixe pour Discord/Twitch/mobile/PC**. Elle préserve l'ordre d'un même fil et applique un repli FIFO si le modèle d'arbitrage échoue ou dépasse son délai, ainsi qu'une règle anti-attente trop longue. Cet arbitrage peut entraîner un coût API supplémentaire. Il ne génère pas plusieurs réponses en parallèle : le moteur exécute un tour à la fois et ne coupe pas un tour déjà commencé. La probabilité de réponse sur Discord n'est pas une priorité de service.
+
+## 13. API HTTP locale et interface PC
+
+Une API textuelle locale authentifiée existe distinctement de la PWA. Elle écoute `127.0.0.1:8765` par défaut, exige `JADE_HTTP_ENABLED=1` et `JADE_HTTP_TOKEN` (32+ caractères), avec endpoint `POST /message` et `Authorization: Bearer`. Le client HTML local peut servir au diagnostic sans ouvrir un port public. Le token HTTP **ne doit pas** être identique au token PWA. La réponse est dirigée vers l'appelant local et n'a pas à être diffusée automatiquement sur Discord.
+
+## 14. Sous-titres OBS, supervision, arrêt et diagnostic
+
+Les sous-titres temporaires sont écrits sur `JADE_SUBTITLE_PATH` et effacés à la fin de la lecture ; ne pas les confondre avec un archivage des conversations. Les réponses micro/HTTP privées ne doivent pas y être affichées lors d'une diffusion publique. Les journaux de conversation structurés peuvent contenir de la provenance et du texte : configurer leur accès et durée de conservation avec prudence.
+
+En cas de panne : contrôler la console de lancement, les erreurs `--preflight --all-channels`, les connexions réelles, les périphériques et les tokens privés **sans les coller dans un ticket**. Sur Android, 403 signifie typiquement identité Serve, 401 jeton Bearer ; un rendu absent évoque SDK Web ou modèle LFS. Arrêter par `Ctrl+C`, pas par suppression forcée de toutes les tâches du PC. Voir [INSTALLATION.md](INSTALLATION.md) et [TECHNICAL.md](TECHNICAL.md).
+
+## 15. Réactions émotionnelles du modèle 2D (nouveau sur develop)
+
+Quand Jade renvoie une intention valide `neutral`, `playful`, `excited`, `curious`, `tender`, `reassuring` ou `serious`, le modèle 2D Windows reçoit une commande d'expression ; la PWA propriétaire affiche une expression (si Live2D Web est compatible) et une **courte indication textuelle d'humeur**. Deux variantes A/B tournent entre deux réponses successives de même intention. C'est un complément visuel : la phrase réellement dite ou écrite par Jade reste inchangée. Le rendu fonctionne aussi en réponse **écrite sans voix** ; la bouche continue d'être synchronisée sur le son quand il y en a. La réaction s'efface après la fin de lecture ou 12 secondes sans son pour revenir à l'Idle neutre. Les sept expressions de premier choix sont distinctes, mais la palette r20 limitée implique des réutilisations pour la variante B.
+
+**Activation :** `JADE_AVATAR_INTENT_ENABLED=1` dans la configuration privée sur le PC (défaut). Pour couper les réactions émotionnelles sans toucher à la voix ni au lip-sync : `JADE_AVATAR_INTENT_ENABLED=0`. Redémarrer Jade, recharger la PWA ; il n'existe pas encore de bouton ON/OFF à chaud sur l'application mobile. En mode coupé, la détection vocale des intentions continue pour le TTS. Les 14 textes sont de simples libellés sur la PWA, jamais envoyés à Discord/Twitch ou prononcés. En cas d'échec du rendu, la conversation doit continuer. **Les 14 véritables animations propres (deux par intention) sont le prochain chantier de création de motions Live2D, pas un résultat déjà livré.** Voir la [passation Codex](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md) et prévoir un test visuel PC/Android.
+
+## Dialogue, mémoire et fréquence des réponses — develop, 15 novembre 2026
+
+La personnalité active de Jade est le texte exact approuvé par Goldaj dans `prompt_chat.txt`. La génération utilise par défaut GPT-6 Luna en `low`, plafond 320 tokens de complétion (incluant le raisonnement interne). Le moteur d'intentions existant ajoute puis masque son tag séparément ; rien ne change à la syntaxe `[INTENT:...]`.
+
+**Conversation individuelle :** Jade répond aux messages valides du propriétaire sur le micro PC, le mobile privé et l'API locale. Sur Discord texte/vocal et Twitch, le tête-à-tête est déterminé par les participants **observés** ; seul un participant humain actif -> réponse systématique. **En groupe :** sélection probabiliste des tours spontanés admissibles : 20 % sur Discord et 30 % sur Twitch, avec exceptions pour les interpellations explicites et les règles de commande, de suivi, de silence, de cooldown et de saturation. Twitch ne voit pas ses spectateurs silencieux via IRC. Le texte Discord maintient un historique des participants actifs du salon sur dix minutes.
+
+**Conservation :** l'inscription est automatique pour les membres identifiés d'un serveur Discord qui échangent avec Jade, sans commande préalable ; Twitch requiert toujours `!jade-memoire activer` ; les MP Discord vérifiés sont inscrits automatiquement. La mémoire et sa curation sont activées par défaut sur le runtime réel, sauf paramètres privés contraires. Les réponses livrées sont conservées avec le message utilisateur **en texte intégral**, et non résumées, dans la base SQLite privée. Tous les échanges des **dernières 24 heures** d'un même profil et salon sont rechargés à la reprise d'une session, **sans plafond de nombre**. Les échanges complets sont supprimés de SQLite après **7 jours** ; l'historique éphémère hors SQLite reste borné. La purge se déclenche au démarrage et toutes les heures pendant le fonctionnement réel. La quantité de texte réinjectée peut toutefois dépasser les limites de contexte du modèle conversationnel lors de journées très chargées. Les messages publics auxquels Jade n'a pas répondu ne sont pas automatiquement archivés par cette fonction. La commande d'effacement global a été supprimée. Les commandes de suppression individuelle des Core Memories restent disponibles. `!jade-memoire delier` sépare les profils **sans effacer les données**. Les cas anciens où plusieurs comptes d'un même service sont liés peuvent nécessiter une séparation manuelle ; la suppression ne couvre pas les journaux console séparés.
+
+Les **deux variantes faciales et textuelles par intention** sont présentes dans le code r20/PWA. Les **14 motions corporelles originales** restent un projet artistique : [contrat Live2D](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+
+## Sauvegardes et incidents (15/11/2026)
+
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Les versions de schéma mémoire 1, 2, 3 et 4 sont prises en charge par la fonction d'export/import portable, sous réserve des tests du SHA exécuté. L'export ZIP est en clair et peut conserver des données même après leur suppression de Jade : garder les archives hors Git, appliquer une durée de conservation et vérifier les restaurations en environnement isolé. En cas de CI rouge, ne pas considérer la simple présence d'un fichier ou de sa documentation comme une fonctionnalité validée.
+
+Les travaux futurs, sans doublon avec ce guide utilisateur, sont centralisés dans le [catalogue](../ameliorations/README.md).
+
+
+## Association de comptes à la mémoire personnelle
+
+Lorsque la mémoire est active (par défaut sur le runtime réel), le compte Discord de serveur est automatiquement inscrit lors de sa première interaction traitée ; pour Twitch, utiliser `!jade-memoire activer` ; les MP Discord sont automatiques. Demander ensuite son ID numérique avec `!jade-memoire identite`. Depuis **la PWA privée de Goldaj**, ouvrir « Associer un compte Discord / Twitch », saisir l'**ID numérique** du compte, puis copier la commande `!jade-memoire confirmer <code>` vers le chat **de ce même compte** dans les cinq minutes. La confirmation est à usage unique et liée à cet ID ; elle ne fusionne pas les historiques de salons indépendants. Sur un compte lié, `!jade-memoire delier` conserve les souvenirs mais sépare les profils ; la suppression individuelle des Core Memories demeure possible. Les données du propriétaire et des autres comptes restent distinctes. Voir [la passation technique du 16 novembre](../operations/handoffs/2026-11-16-chatgpt-pcm-memoire-mobile.md).

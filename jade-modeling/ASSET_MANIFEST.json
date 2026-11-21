@@ -2,10 +2,34 @@
   {
     "path": "jade-modeling/CONTINUATION.md",
     "source_group": "current-documentation",
-    "bytes": 4673,
-    "sha256": "74e2c22e0e4b5de136ec49cfafeacdd4f49d61f35a740417794cb6f09325aa47",
+    "bytes": 8848,
+    "sha256": "a2a353b66e7ba1e2965969b0aa7b1009463fdc263d2f921d7a094a1f1add3610",
     "storage": "git",
     "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_shoulder_underpaint_v31_candidate.cmo3",
+    "source_group": "current-model-candidate",
+    "bytes": 31143973,
+    "sha256": "39c00ecc82468b70004590e6e8ec549c7c16150a03341a322cb5a223a7ceba8c",
+    "storage": "git-lfs",
+    "selection_reason": "Native checkpoint candidate with shoulder underpainting, incomplete and not yet finally validated"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/Jade_r21_rear_hair_underpaint_candidate_v1.png",
+    "source_group": "current-art-input",
+    "bytes": 1321342,
+    "sha256": "3a402867e3cb697cf1b2581f4f5481b9eeb669ef3e447a1ac64bfdf362b0ea93",
+    "storage": "git-lfs",
+    "selection_reason": "Generated underpainting source for the shoulder checkpoint candidate"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_shoulder_hair_underpaint.py",
+    "source_group": "current-model-tool",
+    "bytes": 6054,
+    "sha256": "6a734b80b6046625c57111de184bb3e495625e14e29d03d11ce479db78f300b4",
+    "storage": "git",
+    "selection_reason": "Reproducible builder for the underpainting candidate"
   },
   {
     "path": "jade-modeling/PLAN_MODELE_JADE.md",
@@ -1606,6 +1630,22 @@
     "sha256": "3b0fb6b0efc5a766d666cc2c0db4f4c8994e1a27efa824c044e58bec6b387ecd",
     "storage": "git",
     "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_split_model_images_v31.py",
+    "source_group": "current-tools",
+    "bytes": 8320,
+    "sha256": "1b1a463755f2130556e242df719ad30c2f94fd546378afd6b034118ca917f3da",
+    "storage": "git",
+    "selection_reason": "Dependency of current cropped-atlas working model builder"
+  },
+  {
+    "path": "jade-modeling/tools/cmo3_r21_atlas_crop_working.py",
+    "source_group": "current-tools",
+    "bytes": 6561,
+    "sha256": "d8999c4818a3cef5834e150dd2c3e5729584337b6653e021c6853807ed40892d",
+    "storage": "git",
+    "selection_reason": "Current unvalidated working-model builder for per-part atlas crops"
   },
   {
     "path": "jade-modeling/tools/vts_toggle_matrix_r20.py",

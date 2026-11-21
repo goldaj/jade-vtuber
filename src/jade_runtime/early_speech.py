@@ -10,6 +10,10 @@ from __future__ import annotations
 import asyncio
 import logging
 
+from .intent_engine import normalize_intent
+from .openai_services import OpenAIServices
+from .pitch_shift import shift_pcm
+
 
 class EarlySpeechTurn:
     def __init__(self, output, source, *, max_seconds=180):
@@ -21,6 +25,7 @@ class EarlySpeechTurn:
         self._phrases = asyncio.Queue(maxsize=2)
         self._ended = False
         self.has_submitted = False
+        self.intent = "neutral"
         self.on_first_sentence = None
         self._first_callback_task = None
         self._task = asyncio.create_task(
@@ -39,6 +44,12 @@ class EarlySpeechTurn:
                 if not callback.done():
                     callback.cancel()
                 await asyncio.gather(callback, return_exceptions=True)
+
+    def set_intent(self, intent: str):
+        """Select the single prosody for this reply BEFORE its first segment."""
+        if self.has_submitted or self._ended:
+            raise RuntimeError("cannot change intention after speech submission")
+        self.intent = normalize_intent(intent)
 
     async def _offer(self, text):
         while self._phrases.full():
@@ -91,7 +102,7 @@ class EarlySpeechTurn:
             written = False
             path = output.subtitle_path
 
-            async def audio():
+            async def unshifted_audio():
                 sentence = first
                 first_sentence = True
                 while sentence is not None:
@@ -115,7 +126,9 @@ class EarlySpeechTurn:
                     subtitle_tmp = path.with_name(path.name + ".tmp")
                     subtitle_tmp.write_text(sentence, encoding="utf-8")
                     subtitle_tmp.replace(path)
-                    stream = output.services.stream_speech_pcm(sentence)
+                    stream = (output.services.stream_speech_pcm(sentence, intent=self.intent)
+                              if isinstance(output.services, OpenAIServices)
+                              else output.services.stream_speech_pcm(sentence))
                     if stream is None:
                         raise RuntimeError("early speech requires Realtime TTS")
                     try:
@@ -138,7 +151,13 @@ class EarlySpeechTurn:
                 tmp.write_text(first, encoding="utf-8")
                 tmp.replace(path)
                 written = True
-                played = await bridge.play_pcm_stream_for_reply(audio(), source)
+                # One DSP process for the whole reply, not a new process for
+                # every sentence. This also preserves audio continuity across
+                # early-speech segments and avoids repeated startup latency.
+                stream = unshifted_audio()
+                if output.pitch_semitones:
+                    stream = shift_pcm(stream, output.pitch_semitones)
+                played = await bridge.play_pcm_stream_for_reply(stream, source)
             finally:
                 try:
                     if gated:

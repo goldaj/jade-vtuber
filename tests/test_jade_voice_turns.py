@@ -13,12 +13,46 @@ class SegmentationTests(unittest.TestCase):
         segmenter = PcmTurnSegmenter()
         phrase = pcm(1.2, 1500)
         self.assertEqual(segmenter.feed('a', phrase, now=1), [])
-        self.assertEqual(segmenter.poll(now=1.69), [])
-        out = segmenter.poll(now=1.71)
+        self.assertEqual(segmenter.poll(now=1.49), [])
+        out = segmenter.poll(now=1.51)
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0].pcm, phrase)
         self.assertFalse(out[0].partial)
         self.assertEqual(segmenter.poll(now=2), [])
+
+    def test_background_above_fixed_threshold_does_not_hold_turn_open(self):
+        segmenter = PcmTurnSegmenter(rms_threshold=550)
+        phrase = pcm(.3, 2000)
+        # A steady microphone noise floor of 700 exceeds the old fixed 550
+        # threshold, but is substantially quieter than the user's speech.
+        result = segmenter.feed('a', phrase + pcm(.6, 700), now=1)
+        self.assertEqual(len(result), 1)
+        self.assertTrue(result[0].pcm.startswith(phrase))
+        self.assertFalse(result[0].partial)
+
+    def test_open_mic_noise_does_not_start_a_new_turn_after_speech(self):
+        segmenter = PcmTurnSegmenter(rms_threshold=550)
+        self.assertEqual(len(segmenter.feed('a', pcm(.3, 2000) + pcm(.5, 700), now=1)), 1)
+        for at in (2, 3, 4, 5, 6, 7):
+            self.assertEqual(segmenter.feed('a', pcm(1, 700), now=at), [])
+        self.assertEqual(segmenter.poll(now=7.6), [])
+        reply = segmenter.feed('a', pcm(.3, 1800) + pcm(.6, 700), now=8)
+        self.assertEqual(len(reply), 1)
+
+    def test_quiet_speech_still_detected(self):
+        segmenter = PcmTurnSegmenter(rms_threshold=550)
+        phrase = pcm(.3, 600)
+        result = segmenter.feed('a', phrase + pcm(.6, 0), now=1)
+        self.assertEqual(len(result), 1)
+        self.assertTrue(result[0].pcm.startswith(phrase))
+
+    def test_natural_brief_pause_is_kept_in_one_turn(self):
+        segmenter = PcmTurnSegmenter(rms_threshold=550)
+        phrase = pcm(.3, 2000) + pcm(.3, 700) + pcm(.3, 1200)
+        self.assertEqual(segmenter.feed('a', phrase, now=1), [])
+        out = segmenter.feed('a', pcm(.6, 700), now=1.6)
+        self.assertEqual(len(out), 1)
+        self.assertTrue(out[0].pcm.startswith(phrase))
 
     def test_long_phrase_splits_into_bounded_partial_and_final(self):
         s = PcmTurnSegmenter(max_turn_s=1, min_speech_s=.1)

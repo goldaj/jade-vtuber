@@ -1,79 +1,120 @@
-# Architecture et fonctionnement interne de Jade : branche main
+# Guide technique : architecture, infrastructure et algorithmes de Jade sur develop
 
-## 1. Vue d'ensemble
+**Références fonctionnelles prioritaires :** [atlas du 16 novembre 2026](../architecture/atlas-fonctionnel-2026-11-16/README.md) (cinq vues compactes) et [contrat exhaustif des parcours](../architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md), couvrant règles propres à Twitch/Discord/micro/Android/HTTP, arbitrage, appels IA distincts, parallélisme, mémoire et incidents. Les [deux anciens schémas](../architecture/README.md) sont conservés pour l'infrastructure. L'atlas est basé sur `develop` au SHA `a841628b`, non sur une recette PC en conditions réelles ; le code et les réglages de la branche ont priorité.
 
-Jade est un runtime Python 3.11 asynchrone, chargé depuis `main.py`, avec une interface de dialogue remplaçable. Son modèle d'entrée est `Incoming` (`messages.py`), de sortie `Reply` ; le traitement central est `Runtime` (`orchestrator.py`). La configuration est dans `config.py` et les fichiers de prompt dans `assets.py`. Aucune infrastructure serveur distante obligatoire ne sert la démo hors ligne. Les fournisseurs payants et les connecteurs sont explicitement activés par drapeaux sur `main`.
+## 1. Portée et architecture globale
+
+Jade est un **runtime Python 3.11 asynchrone** à plusieurs transports entrants, une file de travail partagée, un moteur de dialogue configurable, des capacités de mémoire et des sorties adaptées à chaque demande. La branche `develop` est plus avancée que `main`. Les appels OpenAI existent uniquement en mode réel autorisé ; la démo console et la Démo Express restent hors ligne.
 
 ~~~text
-Terminal / Discord écrit / Twitch IRC / HTTP local / micro / Discord vocal
-     | parse, validation, anti-doublon, routage session, politiques
-     v
-Incoming -> Runtime.queue [asyncio.Queue FIFO bornée] -> Runtime._process
-     -> Dialogue.respond [filtrage, prompt, historique, modèle OpenAI ou DemoChat]
-     -> Reply -> routage console / chat d'origine / TTS / sous-titres / VTS
-                  ^                                      |
-          STT OpenAI (micro ou vocal Discord)       ffplay et avatar r20
+Discord écrit ─────────────┐
+Discord vocal -> STT ──────┤
+Twitch IRC ────────────────┤
+Micro Windows -> STT ──────┤ -> Incoming -> Runtime/ArbitratingQueue
+HTTP local 127.0.0.1:8765 ┤             -> TurnArbiter (LLM seulement si concurrence)
+PWA Android via Tailscale  ┘             -> Dialogue + MemoryService
+   Serve HTTPS privé -> loopback 8766          -> OpenAI LLM/STT/TTS
+                                            -> Reply / intention / destinataire
+                       ┌──────────────────────────────────────────────┐
+                       v                      v                      v
+                  Discord/Twitch       ffplay / avatar r20       Web Android
+                  texte/vocal          + sous-titres OBS       JSON + audio WAV
 ~~~
 
-Les responsabilités sont délimitées : le moteur ne connaît pas les secrets du dépôt ; les transporteurs ne doivent pas manipuler directement les prompts ; les callbacks de sortie préservent la destination d'origine.
+**Aucun transport n'a de priorité fixe.** Le propriétaire utilise un launcher Windows qui choisit la branche Git et lance tous les supports en une fois. Le VPS Hyperliquid n'est pas une dépendance de Jade ; les serveurs HTTPS Tailscale sont **sur le PC Jade**, pas sur le VPS.
 
-## 2. Processus et supervision
+## 2. Couche plateforme et configuration
 
-`main.py` parse les drapeaux, charge `Settings.load()`, valide la configuration, ouvre un `AsyncExitStack`, crée le backend `OpenAIServices` ou `DemoChat`, la classe `Dialogue`, l'avatar, l'audio, puis `Runtime`. Les connecteurs Twitch/Discord/micro/HTTP tournent comme tâches `asyncio`. La console est le mode de repli si aucun connecteur continu n'est activé. `AsyncExitStack` et le bloc `finally` ferment ressources, lecteurs et tâches après Ctrl+C ou une erreur. Le code de `main` **ne propose pas** `--all-channels`, contrairement à `develop`.
+- `main.py` : entrée CLI, `--all-channels`, `--preflight`, initialisation `OpenAIServices` / `DemoChat`, `AsyncExitStack`, création des connecteurs, `Runtime`, audio et mémoire. `--all-channels` active live, voice, mic, Twitch, Discord, Discord vocal, API HTTP, avatar et mobile ; VTS seulement si son connecteur est configuré.
+- `src/jade_runtime/config.py` : dataclass `Settings`, parsing typé, validations de sécurité ; `src/utility/private_config.py` : `JADE_SECRETS_FILE`, anciennes localisations privées de compatibilité, priorité des variables d'environnement du processus.
+- `src/jade_runtime/diagnostics.py` : préflight local **sans appels réseau ou micro**. Les exigences des services sont vérifiées mais les SDK JS du Web et certaines capacités matérielles peuvent rester des diagnostics informatifs. Ne pas confondre présence de paquet et succès Android.
+- `scripts/jade-launcher.ps1`, `jade-runner.ps1` et `install-jade-launcher.ps1` : interface WinForms, Git fast-forward si répertoire propre, Git LFS, Poetry extras all, préflight, démarrage console, installation dans `D:\Jade\launcher`. Aucune clé stockée dans la configuration du launcher (chemin du fichier privé uniquement).
 
-Les erreurs d'un connecteur peuvent remonter au superviseur, qui ferme les autres tâches, plutôt que de laisser un faux fonctionnement « complet ». Le préflight `diagnostics.py` contrôle la présence des SDK, formats et dossiers, sans connexion réseau. L'utilisateur doit distinguer résultat des vérifications statiques et succès réel.
+## 3. Flux conversationnel et ordonnanceur
 
-## 3. Algorithmes du runtime
+`messages.py` définit `Incoming` et `Reply` avec plateforme, auteur, identifiants, canal/session, mode d'entrée et métadonnées fiables des transporteurs. `orchestrator.py` possède une file limitée par `JADE_QUEUE_LIMIT` (défaut **64**), des objets `Work` (tour, deadline, validation, future de fin) et un worker séquentiel. L'API `submit` échoue sur saturation, sans écraser une autre demande. `task_done` / `queue.join` assurent le suivi des tâches. Les annulations, délais et arrêts empêchent de délivrer une réponse après invalidation d'une demande.
 
-### File et concurrence
+**Arbitrage (nouveau dans develop)** : `turn_arbitration.py` expose `ArbitratingQueue` et `TurnArbiter`. En cas de plusieurs travaux en attente, il considère jusqu'à **6 têtes de conversations distinctes** afin de **ne pas réordonner** les tours internes d'un même fil. Le backend LLM commun reçoit des extraits plafonnés des messages et retourne strictement l'identifiant numérique du prochain tour. L'arbitre ne transforme pas la réponse, ne choisit pas de destinataire différent et ne suit pas d'instructions contenues dans les extraits non fiables. Son délai par défaut est **2 s** ; réponse invalide/timeout/absence de backend = **FIFO**. Un tour en attente depuis **15 s** ou proche de sa deadline est traité via équité, sans priorité de plateforme. L'arbitrage ajoute potentiellement un appel LLM payant, **mais jamais si un seul travail est en attente**. La génération est séquentielle, l'arbitre ne préempte pas un tour en cours.
 
-`Runtime.queue` est une `asyncio.Queue` de capacité `JADE_QUEUE_LIMIT` (défaut **64**, borne 1 à 1024). `submit()` ajoute un `Work` et retourne immédiatement ; une file pleine déclenche `QueueFull`. Un seul worker `_process()` extrait les tâches **dans l'ordre FIFO**. L'exécution d'un tour est protégée par une tâche interne ; une échéance éventuelle invalide le travail et annule les appels en cours. Les tâches ont des compteurs `task_done()` ; `idle()` attend `queue.join()`. L'arrêt gracieux est borné et peut basculer en annulation. La réponse n'est émise que si le travail reste valide.
+**Choix de répondre** : `dialogue.py` applique le prompt système, les contrôles de mention/commande/force_reply et les politiques de canal ; les sessions en RAM sont bornées et isolées. `discord_text_policy.py` gouverne notamment la participation spontanée Discord sans imposer de priorité globale. Les échecs d'API, délais et doublons d'IDs ne doivent pas polluer l'historique. Les logs de provenance sont fournis par `turn_logging.py`, avec une attention particulière aux données personnelles.
 
-**Absence importante :** aucun arbitrage de tours par IA dans `main`. L'algorithme `TurnArbiter` a été introduit plus tard dans `develop`.
+## 4. Mémoire persistante, identité et autobiographie
 
-### Historique et choix de répondre
+**DEV-011 révisée, demandes ordinaires uniquement :** `explicit_memory_intent.py` reconnaît les demandes naturelles de mémorisation en texte/STT, même lorsqu'elles mentionnent les Core Memories. `MemoryService.command` intercepte la demande avant le dialogue, vérifie l'identité de transport et son opt-in, filtre les secrets courants et appelle **exclusivement** `MemoryStore.put_requested_ordinary`. La transaction SQLite (`BEGIN IMMEDIATE`) revérifie le `person_id` initial, l'inscription et les doublons, puis écrit avec `kind='ordinary'`, TTL 365 jours et la portée de `_scope` ; la réponse ne confirme qu'après retour de cette transaction. Une demande explicite n'alimente pas le curateur et **ne peut pas créer de Core Memory**, y compris depuis Goldaj. L'ancienne méthode d'écriture Core forcée par propriétaire a été retirée. Le curateur autonome est le seul parcours du runtime qui sélectionne `core_self`/`core_relationship` à partir d'échanges ordinaires réellement admissibles, en ignorant les injonctions des utilisateurs ; `put_self_core` et `put(kind=core_*)` demeurent internes à la curation. Les anciennes commandes privées de consultation/suppression Core restent disponibles pour la correction ou l'effacement des données, jamais pour leur création forcée. Isolation par personne et salon inchangée.
 
-`Dialogue` conserve des `deque` bornées par clé de session, généralement le salon ou la session locale ; historique par défaut **24 messages**, cap 100. Les caches sont bornés à **256 sessions** avec TTL **1800 secondes** pour les sessions inactives ; la mémoire est en **RAM** et disparaît à l'arrêt. Un `asyncio.Lock` protège chaque session. Les identifiants de transport sont conservés dans une petite file `seen` afin d'éviter de traiter deux fois un même événement ; le texte répété intentionnellement n'est pas dédupliqué.
+`memory_store.py` utilise SQLite **local**, avec tables de profils, liens d'identifiants, souvenirs ordinaires et Core, dates et provenance. Les Core Memories n'ont pas de purge automatique mais restent supprimables selon les droits ; les faits ordinaires peuvent expirer. `memory_service.py` relie la mémoire aux tours : en mode réel, SQLite et la curation (`JADE_MEMORY_CURATOR_ENABLED=1` par défaut) sont activées, et le chemin de base est privé hors Git. Les comptes Discord vérifiés (serveur, vocal ou MP) sont inscrits automatiquement à leur première interaction traitée ; Twitch garde une activation explicite. L'ancienne commande `!jade-memoire oublier` et la liste de refus Discord sont supprimées ; les suppressions individuelles (`supprimer-self`, `supprimer-core`) et la déliaison restent opérationnelles. La curation peut appeler un modèle. Les écritures LLM invalides doivent être rejetées, les secrets non automatiquement inscrits. `memory_transfer.py` fournit export/import vérifiés sans écrasement.
 
-`should_reply()` traite d'abord les demandes `force_reply`, les préfixes explicites, la mention du nom, puis un tirage aléatoire configuré (par défaut 0). Les politiques des connecteurs peuvent influencer les messages proposés. Le dialogue construit un rôle `system` depuis le prompt, un contexte de salon **non fiable** et le message courant. Les sorties invalides/vides et les appels LLM ratés ne doivent pas polluer l'historique ; les flux oraux interrompus ont une logique de commit distincte.
+**Souvenirs transversaux MVP (21/11) :** `MemoryStore.recall_linked` retrouve au maximum quatre souvenirs condensés des autres portées du même `person_id`, seulement si plusieurs identités vérifiées sont liées. `MemoryService.context_for` les utilise en conversation privée (PWA propriétaire, micro PC, MP Discord) et conserve huit souvenirs au maximum dans le prompt. Les salons publics Discord, vocaux et Twitch restent sur `recall` strictement limité à leur portée. Aucun historique brut de niveau 1 ne traverse les salons : `recent_conversation_turns` reste inchangé. Pas de migration SQLite, de copie des souvenirs ni de coût IA supplémentaire ; déliaison, suppression ciblée, TTL et curation autonome préservés. Cette version n'autorise pas à divulguer automatiquement les souvenirs privés dans les salons publics.
 
-### Streaming et latence
+Les comptes Discord/Twitch sont identifiés par ID fiables du transport, **pas par pseudonyme visible**. Le micro local et l'application Android authentifiée représentent le même propriétaire Goldaj ; ils peuvent partager un profil mémoire. Les conversations Discord vocal/texte utilisent `discord_conversation.py` pour dériver une clé opaque de session vérifiée, évitant les fausses reprises d'ancienne session. Les mémoires autobiographiques de Jade demandent une discipline de séparation entre expériences du personnage et confidences des autres utilisateurs. L'absence d'activation sur les parcours manuels doit empêcher la collecte durable ; Discord conserve l'inscription automatique des comptes vérifiés ; l'information préalable des membres de serveur Discord est une condition d'exploitation.
 
-`Dialogue.respond` peut appeler `complete_stream`. `sentence_stream.py` assemble les fragments en phrases ; `early_speech.py` et `voice_turns.py` préparent une sortie TTS anticipée lorsque `JADE_EARLY_VOICE` est activé et que le backend le supporte. La lecture anticipée et les sous-titres nécessitent un suivi strict de la session pour éviter les réponses après expiration. Ce n'est pas une garantie de latence inférieure à une valeur donnée.
+## 5. Voix, intentions, sous-titres et animation
 
-## 4. Interfaces, données et sécurité
+Le STT et TTS reposent sur **OpenAI**, non sur une synthèse locale alternative ; `openai_services.py`, `realtime_tts.py`, `voice_pipeline.py`, `microphone.py` et `discord_voice.py` convertissent audio, contrôlent le format et transmettent les réponses. `sentence_stream.py` et `early_speech.py` peuvent produire des phrases audio anticipées, sous contrôle des sessions/deadlines. `AudioCoordinator` réduit les boucles d'écho. Sur PC, `ffplay` lit le WAV ; le pont Discord peut diffuser à un salon autorisé. Les réponses locales privées (micro, HTTP) ne doivent **pas** être routées automatiquement vers un canal Discord public ou OBS.
 
-| Module | Responsabilité | Contraintes |
-| --- | --- | --- |
-| `twitch_irc.py`, `twitch_token.py`, `twitch_rotation.py` | Lire les PRIVMSG IRC/TLS, gérer validation/renouvellement de tokens, sortie chat | OAuth réel, limitation des envois, stockage privé |
-| `discord_text.py`, `discord_text_policy.py` | Entrées textuelles, filtre, politique de participation, réponse dans le salon | Permissions/intents Discord ; ignorer sa propre identité |
-| `discord_voice.py`, `discord_dave.py`, `discord_pcm.py` | Transport/PCM vocal, état session, transcription STT, émission audio Discord | dépendances DAVE/FFmpeg, sessions révocables et politiques de consentement |
-| `microphone.py`, `voice_pipeline.py` | Capture PCM, détection parole, STT OpenAI, conversion en message | périphérique et permission micro, prévention d'écho |
-| `openai_services.py`, `openai_client.py`, `realtime_tts.py` | Dialogue, STT/TTS et transport streaming OpenAI | clé privée, crédit, erreurs réseau, coûts |
-| `output.py` | Audio WAV, ffplay, sous-titres temporaires | effacer les sous-titres après lecture, ne pas exposer des échanges privés |
-| `avatar.py`, `vtube_studio.py` | Processus Live2D r20 et API VTS optionnelle | GPU, Git LFS, SDK/logiciel local |
-| `local_http.py`, `phone_ui.py` | Serveur loopback texte et page Web locale | Bearer 32+ caractères, pas de CORS ouvert, pas d'accès public |
-| `private_config.py`, `config.py` | Charger le fichier `JADE_SECRETS_FILE` et valider les paramètres | ne jamais committer des secrets ; environnement prioritaire |
+`intent_engine.py` interprète le préfixe strict `[INTENT:...]` proposé par le LLM, le supprime des sorties visibles et des mémoires et fournit une direction vocale limitée. Le pitch Étincelle +2 demi-tons est un traitement PCM dans `pitch_shift.py` si FFmpeg/rubberband est disponible, **pas** une option `pitch` universelle du TTS OpenAI. `output.py` gère WAV, observation d'animation et fichiers de sous-titres temporaires ; `avatar.py` démarre l'avatar autonome r20 via son processus local. `vtube_studio.py` fournit un renderer optionnel distinct à URL WebSocket loopback.
 
-### Frontières de confiance
+Le modèle r20 est suivi via **Git LFS**. Les paquets graphiques Web propriétaire et les formats `.moc3` Cubism exigent des licences et une compatibilité testée ; leur présence dans le dépôt Python n'assure pas le rendu Android.
 
-Les plateformes externes fournissent du contenu **non fiable**. Les champs utilisateur et extraits Discord restent des données, pas des instructions système. Le service HTTP a un jeton Bearer, du contrôle de longueur, un endpoint fixe et un bind loopback, pas une API publique. Les tokens Twitch, Discord, VTS et OpenAI ne doivent pas apparaître dans les journaux. Le dossier `src/utility/private_config.py` gère les priorités de configuration. Les sous-titres OBS et les sorties vocales publiques sont des surfaces de fuite potentielles, à tester avant la diffusion.
+## 6. Connecteurs texte, HTTP et PWA
 
-La démo Express n'accède pas à ces services. Le processus de mémoire de Jade sur `main` est volatile : ne pas inventer de base de données ni de politiques Core Memories à cette version.
+- **Discord** : `discord_text.py` et `discord_voice.py` reçoivent/émittent sur les destinations associées, contrôle des IDs, permissions, sessions vocales et reconnexions ; `discord_dave.py` et `discord_pcm.py` gèrent la pile audio/codec.
+- **Twitch** : `twitch_irc.py` lit les messages IRC via TLS, gère PING/PONG et limitation d'envoi ; `twitch_rotation.py` et `twitch_token.py` valident/renouvellent les secrets si configurés.
+- **HTTP PC** : `local_http.py` écoute seulement `127.0.0.1:8765` par défaut, Bearer indépendant et `POST /message` ; `phone_ui.py` est une petite interface Web locale texte, pas la PWA moderne.
+- **Android** : `mobile_gateway.py` écoute seulement `127.0.0.1:8766`, sert `GET /`, `/assets/*`, `/vendor/*`, `/model/*` avec chemins autorisés ; les appels `POST /api/chat` et `/api/voice` nécessitent un token Bearer distinct. Toutes les routes vérifient `Tailscale-User-Login` fourni par le proxy Serve, et les POST un contrôle d'origine HTTPS. Les WAV sont traités en RAM. L'API renvoie texte/intention et éventuellement WAV encodé.
+- **Client Web** : `mobile_web/index.html`, `app.js`, `avatar.js`, `styles.css`, `manifest.webmanifest` et `sw.js`. Le jeton n'est stocké ni en cookie, ni en localStorage ; le service worker ne met pas en cache des conversations privées. Micro appuyer-pour-parler max 20 s ; capture abandonnée lors de passage en arrière-plan ; TTS joué localement dans le navigateur ; animation de bouche basée sur amplitude audio approximative.
 
-## 5. Infrastructure, déploiement, CI et ressources
+**Modèle de sécurité :** aucune ouverture publique du port mobile, aucune CORS générale, aucun Funnel, pas de transit par le VPS trading. Le fait de posséder l'URL privée ne dispense pas du bon compte Tailscale et du token. Un code local sur le PC capable d'usurper l'en-tête sur loopback reste hors du modèle de confiance, ce qui rend l'isolation du PC importante.
 
-- **Windows local** pour la démo Express (PowerShell WinForms) et la démo réelle ; le moteur Python peut exécuter des composants hors ligne sous Linux/Windows, mais Live2D et l'audio restent dépendants de pilotes.
-- **GitHub** héberge le dépôt public et les Git LFS de modèles/sources graphiques. Aucun token dans les artefacts publics. Les binaires propriétaires sont soumis à licence.
-- **GitHub Actions** : `.github/workflows/jade-rebuild.yml` exécute les tests de compilation et unittest sur Windows et Ubuntu ; `jade-secret-scan.yml` recherche des secrets ; les autres workflows ont des objets spécifiques. Une CI verte ne valide pas l'audio matériel, Discord/Twitch réels ou des facturations.
-- **Données** : historique conversationnel volatile par session ; logs runtime/latence et fichier texte de sous-titres éventuellement sur disque ; aucune base SQLite de mémoire persistante dans cette branche.
-- **Réseau** : démo offline isolée ; connexions OpenAI/Twitch/Discord uniquement sur opt-in ; API texte liée à `127.0.0.1`. Les services de démonstration et le VPS personnel du propriétaire sont extérieurs au déploiement de main.
-- **Coûts** : aucun pour la démo Express ou la démo console ; modèles OpenAI facturés selon le compte et la charge réels. STT, réponse et TTS peuvent correspondre à plusieurs requêtes.
+## 7. Infra, opérations, limites et tests
 
-## 6. Tester, investiguer et étendre
+~~~text
+GitHub public (branches main/develop, PR, Actions, Git LFS)
+     |
+Windows PC Jade (clone + Poetry + modeles LFS sur D:)
+     |-- process Python Jade :443? NON (boucle locale uniquement)
+     |-- Discord/Twitch/OpenAI : connexions sortantes autorisees
+     |-- Tailscale Serve prive HTTPS (.ts.net) -> 127.0.0.1:8766
+     |-- API HTTP texte : 127.0.0.1:8765
+     |-- SQLite memoire privee et fichiers de configuration hors Git
+     |-- FFmpeg / ffplay / r20 Live2D / eventuel VTube Studio
+     |
+Android Chrome PWA + Tailscale -> URL privee Serve PC Jade
+~~~
 
-1. `poetry run python -m compileall -q src main.py`.
-2. `poetry run python -m unittest discover -s tests -v` ; sous Windows tester aussi `demo/express/Jade-Demo-Express.ps1 -SelfTest`.
-3. `poetry run python main.py --preflight` et préflight par drapeau opt-in.
-4. Tester séparément les permissions, périphériques audio, codecs et routes réseaux sur les vraies machines, avec accord du propriétaire.
-5. Avant de changer le contrat `Incoming/Reply`, revoir tests et adaptateurs ; ne pas injecter de secret dans un nouveau log. Quand un module évolue, actualiser **tous les guides de ce dossier**, `AGENTS.md` et les tests selon le [contrat documentaire](AI_HANDOFF.md).
+`D:\Jade\launcher` est volontairement **hors du clone**, ce qui impose une réinstallation après changement de scripts. Les données SQLite et secrets sont hors Git et ne se réinitialisent pas lors d'un `git switch` normal. Le PC doit rester allumé ; pas de reprise par le VPS. Les appels OpenAI (dialogue, STT, TTS, arbitre, curation) peuvent être facturables séparément. Les logs et l'overlay OBS exigent une politique de confidentialité concrète ; ne jamais les committer.
+
+**Validation automatisée :** `python -m compileall`, `python -m unittest discover -s tests -v`, tests du module mobile, mémoire, intentions, arbitrage et routage privé ; `scripts/check_docs.py` contrôle les guides par branche. GitHub Actions exécute Windows et Ubuntu en mode hors ligne, avec scan secrets. **Ce n'est pas une validation du PC réel** : prévoir recette Discord/Twitch/micro/audio, animation r20 Windows/Web, Tailscale et Android Wi-Fi/4G, charge simultanée, pertes de réseau, coûts réels, arrêt/reprise et fuite inter-canaux.
+
+**Maintenance :** pour les changements techniques, mettre à jour le journal [`docs/operations/CHANGELOG.md`](../operations/CHANGELOG.md), puis **uniquement les guides, atlas, README, consignes AGENTS et passations réellement impactés**, conformément à [AGENTS.md](../../AGENTS.md) et [AGENT_COORDINATION.md](../operations/AGENT_COORDINATION.md). Aucune réécriture automatique de tous les guides ; une correction purement documentaire ne requiert pas d'entrée technique au changelog. Ne pas merger `develop` dans `main` simplement pour lui donner ces documents.
+
+## 8. Contrat émotionnel avatar Live2D (ajout du 15/11/2026)
+
+Flux : LLM → préfixe `[INTENT:...]` filtré par `intent_engine.py` → `Reply.intent` validé → `main.py:on_reply` → `Avatar.set_intent` pour l'avatar autonome r20 sur PC, ou JSON `{reply,intent,audio_wav_b64}` vers `mobile_web/app.js` → `JadeAvatar.setIntent` pour la PWA. L'intention envoyée à `SpeechOutput` reste inchangée. Aucun classifieur LLM ou TTS supplémentaire.
+
+**Contrat unique v1 :** `src/jade_runtime/mobile_web/intent-visuals.json` (7 clés, exactement deux variantes chacune pour le catalogue actuel, champ `expression` limité aux expressions r20 et `text` uniquement décoratif). `intent_visuals.py` valide le catalogue, le fallback inconnu → `neutral`, puis sélectionne les variations en rotation par label pour PC ; la PWA lit le même catalogue via `GET /assets/intent-visuals.json` sur la passerelle privée. Le booléen `enabled` n'est pas un état du LLM : il provient du seul réglage `Settings.avatar_intent_enabled` / `JADE_AVATAR_INTENT_ENABLED` (défaut `1`). Il est évalué au lancement ; redémarrage et rechargement PWA nécessaires.
+
+**PC et concurrence :** `avatar.py` possède un unique writer JSON sur stdin du processus `src/jade_runtime/avatar_renderer.py`, alimenté par deux derniers états coalescés indépendants : `expression` (rare) et `mouth` (25 Hz ou niveaux PCM consommés). `_offer` bascule les callbacks audio provenant d'autres threads sur la boucle asyncio. L'avatar revient à `Neutral` après `end/pcm_end` ou après 12 s sans audio actif. Le renderer enfant savait déjà recevoir `{type:expression,value:...}` et vérifier la palette r20 ; aucun nouveau binaire graphique n'est ajouté.
+
+**Mobile et dégradation :** `mobile_gateway.py` sert le JSON de palette en lecture sous identité Tailscale ; `avatar.js` lit le catalogue avant d'essayer le SDK Web, sélectionne A/B par intention, affiche un libellé `textContent` et déclenche les `.exp3` connues. Si le SDK/asset ou le catalogue manque, la discussion et la voix continuent. `app.js` évite de doubler les commandes d'émotion et ne remplace plus les libellés par un état vocal générique ; l'Idle est rétabli en fin de voix. La remise à zéro des expressions Web utilise `resetExpression()` seulement si la version du SDK l'expose ; validation matérielle obligatoire.
+
+**Limite métier :** aucun des deux rendus ne dispose encore de **deux nouvelles motions corporelles distinctes par intention**. Les variantes sont des expressions faciales du r20, certaines réutilisées. L'animation de base Idle et la bouche sont conservées. L'extension v2 avec 14 ressources propres doit être conçue, riggée, validée et seulement ensuite activée. Ne pas basculer automatiquement sur le r21 en pied non finalisé. Contrat/risques/tests : [passation Codex Live2D](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+
+## 9. Dialogue, historique et participation
+
+Le backend `OpenAIServices` transmet `reasoning_effort=low` et `max_completion_tokens=320` par défaut, en appel normal et en streaming. `MemoryStore` SQLite v4 conserve les tours complets des personnes consentantes **7 jours** et `MemoryService` restaure **tous les tours des dernières 24 h** d'une identité et d'un salon, sans `LIMIT` SQL ni troncature `deque` des sessions SQLite. Le contexte du modèle peut néanmoins atteindre les plafonds de tokens du fournisseur ; aucun quota en nombre d'échanges n'est appliqué par Jade. Les souvenirs ordinaires (`kind='ordinary'`) expirent après **365 jours**, les Core n'ont aucun TTL. La migration v3→v4 recalcule les échéances ordinaires existantes depuis `created_at`, sans déplacer les Core. Purge au lancement et toutes les heures en mode réel ; la curation reste asynchrone.
+
+`DiscordTextPolicy` et le vocal utilisent 100 % de réponse en tête-à-tête observé et un tirage à 20 % des tours spontanés admissibles en groupe. `TwitchIRC` ignore les nouveaux messages pendant un tour Twitch en cours, force une réponse si un seul auteur est observé et passe par le dialogue pour les 30 % en groupe ; les spectateurs silencieux ne sont pas comptés.
+
+**Les variantes faciales/textuelles A/B des sept intentions sont codées**. Seules les 14 motions corporelles dédiées restent futures. Pour le détail : [dialogue et participation](../history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md), [contrat Live2D](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), [inventaire actuel](BRANCH_STATE.md).
+
+La roadmap technique non implémentée est centralisée dans le [catalogue](../ameliorations/README.md). Les anciennes anomalies et comptes rendus CI restent dans les audits datés et ne sont pas répétés dans cette documentation d'architecture.
+
+
+## Correctif de streaming PCM et liaison d'identités (PR #23)
+
+`SpeechOutput.start_early` et `_speak_progressive` acceptent maintenant `discord_voice` même avec `AudioOutput('ffplay')`, lequel reste réservé aux réponses du micro local dans le parcours PCM. Le streaming exige un modèle TTS Realtime, une session Discord autorisée et la capacité `play_pcm_stream_for_reply` ; à la date de cette PR, le repli WAV conservait des effets locaux ; **DEV-003 du 19/11 retire ensuite la lecture locale du fallback Discord vocal**. `MobileGateway` expose `POST /api/link` uniquement après double authentification PWA Tailscale + Bearer ; la source est le profil privé Goldaj, la cible un ID numérique `discord` ou `twitch`. Le secret temporaire encodant la cible est à usage unique, confirmé par `!jade-memoire confirmer` depuis l'identité authentifiée par son connecteur ; les profils SQLite et historiques sont rapprochés sans effacer les échanges lors du merge. La commande globale `!jade-memoire oublier` n'existe plus ; `!jade-memoire delier` sépare les comptes en conservant les souvenirs. Le texte du code de liaison est masqué avant l'arbitrage LLM, dans les logs et le contexte Discord. Voir [la fiche de mission](../operations/handoffs/2026-11-16-chatgpt-pcm-memoire-mobile.md) ; SDK Live2D Web toujours à installer sur D:, aucune animation r21 livrée.
+
+## Instrumentation de latence multi-canaux (DEV-008, 19 novembre 2026)
+
+Activer `JADE_LATENCY_LOG=1` dans la **configuration privée** (défaut `0`) pour émettre sur stderr les jalons `jade.latency` des tours de chaque plateforme. Chaque ligne ne comporte que l'identifiant technique du tour, la plateforme/modalité, un nom de jalon et la durée monotone `since_queue_ms` ; aucun texte, auteur, canal, ID transport ni audio. Les jalons comprennent la prise en file, la mémoire facultative, le LLM, le début/fin d'appel aux sorties et la complétion/échec. `delivery_end` atteste seulement le retour du callback, **pas** la diffusion audio complète si un flux vocal asynchrone continue. Ces métriques sont destinées aux expériences p50/p95 ; le STT et le premier son réellement audible demandent encore les mesures REC-010 sur le PC.

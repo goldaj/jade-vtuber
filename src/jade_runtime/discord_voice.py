@@ -6,6 +6,7 @@ bridge retains the historical participant-restricted mode for older callers.
 """
 import asyncio
 import os
+import re
 from dataclasses import dataclass, replace
 from collections.abc import Mapping
 from io import BytesIO
@@ -119,6 +120,58 @@ class DiscordVoiceBridge:
         self._scheduled = 0
         if authorized_user_ids or consent_confirmed:
             self.set_session(authorized_user_ids, consent_confirmed=consent_confirmed)
+
+    def voice_conversation_id(self, user_id, session_id):
+        """Route an already-authorized vocal turn to a per-person history."""
+        from .discord_conversation import conversation_id
+        with self.buffers_lock:
+            if (not self.consent_confirmed or not session_id
+                    or self.session_id != session_id or self.connection is None
+                    or not self._speaker_allowed_locked(user_id)):
+                return None
+            channel = getattr(self.connection, "channel", None)
+            voice_id = getattr(channel, "id", None)
+            guild_id = getattr(getattr(channel, "guild", None), "id", None)
+        return conversation_id(guild_id, voice_id, session_id, user_id)
+
+    def linked_text_conversation_id(self, guild_id, text_channel_id, user_id):
+        """Only native text chat *inside the same voice channel* can share history.
+
+        No DM, unrelated guild channel or user outside the voice call is
+        promoted to the voice context. This key never grants audio access.
+        """
+        from .discord_conversation import conversation_id
+        if not all(type(x) is int and x > 0 for x in
+                   (guild_id, text_channel_id, user_id)):
+            return None
+        with self.buffers_lock:
+            if (not self.consent_confirmed or not self.session_id
+                    or self.connection is None or not self._speaker_allowed_locked(user_id)):
+                return None
+            connection = self.connection
+            session_id = self.session_id
+            generation = self.generation
+            channel = getattr(connection, "channel", None)
+            if (getattr(channel, "id", None) != text_channel_id
+                    or getattr(getattr(channel, "guild", None), "id", None) != guild_id):
+                return None
+        try:
+            members = getattr(channel, "members", None)
+            if not isinstance(members, (list, tuple)):
+                return None
+            matches = [m for m in members if getattr(m, "id", None) == user_id
+                       and getattr(m, "bot", True) is False]
+            if len(matches) != 1:
+                return None
+            if not self._open_voice and not self._members_authorized(channel):
+                return None
+        except Exception:
+            return None
+        with self.buffers_lock:
+            if (self.connection is not connection or self.session_id != session_id
+                    or self.generation != generation or not self.consent_confirmed):
+                return None
+        return conversation_id(guild_id, text_channel_id, session_id, user_id)
 
     def set_session(self, authorized_user_ids, *, consent_confirmed, _expected=None):
         """Replace the authorized participants; revoke the prior session immediately.
@@ -555,6 +608,11 @@ class DiscordVoiceBridge:
                         or not self._capture_authorized(item.user_id, item.generation, item.session_id,
                             None if self._open_voice and item.during_playback else item.audio_epoch)):
                     continue
+                # Speech captured over Jade's answer must never interrupt it.
+                # Discard it without sending it to STT; a turn already being
+                # transcribed when playback starts is discarded below as well.
+                if item.during_playback:
+                    continue
                 self._transcribing_generation = item.generation
                 self._transcribing_during_playback = item.during_playback
                 self._transcribing = asyncio.create_task(self._transcribe_authorized(item))
@@ -573,9 +631,18 @@ class DiscordVoiceBridge:
                 epoch = None if during_playback else item.audio_epoch
                 if value and self._capture_authorized(item.user_id, item.generation, item.session_id, epoch):
                     if self._open_voice:
-                        # Everyone audible in the active connection participates;
-                        # this mode does not inspect or classify room membership.
-                        participant_count = None
+                        # Read-only Discord membership snapshot for solo-vs-group
+                        # replies; this never excludes anyone from voice capture.
+                        channel = getattr(self.connection, "channel", None)
+                        members = getattr(channel, "members", None)
+                        if isinstance(members, (list, tuple)):
+                            humans = {member.id for member in members
+                                      if type(getattr(member, "id", None)) is int
+                                      and getattr(member, "bot", None) is False
+                                      and member.id != self.own_bot_id}
+                            participant_count = len(humans) if item.user_id in humans and 1 <= len(humans) <= 32 else 2
+                        else:
+                            participant_count = 2  # Unknown presence: never guess a solo room.
                     else:
                         channel = getattr(self.connection, 'channel', None)
                         try:
@@ -591,9 +658,16 @@ class DiscordVoiceBridge:
                         except Exception:
                             continue
                         participant_count = len(humans)
-                    # During playback, transcribe only to detect an interruption.
-                    # Other audible speech is never sent to the dialogue.
-                    if during_playback and not self._decider.is_stop_command(value):
+                    # A real voice response ends unanswered spontaneous outreach.
+                    # Only post-STT, authorized, non-echo human speech can do this.
+                    initiative_tracker = getattr(self, "initiatives", None)
+                    if initiative_tracker is not None and item.user_id != self.own_bot_id:
+                        initiative_tracker.human_replied(
+                            str(self.channel_id), text=value,
+                            directed=bool(re.search(r"(?<!\w)jade(?!\w)", value, re.I)))
+                    # Even a recognized stop word may belong to the surrounding
+                    # conversation. Finish Jade's answer before accepting commands.
+                    if during_playback:
                         continue
                     with self.buffers_lock:
                         if (not self.consent_confirmed or (self._playback_active and not self._open_voice)
@@ -603,7 +677,7 @@ class DiscordVoiceBridge:
                         decision = self._decider.decide(
                             item.session_id, item.user_id, value, authorized=True,
                             consent_confirmed=True, participant_count=participant_count,
-                            direct_address=self._open_voice)
+                            direct_address=(self._open_voice and bool(re.search(r"(?<!\w)jade(?!\w)", value, re.I))))
                     if not decision.should_reply:
                         if decision.reason == 'muted':
                             self._stop_playback(self.connection)
@@ -627,7 +701,9 @@ class DiscordVoiceBridge:
                         "discord_voice", item.author, value,
                         channel=str(self.channel_id),
                         message_id=message_id, force_reply=True,
-                        speaker_id=item.user_id, voice_session_id=item.session_id))
+                        speaker_id=item.user_id, voice_session_id=item.session_id,
+                        conversation_id=(self.voice_conversation_id(
+                            item.user_id, item.session_id) or "")))
                     if isinstance(work, Work):
                         self._submitted = [(generation, previous) for generation, previous in self._submitted
                                            if not previous.cancelled and (previous.task is None or not previous.task.done())]
@@ -767,8 +843,8 @@ class DiscordVoiceBridge:
             self.buffers.clear()
             self.buffer_updated.clear()
             if self._open_voice:
-                # A turn crossing a phrase boundary remains eligible only for
-                # an interruption command, never for a normal conversation.
+                # Mark any overlapping turn for discard, even if STT finishes
+                # after playback or another streaming phrase starts.
                 self._playback_turns.update(int(uid) for uid in self._segmenter._users)
                 self._playback_turns.update(self._assemblies)
             else:
@@ -1047,8 +1123,10 @@ class OpenVoiceBridge(DiscordVoiceBridge):
 
     _open_voice = True
 
-    def __init__(self, services, runtime, channel_id, *, threshold=550):
+    def __init__(self, services, runtime, channel_id, *, threshold=550,
+                 group_reply_rate=0.20):
         super().__init__(services, runtime, channel_id, threshold=threshold)
+        self._decider = ConversationTurnDecider(group_reply_probability=group_reply_rate)
         self._awaiting_channel_update = False
 
     def _speaker_allowed_locked(self, user_id):
@@ -1094,7 +1172,11 @@ class OpenVoiceBridge(DiscordVoiceBridge):
 
     async def _connect_locked(self, client):
         if self.connection is not None:
-            return
+            with self.buffers_lock:
+                active = self.consent_confirmed and self.session_id is not None
+            if active:
+                return
+            await self._close_locked()
         own_bot_id = getattr(getattr(client, "user", None), "id", None)
         if type(own_bot_id) is not int or own_bot_id <= 0:
             raise ValueError("Discord bot identity is not available")
@@ -1108,7 +1190,19 @@ class OpenVoiceBridge(DiscordVoiceBridge):
             raise ValueError("Discord voice channel is not available")
         with self.buffers_lock:
             connecting_generation = self.generation
-        connection = await channel.connect(cls=DaveVoiceRecvClient)
+        try:
+            connection = await channel.connect(cls=DaveVoiceRecvClient)
+        except asyncio.CancelledError:
+            # discord.py caches the protocol before the handshake. A cancelled
+            # connect only soft-disconnects, so explicit cleanup frees that slot.
+            pending = getattr(getattr(channel, "guild", None), "voice_client", None)
+            if isinstance(pending, DaveVoiceRecvClient):
+                try:
+                    await asyncio.wait_for(pending.disconnect(force=True), timeout=2)
+                except Exception:
+                    import logging
+                    logging.getLogger("jade.discord.voice").warning("Pending voice connection cleanup failed")
+            raise
         loop = asyncio.get_running_loop()
         with self.buffers_lock:
             stale = self.generation != connecting_generation or self.connection is not None
@@ -1246,6 +1340,13 @@ class OpenVoiceBridge(DiscordVoiceBridge):
             if (connection is None or self.session_id != session_id
                     or not self._speaker_allowed_locked(speaker_id)):
                 return False
+        if getattr(source, "system_initiative", False):
+            members = getattr(getattr(connection, "channel", None), "members", None)
+            if not isinstance(members, (list, tuple)) or not any(
+                    type(getattr(person, "id", None)) is int
+                    and person.id == speaker_id and getattr(person, "bot", True) is False
+                    for person in members):
+                return False  # Never speak if the joining human already left.
         if not self._playback_authorized(connection, generation, session_id):
             return False
         with self.buffers_lock:

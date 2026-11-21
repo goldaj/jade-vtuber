@@ -37,14 +37,15 @@ def _discord_stack_ok():
 
 def inspect_environment(settings, *, live=False, voice=False, mic=False,
                         twitch=False, discord=False, vts=False,
-                        discord_voice=False, http=False, avatar=False):
+                        discord_voice=False, http=False, avatar=False,
+                        mobile=False, all_channels=False):
     """Return explicit diagnostics without connecting to any external service.
 
     Checks of installed packages, configured flags and presence of secrets are
     not a validation that paid APIs, audio or OAuth work in the real world.
     """
     checks = [Check("Configuration Jade", True, "Format vérifié localement")]
-    selected = any((voice, mic, twitch, discord, vts, discord_voice, http))
+    selected = any((voice, mic, twitch, discord, vts, discord_voice, http, mobile))
     if selected and not live:
         checks.append(Check("Mode live", False,
                             "Les connecteurs nécessitent --live"))
@@ -81,7 +82,15 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
     if mic:
         checks.append(Check("Capture microphone", _installed("sounddevice"),
                             "sounddevice installé, aucun enregistrement réalisé"))
+        if voice:
+            checks.append(Check("Retour vocal du micro local",
+                                settings.audio_output == "ffplay" and which("ffplay") is not None,
+                                "Pour la voix locale : JADE_AUDIO_OUTPUT=ffplay et ffplay sur PATH"))
     if twitch:
+        if all_channels:
+            checks.append(Check(
+                "Twitch réponses activées", settings.twitch_send,
+                "Activer JADE_TWITCH_SEND=1 dans la configuration privée pour répondre dans le chat"))
         checks.append(Check(
             "Twitch activé", settings.twitch_enabled
             and all((settings.twitch_oauth, settings.channel)),
@@ -124,4 +133,27 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
         checks.append(Check(
             "Tailscale (option téléphone)", which("tailscale") is not None,
             "Optionnel, configuration Serve / ACL non testées", required=False))
+    if mobile:
+        from .mobile_gateway import DEFAULT_MODEL, VENDOR_NAMES, WEB_ROOT
+        from pathlib import Path
+        model_dir = Path(settings.mobile_model_dir) if settings.mobile_model_dir else DEFAULT_MODEL
+        vendor_dir = Path(settings.mobile_vendor_dir) if settings.mobile_vendor_dir else None
+        checks.append(Check("Client mobile privé", settings.mobile_enabled
+                            and len(settings.mobile_token) >= 32
+                            and settings.mobile_port != settings.http_port
+                            and bool(settings.mobile_owner_login.strip())
+                            and settings.mobile_public_origin.startswith("https://"),
+                            "Jeton privé et port distinct ; serveur lié à 127.0.0.1"))
+        checks.append(Check("Interface PWA", (WEB_ROOT / "index.html").is_file(),
+                            "Fichiers frontend présents, navigateur non testé"))
+        checks.append(Check("Modèle r20 local", (model_dir / "Jade.model3.json").is_file(),
+                            "Package Live2D présent ; git lfs, rendu Android non testés",
+                            required=False))
+        checks.append(Check("SDK Web Live2D local", bool(vendor_dir) and all(
+            (vendor_dir / name).is_file() for name in VENDOR_NAMES),
+            "Bibliothèques à installer sur D: après contrôle de licence ; pas dans Git",
+            required=False))
+        checks.append(Check("Tailscale Serve", which("tailscale") is not None,
+                            "HTTPS privé à configurer et tester manuellement",
+                            required=all_channels))
     return checks

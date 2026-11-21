@@ -1,5 +1,6 @@
 """OpenAI STT microphone bridge, serialized against Jade speech playback."""
 import asyncio
+import secrets
 
 from .messages import Incoming
 from .orchestrator import Runtime
@@ -13,6 +14,7 @@ class VoiceInput:
         self.services = services
         self.runtime = runtime
         self.segment = 0
+        self.session_token = secrets.token_hex(8)
 
     async def once(self, duration=3.0) -> bool:
         if self.audio_gate is None:
@@ -29,12 +31,15 @@ class VoiceInput:
         if self.audio_gate is not None and not await self.audio_gate.valid(generation):
             return False
         self.segment += 1
-        await self.runtime.submit(Incoming(
-            platform="microphone", author="local",
-            channel="mic", message_id=f"mic-{self.segment}",
+        work = await self.runtime.submit(Incoming(
+            platform="microphone", author="Goldaj",
+            channel="mic", message_id=f"mic-{self.session_token}-{self.segment}",
             text=text, force_reply=True))
-        # Wait for playback to stop before listening again.
-        await self.runtime.idle()
+        # Await only this microphone turn, including its playback, rather than
+        # waiting for unrelated Twitch/Discord/mobile messages queued later.
+        # This preserves echo protection without giving any source priority.
+        if work.finished is not None:
+            await work.finished
         return True
 
     async def loop(self, duration=3.0):

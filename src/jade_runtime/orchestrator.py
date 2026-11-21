@@ -6,6 +6,9 @@ from collections.abc import Awaitable, Callable
 import time
 from .dialogue import Dialogue
 from .messages import Incoming, Reply
+from .turn_logging import record_input, record_reply, record_outcome, record_delivery
+from .session_logging import bind_turn, reset_turn, event
+from .turn_arbitration import ArbitratingQueue, TurnArbiter
 
 
 @dataclass
@@ -17,6 +20,7 @@ class Work:
     task: asyncio.Task | None = None
     turn: int = 0
     queued_at: float = field(default_factory=time.monotonic)
+    finished: asyncio.Future | None = field(default=None, repr=False)
 
     def valid(self):
         return not self.cancelled and (self.deadline is None or
@@ -25,12 +29,16 @@ class Work:
 
 class Runtime:
     def __init__(self, dialogue: Dialogue, on_reply: Callable[[Reply], Awaitable[None]],
-                 max_queue: int = 64, on_stream_start=None):
+                 max_queue: int = 64, on_stream_start=None, delivery_plan=None,
+                 memory_service=None):
         if not 1 <= max_queue <= 1024:
             raise ValueError("invalid queue limit")
         self.dialogue, self.on_reply = dialogue, on_reply
         self.on_stream_start = on_stream_start
-        self.queue = asyncio.Queue(maxsize=max_queue)
+        self.delivery_plan = delivery_plan
+        self.memory_service = memory_service
+        self.queue = ArbitratingQueue(maxsize=max_queue)
+        self.arbiter = TurnArbiter(dialogue.backend) if isinstance(dialogue, Dialogue) else None
         self.worker = None
         self.active = None
         self.state = "STOPPED"
@@ -52,7 +60,8 @@ class Runtime:
         if self.state != "RUNNING" or self.worker is None or self.worker.done():
             raise RuntimeError("runtime is not running")
         self._turn_sequence += 1
-        item = Work(message, deadline, result, turn=self._turn_sequence)
+        item = Work(message, deadline, result, turn=self._turn_sequence,
+                    finished=asyncio.get_running_loop().create_future())
         self.queue.put_nowait(item)
         return item
 
@@ -64,6 +73,8 @@ class Runtime:
             item.task.cancel()
         if item.result is not None and not item.result.done():
             item.result.cancel()
+        if item.task is None and item.finished is not None and not item.finished.done():
+            item.finished.set_result(None)
 
     def _expire_work(self, item):
         if item.cancelled:
@@ -106,10 +117,15 @@ class Runtime:
     def mark_timing(self, stage):
         """Optional local timing: no message content or participant identity."""
         item = self.active
-        if (item is not None and item.message.platform == "discord_voice"
-                and self.latency_log.isEnabledFor(logging.INFO)):
-            self.latency_log.info("turn=%d stage=%s since_queue_ms=%.1f",
-                                  item.turn, stage, (time.monotonic() - item.queued_at) * 1000)
+        if item is not None and self.latency_log.isEnabledFor(logging.INFO):
+            # Only technical routing metadata and monotonic elapsed time;
+            # never record participants, raw speech or message content.
+            self.latency_log.info(
+                "turn=%d platform=%s modality=%s stage=%s since_queue_ms=%.1f",
+                item.turn, item.message.platform,
+                ("voice" if item.message.platform in ("discord_voice", "microphone")
+                 else item.message.input_modality),
+                stage, (time.monotonic() - item.queued_at) * 1000)
 
     async def stop(self, *, graceful=True, timeout=5.0):
         async with self._stop_lock:
@@ -147,23 +163,56 @@ class Runtime:
     async def _execute(self, item):
         if not item.valid():
             raise TimeoutError("message expired")
+        context_token = bind_turn(item.turn, item.message)
         self.mark_timing("queue_start")
+        record_input(item.turn, item.message)
         turn = None
         committed = False
+        command_reply = None
+        memory_context = ""
+        history_messages = None
+        memory_action = None
+        destinations = ()
         try:
-            if (self.on_stream_start is not None and item.message.platform == "discord_voice"
+            if self.memory_service is not None:
+                event("turn_stage", stage="memory_start")
+                self.mark_timing("memory_start")
+                auto_enroll = getattr(self.memory_service, "ensure_auto_enrolled", None)
+                if callable(auto_enroll):
+                    await auto_enroll(item.message)
+                command_reply = await self.memory_service.command(item.message)
+                if command_reply is None:
+                    memory_context = await self.memory_service.context_for(item.message)
+                    prepare = getattr(self.memory_service, "prepare_memory_action", None)
+                    if callable(prepare):
+                        memory_action = await prepare(item.message)
+                    if (isinstance(self.dialogue, Dialogue)
+                            and item.message.history_key not in self.dialogue.history):
+                        history_messages = await self.memory_service.history_for(item.message)
+                event("turn_stage", stage="memory_end", memory_tool_available=memory_action is not None)
+                self.mark_timing("memory_end")
+            if (command_reply is None and self.on_stream_start is not None
+                    and item.message.platform == "discord_voice"
                     and callable(getattr(self.dialogue.backend, "complete_stream", None))):
                 turn = self.on_stream_start(item.message)
-            if turn is None:
+            if command_reply is not None:
+                reply = command_reply
+            elif turn is None:
                 if isinstance(self.dialogue, Dialogue):
                     reply = await self.dialogue.respond(item.message, valid=item.valid,
-                                                        on_timing=self.mark_timing)
+                                                        on_timing=self.mark_timing,
+                                                        memory_context=memory_context,
+                                                        history_messages=history_messages,
+                                                        memory_action=memory_action)
                 else:
                     reply = await self.dialogue.respond(item.message, valid=item.valid)
             else:
                 reply = await self.dialogue.respond(
                     item.message, valid=item.valid, on_sentence=turn.emit,
-                    on_timing=self.mark_timing, defer_history=True)
+                    on_timing=self.mark_timing, defer_history=True,
+                    on_intent=getattr(turn, "set_intent", None),
+                    memory_context=memory_context,
+                    history_messages=history_messages, memory_action=memory_action)
             if not item.valid():
                 raise TimeoutError("message expired")
             if reply is None and turn is not None:
@@ -171,27 +220,62 @@ class Runtime:
                 turn = None
             if turn is not None:
                 await turn.finish_input()
+            if reply is None:
+                self.mark_timing("no_reply")
+                record_outcome(item.turn, "no_reply")
+            else:
+                destinations = (self.delivery_plan(reply) if self.delivery_plan is not None
+                                else ("console_text",))
+                record_reply(item.turn, reply, destinations)
             if item.result is not None and not item.result.done():
                 if reply is None:
                     item.result.set_exception(RuntimeError("message not accepted"))
                 else:
                     item.result.set_result(reply.text)
             if reply is not None and item.valid():
-                await self.on_reply(replace(reply, spoken=True) if turn is not None else reply)
+                self.mark_timing("delivery_start")
+                try:
+                    await self.on_reply(replace(reply, spoken=True) if turn is not None else reply)
+                    record_delivery(item.turn, "handoff_completed", destinations=destinations)
+                except Exception:
+                    record_delivery(item.turn, "failed", destinations=destinations)
+                    raise
+                finally:
+                    self.mark_timing("delivery_end")
+            played = True
             if turn is not None:
                 played = await turn.wait()
                 await self.dialogue.commit_stream_response(item.message,
                                                            reply.text if played else None)
                 committed = True
-        except BaseException:
+            if (reply is not None and played and command_reply is None and item.valid()
+                    and self.memory_service is not None):
+                await self.memory_service.remember_turn(item.message, reply)
+                if not getattr(memory_action, "used", False):
+                    self.memory_service.schedule(item.message, reply)
+            event("turn_complete", delivered=reply is not None and played)
+            self.mark_timing("turn_complete")
+        except BaseException as exc:
+            self.mark_timing("turn_cancelled" if isinstance(
+                exc, asyncio.CancelledError) else "turn_failed")
+            record_outcome(item.turn, "cancelled" if isinstance(
+                exc, asyncio.CancelledError) else "failed")
             if turn is not None:
                 await turn.abort()
                 if not committed and turn.has_submitted:
                     await self.dialogue.commit_stream_response(item.message, None)
             raise
+        finally:
+            reset_turn(context_token)
 
     async def _process(self):
         while True:
+            # Interleaved sources compete on content and recency, never on transport.
+            # Heads preserve the order of each independent conversation.
+            if self.arbiter is not None and self.queue.qsize() >= 2:
+                choice = await self.arbiter.choose(self.queue.heads())
+                if choice is not None:
+                    self.queue.choose(choice)
             item = await self.queue.get()
             self.active = item
             timer = None
@@ -216,9 +300,15 @@ class Runtime:
                 if item.result is not None and not item.result.done():
                     item.result.set_exception(TimeoutError() if isinstance(exc, TimeoutError)
                                               else RuntimeError("message processing failed"))
-                self.log.warning("Message processing failed (%s)", self.errors)
+                self.log.exception(
+                    "Message processing failed (%s): turn=%s platform=%s modality=%s",
+                    self.errors, item.turn, item.message.platform,
+                    ("voice" if item.message.platform in ("discord_voice", "microphone")
+                     else item.message.input_modality))
             finally:
                 if timer is not None:
                     timer.cancel()
                 self.active = None
                 self.queue.task_done()
+                if item.finished is not None and not item.finished.done():
+                    item.finished.set_result(None)

@@ -4,6 +4,6 @@ Double-cliquer **Installer-Demo-Express.cmd** à la racine du dépôt sous Windo
 
 Alternative sans installation : double-cliquer **Lancer-Demo-Express.cmd** depuis le clone. Pour désinstaller, fermer la démo, supprimer le dossier local JadeDemoExpress dans LOCALAPPDATA et son raccourci du menu Démarrer. Aucun message n'est conservé sur disque par ce programme.
 
-Les réponses de Jade sont **simulées et déterministes**, le portrait est dessiné par Windows. **Ce n'est pas une preuve de fonctionnement IA, voix, Live2D ou connexion Discord/Twitch.** Pour la démo animée OpenAI existante (clés API et coûts), voir demo/reelle/GUIDE-DEMO.md ; pour le moteur du dépôt, voir docs/handbook/INSTALLATION.md.
+Les réponses de Jade sont **simulées et déterministes**, le portrait est dessiné par Windows. **Ce n'est pas une preuve de fonctionnement IA, voix, Live2D ou connexion Discord/Twitch.** Il s'agit de la **seule démo distribuée** sur `develop` : les anciennes démos `demo/reelle/` et `demo/windows/` ont été retirées. Pour utiliser Jade réelle (ce n'est pas une deuxième démo), voir [le guide d'installation](../../docs/handbook/INSTALLATION.md) et [le guide des démonstrations](../../docs/handbook/DEMO.md).
 
 Test sans interface : powershell.exe -NoLogo -NoProfile -File demo/express/Jade-Demo-Express.ps1 -SelfTest. Les tests automatiques ne remplacent pas un essai visuel sous Windows.

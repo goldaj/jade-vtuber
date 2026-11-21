@@ -17,7 +17,7 @@ from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.orchestrator import Runtime
 from src.jade_runtime.output import SpeechOutput
 from src.jade_runtime.voice_pipeline import VoiceInput
-from tests.test_demo_realtime_tts import FakeClient, configured, created, delta, transcript, done
+from tests.test_jade_realtime_tts import FakeClient, configured, created, delta, transcript, done
 
 
 class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
@@ -42,7 +42,13 @@ class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
         stt = AsyncMock(side_effect=transcribe)
         chat = AsyncMock(return_value=SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content='Bonjour !'))]))
         tts = AsyncMock(return_value=SimpleNamespace(content=output_wav))
-        sdk = FakeClient([configured(1.5), created(), delta(), transcript('Bonjour !'), done()])
+        # Provide 100 ms of PCM at the Realtime TTS sample rate so the
+        # Rubber Band filter receives a realistic, processable audio buffer.
+        tts_pcm = array('h', [1600] * 2400).tobytes()
+        sdk = FakeClient([
+            configured(1.25, voice="shimmer"), created(), delta(tts_pcm),
+            transcript('Bonjour !'), done(),
+        ])
         sdk.audio = SimpleNamespace(transcriptions=SimpleNamespace(create=stt),
                                     speech=SimpleNamespace(create=tts))
         sdk.chat = SimpleNamespace(completions=SimpleNamespace(create=chat))

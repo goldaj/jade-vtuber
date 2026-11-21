@@ -1,0 +1,8 @@
+# Avatar mobile r20 — 20 novembre 2026
+
+- **Mission Codex, DEV-002** · Base develop 0ddfba0. Le propriétaire a confirmé le texte et la voix sur Android, avec le modèle absent.
+- **Diagnostic** · PixiJS 6.5.10 bloque sous la CSP existante. Une fois le constructeur rétabli, l'adaptateur 0.4.0 n'obtient pas l'ordre de rendu de Cubism Core 6.0.1. Les deux erreurs ont été reproduites séparément sur les bibliothèques installées et le r20.
+- **Correction** · Le bundle navigateur @pixi/unsafe-eval 6.5.10 est chargé depuis la liste des fichiers autorisés. Il supprime le recours à la compilation dynamique de JavaScript. Après chargement du r20, la couche d'adaptation utilise getRenderOrders() si l'ancienne API ne fournit pas de tableau, avec vérification de la taille pour ce modèle. Aucune extension de la CSP.
+- **Vérification distincte** · 37 tests ciblés sur la PWA, les intentions et le démarrage. Fenêtre Pixel émulée Chromium sur le vrai site Serve avec le nouveau JS. Modèle r20 visible après ouverture de l'interface, textures et Idle chargés et images successives différentes. Pendant ce test, le bundle Pixi supplémentaire a été fourni par l'interception locale du navigateur jusqu'au redémarrage du gateway. Les navigateurs de test ont été fermés et leurs processus résiduels contrôlés.
+- **Installation** · Bundle vérifié SHA-512 du registre npm et installé dans le dossier SDK privé sur D:. Les bibliothèques restent hors Git. [Guide](../../handbook/INSTALLATION.md).
+- **À confirmer** · REC-019 sur le téléphone du propriétaire après rechargement de la PWA. DEV-002 reste ouverte jusqu'à cette confirmation.

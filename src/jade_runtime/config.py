@@ -1,8 +1,18 @@
 """Strict, private, fail-closed runtime settings. No network on import."""
 from dataclasses import dataclass, field
+import math
+import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from src.utility.private_config import environ
+
+
+def _default_memory_db_path() -> str:
+    """Private persistent database outside the public Git repository."""
+    if os.name == "nt" and Path("D:/").is_dir():
+        return str(Path("D:/Jade/private/jade-memory.sqlite3"))
+    return str(Path.home() / ".jade" / "jade-memory.sqlite3")
 
 
 def _enabled(value: str) -> bool:
@@ -29,10 +39,13 @@ def _voice_users(value: str) -> tuple[int, ...]:
 @dataclass(frozen=True)
 class Settings:
     model: str = "gpt-6-luna"
+    reasoning_effort: str = "low"
+    max_completion_tokens: int = 320
     stt_model: str = "gpt-transcribe"
     tts_model: str = "gpt-realtime-2.1-mini"
-    voice: str = "coral"
-    tts_speed: float = 1.5
+    voice: str = "shimmer"
+    tts_speed: float = 1.25
+    tts_pitch_semitones: float = 2.0  # Étincelle: DSP, not an OpenAI API parameter.
     api_key: str = ""
     channel: str = ""
     bot_name: str = "Jade"
@@ -51,8 +64,16 @@ class Settings:
     discord_voice_consent: bool = False
     discord_voice_allowed_users: tuple[int, ...] = field(default=(), repr=False)
     discord_voice_channel: int = 0
-    discord_text_auto_rate: float = 0.30
+    discord_voice_auto_rate: float = 0.20
+    discord_text_auto_rate: float = 0.20
     discord_text_cooldown_seconds: int = 180
+    social_hybrid_enabled: bool = True
+    initiatives_enabled: bool = True
+    social_budget_daily_usd: float = 0.0
+    social_budget_monthly_usd: float = 0.0
+    initiative_budget_daily_usd: float = 0.0
+    initiative_budget_monthly_usd: float = 0.0
+    avatar_intent_enabled: bool = True  # Facial/text reactions, not voice intent metadata.
     vts_enabled: bool = False
     vts_token: str = ""
     vts_url: str = "ws://127.0.0.1:8001"
@@ -63,20 +84,39 @@ class Settings:
     audio_output: str = "none"
     early_voice: bool = False
     subtitle_path: Path = Path("subtitle.txt")
-    max_history_messages: int = 24
+    max_history_messages: int = 48
     max_queue: int = 64
-    reply_probability: float = 0.0
+    reply_probability: float = 0.30
     timeout_seconds: float = 20.0
+    latency_logging: bool = False  # Opt-in: technical timings only, no content.
+    # Persistent memory and its curator enabled by default for the live runtime.
+    memory_enabled: bool = True
+    memory_curator_enabled: bool = True
+    memory_batch_enabled: bool = True
+    selective_context_enabled: bool = True
+    memory_db_path: str = field(default_factory=_default_memory_db_path)
+    # Private PWA, opt-in via Tailscale Serve; separate HTTP secret from chat.
+    billing_admin_key: str = field(default="", repr=False)
+    mobile_enabled: bool = False
+    mobile_token: str = field(default="", repr=False)
+    mobile_owner_login: str = ""
+    mobile_public_origin: str = ""
+    mobile_port: int = 8766
+    mobile_vendor_dir: str = ""
+    mobile_model_dir: str = ""
 
     @classmethod
     def load(cls) -> "Settings":
         """The project-private dotenv is preferred over a tracked file."""
         cfg = cls(
             model=str(environ("JADE_LLM_MODEL", "gpt-6-luna")),
+            reasoning_effort=str(environ("JADE_LLM_REASONING_EFFORT", "low")).lower(),
+            max_completion_tokens=int(environ("JADE_MAX_COMPLETION_TOKENS", "320")),
             stt_model=str(environ("JADE_STT_MODEL", "gpt-transcribe")),
             tts_model=str(environ("JADE_TTS_MODEL", "gpt-realtime-2.1-mini")),
-            voice=str(environ("JADE_TTS_VOICE", "coral")),
-            tts_speed=float(environ("JADE_TTS_SPEED", "1.5")),
+            voice=str(environ("JADE_TTS_VOICE", "shimmer")),
+            tts_speed=float(environ("JADE_TTS_SPEED", "1.25")),
+            tts_pitch_semitones=float(environ("JADE_TTS_PITCH_SEMITONES", "2.0")),
             api_key=str(environ("OPENAI_API_KEY", "")),
             channel=str(environ("TWITCH_CHANNEL", "")),
             bot_name=str(environ("BOT_NAME", "Jade")),
@@ -89,8 +129,16 @@ class Settings:
             # Obsolete Discord activation/broadcast/list/confirmation values are not
             # loaded: existing private files are preserved but have no effect.
             discord_voice_channel=int(environ("DISCORD_VOICE_CHANNEL", "0") or 0),
-            discord_text_auto_rate=float(environ("JADE_DISCORD_TEXT_AUTO_RATE", "0.30")),
+            discord_voice_auto_rate=float(environ("JADE_DISCORD_VOICE_AUTO_RATE", "0.20")),
+            discord_text_auto_rate=float(environ("JADE_DISCORD_TEXT_AUTO_RATE", "0.20")),
             discord_text_cooldown_seconds=int(environ("JADE_DISCORD_TEXT_COOLDOWN_SECONDS", "180")),
+            social_hybrid_enabled=_enabled(str(environ("JADE_SOCIAL_HYBRID_ENABLED", "1")).lower()),
+            initiatives_enabled=_enabled(str(environ("JADE_INITIATIVES_ENABLED", "1")).lower()),
+            social_budget_daily_usd=float(environ("JADE_SOCIAL_BUDGET_DAILY_USD", "0")),
+            social_budget_monthly_usd=float(environ("JADE_SOCIAL_BUDGET_MONTHLY_USD", "0")),
+            initiative_budget_daily_usd=float(environ("JADE_INITIATIVE_BUDGET_DAILY_USD", "0")),
+            initiative_budget_monthly_usd=float(environ("JADE_INITIATIVE_BUDGET_MONTHLY_USD", "0")),
+            avatar_intent_enabled=_enabled(str(environ("JADE_AVATAR_INTENT_ENABLED", "1")).lower()),
             vts_enabled=_enabled(str(environ("JADE_VTS_ENABLED", "0")).lower()),
             vts_token=str(environ("JADE_VTS_TOKEN", "")),
             vts_url=str(environ("JADE_VTS_URL", "ws://127.0.0.1:8001")),
@@ -101,35 +149,93 @@ class Settings:
             audio_output=str(environ("JADE_AUDIO_OUTPUT", "none")),
             early_voice=_enabled(str(environ("JADE_EARLY_VOICE", "0")).lower()),
             subtitle_path=Path(str(environ("JADE_SUBTITLE_PATH", "subtitle.txt"))),
-            max_history_messages=int(environ("JADE_HISTORY_LIMIT", "24")),
+            max_history_messages=int(environ("JADE_HISTORY_LIMIT", "48")),
             max_queue=int(environ("JADE_QUEUE_LIMIT", "64")),
-            reply_probability=float(environ("JADE_RANDOM_REPLY_RATE", "0")),
+            reply_probability=float(environ("JADE_RANDOM_REPLY_RATE", "0.30")),
             timeout_seconds=float(environ("JADE_API_TIMEOUT", "20")),
+            latency_logging=_enabled(str(environ("JADE_LATENCY_LOG", "0")).lower()),
+            memory_enabled=_enabled(str(environ("JADE_MEMORY_ENABLED", "1")).lower()),
+            memory_curator_enabled=_enabled(str(environ("JADE_MEMORY_CURATOR_ENABLED", "1")).lower()),
+            memory_batch_enabled=_enabled(str(environ("JADE_MEMORY_BATCH_ENABLED", "1")).lower()),
+            selective_context_enabled=_enabled(str(environ("JADE_SELECTIVE_CONTEXT_ENABLED", "1")).lower()),
+            memory_db_path=str(environ("JADE_MEMORY_DB_PATH", "")).strip() or _default_memory_db_path(),
+            billing_admin_key=str(environ("JADE_OPENAI_ADMIN_KEY", "")),
+            mobile_enabled=_enabled(str(environ("JADE_MOBILE_ENABLED", "0")).lower()),
+            mobile_token=str(environ("JADE_MOBILE_TOKEN", "")),
+            mobile_owner_login=str(environ("JADE_MOBILE_OWNER_LOGIN", "")).strip(),
+            mobile_public_origin=str(environ("JADE_MOBILE_PUBLIC_ORIGIN", "")).strip(),
+            mobile_port=int(environ("JADE_MOBILE_PORT", "8766")),
+            mobile_vendor_dir=str(environ("JADE_MOBILE_VENDOR_DIR", "")),
+            mobile_model_dir=str(environ("JADE_MOBILE_MODEL_DIR", "")),
         )
         cfg.validate()
         return cfg
 
     def validate(self):
+        if (self.reasoning_effort not in ("none", "low", "medium", "high", "xhigh", "max")
+                or not 128 <= self.max_completion_tokens <= 8192):
+            raise ValueError("invalid LLM effort or completion budget")
         if (not self.model or not self.stt_model or not self.tts_model or not self.voice
                 or not self.bot_name.strip()):
             raise ValueError("model names and Jade name must not be blank")
         if (isinstance(self.tts_speed, bool) or not isinstance(self.tts_speed, (int, float))
                 or not 0.25 <= self.tts_speed <= 1.5):
             raise ValueError("TTS speed must be between 0.25 and 1.5")
+        if (isinstance(self.tts_pitch_semitones, bool)
+                or not isinstance(self.tts_pitch_semitones, (float, int))
+                or not math.isfinite(self.tts_pitch_semitones)
+                or not -6 <= self.tts_pitch_semitones <= 6):
+            raise ValueError("pitch semitones must be between -6 and 6")
+        if type(self.latency_logging) is not bool:
+            raise ValueError("latency logging must be a boolean")
         if (self.max_history_messages < 2 or self.max_history_messages > 100
                 or not 1 <= self.max_queue <= 1024
                 or not 0 <= self.reply_probability <= 1
                 or not 1 <= self.timeout_seconds <= 120):
             raise ValueError("invalid runtime safety bounds")
-        if (not 0 <= self.discord_text_auto_rate <= 1
+        if any(not math.isfinite(value) or not 0 <= value <= 10000 for value in (
+                self.social_budget_daily_usd, self.social_budget_monthly_usd,
+                self.initiative_budget_daily_usd, self.initiative_budget_monthly_usd)):
+            raise ValueError("invalid optional API budget")
+        if (not 0 <= self.discord_voice_auto_rate <= 1
+                or not 0 <= self.discord_text_auto_rate <= 1
                 or not 30 <= self.discord_text_cooldown_seconds <= 3600):
             raise ValueError("invalid Discord text participation limits")
         if not 1024 <= self.http_port <= 65535:
             raise ValueError("invalid local API port")
+        if not 1024 <= self.mobile_port <= 65535:
+            raise ValueError("invalid mobile port")
+        if self.mobile_enabled and not 32 <= len(self.mobile_token) <= 256:
+            raise ValueError("mobile app requires a separate 32+ character token")
+        if self.mobile_enabled and not (3 <= len(self.mobile_owner_login) <= 256
+                                        and "\r" not in self.mobile_owner_login
+                                        and "\n" not in self.mobile_owner_login
+                                        and self.mobile_owner_login.isascii()):
+            raise ValueError("mobile app requires JADE_MOBILE_OWNER_LOGIN (Tailscale identity)")
+        if self.mobile_enabled:
+            origin = urlsplit(self.mobile_public_origin)
+            if (origin.scheme != "https" or not origin.hostname
+                    or not origin.hostname.endswith(".ts.net") or origin.path
+                    or origin.query or origin.fragment or origin.username
+                    or origin.password or self.mobile_public_origin.endswith("/")):
+                raise ValueError("mobile requires exact HTTPS .ts.net JADE_MOBILE_PUBLIC_ORIGIN")
+            try:
+                if origin.port is not None and not 1024 <= origin.port <= 65535:
+                    raise ValueError("invalid mobile HTTPS public port")
+            except ValueError as exc:
+                raise ValueError("invalid mobile HTTPS origin port") from exc
+        if self.mobile_enabled and self.http_enabled and self.mobile_port == self.http_port:
+            raise ValueError("mobile and legacy HTTP cannot share one port")
         if self.http_enabled and len(self.http_token) < 32:
             raise ValueError("HTTP API requires an independent 32+ character token")
         if self.audio_output not in ("none", "ffplay"):
             raise ValueError("audio output must be 'none' or 'ffplay'")
+        if self.memory_curator_enabled and not self.memory_enabled:
+            raise ValueError("memory curator needs JADE_MEMORY_ENABLED=1")
+        if self.memory_enabled and (not self.memory_db_path
+                                    or not Path(self.memory_db_path).is_absolute()
+                                    or not self.memory_db_path.endswith(".sqlite3")):
+            raise ValueError("memory requires absolute private JADE_MEMORY_DB_PATH (.sqlite3)")
         if self.twitch_enabled and not (self.channel and self.twitch_oauth):
             raise ValueError("Twitch explicitly enabled but credentials missing")
         if self.twitch_send and not self.twitch_enabled:

@@ -22,11 +22,33 @@ PUBLIC_FILES = frozenset({
     ".editorconfig", ".flake8", "mypy.ini",
 })
 PUBLIC_PREFIXES = ("src/", "tests/", "config/profiles/")
+# Only these reviewed mobile UI files enter the PRIVATE preview.
+# Never include SDK vendor binaries, LFS model art or private configuration.
+MOBILE_WEB_PUBLIC = frozenset({
+    "src/jade_runtime/mobile_web/index.html",
+    "src/jade_runtime/mobile_web/styles.css",
+    "src/jade_runtime/mobile_web/avatar.js",
+    "src/jade_runtime/mobile_web/room-motion.js",
+    "src/jade_runtime/mobile_web/room-spring.webp",
+    "src/jade_runtime/mobile_web/intent-visuals.json",
+    "src/jade_runtime/mobile_web/app.js",
+    "src/jade_runtime/mobile_web/duplex-client.js",
+    "src/jade_runtime/mobile_web/manifest.webmanifest",
+    "src/jade_runtime/mobile_web/sw.js",
+    "src/jade_runtime/mobile_web/icon.svg",
+})
+ROOM_BACKGROUND = "src/jade_runtime/mobile_web/room-spring.webp"
+ROOM_BACKGROUND_SHA256 = "5b7217ff8c1351a22c9ccb51d76889b3a9bb3fe8b7894d7855e2cd4961fe3671"
 PUBLIC_TOOLS = frozenset({
     "tools/jade_publication_audit.py",
     "tools/jade_publication_export.py",
     "tools/jade_ci_preflight.py",
     "tools/jade_twitch_authorize.py",
+    "tools/jade_pycharm_runner.py",
+})
+PUBLIC_RUN_CONFIGS = frozenset({
+    ".run/Jade - Discord mobile.run.xml",
+    ".run/Jade - preflight.run.xml",
 })
 PUBLIC_TEMPLATES = frozenset({
     "docs/publication/README_PUBLIC_TEMPLATE.md",
@@ -45,7 +67,8 @@ WARNING = ("UNAPPROVED PRIVATE PREVIEW. NOT RELEASE-CLEARED.\n"
 
 def selected_paths(paths: list[str]) -> list[str]:
     """Explicit allowlist; the optional portrait is handled separately."""
-    return sorted(p for p in paths if p in PUBLIC_FILES or p in PUBLIC_TOOLS or p in PUBLIC_TEMPLATES
+    return sorted(p for p in paths if p in PUBLIC_FILES or p in PUBLIC_TOOLS
+                  or p in PUBLIC_TEMPLATES or p in MOBILE_WEB_PUBLIC or p in PUBLIC_RUN_CONFIGS
                   or (p.startswith(PUBLIC_PREFIXES) and p.endswith(".py"))
                   or (p.startswith("config/profiles/") and p.endswith(".toml")))
 
@@ -84,7 +107,12 @@ def create_preview(root: Path, dest: Path, paths: list[str], *, include_portrait
             raise ValueError("Source for public preview missing or outside checkout")
         if sourcefile.stat().st_size > 2_000_000:
             raise ValueError("Oversized source excluded from public preview")
-        if scan_text(sourcefile.read_text(encoding="utf-8")):
+        if source == ROOM_BACKGROUND:
+            image = sourcefile.read_bytes()
+            if (image[:4] != b"RIFF" or image[8:12] != b"WEBP"
+                    or hashlib.sha256(image).hexdigest() != ROOM_BACKGROUND_SHA256):
+                raise ValueError("Mobile background digest does not match the reviewed source")
+        elif scan_text(sourcefile.read_text(encoding="utf-8")):
             raise ValueError("Potential credential in preview source")
     portrait = _verified_portrait(root, paths) if include_portrait else None
     readme = None

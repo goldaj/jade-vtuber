@@ -37,16 +37,29 @@ class FixedRandom:
         return self.value
 
 
+def prime_group(policy, channel=10):
+    """Observe two verified speakers without triggering unsolicited sampling."""
+    previous_rate = policy.auto_rate
+    policy.auto_rate = 0
+    try:
+        for uid in (901, 902):
+            event = msg("Préambule", author_id=uid, ident=uid, channel=channel)
+            policy.observe(event, parse_discord_message(event), own_user_id=42)
+    finally:
+        policy.auto_rate = previous_rate
+
+
 class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
     def test_ignore_chatter_but_pass_context_to_explicit_ping(self):
         policy = DiscordTextPolicy(auto_rate=0)
+        prime_group(policy)
         idle = msg("On se retrouve demain.", ident=1)
         self.assertIsNone(policy.observe(idle, parse_discord_message(idle), own_user_id=42))
         ping = msg("<@42> Tu en penses quoi ?", ident=2,
                    mentions=[SimpleNamespace(id=42)])
         selected = policy.observe(ping, parse_discord_message(ping), own_user_id=42)
         self.assertTrue(selected.force_reply)
-        self.assertEqual(selected.context, ("Alice : On se retrouve demain.",))
+        self.assertEqual(selected.context[-1], "Alice : On se retrouve demain.")
         self.assertEqual(selected.text, "<@42> Tu en penses quoi ?")
 
     def test_other_channels_are_isolated_and_name_requires_word_boundaries(self):
@@ -56,8 +69,41 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
         b = msg("Bonjour Jade !", ident=2, channel=11)
         selected = policy.observe(b, parse_discord_message(b), own_user_id=42)
         self.assertEqual(selected.context, ())
+        prime_group(policy)
         c = msg("Jadette était là", ident=3, channel=10)
         self.assertIsNone(policy.observe(c, parse_discord_message(c), own_user_id=42))
+
+    def test_memory_commands_are_selected_without_jade_mention(self):
+        policy = DiscordTextPolicy(auto_rate=0)
+        for num, text in enumerate(
+            ("!jade-memoire", "!jade-memoire activer",
+             "!jade-memoire delier", "!jade-memoire etat"), start=1
+        ):
+            with self.subTest(text=text):
+                source = msg(text, ident=num)
+                self.assertTrue(policy.observe(
+                    source, parse_discord_message(source),
+                    own_user_id=42).force_reply)
+        prime_group(policy)
+        invalid = msg("!jade-memoire inventer", ident=100)
+        self.assertIsNone(policy.observe(
+            invalid, parse_discord_message(invalid), own_user_id=42))
+
+    def test_identity_confirmation_code_never_enters_discord_context(self):
+        policy = DiscordTextPolicy(auto_rate=0)
+        prime_group(policy)
+        code = "v1.twitch.6001.somethingSecret12345678901234567890"
+        command = msg("!jade-memoire   CONFIRMER " + code, ident=333)
+        selected = policy.observe(command, parse_discord_message(command),
+                                  own_user_id=42)
+        self.assertTrue(selected.force_reply)
+        later = msg("<@42> Question suivante ?", ident=334,
+                    mentions=[SimpleNamespace(id=42)])
+        followup = policy.observe(later, parse_discord_message(later),
+                                  own_user_id=42)
+        self.assertIsNotNone(followup)
+        self.assertNotIn(code, str(followup.context))
+        self.assertIn("[code masqué]", str(followup.context))
 
     def test_dm_and_reply_to_jade_are_direct(self):
         policy = DiscordTextPolicy(auto_rate=0)
@@ -71,6 +117,7 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
     def test_followup_only_after_successful_written_reply_and_same_speaker(self):
         clock = FakeClock()
         policy = DiscordTextPolicy(auto_rate=0, clock=clock)
+        prime_group(policy)
         direct = msg("Jade, une question", ident=10)
         selected = policy.observe(direct, parse_discord_message(direct), own_user_id=42)
         self.assertTrue(selected.force_reply)
@@ -78,8 +125,11 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(policy.observe(question, parse_discord_message(question), own_user_id=42))
         policy.note_sent("10", source_message_id="10", sent_message_id=500)
         clock.now += 1
+        # Follow-ups in a group remain sampled; use a deterministic 100% sample.
+        policy.auto_rate = 1
         next_msg = msg("Et ensuite ?", ident=12)
         self.assertTrue(policy.observe(next_msg, parse_discord_message(next_msg), own_user_id=42).force_reply)
+        policy.auto_rate = 0
         other = msg("Et moi ?", author_id=8, ident=13)
         self.assertIsNone(policy.observe(other, parse_discord_message(other), own_user_id=42))
         clock.now += 91
@@ -92,6 +142,7 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
         clock = FakeClock()
         policy = DiscordTextPolicy(auto_rate=1, cooldown_seconds=180,
                                    clock=clock, rng=FixedRandom(0))
+        prime_group(policy)
         a = msg("Comment ça marche ?", ident=1)
         self.assertTrue(policy.observe(a, parse_discord_message(a), own_user_id=42).force_reply)
         b = msg("Pourquoi ?", ident=2)
@@ -102,6 +153,7 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
         d = msg("Combien ?", ident=4)
         self.assertTrue(policy.observe(d, parse_discord_message(d), own_user_id=42).force_reply)
         policy0 = DiscordTextPolicy(auto_rate=0)
+        prime_group(policy0)
         self.assertIsNone(policy0.observe(d, parse_discord_message(d), own_user_id=42))
 
     def test_large_messages_and_state_are_bounded(self):
@@ -138,6 +190,25 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(connector.policy.channels["10"].last_reply_author, 7)
         self.assertIn(700, connector.policy.channels["10"].sent_ids)
 
+    async def test_dm_reply_uses_only_verified_incoming_channel_on_cache_miss(self):
+        target = SimpleNamespace(id=900, send=AsyncMock(
+            return_value=SimpleNamespace(id=42)))
+        connector = DiscordText("test", AsyncMock(), send_enabled=True)
+        connector.client = SimpleNamespace(get_channel=lambda channel_id: None)
+        received = parse_discord_message(msg(
+            "Bonjour Jade", guild=None, channel=900, author_id=41))
+        self.assertTrue(received.private_channel)
+        connector._remember_dm_channel(received, target)
+        fake = SimpleNamespace(AllowedMentions=SimpleNamespace(none=lambda: "none"))
+        with patch.dict("sys.modules", {"discord": fake}):
+            self.assertTrue(await connector.send_chat("900", "Bonjour."))
+            self.assertFalse(await connector.send_chat("901", "Interdit."))
+        target.send.assert_awaited_once()
+        self.assertEqual(len(connector._dm_channels), 1)
+        connector._remember_dm_channel(parse_discord_message(
+            msg("Message en salon", guild=1, channel=901)), target)
+        self.assertEqual(len(connector._dm_channels), 1)
+
     async def test_text_reply_can_span_multiple_discord_messages(self):
         target = SimpleNamespace(send=AsyncMock(return_value=SimpleNamespace(id=99)))
         fake = SimpleNamespace(AllowedMentions=SimpleNamespace(none=lambda: "disabled"))
@@ -172,9 +243,11 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
 
 class ConfigTests(unittest.TestCase):
     def test_default_spontaneous_participation_is_thirty_percent(self):
-        self.assertEqual(Settings().discord_text_auto_rate, 0.30)
-        self.assertEqual(DiscordTextPolicy().auto_rate, 0.30)
-        self.assertEqual(DiscordText("test", AsyncMock()).policy.auto_rate, 0.30)
+        self.assertEqual(Settings().discord_text_auto_rate, 0.20)
+        self.assertEqual(Settings().discord_voice_auto_rate, 0.20)
+        self.assertEqual(Settings().reply_probability, 0.30)
+        self.assertEqual(DiscordTextPolicy().auto_rate, 0.20)
+        self.assertEqual(DiscordText("test", AsyncMock()).policy.auto_rate, 0.20)
 
     def test_discord_text_bounds(self):
         Settings(discord_text_auto_rate=0, discord_text_cooldown_seconds=30).validate()

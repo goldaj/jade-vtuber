@@ -12,6 +12,32 @@ from tools import jade_publication_export as exporter
 from tools.jade_publication_export import create_preview, selected_paths, tracked_paths
 
 class ExportTests(unittest.TestCase):
+    def test_mobile_room_export_copies_reviewed_image_and_script(self):
+        image = b"RIFF" + b"\x08\x00\x00\x00" + b"WEBP" + b"synthetic"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "source"
+            dest = Path(directory) / "preview"
+            (root / "docs/publication").mkdir(parents=True)
+            (root / "config/templates").mkdir(parents=True)
+            room = root / "src/jade_runtime/mobile_web"
+            room.mkdir(parents=True)
+            (root / "main.py").write_text("print('demo')", encoding="utf-8")
+            (root / "pyproject.toml").write_text("[tool.poetry]\n", encoding="utf-8")
+            (root / exporter.TEMPLATE_README).write_text("# Jade", encoding="utf-8")
+            (root / exporter.TEMPLATE_PROMPT).write_text("generic", encoding="utf-8")
+            (room / "room-motion.js").write_text("// animation", encoding="utf-8")
+            (room / "room-spring.webp").write_bytes(image)
+            paths = ["main.py", "pyproject.toml", exporter.ROOM_BACKGROUND,
+                     "src/jade_runtime/mobile_web/room-motion.js"]
+            with patch.object(exporter, "ROOM_BACKGROUND_SHA256", hashlib.sha256(image).hexdigest()):
+                create_preview(root, dest, paths)
+            self.assertEqual((dest / exporter.ROOM_BACKGROUND).read_bytes(), image)
+            self.assertTrue((dest / "src/jade_runtime/mobile_web/room-motion.js").is_file())
+            with patch.object(exporter, "ROOM_BACKGROUND_SHA256", "0" * 64):
+                with self.assertRaises(ValueError):
+                    create_preview(root, Path(directory) / "invalid", paths)
+            self.assertFalse((Path(directory) / "invalid").exists())
+
     def test_strict_allowlist_drops_art_and_private_persona(self):
         paths = ["main.py", "pyproject.toml", "src/jade_runtime/config.py",
                  "jade-modeling/runtime-installed/Jade.moc3", "prompt_chat.txt",

@@ -1,44 +1,73 @@
-# Passation obligatoire pour Codex, Terra et tous les agents IA : branche main
+# Contrat et passation permanente pour les agents IA : develop
 
-## Directive permanente de documentation
+**Cartographie obligatoire avant modification des flux de dialogue, arbitrage, mémoire ou diffusion :** [atlas fonctionnel à cinq vues](../architecture/atlas-fonctionnel-2026-11-16/README.md) et [contrat détaillé](../architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md). Réviser les diagrammes lors de tout changement fonctionnel ; les vues de novembre 2026 sont datées, seule l'implémentation de la branche courante est source de vérité.
 
-**Toute modification de code, configuration, scripts, dépendances, ressources, tests, interfaces ou infrastructure DOIT entraîner une mise à jour de la documentation de la BRANCHE CONCERNÉE dans le même commit/PR.** Ce contrat s'applique aux changements minuscules autant qu'aux nouvelles fonctions, même si la correction consiste seulement à actualiser « aucun changement fonctionnel » dans certaines pages.
+**Cartographie de référence :** consulter les [deux schémas visuels](../architecture/README.md) avant d'analyser les flux ou de déplacer des composants. Ils servent d'orientation, jamais de preuve à eux seuls : examiner `main.py`, la configuration, les adaptateurs et les sorties. Lorsqu'une modification rend une flèche ou une fonction obsolète, mettre à jour les images et cette documentation dans la même branche.
 
-Mise à jour systématique des fichiers suivants :
-1. `docs/handbook/INSTALLATION.md` : prérequis, OS, clone, configuration, mises à niveau.
-2. `docs/handbook/DEMO.md` : procédure de démo, statut simulé/réel, limites.
-3. `docs/handbook/USER_GUIDE.md` : comportement visible, commandes, toutes les fonctionnalités.
-4. `docs/handbook/TECHNICAL.md` : architecture, interfaces, algorithmes, infrastructure, sécurité, coût, opérations.
-5. `docs/handbook/AI_HANDOFF.md` : périmètre, passation, risques, décisions et nouvelles règles agents.
-6. `docs/handbook/BRANCH_STATE.md` : présence/absence des fonctions, différences avec autres branches, preuves de test.
-7. `AGENTS.md` et l'index `docs/handbook/README.md` si leur portée, chemin ou consigne change.
+## Documentation et communication entre agents (contrat allégé)
 
-**Ne pas mettre la documentation d'une branche « au niveau de develop » en copiant du contenu** : les éléments absents doivent explicitement rester absents. Relire le code de la branche avant d'affirmer qu'une fonction y existe ; les discussions, tickets et anciennes PR sont des archives, pas la vérité opérationnelle. En cas de conflit entre anciens documents et nouveau manuel, le code testé et les décisions les plus récentes priment ; corriger les documents contradictoires.
+Le point d'entrée est **[`AGENTS.md`](../../AGENTS.md)**. Le [backlog opérationnel](../backlog/README.md) et sa [Definition of Done officielle](../backlog/DEFINITION_OF_DONE.md) gouvernent les tâches et leur clôture. La documentation fonctionnelle courante vit dans ce manuel et la coordination inter-agents dans [`docs/operations/AGENT_COORDINATION.md`](../operations/AGENT_COORDINATION.md). Une mission active possède **sa propre fiche** dans [`docs/operations/handoffs/`](../operations/handoffs/README.md) et une PR clairement liée ; ne pas modifier un ancien dossier historique comme canal de coordination.
 
-## Workflow concret obligatoire
+Une modification technique doit **actualiser seulement `docs/operations/CHANGELOG.md` de manière obligatoire** afin de tracer la décision et les preuves ; la garde CI `scripts/check_docs.py` vérifie cette règle. Actualiser en plus uniquement les guides, schémas et données de référence affectés, notamment `BRANCH_STATE.md` si le comportement réel change. Ne pas ajouter des mentions « vérifié, inchangé » aux huit autres manuels par automatisme. Une modification de tests uniquement n'exige pas d'entrée de changelog si elle ne modifie pas les contrats produit.
 
-- **0. Inventorier** : `git status --short --branch`, `git log -1`, `git branch -avv`, liste des PR encore actives. Ne pas forcer, rebaser ou supprimer du travail de quelqu'un d'autre. Préserver `main` et `develop` selon les instructions de l'utilisateur.
-- **1. Analyser l'impact** : fonctionnement utilisateur, comportements, config, infra, interfaces, sécurité, secrets, coûts, compatibilité, logs, modèles graphiques, tests et erreurs, **pour cette branche**.
-- **2. Développer** dans une branche dédiée si nécessaire, sans déploiement ou appel payant implicite.
-- **3. Mettre à jour TOUS les guides** au même niveau de changement et noter les fonctionnalités nouvelles, modifiées, retirées ou non vérifiées. Ne pas faire d'affirmation de succès matériel sans essai réel.
-- **4. Tests** : lint/compile, unittest offline, préflight, validation de la Démo Express et éventuellement des tests matériels autorisés.
-- **5. Vérifier la garde documentaire** `python scripts/check_docs.py` ; son mode CI compare les fichiers sources et les guides modifiés par la PR.
-- **6. Passer en revue/PR** : exposer dans le résumé l'état de chaque guide, les branches impactées, les limites, et signaler toute procédure manuelle restante.
-- **7. Fusionner selon la politique du propriétaire** ; surtout pas de merge automatique du code de `develop` dans `main` sous prétexte de synchroniser les textes.
+Les versions de documentation sont **spécifiques à chaque branche** et reflètent son code. Les anciennes passations datées dans [`docs/history/`](../history/README.md) sont des preuves et non des instructions d'exécution actuelles.
 
-## Sauvegarde, confidentialité et coûts
+## Décisions produit non négociables sur develop
 
-Aucun token API, compte privé, clé GitHub, fichier `.env`, audio, transcript ou mémoire personnelle dans Git ou les logs. La démo Express ne contacte personne. Un test réel Discord/Twitch, microphone/voix ou OpenAI doit être autorisé, et le coût/les données transmises annoncés. Ne pas modifier le VPS de trading ni publier les ports du PC pour faciliter un essai. Distinguer tests simulés de validation physique.
+1. **Une seule Jade, tous les supports simultanément.** Le launcher n'a pas de menu de mode. Utiliser `--all-channels`, pas choisir Discord au détriment de mobile/micro/Twitch. Les flags individuels existent pour le diagnostic et tests uniquement. Aucune priorité fixe par canal.
+2. **Jade décide du prochain tour en attente.** `TurnArbiter` permet un choix LLM sensible au contexte, limité par délais et équité, sans préemption d'une réponse en cours. Garder l'ordre d'un fil, le fallback FIFO, la file bornée et `task_done`.
+3. **Routes privées** : un message mobile/micro/HTTP local ne doit pas être diffusé publiquement via Discord, OBS ou Twitch par simple présence de ces canaux ; respecter l'identité authentifiée du propriétaire.
+4. **Android est une PWA privée** : Tailscale Serve uniquement sur le PC vers loopback `8766`, double protection compte Tailscale + Bearer ; aucun service public, aucune modification du VPS Hyperliquid. SDK Web Live2D propriétaire installé hors Git et compatible avec le modèle r20.
+5. **Mémoire persistante optionnelle et respect du consentement** : SQLite hors repo, identités transport vérifiées, Core Memories non purgées automatiquement mais effaçables sur demande, curation facultative avec coûts et risques.
+6. **Voix/intention** : préfixe strict `[INTENT:...]` supprimé avant sorties et mémoire, pitch DSP nécessitant FFmpeg/rubberband ; aucune affirmation de prosodie garantie sans écoute.
+7. **Une seule démonstration livrable** : Démo Express Windows sans API et purement simulée. Le vrai rendu Live2D r20 appartient au runtime `src/jade_runtime/avatar_renderer.py`, et non plus à `demo/reelle/`. Ne pas vendre la simulation comme preuve d'IA opérationnelle.
 
-Les branches de fonctionnalités **déjà intégrées à develop** peuvent être supprimées après preuve d'ascendance et revue des PR ; le connecteur GitHub disponible lors de cette intervention n'autorise pas la suppression de références. La liste et les commandes prévues pour Codex figurent dans [BRANCH_MAINTENANCE.md](BRANCH_MAINTENANCE.md). **Ne pas supprimer un travail divergent sans l'avoir comparé**.
+## Procédure de travail des agents
 
-## Checklist de PR pour agents
+1. **Inventaire** : vérifier `git status --short --branch`, SHA courant, branches et PR ouvertes, modifications locales d'autres agents. Ne pas écraser un état de travail ni utiliser `reset --hard` pour faciliter une action.
+2. **Choisir la bonne branche** : travail sur `develop` ou branche dédiée à partir de `develop`, `main` uniquement sur autorisation séparée. Voir la [note de nettoyage](BRANCH_MAINTENANCE.md) ; les anciennes branches ancêtres de develop sont candidates à suppression par Codex, celles divergentes demandent revue.
+3. **Lire les sources et les docs exactes** de cette branche, surtout `main.py`, `config.py`, `orchestrator.py`, les transports touchés, `AGENTS.md` et le guide concerné. Ne pas considérer un rapport d'une ancienne PR comme la preuve d'un comportement courant.
+4. **Analyser avec perspectives PO, architecture, backend, audio/Live2D, SRE/infra, sécurité/privacité et QA** : user journey, coût, compatibilité, tests et mode dégradé. Corriger les contradictions plutôt que les documenter comme des réussites.
+5. **Coder puis documenter** en actualisant le journal technique obligatoire `docs/operations/CHANGELOG.md`, puis uniquement les guides, schémas et passations réellement impactés sur la branche concernée. Ne pas recopier des documents de develop sur main si le runtime diffère.
+6. **Tester le travail** : `poetry run python -m compileall -q src main.py`, `poetry run python -m unittest discover -s tests -v`, `poetry run python main.py --preflight`, `python scripts/check_docs.py`, tests ciblés, Windows PowerShell parser **selon pertinence** ; plus essais physiques **avec consentement** quand nécessaires. Conserver les résultats réels, sans prétendre qu'une simulation valide le poste.
+7. **Faire une passe de validation distincte** conformément à la [DoD officielle](../backlog/DEFINITION_OF_DONE.md) : **Codex (tous modèles/sous-agents) OU propriétaire**, un seul suffisant, sans validation humaine obligatoire ; consigner résultat et preuve par ID de carte.
+8. **Revoir et merger** selon la politique propriétaire : ne pas modifier `main` ni les routes du VPS sans instruction claire. Un connecteur qui n'est pas configuré ne doit pas être masqué pour faire passer le launcher.
+9. **Livrer** une synthèse avec SHA/branche/PR, fichiers et documents mis à jour, tests automatiques vs tests réels, limites ouvertes, dépendances manuelles et risques. **La clôture Done** exige en plus les cinq conditions de la DoD et la mise à jour du statut de la carte ; un compte rendu seul ne suffit pas. Les consignes de chat ne remplacent pas les changements enregistrés dans le dépôt.
 
-- [ ] Fonction ou correction testée sur cette branche
-- [ ] Installation, démo, utilisateur, technique, agents et état de branche révisés
-- [ ] `AGENTS.md` et liens index cohérents
-- [ ] Aucune fonctionnalité de `develop` revendiquée par `main` sans code présent
-- [ ] CI Windows/Linux verte, scan secrets, guide de démo et scripts compatibles
-- [ ] Résumé clair des essais réels manquants, des risques et des autres branches à documenter séparément
+## Reprise Codex sur le PC Windows et Android
 
-**Fin d'intervention :** indiquer fichiers et branche modifiés, SHA, résultats de tests, PR, statut de fusion et corrections restant à faire. Ne pas dire « testé sur le PC » si seules des actions GitHub ont été effectuées.
+Avant toute manipulation sur le vrai PC de Goldaj, lire [le guide d'installation PC Android](../history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), le [launcher](../operations/reference/LAUNCHER-WINDOWS-20261115.md), les [voix](../history/gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), la [mémoire](../history/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md) et [l'audit transverse](../history/gpt6-jade/AUDIT-TRANSVERSE-20261115.md). Réaliser l'inventaire du volume D:, de la config privée, du SDK/Live2D, des routes Serve et du stockage SQLite avant installation. Ne pas afficher/committer le contenu des secrets. Ne pas annoncer de connexion ou d'animation réussie sur Android sans avoir vu le test.
+
+L'utilisateur ne veut pas de longue chaîne de prérequis pour la **démo** : privilégier le programme WinForms simulé pour les visiteurs, et conserver la chaîne technique complète seulement pour le **vrai runtime**.
+
+## Nettoyage des branches historiques
+
+Le connecteur GitHub de cette session ne dispose pas d'action de suppression de référence. **Codex devra supprimer les huit branches déjà ancêtres de develop après revalidation individuelle**, voir [BRANCH_MAINTENANCE.md](BRANCH_MAINTENANCE.md). Ne pas supprimer les trois branches divergentes tant que leur apport unique n'est pas audité et repris ou rejeté. Ne pas créer un clone de travail entier uniquement pour modifier la doc d'une autre branche sans vérifier ses commits.
+
+## Checklist avant fermeture d'une PR
+
+- [ ] Cette branche reflète les fonctions réellement présentes, et non des intentions futures
+- [ ] Journal technique actualisé si nécessaire ; guides et passations touchés par la modification corrigés
+- [ ] Aucun secret, piste audio privée ou mémoire dans les commits
+- [ ] Aucune priorité fixe de canal ni sélecteur de mode réintroduit
+- [ ] L'isolation mobile/micro et la confidentialité OBS/Discord/Twitch restent testées
+- [ ] Test automatique Windows/Linux et scan secrets, et limites de recette matérielle détaillées
+- [ ] Aucun changement de `main` ou VPS non demandé
+
+## Addendum obligatoire : 14 réactions propres par intention (15/11/2026)
+
+Le propriétaire demande maintenant **deux animations Live2D réellement différentes ET deux représentations textuelles par chacune des sept intentions**, sur un modèle **2D**, pas 3D. Sur cette branche, seules deux expressions faciales de substitution et deux libellés PWA ont été codés par intention, avec toggle global et synchronisation PC/mobile. Les **14 motion assets dédiés** et le rig en pied validé ne sont PAS livrés. Codex doit lire la [passation Live2D explicite et sa matrice de statuts](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), réaliser le travail artistique/technique qui manque sur une branche indépendante, ne brancher aucun motion ID fictif ou SDK incompatible, effectuer une recette réelle PC + Android, et synchroniser les documentations **effectivement impactées** de cette branche, avec une entrée au journal technique. Ne pas afficher de didascalies sur les canaux publics ni modifier `main` sans accord.
+
+## Passation obligatoire : évolution dialogue (2026-11-15)
+
+Goldaj a validé un prompt exact : **ne pas le réécrire** sans autorisation. Fichier d'exécution `prompt_chat.txt` ; les trois prototypes dans `docs/history/gpt6-jade/PROPOSITIONS-PERSONNALITE-20261115.md` ne sont plus à activer. Garder les intentions `[INTENT:...]` séparées et inchangées. Le code `develop` a reçu `low / 320`, mémoire SQLite v3 des échanges entiers opt-in, 48 messages d'historique, et participation solo 100 % / groupe 20 % sur Discord et 30 % sur Twitch pour les interventions spontanées admissibles, avec contraintes de plateforme.
+
+Avant toute autre modification, lire [la passation technique de ce chantier](../history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md), examiner les variables privées et contrôler les règles de consentement. Tester la migration d'une base v2 sur copie de sauvegarde, les reprises après redémarrage, l'effacement, les politiques solo/groupe et le coût. Les **deux variantes faciales/textuelles r20 par intention sont codées** ; les **14 motions corporelles originales** restent à créer. Les scénarios de recette sont une activité QA distincte de l'inventaire fonctionnel.
+
+## Passation Codex : sécurité, CI et restauration (15/11/2026)
+
+**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Priorité : garder les checks Ubuntu/Windows bloquants, **ne pas** masquer les erreurs de la suite ni fusionner dans `main` pour contourner un échec. Vérifier l'ordre des changements des agents sur `develop`, le diagnostic des 17 tests en échec et 5 erreurs observés sur le commit initial, le transfert SQLite v3, la conservation des logs privés et la protection GitHub de `develop`. Les documents et l'historique GitHub Actions décrivent les résultats observables, pas un test sur le poste Jade. Après tout changement technique, actualiser le journal technique puis les guides de la branche concernés par ce changement.
+
+## Références courantes
+
+**État des fonctions codées :** [BRANCH_STATE.md](BRANCH_STATE.md). **Améliorations futures :** [catalogue](../ameliorations/README.md). Ne pas recopier des résultats d'anciens audits comme s'il s'agissait de déficiences actuelles du code.

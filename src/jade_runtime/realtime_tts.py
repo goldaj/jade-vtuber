@@ -12,6 +12,8 @@ https://developers.openai.com/api/reference/resources/realtime/server-events
 """
 from __future__ import annotations
 
+from .intent_engine import INTENTS, voice_direction
+
 import asyncio
 import base64
 import binascii
@@ -132,20 +134,23 @@ class RealtimeTTS:
 
     def __init__(self, client, *, model="gpt-realtime-2.1-mini", voice="coral",
                  timeout_seconds=60.0, max_audio_bytes=4_800_000,
-                 verify_transcript=True, connection_pool=None, speed=1.0):
+                 verify_transcript=True, connection_pool=None, speed=1.0,
+                  intent="neutral"):
         if (not isinstance(model, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,100}", model)
                 or not isinstance(voice, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", voice)
                 or isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (float, int))
                 or not math.isfinite(timeout_seconds) or not 1 <= timeout_seconds <= 180
                 or isinstance(speed, bool) or not isinstance(speed, (float, int))
                 or not math.isfinite(speed) or not 0.25 <= speed <= 1.5
-                or type(max_audio_bytes) is not int or not 2 <= max_audio_bytes <= 10_000_000
+                or intent not in INTENTS
+                 or type(max_audio_bytes) is not int or not 2 <= max_audio_bytes <= 10_000_000
                 or type(verify_transcript) is not bool):
             raise ValueError("invalid realtime synthesis settings")
         self.client = client
         self.model = model
         self.voice = voice
         self.speed = float(speed)
+        self.intent = intent
         self.timeout_seconds = float(timeout_seconds)
         self.max_audio_bytes = max_audio_bytes
         self.verify_transcript = verify_transcript
@@ -241,7 +246,10 @@ class RealtimeTTS:
                     "output_modalities": ["audio"],
                     "instructions": (
                         "Read the user's text aloud exactly as provided. "
-                        "Do not add, omit, answer, translate, or explain anything."
+                        "Do not add, omit, answer, translate, or explain anything. "
+                        "Speak natural metropolitan French in a bright, lively "
+                        "young-adult feminine manner; never sound childish or shrill. "
+                        + voice_direction(self.intent)
                     ),
                     "audio": {"input": {"turn_detection": None},
                               "output": {"format": {"type": "audio/pcm", "rate": 24000},

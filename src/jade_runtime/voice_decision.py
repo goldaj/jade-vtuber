@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from dataclasses import dataclass, field
+import random
 import re
 import secrets
 import time
@@ -59,14 +60,18 @@ class ConversationTurnDecider:
     """
 
     def __init__(self, *, max_sessions: int = 128, ttl: float = 1800,
-                 follow_up_seconds: float = 30, clock: Callable[[], float] = time.monotonic):
+                 follow_up_seconds: float = 30, clock: Callable[[], float] = time.monotonic,
+                 group_reply_probability: float = 0.0, rng=None):
         if (type(max_sessions) is not int or not 1 <= max_sessions <= 256
-                or not 0 < ttl <= 86400 or not 0 <= follow_up_seconds <= ttl):
+                or not 0 < ttl <= 86400 or not 0 <= follow_up_seconds <= ttl
+                or not 0 <= group_reply_probability <= 1):
             raise ValueError("invalid voice policy bounds")
         self.max_sessions = max_sessions
         self.ttl = ttl
         self.follow_up_seconds = follow_up_seconds
         self.clock = clock
+        self.group_reply_probability = group_reply_probability
+        self.rng = rng or random.Random()
         self._sessions: OrderedDict[str, _Session] = OrderedDict()
 
     @staticmethod
@@ -115,9 +120,9 @@ class ConversationTurnDecider:
         state = self._session(session_id, now)
         if state is None:
             return TurnDecision(False, "session_capacity")
-        addressed = participant_count == 1 or direct_address or (
-            state.last_speaker == speaker_id and now < state.active_until)
-        if normalized in (_MUTE | _RESUME) and not addressed:
+        addressed = participant_count == 1 or direct_address
+        contextual_followup = (state.last_speaker == speaker_id and now < state.active_until)
+        if normalized in (_MUTE | _RESUME) and not (addressed or contextual_followup):
             return TurnDecision(False, "ambiguous_group")
         if normalized in _MUTE:
             state.muted = True
@@ -132,13 +137,14 @@ class ConversationTurnDecider:
             return TurnDecision(False, "muted")
         if normalized in _ASIDE:
             return TurnDecision(False, "aside")
-        if not addressed:
-            return TurnDecision(False, "ambiguous_group")
+        if not addressed and self.rng.random() >= self.group_reply_probability:
+            return TurnDecision(False, "group_sampled_out")
         turn_id = secrets.token_hex(16)
         if len(state.pending) >= 8:
             state.pending.popitem(last=False)
         state.pending[turn_id] = (speaker_id, now)
-        return TurnDecision(True, "solo" if participant_count == 1 else "addressed_or_followup", turn_id)
+        reason = "solo" if participant_count == 1 else ("direct" if direct_address else "group_sampled")
+        return TurnDecision(True, reason, turn_id)
 
     def mark_replied(self, session_id: str, turn_id: str) -> bool:
         """Start a follow-up window only after the application emitted a reply."""

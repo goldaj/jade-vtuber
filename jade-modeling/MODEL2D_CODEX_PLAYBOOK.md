@@ -8,8 +8,8 @@ Les scripts/outils **directement nécessaires** à ce flux de production 2D sont
 **Exclus** : architecture du bot Python, LLM/STT/TTS, Discord/Twitch, infrastructure, déploiement applicatif et refonte du runtime, sauf interface strictement nécessaire pour vérifier le modèle VTuber. Pas d'autorisation implicite de merge, déploiement ou modification hors périmètre.
 
 ## Lecture obligatoire au démarrage d'une session 2D
-1. Lire `AGENTS.md`, `docs/CODEX_PARALLEL_GPT6.md`, puis ce protocole et `jade-modeling/MODEL2D_CODEX_STATE.md`.
-2. Lire `jade-modeling/MODEL_GUIDE.md`, `jade-modeling/CONTINUATION.md`, `jade-modeling/PLAN_MODELE_JADE.md`, manifestes, rapports pertinents et `docs/CHATGPT_PROJECT_HISTORY.md` si utile.
+1. Lire `AGENTS.md`, `docs/history/handoffs/CODEX_PARALLEL_GPT6.md`, puis ce protocole et `jade-modeling/MODEL2D_CODEX_STATE.md`.
+2. Lire `jade-modeling/MODEL_GUIDE.md`, `jade-modeling/CONTINUATION.md`, `jade-modeling/PLAN_MODELE_JADE.md`, manifestes, rapports pertinents et `docs/history/handoffs/CHATGPT_PROJECT_HISTORY.md` si utile.
 3. Lire `jade-modeling/MODEL2D_MASTER_PLAN.md` **s'il existe et a été effectivement validé**. Sinon suivre la phase de planification Astra.
 4. Vérifier les fichiers, les branches, Git LFS, la disponibilité des applications natives et les travaux concurrents ; ne pas confondre l'état documenté avec l'état effectivement constaté.
 
