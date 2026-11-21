@@ -193,12 +193,24 @@ class MemoryService:
     async def command(self, incoming) -> Reply | None:
         request = parse_explicit_memory_intent(incoming.text)
         if request is not None:
-            # All explicit requests are ordinary, even when somebody asks for
-            # Core Memories. Core classification belongs exclusively to Jade's
-            # autonomous curator. Never infer authority from a display name.
+            # An imperative memory request is enforceable ONLY when it comes
+            # from Goldaj's verified owner account (including verified linked
+            # identities). Everybody else's request is conversational input:
+            # Jade may choose to remember via her optional LLM tool, or not.
+            # Nickname / spoken claims never grant this privilege.
             key = identity_of(incoming)
             if key is None:
-                return Reply(incoming, "Je ne peux mémoriser que les demandes d'un compte identifié.")
+                return None
+            try:
+                owner_verified = await asyncio.to_thread(self.store.is_goldaj, key)
+            except Exception:
+                LOG.exception("Owner privilege lookup unavailable; treating request as optional")
+                return None
+            if not owner_verified:
+                event("memory_request_deferred_to_jade",
+                      source_platform=incoming.platform, scope=_scope(incoming))
+                return None
+            # Even Goldaj cannot force L3; explicit owner instructions are L2.
             if not request.summary:
                 return Reply(incoming, "Précise le souvenir à enregistrer.")
             if len(request.summary) > 400:
@@ -382,9 +394,9 @@ class MemoryService:
                 or not 1 <= len(summary.strip()) <= 400
                 or len(significance) > 280):
             return reject("invalid_memory_fields")
-        # DEV-011 owns ALL explicit human memory requests, including Core requests.
-        if parse_explicit_memory_intent(incoming.text) is not None:
-            return reject("explicit_request_uses_ordinary_path")
+        # For non-owner speakers even "remember X" is a suggestion; the
+        # autonomous LLM may decide to save it, or not. Owner's mandatory L2
+        # requests are intercepted by command() before this path.
         if re.search(
             r"(?i)(api[_ -]?key|mot de passe|password|token|"
             r"code bancaire|carte bancaire|sk-[a-z0-9]+)",
@@ -426,8 +438,7 @@ class MemoryService:
         if self._closed or not self.curator_enabled or len(self.tasks) >= self.max_pending:
             return False
         key = identity_of(incoming)
-        if (key is None or COMMAND.fullmatch(incoming.text.strip())
-                or parse_explicit_memory_intent(incoming.text) is not None):
+        if key is None or COMMAND.fullmatch(incoming.text.strip()):
             return False
         if self.batch is not None:
             return self.batch.schedule(key, _scope(incoming), incoming, reply)
