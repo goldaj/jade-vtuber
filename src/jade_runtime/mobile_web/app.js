@@ -437,6 +437,20 @@
         const part = new Float32Array(sample);
         chunks.push(part);
         frames += part.length;
+        // Lightweight local end-of-utterance detection: after meaningful
+        // speech, 1.2s of silence finalizes the utterance. Manual stop stays.
+        let energy = 0;
+        for (let n = 0; n < sample.length; n++) energy += sample[n] * sample[n];
+        const loudness = Math.sqrt(energy / Math.max(1, sample.length));
+        const now = Date.now();
+        if (loudness > 0.024) {
+          recording.voiceDetected = true;
+          recording.lastVoiceAt = now;
+        } else if (recording.voiceDetected && now - recording.lastVoiceAt > 1200
+                   && now - recording.started > 800) {
+          stopRecording();
+          return;
+        }
         if (duplex) {
           try { duplex.push(part, context.sampleRate); }
           catch (error) {
@@ -450,6 +464,7 @@
       processor.connect(silent);
       silent.connect(context.destination);
       recording = {stream, context, source, processor, silent, chunks, duplex,
+                   voiceDetected:false, lastVoiceAt:0,
                    get frames() {return frames;}, started:Date.now()};
       mic.classList.add("recording");
       mic.setAttribute("aria-pressed", "true");
