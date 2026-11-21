@@ -1,4 +1,5 @@
 """Cross-platform memory regressions without real connectors or paid calls."""
+from contextlib import closing
 from pathlib import Path
 import sqlite3
 import tempfile
@@ -96,7 +97,7 @@ class CrossChannelMemoryTests(unittest.IsolatedAsyncioTestCase):
         self.store.put(DISCORD, kind="core_relationship", scope="discord:server1",
                        summary="Souvenir fondateur non expiré.")
         self.link()
-        with sqlite3.connect(self.path) as db:
+        with closing(sqlite3.connect(self.path)) as db:
             db.execute("UPDATE memories SET expires_at='2000-01-01T00:00:00+00:00' "
                        "WHERE kind='ordinary' AND source_platform='discord'")
             db.commit()
