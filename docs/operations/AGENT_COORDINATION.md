@@ -17,6 +17,14 @@
 - **Idées non engagées :** inscrire dans [`docs/ameliorations/`](../ameliorations/README.md), classées par thème. Ne les promouvoir dans le backlog opérationnel qu'après arbitrage du propriétaire.
 - **Anciennes décisions / recherche :** conserver dans [`docs/history/`](../history/README.md), datées et signalées comme historiques.
 
+## Routage DEV → REC et suivi unique (décision propriétaire du 21/11/2026)
+
+**Règle à appliquer par tous les agents avant de changer un statut :** une fonctionnalité **déjà codée** dont il ne reste que la validation appartient exclusivement à la **vue REC**, au statut `À valider`. Ne pas garder en parallèle la DEV à valider ni créer deux cartes pour le même suivi. Réserver les **DEV** aux réalisations logicielles, anomalies et à leur historique clôturé. Les **OPS** (exploitation) et **ART** (production graphique) gardent leur nature.
+
+**Procédure de transfert :** relever l'ancien identifiant et la version concernée ; déplacer **une fois** la ligne de DEV vers REC avec un nouvel identifiant REC disponible ; reprendre intégralement les scénarios, validations, échecs, dépendances et liens utiles ; conserver une correspondance dans [l'index](../backlog/README.md) et une référence historique dans DEV ; vérifier qu'aucune carte active ne subsiste en doublon. Ne jamais créer de fausse réussite `Done`. Une REC qui échoue reste ouverte et documentée ; un vrai correctif peut être suivi dans une DEV distincte.
+
+**Historique de conversion :** DEV-011 → REC-026 ; DEV-015 → REC-027 ; DEV-016 → REC-028 (reconnexion vocale Discord en échec) ; DEV-017 → REC-029 ; DEV-018 → REC-030. Les autres décisions, définitions de statut, obligations de preuve et suspensions sont dans [la DoD](../backlog/DEFINITION_OF_DONE.md) et [la vue REC](../backlog/02-RECETTE.md). Les idées non engagées P3 vont au catalogue d'améliorations.
+
 ## Definition of Done et validation des tâches
 
 **Routage REC (21/11/2026) :** en priorité, l'agent exécute les recettes automatisables. Si un contrôle de bout en bout ne peut pas être réalisé automatiquement dans l'environnement autorisé, placer directement la carte **`À valider`** en précisant l'essai manuel et les limites ; elle n'est ni exécutée, ni approuvée du seul fait de ce reclassement. Ne pas masquer sous `À valider` les vrais blocages ou les anomalies. Les conditions de `Done` sont inchangées.
