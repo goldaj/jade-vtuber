@@ -1338,6 +1338,13 @@ class OpenVoiceBridge(DiscordVoiceBridge):
             if (connection is None or self.session_id != session_id
                     or not self._speaker_allowed_locked(speaker_id)):
                 return False
+        if getattr(source, "system_initiative", False):
+            members = getattr(getattr(connection, "channel", None), "members", None)
+            if not isinstance(members, (list, tuple)) or not any(
+                    type(getattr(person, "id", None)) is int
+                    and person.id == speaker_id and getattr(person, "bot", True) is False
+                    for person in members):
+                return False  # Never speak if the joining human already left.
         if not self._playback_authorized(connection, generation, session_id):
             return False
         with self.buffers_lock:
