@@ -142,7 +142,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 mobile_gateway.deliver(reply)
             # Mobile replies contain owner-only conversations. Do not echo
             # their full text to stdout; responses are delivered to the app.
-            if reply.source.platform != "mobile":
+            if reply.source.platform not in ("mobile",) and not (
+                    reply.source.platform == "discord" and reply.source.private_channel):
                 print("Jade:", reply.text)
             # Expressions use trusted, normalized Reply.intent (never raw LLM text).
             # Text-only replies also animate; mobile has its own Live2D instance.
@@ -162,9 +163,14 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             if reply.source.platform == "twitch" and twitch_client is not None:
                 await optional("twitch", lambda: twitch_client.send_chat(reply.text))
             if reply.source.platform == "discord" and discord_client is not None:
-                await optional("discord", lambda: discord_client.send_chat(
+                # Delivery is REQUIRED for a Discord reply, not an optional
+                # decoration: an undelivered DM must not be stored as "sent"
+                # or trigger autonomous curation. Never log private contents.
+                sent = await asyncio.wait_for(discord_client.send_chat(
                     reply.source.channel, reply.text,
-                    source_message_id=reply.source.message_id))
+                    source_message_id=reply.source.message_id), timeout=20)
+                if not sent:
+                    raise RuntimeError("Discord message delivery not confirmed")
             if (vts_client is not None and speech is not None and config.vts_speak_hotkey
                     and not reply.spoken
                     and reply.source.platform in ("microphone", "discord_voice", "console")):
