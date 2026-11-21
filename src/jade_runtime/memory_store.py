@@ -14,6 +14,8 @@ import secrets
 import sqlite3
 import uuid
 
+from .session_logging import event
+
 SCHEMA_VERSION = 4
 CONVERSATION_RETENTION_DAYS = 7
 CONVERSATION_RELOAD_HOURS = 24
@@ -174,12 +176,40 @@ class MemoryStore:
     @contextmanager
     def _db(self):
         db = sqlite3.connect(str(self.path), timeout=5)
+        # The trace callback is never allowed to emit SQL or bound values.
+        # SQLite expands parameters in trace strings, including private data.
+        mutations = []
+        write_pattern = re.compile(
+            r"^\s*(INSERT(?:\s+OR\s+\w+)?\s+INTO|REPLACE\s+INTO|"
+            r"UPDATE(?:\s+OR\s+\w+)?|DELETE\s+FROM)\s+([A-Za-z_]\w*)",
+            re.I,
+        )
+
+        def trace(statement):
+            match = write_pattern.match(statement)
+            if match:
+                mutations.append({
+                    "operation": match.group(1).split()[0].upper(),
+                    "table": match.group(2),
+                })
+
         try:
             db.row_factory = sqlite3.Row
             db.execute("PRAGMA foreign_keys=ON")
             db.execute("PRAGMA busy_timeout=5000")
-            with db:
-                yield db
+            db.set_trace_callback(trace)
+            try:
+                with db:
+                    yield db
+            except BaseException:
+                if mutations:
+                    event("sqlite_rollback", database="jade_memory",
+                          statements=mutations)
+                raise
+            else:
+                if mutations:
+                    event("sqlite_commit", database="jade_memory",
+                          statements=mutations, changed_rows=db.total_changes)
         finally:
             db.close()
 
