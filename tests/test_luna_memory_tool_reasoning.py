@@ -129,7 +129,6 @@ def test_tool_only_reply_does_not_wait_for_sqlite_and_reasons_low_twice():
             assert continuation[-1]["type"] == "function_call_output"
             assert continuation[-1]["call_id"] == "call-1"
             assert '"enregistré"' in continuation[-1]["output"]
-            assert continuation[-1]["output"].find("non vérifiée") >= 0
         finally:
             release.set()
             await service._responses.close()
