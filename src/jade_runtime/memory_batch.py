@@ -6,6 +6,8 @@ import json
 import logging
 import re
 
+from .session_logging import event
+
 LOG = logging.getLogger("jade.memory.batch")
 _SECRET = re.compile(r"(?i)(api[_ -]?key|mot de passe|password|token|"
                      r"code bancaire|carte bancaire|sk-[a-z0-9]+)")
@@ -84,7 +86,7 @@ class MemoryBatcher:
             try:
                 task.result()
             except Exception:
-                LOG.warning("Memory batch rejected; no personal contents logged")
+                LOG.exception("Memory batch rejected; no personal contents logged")
 
     async def _worker(self, bucket):
         key, scope, pinned_person = bucket
@@ -170,16 +172,18 @@ class MemoryBatcher:
                     # the personal memory table of a Discord/Twitch speaker.
                     if key != ("microphone", "goldaj"):
                         continue
-                    await asyncio.to_thread(
+                    persisted = await asyncio.to_thread(
                         self.store.put_self_core, key, summary=summary,
                         significance=significance, message_id=incoming.message_id,
                         expected_person_id=person_id)
                 else:
-                    await asyncio.to_thread(
+                    persisted = await asyncio.to_thread(
                         self.store.put, key, kind=kind, scope=scope,
                         summary=summary, significance=significance,
                         message_id=incoming.message_id,
                         expected_person_id=person_id)
+                event("memory_batch_write", kind=kind, scope=scope,
+                      persisted=persisted, summary=summary)
         except asyncio.CancelledError:
             raise
         except Exception:
