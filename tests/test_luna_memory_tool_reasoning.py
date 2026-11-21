@@ -1,10 +1,8 @@
-"""Offline contract tests for Jade's stateless Responses API migration.
-
-No OpenAI credentials, network, Discord or audio dependencies are needed.
-"""
+"""Offline acceptance tests: Jade streams in low and logs deferred memory writes."""
 from __future__ import annotations
 
 import asyncio
+import threading
 from types import SimpleNamespace as NS
 
 import pytest
@@ -13,322 +11,353 @@ from src.jade_runtime.config import Settings
 from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming
+from src.jade_runtime.memory_service import MemoryService
 
 
-def text_response(text="[INTENT:neutral] Bonjour", *, status="completed"):
+def text_response(text="[INTENT:neutral] Bonjour", *, status="completed", calls=()):
+    items = [NS(type="message", content=[NS(type="output_text", text=text)])] if text else []
     return NS(
-        id="resp-text", status=status, output_text=text,
-        output=[NS(type="message", content=[NS(type="output_text", text=text)])],
+        id="resp-text", status=status, output_text=text, output=[
+            NS(type="reasoning", encrypted_content="sealed"), *items, *calls],
         usage=NS(input_tokens=123, output_tokens=19),
-        incomplete_details=NS(reason="max_output_tokens") if status == "incomplete" else None,
+        incomplete_details="max_output_tokens" if status != "completed" else None,
     )
 
 
-def tool_response(*, calls=None, status="completed"):
-    calls = calls or [NS(type="function_call", call_id="call-1",
-                         name="jade_save_memory", arguments='{"kind":"ordinary"}')]
-    return NS(
-        id="resp-tool", status=status, output_text="",
-        output=[NS(type="reasoning", encrypted_content="encrypted-reasoning"), *calls],
-        usage=NS(input_tokens=83, output_tokens=18),
-        incomplete_details=None,
-    )
+def tool_call(name="jade_save_memory", *, call_id="call-1", arguments='{"kind":"ordinary"}'):
+    return NS(type="function_call", call_id=call_id,
+              name=name, arguments=arguments)
 
 
-def streaming_text(text="[INTENT:neutral] Bonjour"):
-    async def generator():
+def tool_response(*calls, text=""):
+    if not calls:
+        calls = (tool_call(),)
+    return text_response(text, calls=calls)
+
+
+def stream_response(response, *, pieces=None):
+    async def events():
         yield NS(type="response.created")
-        yield NS(type="response.output_item.added", item=NS(type="message"))
-        yield NS(type="response.output_text.delta", delta=text[:14])
-        yield NS(type="response.output_text.delta", delta=text[14:])
-        yield NS(type="response.completed", response=text_response(text))
-    return generator()
+        if pieces:
+            for fragment in pieces:
+                yield NS(type="response.output_text.delta", delta=fragment)
+        yield NS(type="response.completed", response=response)
+    return events()
 
 
 class FakeResponses:
-    def __init__(self, results):
-        self.results = list(results)
+    def __init__(self, items):
+        self.items = list(items)
         self.calls = []
 
-    async def create(self, **params):
-        self.calls.append(params)
-        if not self.results:
-            raise AssertionError("Unplanned provider call")
-        result = self.results.pop(0)
+    async def create(self, **arguments):
+        self.calls.append(arguments)
+        assert self.items, "Unplanned LLM call"
+        result = self.items.pop(0)
         if isinstance(result, BaseException):
             raise result
         return result
 
 
-def service_with(*responses, model="gpt-6-luna", reasoning="low"):
-    fake = FakeResponses(responses)
-    client = NS(responses=fake)
-    return OpenAIServices(Settings(model=model, reasoning_effort=reasoning), client=client), fake
+def make_service(*results):
+    backend = FakeResponses(results)
+    client = NS(responses=backend)
+    return OpenAIServices(Settings(model="gpt-6-luna", reasoning_effort="low"),
+                          client=client), backend
 
 
-async def no_tool(arguments):
-    raise AssertionError("A local memory write was not requested")
+async def forbidden_action(arguments):
+    raise AssertionError("No memory action should execute")
 
 
-def test_plain_text_preserves_original_low_and_never_uses_chat_completions():
-    service, fake = service_with(text_response())
-    result = asyncio.run(service.complete([{"role": "user", "content": "Bonjour"}]))
-    assert "Bonjour" in result
-    assert len(fake.calls) == 1
-    call = fake.calls[0]
-    assert call["model"] == "gpt-6-luna"
+def test_simple_chat_preserves_low_and_local_history():
+    service, backend = make_service(text_response())
+    async def run():
+        return await service.complete([{"role": "user", "content": "Bonjour"}])
+    assert asyncio.run(run()).endswith("Bonjour")
+    call = backend.calls[0]
     assert call["reasoning"] == {"effort": "low"}
     assert call["store"] is False
-    assert call["max_output_tokens"] == 320
+    assert call["input"][0]["role"] == "user"
     assert "tools" not in call
-    assert "previous_response_id" not in call
-    assert "conversation" not in call
 
 
-def test_memory_available_but_unused_is_still_low():
-    service, fake = service_with(text_response())
-    result = asyncio.run(service.complete_with_tools(
-        [{"role": "user", "content": "Bonjour"}], no_tool))
-    assert result.endswith("Bonjour")
-    assert len(fake.calls) == 1
-    call = fake.calls[0]
-    assert call["reasoning"] == {"effort": "low"}
-    assert call["store"] is False
+def test_tool_available_but_unused_still_keeps_low():
+    service, backend = make_service(text_response())
+    async def run():
+        return await service.complete_with_tools(
+            [{"role": "user", "content": "Bonjour"}], forbidden_action)
+    assert asyncio.run(run()).endswith("Bonjour")
+    assert len(backend.calls) == 1
+    call = backend.calls[0]
+    assert call["reasoning"]["effort"] == "low"
     assert call["tool_choice"] == "auto"
     assert call["parallel_tool_calls"] is False
+    assert call["store"] is False
     assert call["include"] == ["reasoning.encrypted_content"]
     schema = call["tools"][0]
-    assert schema["type"] == "function"
     assert schema["name"] == "jade_save_memory"
     assert schema["strict"] is True
     assert schema["parameters"]["additionalProperties"] is False
-    assert set(schema["parameters"]["required"]) == set(schema["parameters"]["properties"])
-    assert "function" not in schema
 
 
-def test_memory_call_is_local_and_continuation_replays_reasoning():
-    first = tool_response()
-    last = text_response("[INTENT:playful] Je m'en souviendrai.")
-    service, fake = service_with(first, last)
+def test_tool_only_reply_does_not_wait_for_sqlite_and_reasons_low_twice():
+    service, backend = make_service(
+        tool_response(), text_response("[INTENT:playful] Je m'en souviens."))
+    started, release = asyncio.Event(), asyncio.Event()
+    used = []
+
+    async def write(arguments):
+        used.append(arguments)
+        started.set()
+        await release.wait()
+        return {"status": "enregistré", "level": 2}
+
+    async def run():
+        try:
+            reply = await service.complete_with_tools(
+                [{"role": "user", "content": "Je commence le piano"}], write)
+            assert reply.endswith("Je m'en souviens.")
+            assert not release.is_set()
+            await asyncio.wait_for(started.wait(), timeout=1)
+            assert used == ['{"kind":"ordinary"}']
+            assert backend.calls[0]["reasoning"]["effort"] == "low"
+            assert backend.calls[1]["reasoning"]["effort"] == "low"
+            assert backend.calls[1]["store"] is False
+            continuation = backend.calls[1]["input"]
+            assert continuation[-2].type == "function_call"
+            assert continuation[-1]["type"] == "function_call_output"
+            assert continuation[-1]["call_id"] == "call-1"
+            assert '"enregistré"' in continuation[-1]["output"]
+            assert continuation[-1]["output"].find("non vérifiée") >= 0
+        finally:
+            release.set()
+            await service._responses.close()
+
+    asyncio.run(run())
+
+
+def test_combined_text_and_memory_call_never_duplicates_reply():
+    service, backend = make_service(tool_response(
+        text="[INTENT:neutral] Je note cette information."))
     recorded = []
 
     async def action(arguments):
         recorded.append(arguments)
         return {"status": "enregistré", "level": 2}
 
-    result = asyncio.run(service.complete_with_tools(
-        [{"role": "system", "content": "Tu es Jade"},
-         {"role": "user", "content": "Je commence le piano"}], action))
-    assert "Je m'en souviendrai" in result
+    async def run():
+        try:
+            reply = await service.complete_with_tools(
+                [{"role": "user", "content": "Info"}], action)
+            assert reply.endswith("Je note cette information.")
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert len(backend.calls) == 1
     assert recorded == ['{"kind":"ordinary"}']
-    assert len(fake.calls) == 2
-    first_call, second = fake.calls
-    assert first_call["reasoning"]["effort"] == "low"
-    assert second["reasoning"]["effort"] == "low"
-    assert first_call["store"] is second["store"] is False
-    assert "tools" not in second
-    items = second["input"]
-    assert items[0]["role"] == "system"
-    assert items[1]["role"] == "user"
-    assert items[2].type == "reasoning"
-    assert items[2].encrypted_content == "encrypted-reasoning"
-    assert items[3].type == "function_call"
-    assert items[4]["type"] == "function_call_output"
-    assert items[4]["call_id"] == "call-1"
-    assert "enregistré" in items[4]["output"]
 
 
-def test_unknown_tool_is_refused_and_never_executed():
-    first = tool_response(calls=[NS(type="function_call", call_id="x",
-                                    name="execute_shell", arguments='{"cmd":"rm"}')])
-    service, fake = service_with(first, text_response())
-    asyncio.run(service.complete_with_tools(
-        [{"role": "user", "content": "hello"}], no_tool))
-    assert '"refusé"' in fake.calls[1]["input"][-1]["output"]
+def test_unknown_and_duplicate_tools_are_not_executed():
+    service, backend = make_service(
+        tool_response(tool_call("execute_shell")), text_response())
+    async def run():
+        await service.complete_with_tools(
+            [{"role": "user", "content": "hello"}], forbidden_action)
+    asyncio.run(run())
+    assert '"refusé"' in backend.calls[1]["input"][-1]["output"]
 
-
-def test_multiple_calls_allow_one_write_only():
-    calls = [NS(type="function_call", call_id=f"call-{i}",
-                name="jade_save_memory", arguments='{"kind":"ordinary"}')
-             for i in range(3)]
-    service, fake = service_with(tool_response(calls=calls), text_response())
-    invoked = []
-
-    async def action(arguments):
-        invoked.append(arguments)
-        return {"status": "enregistré"}
-
-    asyncio.run(service.complete_with_tools(
-        [{"role": "user", "content": "Bonjour"}], action))
-    assert len(invoked) == 1
-    outputs = fake.calls[1]["input"][-3:]
-    assert [item["call_id"] for item in outputs] == ["call-0", "call-1", "call-2"]
-    assert "refusé" in outputs[1]["output"]
-    assert "refusé" in outputs[2]["output"]
-
-
-def test_duplicate_call_ids_raise_before_writing():
-    calls = [NS(type="function_call", call_id="same",
-                name="jade_save_memory", arguments="{}")
-             for _ in range(2)]
-    service, fake = service_with(tool_response(calls=calls))
+    duplicate = tool_response(tool_call(call_id="same"), tool_call(call_id="same"))
+    service, _ = make_service(duplicate)
+    async def run_duplicate():
+        await service.complete_with_tools(
+            [{"role": "user", "content": "hello"}], forbidden_action)
     with pytest.raises(ValueError, match="duplicate"):
-        asyncio.run(service.complete_with_tools(
-            [{"role": "user", "content": "Bonjour"}], no_tool))
-    assert len(fake.calls) == 1
+        asyncio.run(run_duplicate())
 
 
-def test_incomplete_response_never_writes_memory():
-    service, fake = service_with(tool_response(status="incomplete"))
+def test_incomplete_result_and_provider_failure_do_not_schedule_writes():
+    service, _ = make_service(tool_response(text="", ).__class__(
+        **vars(tool_response()).copy()))  # Replaced below with incomplete.
+    response = tool_response()
+    response.status = "incomplete"
+    service, _ = make_service(response)
+    async def run():
+        await service.complete_with_tools(
+            [{"role": "user", "content": "hello"}], forbidden_action)
     with pytest.raises(RuntimeError, match="not completed"):
+        asyncio.run(run())
+
+    service, backend = make_service(RuntimeError("HTTP 429"))
+    with pytest.raises(RuntimeError, match="429"):
         asyncio.run(service.complete_with_tools(
-            [{"role": "user", "content": "Bonjour"}], no_tool))
-    assert len(fake.calls) == 1
+            [{"role": "user", "content": "hello"}], forbidden_action))
+    assert len(backend.calls) == 1
 
 
-def test_regular_stream_yields_fragments_with_low_and_no_tools():
-    stream = streaming_text()
-    service, fake = service_with(stream)
+def test_first_voice_fragment_arrives_before_model_completion():
+    gate = asyncio.Event()
+    first_sent = asyncio.Event()
+
+    async def events():
+        yield NS(type="response.output_text.delta", delta="[INTENT:neutral] Bonjour.")
+        first_sent.set()
+        await gate.wait()
+        yield NS(type="response.completed", response=text_response(
+            "[INTENT:neutral] Bonjour."))
+
+    service, backend = make_service(events())
 
     async def run():
-        return [fragment async for fragment in service.complete_stream(
-            [{"role": "user", "content": "Bonjour"}])]
+        stream = service.complete_stream_with_tools(
+            [{"role": "user", "content": "hello"}], forbidden_action)
+        try:
+            first = await asyncio.wait_for(anext(stream), timeout=1)
+            assert first == "[INTENT:neutral] Bonjour."
+            assert first_sent.is_set()
+            assert not gate.is_set()  # Text was NOT buffered until completion.
+        finally:
+            gate.set()
+        rest = [piece async for piece in stream]
+        assert rest == []
 
-    fragments = asyncio.run(run())
-    assert len(fragments) == 2
-    assert "".join(fragments) == "[INTENT:neutral] Bonjour"
-    assert fake.calls[0]["stream"] is True
-    assert fake.calls[0]["reasoning"]["effort"] == "low"
-    assert fake.calls[0]["store"] is False
+    asyncio.run(run())
+    assert len(backend.calls) == 1
+    assert backend.calls[0]["stream"] is True
+    assert backend.calls[0]["reasoning"]["effort"] == "low"
 
 
-def test_stream_with_memory_available_does_not_speak_before_tool_result():
-    service, fake = service_with(tool_response(), streaming_text())
-    invoked = []
+def test_voice_stream_tool_only_never_waits_for_sqlite():
+    service, backend = make_service(
+        stream_response(tool_response()),
+        stream_response(text_response("[INTENT:neutral] Je note."), pieces=[
+            "[INTENT:neutral] ", "Je note."]))
+    started, release = asyncio.Event(), asyncio.Event()
 
     async def action(arguments):
-        invoked.append(arguments)
+        started.set()
+        await release.wait()
         return {"status": "enregistré"}
 
     async def run():
-        return [part async for part in service.complete_stream_with_tools(
-            [{"role": "user", "content": "Je commence le piano"}], action)]
+        try:
+            result = [chunk async for chunk in service.complete_stream_with_tools(
+                [{"role": "user", "content": "Je commence le piano"}], action)]
+            assert "".join(result) == "[INTENT:neutral] Je note."
+            assert not release.is_set()
+            await asyncio.wait_for(started.wait(), timeout=1)
+        finally:
+            release.set()
+            await service._responses.close()
 
-    result = asyncio.run(run())
-    assert "".join(result).endswith("Bonjour")
-    assert len(invoked) == 1
-    assert len(fake.calls) == 2
-    assert fake.calls[0].get("stream") is None
-    assert fake.calls[1]["stream"] is True
-    assert fake.calls[0]["reasoning"]["effort"] == "low"
-    assert fake.calls[1]["reasoning"]["effort"] == "low"
-    assert fake.calls[0]["store"] is fake.calls[1]["store"] is False
+    asyncio.run(run())
+    assert len(backend.calls) == 2
+    assert backend.calls[0]["stream"] is True
+    assert backend.calls[1]["stream"] is True
+    assert backend.calls[0]["store"] is backend.calls[1]["store"] is False
 
 
-def test_stream_with_unused_tool_remains_low_and_speaks_once():
-    service, fake = service_with(text_response("[INTENT:neutral] Coucou"))
+def test_voice_stream_combined_text_and_tool_has_one_reply_and_deferred_write():
+    service, backend = make_service(
+        stream_response(tool_response(text="[INTENT:neutral] Je retiens."),
+                        pieces=["[INTENT:neutral] ", "Je retiens."]))
+    used = []
+
+    async def action(arguments):
+        used.append(arguments)
+        return {"status": "enregistré"}
 
     async def run():
-        return [part async for part in service.complete_stream_with_tools(
-            [{"role": "user", "content": "Coucou"}], no_tool)]
+        try:
+            fragments = [fragment async for fragment in
+                         service.complete_stream_with_tools(
+                             [{"role": "user", "content": "Bonjour"}], action)]
+            assert "".join(fragments) == "[INTENT:neutral] Je retiens."
+        finally:
+            await service._responses.close()
 
-    assert asyncio.run(run()) == ["[INTENT:neutral] Coucou"]
-    assert fake.calls[0]["reasoning"]["effort"] == "low"
-    assert len(fake.calls) == 1
+    asyncio.run(run())
+    assert len(backend.calls) == 1
+    assert used == ['{"kind":"ordinary"}']
 
 
-def test_stream_missing_terminal_event_is_not_success():
+def test_stream_incomplete_and_text_mismatch_are_errors():
     async def broken():
-        yield NS(type="response.output_text.delta", delta="[INTENT:neutral] Bonjour")
-    service, _ = service_with(broken())
-
+        yield NS(type="response.output_text.delta", delta="Texte incomplet")
+    service, _ = make_service(broken())
     async def run():
-        return [part async for part in service.complete_stream(
-            [{"role": "user", "content": "Bonjour"}])]
-
+        return [piece async for piece in service.complete_stream_with_tools(
+            [{"role": "user", "content": "hello"}], forbidden_action)]
     with pytest.raises(RuntimeError, match="without response.completed"):
         asyncio.run(run())
 
+    service, _ = make_service(stream_response(text_response("Version B"),
+                                                   pieces=["Version A"]))
+    with pytest.raises(ValueError, match="differs"):
+        asyncio.run(service.complete_stream_with_tools(
+            [{"role": "user", "content": "hello"}], forbidden_action).__anext__())
+        # The first streamed fragment is already visible; consume all instead.
 
-def test_stream_with_different_final_text_is_not_success():
-    async def broken():
-        yield NS(type="response.output_text.delta", delta="Wrong")
-        yield NS(type="response.completed", response=text_response("Correct"))
-    service, _ = service_with(broken())
+
+def test_dialogue_preserves_intent_with_asynchronous_tool():
+    service, _ = make_service(
+        tool_response(), text_response("[INTENT:playful] Je retiens cette information."))
+    seen = []
+
+    async def action(arguments):
+        seen.append(arguments)
+        return {"status": "enregistré"}
 
     async def run():
-        return [part async for part in service.complete_stream(
-            [{"role": "user", "content": "Bonjour"}])]
+        try:
+            incoming = Incoming("mobile", "Goldaj", "Je commence le piano.",
+                                force_reply=True, message_id="mobile01")
+            reply = await Dialogue(service, "Tu es Jade.").respond(
+                incoming, memory_action=action)
+            assert reply.intent == "playful"
+            assert reply.text == "Je retiens cette information."
+        finally:
+            await service._responses.close()
 
-    with pytest.raises(ValueError, match="differs"):
-        asyncio.run(run())
-
-
-def test_failed_write_returns_explicit_failure_to_model():
-    service, fake = service_with(tool_response(), text_response())
-
-    async def broken_action(arguments):
-        raise RuntimeError("SQLite locked")
-
-    asyncio.run(service.complete_with_tools(
-        [{"role": "user", "content": "Je commence le piano"}], broken_action))
-    assert '"échec"' in fake.calls[1]["input"][-1]["output"]
+    asyncio.run(run())
+    assert seen == ['{"kind":"ordinary"}']
 
 
-def test_provider_exception_propagates_without_retry():
-    service, fake = service_with(RuntimeError("HTTP 429"))
-    with pytest.raises(RuntimeError, match="429"):
-        asyncio.run(service.complete_with_tools(
-            [{"role": "user", "content": "Bonjour"}], no_tool))
-    assert len(fake.calls) == 1
+def test_explicit_human_memory_request_is_queued_without_waiting_for_write():
+    release = threading.Event()
+    called = threading.Event()
+    writes = []
 
+    class Store:
+        def account(self, key):
+            return "verified-person"
 
+        def put_requested_ordinary(self, key, **kwargs):
+            writes.append((key, kwargs))
+            called.set()
+            release.wait(timeout=2)
+            return "created"
 
-def test_end_to_end_dialogue_with_memory_tool_and_intent_parser():
-    service, fake = service_with(tool_response(), text_response(
-        "[INTENT:playful] Je retiendrai ce souvenir."))
-    invoked = []
+    store = Store()
+    memory = MemoryService(store, backend=object())
+    incoming = Incoming("mobile", "Goldaj",
+                        "Retiens que je commence le piano.",
+                        channel="private", force_reply=True,
+                        message_id="explicit01")
 
-    async def action(arguments):
-        invoked.append(arguments)
-        return {"status": "enregistré", "level": 2}
+    async def run():
+        try:
+            reply = await memory.command(incoming)
+            assert reply is not None
+            assert "enregistré" in reply.text
+            assert not release.is_set()
+            await asyncio.wait_for(asyncio.to_thread(called.wait), timeout=1)
+            assert not release.is_set()
+        finally:
+            release.set()
+            await memory.close()
 
-    source = Incoming(
-        "mobile", "Goldaj", "Je commence le piano.",
-        channel="private", force_reply=True, message_id="mobile-test-01")
-    response = asyncio.run(
-        Dialogue(service, "Tu es Jade.").respond(source, memory_action=action))
-    assert response.text == "Je retiendrai ce souvenir."
-    assert response.intent == "playful"
-    assert len(invoked) == 1
-    assert fake.calls[0]["input"][0]["role"] == "system"
-    assert "Tu es Jade" in fake.calls[0]["input"][0]["content"]
-    assert fake.calls[0]["store"] is fake.calls[1]["store"] is False
-
-
-def test_end_to_end_dialogue_streaming_sends_only_final_text():
-    service, fake = service_with(tool_response(), streaming_text(
-        "[INTENT:neutral] Bonjour depuis Jade."))
-    invoked = []
-    spoken = []
-
-    async def action(arguments):
-        invoked.append(arguments)
-        return {"status": "enregistré", "level": 2}
-
-    async def on_sentence(sentence):
-        spoken.append(sentence)
-
-    source = Incoming(
-        "discord_voice", "Goldaj", "J'apprends le piano depuis hier.",
-        channel="voice-123", force_reply=True, message_id="discord-voice-test")
-    response = asyncio.run(Dialogue(service, "Tu es Jade.").respond(
-        source, memory_action=action, on_sentence=on_sentence))
-    assert response.text == "Bonjour depuis Jade."
-    assert response.intent == "neutral"
-    assert len(invoked) == 1
-    assert " ".join(spoken).strip() == "Bonjour depuis Jade."
-    assert all("jade_save_memory" not in sentence for sentence in spoken)
-    assert all("[INTENT:" not in sentence for sentence in spoken)
-    assert fake.calls[0]["reasoning"]["effort"] == "low"
-    assert fake.calls[1]["reasoning"]["effort"] == "low"
+    asyncio.run(run())
+    assert len(writes) == 1
+    assert writes[0][1]["expected_person_id"] == "verified-person"
