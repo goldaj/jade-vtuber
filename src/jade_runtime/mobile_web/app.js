@@ -530,7 +530,19 @@
       }
       if (current.duplexFailed) throw current.duplexFailed;
       if (current.duplex) {
-        await current.duplex.finish();
+        try {
+          await current.duplex.finish();
+        } catch (error) {
+          // Before the authenticated WebSocket was ready, STT never started.
+          // Once ready, NEVER retry: that could charge for a second response.
+          if (current.duplex.ready) throw error;
+          const wav = buildWav(current.chunks, rate, frames);
+          await makeStreamingRequest("/api/voice", wav, {
+            "Content-Type":"audio/wav",
+            "X-Jade-Session":thread,
+            "X-Jade-Speak":soundEnabled ? "1" : "0"
+          });
+        }
       } else {
         const wav = buildWav(current.chunks, rate, frames);
         await makeStreamingRequest("/api/voice", wav, {
