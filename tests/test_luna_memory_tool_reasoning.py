@@ -359,3 +359,57 @@ def test_explicit_human_memory_request_is_queued_without_waiting_for_write():
     asyncio.run(run())
     assert len(writes) == 1
     assert writes[0][1]["expected_person_id"] == "verified-person"
+
+
+
+def test_goldaj_cannot_force_core_even_with_async_memory():
+    writes = []
+
+    class Store:
+        def account(self, key):
+            return "owner-profile"
+
+        def put_requested_ordinary(self, key, **kwargs):
+            writes.append(kwargs)
+            return "created"
+
+    memory = MemoryService(Store(), backend=object())
+    incoming = Incoming(
+        "mobile", "Goldaj",
+        "Jade, enregistre dans tes core memories que je commence le piano.",
+        channel="private", force_reply=True, message_id="core-request")
+
+    async def run():
+        try:
+            reply = await memory.command(incoming)
+            assert "pas dans mes Core Memories" in reply.text
+        finally:
+            await memory.close()
+
+    asyncio.run(run())
+    assert len(writes) == 1
+    assert writes[0]["expected_person_id"] == "owner-profile"
+
+
+def test_anonymous_user_cannot_queue_personal_memory():
+    class Store:
+        def account(self, key):
+            return None
+
+        def put_requested_ordinary(self, key, **kwargs):
+            raise AssertionError("No write without active identity")
+
+    memory = MemoryService(Store(), backend=object())
+    incoming = Incoming("discord", "Anonymous",
+                        "Retiens que je commence le piano.",
+                        channel="public", force_reply=True, message_id="none")
+
+    async def run():
+        try:
+            reply = await memory.command(incoming)
+            assert "ne peux mémoriser" in reply.text or "inactive" in reply.text
+            assert not memory._explicit_writes
+        finally:
+            await memory.close()
+
+    asyncio.run(run())
