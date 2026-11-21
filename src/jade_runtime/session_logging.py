@@ -22,7 +22,8 @@ _SUMMARY = logging.getLogger("jade.summary")
 _SECRET_PATTERNS = (
     re.compile(r"(?i)\bsk-[A-Za-z0-9_-]{8,}\b"),
     re.compile(r"(?i)\bgh[pousr]_[A-Za-z0-9_]{12,}\b"),
-    re.compile(r"(?i)(\b(?:authorization|api[_-]?key|password|client_secret|access_token|refresh_token|token)\b\s*[:=]\s*)([^\s,;}\]]+)"),
+    re.compile(r"(?i)(\bAuthorization\s*:\s*)([^\r\n]+)"),
+    re.compile(r"(?i)(\b(?:api[_-]?key|password|client_secret|access_token|refresh_token|token)\b\s*[:=]\s*)([^\s,;}\]]+)"),
     re.compile(r"(?i)(\bBearer\s+)([A-Za-z0-9._~+/-]{8,})"),
     re.compile(r"(?i)(!jade-memoire\s+confirmer\s+)\S+"),
 )
