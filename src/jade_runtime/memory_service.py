@@ -77,7 +77,7 @@ class MemoryService:
         # A person's consent to store a memory does not authorize replaying
         # it aloud to OTHER listeners of a public Discord channel. Ordinary
         # public dialogue history still works independently of private recall.
-        if incoming.platform == "discord_voice" or (
+        if incoming.platform in ("discord_voice", "twitch") or (
                 incoming.platform == "discord" and not incoming.private_channel):
             return ""
         try:

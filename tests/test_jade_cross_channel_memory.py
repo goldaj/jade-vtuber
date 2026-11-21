@@ -77,7 +77,7 @@ class CrossChannelMemoryTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("discussion Twitch", await self.service.context_for(self.mobile()))
         public = Incoming("twitch", "Goldaj", "Tu sais ?", channel="live",
                           account_id="202")
-        self.assertIn("discussion Twitch", await self.service.context_for(public))
+        self.assertEqual(await self.service.context_for(public), "")
         self.assertNotIn("discussion Twitch", await self.service.context_for(self.server()))
 
     async def test_unlinked_person_and_unlink_are_isolated(self):
