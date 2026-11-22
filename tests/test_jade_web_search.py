@@ -78,7 +78,7 @@ class ToolTests(unittest.IsolatedAsyncioTestCase):
         blocked = Path(self.temp.name) / "blocked.jsonl"
         blocked.mkdir()
         service = WebSearchService(self.provider, SearchJournal(blocked))
-        with self.assertRaises(IsADirectoryError):
+        with self.assertRaises(OSError):
             await service.for_turn(self.incoming, 1)(
                 json.dumps({"query": "test", "reason": "verification"}))
         self.assertEqual(self.provider.queries, [])

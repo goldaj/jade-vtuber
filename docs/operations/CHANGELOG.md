@@ -2,11 +2,11 @@
 
 ## 2026-11-22 — Recherche Internet Tavily interchangeable et journal privé
 
-- **Décision produit :** recherche web facultative à la demande explicite du modèle conversationnel, sans recherche en veille. Désactivée tant que \`JADE_WEB_ENABLED=1\` et une clé Tavily privée ne sont pas configurés.
-- **Architecture :** contrat \`SearchProvider\`, implémentation \`TavilyProvider\` isolée, \`WebSearchService\` avec 3 appels maximum par tour par défaut. \`jade_web_search\` coexiste avec les outils mémoire, même sans profil mémoire ; parcours texte et streaming vocal.
-- **Journal exhaustif des tentatives passant par l'outil :** JSONL privé persistant hors Git, horodatage UTC, motif, requête, ID de tour, canal, fournisseur, statut, durée, crédits annoncés et résultats. Écriture \`started\` synchronisée sur disque avant tout réseau, puis \`success\` / \`failed\` / \`rejected\`. En cas d'arrêt brutal après \`started\`, l'enregistrement reste consultable.
+- **Décision produit :** recherche web facultative à la demande explicite du modèle conversationnel, sans recherche en veille. Désactivée tant que `JADE_WEB_ENABLED=1` et une clé Tavily privée ne sont pas configurés.
+- **Architecture :** contrat `SearchProvider`, implémentation `TavilyProvider` isolée, `WebSearchService` avec 3 appels maximum par tour par défaut. `jade_web_search` coexiste avec les outils mémoire, même sans profil mémoire ; parcours texte et streaming vocal.
+- **Journal exhaustif des tentatives passant par l'outil :** JSONL privé persistant hors Git, horodatage UTC, motif, requête, ID de tour, canal, fournisseur, statut, durée, crédits annoncés et résultats. Écriture `started` synchronisée sur disque avant tout réseau, puis `success` / `failed` / `rejected`. En cas d'arrêt brutal après `started`, l'enregistrement reste consultable.
 - **Coûts et sécurité :** mode Tavily basic, cinq extraits au plus, pas de HTML brut ni réponse générée par Tavily, pas d'appel de recherche pour les conversations ordinaires. Clé masquée et préflight sans réseau. Aucun secret/version privée commités.
-- **Validation :** tests hors ligne nouveaux dans \`tests/test_jade_web_search.py\`, CI Linux/Windows à vérifier après intégration ; essai Tavily avec la vraie clé et recette Discord/PWA sur PC à faire par le propriétaire. Suivi unique REC-038.
+- **Validation :** tests hors ligne nouveaux dans `tests/test_jade_web_search.py`, CI Linux/Windows à vérifier après intégration ; essai Tavily avec la vraie clé et recette Discord/PWA sur PC à faire par le propriétaire. Suivi unique REC-038.
 
 ## 2026-11-22 — Branche expérimentale isolée : continuité privée, mémoire et métrologie
 

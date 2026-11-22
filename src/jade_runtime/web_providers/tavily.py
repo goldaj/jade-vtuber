@@ -37,6 +37,7 @@ class TavilyProvider:
                 "include_answer": False,
                 "include_raw_content": False,
                 "include_images": False,
+                "include_published_date": True,
                 "include_usage": True,
             },
             timeout=timeout,
