@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Arbitrage produit : quatre cartes à cadrer, six idées retirées
+
+- **Aucune modification de code** : uniquement les choix du propriétaire dans les sources canoniques sur `develop`. Les travaux sur les documents mobiles et la vision ne sont **pas démarrés**.
+- **Catalogue :** `NEW-12` retirée car la recherche est déjà validée en `REC-038 (Done)` ; `NEW-19` écartée car Jade conserve une seule personnalité ; `NEW-30` limitée exclusivement aux sondages Twitch (aucun quiz, devinette, mini-jeu ni sondage Discord) ; `NEW-16` réorientée vers rappels d'événements envoyés par message Discord ciblé ou notification mobile autorisée. La suspension existante de Twitch est respectée.
+- **Transferts sans doublon vers backlog :** `UX-19 → DEV-032` (documents téléchargeables dans le chat mobile) ; `PER-01 → DEV-033` (réception d'images), `PER-02 → DEV-034` (compréhension visuelle) et `PER-03 → DEV-035` (réaction conversationnelle). Les quatre DEV P2 sont **À qualifier**, à commencer par une discussion UX-19 avant de coder ; leurs lignes prospectives ont été supprimées.
+- **Comptabilité :** catalogue `110 → 104` idées actives, dont `21 P1` ; backlog `85 → 89` tâches, `19 → 23` DEV et `11 → 15` P2. La règle du propriétaire impose désormais le retrait immédiat des idées transférées ou rejetées des tableaux actifs.
+- **Vérifications :** cohérence des identifiants, liens et décomptes documentaires ; aucune activation de fournisseur, dépense API, connexion à des comptes externes ni merge sur `main`. [Passation](handoffs/2026-11-22-chatgpt-ux19-perceptions-catalogue.md).
+
 ## 2026-11-22 — NEW-20 intégré, NEW-25 supprimée du catalogue
 
 - **NEW-20 → DEV-031 (P2, En cours)** : module déterministe de messages d'incident classés (expiration, indisponibilité de connexion, saturation, autorisation, limite fournisseur, autre). Les contenus bruts des exceptions ne sont jamais publiés, pas de nouvelle génération LLM ni de relance payante.
