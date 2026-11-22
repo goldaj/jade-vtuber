@@ -363,19 +363,19 @@ def test_explicit_goldaj_memory_request_is_queued_without_waiting_for_write():
     assert writes[0][1]["expected_person_id"] == "verified-person"
 
 
-def test_goldaj_cannot_force_core_even_with_async_memory():
+def test_goldaj_core_request_is_proposal_not_forced_l2():
     writes = []
 
     class Store:
         def is_goldaj(self, key):
-            return key == ("microphone", "goldaj")
+            raise AssertionError("Core proposal must bypass mandatory owner path")
 
         def account(self, key):
             return "owner-profile"
 
         def put_requested_ordinary(self, key, **kwargs):
             writes.append(kwargs)
-            return "created"
+            raise AssertionError("Core proposal cannot become mandatory L2")
 
     memory = MemoryService(Store(), backend=object())
     incoming = Incoming(
@@ -385,14 +385,18 @@ def test_goldaj_cannot_force_core_even_with_async_memory():
 
     async def run():
         try:
-            reply = await memory.command(incoming)
-            assert "pas dans mes Core Memories" in reply.text
+            # Delegated to Jade's conversational LLM, without a direct reply
+            # claiming any write or any forced L2 insertion.
+            assert await memory.command(incoming) is None
+            action = await memory.prepare_memory_action(incoming)
+            assert action is not None
+            assert action.allowed_kinds == ("core_self", "core_relationship")
+            assert not memory._explicit_writes
         finally:
             await memory.close()
 
     asyncio.run(run())
-    assert len(writes) == 1
-    assert writes[0]["expected_person_id"] == "owner-profile"
+    assert writes == []
 
 
 def test_anonymous_user_suggestion_reaches_dialogue_without_direct_write():
