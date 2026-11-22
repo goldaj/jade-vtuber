@@ -9,7 +9,7 @@ from .messages import Incoming, Reply
 from .turn_logging import record_input, record_reply, record_outcome, record_delivery
 from .session_logging import bind_turn, reset_turn, event
 from .turn_arbitration import ArbitratingQueue, TurnArbiter
-from .turn_metrics import TurnMetrics
+from .turn_metrics import TurnMetrics, bind_metrics, reset_metrics
 
 
 @dataclass
@@ -174,6 +174,7 @@ class Runtime:
         if not item.valid():
             raise TimeoutError("message expired")
         context_token = bind_turn(item.turn, item.message)
+        metrics_token = bind_metrics(self.metrics, item.turn)
         self.mark_timing("queue_start")
         record_input(item.turn, item.message)
         turn = None
@@ -283,6 +284,7 @@ class Runtime:
                     await self.dialogue.commit_stream_response(item.message, None)
             raise
         finally:
+            reset_metrics(metrics_token)
             reset_turn(context_token)
 
     async def _process(self):
