@@ -738,3 +738,133 @@ def test_autonomous_memory_accepts_legacy_evidence_from_older_turn():
     assert result["level"] == 2
     assert len(writes) == 1
 
+
+
+def test_memory_lookup_tool_can_search_and_page_before_answering():
+    import json
+
+    first = tool_call(
+        "jade_search_memory", call_id="search-1",
+        arguments=json.dumps({
+            "query": "anniversaire", "kind": "all", "scope": "current",
+            "cursor": 0, "limit": 10,
+        }))
+    second = tool_call(
+        "jade_search_memory", call_id="search-2",
+        arguments=json.dumps({
+            "query": "", "kind": "all", "scope": "current",
+            "cursor": 10, "limit": 10,
+        }))
+    service, backend = make_service(
+        tool_response(first), tool_response(second),
+        text_response("[INTENT:neutral] Ma date de naissance est le 1er février 2025."))
+    queries = []
+
+    async def action(arguments):
+        raise AssertionError("Browsing must not start a write")
+
+    async def search(arguments):
+        data = json.loads(arguments)
+        queries.append(data)
+        return {
+            "status": "ok",
+            "scope_applied": "current",
+            "items": [{"kind": "core_self", "summary": (
+                "Jade est née le 1er février 2025.")}] if data["cursor"] else [],
+            "next_cursor": 10 if data["cursor"] == 0 else None,
+        }
+
+    action.search = search
+
+    async def run():
+        try:
+            answer = await service.complete_with_tools([
+                {"role": "user", "content": "Quand es-tu née ?"}], action)
+            assert answer.endswith("1er février 2025.")
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert len(backend.calls) == 3
+    assert len(queries) == 2
+    assert backend.calls[0]["tools"][1]["name"] == "jade_search_memory"
+    assert backend.calls[1]["input"][-1]["type"] == "function_call_output"
+    assert backend.calls[2]["input"][-1]["type"] == "function_call_output"
+    assert "1er février" in backend.calls[2]["input"][-1]["output"]
+
+
+def test_voice_memory_lookup_runs_before_progressive_spoken_answer():
+    import json
+    call = tool_call("jade_search_memory", call_id="read-voice",
+        arguments=json.dumps({"query": "naissance", "kind": "core_self",
+                              "scope": "current", "cursor": 0, "limit": 10}))
+    service, backend = make_service(
+        stream_response(tool_response(call)),
+        stream_response(text_response("[INTENT:neutral] Premier février 2025."),
+                        pieces=["[INTENT:neutral] ", "Premier février 2025."]))
+    reads = []
+
+    async def save(arguments):
+        raise AssertionError("No write for a recollection question")
+
+    async def search(arguments):
+        reads.append(json.loads(arguments))
+        return {"status": "ok", "scope_applied": "current", "next_cursor": None,
+                "items": [{"kind": "core_self", "summary": "1er février 2025"}]}
+
+    save.search = search
+
+    async def run():
+        try:
+            response = [x async for x in service.complete_stream_with_tools(
+                [{"role": "user", "content": "Ta date de naissance ?"}], save)]
+            assert "".join(response) == "[INTENT:neutral] Premier février 2025."
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert len(reads) == 1
+    assert len(backend.calls) == 2
+    assert backend.calls[0]["tools"][1]["name"] == "jade_search_memory"
+    assert backend.calls[1]["stream"] is True
+    assert "1er février" in backend.calls[1]["input"][-1]["output"]
+
+
+def test_memory_save_remains_optimistic_and_never_verifies_sqlite():
+    import json
+    service, backend = make_service(
+        tool_response(tool_call(
+            "jade_save_memory", call_id="save-1", arguments=json.dumps({
+                "kind": "core_self", "summary": "Date importante.",
+                "significance": "Un repère de Jade.",
+            }))),
+        text_response("[INTENT:neutral] Je l'ai enregistré."))
+    started, release = asyncio.Event(), asyncio.Event()
+    checked = []
+
+    async def save(arguments):
+        started.set()
+        await release.wait()
+        return {"status": "refusé"}  # Expected simulated SQLite failure.
+
+    async def never_verify(arguments):
+        checked.append(arguments)
+        raise AssertionError("An optimistic save must never verify its result")
+
+    save.search = never_verify
+
+    async def run():
+        try:
+            response = await service.complete_with_tools(
+                [{"role": "user", "content": "Garde ce souvenir."}], save)
+            assert response.endswith("Je l'ai enregistré.")
+            assert not release.is_set()
+            await asyncio.wait_for(started.wait(), timeout=1)
+            assert '"enregistré"' in backend.calls[1]["input"][-1]["output"]
+        finally:
+            release.set()
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert checked == []
+    assert len(backend.calls) == 2
