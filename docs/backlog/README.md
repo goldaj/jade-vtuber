@@ -6,25 +6,22 @@
 
 **Clôtures du 22/11/2026 :** `REC-021` (mémoire SQLite), `REC-025` (sauvegarde/restauration ciblée) et `REC-027` (sélection sociale hybride) sont **`Done`** par décision explicite du propriétaire. Réserves et preuves dans la [vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-021-rec-025-rec-027). `REC-020` (variantes d'intention A/B) a également été clôturée en **`Done`** sur validation explicite du propriétaire le 22/11/2026, [détails et réserves dans la vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-020).
 
-## REPRISE PRIORITAIRE — code PR #38 intégré, recettes ouvertes
+## REPRISE PRIORITAIRE — validations du 22 novembre 2026
 
-**Clôture mémoire du 22/11/2026 : REC-026 et REC-032 sont désormais `Done`**, après validation explicite des fonctionnalités de mémorisation et de rappel par le propriétaire. [Preuves et limites](02-RECETTE.md#clôture-fonctionnelle-mémoire-du-22-novembre-2026). **REC-031 et REC-033 à REC-037 demeurent `À valider`** ; les lacunes distinctes de REC-033/035 restent ouvertes. Une CI verte ne vaut pas recette réelle.
+**REC-031, REC-032, REC-033 et REC-034 sont `Done`**, après acceptation explicite du propriétaire. REC-032 l'était déjà à la suite de la validation mémoire ; REC-031/033/034 viennent d'être clôturées. Les limites documentées sont **acceptées pour cette version et ne sont pas déclarées corrigées**.
 
-| Ordre | Recette | Vérification principale |
+| Ordre | Ticket encore à valider | Vérification prioritaire |
 | ---: | --- | --- |
-| 1 | **REC-034** (P0) | Latences et coûts par canal, limites physiques P3 acceptées. |
-| 2 | **REC-031** (P1) | Continuité privée et envois Discord strictement autorisés. |
-| 3 | **REC-033** (P1) | Cache présence, ouverture PWA et L1 encore partiels. |
-| 4 | **REC-036** (P1) | Profil de personnalité et stabilité entre sessions. |
-| 5 | **REC-035** (P2) | Dialogues de groupe, fils parallèles encore partiels. |
-| 6 | **REC-037** (P2) | Déploiement Windows depuis PWA Android sur appareil réel. |
+| 1 | **REC-036** (P1) | Personnalité durable et cohérence entre sessions. |
+| 2 | **REC-035** (P2) | Interventions en groupe, avec fils parallèles encore partiellement gérés. |
+| 3 | **REC-037** (P2) | Configurer le superviseur Windows indépendant, puis tester redéploiement et redémarrage via PWA Android. |
 | En parallèle | **DEV-010**, **OPS-015**, ART-001 à ART-012 | Calques et comparaison artistique restent **À faire**. |
 
-**Microphone physique du PC, Twitch et OBS restent suspendus**, sans réactivation implicite. [Rapport d'audit](../operations/handoffs/2026-11-22-audit-technique-fonctionnel-ci-pr38.md).
+**Microphone physique du PC, Twitch et OBS restent suspendus** dans leurs cartes concernées. [Décision et limites](../operations/handoffs/2026-11-22-validation-rec031-rec033-rec034.md).
 
 ## Focus de travail léger (limite indicative : 3 tâches réellement « En cours »)
 
-**Mise à jour :** les anciennes DEV-021 à DEV-026 sont dans REC-031 à REC-036 ; **REC-032 est Done** depuis la validation mémoire du 22/11, les autres restent **À valider**. DEV-020 est suivi par REC-037. Ne pas créer de doublons.
+**Mise à jour du 22/11 :** les anciennes DEV-021 à DEV-026 sont suivies en REC-031 à REC-036. **REC-031/032/033/034 sont Done** sur validation du propriétaire ; **REC-035/036 restent À valider**. DEV-020 est REC-037, également À valider. Les réserves acceptées n'ont pas été réparées par ce changement de statut.
 
 **Règle pratique :** viser au plus **trois tâches en cours simultanément**, sans en faire un verrou automatique ; les autres restent « À faire », « À qualifier » ou « Bloqué ». Mettre à jour la colonne **Statut** de la vue canonique, pas ce texte historique. Pas de cadence Scrum obligatoire ni de tableau parallèle.
 
