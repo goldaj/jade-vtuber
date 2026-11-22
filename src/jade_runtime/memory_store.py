@@ -552,35 +552,25 @@ class MemoryStore:
             rows = db.execute(sql, (person, scope, _now().isoformat(), limit)).fetchall()
         return [dict(x) for x in rows]
 
-    def search_for_assistant(self, key: tuple[str, str], scope: str, *,
-                             expected_person_id: str, query: str = "",
-                             kind: str = "all", cursor: int = 0, limit: int = 10,
-                             allow_other_scopes: bool = False) -> dict:
-        """Browse every L2/L3 entry in *authorized* SQLite scopes, page by page.
+    def search_global(self, *, query: str = "", level: str = "all",
+                      kind: str = "all", cursor: int = 0, limit: int = 10) -> dict:
+        """Search ALL retained memories, without identity, room or audience gates.
 
-        No arbitrary account IDs, other users' memories, expired L2 memories,
-        or cross-channel public lookup. Self-core from another speaker is
-        visible only in the authenticated owner's private context.
+        Every stored level is accessible from every platform. Page size controls
+        the model's token budget, not the depth of the searchable database.
+        Provenance accompanies every result to avoid confusing interlocutors.
         """
-        _validate_key(key)
-        if (not isinstance(scope, str) or not 1 <= len(scope) <= 256
-                or not isinstance(expected_person_id, str)
-                or not isinstance(query, str) or len(query) > 120
-                or kind not in ("all", "ordinary", "core_relationship", "core_self")
-                or type(cursor) is not int or not 0 <= cursor <= 1_000_000
-                or type(limit) is not int or not 1 <= limit <= 15
-                or type(allow_other_scopes) is not bool):
-            raise ValueError("invalid memory search parameters")
+        if (not isinstance(query, str) or len(query) > 120
+                or level not in ("all", "1", "2", "3")
+                or kind not in ("all", "conversation", "ordinary",
+                                "core_self", "core_relationship")
+                or type(cursor) is not int or cursor < 0
+                or type(limit) is not int or not 1 <= limit <= 15):
+            raise ValueError("invalid global memory query")
 
-        # Unicode-friendly enough for a first lexical search; an empty query
-        # deliberately lists everything. Tokens are ORed so an imperfect
-        # recollection still yields useful candidates. No fixed candidate cap.
         raw_terms = [word for word in re.findall(r"\w+", query.casefold())
                      if len(word) >= 2][:8]
-        # A small lexical expansion avoids missing obvious French paraphrases
-        # such as "anniversaire" versus "date de naissance". No embeddings,
-        # external requests or arbitrary truncation of the result collection.
-        equivalents = {
+        synonyms = {
             "anniversaire": ("naissance", "née", "né"),
             "naissance": ("anniversaire", "née", "né"),
             "née": ("naissance", "anniversaire"),
@@ -590,90 +580,103 @@ class MemoryStore:
         }
         terms = list(dict.fromkeys(
             word for original in raw_terms
-            for word in (original, *equivalents.get(original, ()))))[:16]
-        def filters():
-            clauses = []
-            params = []
-            if terms:
-                matches = []
-                for word in terms:
-                    escaped = word.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-                    matches.append("(LOWER(summary) LIKE ? ESCAPE '\\' OR "
-                                   "LOWER(significance) LIKE ? ESCAPE '\\')")
-                    params.extend((f"%{escaped}%", f"%{escaped}%"))
-                clauses.append("(" + " OR ".join(matches) + ")")
-            return clauses, params
+            for word in (original, *synonyms.get(original, ()))))[:16]
 
+        def match_fields(fields):
+            if not terms:
+                return "", []
+            clauses, params = [], []
+            for word in terms:
+                escaped = word.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                clauses.append("(" + " OR ".join(
+                    f"LOWER({field}) LIKE ? ESCAPE '\\'" for field in fields) + ")")
+                params.extend(f"%{escaped}%" for _ in fields)
+            return " AND (" + " OR ".join(clauses) + ")", params
+
+        def requested(number, name):
+            return (level in ("all", number) and kind in ("all", name))
+
+        queries, params = [], []
+        if requested("1", "conversation"):
+            clause, values = match_fields(("user_content", "assistant_content"))
+            queries.append("""
+                SELECT 'turn:' || CAST(id AS TEXT) AS id, '1' AS level,
+                       'conversation' AS kind, scope,
+                       user_content || char(10) || 'Jade: ' ||
+                           assistant_content AS summary,
+                       '' AS significance, created_at, source_platform,
+                       source_account_id, source_author_name,
+                       person_id AS source_person_id
+                FROM conversation_turns WHERE 1=1
+            """ + clause)
+            params.extend(values)
+
+        allowed_kinds = (
+            ("ordinary",) if level == "2" else
+            ("core_self", "core_relationship") if level == "3" else
+            ("ordinary", "core_self", "core_relationship"))
+        if kind != "all":
+            allowed_kinds = (kind,) if kind in allowed_kinds else ()
+        if level in ("all", "2", "3") and allowed_kinds:
+            placeholders = ",".join("?" for _ in allowed_kinds)
+            clause, values = match_fields(("summary", "significance"))
+            queries.append("""
+                SELECT id, CASE WHEN kind='ordinary' THEN '2'
+                                ELSE '3' END AS level,
+                       kind, scope, summary, significance, created_at,
+                       source_platform, source_account_id,
+                       '' AS source_author_name, person_id AS source_person_id
+                FROM memories WHERE kind IN (""" + placeholders + """)
+                  AND (expires_at IS NULL OR expires_at>?)
+            """ + clause)
+            params.extend((*allowed_kinds, _now().isoformat(), *values))
+
+        if requested("3", "core_self"):
+            clause, values = match_fields(("summary", "significance"))
+            queries.append("""
+                SELECT id, '3' AS level, 'core_self' AS kind,
+                       source_scope AS scope, summary, significance,
+                       created_at, source_platform, source_account_id,
+                       '' AS source_author_name, '' AS source_person_id
+                FROM jade_self_core WHERE 1=1
+            """ + clause)
+            params.extend(values)
+
+        if not queries:
+            return {"status": "ok", "items": [], "next_cursor": None}
+
+        sql = (" UNION ALL ".join(queries) +
+               " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?")
         with self._db() as db:
-            person = db.execute(
-                "SELECT person_id FROM identities WHERE platform=? AND account_id=?",
-                key).fetchone()
-            if not person or person["person_id"] != expected_person_id:
-                return {"status": "indisponible", "items": [], "next_cursor": None}
-            person_id = person["person_id"]
-            owner = db.execute("""
-                SELECT 1 FROM identities
-                WHERE platform='microphone' AND account_id='goldaj'
-                  AND person_id=?
-            """, (person_id,)).fetchone() is not None
-
-            queries = []
-            parameters = []
-            if kind in ("all", "ordinary", "core_relationship", "core_self"):
-                clauses = ["person_id=?", "(expires_at IS NULL OR expires_at>?)"]
-                args = [person_id, _now().isoformat()]
-                if not allow_other_scopes:
-                    clauses.append("scope=?")
-                    args.append(scope)
-                if kind != "all":
-                    clauses.append("kind=?")
-                    args.append(kind)
-                extra, extra_args = filters()
-                clauses.extend(extra)
-                args.extend(extra_args)
-                queries.append("""
-                    SELECT id,kind,scope,summary,significance,created_at,
-                           source_platform FROM memories WHERE
-                """ + " AND ".join(clauses))
-                parameters.extend(args)
-
-            if kind in ("all", "core_self"):
-                clauses = ["visibility='owner_only'"]
-                args = []
-                # In public contexts only autobiographical memories originating
-                # from this same verified speaker can be recalled. In private
-                # owner context Jade may inspect her complete autobiography.
-                if not (allow_other_scopes and owner):
-                    access = ("""
-                        EXISTS (SELECT 1 FROM jade_self_core_access AS a
-                                WHERE a.memory_id=jade_self_core.id
-                                  AND a.source_platform=?
-                                  AND a.source_account_id=?
-                    """ + (""" AND a.source_scope=?""" if not allow_other_scopes
-                           else "") + ")")
-                    clauses.append(access)
-                    args.extend(key)
-                    if not allow_other_scopes:
-                        args.append(scope)
-                extra, extra_args = filters()
-                clauses.extend(extra)
-                args.extend(extra_args)
-                queries.append("""
-                    SELECT id,'core_self' AS kind,'jade_self' AS scope,
-                           summary,significance,created_at,source_platform
-                    FROM jade_self_core WHERE
-                """ + " AND ".join(clauses))
-                parameters.extend(args)
-
-            sql = (" UNION ALL ".join(queries) +
-                   " ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?")
-            rows = db.execute(sql, (*parameters, limit + 1, cursor)).fetchall()
-        has_more = len(rows) > limit
+            rows = db.execute(sql, (*params, limit + 1, cursor)).fetchall()
+            items = [dict(row) for row in rows[:limit]]
+            autobiographical_ids = [item["id"] for item in items
+                                    if item["kind"] == "core_self"
+                                    and not item["source_person_id"]]
+            provenance = {}
+            if autobiographical_ids:
+                references = db.execute("""
+                    SELECT memory_id,source_platform,source_account_id,source_scope
+                    FROM jade_self_core_access
+                    WHERE memory_id IN (""" + ",".join(
+                        "?" for _ in autobiographical_ids) + ")",
+                    autobiographical_ids).fetchall()
+                for ref in references:
+                    provenance.setdefault(ref["memory_id"], []).append({
+                        "platform": ref["source_platform"],
+                        "account_id": ref["source_account_id"],
+                        "scope": ref["source_scope"],
+                    })
+            for item in items:
+                if item["kind"] == "core_self" and not item["source_person_id"]:
+                    item["recorded_origins"] = provenance.get(item["id"]) or [{
+                        "platform": item["source_platform"],
+                        "account_id": item["source_account_id"],
+                        "scope": item["scope"],
+                    }]
         return {
-            "status": "ok",
-            "items": [dict(row) for row in rows[:limit]],
-            "next_cursor": cursor + limit if has_more else None,
-            "scope_applied": "all" if allow_other_scopes else "current",
+            "status": "ok", "items": items,
+            "next_cursor": cursor + limit if len(rows) > limit else None,
         }
 
     def recall(self, key: tuple[str, str], scope: str, *, limit: int = 8) -> list[dict]:
