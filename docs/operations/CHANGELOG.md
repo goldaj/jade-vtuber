@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — QA : isolement des journaux et contrats mémoire/asynchronisme
+
+- **Journalisation :** les tests de compatibilité `jade.conversation` isolent le mode sans fichier de session, au lieu de dépendre de l'état global laissé par les autres tests. Aucune émission de texte privé vers la console réelle n'est ajoutée.
+- **Voix synthétique :** le mock LLM du scénario PCM/micro fictif utilise maintenant la Responses API et vérifie la même génération unique, sans périphérique réel.
+- **Souvenirs volontaires :** le test confirme qu'une demande humaine de Core ne crée pas une Core par commande ; une action volontaire distincte de Jade peut toutefois le faire, et les éléments provenant du contexte antérieur n'exigent pas une citation du dernier tour.
+- **Budget/raisonnement :** le test du contrat actuel vérifie `reasoning.effort=low`, `max_output_tokens=2048`, `store=false` et le streaming Responses.
+- **Validation :** suite offline à relancer. Les tests d'isolement multicanal/consentement restent prioritaires.
+
 ## 2026-11-22 — QA : adapter les simulations OpenAI au contrat Responses
 
 - **Diagnostic :** des tests de conversation, streaming et isolation de clés simulaient encore `chat.completions` alors que Jade utilise la Responses API. Échecs de `FakeClient.responses` absente, pas une preuve d'échec du backend actuel.

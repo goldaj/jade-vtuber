@@ -30,49 +30,43 @@ class _Random:
         return self.value
 
 
-class _Completions:
+class _Responses:
     def __init__(self):
         self.calls = []
 
     async def create(self, **kwargs):
         self.calls.append(kwargs)
         if not kwargs.get("stream"):
-            return SimpleNamespace(choices=[
-                SimpleNamespace(message=SimpleNamespace(content="Réponse"))
-            ])
+            return SimpleNamespace(status="completed", output_text="Réponse", output=[])
 
-        async def chunks():
-            yield SimpleNamespace(choices=[SimpleNamespace(
-                index=0, finish_reason=None,
-                delta=SimpleNamespace(content="[INTENT:neutral] Réponse"))])
-            yield SimpleNamespace(choices=[SimpleNamespace(
-                index=0, finish_reason="stop",
-                delta=SimpleNamespace(content=None))])
-        return chunks()
+        async def updates():
+            content = "[INTENT:neutral] Réponse"
+            yield SimpleNamespace(type="response.output_text.delta", delta=content)
+            yield SimpleNamespace(type="response.completed", response=SimpleNamespace(
+                status="completed", output_text=content, output=[]))
+        return updates()
 
 
 class TestJadeRuntime20261115(unittest.TestCase):
-    def test_low_320_are_explicit_on_chat_and_stream(self):
+    def test_low_2048_are_explicit_on_responses_and_stream(self):
         self.assertEqual(Settings().reasoning_effort, "low")
-        self.assertEqual(Settings().max_completion_tokens, 320)
-        backend = _Completions()
-        services = object.__new__(OpenAIServices)
-        services.settings = Settings()
-        services.client = SimpleNamespace(
-            chat=SimpleNamespace(completions=backend))
+        self.assertEqual(Settings().max_completion_tokens, 2048)
+        backend = _Responses()
+        services = OpenAIServices(Settings(), client=SimpleNamespace(responses=backend))
         async def run():
             self.assertEqual(await services.complete([{"role": "user", "content": "salut"}]),
                              "Réponse")
             self.assertEqual(
-                "".join([chunk async for chunk in services.complete_stream(
+                "".join([part async for part in services.complete_stream(
                     [{"role": "user", "content": "salut"}])]),
                 "[INTENT:neutral] Réponse")
         asyncio.run(run())
         self.assertEqual(len(backend.calls), 2)
         for call in backend.calls:
             self.assertEqual(call["model"], "gpt-6-luna")
-            self.assertEqual(call["reasoning_effort"], "low")
-            self.assertEqual(call["max_completion_tokens"], 320)
+            self.assertEqual(call["reasoning"], {"effort": "low"})
+            self.assertEqual(call["max_output_tokens"], 2048)
+            self.assertFalse(call["store"])
 
     def test_exact_history_is_kept_and_replayed_only_after_opt_in(self):
         with TemporaryDirectory() as tmp:
