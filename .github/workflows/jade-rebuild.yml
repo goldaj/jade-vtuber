@@ -59,6 +59,10 @@ jobs:
           poetry run python -m pip install --disable-pip-version-check tzdata
       - name: Compile Python
         run: poetry run python -m compileall -q src main.py
+      - name: Browser Live2D visibility lifecycle
+        run: |
+          node --check src/jade_runtime/mobile_web/avatar.js
+          node tests/mobile_avatar_visibility_test.js
       - name: Run offline unit tests
         run: poetry run python -m unittest discover -s tests -v
       - name: Documentation contract
