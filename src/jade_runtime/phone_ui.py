@@ -61,7 +61,7 @@ async function submit(){
   });
   const result=await response.json();
   if(!response.ok)throw new Error(
-   response.status===401?"Jeton invalide.":(result.error||"Erreur HTTP "+response.status));
+   response.status===401?"Jeton invalide.":(result.message||result.error||"Erreur HTTP "+response.status));
   add(String(result.reply||""),"jade");status.textContent="Prêt.";
  }catch(err){status.textContent=err.message||"Connexion impossible."}
  finally{busy=false;send.disabled=false;newButton.disabled=false;input.focus()}
