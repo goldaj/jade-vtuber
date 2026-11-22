@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — QA : contrat des outils mémoire Responses
+
+- Les quatre tests de `tests/test_jade_openai_memory_tools.py` utilisaient les objets `chat.completions` retirés de Jade. Simulations actualisées en `responses.create` sans changer le but de chaque contrôle : abstention sans appel supplémentaire, continuation après écriture différée, aucun argument d'outil divulgué dans le flux, fermeture des streams.
+- Les assertions suivent le contrat validé : l'acceptation de la tentative est immédiate et le résultat SQLite est observé à la fermeture de la tâche, sans imposer une confirmation bloquante au LLM.
+- Suite GitHub Linux/Windows à observer avant clôture.
+
 ## 2026-11-22 — QA : isolement des journaux et contrats mémoire/asynchronisme
 
 - **Journalisation :** les tests de compatibilité `jade.conversation` isolent le mode sans fichier de session, au lieu de dépendre de l'état global laissé par les autres tests. Aucune émission de texte privé vers la console réelle n'est ajoutée.
