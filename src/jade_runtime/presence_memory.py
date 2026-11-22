@@ -49,13 +49,15 @@ class PresenceMemoryCache:
                                         revision_again, tuple(dict(x) for x in rows))
             self._entries.move_to_end(cache_key)
             while len(self._entries) > self.max_entries:
-                self._entries.popitem(last=False)
+                oldest, _ = self._entries.popitem(last=False)
+                self._locks.pop(oldest, None)
             return [dict(item) for item in rows]
 
     def invalidate(self, key=None):
         for candidate in list(self._entries):
             if key is None or candidate[0] == key:
                 self._entries.pop(candidate, None)
+                self._locks.pop(candidate, None)
 
     def clear(self):
         self._entries.clear()
