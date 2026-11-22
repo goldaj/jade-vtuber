@@ -81,6 +81,8 @@ class Runtime:
             item.result.cancel()
         if item.task is None and item.finished is not None and not item.finished.done():
             item.finished.set_result(None)
+        if item.task is None:
+            self.metrics.end(item.turn, "cancelled")
 
     def _expire_work(self, item):
         if item.cancelled:
@@ -323,11 +325,7 @@ class Runtime:
             finally:
                 if timer is not None:
                     timer.cancel()
-                self.metrics.end(
-                    item.turn, "cancelled" if item.cancelled else
-                    "failed" if item.result is not None and item.result.done()
-                    and not item.result.cancelled() and item.result.exception() is not None
-                    else "complete")
+                self.metrics.end(item.turn, "cancelled" if item.cancelled else "complete")
                 self.active = None
                 self.queue.task_done()
                 if item.finished is not None and not item.finished.done():
