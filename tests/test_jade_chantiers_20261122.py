@@ -180,6 +180,29 @@ class ContinuityTests(unittest.IsolatedAsyncioTestCase):
             Incoming(platform="mobile", author="Goldaj", channel="private",
                      text="Je pensais envoyer une annonce sur Discord")))
 
+    async def test_only_linked_owner_discord_dm_can_resume_private_task(self):
+        self.assertIn("Tâche suivie", (await self.coordinator.command(
+            Incoming("mobile", "Goldaj", "Jade, note une tâche : Terminer les recettes",
+                     channel="owner"))).text)
+        self.store.enable(("discord", "101"))
+        self.store.enable(("discord", "202"))
+        allowed = Incoming("discord", "Goldaj", "Où en étions-nous ?",
+                           channel="dm101", account_id="101", private_channel=True)
+        stranger = Incoming("discord", "Goldaj", "Où en étions-nous ?",
+                            channel="dm202", account_id="202", private_channel=True)
+        public = Incoming("discord", "Goldaj", "Où en étions-nous ?",
+                          channel="salon", account_id="101", private_channel=False)
+        self.assertEqual(await self.coordinator.context_for(allowed), "")
+        self.assertEqual(await self.coordinator.context_for(stranger), "")
+        code = self.store.begin_link(("microphone", "goldaj"),
+                                     target=("discord", "101"))
+        self.assertTrue(self.store.complete_link(("discord", "101"), code))
+        self.assertIn("Terminer les recettes", await self.coordinator.context_for(allowed))
+        self.assertEqual(await self.coordinator.context_for(stranger), "")
+        self.assertEqual(await self.coordinator.context_for(public), "")
+        self.assertTrue(self.store.unlink(("discord", "101")))
+        self.assertEqual(await self.coordinator.context_for(allowed), "")
+
     async def test_explicit_allowlisted_cross_channel_send(self):
         cmd = Incoming(platform="mobile", author="Goldaj", channel="private",
                        text="!jade-transfert discord:555 Bonjour à tous")
