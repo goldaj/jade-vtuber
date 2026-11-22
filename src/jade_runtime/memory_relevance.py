@@ -63,4 +63,8 @@ def rank_memories(candidates: list[dict], question: str, *, limit: int = 8,
                  + 1 / (1 + age / 45))
         ranked.append((score, -index, memory))
     ranked.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    # Preserve a small contextual fallback when lexical overlap misses
+    # useful paraphrases in the person's own authorized memories.
+    if not ranked:
+        return candidates[:min(2, limit)]
     return [item[2] for item in ranked[:limit]]
