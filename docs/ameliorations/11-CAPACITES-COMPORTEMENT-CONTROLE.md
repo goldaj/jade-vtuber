@@ -1,6 +1,6 @@
 # Nouvelles capacités : contrôle, comportement, autonomie et interactions
 
-**Historique :** 36 propositions NEW-01 à NEW-36 classées le 18/11/2026. **État du catalogue actif au 22/11 : 34 idées** : 32 idées restées après retrait de NEW-10 (livré via REC-027), NEW-11 (couvert par DEV-021) et transferts de NEW-17 vers DEV-025 et NEW-36 vers DEV-026, puis ajout de **NEW-37** en report et **NEW-38** en capacité prospective. NEW-04/18/24 restent en P1, 28 idées sont en P2, NEW-34/35/37 en P3.
+**Historique :** 36 propositions NEW-01 à NEW-36 classées le 18/11/2026. **État du catalogue actif au 22/11 : 32 idées** : 32 idées restées après retrait de NEW-10 (livré via REC-027), NEW-11 (couvert par DEV-021) et transferts de NEW-17 vers DEV-025 et NEW-36 vers DEV-026, puis ajout de **NEW-37** en report et **NEW-38** en capacité prospective. NEW-04/18/24 restent en P1, 26 idées sont en P2, NEW-34/35/37 en P3. NEW-20 a été transférée en DEV-031 ; NEW-25 a été retirée sur décision explicite du propriétaire (pas de fonctionnalité multilingue souhaitée actuellement).
 
 **Statut : idées restantes à étudier, pas de nouveau code autorisé par ce catalogue.** Les mécanismes existants (files bornées, arrêt de session vocal, opt-in mémoire, contrôles de transport, expressions r20, sous-titres locaux, participation Discord 20 % / Twitch 30 %, etc.) doivent être conservés : les entrées ci-dessous couvrent seulement des extensions **non identifiées comme fonctionnalités complètes dans le code**. Vérifier l'état réel de `develop` lors de chaque prise en charge. Pour respecter l'identité de Jade, les contrôles de sortie publique doivent permettre la personnalité espiègle prévue, pas neutraliser systématiquement sa voix.
 
@@ -17,7 +17,6 @@
 | NEW-07 | P2 / P | **Tests adversariaux reproductibles** : scénarios simulés de spam, usurpation, attaques par contenu, tentatives de fuite, épuisement d'API, manipulations de souvenirs et dérives publiques ; contrôles automatiques des garde-fous sans exposer de secrets ni effectuer d'appels payants. Distinct de la recette E2E générale. |
 | NEW-08 | P2 / P | **Approbation humaine des actions sensibles** : cadre générique de confirmation à portée limitée, expiration et journalisation avant suppression de fichiers, envoi privé ou action externe à conséquences. **Condition bloquante avant l'activation de telles actions**, sans exiger de développer immédiatement ces fonctionnalités. |
 | NEW-09 | P2 / P | **Cockpit de pilotage live** : interface privée montrant sessions, connexions, consommation, réponses en cours, modules activés et contrôles propriétaire pour suspendre/relancer. Distinct du tableau de mesures passif QUA-11 ; accès strictement authentifié. |
-| NEW-20 | P2 / P | **Explication compréhensible des incidents** : état d'indisponibilité, déconnexion ou capacité temporairement coupée indiqué seulement sur les canaux autorisés, sans affirmer qu'une action a abouti et sans transformer chaque panne en nouvelle génération payante. |
 
 ## B. Comportement social, apprentissage et continuité conversationnelle
 
@@ -55,7 +54,6 @@
 | --- | --- | --- |
 | NEW-23 | P2 / P | **Diarisation sur une source audio partagée** : distinguer plusieurs locuteurs sur un seul microphone ou flux, de manière prudente, sans confondre une identité vocale inférée avec un compte authentifié. Le vocal Discord dispose déjà d'identités de transport distinctes. |
 | NEW-24 | **P1 / P** | **Compréhension des sons non verbaux** : rire, applaudissements, surprise ou événements acoustiques pertinents, avec niveau de confiance et réaction proportionnée ; ne pas déduire une identité ou un état émotionnel certain de simples sons. |
-| NEW-25 | P2 / P | **Multilinguisme et traduction contextuelle** : langues et préférences par conversation, traduction en temps réel facultative, maintien de la personnalité française par défaut, coût/latence mesurés. |
 | NEW-26 | P2 / P | **Télémétrie de jeux structurée** : fournisseurs d'événements de jeu (scores, manches, victoires, etc.) lorsqu'une API ou source locale autorisée existe ; corréler avec le visuel sans supposer l'existence d'une API universelle. |
 | NEW-27 | P2 / P | **Gestion de l'attention multimodale** : arbitrer entre événements vocaux, textuels, visuels et API en temps réel selon importance, coût, latence, consentement et priorité des conversations directes. Complète le TurnArbiter textuel existant et PER-09. |
 | NEW-28 | P2 / P | **Gestuelle contextuelle non émotionnelle** : gestes de présentation, désignation d'éléments, orientation du regard, posture et synchronisation ; extension distincte des 14 motions associées aux intentions. |
@@ -76,4 +74,4 @@
 - **Ne pas dupliquer les fondations déjà codées** : vérifier le code de `develop` avant la conception. Compléter plutôt que recréer.
 - Aucune action externe, surveillance, connexion, nouvelle dépense API, modification de permissions ou déploiement n'est autorisé par cette seule liste.
 
-**Contrôle de cohérence au 22/11/2026 : 34 idées actives (3 P1 : NEW-04/18/24 ; 28 P2 ; 3 P3 : NEW-34/35/37), 4 identifiants historiques absents du catalogue actif car livrés ou transférés.**
+**Contrôle de cohérence au 22/11/2026 : 32 idées actives (3 P1 : NEW-04/18/24 ; 26 P2 ; 3 P3 : NEW-34/35/37). NEW-20 est suivie en [DEV-031](../backlog/01-DEVELOPPEMENT.md) et NEW-25 a été abandonnée sur instruction du propriétaire ; les deux lignes ont été retirées de la liste active.**
