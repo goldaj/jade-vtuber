@@ -16,7 +16,7 @@ import uuid
 
 from .session_logging import event
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 CONVERSATION_RETENTION_DAYS = 7
 CONVERSATION_RELOAD_HOURS = 24
 ORDINARY_RETENTION_DAYS = 365
@@ -72,7 +72,7 @@ class MemoryStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._db() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, 5, SCHEMA_VERSION):
+            if version not in (0, 1, 2, 3, 4, 5, 6, SCHEMA_VERSION):
                 raise RuntimeError("unsupported Jade memory schema; migrate before starting")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS persons (
@@ -128,6 +128,18 @@ class MemoryStore:
                 );
                 CREATE INDEX IF NOT EXISTS idx_jade_self_core_recency
                     ON jade_self_core(created_at DESC);
+                -- A global self Core may be remembered in several independent
+                -- rooms. Grant each authenticated source its own read scope
+                -- without duplicating the global autobiographical fact.
+                CREATE TABLE IF NOT EXISTS jade_self_core_access (
+                    memory_id TEXT NOT NULL REFERENCES jade_self_core(id) ON DELETE CASCADE,
+                    source_platform TEXT NOT NULL,
+                    source_account_id TEXT NOT NULL,
+                    source_scope TEXT NOT NULL,
+                    PRIMARY KEY(memory_id,source_platform,source_account_id,source_scope)
+                );
+                CREATE INDEX IF NOT EXISTS idx_jade_self_core_access_source
+                    ON jade_self_core_access(source_platform,source_account_id,source_scope);
                 -- Complete, non-summarized dialogue turns, strictly opt-in per verified identity.
                 CREATE TABLE IF NOT EXISTS conversation_turns (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -196,6 +208,15 @@ class MemoryStore:
                     db.execute("ALTER TABLE jade_self_core "
                                "ADD COLUMN source_scope TEXT NOT NULL "
                                "DEFAULT 'legacy_private'")
+            if version < 7:
+                # Backfill every existing Core's actual origin. A v5 legacy
+                # entry has legacy_private scope and stays out of public chat.
+                db.execute("""
+                    INSERT OR IGNORE INTO jade_self_core_access
+                    (memory_id,source_platform,source_account_id,source_scope)
+                    SELECT id,source_platform,source_account_id,source_scope
+                    FROM jade_self_core
+                """)
             db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
         # Purge expired rows on open, including DBs created before this policy.
         self.prune_expired()
@@ -431,6 +452,15 @@ class MemoryStore:
                 """, (uuid.uuid4().hex, summary.strip(), significance.strip(),
                       _fingerprint(summary), key[0], key[1], message_id[:128],
                       scope, _now().isoformat()))
+            remembered = db.execute(
+                "SELECT id FROM jade_self_core WHERE fingerprint=?",
+                (_fingerprint(summary),)).fetchone()
+            if remembered is not None:
+                db.execute("""
+                    INSERT OR IGNORE INTO jade_self_core_access
+                    (memory_id,source_platform,source_account_id,source_scope)
+                    VALUES (?,?,?,?)
+                """, (remembered["id"], key[0], key[1], scope))
             return written.rowcount > 0
 
     def recall_self_core(self, key: tuple[str, str], *, limit: int = 6) -> list[dict]:
@@ -601,10 +631,16 @@ class MemoryStore:
                 # from this same verified speaker can be recalled. In private
                 # owner context Jade may inspect her complete autobiography.
                 if not (allow_other_scopes and owner):
-                    clauses += ["source_platform=?", "source_account_id=?"]
+                    access = ("""
+                        EXISTS (SELECT 1 FROM jade_self_core_access AS a
+                                WHERE a.memory_id=jade_self_core.id
+                                  AND a.source_platform=?
+                                  AND a.source_account_id=?
+                    """ + (""" AND a.source_scope=?""" if not allow_other_scopes
+                           else "") + ")")
+                    clauses.append(access)
                     args.extend(key)
                     if not allow_other_scopes:
-                        clauses.append("source_scope=?")
                         args.append(scope)
                 extra, extra_args = filters()
                 clauses.extend(extra)
