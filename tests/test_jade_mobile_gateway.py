@@ -206,6 +206,9 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
             headers=self.headers("application/json"))
         self.assertEqual(status, 503)
         self.assertEqual(json.loads(body)["error"], "Jade indisponible")
+        self.assertEqual(json.loads(body)["incident_code"], "unavailable")
+        self.assertIn("indisponible", json.loads(body)["message"])
+        self.assertNotIn("synthetic provider", str(json.loads(body)))
         self.assertFalse(self.fake.speeches)
         self.assertFalse(self.mobile.pending)
 
@@ -230,6 +233,7 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
             headers=self.headers("application/json"))
         self.assertTrue(entered.is_set())
         self.assertEqual(status, 504)
+        self.assertEqual(json.loads(body)["incident_code"], "timeout")
         await asyncio.wait_for(released.wait(), 1)
         await asyncio.wait_for(self.runtime.idle(), 1)
         self.assertFalse(self.reply_log)
@@ -244,6 +248,23 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status, 200)
         self.assertTrue(json.loads(body)["audio_wav_b64"])
         self.assertEqual(len(self.fake.speeches), 1)
+
+    async def test_optional_tts_failure_keeps_answer_and_explains_voice_failure(self):
+        async def failed_tts(text, *, intent="neutral"):
+            raise ConnectionError("private-user-api-key")
+        self.fake.synthesize_speech = failed_tts
+        payload = json.dumps({"text":"Jade, bonjour", "session":"m-123456789012",
+                              "speak":True}).encode()
+        status, body, _ = await self.request(
+            "POST", "/api/chat", body=payload,
+            headers=self.headers("application/json"))
+        self.assertEqual(status, 200)
+        result = json.loads(body)
+        self.assertEqual(result["reply"], "Bonjour papa, je t'écoute.")
+        self.assertTrue(result["audio_unavailable"])
+        self.assertEqual(result["audio_unavailable_reason"]["incident_code"], "connection")
+        self.assertNotIn("private-user-api-key", str(result))
+        self.assertEqual(len(self.fake.prompts), 1)  # Never regenerate text.
 
     async def test_owner_tailscale_identity_is_checked_for_all_files_and_api(self):
         self.mobile.owner_login = "creator@example.test"
