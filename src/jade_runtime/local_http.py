@@ -14,6 +14,7 @@ import secrets
 from .phone_ui import PHONE_HTML
 
 from .messages import Incoming
+from .incidents import incident_for_client
 
 
 class LocalHTTP:
@@ -170,15 +171,17 @@ class LocalHTTP:
                     work = await self.runtime.submit(Incoming(
                         "local_http", "phone", text, session, uid, True),
                         deadline=deadline, result=future)
-                except asyncio.QueueFull:
-                    await self._response(writer, 429, {"error": "busy"})
+                except asyncio.QueueFull as exc:
+                    await self._response(writer, 429, {"error": "busy",
+                                                       **incident_for_client(exc)})
                     return
                 try:
                     result = await asyncio.wait_for(future, timeout=self.request_timeout)
                 except asyncio.CancelledError:
                     if asyncio.current_task().cancelling():
                         raise
-                    await self._response(writer, 503, {"error": "unavailable"})
+                    await self._response(writer, 503, {"error": "unavailable",
+                                                       **incident_for_client(ConnectionError())})
                     return
                 await self._response(writer, 200, {"reply": result})
             finally:
@@ -186,11 +189,13 @@ class LocalHTTP:
                     self.runtime.cancel_work(work)
                 self.pending.pop(uid, None)
         except (TimeoutError, asyncio.IncompleteReadError):
-            await self._response(writer, 504, {"error": "timeout"})
-        except Exception:
+            await self._response(writer, 504, {"error": "timeout",
+                                               **incident_for_client(TimeoutError())})
+        except Exception as exc:
             self.log.warning("local HTTP request failed (no content logged)")
             try:
-                await self._response(writer, 503, {"error": "unavailable"})
+                await self._response(writer, 503, {"error": "unavailable",
+                                                   **incident_for_client(exc)})
             except Exception:
                 pass
         finally:
