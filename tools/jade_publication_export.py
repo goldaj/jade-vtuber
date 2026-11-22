@@ -34,6 +34,7 @@ MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/avatar.js",
     "src/jade_runtime/mobile_web/room-motion.js",
     "src/jade_runtime/mobile_web/room-spring.webp",
+    "src/jade_runtime/mobile_web/room-kitchen.webp",
     "src/jade_runtime/mobile_web/room-backdrop.webp",
     "src/jade_runtime/mobile_web/room-curtain.webp",
     "src/jade_runtime/mobile_web/intent-visuals.json",

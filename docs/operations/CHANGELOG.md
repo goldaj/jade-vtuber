@@ -4,7 +4,7 @@
 
 - **Décision :** le sélecteur « Décor » propose Chambre (décor existant) et Cuisine (visuel validé par le propriétaire), avec un choix mémorisé dans le paramètre d’URL `room` plutôt que dans un stockage navigateur privé.
 - **Implémentation :** `room-kitchen.webp` est un asset local servi par la liste explicite du gateway ; le contrôleur `room-motion.js` sélectionne la source et active les calques animés uniquement pour la chambre. Au passage dans la cuisine, rideau, ombres, reflet et vapeur de la chambre sont cachés et la boucle `requestAnimationFrame` est interrompue ; retour chambre = reprise des effets initiaux. La cuisine ne possède **pas encore d’animations**, en attente de consignes du propriétaire.
-- **Portée :** `mobile_web/index.html`, `jade-theme.css`, `room-motion.js`, `room-kitchen.webp`, `mobile_gateway.py` et le test `tests/mobile_room_selection_test.js`. Le modèle Live2D et la logique d’authentification ne changent pas. Aucun impact sur `main`.
+- **Portée :** `mobile_web/index.html`, `jade-theme.css`, `room-motion.js`, `room-kitchen.webp`, `mobile_gateway.py`, `tools/jade_publication_export.py` et le test `tests/mobile_room_selection_test.js`. Le modèle Live2D et la logique d’authentification ne changent pas. Aucun impact sur `main`.
 - **Vérifications :** invariants visuels et source par pièce couverts par un test Node simulé ; vérifier sur Android les changements répétés, la chambre avec rideau animé, et le rendu final de la cuisine avant validation propriétaire.
 
 
