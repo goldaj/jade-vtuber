@@ -28,6 +28,8 @@ class Incoming:
     requested_speech: bool = field(default=False, repr=False)
     # Only runtime-created events; never attribute Jade\u0027s speech to a human.
     system_initiative: bool = field(default=False, repr=False)
+    # Set by a trusted transport policy, never inferred from public text in Runtime.
+    direct_request: bool = field(default=False, repr=False)
 
     def __post_init__(self):
         if (not self.platform.strip() or not self.author.strip()
@@ -44,6 +46,8 @@ class Incoming:
             raise ValueError("invalid preprocessing metric")
         if type(self.system_initiative) is not bool:
             raise ValueError("invalid system event flag")
+        if type(self.direct_request) is not bool:
+            raise ValueError("invalid direct request flag")
         if type(self.private_channel) is not bool:
             raise ValueError("invalid private channel flag")
         if len(self.text) > 4000:
