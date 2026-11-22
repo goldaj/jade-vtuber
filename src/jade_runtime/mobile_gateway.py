@@ -360,6 +360,19 @@ class MobileGateway:
             self.pending.pop(incoming.message_id, None)
 
     async def _post(self, writer, route: str, headers: dict, body: bytes, *, streaming=False):
+        if route == "/api/metrics":
+            if (headers.get("content-type", "").split(";")[0].strip() != "application/json"
+                    or body.strip() != b"{}"):
+                await self._json(writer, 400, {"error": "expected empty JSON object"})
+                return
+            await self._json(writer, 200, {
+                "runtime": self.runtime.state,
+                "metrics": self.runtime.metrics.summary(),
+                "scope": "server_observed_only",
+                "first_audible": "unavailable_without_client_ack",
+                "billing": "unavailable_per_turn",
+            })
+            return
         if route == "/api/billing":
             if headers.get("content-type", "").split(";")[0].strip() != "application/json":
                 await self._json(writer, 400, {"error": "expected JSON"})
@@ -564,7 +577,7 @@ class MobileGateway:
                     return
                 await self._static(writer, route)
                 return
-            if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing"):
+            if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing", "/api/metrics"):
                 await self._json(writer, 404, {"error": "unknown route"})
                 return
             if (headers.get("transfer-encoding") or not self._origin_allowed(headers)
