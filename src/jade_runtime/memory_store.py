@@ -387,8 +387,9 @@ class MemoryStore:
                       expected_person_id: str | None = None) -> bool:
         """Jade's own lasting episodes, owner-only until explicit promotion exists.
 
-        Only the verified owner (local or linked account) may populate
-        the global table. This is checked atomically with the insertion.
+        Jade may choose her own autobiographical Core from any trusted
+        enrolled speaker. Nobody may mandate one. The pinned verified profile
+        is rechecked atomically; public recall never crosses speaker identities.
         No TTL, no retention purge, no copy into other people's prompt context.
         """
         _validate_key(key)
@@ -397,14 +398,13 @@ class MemoryStore:
                 or not isinstance(message_id, str)):
             raise ValueError("invalid Jade autobiography")
         with self._db() as db:
-            # The owner link must still exist at the instant of insertion.
+            # The trusted speaker's profile must still exist when the write
+            # commits. Jade's own autobiography is chosen by her model, not
+            # an owner privilege that ordinary Discord conversations lack.
             db.execute("BEGIN IMMEDIATE")
-            profile = db.execute("""
-                SELECT actor.person_id FROM identities AS actor
-                JOIN identities AS owner ON owner.person_id=actor.person_id
-                WHERE actor.platform=? AND actor.account_id=?
-                  AND owner.platform='microphone' AND owner.account_id='goldaj'
-            """, key).fetchone()
+            profile = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?",
+                key).fetchone()
             if not profile or (expected_person_id is not None
                                and profile["person_id"] != expected_person_id):
                 return False
@@ -493,6 +493,106 @@ class MemoryStore:
             """
             rows = db.execute(sql, (person, scope, _now().isoformat(), limit)).fetchall()
         return [dict(x) for x in rows]
+
+    def search_for_assistant(self, key: tuple[str, str], scope: str, *,
+                             expected_person_id: str, query: str = "",
+                             kind: str = "all", cursor: int = 0, limit: int = 10,
+                             allow_other_scopes: bool = False) -> dict:
+        """Browse every L2/L3 entry in *authorized* SQLite scopes, page by page.
+
+        No arbitrary account IDs, other users' memories, expired L2 memories,
+        or cross-channel public lookup. Self-core from another speaker is
+        visible only in the authenticated owner's private context.
+        """
+        _validate_key(key)
+        if (not isinstance(scope, str) or not 1 <= len(scope) <= 256
+                or not isinstance(expected_person_id, str)
+                or not isinstance(query, str) or len(query) > 120
+                or kind not in ("all", "ordinary", "core_relationship", "core_self")
+                or type(cursor) is not int or not 0 <= cursor <= 1_000_000
+                or type(limit) is not int or not 1 <= limit <= 15
+                or type(allow_other_scopes) is not bool):
+            raise ValueError("invalid memory search parameters")
+
+        # Unicode-friendly enough for a first lexical search; an empty query
+        # deliberately lists everything. Tokens are ORed so an imperfect
+        # recollection still yields useful candidates. No fixed candidate cap.
+        terms = [word for word in re.findall(r"\w+", query.casefold()) if len(word) >= 2][:8]
+        def filters():
+            clauses = []
+            params = []
+            if terms:
+                matches = []
+                for word in terms:
+                    escaped = word.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                    matches.append("(LOWER(summary) LIKE ? ESCAPE '\\' OR "
+                                   "LOWER(significance) LIKE ? ESCAPE '\\')")
+                    params.extend((f"%{escaped}%", f"%{escaped}%"))
+                clauses.append("(" + " OR ".join(matches) + ")")
+            return clauses, params
+
+        with self._db() as db:
+            person = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?",
+                key).fetchone()
+            if not person or person["person_id"] != expected_person_id:
+                return {"status": "indisponible", "items": [], "next_cursor": None}
+            person_id = person["person_id"]
+            owner = db.execute("""
+                SELECT 1 FROM identities
+                WHERE platform='microphone' AND account_id='goldaj'
+                  AND person_id=?
+            """, (person_id,)).fetchone() is not None
+
+            queries = []
+            parameters = []
+            if kind in ("all", "ordinary", "core_relationship", "core_self"):
+                clauses = ["person_id=?", "(expires_at IS NULL OR expires_at>?)"]
+                args = [person_id, _now().isoformat()]
+                if not allow_other_scopes:
+                    clauses.append("scope=?")
+                    args.append(scope)
+                if kind != "all":
+                    clauses.append("kind=?")
+                    args.append(kind)
+                extra, extra_args = filters()
+                clauses.extend(extra)
+                args.extend(extra_args)
+                queries.append("""
+                    SELECT id,kind,scope,summary,significance,created_at,
+                           source_platform FROM memories WHERE
+                """ + " AND ".join(clauses))
+                parameters.extend(args)
+
+            if kind in ("all", "core_self"):
+                clauses = ["visibility='owner_only'"]
+                args = []
+                # In public contexts only autobiographical memories originating
+                # from this same verified speaker can be recalled. In private
+                # owner context Jade may inspect her complete autobiography.
+                if not (allow_other_scopes and owner):
+                    clauses += ["source_platform=?", "source_account_id=?"]
+                    args.extend(key)
+                extra, extra_args = filters()
+                clauses.extend(extra)
+                args.extend(extra_args)
+                queries.append("""
+                    SELECT id,'core_self' AS kind,'jade_self' AS scope,
+                           summary,significance,created_at,source_platform
+                    FROM jade_self_core WHERE
+                """ + " AND ".join(clauses))
+                parameters.extend(args)
+
+            sql = (" UNION ALL ".join(queries) +
+                   " ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?")
+            rows = db.execute(sql, (*parameters, limit + 1, cursor)).fetchall()
+        has_more = len(rows) > limit
+        return {
+            "status": "ok",
+            "items": [dict(row) for row in rows[:limit]],
+            "next_cursor": cursor + limit if has_more else None,
+            "scope_applied": "all" if allow_other_scopes else "current",
+        }
 
     def recall(self, key: tuple[str, str], scope: str, *, limit: int = 8) -> list[dict]:
         """Personal and current-channel memories; never another person's memories."""
