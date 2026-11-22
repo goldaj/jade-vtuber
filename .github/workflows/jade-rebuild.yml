@@ -63,6 +63,8 @@ jobs:
         run: |
           node --check src/jade_runtime/mobile_web/avatar.js
           node tests/mobile_avatar_visibility_test.js
+          node --check src/jade_runtime/mobile_web/room-motion.js
+          node tests/mobile_room_selection_test.js
       - name: Run offline unit tests
         run: poetry run python -m unittest discover -s tests -v
       - name: Documentation contract
