@@ -145,6 +145,70 @@ class ToolTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(build_web_search_service(Settings()))
 
 
+    async def test_tool_result_is_returned_to_model_before_final_answer(self):
+        class FakeResponses:
+            def __init__(self):
+                self.calls = []
+
+            async def create(self, **kwargs):
+                self.calls.append(kwargs)
+                if len(self.calls) == 1:
+                    return SimpleNamespace(
+                        status="completed", output_text="", output=[
+                            SimpleNamespace(
+                                type="function_call", call_id="web_1",
+                                name="jade_web_search",
+                                arguments=json.dumps({
+                                    "query": "actualité", "reason": "Vérifier un fait récent"
+                                }),
+                            )
+                        ])
+                return SimpleNamespace(
+                    status="completed", output_text="Voici la source consultée.",
+                    output=[SimpleNamespace(type="message", content=[
+                        SimpleNamespace(type="output_text", text="Voici la source consultée.")
+                    ])],
+                )
+
+        fake = FakeResponses()
+        backend = ResponsesChat(
+            SimpleNamespace(responses=fake),
+            SimpleNamespace(model="fake", reasoning_effort="low",
+                            max_completion_tokens=512),
+        )
+        action = ToolActions(None, self.service.for_turn(self.incoming, 15))
+        reply = await backend.complete_with_tools(
+            [{"role": "user", "content": "Question actuelle"}], action)
+        self.assertIn("source consultée", reply)
+        self.assertEqual(len(fake.calls), 2)
+        final_input = fake.calls[1]["input"]
+        result = next(item for item in final_input
+                      if isinstance(item, dict)
+                      and item.get("type") == "function_call_output")
+        self.assertEqual(result["call_id"], "web_1")
+        self.assertIn("https://example.org/fact", result["output"])
+        self.assertEqual([e["status"] for e in self.entries()],
+                         ["started", "success"])
+
+    async def test_provider_error_is_logged_without_exception_or_secret_text(self):
+        class FailingProvider:
+            name = "stub"
+
+            async def search(self, *args, **kwargs):
+                raise RuntimeError("private-header-token-should-not-appear")
+
+        service = WebSearchService(
+            FailingProvider(), SearchJournal(self.path))
+        response = await service.for_turn(self.incoming, 16)(
+            json.dumps({"query": "test", "reason": "Vérifier"}))
+        self.assertEqual(response["status"], "indisponible")
+        entries = self.entries()
+        self.assertEqual([e["status"] for e in entries], ["started", "failed"])
+        self.assertEqual(entries[1]["error_type"], "RuntimeError")
+        self.assertNotIn("private-header-token-should-not-appear",
+                         self.path.read_text(encoding="utf-8"))
+
+
 class TavilyProviderTests(unittest.IsolatedAsyncioTestCase):
     async def test_http_contract_and_normalization(self):
         captures = {}
