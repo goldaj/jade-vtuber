@@ -133,7 +133,7 @@ class WebSearchService:
     """Bounded per-turn searches, with observed outcome and persistent provenance."""
 
     def __init__(self, provider: SearchProvider, journal: SearchJournal,
-                 *, timeout_seconds: float = 8.0, max_per_turn: int = 3):
+                 *, timeout_seconds: float = 8.0, max_per_turn: int = 10):
         if timeout_seconds <= 0 or not 1 <= max_per_turn <= 10:
             raise ValueError("invalid web search limits")
         self.provider = provider

@@ -39,7 +39,7 @@ TAVILY_API_KEY=tvly-VOTRE_CLE_PRIVEE
 # Facultatif :
 # JADE_WEB_LOG_PATH=D:/Jade/private/jade-web-search.jsonl
 # JADE_WEB_TIMEOUT_SECONDS=8
-# JADE_WEB_MAX_PER_TURN=3
+# JADE_WEB_MAX_PER_TURN=10
 ~~~
 
 3. Exécuter `poetry run python main.py --preflight` (vérification locale **sans requête** Tavily), puis redémarrer le runtime réel. Pour une recherche réellement confirmée, demander en Discord ou dans la PWA un fait d'actualité et regarder `D:\Jade\private\jade-web-search.jsonl` ou le chemin `JADE_WEB_LOG_PATH`.

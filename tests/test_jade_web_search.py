@@ -60,6 +60,28 @@ class ToolTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("+00:00", log[0]["timestamp"])
         self.assertNotIn("TAVILY_API_KEY", self.path.read_text())
 
+    async def test_new_default_allows_ten_searches_per_turn(self):
+        self.assertEqual(Settings().web_max_per_turn, 10)
+        self.assertEqual(WebSearchService(self.provider, SearchJournal(self.path)).max_per_turn, 10)
+        config = Settings(
+            web_enabled=True, tavily_api_key="tvly-test",
+            web_log_path=str(self.path))
+        self.assertEqual(build_web_search_service(config).max_per_turn, 10)
+        self.assertEqual(config.web_max_per_turn, 10)
+        action = WebSearchService(
+            self.provider, SearchJournal(self.path)).for_turn(self.incoming, 10)
+        for index in range(10):
+            result = await action(json.dumps({
+                "query": f"Recherche {index + 1}", "reason": "Contrôle de limite"
+            }))
+            self.assertEqual(result["status"], "ok")
+        blocked = await action(json.dumps({
+            "query": "Recherche 11", "reason": "Contrôle de limite"
+        }))
+        self.assertEqual(blocked["status"], "limite_atteinte")
+        self.assertEqual(len(self.provider.queries), 10)
+        self.assertEqual(self.entries()[-1]["status"], "rejected")
+
     async def test_invalid_arguments_and_turn_limit_are_audited(self):
         action = self.service.for_turn(self.incoming, 2)
         invalid = await action('{"query": ""}', call_id="bad")

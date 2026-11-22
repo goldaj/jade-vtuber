@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Recherche Tavily : dix appels possibles par tour
+
+- **Décision produit :** à la demande du propriétaire, le plafond par défaut passe de **3 à 10 recherches par tour** ; Jade garde sa liberté de n'effectuer aucune recherche ou seulement celles nécessaires.
+- **Configuration :** valeurs par défaut cohérentes dans `Settings`, `Settings.load()` et `WebSearchService` ; plage explicite `JADE_WEB_MAX_PER_TURN=1..10` inchangée. Une valeur privée explicite continue de primer sur le nouveau défaut.
+- **Qualité :** test hors ligne de dix recherches acceptées et de la onzième refusée, avec journalisation. Pas de changement d'API, de fournisseur, de prompt ni de journal. Augmenter la limite augmente le plafond potentiel de crédits Tavily et la latence si Jade multiplie les appels.
+
 ## 2026-11-22 — Recherche web : réponses naturelles sans rafale d'URL
 
 - **Retour propriétaire :** Jade ajoutait trop souvent les liens des pages Tavily dans ses réponses, parce que `WEB_PROMPT` l'encourageait à citer les URL.

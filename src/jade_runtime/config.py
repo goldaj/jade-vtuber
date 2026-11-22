@@ -54,7 +54,7 @@ class Settings:
     web_log_path: str = field(default_factory=lambda: str(
         Path(_default_memory_db_path()).with_name("jade-web-search.jsonl")))
     web_timeout_seconds: float = 8.0
-    web_max_per_turn: int = 3
+    web_max_per_turn: int = 10
     channel: str = ""
     bot_name: str = "Jade"
     twitch_oauth: str = ""
@@ -136,7 +136,7 @@ class Settings:
                 or str(Path(str(environ("JADE_MEMORY_DB_PATH", "")).strip()
                     or _default_memory_db_path()).with_name("jade-web-search.jsonl"))),
             web_timeout_seconds=float(environ("JADE_WEB_TIMEOUT_SECONDS", "8")),
-            web_max_per_turn=int(environ("JADE_WEB_MAX_PER_TURN", "3")),
+            web_max_per_turn=int(environ("JADE_WEB_MAX_PER_TURN", "10")),
             channel=str(environ("TWITCH_CHANNEL", "")),
             bot_name=str(environ("BOT_NAME", "Jade")),
             twitch_oauth=str(environ("TWITCH_TOKEN", "")),
