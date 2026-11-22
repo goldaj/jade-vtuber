@@ -21,6 +21,7 @@ import wave
 import time
 
 from .messages import Incoming
+from .incidents import incident_for_client
 from .intent_visuals import public_visual_contract
 
 LOG = logging.getLogger("jade.mobile")
@@ -194,9 +195,10 @@ class MobileGateway:
                 raise
             except (ConnectionError, OSError):
                 raise
-            except Exception:
+            except Exception as exc:
                 LOG.warning("Mobile streaming voice unavailable; text answer preserved")
-                await self._stream_event(writer, {"type": "audio_error"})
+                await self._stream_event(writer, {"type": "audio_error",
+                                                  **incident_for_client(exc)})
             finally:
                 try:
                     await events.aclose()
@@ -502,7 +504,8 @@ class MobileGateway:
             await self._json(writer, 400, {"error": "invalid session"})
             return
         if self.semaphore.locked():
-            await self._json(writer, 429, {"error": "Jade est occupée"})
+            await self._json(writer, 429, {"error": "Jade est occupée",
+                                          **incident_for_client(asyncio.QueueFull())})
             return
         async with self.semaphore:
             stream_started = False
@@ -552,20 +555,24 @@ class MobileGateway:
                             payload["audio_wav_b64"] = base64.b64encode(audio).decode("ascii")
                         except asyncio.CancelledError:
                             raise
-                        except Exception:
+                        except Exception as exc:
                             LOG.warning("Mobile voice unavailable; text answer preserved")
                             payload["audio_unavailable"] = True
+                            payload["audio_unavailable_reason"] = incident_for_client(exc)
                     await self._json(writer, 200, payload)
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as exc:
                 if not stream_started:
-                    await self._json(writer, 504, {"error": "Jade n'a pas répondu à temps"})
-            except asyncio.QueueFull:
+                    await self._json(writer, 504, {"error": "Jade n'a pas répondu à temps",
+                                                  **incident_for_client(exc)})
+            except asyncio.QueueFull as exc:
                 if not stream_started:
-                    await self._json(writer, 429, {"error": "Jade est occupée"})
-            except Exception:
+                    await self._json(writer, 429, {"error": "Jade est occupée",
+                                                  **incident_for_client(exc)})
+            except Exception as exc:
                 LOG.warning("Mobile turn failed; no transcript/secret logged")
                 if not stream_started:
-                    await self._json(writer, 503, {"error": "Jade indisponible"})
+                    await self._json(writer, 503, {"error": "Jade indisponible",
+                                                  **incident_for_client(exc)})
 
     async def _handle(self, reader, writer):
         try:
