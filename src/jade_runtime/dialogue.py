@@ -10,6 +10,7 @@ from .context_selection import select_context
 from .sentence_stream import SentenceAccumulator
 from .intent_engine import INTENT_PROMPT, IntentStreamParser, parse_reply
 from .memory_actions import MEMORY_PROMPT
+from .web_search import WEB_PROMPT, ToolActions
 from .session_logging import event
 
 
@@ -74,7 +75,7 @@ class Dialogue:
     async def respond(self, incoming: Incoming, *, valid=lambda: True,
                       on_sentence=None, on_timing=None, defer_history=False,
                       on_intent=None, memory_context="", history_messages=None,
-                      memory_action=None) -> Reply | None:
+                      memory_action=None, web_action=None) -> Reply | None:
         # Reject stale duplicates by transport ID, not by repeated message text.
         if len(incoming.text) > 1200 or not self.should_reply(incoming):
             return None
@@ -115,14 +116,17 @@ class Dialogue:
                     + memory_context[:3500]}] if memory_context else [])
                 selected_history = (select_context(history, incoming.text)
                                     if self.selective_context else history)
-                can_use_memory_tool = (
-                    memory_action is not None
+                tools_action = (ToolActions(memory_action, web_action)
+                                if web_action is not None else memory_action)
+                can_use_tools = (
+                    tools_action is not None
                     and callable(getattr(type(self.backend), "complete_with_tools", None))
                     and (on_sentence is None or callable(getattr(
                         type(self.backend), "complete_stream_with_tools", None)))
                 )
                 system_prompt = (self.prompt + "\n\n" + INTENT_PROMPT + owner_note
-                                 + (MEMORY_PROMPT if can_use_memory_tool else "")
+                                 + (MEMORY_PROMPT if can_use_tools and memory_action is not None else "")
+                                 + (WEB_PROMPT if can_use_tools and web_action is not None else "")
                                  + "\nPour une demande qui appelle une réponse longue, "
                                    "donne plutôt une synthèse claire de 3 à 5 phrases "
                                    "(environ 120 mots, soit ~320 tokens visibles au maximum). "
@@ -131,7 +135,7 @@ class Dialogue:
                 messages = [{"role": "system", "content": system_prompt},
                             *selected_history, *memory_notes, *context, user]
                 event("llm_request", streaming=on_sentence is not None,
-                      tools_available=can_use_memory_tool, input_message_count=len(messages))
+                      tools_available=can_use_tools, input_message_count=len(messages))
                 if on_timing is not None:
                     on_timing("llm_start")
                 # Failed LLM calls must not corrupt memory or mark a message handled.
@@ -141,7 +145,7 @@ class Dialogue:
                     answer_parts = []
                     raw_fragments = []
                     stream = (self.backend.complete_stream_with_tools(
-                                  messages, memory_action) if can_use_memory_tool
+                                  messages, tools_action) if can_use_tools
                               else self.backend.complete_stream(messages))
                     first_fragment = True
                     intent_announced = False
@@ -181,7 +185,7 @@ class Dialogue:
                     selected_intent = intent_parser.intent
                 else:
                     response = (await self.backend.complete_with_tools(
-                                    messages, memory_action) if can_use_memory_tool
+                                    messages, tools_action) if can_use_tools
                                 else await self.backend.complete(messages))
                     event("llm_raw", streaming=False, raw_output=response)
                     decoded = parse_reply(response)

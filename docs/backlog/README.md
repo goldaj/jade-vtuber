@@ -6,6 +6,8 @@
 
 **Clôtures du 22/11/2026 :** `REC-021` (mémoire SQLite), `REC-025` (sauvegarde/restauration ciblée) et `REC-027` (sélection sociale hybride) sont **`Done`** par décision explicite du propriétaire. Réserves et preuves dans la [vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-021-rec-025-rec-027). `REC-020` (variantes d'intention A/B) a également été clôturée en **`Done`** sur validation explicite du propriétaire le 22/11/2026, [détails et réserves dans la vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-020).
 
+**Nouvelle fonctionnalité engagée (22/11) :** recherche Internet Tavily modulaire et journaux privés, suivie par l'unique recette **REC-038 (P1, À valider)** dans [la vue REC](02-RECETTE.md). Tests automatiques et essai physique réel distingués.
+
 ## REPRISE PRIORITAIRE — code PR #38 intégré, recettes ouvertes
 
 **Clôture mémoire du 22/11/2026 : REC-026 et REC-032 sont désormais `Done`**, après validation explicite des fonctionnalités de mémorisation et de rappel par le propriétaire. [Preuves et limites](02-RECETTE.md#clôture-fonctionnelle-mémoire-du-22-novembre-2026). **REC-031 et REC-033 à REC-037 demeurent `À valider`** ; les lacunes distinctes de REC-033/035 restent ouvertes. Une CI verte ne vaut pas recette réelle.
