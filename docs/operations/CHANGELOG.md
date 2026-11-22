@@ -1,5 +1,12 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — QA : restauration SQLite v5 et fiabilisation des vérifications hors ligne
+
+- **Sauvegarde/restauration :** `memory_transfer.py` accepte désormais explicitement les archives de schéma SQLite v5, déjà produites par `export_memory` et validées par `_check`. Hachage SHA-256, schéma, intégrité SQLite, non-écrasement et limites de taille restent obligatoires. Tests existants REC-025 et migration anciens schémas à contrôler en CI.
+- **Backlog :** le contrôleur documentaire ne lit les ID que dans le tableau canonique `| ID | Prio | Jalon | Statut |`, et non dans les tableaux de résultats des recettes ; dépendance historique `DEV-011` de `DEV-012` renvoyée vers `REC-026`.
+- **Tests :** tests fonctionnels de Luna ne nécessitent plus d'import `pytest` pour être découverts par `unittest` ; le défaut du budget par défaut est mis à jour de 320 vers 2048 dans une assertion ancienne (contrat du 22/11).
+- **Vérification :** diagnostic à partir des erreurs réelles GitHub Actions `45001055153`; exécution et vérification complète à confirmer par les workflows sur ce commit. Aucun appel API payant ni test matériel.
+
 ## 2026-11-22 — QA : supprimer un faux positif TOKEN_PATTERN sans affaiblir le scanner
 
 - **Diagnostic :** le préflight Linux/Windows du SHA 5feb9a1b7a2b échouait avant les tests avec `BLOCKED: TOKEN_PATTERN` ; un littéral de test de confidentialité dans `tests/test_session_diagnostics.py` avait le format d'une clé.

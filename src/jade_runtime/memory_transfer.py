@@ -3,7 +3,7 @@
 Export produces a single *unencrypted* .zip containing the database and a
 versioned SHA-256 manifest. Move the zip using an encrypted disk/transfer.
 Import refuses to overwrite an existing database or follow symlink targets.
-Supports schema versions 1, 2, 3 and 4; MemoryStore performs forward migration on open.
+Supports schema versions 1 through 5; MemoryStore performs forward migration on open.
 """
 from __future__ import annotations
 
@@ -102,7 +102,7 @@ def import_memory(archive_path: str | Path, db_path: str | Path) -> Path:
         if (meta.get("format") != "jade-memory-backup"
                 or meta.get("archive_version") != ARCHIVE_VERSION
                 or meta.get("database") != DB_NAME
-                or meta.get("schema_version") not in (1, 2, 3, 4)
+                or meta.get("schema_version") not in (1, 2, 3, 4, 5)
                 or not isinstance(meta.get("size"), int)
                 or not 0 < meta["size"] <= MAX_ARCHIVE_BYTES):
             raise ValueError("unsupported archive manifest")

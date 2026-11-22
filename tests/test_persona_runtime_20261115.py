@@ -37,7 +37,7 @@ class PersonaRuntimeTests(unittest.TestCase):
         settings = Settings()
         self.assertEqual(settings.model, "gpt-6-luna")
         self.assertEqual(settings.reasoning_effort, "low")
-        self.assertEqual(settings.max_completion_tokens, 320)
+        self.assertEqual(settings.max_completion_tokens, 2048)
         self.assertEqual(settings.max_history_messages, 48)
         self.assertAlmostEqual(settings.reply_probability, 0.30)
 

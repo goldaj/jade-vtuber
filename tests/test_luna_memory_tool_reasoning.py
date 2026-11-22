@@ -5,7 +5,7 @@ import asyncio
 import threading
 from types import SimpleNamespace as NS
 
-import pytest
+import unittest
 
 from src.jade_runtime.config import Settings
 from src.jade_runtime.openai_services import OpenAIServices
@@ -172,7 +172,7 @@ def test_unknown_and_duplicate_tools_are_not_executed():
     async def run_duplicate():
         await service.complete_with_tools(
             [{"role": "user", "content": "hello"}], forbidden_action)
-    with pytest.raises(ValueError, match="duplicate"):
+    with unittest.TestCase().assertRaisesRegex(ValueError, "duplicate"):
         asyncio.run(run_duplicate())
 
 
@@ -183,11 +183,11 @@ def test_incomplete_result_and_provider_failure_do_not_schedule_writes():
     async def run():
         await service.complete_with_tools(
             [{"role": "user", "content": "hello"}], forbidden_action)
-    with pytest.raises(RuntimeError, match="not completed"):
+    with unittest.TestCase().assertRaisesRegex(RuntimeError, "not completed"):
         asyncio.run(run())
 
     service, backend = make_service(RuntimeError("HTTP 429"))
-    with pytest.raises(RuntimeError, match="429"):
+    with unittest.TestCase().assertRaisesRegex(RuntimeError, "429"):
         asyncio.run(service.complete_with_tools(
             [{"role": "user", "content": "hello"}], forbidden_action))
     assert len(backend.calls) == 1
@@ -286,7 +286,7 @@ def test_stream_incomplete_and_text_mismatch_are_errors():
     async def run():
         return [piece async for piece in service.complete_stream_with_tools(
             [{"role": "user", "content": "hello"}], forbidden_action)]
-    with pytest.raises(RuntimeError, match="without response.completed"):
+    with unittest.TestCase().assertRaisesRegex(RuntimeError, "without response.completed"):
         asyncio.run(run())
 
     service, _ = make_service(stream_response(text_response("Version B"),
@@ -294,7 +294,7 @@ def test_stream_incomplete_and_text_mismatch_are_errors():
     async def run_mismatch():
         return [piece async for piece in service.complete_stream_with_tools(
             [{"role": "user", "content": "hello"}], forbidden_action)]
-    with pytest.raises(ValueError, match="differs"):
+    with unittest.TestCase().assertRaisesRegex(ValueError, "differs"):
         asyncio.run(run_mismatch())
 
 

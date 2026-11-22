@@ -124,8 +124,14 @@ def backlog_integrity_errors(root: Path = ROOT) -> list[str]:
         except OSError:
             errors.append("Missing backlog view: " + filename)
             continue
+        in_card_table = False
         for line in lines:
-            if not re.match(r"^\|\s*\*\*(?:DEV|REC|OPS|ART)-\d{3}\*\*\s*\|", line):
+            if line.startswith("| ID | Prio | Jalon | Statut |"):
+                in_card_table = True
+                continue
+            if not line.strip():
+                in_card_table = False
+            if not in_card_table or not re.match(r"^\|\s*\*\*(?:DEV|REC|OPS|ART)-\d{3}\*\*\s*\|", line):
                 continue
             cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
             if len(cells) != 8:
