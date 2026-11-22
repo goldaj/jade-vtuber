@@ -232,7 +232,7 @@ def test_schema_v5_autobiography_migrates_without_public_disclosure(tmp_path):
     store.enable(ALICE)
     store.enable(OWNER)
     with closing(sqlite3.connect(path)) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 6
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 7
         assert db.execute(
             "SELECT source_scope FROM jade_self_core").fetchone()[0] == "legacy_private"
     service = MemoryService(store, object())
@@ -247,6 +247,39 @@ def test_schema_v5_autobiography_migrates_without_public_disclosure(tmp_path):
             page = await private.search(_request(scope="all", kind="core_self"))
             assert len(page["items"]) == 1
             assert "ancien" in page["items"][0]["summary"]
+        finally:
+            await service.close()
+    asyncio.run(run())
+
+
+def test_same_global_self_core_can_be_recalled_by_two_authorized_sources(tmp_path):
+    store = _setup(tmp_path)
+    summary = "Jade a défini le 1er février 2025 comme anniversaire."
+    assert store.put_self_core(
+        ALICE, summary=summary, scope=f"discord:{CHANNEL}",
+        expected_person_id=store.account(ALICE))
+    # Global fingerprint deduplicates the autobiography, but the second
+    # origin still gains a scoped read grant.
+    assert not store.put_self_core(
+        BOB, summary=summary, scope=f"discord:{CHANNEL}",
+        expected_person_id=store.account(BOB))
+    assert not store.put_self_core(
+        ALICE, summary=summary, scope=f"discord:{OTHER}",
+        expected_person_id=store.account(ALICE))
+    with closing(sqlite3.connect(store.path)) as db:
+        assert db.execute("SELECT COUNT(*) FROM jade_self_core").fetchone()[0] == 1
+        assert db.execute(
+            "SELECT COUNT(*) FROM jade_self_core_access").fetchone()[0] == 3
+    service = MemoryService(store, object())
+
+    async def run():
+        try:
+            for origin in (_voice(ALICE), _voice(BOB),
+                           _voice(ALICE, channel=OTHER)):
+                action = await service.prepare_memory_action(origin)
+                result = await action.search(
+                    _request(kind="core_self", query="anniversaire"))
+                assert len(result["items"]) == 1
         finally:
             await service.close()
     asyncio.run(run())
