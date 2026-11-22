@@ -444,6 +444,9 @@ class MemoryService:
             # Only a categorical reason goes into the log; no secret, identity
             # or untrusted payload should be included in rejected candidates.
             event("memory_write_rejected", reason=reason, scope=_scope(incoming))
+            # Diagnostic category only. Never log summary, user identity,
+            # speech content, or any candidate field.
+            LOG.warning("Autonomous Jade memory write rejected: %s", reason)
             return refused
 
         if not isinstance(raw, str) or len(raw) > 2400:
