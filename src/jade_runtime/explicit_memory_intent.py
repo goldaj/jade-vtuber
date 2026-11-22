@@ -31,7 +31,7 @@ _PREFIX = re.compile(
     re.I,
 )
 _MEMORY_MARKER = re.compile(
-    r"\b(?:dans|à|en|comme)\s+(?:(?:tes?|ta|la|mes?)\s+)?"
+    r"\b(?:dans|à|en|comme)\s+(?:(?:tes?|ta|ton|le|la|mon|ma|mes?|ses?|sa)\s+)?"
     r"(?:(?:core[\s-]*memor(?:y|ies)|core[\s-]*m[ée]moir(?:e|es))|"
     r"(?:m[ée]moir(?:e|es)|souvenirs?)"
     r"(?:\s+(?:(?:de\s+)?niveau\s*(?:3|trois)|ordinaires?|"
