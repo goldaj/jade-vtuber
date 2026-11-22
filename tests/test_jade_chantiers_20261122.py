@@ -301,6 +301,26 @@ class DeploymentSupervisorTests(unittest.TestCase):
 
 
 class MetricsTests(unittest.TestCase):
+    def test_latency_phase_durations_are_not_cumulative_stage_timestamps(self):
+        clock = [1.0]
+        metrics = TurnMetrics(clock=lambda: clock[0])
+        metrics.begin(4, "mobile", "text", clock[0])
+        clock[0] = 1.1
+        metrics.mark(4, "memory_start")
+        clock[0] = 1.3
+        metrics.mark(4, "memory_end")
+        clock[0] = 1.4
+        metrics.mark(4, "llm_start")
+        clock[0] = 1.65
+        metrics.mark(4, "llm_end")
+        clock[0] = 1.7
+        metrics.end(4)
+        values = metrics.summary()[0]["latency"]
+        self.assertEqual(values["memory_duration_ms"]["p50_ms"], 200.0)
+        self.assertEqual(values["llm_duration_ms"]["p50_ms"], 250.0)
+        self.assertEqual(values["llm_end"]["p50_ms"], 650.0)
+        self.assertEqual(values["total_ms"]["p50_ms"], 700.0)
+
     def test_provider_tokens_are_attributed_only_to_current_turn(self):
         clock = [10.0]
         metrics = TurnMetrics(clock=lambda: clock[0])
