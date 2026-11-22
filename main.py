@@ -220,6 +220,16 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 await optional("voice", lambda: speech.speak(reply),
                                timeout=min(180, config.timeout_seconds + 120))
 
+        async def on_incident(incoming, incident):
+            # No LLM/TTS call or cross-post. DiscordTextPolicy marked the
+            # source as a direct request on the authorized original channel.
+            if incoming.platform == "discord" and discord_client is not None:
+                await discord_client.send_chat(
+                    incoming.channel, incident.message,
+                    source_message_id=incoming.message_id)
+            elif incoming.platform in ("console", "microphone"):
+                print("Jade (indisponible) :", incident.message)
+
         def start_early_voice(source):
             turn = speech.start_early(source)
             if turn is not None and vts_client is not None and config.vts_speak_hotkey:
@@ -250,7 +260,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         runtime = Runtime(dialogue, on_reply, config.max_queue,
                           on_stream_start=(start_early_voice if speech and config.early_voice else None),
                           delivery_plan=describe_delivery,
-                          memory_service=memory,
+                          memory_service=memory, on_incident=on_incident,
                           cross_channel=cross_channel, web_service=web_service)
         await runtime.start()
         async def stop_runtime():
