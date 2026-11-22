@@ -1,5 +1,12 @@
 # État de develop — fonctionnalités codées
 
+## DEV-036 · Rappels persistants et notifications Web Push Android (22/11/2026)
+
+- **Présent dans le code develop :** rendez-vous et rappels internes stockés dans la base privée jade-reminders.sqlite3 ; outil modèle pour créer/lister/corriger/annuler, avec autorisation propriétaire sur PWA et compte Discord lié ; scheduler indépendant des appels OpenAI et reprise des échéances après redémarrage.
+- **PWA :** panneau des rappels, permission explicite Web Push, inscription et désinscription, service worker qui reçoit un identifiant opaque, notification générique et ouverture/focalisation du rappel détaillé après authentification.
+- **Conditions :** pywebpush + clés VAPID hors Git, PC allumé et en ligne, téléphone/navigateur compatibles, permissions actives. Push accepté n'est pas un affichage prouvé ; fermeture forcée, optimisation batterie et coupures réseau peuvent empêcher la réception.
+- **Preuve de recette :** aucun essai physique Android ou livraison push réelle dans cette session. DEV-036 reste En cours ; calendrier Google/Outlook, récurrence et exécution conversationnelle Android permanente non implémentés.
+
 **Référence :** sources de `goldaj/jade-vtuber`, état préparé pour `develop` sur la PR #34 (21 novembre 2026). **Code raccordé = fonctionnalité implémentée** ; la recette Android/Discord physique reste indépendante, et la configuration privée du PC peut remplacer les valeurs par défaut.
 
 ## Livrables PR #38 — code présent, recette en attente (22 novembre 2026)

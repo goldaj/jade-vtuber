@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — DEV-036 : rappels persistants, push Android et ouverture ciblée
+
+- **Décision produit approuvée :** les trois étapes d'origine forment une seule US, avec la création/gestion des rappels, les notifications Web Push après fermeture courante de la PWA ou sur écran verrouillé, et le deep link vers le rappel ciblé. Contrat détaillé et critères d'acceptation dans la [carte DEV-036](../backlog/01-DEVELOPPEMENT.md).
+- **Implémentation sur develop :** service SQLite privé et scheduler sans appels IA en veille ; outils Responses sur canaux propriétaire autorisés ; routage Discord limité au salon/MP d'origine ; API mobile authentifiée pour consulter, créer, modifier, annuler, inscrire/désinscrire la subscription ; PWA et Service Worker sans stockage du Bearer ni microphone actif en arrière-plan ; notifications génériques et identifiant opaque, click-to-open.
+- **Fichiers :** reminders.py, mobile_gateway.py, mobile_web (app.js, sw.js, index.html, styles.css), config.py, web_search.py, dialogue.py, responses_chat.py, orchestrator.py, main.py, setup_web_push.py, tests/test_jade_reminders.py, documentation de la PWA et du backlog.
+- **Risques et limites :** bibliothèque facultative pywebpush et paire VAPID privée à installer sur le PC, compatibilité/fonctionnement Android non encore observés, dépendance PC et accès Internet. Le fournisseur push peut accepter sans que le téléphone affiche ; une coupure après envoi et avant écriture SQLite peut provoquer un doublon. Pas de calendrier externe ni récurrence.
+- **Vérifications :** tests automatiques ajoutés pour la persistance, les échéances, l'accès et le scheduler ; leur exécution CI doit être vérifiée séparément. Aucun push réel ni test sur téléphone n'est affirmé. DEV-036 reste En cours avant preuve de recette.
+
 ## 2026-11-22 — NEW-16 → DEV-036 : rappels et notifications, backlog uniquement
 
 - **Décision explicite du propriétaire :** promouvoir l'idée prospective `NEW-16` (P2) vers une carte de développement `DEV-036`, au statut **À qualifier**, puis retirer son entrée du catalogue actif des idées. Aucune implémentation autorisée ni démarrée.
