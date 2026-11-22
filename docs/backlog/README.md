@@ -6,32 +6,32 @@
 
 **Clôtures du 22/11/2026 :** `REC-021` (mémoire SQLite), `REC-025` (sauvegarde/restauration ciblée) et `REC-027` (sélection sociale hybride) sont **`Done`** par décision explicite du propriétaire. Réserves et preuves dans la [vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-021-rec-025-rec-027). `REC-020` (variantes d'intention A/B) a également été clôturée en **`Done`** sur validation explicite du propriétaire le 22/11/2026, [détails et réserves dans la vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-020).
 
-## REPRISE PRIORITAIRE — première lecture au prochain token Codex
+## REPRISE PRIORITAIRE — état actualisé le 22 novembre 2026
 
-**Demandé par le propriétaire le 18 novembre 2026.** Cette liste est un **point d'entrée de reprise**, pas un second backlog ni une modification des P0/P1/P2. **Les cartes et leurs statuts canoniques restent dans les quatre vues** ci-dessous ; les références sont les mêmes. Toute intervention suit la [DoD](DEFINITION_OF_DONE.md). Ne pas marquer Done sans preuves et validation explicite par Codex ou le propriétaire.
+Les cartes et statuts des quatre vues restent canoniques. **Ne pas réouvrir** des opérations `Done` sur la foi d'anciens tableaux de reprise. Les six sujets ajoutés à la demande du propriétaire sont des développements nouveaux, **aucun n'a encore commencé**.
 
-| Ordre de reprise | Cartes existantes | Actions encore impossibles depuis le chat et prérequis |
+| Ordre conseillé | Tickets | Reprise pour les développeurs |
 | ---: | --- | --- |
-| **1** | **OPS-001** | Sur le vrai PC Windows, vérifier `git status`, travaux locaux des agents, chemins sur D:, processus Jade et fichiers privés **avant toute synchronisation** ; ne rien effacer ni écraser. |
-| **2** | **OPS-002, OPS-003, OPS-004, OPS-005, OPS-006** | Mettre à jour `develop` en avance rapide, vérifier Git LFS, dépendances, launcher installé et configuration privée, puis exécuter les tests et `--preflight --all-channels`. Ne pas afficher les secrets ni lancer des appels payants sans autorisation. |
-| **3** | **REC ouvertes, selon dépendances** | **Automatiser ce qui peut l'être** (notamment démarrage, mémoire et restauration) ; pour les recettes nécessitant l'observation humaine / des comptes réels non pilotables, appliquer la règle du 21/11 : **passage direct `À valider`**, sans déclarer les essais effectués. Exécuter les scénarios manuels sur la vraie instance et documenter les résultats avec le [format de preuve rapide](02-RECETTE.md#compte-rendu-de-recette-rapide). Un défaut confirmé ouvre ou maintient le DEV lié. |
-| **4** | **OPS-013, OPS-014** | Nettoyer les **branches Git distantes** via une session Codex ayant les permissions : [audit du 18 novembre](../handbook/BRANCH_MAINTENANCE.md#audit-cible-du-18-novembre-2026). **14 branches ancêtres vérifiées**, 8 divergentes à examiner, 1 résultat indéterminé. Recontrôler pointes et PR avant chaque suppression ; ne jamais supprimer `develop`, `main` ou du travail unique. |
-| **5** | **OPS-017** | Examiner avec droits d'administration la **protection minimale de `main`** (par exemple éviter suppression et force-push accidentels), sans imposer automatiquement une PR obligatoire et **sans modifier la visibilité publique**. Confirmer le réglage souhaité avec le propriétaire avant toute mutation de gouvernance ; le connecteur chat n'a pas l'action d'administration. |
-| **6** | **OPS-015, OPS-016** | Sur D: et les objets Git LFS réels, examiner redondances artistiques, fichiers historiquement sensibles et provenance/licences ; éviter les suppressions sans preuve et toute exposition de secrets. |
-| **Parallèle, jalon B** | **ART-001 à ART-012, DEV-001** | Reprendre le modèle r21 à partir des checkpoints natifs ; traiter notamment les UV/export plein pied, les assets et 14 motions. Ce chantier reste parallèle au jalon A, sans prétendre avoir validé Cubism/VTube Studio depuis le chat. |
+| 1 | **DEV-024** (P0) | Compléter la mesure de latence réelle à partir de DEV-008, sans payer des tests API ni dépendre des canaux suspendus. |
+| 2 | **DEV-021** (P1) | Architecturer l'état partagé + les actions intercanaux autorisées avec protections d'audience. |
+| 3 | **DEV-022** (P2) | Recherche ciblée parmi les souvenirs autorisés ; mesurer précision, tokens, latence. |
+| 4 | **DEV-023** (P1) | Cache anticipé des identités présentes, après les contrats de rappel et d'invalidation DEV-022. |
+| 5 | **DEV-026** (P1) | Personnalité durable distincte des repères déjà livrés dans DEV-014. |
+| 6 | **DEV-025** (P2) | Compréhension des fils de groupe en complément de REC-027 déjà validée. |
+| En parallèle | ART-001 à ART-012 ; DEV-010/020 | Travaux r21 et correctifs/ergonomie indépendants des six tickets. |
 
-**À ne pas recommencer :** le contrôle CI des liens et fichiers de `docs/backlog`, la simplification des règles de commit, cette file de reprise et le format de recette sont traités dans la présente intervention. Vérifier les [Actions GitHub](https://github.com/goldaj/jade-vtuber/actions) sur le dernier SHA avant de les considérer validés par la CI ; ne pas relancer un chantier logiciel déjà codé par simple absence de recette.
+**Suspensions conservées :** les recettes nécessitant le microphone physique PC, Twitch ou OBS restent `Bloqué` jusqu'à décision contraire du propriétaire. **Ne jamais déduire** de cette liste une autorisation d'appels payants, de modification du PC ou de fusion sur `main`.
 
 ## Focus de travail léger (limite indicative : 3 tâches réellement « En cours »)
 
-**Photographie du 18 novembre : 0 carte marquée « En cours ». Le lot DEV-003/005–008 du 19 novembre est suivi dans la vue DEV.** Les prochaines cartes à prendre sont **OPS-001**, puis **OPS-002** et **OPS-003** une fois le poste inventorié. `OPS-005` et `OPS-006` viennent ensuite selon leurs dépendances. Ne pas écrire « En cours » tant qu'un agent n'a pas commencé effectivement.
+**Mise à jour du 22 novembre :** les six nouvelles cartes DEV-021 à DEV-026 sont `À faire`. Aucun travail entamé n'est affirmé. Prioriser selon les dépendances réelles et conserver les blocages documentés. Ne jamais réactiver une carte déjà `Done` ou `Bloqué` via cet ancien focus.
 
 **Règle pratique :** viser au plus **trois tâches en cours simultanément**, sans en faire un verrou automatique ; les autres restent « À faire », « À qualifier » ou « Bloqué ». Mettre à jour la colonne **Statut** de la vue canonique, pas ce texte historique. Pas de cadence Scrum obligatoire ni de tableau parallèle.
 
 ---
 
 **Référence :** `goldaj/jade-vtuber` · branche `develop` · créé le 18 novembre 2026.
-**Périmètre :** tâches identifiées pour livrer, installer, recetter et maintenir **la Jade déjà en chantier**. **Ne pas confondre** avec les [185 idées prospectives](../ameliorations/README.md), qui restent un catalogue distinct, ni avec les archives historiques.
+**Périmètre :** tâches identifiées pour livrer, installer, recetter et maintenir **la Jade déjà en chantier**. **Ne pas confondre** avec les [109 idées prospectives restantes](../ameliorations/README.md), qui restent un catalogue distinct, ni avec les archives historiques.
 **Photographie GitHub initiale :** aucune issue ni PR ouverte au relevé du 18 novembre ; les modules existants demeurent **codés** même sans recette physique. Les dernières CI hors ligne et le scan des secrets ont réussi au SHA `01c7551f8b4f4aae22e7e42a5a090fc05fbaac99`. Le PC, les clés et les comptes n'ont pas été inspectés par cet audit.
 
 ## Organisation retenue par le propriétaire
@@ -40,11 +40,11 @@
 
 | Type | Vue | Objet | Nombre actuel |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 15 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 21 |
 | `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, y compris cinq anciennes cartes DEV | 30 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 17 |
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 12 |
-| **Total** | | **Tâches uniques identifiées, dont les six évolutions économiques de la PR #34** | **74 (dont 1 classée sans suite)** |
+| **Total** | | **Tâches uniques identifiées, dont les six évolutions économiques de la PR #34** | **80 (dont 1 classée sans suite)** |
 
 **Definition of Done officielle :** [lire les règles de clôture](DEFINITION_OF_DONE.md). Toute carte n'est **Done** que si les cinq exigences sont satisfaites, dont validation explicite par **Codex (tous ses modèles et sous-agents) OU le propriétaire**, **au moins un des deux**. L'intervention humaine n'est plus obligatoire si Codex a validé. La présence du code ou d'une CI verte ne clôture pas à elle seule une recette physique.
 
@@ -64,13 +64,13 @@ Modèle r21 plein pied utilisable, rig/physique, 14 motions propres, bundle expo
 
 ## Priorisation : valeur métier et dépendances
 
-**P0** = débloque l'usage réel de la version actuelle ou traite un risque immédiat de confidentialité/fiabilité. **P1** = fort impact sur les fonctions importantes ou livraison r21. **P2** = entretien, documentation, démo et gouvernance sans blocage direct du jalon A.
+**P0** = débloque l'usage réel de la version actuelle ou traite un risque immédiat de confidentialité/fiabilité. **P1** = fort impact sur les fonctions importantes ou livraison r21. **P2** = améliorations utiles mais non indispensables au jalon A, ainsi que l'entretien, la documentation, les démonstrations et la gouvernance.
 
 Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'impact d'un échec, les dépendances et seulement ensuite l'effort. **Le rang est une proposition de séquencement, pas un planning de sprint ni une permission de passer outre les prérequis.** Une carte conditionnelle (`DEV-002`, `DEV-003`) n'est pas une preuve qu'un bug s'est produit.
 
 ## Vue globale ordonnée
 
-### P0 · 22 tâches
+### P0 · 23 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
@@ -96,67 +96,73 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 20 | REC-009 | A | Arbitrage multi-conversations | [REC](02-RECETTE.md) |
 | 21 | REC-010 | A | Latence et coût d'une session réelle | [REC](02-RECETTE.md) |
 | 22 | DEV-003 | A | Corriger la sortie indésirable du repli WAV s'il se produit réellement | [DEV](01-DEVELOPPEMENT.md) |
+| 23 | DEV-024 | Transverse | Mesure du temps réellement perçu, du coût et des p50/p95 par canal | [DEV](01-DEVELOPPEMENT.md) |
 
-### P1 · 43 tâches
-
-| Rang | ID | Jalon | Tâche | Vue |
-| ---: | --- | --- | --- | --- |
-| 23 | REC-021 | A | Mémoire SQLite, Core et autobiographie | [REC](02-RECETTE.md) |
-| 24 | DEV-012 | A | Donner au LLM de Jade le contrôle conscient et confirmé des écritures mémoire L2/L3 | [DEV](01-DEVELOPPEMENT.md) |
-| 25 | REC-025 | A | Sauvegarde/restauration et suppression ciblée | [REC](02-RECETTE.md) |
-| 26 | OPS-009 | A | Configurer Tailscale Serve privé | [OPS](03-INSTALLATION-OPS.md) |
-| 27 | REC-014 | A | PWA Android texte et authentification | [REC](02-RECETTE.md) |
-| 28 | OPS-010 | A | Installer les dépendances Live2D Web de la PWA | [OPS](03-INSTALLATION-OPS.md) |
-| 29 | REC-019 | A | Avatar Web Android r20 | [REC](02-RECETTE.md) |
-| 30 | REC-015 | A | PWA Android voix et micro | [REC](02-RECETTE.md) |
-| 31 | REC-016 | A | PWA arrière-plan, connexion et réseau mobile | [REC](02-RECETTE.md) |
-| 32 | REC-017 | A | TTS mobile désactivé | [REC](02-RECETTE.md) |
-| 33 | OPS-011 | A | Préparer OAuth et authentification Twitch | [OPS](03-INSTALLATION-OPS.md) |
-| 34 | REC-012 | A | Twitch IRC réel | [REC](02-RECETTE.md) |
-| 35 | REC-013 | A | API HTTP locale authentifiée | [REC](02-RECETTE.md) |
-| 36 | REC-011 | A | Voix Étincelle et sept intentions | [REC](02-RECETTE.md) |
-| 37 | REC-018 | A | Avatar r20 Windows en rendu réel | [REC](02-RECETTE.md) |
-| 38 | REC-020 | A | Variantes d'intention A/B | [REC](02-RECETTE.md) |
-| 39 | REC-022 | A | Liaisons des comptes Discord/Twitch avec Goldaj | [REC](02-RECETTE.md) |
-| 40 | REC-023 | A | Résilience des canaux et arrêt propre | [REC](02-RECETTE.md) |
-| 41 | DEV-002 | A | Corriger une éventuelle incompatibilité SDK Live2D Web Android | [DEV](01-DEVELOPPEMENT.md) |
-| 42 | ART-001 | B | Aligner la reprise Codex avec l'avancement artistique v31 | [ART](04-PRODUCTION-2D.md) |
-| 43 | ART-002 | B | Identifier et sécuriser les sources r20/r21 | [ART](04-PRODUCTION-2D.md) |
-| 44 | ART-003 | B | Corriger les UV et construire un atlas plein pied | [ART](04-PRODUCTION-2D.md) |
-| 45 | ART-004 | B | Réparer les raccords cheveux, épaules, cou et vêtements | [ART](04-PRODUCTION-2D.md) |
-| 46 | ART-005 | B | Corriger le clignement et les yeux | [ART](04-PRODUCTION-2D.md) |
-| 47 | ART-006 | B | Finaliser tête, regard et rig du corps plein pied | [ART](04-PRODUCTION-2D.md) |
-| 48 | ART-007 | B | Finaliser les physiques cheveux, oreilles et vêtements | [ART](04-PRODUCTION-2D.md) |
-| 49 | ART-008 | B | Créer idle, expressions et règles de transitions r21 | [ART](04-PRODUCTION-2D.md) |
-| 50 | ART-009 | B | Créer 14 motions corporelles originales | [ART](04-PRODUCTION-2D.md) |
-| 51 | ART-010 | B | Réconcilier les sources éditables KRA/PSD avec le rig r21 | [ART](04-PRODUCTION-2D.md) |
-| 52 | ART-011 | B | Créer le bundle r21 versionné et réutilisable | [ART](04-PRODUCTION-2D.md) |
-| 53 | DEV-001 | B | Raccorder les 14 vraies motions r21 au runtime Jade | [DEV](01-DEVELOPPEMENT.md) |
-| 54 | ART-012 | B | Importer, calibrer et recetter r21 dans VTube Studio | [ART](04-PRODUCTION-2D.md) |
-| 55 | DEV-005 | A | Routage sans TTS pour Discord/Twitch/HTTP écrits | [DEV](01-DEVELOPPEMENT.md) |
-| 56 | DEV-006 | A | Hotkey VTS asynchrone, sans retarder la voix | [DEV](01-DEVELOPPEMENT.md) |
-| 57 | DEV-007 | A | Pool Realtime TTS partagé entre WAV et PCM | [DEV](01-DEVELOPPEMENT.md) |
-| 58 | DEV-008 | A | Jalons de latence multi-canaux sans contenu privé | [DEV](01-DEVELOPPEMENT.md) |
-| 59 | DEV-009 | A | Stabiliser le test micro synthétique avec Rubber Band | [DEV](01-DEVELOPPEMENT.md) |
-| 60 | DEV-013 | ECO | Contexte historique 24 h sélectif et curation mémoire par lots | [DEV](01-DEVELOPPEMENT.md) |
-| 61 | DEV-014 | ECO | Personnalité évolutive tirée des souvenirs autorisés | [DEV](01-DEVELOPPEMENT.md) |
-| 62 | REC-027 | ECO | Participation sociale hybride locale et LLM optionnel | [REC](02-RECETTE.md) |
-| 63 | REC-028 | ECO | Initiatives spontanées sur événement sans relance si ignorée | [REC](02-RECETTE.md) |
-| 64 | REC-029 | ECO | Audio mobile PCM WebSocket et réponse progressive | [REC](02-RECETTE.md) |
-| 65 | REC-030 | ECO | VAD locale et annulation mobile | [REC](02-RECETTE.md) |
-
-### P2 · 8 tâches
+### P1 · 46 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 66 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
-| 67 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
-| 68 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
-| 69 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
-| 70 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
-| 71 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
-| 72 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
-| 73 | DEV-020 | Transverse | Choisir une branche Git et redéployer/redémarrer Jade depuis l'application mobile | [DEV](01-DEVELOPPEMENT.md) |
+| 24 | DEV-021 | Transverse | Conscience unique Jade et actions intercanaux autorisées | [DEV](01-DEVELOPPEMENT.md) |
+| 25 | DEV-023 | Transverse | Cache mémoire anticipé par présence et identité vérifiée | [DEV](01-DEVELOPPEMENT.md) |
+| 26 | DEV-026 | Transverse | Personnalité durable, cohérente et corrigible | [DEV](01-DEVELOPPEMENT.md) |
+| 27 | REC-021 | A | Mémoire SQLite, Core et autobiographie | [REC](02-RECETTE.md) |
+| 28 | DEV-012 | A | Donner au LLM de Jade le contrôle conscient et confirmé des écritures mémoire L2/L3 | [DEV](01-DEVELOPPEMENT.md) |
+| 29 | REC-025 | A | Sauvegarde/restauration et suppression ciblée | [REC](02-RECETTE.md) |
+| 30 | OPS-009 | A | Configurer Tailscale Serve privé | [OPS](03-INSTALLATION-OPS.md) |
+| 31 | REC-014 | A | PWA Android texte et authentification | [REC](02-RECETTE.md) |
+| 32 | OPS-010 | A | Installer les dépendances Live2D Web de la PWA | [OPS](03-INSTALLATION-OPS.md) |
+| 33 | REC-019 | A | Avatar Web Android r20 | [REC](02-RECETTE.md) |
+| 34 | REC-015 | A | PWA Android voix et micro | [REC](02-RECETTE.md) |
+| 35 | REC-016 | A | PWA arrière-plan, connexion et réseau mobile | [REC](02-RECETTE.md) |
+| 36 | REC-017 | A | TTS mobile désactivé | [REC](02-RECETTE.md) |
+| 37 | OPS-011 | A | Préparer OAuth et authentification Twitch | [OPS](03-INSTALLATION-OPS.md) |
+| 38 | REC-012 | A | Twitch IRC réel | [REC](02-RECETTE.md) |
+| 39 | REC-013 | A | API HTTP locale authentifiée | [REC](02-RECETTE.md) |
+| 40 | REC-011 | A | Voix Étincelle et sept intentions | [REC](02-RECETTE.md) |
+| 41 | REC-018 | A | Avatar r20 Windows en rendu réel | [REC](02-RECETTE.md) |
+| 42 | REC-020 | A | Variantes d'intention A/B | [REC](02-RECETTE.md) |
+| 43 | REC-022 | A | Liaisons des comptes Discord/Twitch avec Goldaj | [REC](02-RECETTE.md) |
+| 44 | REC-023 | A | Résilience des canaux et arrêt propre | [REC](02-RECETTE.md) |
+| 45 | DEV-002 | A | Corriger une éventuelle incompatibilité SDK Live2D Web Android | [DEV](01-DEVELOPPEMENT.md) |
+| 46 | ART-001 | B | Aligner la reprise Codex avec l'avancement artistique v31 | [ART](04-PRODUCTION-2D.md) |
+| 47 | ART-002 | B | Identifier et sécuriser les sources r20/r21 | [ART](04-PRODUCTION-2D.md) |
+| 48 | ART-003 | B | Corriger les UV et construire un atlas plein pied | [ART](04-PRODUCTION-2D.md) |
+| 49 | ART-004 | B | Réparer les raccords cheveux, épaules, cou et vêtements | [ART](04-PRODUCTION-2D.md) |
+| 50 | ART-005 | B | Corriger le clignement et les yeux | [ART](04-PRODUCTION-2D.md) |
+| 51 | ART-006 | B | Finaliser tête, regard et rig du corps plein pied | [ART](04-PRODUCTION-2D.md) |
+| 52 | ART-007 | B | Finaliser les physiques cheveux, oreilles et vêtements | [ART](04-PRODUCTION-2D.md) |
+| 53 | ART-008 | B | Créer idle, expressions et règles de transitions r21 | [ART](04-PRODUCTION-2D.md) |
+| 54 | ART-009 | B | Créer 14 motions corporelles originales | [ART](04-PRODUCTION-2D.md) |
+| 55 | ART-010 | B | Réconcilier les sources éditables KRA/PSD avec le rig r21 | [ART](04-PRODUCTION-2D.md) |
+| 56 | ART-011 | B | Créer le bundle r21 versionné et réutilisable | [ART](04-PRODUCTION-2D.md) |
+| 57 | DEV-001 | B | Raccorder les 14 vraies motions r21 au runtime Jade | [DEV](01-DEVELOPPEMENT.md) |
+| 58 | ART-012 | B | Importer, calibrer et recetter r21 dans VTube Studio | [ART](04-PRODUCTION-2D.md) |
+| 59 | DEV-005 | A | Routage sans TTS pour Discord/Twitch/HTTP écrits | [DEV](01-DEVELOPPEMENT.md) |
+| 60 | DEV-006 | A | Hotkey VTS asynchrone, sans retarder la voix | [DEV](01-DEVELOPPEMENT.md) |
+| 61 | DEV-007 | A | Pool Realtime TTS partagé entre WAV et PCM | [DEV](01-DEVELOPPEMENT.md) |
+| 62 | DEV-008 | A | Jalons de latence multi-canaux sans contenu privé | [DEV](01-DEVELOPPEMENT.md) |
+| 63 | DEV-009 | A | Stabiliser le test micro synthétique avec Rubber Band | [DEV](01-DEVELOPPEMENT.md) |
+| 64 | DEV-013 | ECO | Contexte historique 24 h sélectif et curation mémoire par lots | [DEV](01-DEVELOPPEMENT.md) |
+| 65 | DEV-014 | ECO | Personnalité évolutive tirée des souvenirs autorisés | [DEV](01-DEVELOPPEMENT.md) |
+| 66 | REC-027 | ECO | Participation sociale hybride locale et LLM optionnel | [REC](02-RECETTE.md) |
+| 67 | REC-028 | ECO | Initiatives spontanées sur événement sans relance si ignorée | [REC](02-RECETTE.md) |
+| 68 | REC-029 | ECO | Audio mobile PCM WebSocket et réponse progressive | [REC](02-RECETTE.md) |
+| 69 | REC-030 | ECO | VAD locale et annulation mobile | [REC](02-RECETTE.md) |
+
+### P2 · 10 tâches
+
+| Rang | ID | Jalon | Tâche | Vue |
+| ---: | --- | --- | --- | --- |
+| 70 | DEV-022 | Transverse | Recherche de souvenirs ciblée, pertinente et sécurisée | [DEV](01-DEVELOPPEMENT.md) |
+| 71 | DEV-025 | Transverse | Compréhension des apartés et fils de discussion de groupe | [DEV](01-DEVELOPPEMENT.md) |
+| 72 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
+| 73 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
+| 74 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
+| 75 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
+| 76 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
+| 77 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
+| 78 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
+| 79 | DEV-020 | Transverse | Choisir une branche Git et redéployer/redémarrer Jade depuis l'application mobile | [DEV](01-DEVELOPPEMENT.md) |
 
 ### Décision classée sans suite (hors liste de priorisation)
 
