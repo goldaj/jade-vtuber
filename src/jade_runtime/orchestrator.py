@@ -5,6 +5,7 @@ from dataclasses import dataclass, field, replace
 from collections.abc import Awaitable, Callable
 import time
 from .dialogue import Dialogue
+from .incidents import explain_incident
 from .messages import Incoming, Reply
 from .turn_logging import record_input, record_reply, record_outcome, record_delivery
 from .session_logging import bind_turn, reset_turn, event
@@ -22,6 +23,7 @@ class Work:
     turn: int = 0
     queued_at: float = field(default_factory=time.monotonic)
     finished: asyncio.Future | None = field(default=None, repr=False)
+    delivery_started: bool = False
 
     def valid(self):
         return not self.cancelled and (self.deadline is None or
@@ -31,7 +33,8 @@ class Work:
 class Runtime:
     def __init__(self, dialogue: Dialogue, on_reply: Callable[[Reply], Awaitable[None]],
                  max_queue: int = 64, on_stream_start=None, delivery_plan=None,
-                 memory_service=None, cross_channel=None, web_service=None):
+                 memory_service=None, cross_channel=None, web_service=None,
+                 on_incident=None):
         if not 1 <= max_queue <= 1024:
             raise ValueError("invalid queue limit")
         self.dialogue, self.on_reply = dialogue, on_reply
@@ -40,6 +43,7 @@ class Runtime:
         self.memory_service = memory_service
         self.cross_channel = cross_channel
         self.web_service = web_service
+        self.on_incident = on_incident
         self.queue = ArbitratingQueue(maxsize=max_queue)
         self.arbiter = TurnArbiter(dialogue.backend) if isinstance(dialogue, Dialogue) else None
         self.worker = None
@@ -261,6 +265,7 @@ class Runtime:
             if reply is not None and item.valid():
                 self.mark_timing("delivery_start")
                 try:
+                    item.delivery_started = True
                     await self.on_reply(replace(reply, spoken=True) if turn is not None else reply)
                     record_delivery(item.turn, "handoff_completed", destinations=destinations)
                 except Exception:
@@ -332,6 +337,23 @@ class Runtime:
                     self.errors, item.turn, item.message.platform,
                     ("voice" if item.message.platform in ("discord_voice", "microphone")
                      else item.message.input_modality))
+                # NEW-20: describe ONLY failed direct requests before a reply
+                # was handed off. Never send a second message after a delivery
+                # attempt, during cancellation, or for unsolicited group chat.
+                if (self.on_incident is not None and self.state == "RUNNING"
+                        and item.message.direct_request and item.message.force_reply
+                        and not item.delivery_started and item.valid()):
+                    try:
+                        await asyncio.wait_for(
+                            self.on_incident(item.message, explain_incident(exc)),
+                            timeout=3.0)
+                    except asyncio.CancelledError:
+                        if asyncio.current_task().cancelling():
+                            raise
+                    except Exception:
+                        # A failed notification is never a retry of the model,
+                        # nor a reason to block the next conversation.
+                        self.log.warning("Optional incident notice unavailable")
             finally:
                 if timer is not None:
                     timer.cancel()
