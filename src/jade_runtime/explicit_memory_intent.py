@@ -34,7 +34,8 @@ _MEMORY_MARKER = re.compile(
     r"\b(?:dans|à|en|comme)\s+(?:(?:tes?|ta|la|mes?)\s+)?"
     r"(?:(?:core[\s-]*memor(?:y|ies)|core[\s-]*m[ée]moir(?:e|es))|"
     r"(?:m[ée]moir(?:e|es)|souvenirs?)"
-    r"(?:\s+(?:ordinaires?|profond(?:e|es)?|fondatric(?:e|es)|"
+    r"(?:\s+(?:(?:de\s+)?niveau\s*(?:3|trois)|ordinaires?|"
+    r"profond(?:e|es)?|fondatric(?:e|es)|"
     r"essentiell(?:e|es)|autobiographiques?|fondateurs?|fondamentaux?))?"
     r")"
     r"|\b(?:un|ce|ces)\s+souvenirs?\b"
@@ -45,7 +46,8 @@ _CORE_MARKER = re.compile(
     r"\b(?:core[\s-]*memor(?:y|ies)|core[\s-]*m[ée]moir(?:e|es)|"
     r"m[ée]moir(?:e|es)\s+(?:profond(?:e|es)?|"
     r"fondatric(?:e|es)|essentiell(?:e|es)|autobiographiques?)|"
-    r"souvenirs?\s+(?:fondateurs?|fondamentaux?|autobiographiques?))\b",
+    r"souvenirs?\s+(?:fondateurs?|fondamentaux?|autobiographiques?)|"
+    r"(?:m[ée]moir(?:e|es)|souvenirs?)\s+(?:de\s+)?niveau\s*(?:3|trois))\b",
     re.I,
 )
 _DELIMITER = re.compile(
