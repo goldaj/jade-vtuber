@@ -180,7 +180,7 @@ class SpeechOutput:
         whenever that player stops or its voice session is revoked.
         """
         if not discord_voice and getattr(self.player, "mode", None) != "none":
-            return (False, False)
+            return False
         # Discord PCM streams directly to the voice bridge. The local ffplay
         # setting is for microphone replies and must not block Discord streaming.
         stream_factory = getattr(self.services, "stream_speech_pcm", None)
@@ -188,14 +188,14 @@ class SpeechOutput:
                        else "play_pcm_stream_for_context")
         bridge_method = getattr(self.secondary_player, method_name, None)
         if not callable(stream_factory) or not callable(bridge_method):
-            return (False, False)
+            return False
         if not discord_voice and context is None:
-            return (False, False)
+            return False
         stream = (stream_factory(reply.text, intent=reply.intent)
                   if isinstance(self.services, OpenAIServices)
                   else stream_factory(reply.text))
         if stream is None:
-            return (False, False)
+            return False
         if self.pitch_semitones:
             stream = shift_pcm(stream, self.pitch_semitones)
 
@@ -225,7 +225,7 @@ class SpeechOutput:
             else:
                 valid = getattr(self.secondary_player, "delivery_context_valid", None)
                 if not callable(valid) or not valid(context):
-                    return (True, False)  # Handled without playback after revocation.
+                    return True  # Destination revoked; do not synthesize.
                 played = await bridge_method(stream, context)
         finally:
             # A cancellation during aclose must not leave the microphone gate
@@ -246,7 +246,7 @@ class SpeechOutput:
             acknowledge = getattr(self.secondary_player, "mark_voice_reply_played", None)
             if callable(acknowledge):
                 acknowledge(reply.source)
-        return (True, played is True)
+        return True
 
     async def speak(self, reply: Reply):
         async with self.lock:
@@ -272,11 +272,9 @@ class SpeechOutput:
 
             if discord_voice:
                 require_session()
-            handled, played_to_completion = await self._speak_progressive(
-                reply, context, require_session, discord_voice=discord_voice)
-            if handled:
-                # A handled stream is not necessarily an audio delivery.
-                return played_to_completion
+            if await self._speak_progressive(
+                    reply, context, require_session, discord_voice=discord_voice):
+                return
             # New adapters can report the words actually spoken; legacy service
             # doubles still provide synthesize_wav only.
             rich_synthesis = getattr(type(self.services), "synthesize_speech", None)
