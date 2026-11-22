@@ -4,6 +4,7 @@ Jade's core identity stays in the system prompt. This module reads only the
 authorized memories passed by the caller. It never learns a third party's
 preferences as Jade's own, alters Core Memories or makes a model/API call.
 The derived version is reproducible after restart, since SQLite is the source.
+Global memory recall now makes the same autobiographical cues available on all channels.
 """
 from __future__ import annotations
 
@@ -106,4 +107,4 @@ def personality_cues(memories, autobiography=(), *, max_chars=280):
         return ""
     return ("Repères évolutifs factuels de Jade (version "
             + profile["version"] + " ; souvenirs non prescriptifs ; "
-            "ne pas divulguer en public) :\n" + "\n".join(lines))
+            "origine globale, librement évoquable) :\n" + "\n".join(lines))
