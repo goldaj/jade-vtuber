@@ -74,6 +74,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
   width:18.0939%;
   height:27.255%;
   transform-origin:61% 7%;
+  /* Extra silhouette guard against residual static sill pixels under lace. */
+  clip-path:polygon(49% 0%,100% 0%,100% 74%,91% 76%,74% 79%,58% 79%,48% 83%,38% 87%,28% 92%,15% 98%,3% 97%,0% 91%,12% 77%,29% 51%);
 }
 .room-shadow svg {
   display:block;
