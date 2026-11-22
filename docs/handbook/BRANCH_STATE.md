@@ -1,5 +1,10 @@
 # État de develop — fonctionnalités codées
 
+## Splash de lancement PWA (22/11/2026)
+
+- Image propriétaire `splash-jade.png` servie et affichée plein écran au lancement de l'interface HTML, puis retirée automatiquement. Android contrôle toujours **la phase native préalable**, constituée de l'icône, du nom et du fond du manifeste. L'icône SVG est ajoutée comme ressource vectorielle alternative ; les PNG restent des fallbacks à source raster 96 px.
+- Chargement sans appel IA ni capture, UI/Live2D intacts. Recette sur Redmi Note 13 non encore réalisée.
+
 ## PWA · Nouvelle DA Jade inspirée de la robe (22/11/2026)
 
 - **Maquette propriétaire retenue :** dernier concept botanique avec Jade visible dans sa chambre, icône florale aux deux fleurs, vert sauge / vert profond / blanc crème / jaune doux. Nouveau thème CSS séparé de la scène Live2D et des animations.

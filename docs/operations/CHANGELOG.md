@@ -1,5 +1,12 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Splash illustré Jade et écran Android
+
+- **Choix du propriétaire :** image exacte `src/jade_runtime/mobile_web/splash-jade.png` déposée sur develop, utilisée pour le premier écran web dès que Chrome a lancé la PWA. Plein écran (ratio vertical, object-fit cover), chargement prioritaire, retrait automatique et non bloquant lorsque la page est prête. Aucune nouvelle permission ni utilisation de tokens ; la chambre Live2D et la conversation restent intactes.
+- **Distinction technique incontournable :** Android/Chrome affiche d'abord le splash natif construit depuis le manifeste (icône/nom/couleur), puis affiche le HTML. La PWA ne peut pas remplacer cet écran natif par un fond plein écran. Une version vectorielle SVG est ajoutée au manifeste pour les navigateurs compatibles, tandis que les PNG 192/512 restent des solutions de repli ; leur source raster actuelle ne fait que 96 px, donc une mise à l'échelle 4K ne créera pas de vrais détails.
+- **Sécurité et packaging :** le gateway privé autorise uniquement `/assets/splash-jade.png` et `/assets/splash.js`, politique de cache inchangée ; la prévisualisation privée copie l'image et vérifie sa signature/dimensions avant export, sans lire le PNG comme du texte.
+- **Validation :** contrat de la PWA enrichi ; recette physique sur Redmi Note 13 toujours requise pour confirmer l'enchaînement splash natif → illustration → accueil. Après mise à jour du manifeste, Chrome peut nécessiter une réinstallation pour renouveler son icône système. Aucun changement main.
+
 ## 2026-11-22 — Identité visuelle PWA Jade, maquette finale du propriétaire
 
 - **Décision visuelle :** retenir la dernière maquette validée en conversation : ambiance botanique sobre, fond clair, sauge #C8DCC7, vert profond #2F5D45, crème/blanc et jaune floral #F7D774 ; l'icône est la composition choisie de deux fleurs blanches avec feuillage et arabesques dorées.
