@@ -65,7 +65,7 @@ class PersonalityTests(unittest.TestCase):
         profile = personality_snapshot([row, dict(row)])
         self.assertEqual(len(profile["observations"]), 1)
         self.assertEqual(profile["version"], personality_snapshot([row, row])["version"])
-        self.assertEqual(personality_snapshot([row])["observations"], [])
+        self.assertEqual(len(personality_snapshot([row])["observations"]), 1)
         self.assertEqual(personality_snapshot([
             {"summary": "Louis aime dessiner", "kind": "core_relationship",
              "significance": "n/a"}
