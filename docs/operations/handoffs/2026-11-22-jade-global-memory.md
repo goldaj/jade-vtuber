@@ -37,14 +37,14 @@ Jade dispose consciemment d'un outil disponible sur tous les canaux, y compris d
 
 - Le contexte automatique ajoute désormais une courte sélection de souvenirs **globaux** dans tous les canaux, y compris Discord vocal ; il conserve la personnalisation évolutive de Jade et quelques Core autobiographiques récentes.
 - L'historique brut de conversation injecté en tant que **dialogue immédiat** reste propre à la session afin de ne pas fusionner les tours de parole de deux salons. Jade peut toutefois rechercher ces mêmes tours via le nouvel outil global.
-- L'écriture L2/L3 reste volontaire (sauf demande L2 explicite du propriétaire authentifié) et associée au profil du véritable locuteur.
+- **Règles impératives d'écriture, indépendantes de la lecture globale :** seul Goldaj authentifié peut imposer une **vraie demande de niveau 2** ; personne ne peut imposer une **Core Memory de niveau 3**, pas même Goldaj. Une demande Core formulée par Goldaj ou un autre participant est transmise à Jade comme une simple proposition. Jade peut décider de l'enregistrer réellement en Core (`core_self` ou `core_relationship`) ou de refuser sans rien enregistrer. **Aucun reclassement automatique ni enregistrement de remplacement en niveau 2.** L'outil d'écriture est limité aux types Core pendant ce tour ; une tentative `ordinary` est refusée avant mise en file.
 - **Aucune vérification de succès après l'écriture.** La confirmation est optimiste dès que `jade_save_memory` accepte la mise en file ; aucune recherche ne peut être utilisée pour contrôler cette même écriture dans le même tour. Les éventuels échecs vont dans les logs techniques.
 - Les commandes textuelles `!jade-memoire autobiographie` et `!jade-memoire lister-core` lisent désormais globalement sans contrôle d'identité. Les commandes de suppression conservent leurs droits existants.
 
 ## Tests prévus / ajoutés
 
 ```powershell
-poetry run pytest -q tests/test_jade_memory_browsing.py tests/test_jade_cross_channel_memory.py tests/test_jade_discord_voice_core_self.py tests/test_jade_persistent_memory.py tests/test_luna_memory_tool_reasoning.py tests/test_jade_economy_memory.py
+poetry run pytest -q tests/test_jade_memory_browsing.py tests/test_jade_cross_channel_memory.py tests/test_jade_discord_voice_core_self.py tests/test_jade_persistent_memory.py tests/test_luna_memory_tool_reasoning.py tests/test_jade_economy_memory.py tests/test_jade_global_memory_authority.py
 ```
 
 Ces tests visent : pagination interpersonnes, L1/L2/L3, provenances et déduplication Core, accès Discord/Twitch anonymes, Core d'autres utilisateurs, migration v5→v8, exclusion des entrées déjà expirées, disponibilité de l'outil en vocal, écritures optimistes, autorisations d'écriture inchangées.
@@ -56,5 +56,5 @@ Ces tests visent : pagination interpersonnes, L1/L2/L3, provenances et déduplic
 3. Demander depuis Discord vocal l'anniversaire de Jade ; vérifier que `jade_search_memory` retourne le niveau 3 et l'origine précise de l'information, puis obtenir une réponse orale correcte.
 4. Vérifier que `level=1` ramène un échange récent d'un autre compte (y compris dans un salon public), et que le modèle n'attribue pas cet échange au locuteur courant.
 5. Vérifier le parcours par pages avec une base contenant plus de 15 souvenirs, et la recherche sans mots-clés.
-6. Tester les anciennes commandes de consultation Core et la non-régression de l'enregistrement asynchrone optimiste.
+6. Tester les anciennes commandes de consultation Core, le refus volontaire par Jade, son acceptation autonome d'une véritable Core, l'absence d'écriture de niveau 2 si Goldaj demande une Core, et la non-régression de l'enregistrement asynchrone optimiste.
 7. Exécuter la suite de tests complète dans l'environnement réel ; ne pas affirmer que les tests sont réussis tant qu'ils ne l'ont pas été.
