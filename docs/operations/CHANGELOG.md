@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — REC-006 : preuve de progression PCM Discord (develop)
+
+- **Besoin :** comparer les instants techniques de la première trame PCM non silencieuse consommée par le lecteur Discord et de la réponse TTS OpenAI terminée, sans confondre ces horodatages avec la durée totale du tour ou le son réellement entendu chez un utilisateur.
+- **Implémentation :** trace par lecture vocale et contexte asynchrone dans `pcm_timing.py`, mesure monotone dans `discord_pcm.py`, récapitulatif `rec006_pcm_progress` dans `discord_voice.py`, marquage de `response.done` accepté dans `realtime_tts.py`. Une seule ligne synthétique par tentative PCM, même interrompue ; champs numériques, booléen de recouvrement et verdict, sans voix, transcription, identité ni secret.
+- **Périmètre :** pas de changement de routage, de synthèse, de coût API, de mode Early Voice ou de réglage privé. `JADE_EARLY_VOICE=0` reste le choix du propriétaire. Le compteur commence au démarrage de la lecture Discord, pas au début de la question ; une trame consommée localement ne prouve pas l'audition distante.
+- **Vérification :** tests hors ligne ciblés ajoutés ; CI Windows/Linux et essai Discord réel à constater après le push. REC-006 reste `À valider` ; aucune mesure réelle ni acceptation du PCM anticipée.
+
+
 ## 2026-11-21 — Retrait de la commande d'oubli global et du blocage Discord (develop)
 
 - **Décision produit :** suppression complète de `!jade-memoire oublier` et du mécanisme de blocage de réinscription Discord. Les comptes Discord vérifiés continuent à s'inscrire automatiquement ; l'activation Twitch, la déliaison, les historiques L1, souvenirs L2/L3 et les commandes de suppression ciblée des Core sont préservés.

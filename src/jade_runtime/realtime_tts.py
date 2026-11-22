@@ -13,6 +13,7 @@ https://developers.openai.com/api/reference/resources/realtime/server-events
 from __future__ import annotations
 
 from .intent_engine import INTENTS, voice_direction
+from .pcm_timing import active_pcm_timing
 
 import asyncio
 import base64
@@ -368,6 +369,10 @@ class RealtimeTTS:
                         raise RealtimeTTSError("Synthesized wording differs from the text")
                     if not audio_bytes or audio_bytes % 2:
                         raise RealtimeTTSError("Invalid synthesized audio")
+                    if on_chunk is not None:
+                        timing = active_pcm_timing.get()
+                        if timing is not None:
+                            timing.mark_tts_completed()
                     return SpokenAudio(_wav(bytes(pcm)) if on_chunk is None else b"", transcript)
         finally:
             if response_requested and not response_finished:

@@ -179,6 +179,11 @@ class DiscordPCMBuffer:
             except Empty:
                 break
 
+    @property
+    def first_nonzero_read_at(self) -> float | None:
+        """Monotonic instant of the first non-silent frame consumed by Discord."""
+        return self._first_nonzero_at
+
     def metrics(self) -> PCMPlaybackMetrics:
         """Snapshot numeric PCM reads; contains no user content or audio."""
         first_ms = (None if self._first_nonzero_at is None else

@@ -17,7 +17,8 @@ Les anciens fichiers restent disponibles pour diagnostic. Ils ne sont ni supprim
 - input_selected : numéro de tour, plateforme (discord, discord_voice, twitch, mobile, microphone, local_http, console) et médium (text/voice) ;
 - reply_planned : destinations et médias prévus, intention sans contenu privé ;
 - delivery_outcome : transfert réussi vers le connecteur ou échec ; ce n'est pas la confirmation qu'un destinataire a entendu ou lu ;
-- turn_outcome, avertissements, erreurs et tracebacks Python complets.
+- turn_outcome, avertissements, erreurs et tracebacks Python complets ;
+- rec006_pcm_progress : à chaque tentative de lecture PCM Discord, `first_pcm_ms` (première trame non silencieuse consommée par le lecteur), `tts_completed_ms` (réponse TTS validée), `pcm_before_tts_complete` (booléen ou null), `playback_completed` et `verdict`.
 
 **Fichier de session (détaillé, local)** :
 - toutes les traces précédentes, horodatées ;
@@ -56,5 +57,6 @@ Aucune capture audio WAV/PCM brute n'est écrite dans ces journaux ; seules les 
 - Les logs naissent au démarrage de la nouvelle version du code. Ils ne peuvent expliquer les sessions précédentes.
 - Une interruption brutale du système peut empêcher l'écriture des dernières lignes.
 - handoff_completed ne vaut pas accusé de lecture ni lecture audio confirmée.
+- `rec006_pcm_progress` utilise le temps monotone depuis le lancement du lecteur PCM Discord, **pas** depuis le début de la question. `progressive_confirmed` signifie que le lecteur a consommé une première trame sonore avant la fin du TTS validé, et que la lecture s'est terminée normalement ; ce n'est pas une preuve que le destinataire Discord l'a entendue. `no_overlap_observed` ne prouve pas à lui seul une panne du streaming, et `inconclusive` signale une mesure manquante (erreur, interruption, autre adaptateur TTS). Les durées sont en millisecondes. Ce diagnostic n'ajoute aucun appel API.
 - Les écritures couvertes sont celles de MemoryStore et des réservations de CostGuard. Les autres connexions SQLite ajoutées ultérieurement devront être instrumentées à leur tour.
 - Les exceptions TTS/STT/réseau remontées sont journalisées, mais les requêtes réseau complètes et flux audio ne sont pas enregistrés.
