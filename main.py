@@ -168,6 +168,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 await asyncio.gather(*vts_tasks, return_exceptions=True)
 
         async def on_reply(reply):
+            accepted_transports = set()
+            completed_playbacks = set()
             if local_api is not None:
                 local_api.deliver(reply)
             if mobile_gateway is not None:
@@ -186,7 +188,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 if not runtime.current_valid():
                     return
                 try:
-                    await asyncio.wait_for(action(), timeout=timeout)
+                    return await asyncio.wait_for(action(), timeout=timeout)
                 except asyncio.CancelledError:
                     raise
                 except Exception:
@@ -203,6 +205,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     source_message_id=reply.source.message_id), timeout=20)
                 if not sent:
                     raise RuntimeError("Discord message delivery not confirmed")
+                # Discord API accepted all output chunks; not a read receipt.
+                accepted_transports.add("discord_text")
             if (vts_client is not None and speech is not None and config.vts_speak_hotkey
                     and not reply.spoken
                     and reply.source.platform in ("microphone", "discord_voice", "console")):
@@ -216,8 +220,21 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     and reply.source.platform in ("microphone", "discord_voice", "console")):
                 # TTS and the ensuing playback share this deadline. The old
                 # 20-second total could cut off an otherwise valid answer.
-                await optional("voice", lambda: speech.speak(reply),
-                               timeout=min(180, config.timeout_seconds + 120))
+                voice_completed = await optional(
+                    "voice", lambda: speech.speak(reply),
+                    timeout=min(180, config.timeout_seconds + 120))
+                if voice_completed is True:
+                    if reply.source.platform == "discord_voice":
+                        completed_playbacks.add("discord_voice")
+                    elif (reply.source.platform in ("microphone", "console")
+                          and config.audio_output == "ffplay"):
+                        completed_playbacks.add("local_audio")
+            # No client-side ack is available for mobile/HTTP, and Twitch IRC
+            # send acceptance is not proof that the message was displayed.
+            return {
+                "transport_accepted": tuple(sorted(accepted_transports)),
+                "playback_completed": tuple(sorted(completed_playbacks)),
+            }
 
         def start_early_voice(source):
             turn = speech.start_early(source)
