@@ -8,24 +8,23 @@
 
 ## REPRISE PRIORITAIRE — code PR #38 intégré, recettes ouvertes
 
-**REC-031 à REC-037 sont `À valider`, et non `Done`.** Les écarts de REC-032/033/035 restent connus et l'acceptation doit tenir compte des critères non remplis. Une CI verte ne vaut pas recette réelle.
+**Clôture mémoire du 22/11/2026 : REC-026 et REC-032 sont désormais `Done`**, après validation explicite des fonctionnalités de mémorisation et de rappel par le propriétaire. [Preuves et limites](02-RECETTE.md#clôture-fonctionnelle-mémoire-du-22-novembre-2026). **REC-031 et REC-033 à REC-037 demeurent `À valider`** ; les lacunes distinctes de REC-033/035 restent ouvertes. Une CI verte ne vaut pas recette réelle.
 
 | Ordre | Recette | Vérification principale |
 | ---: | --- | --- |
 | 1 | **REC-034** (P0) | Latences et coûts par canal, limites physiques P3 acceptées. |
 | 2 | **REC-031** (P1) | Continuité privée et envois Discord strictement autorisés. |
-| 3 | **REC-032** (P2) | Pertinence des souvenirs anciens et contradictions encore partielles. |
-| 4 | **REC-033** (P1) | Cache présence, ouverture PWA et L1 encore partiels. |
-| 5 | **REC-036** (P1) | Profil de personnalité et stabilité entre sessions. |
-| 6 | **REC-035** (P2) | Dialogues de groupe, fils parallèles encore partiels. |
-| 7 | **REC-037** (P2) | Déploiement Windows depuis PWA Android sur appareil réel. |
+| 3 | **REC-033** (P1) | Cache présence, ouverture PWA et L1 encore partiels. |
+| 4 | **REC-036** (P1) | Profil de personnalité et stabilité entre sessions. |
+| 5 | **REC-035** (P2) | Dialogues de groupe, fils parallèles encore partiels. |
+| 6 | **REC-037** (P2) | Déploiement Windows depuis PWA Android sur appareil réel. |
 | En parallèle | **DEV-010**, **OPS-015**, ART-001 à ART-012 | Calques et comparaison artistique restent **À faire**. |
 
 **Microphone physique du PC, Twitch et OBS restent suspendus**, sans réactivation implicite. [Rapport d'audit](../operations/handoffs/2026-11-22-audit-technique-fonctionnel-ci-pr38.md).
 
 ## Focus de travail léger (limite indicative : 3 tâches réellement « En cours »)
 
-**Mise à jour :** les anciennes DEV-021 à DEV-026 sont dans REC-031 à REC-036, toutes **À valider** ; DEV-020 dans REC-037. Ne pas créer de doublons.
+**Mise à jour :** les anciennes DEV-021 à DEV-026 sont dans REC-031 à REC-036 ; **REC-032 est Done** depuis la validation mémoire du 22/11, les autres restent **À valider**. DEV-020 est suivi par REC-037. Ne pas créer de doublons.
 
 **Règle pratique :** viser au plus **trois tâches en cours simultanément**, sans en faire un verrou automatique ; les autres restent « À faire », « À qualifier » ou « Bloqué ». Mettre à jour la colonne **Statut** de la vue canonique, pas ce texte historique. Pas de cadence Scrum obligatoire ni de tableau parallèle.
 
