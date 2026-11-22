@@ -75,7 +75,8 @@ def test_linked_owner_voice_persists_self_core_without_public_recall(tmp_path):
     asyncio.run(run())
 
 
-def test_unlinked_discord_voice_cannot_write_owner_autobiography(tmp_path):
+def test_unlinked_discord_voice_can_write_autonomous_self_core(tmp_path):
+    """Jade chooses her own Core; a nonowner cannot mandate one."""
     store = _store(tmp_path)
     service = MemoryService(store, backend=object())
 
@@ -84,16 +85,27 @@ def test_unlinked_discord_voice_cannot_write_owner_autobiography(tmp_path):
             incoming = _voice(STRANGER, author="Goldaj")
             action = await service.prepare_memory_action(incoming)
             assert action is not None
-            assert (await action(_candidate()))["status"] == "refusé"
-            # The database must enforce this too if bypassing service policy.
-            assert not store.put_self_core(
-                STRANGER, summary=FACT, expected_person_id=store.account(STRANGER))
-            assert store.recall_self_core(OWNER) == []
-            # Third-party relationship memories still behave as before.
+            assert (await action(_candidate()))["status"] == "enregistré"
+            # The actual store keeps the self Core separate from this person's
+            # relational memories, rather than misclassifying it as an L2.
+            assert len(store.recall_self_core(OWNER)) == 1
+            assert store.list_for_account(STRANGER) == []
+            # Public recall of this self-memory is limited to its originator.
+            result = await action.search(json.dumps({
+                "query": "février", "kind": "core_self",
+                "scope": "current", "cursor": 0, "limit": 10,
+            }, ensure_ascii=False))
+            assert result["status"] == "ok" and len(result["items"]) == 1
+            other = await service.prepare_memory_action(_voice(DISCORD_OWNER))
+            assert other is not None
+            result = await other.search(json.dumps({
+                "query": "février", "kind": "core_self",
+                "scope": "current", "cursor": 0, "limit": 10,
+            }, ensure_ascii=False))
+            assert result["items"] == []
             result = await action(_candidate("core_relationship"))
             assert result["status"] == "enregistré"
             assert len(store.list_for_account(STRANGER)) == 1
-            assert store.recall_self_core(OWNER) == []
         finally:
             await service.close()
 
