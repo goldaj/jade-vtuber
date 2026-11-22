@@ -94,7 +94,7 @@ MEMORY_SEARCH_TOOL = {
 
 
 MEMORY_PROMPT = (
-    "\\n\\nMémoire globale consciente : tu es Jade et disposes des outils "
+    "\n\nMémoire globale consciente : tu es Jade et disposes des outils "
     "jade_search_memory (lecture) et jade_save_memory (écriture si autorisée). "
     "Tu peux consulter librement TOUTES les données de ta base mémorielle, "
     "de tous les utilisateurs et sur tous les canaux, sans cloisonnement "
