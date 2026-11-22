@@ -132,6 +132,32 @@ def record_delivery(turn: int, status: str, *, destinations=(), reason="") -> No
     event("delivery_outcome", **data)
 
 
+_DELIVERY_PROOFS = {
+    ("transport_accepted", "discord_text"): "discord_api",
+    ("playback_completed", "discord_voice"): "discord_audio_consumer",
+    ("playback_completed", "local_audio"): "ffplay_exit_zero",
+}
+
+
+def record_delivery_evidence(turn: int, stage: str, destination: str, *,
+                             proof: str) -> None:
+    """Evidence that a *specific* transport action happened, not user receipt.
+
+    A reply planned for a destination, or handed to a callback, is NEVER
+    counted as delivered. The only supported stages are explicit positive
+    observations from the corresponding transport. No message text or
+    personal identity is written into operational evidence.
+    """
+    if type(turn) is not int or turn < 0 or not isinstance(stage, str) or not isinstance(destination, str):
+        raise ValueError("invalid delivery evidence")
+    if _DELIVERY_PROOFS.get((stage, destination)) != proof:
+        raise ValueError("unsupported delivery proof")
+    data = {"turn": turn, "destination": destination,
+            "delivery_stage": stage, "evidence": proof}
+    summary("delivery_evidence", **data)
+    event("delivery_evidence", **data)
+
+
 def record_outcome(turn: int, outcome: str) -> None:
     if outcome not in ("no_reply", "failed", "cancelled"):
         raise ValueError("invalid outcome")
