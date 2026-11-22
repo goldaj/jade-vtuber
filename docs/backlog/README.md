@@ -2,7 +2,9 @@
 
 **Arbitrage du 21/11/2026 :** les cartes exigeant le **microphone physique local du PC**, **Twitch** ou **OBS** sont suspendues en `Bloqué` jusqu'à nouvel ordre. Ce n'est **pas** une suspension générale des travaux sur Windows ni des tests Discord/Android/mémoire. Les sous-tests indépendants restent possibles, mais les cartes mixtes ne sont pas closes. [Passation](../operations/handoffs/2026-11-21-chatgpt-suspension-micro-twitch-obs.md).
 
-**Recettes automatisées du 21/11/2026 :** `REC-021` et `REC-025` ont maintenant **des tests d'acceptation exécutés avec succès sous Linux et Windows**, [CI sur le SHA `955ca2e255`](https://github.com/goldaj/jade-vtuber/actions/runs/44947197393). Les deux cartes sont **`À valider`**, et non `Done`, conformément à la DoD ; contrôle du stockage d'archives privées encore nécessaire pour REC-025. La vue [REC](02-RECETTE.md#compte-rendu-des-recettes-automatiques-rec-021-et-rec-025-21-novembre-2026) décrit les preuves.
+**Recettes automatisées du 21/11/2026 :** `REC-021` et `REC-025` ont maintenant **des tests d'acceptation exécutés avec succès sous Linux et Windows**, [CI sur le SHA `955ca2e255`](https://github.com/goldaj/jade-vtuber/actions/runs/44947197393). **Mise à jour du 22/11/2026 :** les deux cartes sont maintenant **`Done` sur validation expresse du propriétaire**, avec réserves documentées ; aucune inspection nouvelle des archives privées n'est affirmée pour REC-025. La vue [REC](02-RECETTE.md#compte-rendu-des-recettes-automatiques-rec-021-et-rec-025-21-novembre-2026) décrit les preuves.
+
+**Clôtures du 22/11/2026 :** `REC-021` (mémoire SQLite), `REC-025` (sauvegarde/restauration ciblée) et `REC-027` (sélection sociale hybride) sont **`Done`** par décision explicite du propriétaire. Réserves et preuves dans la [vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-021-rec-025-rec-027). `REC-020` demeure **`À valider`** et est sans lien avec ces clôtures.
 
 ## REPRISE PRIORITAIRE — première lecture au prochain token Codex
 
