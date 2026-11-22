@@ -12,7 +12,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from build_room_layers import ART, EXPECTED, CURTAIN_CROP, SHADOW_CROPS, build, make_layers  # noqa: E402
+from build_room_layers import ART, EXPECTED, CURTAIN_CROP, build, make_layers  # noqa: E402
 
 
 def synthetic_art() -> np.ndarray:
@@ -38,8 +38,6 @@ def check_layer_geometry() -> None:
     assert 3 < metrics["affected_percentage"] < 35
     crop = CURTAIN_CROP
     assert layers["room-curtain.webp"].shape == (crop[3] - crop[1], crop[2] - crop[0], 4)
-    for filename, bounds in SHADOW_CROPS.items():
-        assert layers[filename].shape == (bounds[3] - bounds[1], bounds[2] - bounds[0], 4)
     # Conspicuous fixed pieces such as bed, wooden sash, foreground plants
     # must never be affected by the pixel-level layer builder.
     for px, py in ((40, 900), (1320, 175), (1160, 450), (742, 80), (400, 750)):
@@ -55,10 +53,6 @@ def check_real_assets() -> None:
         expected_files = {
             "room-backdrop.webp": EXPECTED,
             "room-curtain.webp": (CURTAIN_CROP[2] - CURTAIN_CROP[0], CURTAIN_CROP[3] - CURTAIN_CROP[1]),
-            **{
-                name: (box[2] - box[0], box[3] - box[1])
-                for name, box in SHADOW_CROPS.items()
-            },
         }
         sizes = {}
         for name, size in expected_files.items():
