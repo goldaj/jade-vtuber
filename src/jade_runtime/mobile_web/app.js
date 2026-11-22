@@ -642,6 +642,87 @@
     }
   });
 
+  const deploymentPanel = $("deployment-panel");
+  const deploymentLoad = $("deployment-load"), deploymentRun = $("deployment-run");
+  const deploymentRestart = $("deployment-restart"), deploymentBranch = $("deployment-branch");
+  const deploymentState = $("deployment-state");
+  let deploymentPending = false;
+
+  async function deploymentRequest(operation, extras = {}) {
+    return makeRequest("/api/deployment",
+      JSON.stringify(Object.assign({operation}, extras)),
+      {"Content-Type":"application/json"});
+  }
+
+  async function refreshDeployment() {
+    if (deploymentPending || !token) return;
+    deploymentPending = true;
+    deploymentLoad.disabled = true;
+    deploymentState.textContent = "Interrogation du superviseur local…";
+    try {
+      const [current, response] = await Promise.all([
+        deploymentRequest("status"), deploymentRequest("branches")
+      ]);
+      const branchNames = Array.isArray(response.branches) ? response.branches : [];
+      const former = deploymentBranch.value;
+      deploymentBranch.replaceChildren();
+      for (const name of branchNames) {
+        if (typeof name !== "string") continue;
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        deploymentBranch.appendChild(option);
+      }
+      if (branchNames.includes(former)) deploymentBranch.value = former;
+      deploymentBranch.disabled = !branchNames.length;
+      deploymentRun.disabled = !branchNames.length;
+      deploymentState.textContent =
+        "Version active : " + (current.sha || "non connue") +
+        " ; statut : " + (current.phase || "inconnu") +
+        " ; processus : " + (current.running ? "en marche" : "arrêté") +
+        (current.error ? " ; incident : " + current.error : "");
+    } catch (error) {
+      deploymentState.textContent = error.message || "Superviseur indisponible.";
+      deploymentBranch.disabled = true;
+      deploymentRun.disabled = true;
+    } finally {
+      deploymentPending = false;
+      deploymentLoad.disabled = false;
+    }
+  }
+
+  async function submitDeployment(operation) {
+    if (deploymentPending || !token) return;
+    const branch = deploymentBranch.value;
+    if (operation === "deploy" && (!branch || deploymentBranch.disabled)) return;
+    const question = operation === "deploy"
+      ? "Redéployer la branche " + branch + " et redémarrer Jade ?"
+      : "Redémarrer Jade sans mettre à jour le code ?";
+    if (!window.confirm(question)) return;
+    deploymentPending = true;
+    deploymentRun.disabled = deploymentRestart.disabled = true;
+    deploymentState.textContent = "Demande de redémarrage envoyée…";
+    try {
+      await deploymentRequest(operation,
+        operation === "deploy" ? {branch, confirm:true} : {confirm:true});
+      deploymentState.textContent =
+        "Redémarrage engagé. La connexion peut être interrompue ; actualise ici après le retour de Jade.";
+    } catch (error) {
+      deploymentState.textContent = error.message || "Redémarrage non confirmé.";
+    } finally {
+      deploymentPending = false;
+      deploymentRestart.disabled = false;
+      deploymentRun.disabled = deploymentBranch.disabled;
+    }
+  }
+
+  deploymentPanel.addEventListener("toggle", () => {
+    if (deploymentPanel.open) refreshDeployment();
+  });
+  deploymentLoad.addEventListener("click", refreshDeployment);
+  deploymentRun.addEventListener("click", () => submitDeployment("deploy"));
+  deploymentRestart.addEventListener("click", () => submitDeployment("restart"));
+
   const billingPanel = $("billing-panel"), billingRefresh = $("billing-refresh");
   const billingStatus = $("billing-status"), billingToday = $("billing-today"), billingMonth = $("billing-month");
   let billingPending = false;
