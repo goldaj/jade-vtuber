@@ -1,4 +1,4 @@
-"""DEV-011 (revised): natural requests write ordinary memory only.
+"""Owner ordinary L2 requests are mandatory; Core proposals are voluntary.
 
 No OpenAI, real microphone, Discord connection or private user data.
 """
@@ -103,24 +103,19 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
             "significance": "Décision volontaire de Jade dans le test.",
         }, ensure_ascii=False))
 
-    async def test_owner_core_request_is_always_ordinary_and_persistent(self):
+    async def test_owner_core_proposal_is_not_forced_to_l2_or_l3(self):
+        # An owner's explicit Core suggestion is conversational input.
+        # Unlike an ordinary L2 imperative, it cannot force any write.
         msg = self.request(
             "Jade, je veux que tu gardes ceci dans tes Core Memories : "
             "notre première conversation sur Discord.")
-        result = await self.svc.command(msg)
-        self.assertIn("mémoire ordinaire", result.text)
-        self.assertIn("mon choix", result.text)
-        self.assertNotIn("première conversation", result.text)
+        self.assertIsNone(await self.svc.command(msg))
         await self.flush_explicit_writes()
-        memories = MemoryStore(self.path).list_for_account(OWNER)
-        self.assertEqual(len(memories), 1)
-        self.assertEqual(memories[0]["kind"], "ordinary")
-        self.assertEqual(memories[0]["scope"], "person")
-        self.assertIsNotNone(memories[0]["expires_at"])
+        self.assertEqual(MemoryStore(self.path).list_for_account(OWNER), [])
         self.assertEqual(MemoryStore(self.path).recall_self_core(OWNER), [])
-        self.assertIn("première conversation", await self.svc.context_for(msg))
-        self.assertFalse(self.svc.schedule(msg, Reply(msg, "Réponse.")))
+        # The optional Jade-selected memory tool is tested separately.
         self.assertFalse(hasattr(self.store, "put_owner_core"))
+
     async def test_natural_voice_from_micro_and_mobile_deduplicates(self):
         phrase = "Jade, retiens que nous avons finalisé le prototype."
         mobile = self.request(phrase, platform="mobile")
@@ -156,8 +151,8 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.store.recall_self_core(OWNER), [])
         other_channel = self.request("Jade, bonjour", platform="discord",
                                      account="123", author="Alice", channel="999")
-        self.assertEqual(await self.svc.context_for(other_channel), "")
-        self.assertNotIn("Alice", await self.svc.context_for(two))
+        self.assertIn("Alice a partagé un souvenir", await self.svc.context_for(other_channel))
+        self.assertIn("Alice a partagé un souvenir", await self.svc.context_for(two))
         self.assertEqual(len(self.store.recall(("discord", "123"), "discord:100")), 1)
         self.assertEqual(len(self.store.recall(("discord", "456"), "discord:100")), 1)
     async def test_voice_and_text_share_verified_discord_scope(self):
@@ -184,7 +179,7 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.jade_chooses_memory(
             dm, "Cet utilisateur vient de se connecter."))["status"], "enregistré")
         self.assertIsNone(await self.svc.command(twitch))
-        self.assertIsNone(await self.svc.prepare_memory_action(twitch))
+        self.assertFalse((await self.svc.prepare_memory_action(twitch)).write_enabled)
         self.assertEqual(len(self.store.list_for_account(("discord", "123"))), 1)
         self.assertEqual(self.store.list_for_account(("twitch", "456")), [])
         self.store.enable(("twitch", "456"))
@@ -241,13 +236,13 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.store.delete_memory(outsider, memory_id))
         self.assertEqual(self.store.list_for_account(outsider), [])
         self.assertEqual(self.store.recall_self_core(OWNER), [])
-    async def test_orchestrator_routes_request_without_llm_or_core_curator(self):
+    async def test_orchestrator_routes_core_proposal_to_model_without_forced_write(self):
         class Backend:
             calls = 0
 
             async def complete(self, messages):
                 self.calls += 1
-                raise AssertionError("Direct memory requests must not call the model")
+                return "Je décide librement de ne pas le retenir."
 
         backend = Backend()
         delivered = []
@@ -264,11 +259,11 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
             result = asyncio.get_running_loop().create_future()
             await runner.submit(msg, result=result)
             await asyncio.wait_for(runner.idle(), 3)
-            self.assertIn("ordinaire", result.result())
-            self.assertEqual(backend.calls, 0)
+            self.assertIn("librement", result.result())
+            self.assertEqual(backend.calls, 1)
             self.assertEqual(len(delivered), 1)
             await self.flush_explicit_writes(service)
-            self.assertEqual(self.store.list_for_account(OWNER)[0]["kind"], "ordinary")
+            self.assertEqual(self.store.list_for_account(OWNER), [])
             self.assertEqual(self.store.recall_self_core(OWNER), [])
             self.assertFalse(service.tasks)
         finally:
