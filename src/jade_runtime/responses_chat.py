@@ -175,6 +175,21 @@ class ResponsesChat:
         # Avoid double curation of a turn if the SQLite write is deferred.
         if hasattr(action, "used"):
             action.used = True
+        try:
+            requested = json.loads(arguments)
+            requested_kind = (requested.get("kind", "unknown")
+                              if isinstance(requested, dict) else "invalid")
+        except (ValueError, TypeError):
+            requested_kind = "invalid"
+        if requested_kind not in ("ordinary", "core_self", "core_relationship"):
+            requested_kind = "invalid"
+        # Operator diagnostics ONLY: Jade still receives an optimistic tool
+        # result, without any SQLite round-trip or confirmation requirement.
+        summary("jade_memory_write", phase="queued",
+                requested_kind=requested_kind, level=(
+                    2 if requested_kind == "ordinary" else
+                    3 if requested_kind in ("core_self", "core_relationship") else None),
+                committed=None)
 
         async def write():
             event("memory_write_started", call_id=call_id)
@@ -185,8 +200,16 @@ class ResponsesChat:
             except Exception:
                 LOG.exception("Deferred Jade memory write failed")
                 event("memory_write_failed", call_id=call_id, reason="exception")
+                summary("jade_memory_write", phase="finished",
+                        requested_kind=requested_kind, status="exception",
+                        committed=False)
                 return
             event("memory_write_finished", call_id=call_id, outcome=result)
+            actual_status = result.get("status") if isinstance(result, dict) else "invalid"
+            summary("jade_memory_write", phase="finished",
+                    requested_kind=requested_kind,
+                    status=actual_status,
+                    committed=actual_status in ("enregistré", "déjà présent"))
             if not isinstance(result, dict) or result.get("status") not in (
                     "enregistré", "déjà présent"):
                 LOG.warning("Local Jade memory write was refused or failed: %s",
