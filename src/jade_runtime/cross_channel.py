@@ -7,12 +7,15 @@ must be declared in the PC's private configuration; unknown targets fail closed.
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import datetime, timezone
 import re
 import uuid
 
 from .memory_store import identity_of
 from .messages import Reply
+
+LOG = logging.getLogger("jade.continuity")
 
 
 def _utc() -> str:
@@ -163,6 +166,17 @@ class CrossChannelContinuity:
                 return updated
             return None
 
+    async def _safe_tasks(self, key, *, operation, payload=""):
+        """Optional continuity must not interrupt the main Jade conversation."""
+        try:
+            return await asyncio.to_thread(
+                self._tasks, key, operation=operation, payload=payload)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            LOG.warning("Continuity store unavailable; no private content logged")
+            return None
+
     async def context_for(self, incoming):
         """Only an explicitly resumed task is passed as untrusted prompt data."""
         if not self._private(incoming):
@@ -170,7 +184,7 @@ class CrossChannelContinuity:
         key = identity_of(incoming)
         if key is None:
             return ""
-        task = await asyncio.to_thread(self._tasks, key, operation="active")
+        task = await self._safe_tasks(key, operation="active")
         if task is None:
             return ""
         return ("Objectif actuellement repris par le propriétaire vérifié, "
@@ -185,7 +199,15 @@ class CrossChannelContinuity:
         if not self._private(incoming):
             return Reply(incoming, "Cette commande est réservée à une conversation privée.")
         key = identity_of(incoming)
-        if key is None or not await asyncio.to_thread(self.store.is_goldaj, key):
+        try:
+            owner = (key is not None and
+                     await asyncio.to_thread(self.store.is_goldaj, key))
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            LOG.warning("Continuity owner verification unavailable")
+            return Reply(incoming, "Continuité temporairement indisponible.")
+        if not owner:
             return Reply(incoming, "Compte propriétaire non vérifié.")
         if text.startswith("!jade-transfert"):
             match = re.fullmatch(r"!jade-transfert\s+discord:([1-9][0-9]{0,24})\s+(.{1,500})",
@@ -217,32 +239,32 @@ class CrossChannelContinuity:
         if operation == "ajouter":
             if not 3 <= len(arg) <= 400:
                 return Reply(incoming, "Décris une tâche en 3 à 400 caractères.")
-            task_id = await asyncio.to_thread(self._tasks, key, operation="add", payload=arg)
+            task_id = await self._safe_tasks(key, operation="add", payload=arg)
+            if not task_id:
+                return Reply(incoming, "Impossible d'enregistrer la tâche actuellement.")
             return Reply(incoming, f"Tâche suivie ({task_id[:8]}).")
         if operation == "liste":
-            tasks = await asyncio.to_thread(self._tasks, key, operation="list")
+            tasks = await self._safe_tasks(key, operation="list")
             if tasks is None:
-                return Reply(incoming, "Accès refusé.")
+                return Reply(incoming, "Tâches indisponibles ou accès refusé.")
             return Reply(incoming, ("Tâches en cours :\n" + "\n".join(
                 f"- {x['id'][:8]} : {x['description'][:180]}" for x in tasks))
                 if tasks else "Aucune tâche en cours.")
         if operation in ("reprendre", "terminer"):
             if not re.fullmatch(r"[0-9a-f]{8,32}", arg):
                 return Reply(incoming, "Indique un identifiant de tâche (8 à 32 caractères).")
-            tasks = await asyncio.to_thread(self._tasks, key, operation="list")
+            tasks = await self._safe_tasks(key, operation="list")
             found = [x for x in tasks or [] if x["id"].startswith(arg)]
             if len(found) != 1:
                 return Reply(incoming, "Tâche introuvable ou identifiant ambigu.")
             task_id = found[0]["id"]
             if operation == "reprendre":
-                resumed = await asyncio.to_thread(
-                    self._tasks, key, operation="resume", payload=task_id)
+                resumed = await self._safe_tasks(key, operation="resume", payload=task_id)
                 if not resumed:
                     return Reply(incoming, "Tâche introuvable.")
                 return Reply(incoming, "Objectif repris sur tes canaux privés liés : "
                              + found[0]["description"][:400])
-            completed = await asyncio.to_thread(
-                self._tasks, key, operation="done", payload=task_id)
+            completed = await self._safe_tasks(key, operation="done", payload=task_id)
             if completed:
                 for session, active_id in list(self.active.items()):
                     if active_id == task_id:
