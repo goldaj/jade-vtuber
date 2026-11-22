@@ -19,6 +19,10 @@
   let visibilityObserver = null;
   let onScreen = true; // Graceful fallback if IntersectionObserver is unavailable.
   let renderRunning = false;
+  let hasStartedRendering = false;
+  let resumeFromPause = false;
+  let visibilityPauseTimer = null;
+  const VIEWPORT_PAUSE_DELAY_MS = 6500;
   let resetTimer = null;
   let speaking = false;
   const counts = Object.create(null);
@@ -57,28 +61,68 @@
     applyExpression("Neutral");
   }
 
+
+  function isMounted() {
+    return target.isConnected !== false &&
+      (typeof target.getClientRects !== "function" || target.getClientRects().length > 0);
+  }
+
+  function cancelPendingVisibilityPause() {
+    if (visibilityPauseTimer !== null) {
+      clearTimeout(visibilityPauseTimer);
+      visibilityPauseTimer = null;
+    }
+  }
+
+  function stopRendering() {
+    cancelPendingVisibilityPause();
+    if (!pixi || !pixi.ticker) return;
+    if (renderRunning) {
+      renderRunning = false;
+      pixi.ticker.stop();
+      resumeFromPause = hasStartedRendering;
+    }
+    if (model && typeof model.autoUpdate === "boolean") model.autoUpdate = false;
+  }
+
   function syncRenderVisibility() {
     if (!pixi || !pixi.ticker) return;
-    // A hidden tab, an unmounted component or one outside the viewport has
-    // no useful GPU output. Audio / LLM / message transport remain independent.
-    const mounted = target.isConnected !== false &&
-      (typeof target.getClientRects !== "function" || target.getClientRects().length > 0);
-    const visible = Boolean(model && mounted && onScreen && !document.hidden);
-    if (renderRunning === visible) {
-      // Loading can finish while already hidden. Keep the model's own shared
-      // animation updater suspended even without a ticker state transition.
-      if (!visible && model && typeof model.autoUpdate === "boolean") model.autoUpdate = false;
+    // Hard stops must be immediate. Backgrounded tabs can throttle timers;
+    // detached/hidden surfaces should never spend GPU time during the grace period.
+    const hardHidden = document.hidden || !isMounted();
+    const visible = Boolean(model && !hardHidden && onScreen);
+    if (visible) {
+      cancelPendingVisibilityPause();
+      if (renderRunning) return;
+      // After a real pause, restart only the visual expression from neutral.
+      // Keep current speech, lips, dialogue and memory state untouched.
+      if (resumeFromPause) {
+        clearTimer();
+        pendingIntent = "neutral";
+        activeChoice = null;
+        mood.textContent = "Jade est attentive.";
+        applyExpression("Neutral");
+        resumeFromPause = false;
+      }
+      if (typeof model.autoUpdate === "boolean") model.autoUpdate = true;
+      renderRunning = true;
+      hasStartedRendering = true;
+      pixi.ticker.start();
       return;
     }
-    renderRunning = visible;
-    if (visible) {
-      // A single resume, not a second ticker or a new Idle motion.
-      if (typeof model.autoUpdate === "boolean") model.autoUpdate = true;
-      pixi.ticker.start();
-    } else {
-      pixi.ticker.stop();
-      if (model && typeof model.autoUpdate === "boolean") model.autoUpdate = false;
+    if (hardHidden || !renderRunning || !model) {
+      stopRendering();
+      return;
     }
+    // Soft viewport occlusion: a single grace timer avoids stop/start storms
+    // on touch scrolls and temporary layout shifts. It is NOT a second ticker.
+    if (visibilityPauseTimer !== null) return;
+    visibilityPauseTimer = setTimeout(() => {
+      visibilityPauseTimer = null;
+      if (renderRunning && (document.hidden || !isMounted() || !onScreen)) {
+        stopRendering();
+      }
+    }, VIEWPORT_PAUSE_DELAY_MS);
   }
 
   document.addEventListener("visibilitychange", syncRenderVisibility);
@@ -204,6 +248,7 @@
       syncRenderVisibility();
     } catch (error) {
       console.warn("Jade Live2D:", error);
+      cancelPendingVisibilityPause();
       if (observer) observer.disconnect();
       if (visibilityObserver) visibilityObserver.disconnect();
       if (pixi) { try { pixi.destroy(true, {children: true}); } catch (_) {} }
