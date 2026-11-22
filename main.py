@@ -99,6 +99,9 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                                    curator_enabled=bool(config.memory_curator_enabled and live),
                                    curation_mode=("batch" if config.memory_batch_enabled else "single"))
             scopes.push_async_callback(memory.close)
+            if mic or mobile:
+                # No LLM request: authorized owner L1/L2 warm before first turn.
+                await memory.prefetch_owner()
 
             # Retention is enforced even for a long-running, otherwise idle Jade.
             # MemoryStore already prunes once during initialization.
