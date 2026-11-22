@@ -170,7 +170,8 @@ class MemoryBatcher:
                 if kind == "core_self":
                     # Jade's autobiography is owner-only. Never store this in
                     # the personal memory table of a Discord/Twitch speaker.
-                    if key != ("microphone", "goldaj"):
+                    if (key != ("microphone", "goldaj")
+                            and not await asyncio.to_thread(self.store.is_goldaj, key)):
                         continue
                     persisted = await asyncio.to_thread(
                         self.store.put_self_core, key, summary=summary,
