@@ -22,14 +22,22 @@ Les corrections ne modifient pas le moteur de mémoire runtime. La suite Windows
 - Aucun changement de génération des réponses, lecture audio, transport, mémoire ni API. Gain GPU/batterie attendu, **pas de mesure matérielle attestée**.
 - `tests/mobile_avatar_visibility_test.js` contrôle démarrage, onglet caché, retour, hors champ, démontage et absence d'API d'observation.
 
-## DEV-028 — preuve de livraison granulaire
+## DEV-028 — preuves passives de livraison (refonte du 22 novembre)
 
-- `turn_logging.py` garde `reply_planned` et `delivery_outcome` et ajoute `delivery_evidence` pour **transport_accepted** (Discord texte après réponse API) ou **playback_completed** (ffplay succès / consommation de flux audio Discord).
-- `orchestrator.py` recoupe les confirmations rendues par `on_reply` avec les seules destinations planifiées, et consigne la fin des tours PCM Discord anticipés lorsqu'ils ont effectivement été consommés.
-- `main.py` confirme l'envoi Discord uniquement après `send_chat` réussi ; un callback mobile/HTTP, l'envoi IRC Twitch non confirmé, la simple planification, le handoff ou l'interruption ne sont **jamais assimilés à une lecture complète**.
-- `output.py` sépare « stream géré » de « stream effectivement consommé » pour ne pas confirmer une destination révoquée. Le fait qu'un lecteur audio ait consommé le signal ne prouve jamais qu'un humain l'a entendu.
-- Zéro texte, secret, identité, token ou extrait de mémoire dans les nouveaux événements.
-- Tests ciblés dans `tests/test_jade_turn_logging.py`, `tests/test_jade_economy_delivery.py` et CI Javascript mobile.
+**La première implémentation a été retirée**, car elle imposait un contrat de retour structuré entre `main.py`, `Runtime.on_reply` et `SpeechOutput._speak_progressive`. Même avec des tests verts, coupler le journal à la diffusion créait un risque inutile.
+
+La refonte conserve **exactement les contrats fonctionnels de la version de référence sur `main`** :
+- `Runtime.on_reply` ne consomme aucun accusé ni dictionnaire de résultat ; son comportement, ses appels mémoire et ses erreurs restent les mêmes.
+- `SpeechOutput.speak` et `_speak_progressive` ont retrouvé leurs valeurs de retour historiques ; le choix du repli WAV, les autorisations et le TTS n'ont pas été modifiés.
+- Trois **points d'observation facultatifs et synchrones**, sans `await`, sont placés **après un succès préexistant** : `main.py` après l'API Discord texte, `AudioOutput.play` après la sortie réussie de ffplay, et `DiscordVoiceBridge.mark_voice_reply_played` après confirmation de session.
+- `turn_logging.observe_delivery` ne décide rien, n'envoie rien et ignore les événements non autorisés ou sans identifiant de tour issu du `ContextVar` local. Les seuls événements sont `transport_accepted / discord_text / discord_api` et `playback_completed / discord_voice / discord_audio_consumer` ou `local_audio / ffplay_exit_zero`.
+- La méthode `_emit_delivery_diagnostic` isole les deux destinations de logs (console, fichier privé). Une exception de l'une ne bloque jamais l'autre ni le transport. Le `record_delivery` historique est rendu non bloquant également ; son statut `handoff_completed` **n'est pas** une preuve que le client a reçu ou lu la réponse.
+- Aucun contenu de conversation, token, identifiant de message, identité ou secret n'est ajouté aux événements de preuve ; seulement identifiant numérique de tour, destination, état et provenance technique. Aucun coût LLM.
+- Les événements ne prouvent **jamais** que l'utilisateur a lu le texte ou entendu la voix. L'absence d'événement peut signifier une destination sans accusé (mobile/Twitch), un contexte non lié, une défaillance du journal ou une interruption ; ce n'est pas un échec de livraison démontré.
+
+Les tests ciblés `tests/test_jade_delivery_observation.py` simulent la panne indépendante des deux sinks, une preuve invalidée/hors tour, une lecture ffplay réussie/échouée/désactivée et une session Discord acceptée/refusée. Les anciens tests de rappel d'un dictionnaire depuis `on_reply` ont été retirés : ils validaient précisément le couplage indésirable.
+
+**Réserve de recette :** vérifier sur Discord réel les horodatages et l'exactitude des événements de fin audio ; le gain de robustesse est établi par tests hors ligne, pas par une mesure en production.
 
 ## Validation et suite
 
