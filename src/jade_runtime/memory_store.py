@@ -143,6 +143,27 @@ class MemoryStore:
                     ON conversation_turns(person_id,scope,id DESC);
                 CREATE INDEX IF NOT EXISTS idx_conversation_turns_recent
                     ON conversation_turns(person_id,scope,created_at,id);
+                CREATE TABLE IF NOT EXISTS memory_revision (
+                    id INTEGER PRIMARY KEY CHECK(id=1),
+                    value INTEGER NOT NULL DEFAULT 0
+                );
+                INSERT OR IGNORE INTO memory_revision(id,value) VALUES(1,0);
+                CREATE TRIGGER IF NOT EXISTS revision_memory_insert AFTER INSERT ON memories
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_memory_update AFTER UPDATE ON memories
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_memory_delete AFTER DELETE ON memories
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_identity_insert AFTER INSERT ON identities
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_identity_update AFTER UPDATE ON identities
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_identity_delete AFTER DELETE ON identities
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_self_insert AFTER INSERT ON jade_self_core
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_self_delete AFTER DELETE ON jade_self_core
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
             """)
             if version < 4:
                 # One-time v4 migration: extend existing ordinary memories from
@@ -427,6 +448,47 @@ class MemoryStore:
                 DELETE FROM jade_self_core WHERE id=? AND visibility='owner_only'""",
                 (memory_id,))
             return deleted.rowcount > 0
+
+    def revision(self) -> int:
+        """Atomic invalidation stamp shared by all Jade processes/connections."""
+        with self._db() as db:
+            return int(db.execute(
+                "SELECT value FROM memory_revision WHERE id=1").fetchone()[0])
+
+    def recall_candidates(self, key: tuple[str, str], scope: str, *,
+                          linked: bool = False, limit: int = 512) -> list[dict]:
+        """Bounded candidates filtered by verified person and scope *in SQLite*.
+
+        Cross-scope recall requires at least two transport-linked identities
+        and is for PRIVATE consumers only; the caller owns the private check.
+        A public channel must never set linked=True.
+        """
+        _validate_key(key)
+        if (not isinstance(scope, str) or not 1 <= len(scope) <= 256
+                or type(linked) is not bool or not 1 <= limit <= 512):
+            raise ValueError("invalid scoped memory retrieval")
+        with self._db() as db:
+            row = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?",
+                key).fetchone()
+            if row is None:
+                return []
+            person = row["person_id"]
+            if linked:
+                count = db.execute(
+                    "SELECT COUNT(*) FROM identities WHERE person_id=?", (person,)
+                ).fetchone()[0]
+                if count < 2:
+                    return []
+            sql = """
+                SELECT kind,scope,summary,significance,created_at,source_platform
+                FROM memories WHERE person_id=? AND scope""" + (
+                "<>?" if linked else "=?") + """
+                  AND (expires_at IS NULL OR expires_at>?)
+                ORDER BY created_at DESC LIMIT ?
+            """
+            rows = db.execute(sql, (person, scope, _now().isoformat(), limit)).fetchall()
+        return [dict(x) for x in rows]
 
     def recall(self, key: tuple[str, str], scope: str, *, limit: int = 8) -> list[dict]:
         """Personal and current-channel memories; never another person's memories."""
