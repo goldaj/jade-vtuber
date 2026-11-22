@@ -30,13 +30,14 @@ class Work:
 class Runtime:
     def __init__(self, dialogue: Dialogue, on_reply: Callable[[Reply], Awaitable[None]],
                  max_queue: int = 64, on_stream_start=None, delivery_plan=None,
-                 memory_service=None):
+                 memory_service=None, cross_channel=None):
         if not 1 <= max_queue <= 1024:
             raise ValueError("invalid queue limit")
         self.dialogue, self.on_reply = dialogue, on_reply
         self.on_stream_start = on_stream_start
         self.delivery_plan = delivery_plan
         self.memory_service = memory_service
+        self.cross_channel = cross_channel
         self.queue = ArbitratingQueue(maxsize=max_queue)
         self.arbiter = TurnArbiter(dialogue.backend) if isinstance(dialogue, Dialogue) else None
         self.worker = None
@@ -174,13 +175,16 @@ class Runtime:
         memory_action = None
         destinations = ()
         try:
+            if self.cross_channel is not None:
+                command_reply = await self.cross_channel.command(item.message)
             if self.memory_service is not None:
                 event("turn_stage", stage="memory_start")
                 self.mark_timing("memory_start")
                 auto_enroll = getattr(self.memory_service, "ensure_auto_enrolled", None)
                 if callable(auto_enroll):
                     await auto_enroll(item.message)
-                command_reply = await self.memory_service.command(item.message)
+                if command_reply is None:
+                    command_reply = await self.memory_service.command(item.message)
                 if command_reply is None:
                     memory_context = await self.memory_service.context_for(item.message)
                     prepare = getattr(self.memory_service, "prepare_memory_action", None)
@@ -191,6 +195,10 @@ class Runtime:
                         history_messages = await self.memory_service.history_for(item.message)
                 event("turn_stage", stage="memory_end", memory_tool_available=memory_action is not None)
                 self.mark_timing("memory_end")
+            if command_reply is None and self.cross_channel is not None:
+                resumed = await self.cross_channel.context_for(item.message)
+                if resumed:
+                    memory_context = (memory_context + "\n" + resumed).strip()
             if (command_reply is None and self.on_stream_start is not None
                     and item.message.platform == "discord_voice"
                     and callable(getattr(self.dialogue.backend, "complete_stream", None))):
