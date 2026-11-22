@@ -67,7 +67,9 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .attachment-button{background:#e1efde;color:#244d36;border:1px solid #bed7ba;border-radius:12px}
 .attachment-button:focus-visible{outline-color:#e9b943}
 /* The authenticated app stays behind this full, sharp splash image until unlock. */
+/* Always display the token form above the temporary launch splash (z-index:99999). */
 .auth-layer{
+  z-index:100000;
   background:#fffdf7 url("/assets/splash-jade.png") center center/cover no-repeat;
   backdrop-filter:none;
   padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px));

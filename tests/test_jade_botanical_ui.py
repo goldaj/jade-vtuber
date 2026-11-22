@@ -26,7 +26,9 @@ class BotanicalUIContract(unittest.TestCase):
         self.assertIn('src="/assets/splash-jade.png"', html)
         self.assertIn('src="/assets/splash.js"', html)
         self.assertIn("object-fit:cover", (ROOT / "jade-theme.css").read_text(encoding="utf-8"))
-        self.assertIn('addEventListener("load", dismissSplash', (ROOT / "splash.js").read_text(encoding="utf-8"))
+        splash_js = (ROOT / "splash.js").read_text(encoding="utf-8")
+        self.assertNotIn('addEventListener("load", dismissSplash', splash_js)
+        self.assertIn("  dismissSplash();", splash_js)
         css = (ROOT / "jade-theme.css").read_text(encoding="utf-8")
         self.assertIn('.shell[data-view="home"]', css)
         self.assertIn('#c8dcc7', css.lower())
@@ -61,6 +63,9 @@ class BotanicalUIContract(unittest.TestCase):
         css = (ROOT / "jade-theme.css").read_text(encoding="utf-8")
         auth_layer = css.split(".auth-layer{", 1)[1].split("}", 1)[0]
         self.assertIn('url("/assets/splash-jade.png")', auth_layer)
+        # The initial splash used to mask the modal until window.load fired.
+        self.assertIn("z-index:100000", auth_layer)
+        self.assertIn("z-index:99999", css.split(".jade-launch-splash{", 1)[1].split("}", 1)[0])
         self.assertIn("backdrop-filter:none", auth_layer)
         self.assertIn("cover no-repeat", auth_layer)
         self.assertIn("transform:translateY(clamp(", css)

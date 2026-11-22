@@ -1,6 +1,7 @@
-/* Dismiss the illustrated web splash as soon as the UI resources load.
- * Independent of app.js, so a conversation error cannot trap the user.
- * Android's earlier OS-controlled WebAPK launch icon is a separate screen.
+/* The deferred script runs after HTML parsing and stylesheets are ready.
+ * Never wait for window.load: slow/unavailable Live2D and images must not
+ * leave the illustrated launch layer in front of the token form or app.
+ * Independent of app.js and of Android's earlier native launch screen.
  */
 "use strict";
 (() => {
@@ -17,6 +18,6 @@
       window.setTimeout(() => splash.remove(), 420);
     });
   }
-  if (document.readyState === "complete") dismissSplash();
-  else window.addEventListener("load", dismissSplash, {once:true});
+  // The script tag is defer, so the modal and page DOM already exist here.
+  dismissSplash();
 })();

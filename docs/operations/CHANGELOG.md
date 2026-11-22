@@ -1,5 +1,12 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Correctif popup de connexion masquée par le splash
+
+- **Anomalie constatée sur Redmi (capture du propriétaire) :** l'image de lancement remplissait l'écran sans laisser apparaître le formulaire de jeton, alors que celui-ci se trouve bien dans le HTML.
+- **Cause :** le lancement HTML superposait un splash temporaire `z-index:99999` au dialogue `z-index:40`, et le retirait seulement lors de `window.load`, susceptible d'être retardé par les autres ressources.
+- **Correctif sur develop :** le dialogue de connexion passe au-dessus du splash transitoire ; `splash.js`, chargé avec `defer`, déclenche sa disparition immédiatement après l'analyse du DOM, indépendamment de `window.load`. Fond net, carte compacte très basse en portrait, sécurité du jeton, autres écrans et animations inchangés.
+- **Validation :** contrat automatisé `tests/test_jade_botanical_ui.py` adapté pour empêcher un retour de cette superposition. À vérifier physiquement sur Android avant clôture de `REC-040` (démarrage, ouverture du clavier, sortie et reconnexion, portrait/paysage). Aucune modification de `main`.
+
 ## 2026-11-22 — Cuisine animée en trois effets isolés
 
 - **Demande du propriétaire :** animer vapeur de bouilloire, plantes retombantes et lumière au sol, sans déformer le reste du décor et sans toucher aux animations de la chambre.
