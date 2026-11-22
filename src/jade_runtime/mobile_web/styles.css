@@ -278,3 +278,12 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
   white-space:normal;overflow-wrap:anywhere;text-align:left;background:#5d4b77;
   color:#fff;border:1px solid #bfa6db;border-radius:10px;font-size:.8rem}
 .attachment-button:focus-visible {outline:2px solid #e8caff;outline-offset:2px}
+
+/* DEV-036: reminder controls stay readable in a narrow Android PWA. */
+#reminders-panel #reminders-list {margin:8px 0;padding-left:20px}
+#reminders-panel #reminders-list li {margin:9px 0;line-height:1.5;overflow-wrap:anywhere}
+#reminders-panel #reminders-list li button {margin:4px 5px 2px 0;padding:5px 8px}
+#reminders-panel #reminder-form {display:grid;grid-template-columns:1fr;gap:7px;margin:10px 0}
+#reminders-panel #reminder-form button {grid-column:1}
+#reminders-panel #reminder-title,#reminders-panel #reminder-date {width:100%;box-sizing:border-box}
+#reminders-panel #notification-status,#reminders-panel #reminder-status {overflow-wrap:anywhere}
