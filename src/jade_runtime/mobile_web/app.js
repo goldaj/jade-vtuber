@@ -817,6 +817,186 @@
     if (billingPanel.open && !document.hidden && token) loadBilling();
   }, 300000);
 
+  // DEV-036: reminders live on the PC. The phone never polls while closed.
+  // Its service worker is only awakened by the operating system's Push API.
+  const remindersPanel = $("reminders-panel");
+  const remindersList = $("reminders-list");
+  const remindersStatus = $("reminder-status");
+  const notificationStatus = $("notification-status");
+  const reminderForm = $("reminder-form");
+  const reminderTitle = $("reminder-title");
+  const reminderDate = $("reminder-date");
+  const reminderHeaders = {"Content-Type":"application/json"};
+  const reminderRequest = (action, id = null, title = null, due_at = null) =>
+    makeRequest("/api/reminders", JSON.stringify({action, id, title, due_at}), reminderHeaders);
+
+  function formatReminderDate(seconds) {
+    return new Date(Number(seconds) * 1000).toLocaleString("fr-FR", {
+      dateStyle:"medium", timeStyle:"short"
+    });
+  }
+  function renderReminders(items) {
+    remindersList.replaceChildren();
+    if (!items.length) {
+      const empty = document.createElement("li");
+      empty.textContent = "Aucun rappel enregistré.";
+      remindersList.appendChild(empty);
+      return;
+    }
+    for (const reminder of items) {
+      const line = document.createElement("li");
+      const info = document.createElement("span");
+      const states = {pending:"programmé", retry:"en attente d'envoi",
+        sending:"envoi en cours", sent:"remis au transport (pas de preuve de lecture)",
+        failed:"échec d'envoi", cancelled:"annulé"};
+      info.textContent = reminder.title + " · " + formatReminderDate(reminder.due_at)
+        + " · " + (states[reminder.state] || reminder.state)
+        + " · " + (reminder.destination === "discord" ? "Discord" : "mobile");
+      line.appendChild(info);
+      if (reminder.state !== "cancelled") {
+        const defer = document.createElement("button");
+        defer.type = "button";
+        defer.textContent = "Reporter 10 min";
+        defer.addEventListener("click", async () => {
+          try {
+            const when = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+            await reminderRequest("update", reminder.id, null, when);
+            remindersStatus.textContent = "Rappel reporté.";
+            await loadReminders();
+          } catch (error) { remindersStatus.textContent = error.message; }
+        });
+        line.appendChild(defer);
+      }
+      if (!["cancelled", "sent"].includes(reminder.state)) {
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.textContent = "Annuler";
+        cancel.addEventListener("click", async () => {
+          try {
+            await reminderRequest("cancel", reminder.id);
+            remindersStatus.textContent = "Rappel annulé.";
+            await loadReminders();
+          } catch (error) { remindersStatus.textContent = error.message; }
+        });
+        line.appendChild(cancel);
+      }
+      remindersList.appendChild(line);
+    }
+  }
+  async function loadReminders() {
+    if (!token) return;
+    try {
+      const result = await reminderRequest("list");
+      renderReminders(result.items || []);
+      remindersStatus.textContent = "Les états sont ceux observés par le serveur Jade.";
+    } catch (error) {
+      remindersStatus.textContent = "Rappels indisponibles : " + error.message;
+    }
+  }
+  reminderForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!token) { authorizeAgain(); return; }
+    const title = reminderTitle.value.trim();
+    const date = new Date(reminderDate.value);
+    if (!title || Number.isNaN(date.getTime())) {
+      remindersStatus.textContent = "Titre et date valides requis.";
+      return;
+    }
+    try {
+      await reminderRequest("create", null, title, date.toISOString());
+      reminderForm.reset();
+      remindersStatus.textContent = "Rappel enregistré sur le PC.";
+      await loadReminders();
+    } catch (error) { remindersStatus.textContent = error.message; }
+  });
+  $("refresh-reminders").addEventListener("click", loadReminders);
+  remindersPanel.addEventListener("toggle", () => {
+    if (remindersPanel.open && token) loadReminders();
+  });
+
+  const decodeVapidKey = value => {
+    const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+    const binary = atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, "="));
+    return Uint8Array.from(binary, char => char.charCodeAt(0));
+  };
+  async function registrationForPush() {
+    if (!window.isSecureContext || !("serviceWorker" in navigator) ||
+        !("PushManager" in window) || !("Notification" in window)) {
+      throw new Error("Ce navigateur ne prend pas en charge le push pour cette PWA.");
+    }
+    return navigator.serviceWorker.ready;
+  }
+  $("enable-notifications").addEventListener("click", async () => {
+    if (!token) { authorizeAgain(); return; }
+    try {
+      const config = await makeRequest("/api/push", JSON.stringify({action:"config"}),
+                                       reminderHeaders);
+      if (!config.enabled) throw new Error("Push non configuré sur le PC Jade.");
+      const registration = await registrationForPush();
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") throw new Error("Permission de notifications refusée.");
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly:true,
+          applicationServerKey:decodeVapidKey(config.vapid_public_key)
+        });
+      }
+      await makeRequest("/api/push", JSON.stringify({
+        action:"subscribe", subscription:subscription.toJSON()
+      }), reminderHeaders);
+      notificationStatus.textContent = "Notifications activées sur cet appareil.";
+    } catch (error) {
+      notificationStatus.textContent = "Activation impossible : " + error.message;
+    }
+  });
+  $("disable-notifications").addEventListener("click", async () => {
+    if (!token) { authorizeAgain(); return; }
+    try {
+      const registration = await registrationForPush();
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        await makeRequest("/api/push", JSON.stringify({
+          action:"unsubscribe", endpoint:subscription.endpoint
+        }), reminderHeaders);
+        await subscription.unsubscribe();
+      }
+      notificationStatus.textContent = "Notifications désactivées sur cet appareil.";
+    } catch (error) {
+      notificationStatus.textContent = "Désactivation incomplète : " + error.message;
+    }
+  });
+  async function showReminder(reminderId) {
+    if (!/^[0-9a-f]{24}$/.test(reminderId)) return;
+    remindersPanel.open = true;
+    if (!token) return;
+    try {
+      const result = await makeRequest("/api/reminders", JSON.stringify({
+        action:"get", id:reminderId
+      }), reminderHeaders);
+      const reminder = result.reminder;
+      remindersStatus.textContent = "Rappel Jade : " + reminder.title + " · "
+        + formatReminderDate(reminder.due_at) + ".";
+      await loadReminders();
+      remindersStatus.textContent = "Rappel Jade : " + reminder.title + " · "
+        + formatReminderDate(reminder.due_at) + ".";
+    } catch (error) {
+      remindersStatus.textContent = "Rappel inaccessible : " + error.message;
+    }
+  }
+  function openReminderFromHash() {
+    const match = /^#reminder-([0-9a-f]{24})$/.exec(window.location.hash);
+    if (match) showReminder(match[1]);
+  }
+  window.addEventListener("hashchange", openReminderFromHash);
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", event => {
+      if (event.data && event.data.type === "jade-open-reminder")
+        showReminder(event.data.id);
+    });
+  }
+  openReminderFromHash();
+
   authForm.addEventListener("submit", event => {
     event.preventDefault();
     const value = authInput.value;
@@ -826,6 +1006,8 @@
     modal.classList.add("hidden");
     setStatus("Jeton saisi. Tu peux parler ou écrire à Jade.");
     input.focus();
+    openReminderFromHash();
+    if (remindersPanel.open) loadReminders();
   });
   form.addEventListener("submit", submitText);
   input.addEventListener("keydown", event => {
