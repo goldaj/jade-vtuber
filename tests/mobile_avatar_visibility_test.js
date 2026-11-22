@@ -75,7 +75,7 @@ async function run({intersection = true, hiddenAtStart = false} = {}) {
   assert.equal(metrics.stop,hiddenAtStart?1:1, "new ticker stopped until model load");
   if(hiddenAtStart) {
     assert.equal(metrics.start,0);
-    assert.equal(model.autoUpdate,true, "initial autoUpdate not altered until model ready");
+    assert.equal(model.autoUpdate,false, "shared model updater stopped while initially hidden");
   } else {
     assert.equal(metrics.start,1);
   }
