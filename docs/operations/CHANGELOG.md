@@ -1,5 +1,12 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — REC-039 : corriger le refus systématique de génération sur Discord
+
+- **Recette propriétaire :** mobile texte et voix confirmés OK ; Discord MP écrit, public écrit et public vocal KO, Jade déclarant explicitement l'outil indisponible.
+- **Cause dans le code :** `DocumentService.for_turn` donnait le droit mobile directement mais refusait Discord quand la mémoire était désactivée, même avec une association de compte persistée. Le prompt conditionnel pouvait entretenir la confusion entre « pas de permission » et « Discord non pris en charge ». L'état réel de la mémoire du PC n'est pas connu : cause plausible, pas preuve d'exécution privée.
+- **Correction ciblée sur develop :** lecture *seule* des identités liées en SQLite lorsque le service mémoire est désactivé, décision d'accès journalisée sans ID/texte, instruction explicite de génération pour un compte Discord déjà lié, et vrai refus de droit pour un tiers. Tests unitaires SQLite lien réel, Discord MP/public/vocal et livraison du fichier simulée. Ni reset de liaison, ni ouverture indiscriminée des autorisations, ni modification de la PWA.
+- **Suivi :** REC-039 reste `À valider` tant que les trois parcours Discord n'ont pas été retestés sur le runtime mis à jour ; les deux parcours mobiles sont déjà validés.
+
 ## 2026-11-22 — DEV-032 → REC-039 : réalisation achevée, recette en attente
 
 - La [CI Linux/Windows](https://github.com/goldaj/jade-vtuber/actions/runs/45043574769) du SHA `dc8f0fb2` est entièrement verte ; les vérifications Responses API et secrets sont réussies.

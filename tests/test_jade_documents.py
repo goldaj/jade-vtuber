@@ -5,11 +5,14 @@ import time
 from pathlib import Path
 import tempfile
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 from zipfile import ZipFile
 from io import BytesIO
 
 from src.jade_runtime.documents import DocumentService, DocumentStore, TTL_SECONDS
 from src.jade_runtime.memory_store import MemoryStore
+from src.jade_runtime.discord_text import DiscordText
 from src.jade_runtime.messages import Incoming
 
 
@@ -150,3 +153,106 @@ class LinkedDiscordRegressionTests(unittest.IsolatedAsyncioTestCase):
                     self.assertFalse((await service.for_turn(attacker)).allowed)
                     disguised = Incoming("discord", "Goldaj", "Crée un txt")
                     self.assertFalse((await service.for_turn(disguised)).allowed)
+
+
+class DiscordAttachmentDeliveryTests(unittest.IsolatedAsyncioTestCase):
+    async def test_attachment_sent_in_private_public_and_voice_text_chats(self):
+        """The same native Discord file path works for all three destinations."""
+        class FakeFile:
+            def __init__(self, path, *, filename):
+                self.name = filename
+                self.data = Path(path).read_bytes()
+                self.closed = False
+
+            def close(self):
+                self.closed = True
+
+        class FakeAllowedMentions:
+            @staticmethod
+            def none():
+                return None
+
+        class FakeChannel:
+            def __init__(self, channel_id):
+                self.id = channel_id
+                self.sent = []
+
+            async def send(self, text, *, files=None, allowed_mentions=None):
+                self.sent.append((text, [(f.name, f.data) for f in (files or [])]))
+                return SimpleNamespace(id=1000 + len(self.sent))
+
+        class FakeClient:
+            def __init__(self, channels):
+                self.channels = channels
+
+            def get_channel(self, channel_id):
+                # Public text and voice rooms are cached by the connected bot.
+                # DM channel is known only through the verified inbound message.
+                return self.channels.get(channel_id) if channel_id != 11 else None
+
+        with tempfile.TemporaryDirectory() as directory:
+            store = DocumentStore(Path(directory))
+            attachment = store.create("document.txt", "texte à télécharger")
+            channels = {id: FakeChannel(id) for id in (10, 11, 12)}
+            discord = DiscordText("fake-token", lambda message: None,
+                                  send_enabled=True, document_store=store)
+            discord.client = FakeClient(channels)
+            discord._dm_channels["11"] = channels[11]
+            with patch.dict("sys.modules", {
+                "discord": SimpleNamespace(File=FakeFile,
+                                           AllowedMentions=FakeAllowedMentions)}):
+                for channel_id in (10, 11, 12):
+                    with self.subTest(channel=channel_id):
+                        sent = await discord.send_chat(
+                            str(channel_id), "Voici le fichier",
+                            source_message_id="123", attachments=(attachment,))
+                        self.assertTrue(sent)
+                        self.assertEqual(channels[channel_id].sent,
+                            [("Voici le fichier", [("document.txt",
+                                                   "texte à télécharger".encode())])])
+            metadata = store._load(attachment.id)
+            self.assertEqual(
+                sorted(item["channel"] for item in metadata["discord"]),
+                ["10", "11", "12"])
+
+
+class DiscordPromptRegressionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_linked_discord_owner_has_document_tool_without_mobile_channel(self):
+        from src.jade_runtime.dialogue import Dialogue
+        class FakeBackend:
+            def __init__(self):
+                self.instructions = ""
+
+            async def complete_with_tools(self, messages, action):
+                self.instructions = messages[0]["content"]
+                assert callable(action.create_document)
+                result = await action.create_document(json.dumps({
+                    "filename": "jadesite.html", "content": "<p>Jade</p>"}))
+                assert result["status"] == "created"
+                return "[INTENT:neutral] Voilà ton fichier."
+
+            async def complete(self, messages):
+                raise AssertionError("Should not fall back to tool-free reply")
+
+        with tempfile.TemporaryDirectory() as directory:
+            db = Path(directory) / "memory.sqlite3"
+            memory = MemoryStore(db)
+            memory.enable(("microphone", "goldaj"))
+            discord_key = ("discord", "123456789123456789")
+            memory.enable(discord_key)
+            code = memory.begin_link(("microphone", "goldaj"), target=discord_key)
+            self.assertTrue(memory.complete_link(discord_key, code))
+            documents = DocumentService(Path(directory) / "documents",
+                                        identity_db_path=db)
+            action = await documents.for_turn(Incoming(
+                "discord", "N'importe quel pseudo", "Crée un HTML",
+                account_id=discord_key[1], channel="salon"))
+            backend = FakeBackend()
+            incoming = Incoming("discord", "N'importe quel pseudo", "Crée un HTML",
+                                account_id=discord_key[1],
+                                channel="salon", force_reply=True)
+            reply = await Dialogue(backend, "Jade est une assistante.").respond(
+                incoming, document_action=action)
+            self.assertEqual(reply.attachments[0].name, "jadesite.html")
+            self.assertIn("identité Goldaj vérifiée", backend.instructions)
+            self.assertIn("Outil jade_create_document disponible", backend.instructions)
