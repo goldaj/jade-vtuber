@@ -1,8 +1,8 @@
 # Nouvelles capacités : contrôle, comportement, autonomie et interactions
 
-**Décision de priorisation du propriétaire — 18 novembre 2026.** Ajout des **36 propositions NEW-01 à NEW-36** formulées lors de la revue produit et architecture de Jade. **NEW-04, NEW-10, NEW-18, NEW-24 et NEW-36 sont P1** ; **NEW-34 et NEW-35 restent P3** comme dans la recommandation initiale ; **les 29 autres sont P2**, y compris les anciennes recommandations P0. La promotion explicite de NEW-36 en P1 prime sur son classement initial P3. Les priorités ci-dessous sont les décisions du propriétaire.
+**Historique :** 36 propositions NEW-01 à NEW-36 classées le 18/11/2026. **État du catalogue actif au 22/11 : 32 idées** après retrait de NEW-10 (déjà livré via REC-027), NEW-11 (couvert par DEV-021) et transferts de NEW-17 vers DEV-025 et NEW-36 vers DEV-026. Les priorités historiques des idées conservées ne sont pas modifiées : NEW-04/18/24 en P1, 27 idées en P2, NEW-34/35 en P3.
 
-**Statut : idées à étudier et à concevoir, pas de code autorisé.** Les mécanismes existants (files bornées, arrêt de session vocal, opt-in mémoire, contrôles de transport, expressions r20, sous-titres locaux, participation Discord 20 % / Twitch 30 %, etc.) doivent être conservés : les entrées ci-dessous couvrent seulement des extensions **non identifiées comme fonctionnalités complètes dans le code**. Vérifier l'état réel de `develop` lors de chaque prise en charge. Pour respecter l'identité de Jade, les contrôles de sortie publique doivent permettre la personnalité espiègle prévue, pas neutraliser systématiquement sa voix.
+**Statut : idées restantes à étudier, pas de nouveau code autorisé par ce catalogue.** Les mécanismes existants (files bornées, arrêt de session vocal, opt-in mémoire, contrôles de transport, expressions r20, sous-titres locaux, participation Discord 20 % / Twitch 30 %, etc.) doivent être conservés : les entrées ci-dessous couvrent seulement des extensions **non identifiées comme fonctionnalités complètes dans le code**. Vérifier l'état réel de `develop` lors de chaque prise en charge. Pour respecter l'identité de Jade, les contrôles de sortie publique doivent permettre la personnalité espiègle prévue, pas neutraliser systématiquement sa voix.
 
 ## A. Maîtrise opérationnelle, sécurité et gouvernance
 
@@ -23,13 +23,9 @@
 
 | ID | Priorité / nature | Proposition et critères de réussite |
 | --- | --- | --- |
-| NEW-10 | **P1 / P** | **Participation sociale intelligente** : remplacer progressivement le taux fixe d'intervention spontanée par une décision contextualisée selon pertinence, rythme, participants, valeur ajoutée, conversation active et signaux de gêne. Conserver un réglage simple, un plafond de participation, les sollicitations explicites prioritaires et un mode déterministe de repli. Mesurer interventions utiles, interruptions inopportunes, latence et coût sur Discord/Twitch/vocal. |
-| NEW-11 | P2 / P | **Continuité volontaire interplateformes** : reprendre une discussion entre Discord, mobile et PC uniquement si l'identité est liée/vérifiée, si les participants et audiences y consentent et si le transfert de contexte est explicitement autorisé ; ne pas fusionner automatiquement des salons. |
-| NEW-17 | P2 / P | **Compréhension des conversations de groupe** : reconnaître les destinataires, sujets concurrents, apartés et occasions pertinentes d'intervenir ; garder l'isolement des sessions et les règles de confidentialité existantes. |
 | NEW-18 | **P1 / P** | **Apprentissage supervisé par retours humains** : accepter notes/retours du propriétaire ou participants autorisés sur réponses utiles, erronées, mal placées ou inadaptées ; rattacher chaque retour à son contexte, analyser les motifs récurrents, proposer des ajustements de comportement/prompts. Pas de mise à jour automatique irréversible du modèle, des permissions ou de la personnalité ; évaluer avant/après et respecter le droit à l'effacement. |
 | NEW-19 | P2 / P | **Profils comportementaux par contexte** : profils public Twitch, Discord, propriétaire privé, travail, etc., avec degré de spontanéité, style et règles de disponibilité différents ; ne pas multiplier les personas contradictoires ni affaiblir les invariants de sécurité. |
 | NEW-32 | P2 / P | **Direction vocale expressive affinée** : rythme, pauses, emphase, nuances émotionnelles et prosodie au-delà des sept intentions, compatibles avec les capacités réelles des différents fournisseurs TTS. |
-| NEW-36 | **P1 / P** | **Personnalité évolutive encadrée** : goûts, habitudes et références vécues enrichies progressivement grâce à la mémoire et aux retours, avec cohérence de la personnalité centrale, provenance, correction et consentement. Ne pas supposer qu'une LLM se réentraîne seule. |
 
 ## C. Connaissances, autonomie et tâches
 
@@ -37,7 +33,7 @@
 | --- | --- | --- |
 | NEW-12 | P2 / P | **Recherche d'informations externes vérifiables** : accès facultatif et contrôlé à une recherche Web/documentaire, récupération des sources et dates, distinction entre faits consultés et suppositions ; limites de coût et résilience en cas d'indisponibilité. |
 | NEW-13 | P2 / P | **Bibliothèque documentaire choisie** : consultation/recherche sur fichiers Markdown, PDF, dépôts ou documents explicitement accessibles, indexation, provenance, contrôle d'accès, données temporaires séparées de la mémoire personnelle. |
-| NEW-16 | P2 / P | **Initiative conversationnelle autorisée** : Jade peut démarrer une intervention à partir d'événements définis ou d'une planification, selon horaires et audience, avec garde-fous de fréquence et interruption manuelle. Distinct de l'intervention spontanée pendant un échange en cours. |
+| NEW-16 | P2 / P | **Initiatives planifiées au-delà des événements vocaux déjà livrés :** Jade pourra ultérieurement lancer une intervention depuis un événement **nouveau et explicitement autorisé**, ou un rappel programmé, pour une audience et un créneau définis. Il ne s'agit pas de refaire les saluts à l'arrivée Discord (REC-028). Déclencheur explicite, contrôle de présence et consentement, budget et arrêt après silence ; aucune boucle de polling LLM en inactivité. |
 | NEW-21 | P2 / P | **Gestion de tâches longues** : objectifs, étapes, états d'attente, reprise après interruption, rapports d'avancement exacts, journal des actions réalisées et autorisations par étape. Aucun travail autonome persistant implicite sans exécuteur/ordonnanceur explicite. |
 | NEW-35 | P3 / D | **Laboratoire d'expérimentation conversationnelle** : scénarios reproductibles et jeux d'évaluation pour comparer prompts, modèles, routage et taux d'intervention, avec mesures de coût, latence, qualité et stabilité. Distinct du banc d'attaques NEW-07. |
 
@@ -78,4 +74,4 @@
 - **Ne pas dupliquer les fondations déjà codées** : vérifier le code de `develop` avant la conception. Compléter plutôt que recréer.
 - Aucune action externe, surveillance, connexion, nouvelle dépense API, modification de permissions ou déploiement n'est autorisé par cette seule liste.
 
-**Contrôle de cohérence attendu : 36 IDs distincts (NEW-01 à NEW-36), exactement 5 en P1 (NEW-04, NEW-10, NEW-18, NEW-24, NEW-36), exactement 29 en P2, exactement 2 en P3 (NEW-34 et NEW-35), aucun P0.**
+**Contrôle de cohérence au 22/11/2026 : 32 idées actives (3 P1 : NEW-04/18/24 ; 27 P2 ; 2 P3 : NEW-34/35), 4 identifiants volontairement absents du catalogue actif car livrés ou transférés.**
