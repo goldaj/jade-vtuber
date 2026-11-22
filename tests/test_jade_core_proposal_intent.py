@@ -19,7 +19,7 @@ def test_explicit_core_request_is_only_a_proposal(phrase):
 
 
 @pytest.mark.parametrize("phrase", [
-    "Goldaj : Retiens que je commence le piano.",
+    "Retiens que je commence le piano.",
     "Jade, enregistre dans ta mémoire ordinaire que je commence le piano.",
     "Jade, note dans tes souvenirs que je commence le piano.",
 ])
