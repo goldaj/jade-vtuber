@@ -17,6 +17,19 @@ _STYLE = re.compile(
     r"voix |façon de parler|évolu|expérience marquante|habitude|souvenir)"
 )
 _JADE_SUBJECT = re.compile(r"(?i)^\s*jade\b")
+# A forced owner's ordinary memory is a retained fact, not an autonomous
+# decision that Jade has changed her preferences.
+_REQUESTED = "Souvenir conservé à la demande explicite de l'interlocuteur."
+_PREFERENCE = re.compile(
+    r"^jade\s+(?:n\s+aime\s+plus|n\s+aime\s+pas|aime|adore|"
+    r"prefere|deteste|apprecie)\s+(.+)$"
+)
+
+
+def _preference_topic(summary: str) -> str | None:
+    match = _PREFERENCE.match(_normalized(summary))
+    return match.group(1).strip(" .!?") if match else None
+
 
 
 def _normalized(text: str) -> str:
@@ -28,9 +41,10 @@ def _normalized(text: str) -> str:
 def personality_snapshot(memories, autobiography=(), *, max_observations=4) -> dict:
     """Recompute a dated, deterministic profile from confirmed Jade memories.
 
-    Ordinary observations require repetition over two memory rows unless they
-    were voluntarily classified Core; autobiography is always owner-only.
-    Deletion/correction therefore instantly changes the derived profile.
+    Sources must already be scoped by the caller. Explicitly owner-forced L2
+    memories cannot dictate Jade's tastes. Existing Core notes take priority,
+    and repeated preference topics are collapsed to the most recent note.
+    Deletion/correction therefore changes the derived profile immediately.
     """
     if not 1 <= max_observations <= 8:
         raise ValueError("invalid personality profile size")
@@ -45,18 +59,25 @@ def personality_snapshot(memories, autobiography=(), *, max_observations=4) -> d
         summary = row.get("summary")
         if not isinstance(summary, str) or not _JADE_SUBJECT.search(summary):
             continue
+        if _REQUESTED in str(row.get("significance") or ""):
+            continue  # Owner-requested L2 is never a mandate to change Jade.
         if not _STYLE.search(summary + " " + str(row.get("significance") or "")):
             continue
         candidates.append((row.get("kind") in ("core_self", "core_relationship"),
                            summary.strip(), row.get("created_at", "")))
     counts = Counter(_normalized(summary) for _, summary, _ in candidates)
-    selected, used = [], set()
+    selected, used, topics = [], set(), set()
     for core, summary, date in sorted(candidates, key=lambda x: (x[0], x[2]), reverse=True):
         tag = _normalized(summary)
         # A curated Jade statement is already an intentional memory event.
         # Repetition adds confidence but is not needed for an initial cue.
         if tag in used:
             continue
+        topic = _preference_topic(summary)
+        if topic is not None and topic in topics:
+            continue  # A recent preference replaces an older conflicting one.
+        if topic is not None:
+            topics.add(topic)
         used.add(tag)
         selected.append({"summary": summary[:145], "date": str(date)[:10],
                          "core": bool(core), "evidence_count": counts[tag]})
