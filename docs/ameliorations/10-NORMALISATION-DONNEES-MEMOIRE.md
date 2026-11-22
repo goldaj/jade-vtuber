@@ -21,16 +21,13 @@ Jade doit recevoir des contenus hétérogènes, les transformer **une seule fois
 
 ## B. Mémoire SQLite : structuration et recherche
 
-L'**existant à préserver** sur `develop` comporte déjà un schéma SQLite v3 avec `persons`, `identities`, `memories` (dont ordinaires/Core), `jade_self_core`, `conversation_turns`, des contraintes de clés et des index par identité, portée et chronologie (voir `src/jade_runtime/memory_store.py`). La récupération actuelle reste principalement **chronologique et bornée**. Il ne faut ni présenter la base comme entièrement dénormalisée, ni détruire ces acquis.
+L'**existant à préserver** sur `develop` comporte déjà un schéma SQLite actuel avec `persons`, `identities`, `memories` (dont ordinaires/Core), `jade_self_core`, `conversation_turns`, des contraintes de clés et des index par identité, portée et chronologie (voir `src/jade_runtime/memory_store.py`). La récupération actuelle reste principalement **chronologique et bornée**. Il ne faut ni présenter la base comme entièrement dénormalisée, ni détruire ces acquis.
 
 | ID | Priorité / nature | Amélioration proposée / résultat attendu |
 | --- | --- | --- |
 | NRM-07 | P2 / E | **Audit de la structure SQLite réelle et des requêtes** : vérifier normalisation relationnelle appropriée (identités, entités, relations, souvenirs, provenance), duplication, contraintes, cardinalités, index composites, taille et requêtes coûteuses avec `EXPLAIN QUERY PLAN`. Ne changer que ce qui apporte un bénéfice démontré. |
 | NRM-08 | P2 / P | **Souvenirs structurés et typés si utile** : représentation de faits/événements/préférences/relations avec sujet, prédicat ou catégorie, valeur, temporalité, auteur/source, confiance, statut (actif, remplacé, contesté), version et niveau de visibilité. Garder un résumé naturel et une référence vers les messages originaux ; éviter des catégories artificielles qui déforment les souvenirs. |
-| NRM-09 | P2 / E | **Recherche rapide et hybride** : index B-tree pour clés, scopes et dates ; évaluer SQLite FTS5 pour texte, filtres de métadonnées et éventuellement recherche sémantique par embeddings, selon bénéfice et charge réelle. Indexer uniquement ce qui est interrogé ; choisir la stratégie par requête et budget. |
-| NRM-10 | P2 / E | **Rappel de mémoire ciblé** : d'abord sélectionner les candidats par identité vérifiée, audience, portée et permissions ; puis combiner pertinence, actualité, importance, contradiction et provenance ; retourner un petit lot de souvenirs avec citations internes plutôt qu'un dump de la base dans le prompt. Prévoir la mémoire anticipée L1/L2/L3 (MEM-01 à MEM-04). |
 | NRM-11 | P2 / P | **Déduplication et gestion des versions de faits** : fingerprint exact + rapprochement sémantique contrôlé, liens entre souvenirs confirmés/contredits/corrigés, fusion prudente, archivage/expiration explicites ; jamais de suppression silencieuse d'une nuance ou d'une relation. |
-| NRM-12 | P1 / C | **Garanties de vie privée et d'effacement** : consentement opt-in, isolation personne/session/serveur, scopes par enregistrement et recherche, accès filtré avant classement, propagation des corrections/effacements aux index FTS/vectoriels, caches, résumés et exports prévus. Interdire la reconstitution indirecte de données supprimées. |
 | NRM-13 | P2 / C | **Migration SQLite incrémentale** : plan de version, sauvegarde et restauration testée, transactions atomiques, migration des données existantes sans perte, compatibilité des anciens tours, tests de liaison/déliaison d'identité et rollback. Aucune réécriture en masse sans résultats de benchmark. |
 
 ## C. Contrat d'architecture envisagé
@@ -72,4 +69,4 @@ Source externe (Discord / Twitch / PC / PWA / image / vidéo / API)
 
 **Liens :** [mémoire et présence](02-MEMOIRE-PRESENCE.md), [architecture modulaire](05-ARCHITECTURE-IA.md), [perception multimodale](09-PERCEPTION-MULTIMODALE.md), [routage de sorties](03-CANAUX-ROUTAGE.md), [documentation technique](../handbook/TECHNICAL.md).
 
-**Statut :** idée consignée uniquement, ni implémentation ni migration. Pas de modification du code, des secrets ni des données SQLite du poste.
+**Statut :** idées restantes non engagées ; le rappel intelligent est désormais suivi par **DEV-022**, qui conserve les critères de filtrage avant classement, recherche, performance et effacement. Pas de modification du code, des secrets ni des données SQLite du poste.
