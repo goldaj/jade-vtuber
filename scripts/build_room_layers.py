@@ -25,9 +25,9 @@ CURTAIN = [
     (1038, 85), (1055, 85), (1081, 83), (1110, 84), (1133, 81),
     (1142, 90), (1142, 145), (1138, 191), (1137, 252),
     (1135, 296), (1125, 310), (1100, 307), (1074, 301),
-    (1055, 297), (1041, 311), (1015, 324), (989, 337),
-    (965, 349), (948, 350), (933, 344), (921, 332),
-    (936, 309), (957, 281), (974, 252), (986, 217),
+    (1055, 314), (1041, 327), (1015, 344), (989, 348),
+    (965, 349), (948, 350), (933, 344), (911, 336),
+    (930, 303), (957, 281), (974, 252), (986, 217),
     (997, 173), (1008, 132), (1027, 92),
 ]
 CURTAIN_CROP = (900, 66, 1162, 362)
@@ -41,18 +41,18 @@ def mask_polygon(height: int, width: int, vertices: list[tuple[int, int]], sigma
 
 
 def alpha_cutout(original: np.ndarray, under: np.ndarray, extent: np.ndarray,
-                 upper_alpha: float = 0.87) -> np.ndarray:
-    """Solve source-over for an editable translucent layer that reproduces its rest pose."""
-    discrepancy = np.max(np.abs(original.astype(np.float32) - under), axis=2) / 255.0
-    # Keep a strong fabric core while feathering the silhouette at the edges.
-    opacity = extent * np.clip(upper_alpha + 0.12 * discrepancy, 0.0, 0.97)
-    alpha = opacity[..., None]
-    safe = np.maximum(alpha, 0.0001)
-    pigment = (original.astype(np.float32) - under * (1.0 - alpha)) / safe
-    pigment = np.clip(pigment, 0.0, 255.0)
-    rgba = np.concatenate([pigment, alpha * 255.0], axis=2)
-    rgba[extent < 0.004] = 0
-    return rgba.clip(0, 255).astype(np.uint8)
+                 upper_alpha: float = 0.91) -> np.ndarray:
+    """Original textile RGB with soft source-art matte, without color extrapolation.
+
+    Solving for translucent RGB against an invented background introduces
+    saturated cyan/yellow fringes. Keep actual fabric paint instead: motion
+    matters more than reproducing the exact stationary composite mathematically.
+    """
+    difference = np.max(np.abs(original.astype(np.float32) - under), axis=2) / 255.0
+    opacity = extent * np.clip(upper_alpha + 0.04 * difference, 0, 0.96)
+    rgba = np.dstack([original, (opacity * 255.0).astype(np.uint8)])
+    rgba[extent < 0.006] = 0
+    return rgba.astype(np.uint8)
 
 
 def restore_behind_curtain(source: np.ndarray, mask: np.ndarray) -> np.ndarray:
