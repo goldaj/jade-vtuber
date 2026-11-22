@@ -1,5 +1,12 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — DEV-027 et DEV-028 : deux P1 engagées
+
+- **Promotion unique après sauvegarde de `develop` sur `main` (PR #41) :** VIS-04 → DEV-027 et RTE-12 → DEV-028, statut `En cours`. Les deux anciennes lignes actives sont supprimées du catalogue prospectif, désormais **114 idées** (23 P1), tout en conservant leurs références historiques.
+- **DEV-027 :** `mobile_web/avatar.js` synchronise le ticker PixiJS et `model.autoUpdate` avec visibilité de l'onglet, IntersectionObserver, attachement DOM et présence d'une surface réelle. La pause ne touche pas la voix ni la conversation. Test de cycle de vie JS (démarrage caché, visibilité, hors-champ, retour, absence de l'API d'observation), exécuté sans SDK réel ni coût IA.
+- **DEV-028 :** `turn_logging.py` conserve la planification et le handoff mais ajoute des preuves typées distinctes, uniquement après accusé Discord API ou fin réelle de lecture ffplay/Discord. `orchestrator.py` recoupe toute preuve avec les destinations prévues ; `main.py` ne transforme ni mobile/HTTP, ni Twitch sans accusé, ni une destination révoquée en réussite. `output.py` distingue stream simplement traité et échantillons réellement consommés. Aucun texte privé inscrit dans ces événements.
+- **QA :** tests de livraison, preuve, annulation et refus de fausse confirmation ; nouveau test navigateur Node dans la CI multi-OS. Recette réelle Android/Discord et mesure batterie non réalisées à ce stade. Détails dans la [passation](handoffs/2026-11-22-chatgpt-vis04-rte12.md). CI générale Linux/Windows sur le HEAD final à contrôler avant un passage éventuel en REC.
+
 ## 2026-11-22 — Réparation de CI avant les quick wins VIS-04 et RTE-12
 
 - **Base sauvegardée avant modification :** promotion explicite de `develop` `96b7157` sur `main` via [PR #41](https://github.com/goldaj/jade-vtuber/pull/41), merge `6afbe0c`. Aucun correctif CI ni nouveau développement VIS/RTE inclus dans ce point de référence.
