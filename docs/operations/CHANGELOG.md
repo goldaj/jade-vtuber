@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Simplification UX PWA Jade
+
+- **Besoin :** rappels retirés de l'Accueil et Activités supprimé ; Rappels en liste immédiatement visible, formulaire sous accordéon fermé, notifications Android en choix radio exclusif synchronisé avec l'abonnement effectif.
+- **Affichage :** icône SVG locale rétablie en haut à gauche ; boutons de redémarrage différenciés dans Profil ; bouton de plein écran transformé en scène exclusive Jade/chambre avec seule commande de sortie visible. Fullscreen API opportuniste et fallback CSS, sans démontage Live2D.
+- **Fichiers :** `mobile_web/index.html`, `app.js`, `jade-theme.css`, test d'interface, état fonctionnel et suivi `REC-040`. [Passation](handoffs/2026-11-22-chatgpt-mobile-ux-navigation.md).
+- **Contrôles et limites :** syntaxe JS et contrats HTML/CSS contrôlés avant push ; recette Android, push réel et rendu Live2D matériel à valider sur le téléphone. Backend et `main` non modifiés.
+
+
 ## 2026-11-22 — Splash illustré Jade et écran Android
 
 - **Choix du propriétaire :** image exacte `src/jade_runtime/mobile_web/splash-jade.png` déposée sur develop, utilisée pour le premier écran web dès que Chrome a lancé la PWA. Plein écran (ratio vertical, object-fit cover), chargement prioritaire, retrait automatique et non bloquant lorsque la page est prête. Aucune nouvelle permission ni utilisation de tokens ; la chambre Live2D et la conversation restent intactes.

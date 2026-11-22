@@ -32,7 +32,7 @@
   const shell = document.querySelector(".shell");
   const navItems = Array.from(document.querySelectorAll(".app-nav-item"));
   function showView(view) {
-    if (!["home", "chat", "reminders", "activities", "profile"].includes(view)) return;
+    if (!["home", "chat", "reminders", "profile"].includes(view)) return;
     shell.dataset.view = view;
     navItems.forEach(button => {
       const active = button.dataset.viewTarget === view;
@@ -40,21 +40,14 @@
       if (active) button.setAttribute("aria-current", "page");
       else button.removeAttribute("aria-current");
     });
-    if (view === "reminders") {
-      $("reminders-panel").open = true;
-      if (token) loadReminders();
+    if (view === "reminders" && token) {
+      loadReminders();
+      refreshNotificationChoice();
     }
-    if (view === "home" && token) loadReminders();
   }
   navItems.forEach(button => button.addEventListener("click", () =>
     showView(button.dataset.viewTarget)));
-  $("header-notifications").addEventListener("click", () => {
-    showView("reminders");
-    $("reminders-panel").open = true;
-  });
-  $("home-view-all").addEventListener("click", () => showView("reminders"));
-  $("activities-reminders").addEventListener("click", () => showView("reminders"));
-  $("activities-chat").addEventListener("click", () => showView("chat"));
+  $("header-notifications").addEventListener("click", () => showView("reminders"));
 
   function newThread() {
     // The opaque session is not identity/authentication. Only the Tailscale
@@ -846,7 +839,6 @@
 
   // DEV-036: reminders live on the PC. The phone never polls while closed.
   // Its service worker is only awakened by the operating system's Push API.
-  const remindersPanel = $("reminders-panel");
   const remindersList = $("reminders-list");
   const remindersStatus = $("reminder-status");
   const notificationStatus = $("notification-status");
@@ -862,44 +854,6 @@
       dateStyle:"medium", timeStyle:"short"
     });
   }
-  function renderHomeReminders(items) {
-    const list = $("home-reminder-list");
-    list.replaceChildren();
-    const today = new Date();
-    const upcoming = items.filter(item => {
-      if (!["pending","retry","sending"].includes(item.state)) return false;
-      const when = new Date(item.due_at * 1000);
-      return when.toDateString() === today.toDateString();
-    }).sort((a,b) => a.due_at - b.due_at).slice(0,3);
-    if (!upcoming.length) {
-      const empty = document.createElement("li");
-      empty.className = "dashboard-empty";
-      empty.textContent = "Aucun rappel prévu aujourd'hui. Profite de ta journée.";
-      list.appendChild(empty);
-      return;
-    }
-    for (const item of upcoming) {
-      const li = document.createElement("li");
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "dashboard-card";
-      const title = document.createElement("span");
-      title.className = "dashboard-card-title";
-      title.textContent = item.title;
-      const hour = document.createElement("span");
-      hour.className = "dashboard-card-hour";
-      hour.textContent = new Date(item.due_at * 1000).toLocaleTimeString("fr-FR", {
-        hour:"2-digit", minute:"2-digit"
-      });
-      button.append(title,hour);
-      button.addEventListener("click", () => {
-        showView("reminders");
-        showReminder(item.id);
-      });
-      li.appendChild(button);
-      list.appendChild(li);
-    }
-  }
   function renderReminders(items) {
     remindersList.replaceChildren();
     if (!items.length) {
@@ -910,6 +864,8 @@
     }
     for (const reminder of items) {
       const line = document.createElement("li");
+      line.id = "reminder-item-" + reminder.id;
+      line.tabIndex = -1;
       const info = document.createElement("span");
       const states = {pending:"programmé", retry:"en attente d'envoi",
         sending:"envoi en cours", sent:"remis au transport (pas de preuve de lecture)",
@@ -953,7 +909,6 @@
     try {
       const result = await reminderRequest("list");
       renderReminders(result.items || []);
-      renderHomeReminders(result.items || []);
       remindersStatus.textContent = "Les états sont ceux observés par le serveur Jade.";
     } catch (error) {
       remindersStatus.textContent = "Rappels indisponibles : " + error.message;
@@ -971,14 +926,12 @@
     try {
       await reminderRequest("create", null, title, date.toISOString());
       reminderForm.reset();
+      $("reminder-create-panel").open = false;
       remindersStatus.textContent = "Rappel enregistré sur le PC.";
       await loadReminders();
     } catch (error) { remindersStatus.textContent = error.message; }
   });
   $("refresh-reminders").addEventListener("click", loadReminders);
-  remindersPanel.addEventListener("toggle", () => {
-    if (remindersPanel.open && token) loadReminders();
-  });
 
   const decodeVapidKey = value => {
     const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
@@ -992,50 +945,86 @@
     }
     return navigator.serviceWorker.ready;
   }
-  $("enable-notifications").addEventListener("click", async () => {
-    if (!token) { authorizeAgain(); return; }
-    try {
-      const config = await makeRequest("/api/push", JSON.stringify({action:"config"}),
-                                       reminderHeaders);
-      if (!config.enabled) throw new Error("Push non configuré sur le PC Jade.");
-      const registration = await registrationForPush();
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") throw new Error("Permission de notifications refusée.");
-      let subscription = await registration.pushManager.getSubscription();
-      if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly:true,
-          applicationServerKey:decodeVapidKey(config.vapid_public_key)
-        });
-      }
-      await makeRequest("/api/push", JSON.stringify({
-        action:"subscribe", subscription:subscription.toJSON()
-      }), reminderHeaders);
-      notificationStatus.textContent = "Notifications activées sur cet appareil.";
-    } catch (error) {
-      notificationStatus.textContent = "Activation impossible : " + error.message;
-    }
-  });
-  $("disable-notifications").addEventListener("click", async () => {
-    if (!token) { authorizeAgain(); return; }
+  const notificationOn = $("notifications-on"), notificationOff = $("notifications-off");
+  let confirmedNotificationChoice = "";
+  let notificationBusy = false;
+  function showNotificationChoice(value) {
+    notificationOn.checked = value === "on";
+    notificationOff.checked = value === "off";
+  }
+  function lockNotificationChoice(value) {
+    notificationOn.disabled = value;
+    notificationOff.disabled = value;
+  }
+  // Refresh from browser state. Never prompt for permission while rendering the page.
+  async function refreshNotificationChoice() {
+    if (!token || notificationBusy) return;
     try {
       const registration = await registrationForPush();
       const subscription = await registration.pushManager.getSubscription();
-      if (subscription) {
-        await makeRequest("/api/push", JSON.stringify({
-          action:"unsubscribe", endpoint:subscription.endpoint
-        }), reminderHeaders);
-        await subscription.unsubscribe();
-      }
-      notificationStatus.textContent = "Notifications désactivées sur cet appareil.";
+      confirmedNotificationChoice = subscription && Notification.permission === "granted" ? "on" : "off";
+      showNotificationChoice(confirmedNotificationChoice);
+      lockNotificationChoice(false);
+      notificationStatus.textContent = confirmedNotificationChoice === "on"
+        ? "Notifications activées sur cet appareil." : "Notifications désactivées sur cet appareil.";
     } catch (error) {
-      notificationStatus.textContent = "Désactivation incomplète : " + error.message;
+      confirmedNotificationChoice = "";
+      showNotificationChoice("");
+      lockNotificationChoice(true);
+      notificationStatus.textContent = "Notifications indisponibles : " + error.message;
     }
+  }
+  async function changeNotificationChoice(enable) {
+    if (notificationBusy) return;
+    if (!token) { showNotificationChoice(confirmedNotificationChoice); authorizeAgain(); return; }
+    notificationBusy = true;
+    lockNotificationChoice(true);
+    try {
+      const registration = await registrationForPush();
+      if (enable) {
+        const config = await makeRequest("/api/push", JSON.stringify({action:"config"}), reminderHeaders);
+        if (!config.enabled) throw new Error("Push non configuré sur le PC Jade.");
+        if (await Notification.requestPermission() !== "granted")
+          throw new Error("Permission de notifications refusée.");
+        let subscription = await registration.pushManager.getSubscription();
+        if (!subscription) subscription = await registration.pushManager.subscribe({
+          userVisibleOnly:true, applicationServerKey:decodeVapidKey(config.vapid_public_key)
+        });
+        await makeRequest("/api/push", JSON.stringify({
+          action:"subscribe", subscription:subscription.toJSON()
+        }), reminderHeaders);
+      } else {
+        const subscription = await registration.pushManager.getSubscription();
+        if (subscription) {
+          await makeRequest("/api/push", JSON.stringify({
+            action:"unsubscribe", endpoint:subscription.endpoint
+          }), reminderHeaders);
+          if (!await subscription.unsubscribe())
+            throw new Error("Le navigateur n'a pas confirmé la désinscription.");
+        }
+      }
+      confirmedNotificationChoice = enable ? "on" : "off";
+      showNotificationChoice(confirmedNotificationChoice);
+      notificationStatus.textContent = enable
+        ? "Notifications activées sur cet appareil." : "Notifications désactivées sur cet appareil.";
+    } catch (error) {
+      showNotificationChoice(confirmedNotificationChoice);
+      notificationStatus.textContent = (enable ? "Activation impossible : " : "Désactivation incomplète : ") + error.message;
+    } finally {
+      notificationBusy = false;
+      lockNotificationChoice(false);
+    }
+  }
+  notificationOn.addEventListener("change", () => {
+    if (notificationOn.checked) changeNotificationChoice(true);
   });
+  notificationOff.addEventListener("change", () => {
+    if (notificationOff.checked) changeNotificationChoice(false);
+  });
+
   async function showReminder(reminderId) {
     if (!/^[0-9a-f]{24}$/.test(reminderId)) return;
     showView("reminders");
-    remindersPanel.open = true;
     if (!token) return;
     try {
       const result = await makeRequest("/api/reminders", JSON.stringify({
@@ -1045,6 +1034,11 @@
       remindersStatus.textContent = "Rappel Jade : " + reminder.title + " · "
         + formatReminderDate(reminder.due_at) + ".";
       await loadReminders();
+      const row = $("reminder-item-" + reminderId);
+      if (row) {
+        row.classList.add("reminder-highlight");
+        row.scrollIntoView?.({block:"nearest"});
+      }
       remindersStatus.textContent = "Rappel Jade : " + reminder.title + " · "
         + formatReminderDate(reminder.due_at) + ".";
     } catch (error) {
@@ -1078,7 +1072,10 @@
     setStatus("Jeton saisi. Tu peux parler ou écrire à Jade.");
     input.focus();
     openReminderFromHash();
-    if (remindersPanel.open || shell.dataset.view === "home") loadReminders();
+    if (shell.dataset.view === "reminders") {
+      loadReminders();
+      refreshNotificationChoice();
+    }
   });
   form.addEventListener("submit", submitText);
   input.addEventListener("keydown", event => {
@@ -1127,9 +1124,35 @@
     log.appendChild(intro);
     setStatus("Nouveau fil.");
   });
-  $("fullscreen").addEventListener("click", () => {
-    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
-    else document.documentElement.requestFullscreen?.().catch(() => {});
+  const fullscreenButton = $("fullscreen");
+  let nativeRoomFullscreen = false;
+  function setRoomFullscreen(active) {
+    shell.classList.toggle("is-room-only", active);
+    fullscreenButton.textContent = active ? "⤢" : "⛶";
+    const description = active ? "Quitter le plein écran" : "Afficher uniquement Jade en plein écran";
+    fullscreenButton.setAttribute("aria-label", description);
+    fullscreenButton.setAttribute("title", description);
+    fullscreenButton.setAttribute("aria-pressed", String(active));
+  }
+  fullscreenButton.addEventListener("click", async () => {
+    if (shell.classList.contains("is-room-only")) {
+      setRoomFullscreen(false);
+      if (document.fullscreenElement) {
+        try { await document.exitFullscreen?.(); } catch (_) { /* CSS view already closed */ }
+      }
+      return;
+    }
+    setRoomFullscreen(true);
+    if (shell.requestFullscreen) {
+      try { await shell.requestFullscreen(); } catch (_) { /* CSS fullscreen stays available */ }
+    }
+  });
+  document.addEventListener("fullscreenchange", () => {
+    if (document.fullscreenElement === shell) nativeRoomFullscreen = true;
+    else if (nativeRoomFullscreen) {
+      nativeRoomFullscreen = false;
+      setRoomFullscreen(false);
+    }
   });
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});

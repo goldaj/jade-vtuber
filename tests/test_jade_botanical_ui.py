@@ -10,14 +10,14 @@ ROOT = Path(__file__).resolve().parents[1] / "src/jade_runtime/mobile_web"
 
 
 class BotanicalUIContract(unittest.TestCase):
-    def test_home_reminders_and_views_keep_the_live_room(self):
+    def test_navigation_and_immersive_room_keep_the_live_room(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         for fragment in ('id="avatar-container"', 'class="room"', 'room-spring.webp',
-                         'id="home-reminder-list"', 'id="reminders-panel"',
+                         'id="reminders-panel"', 'id="reminders-list"',
                          'id="messages"', 'id="composer"', 'id="mic"',
                          'id="auth-modal"', 'id="auth-token"'):
             self.assertIn(fragment, html)
-        for view in ("home", "reminders", "chat", "activities", "profile"):
+        for view in ("home", "reminders", "chat", "profile"):
             self.assertIn('data-view-target="' + view + '"', html)
         self.assertIn("/assets/jade-theme.css", WEB_FILES)
         self.assertIn("/assets/splash-jade.png", WEB_FILES)
@@ -32,9 +32,20 @@ class BotanicalUIContract(unittest.TestCase):
         self.assertIn('#c8dcc7', css.lower())
         self.assertIn('#2f5d45', css.lower())
         app = (ROOT / "app.js").read_text(encoding="utf-8")
-        self.assertIn("renderHomeReminders", app)
-        self.assertIn('showView("chat")', app)
+        self.assertNotIn('id="home-reminder-list"', html)
+        self.assertNotIn('id="activities-overview"', html)
+        self.assertNotIn('data-view-target="activities"', html)
+        self.assertLess(html.index('id="reminders-list"'), html.index('id="reminder-create-panel"'))
+        self.assertIn('<details id="reminder-create-panel"', html)
+        self.assertIn('type="radio" id="notifications-on"', html)
+        self.assertIn('type="radio" id="notifications-off"', html)
+        self.assertIn('src="/icon.svg" width="40"', html)
+        self.assertIn('class="deployment-actions"', html)
         self.assertIn('showView("reminders")', app)
+        self.assertIn("refreshNotificationChoice()", app)
+        self.assertIn("setRoomFullscreen(true)", app)
+        self.assertNotIn("renderHomeReminders", app)
+        self.assertIn('.shell.is-room-only .room{', css)
 
     def test_manifest_flower_palette_and_png_contract(self):
         manifest = json.loads((ROOT / "manifest.webmanifest").read_text(encoding="utf-8"))
