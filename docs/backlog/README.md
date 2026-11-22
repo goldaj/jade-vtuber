@@ -17,7 +17,7 @@
 | 1 | **REC-036** (P1) | Personnalité durable et cohérence entre sessions. |
 | 2 | **REC-035** (P2) | Interventions en groupe, avec fils parallèles encore partiellement gérés. |
 | 3 | **REC-037** (P2) | Configurer le superviseur Windows indépendant, puis tester redéploiement et redémarrage via PWA Android. |
-| En parallèle | **DEV-010** (À valider), **OPS-015** (À faire), ART-001 à ART-012 | Décor mobile développé : recette visuelle Android encore nécessaire ; revue artistique et maintenance OPS restent à faire. |
+| En parallèle | **DEV-010** (Done), **OPS-015** (À faire), ART-001 à ART-012 | DEV-010 clôturé après validation explicite du propriétaire le 22/11/2026 ; revue artistique et maintenance OPS restent à faire. |
 
 **Microphone physique du PC, Twitch et OBS restent suspendus** dans leurs cartes concernées. [Décision et limites](../operations/handoffs/2026-11-22-validation-rec031-rec033-rec034.md).
 
