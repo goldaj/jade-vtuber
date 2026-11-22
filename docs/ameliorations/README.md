@@ -6,7 +6,7 @@
 
 - **192 idées initialement identifiées** dans 11 thèmes le 21/11/2026 (dont ajouts du 20 et du 21 novembre).
 - **83 entrées retirées du catalogue actif** le 22/11/2026 : six transférées dans DEV, les autres déjà couvertes par une carte de backlog, par le code actuellement livré, ou absorbées dans une autre idée prospective conservée. Le détail des décisions figure dans [la passation de dédoublonnage](../operations/handoffs/2026-11-22-catalogue-dedoublonnage.md).
-- **109 idées prospectives après le dédoublonnage**, puis **4 perspectives complémentaires distinctes** consignées le 22/11/2026 après arbitrage de limites techniques : **114 idées prospectives actives**, dans 10 thèmes. Les identifiants retirés ne sont **pas** réattribués ; la version précédente reste consultable dans l'historique Git.
+- **109 idées prospectives après le dédoublonnage**, puis **4 perspectives complémentaires différées** et une idée mobile additionnelle consignées le 22/11/2026 : **114 idées actives avant les deux présentes inscriptions**. Avec **L2D-01 (P1)** et **NEW-38 (P2)** : **116 idées prospectives actives, dans 11 thèmes**. Les identifiants retirés ne sont **pas** réattribués ; la version précédente reste consultable dans l'historique Git.
 - Les six idées promues ont été codées via PR #38 et suivies désormais dans **`RTE-15 → REC-031`, `NRM-10 → REC-032`, `MEM-01 → REC-033`, `LAT-01 → REC-034`, `NEW-17 → REC-035`, `NEW-36 → REC-036`**, toutes À valider. Les ID DEV-021 à DEV-026 sont historiques.
 
 ## Idées encore actives par thème
@@ -17,13 +17,14 @@
 | Mémoire et présence | [02-MEMOIRE-PRESENCE.md](02-MEMOIRE-PRESENCE.md) | 7 | Personnes annoncées, présence serveur à arbitrer, mémoire partagée, curation qualitative et contrôles avancés |
 | Canaux, concurrence | [03-CANAUX-ROUTAGE.md](03-CANAUX-ROUTAGE.md) | 11 | Routeur de sortie, tour non bloquant, annulation étendue, livraison, extensions Discord et intentions intercanaux avancées |
 | Avatar, visibilité | [04-AVATAR-VISIBILITE.md](04-AVATAR-VISIBILITE.md) | 10 | Rendu conditionnel à la visibilité, filtrage par audience et économies GPU |
+| Pilotage volontaire du modèle 2D | [08-MODELE-2D.md](08-MODELE-2D.md) | 1 | Commandes choisies par Jade, connaissance du résultat et arbitrage avec les animations automatiques |
 | Architecture IA | [05-ARCHITECTURE-IA.md](05-ARCHITECTURE-IA.md) | 9 | Moteurs/fournisseurs échangeables, contrats de modules, tests et comparaison de modèles |
 | Produit, mobile | [06-PRODUIT-MOBILE.md](06-PRODUIT-MOBILE.md) | 5 | Reconnexion, Authenticator, client alternatif, solde prépayé et génération de documents téléchargeables dans le chat mobile |
 | Qualité, exploitation | [07-QUALITE-EXPLOITATION.md](07-QUALITE-EXPLOITATION.md) | 5 | Protection des anciennes archives, robustesse CI, tableau de supervision, rollback, exploitation Windows |
 | Perception multimodale | [09-PERCEPTION-MULTIMODALE.md](09-PERCEPTION-MULTIMODALE.md) | 10 | Photos, capture consentie, vidéo, temporalité, réactions et budgets |
 | Données et normalisation | [10-NORMALISATION-DONNEES-MEMOIRE.md](10-NORMALISATION-DONNEES-MEMOIRE.md) | 10 | Contrats d'événements, données structurées, provenance, migrations |
-| Capacités et comportement | [11-CAPACITES-COMPORTEMENT-CONTROLE.md](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | 33 | Sécurité, outils, vie sociale avancée, évolution de personnalité expérientielle, multimodal, autonomie et interactions |
-| **Total** | | **114** | |
+| Capacités et comportement | [11-CAPACITES-COMPORTEMENT-CONTROLE.md](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | 34 | Sécurité, outils, vie sociale avancée, autonomie, registre des actions et connaissance des opérations exécutées |
+| **Total** | | **116** | |
 
 ## Évolutions différées acceptées le 22/11/2026
 
@@ -38,7 +39,7 @@
 
 Ces quatre idées **ne rouvrent pas** REC-031, REC-034 ou REC-036, **ne constituent pas un manque bloquant** pour la version actuelle et ne promettent aucune capacité physiquement impossible. Elles ne seront engagées que sur nouvelle décision du propriétaire après vérification de l'intérêt, des risques de régression et des contraintes réelles. Pas de nouvel appel IA, de changement d'autorisation ou de mise en production par cette inscription.
 
-Le [thème 08, modèle 2D](08-MODELE-2D.md) est conservé comme **fiche d'archivage sans proposition active** : le travail artistique est déjà identifié et priorisé dans la vue [ART de la backlog](../backlog/04-PRODUCTION-2D.md).
+Le [thème 08, modèle 2D](08-MODELE-2D.md) conserve l'archivage des anciennes idées ART et accueille désormais **L2D-01**, capacité prospective de pilotage volontaire du modèle par Jade, **distincte** du travail artistique suivi dans la [backlog ART](../backlog/04-PRODUCTION-2D.md). L'amélioration transversale **NEW-38** décrit le catalogue des actions réellement disponibles et l'initiative de Jade, sans déplacer ni modifier le backlog.
 
 ## Règles pour les prochains agents
 
