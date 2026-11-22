@@ -481,7 +481,7 @@ class MemoryStore:
                 if count < 2:
                     return []
             sql = """
-                SELECT kind,scope,summary,significance,created_at,source_platform
+                SELECT kind,scope,summary,significance,created_at,expires_at,source_platform
                 FROM memories WHERE person_id=? AND scope""" + (
                 "<>?" if linked else "=?") + """
                   AND (expires_at IS NULL OR expires_at>?)
