@@ -1,4 +1,4 @@
-"""Regression: linked Discord voice can store Jade's owner-private autobiography.
+"""Regression: Discord voice writes Jade's globally readable autobiography.
 
 These are offline tests. They do not call Discord, OpenAI, or TTS.
 """
@@ -48,7 +48,7 @@ def _link_owner(store):
     assert store.is_goldaj(DISCORD_OWNER)
 
 
-def test_linked_owner_voice_persists_self_core_without_public_recall(tmp_path):
+def test_linked_owner_voice_persists_self_core_for_global_recall(tmp_path):
     store = _store(tmp_path)
     _link_owner(store)
     service = MemoryService(store, backend=object())
@@ -62,8 +62,8 @@ def test_linked_owner_voice_persists_self_core_without_public_recall(tmp_path):
             assert result == {
                 "status": "enregistré", "level": 3, "kind": "core_self"
             }
-            # Public voice must not inject private owner memories into prompts.
-            assert await service.context_for(incoming) == ""
+            # Autobiography is globally discoverable, even in a public room.
+            assert len(store.search_global(level="3", kind="core_self")["items"]) == 1
             assert len(store.recall_self_core(OWNER)) == 1
             assert store.recall_self_core(DISCORD_OWNER) == []
             # A second attempt is an idempotent duplicate, not a second Core.
@@ -90,19 +90,16 @@ def test_unlinked_discord_voice_can_write_autonomous_self_core(tmp_path):
             # relational memories, rather than misclassifying it as an L2.
             assert len(store.recall_self_core(OWNER)) == 1
             assert store.list_for_account(STRANGER) == []
-            # Public recall of this self-memory is limited to its originator.
-            result = await action.search(json.dumps({
-                "query": "février", "kind": "core_self",
-                "scope": "current", "cursor": 0, "limit": 10,
-            }, ensure_ascii=False))
-            assert result["status"] == "ok" and len(result["items"]) == 1
+            # Query on the next turn: never use memory search to verify the
+            # write in the turn in which Jade just saved it.
             other = await service.prepare_memory_action(_voice(DISCORD_OWNER))
             assert other is not None
             result = await other.search(json.dumps({
-                "query": "février", "kind": "core_self",
-                "scope": "current", "cursor": 0, "limit": 10,
+                "query": "février", "level": "3", "kind": "core_self",
+                "cursor": 0, "limit": 10,
             }, ensure_ascii=False))
-            assert result["items"] == []
+            assert result["status"] == "ok" and len(result["items"]) == 1
+            assert result["items"][0]["source_account_id"] == STRANGER[1]
             result = await action(_candidate("core_relationship"))
             assert result["status"] == "enregistré"
             assert len(store.list_for_account(STRANGER)) == 1
