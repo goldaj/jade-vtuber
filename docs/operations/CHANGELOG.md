@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — RTE-12 repris : preuves de livraison strictement passives
+
+- La première implémentation DEV-028 était trop intrusive : elle transformait les résultats de `on_reply` et de `_speak_progressive` pour transmettre des accusés à l'orchestrateur. Cette conception a été **rejetée** après réexamen demandé par le propriétaire.
+- Les contrats d'origine ont été restaurés depuis la version stable de `main` : aucune livraison, synthèse vocale, reprise WAV, décision de mémoire ni réponse du modèle ne dépend désormais des preuves RTE-12.
+- Observateurs ajoutés uniquement **après** confirmation Discord API texte, sortie ffplay avec code 0 ou accusé existant du pont vocal Discord ; corrélation par `ContextVar` du tour, sans contenu privé.
+- Les erreurs des deux journaux sont absorbées indépendamment sans influencer les transports. `handoff_completed` reste une information de passage au callback, et non un accusé de réception. Les événements `transport_accepted` et `playback_completed` ne constituent pas une lecture ou une audition humaine garantie.
+- Tests de pannes de logs, faux accusés, sortie ffplay, session Discord rejetée, avec le reste de la CI multi-OS. **DEV-028 reste ouvert** pour vérification fonctionnelle sur le Discord réel. [Passation](handoffs/2026-11-22-chatgpt-vis04-rte12.md).
+
 ## 2026-11-22 — DEV-027 et DEV-028 : deux P1 engagées
 
 - **Promotion unique après sauvegarde de `develop` sur `main` (PR #41) :** VIS-04 → DEV-027 et RTE-12 → DEV-028, statut `En cours`. Les deux anciennes lignes actives sont supprimées du catalogue prospectif, désormais **114 idées** (23 P1), tout en conservant leurs références historiques.
