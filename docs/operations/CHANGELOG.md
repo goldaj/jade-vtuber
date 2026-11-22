@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Identité visuelle PWA Jade, maquette finale du propriétaire
+
+- **Décision visuelle :** retenir la dernière maquette validée en conversation : ambiance botanique sobre, fond clair, sauge #C8DCC7, vert profond #2F5D45, crème/blanc et jaune floral #F7D774 ; l'icône est la composition choisie de deux fleurs blanches avec feuillage et arabesques dorées.
+- **Priorité Live2D :** préserver la scène et les calques de la chambre existante, les SDK locaux, les expressions/animations, le microphone et le chat. La page Accueil réserve environ la moitié de la hauteur mobile au modèle visible ; le chat reste accessible, sans cacher Jade sous un plein écran de messages.
+- **Navigation :** Accueil (chambre + saisie + aperçu des vrais rappels), Rappels (gestion et Web Push de DEV-036), Chat (historique), Activités (raccourcis vers les fonctions existantes), Profil (réglages techniques/identité). Aucun faux service calendrier, fonctionnalité facturée ni notification n'est créé à partir de la maquette.
+- **Compatibilité :** CSS autonome jade-theme.css sur le CSS historique, canvas et mémoire conservés dans le DOM lors des changements de vue ; palette du manifest/PWA et icônes alignées ; pas de modification de main. Les ressources restent servies par le gateway localhost derrière Tailscale Serve.
+- **Validation :** tests automatisés des routes/manifest/contrats d'interface et CI à lancer après le push ; conformité exacte du rendu dépend du SDK Live2D et de l'écran Android. Un dessin de maquette n'est pas une capture d'interface réelle.
+
 ## 2026-11-22 — DEV-036 : rappels persistants, push Android et ouverture ciblée
 
 - **Complément de recette CI :** ajouter l'horloge UTC de chaque tour au contexte outil pour convertir les demandes relatives (« dans 10 minutes »), et conserver le deep link de notification dans l'URL quand une PWA existante doit encore être déverrouillée. Les contrôles automatiques ont signalé une dépendance non canonique dans la carte DEV-036, corrigée par `REC-014, REC-022` avant relance.

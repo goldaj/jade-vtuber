@@ -1,5 +1,11 @@
 # État de develop — fonctionnalités codées
 
+## PWA · Nouvelle DA Jade inspirée de la robe (22/11/2026)
+
+- **Maquette propriétaire retenue :** dernier concept botanique avec Jade visible dans sa chambre, icône florale aux deux fleurs, vert sauge / vert profond / blanc crème / jaune doux. Nouveau thème CSS séparé de la scène Live2D et des animations.
+- **Navigation mobile :** Accueil avec scène principale et rappels réels du jour, Chat avec scène compacte et historique, Rappels / notifications, Activités (raccourcis) et Profil (paramétrage). Le modèle reste monté lors des changements de vue, ne recharge pas à chaque navigation ; les protections existantes de pause hors écran et l'authentification restent.
+- **Portée :** UI de la PWA mobile et icônes installables ; pas de changement des fonctionnalités Discord ou du modèle Live2D ni des images de décor existantes. Validation physique Android et rendu dépendant de la licence SDK restent à recetter.
+
 ## DEV-036 · Rappels persistants et notifications Web Push Android (22/11/2026)
 
 - **Présent dans le code develop :** rendez-vous et rappels internes stockés dans la base privée jade-reminders.sqlite3 ; outil modèle pour créer/lister/corriger/annuler, avec autorisation propriétaire sur PWA et compte Discord lié ; scheduler indépendant des appels OpenAI et reprise des échéances après redémarrage.

@@ -3,11 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1c172d">
+  <meta name="theme-color" content="#2f5d45">
   <meta name="description" content="Jade, espace privé de conversation avec Goldaj.">
   <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="icon" type="image/png" href="/icon-192.png">
   <link rel="stylesheet" href="/assets/styles.css">
+  <link rel="stylesheet" href="/assets/jade-theme.css">
   <title>Jade · Espace privé</title>
   <!-- All SDK JS files must be installed LOCALLY on the PC after license review.
        No remote CDNs or embedded proprietary Live2D libraries. -->
@@ -21,11 +22,12 @@
   <script src="/assets/app.js" defer></script>
 </head>
 <body>
-  <main class="shell">
+  <main class="shell" data-view="home">
     <header class="topbar">
-      <div class="mark"><span class="mark-gem">✧</span><span><b>Jade</b><small>Votre salon privé</small></span></div>
+      <div class="mark"><img class="mark-icon" src="/icon-192.png" width="40" height="40" alt=""><span><b>Jade</b><small>Je suis là, avec toi</small></span></div>
       <div class="top-actions">
         <span id="connection-status" class="connection" role="status">Hors connexion</span>
+        <button type="button" class="notification-button" id="header-notifications" aria-label="Ouvrir les rappels et notifications" title="Rappels et notifications"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="notification-dot" aria-hidden="true"></span></button>
         <button type="button" class="icon-button" id="fullscreen" aria-label="Plein écran" title="Plein écran">⛶</button>
       </div>
     </header>
@@ -92,6 +94,26 @@
     </section>
 
     <section class="conversation" aria-label="Discussion">
+      <section class="home-dashboard" id="home-dashboard" aria-label="Mes rappels du jour">
+        <div class="dashboard-heading">
+          <h2>Mes rappels d'aujourd'hui</h2>
+          <button type="button" id="home-view-all">Voir tout <span aria-hidden="true">›</span></button>
+        </div>
+        <ul id="home-reminder-list" class="dashboard-list" aria-label="Rappels du jour">
+          <li class="dashboard-empty">Retrouve ici les rappels que tu confies à Jade.</li>
+        </ul>
+        <p class="dashboard-note">Un moment pour toi, à ton rythme.</p>
+      </section>
+      <section class="activities-overview" id="activities-overview" aria-label="Activités et raccourcis">
+        <h2>Mon quotidien avec Jade</h2>
+        <p>Retrouve tes rappels et tes conversations sans quitter l'univers de Jade.</p>
+        <button type="button" id="activities-reminders">Consulter mes rappels</button>
+        <button type="button" id="activities-chat">Discuter avec Jade</button>
+      </section>
+      <section class="profile-intro" id="profile-intro" aria-label="Mon espace privé">
+        <h2>Mon espace privé</h2>
+        <p>Paramètres, compte lié et informations techniques de Jade.</p>
+      </section>
       <div class="chat-heading">
         <span><span class="chat-pulse"></span> Conversation avec Jade</span>
         <div class="chat-tools">
@@ -181,6 +203,13 @@
       </form>
       <div class="footer-status" id="status" role="status">Connecte-toi pour commencer.</div>
     </section>
+    <nav class="app-nav" aria-label="Navigation principale">
+      <button type="button" class="app-nav-item is-active" data-view-target="home" aria-current="page" aria-label="Accueil"><svg viewBox="0 0 24 24" width="23" height="23" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>Accueil</span></button>
+      <button type="button" class="app-nav-item" data-view-target="reminders"  aria-label="Rappels"><svg viewBox="0 0 24 24" width="23" height="23" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 15h3"/></svg><span>Rappels</span></button>
+      <button type="button" class="app-nav-item" data-view-target="chat"  aria-label="Chat"><svg viewBox="0 0 24 24" width="23" height="23" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.5 0-2.8-.4-4-1L3 21l1.8-5.3A8.5 8.5 0 1 1 21 11.5z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg><span>Chat</span></button>
+      <button type="button" class="app-nav-item" data-view-target="activities"  aria-label="Activités"><svg viewBox="0 0 24 24" width="23" height="23" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.1 6.9L21 12l-6.9 2.1L12 21l-2.1-6.9L3 12l6.9-2.1L12 3z"/><path d="M19 2v4M17 4h4"/></svg><span>Activités</span></button>
+      <button type="button" class="app-nav-item" data-view-target="profile"  aria-label="Profil"><svg viewBox="0 0 24 24" width="23" height="23" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-5 3.5-7 8-7s8 2 8 7"/></svg><span>Profil</span></button>
+    </nav>
   </main>
   <div id="auth-modal" class="auth-layer" role="dialog" aria-modal="true" aria-labelledby="auth-title">
     <form id="auth-form" class="auth-card">

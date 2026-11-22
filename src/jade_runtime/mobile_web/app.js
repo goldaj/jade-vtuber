@@ -29,6 +29,32 @@
   let streamAnalyser = null;
   let streamNextTime = 0;
   let thread = newThread();
+  const shell = document.querySelector(".shell");
+  const navItems = Array.from(document.querySelectorAll(".app-nav-item"));
+  function showView(view) {
+    if (!["home", "chat", "reminders", "activities", "profile"].includes(view)) return;
+    shell.dataset.view = view;
+    navItems.forEach(button => {
+      const active = button.dataset.viewTarget === view;
+      button.classList.toggle("is-active", active);
+      if (active) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    });
+    if (view === "reminders") {
+      $("reminders-panel").open = true;
+      if (token) loadReminders();
+    }
+    if (view === "home" && token) loadReminders();
+  }
+  navItems.forEach(button => button.addEventListener("click", () =>
+    showView(button.dataset.viewTarget)));
+  $("header-notifications").addEventListener("click", () => {
+    showView("reminders");
+    $("reminders-panel").open = true;
+  });
+  $("home-view-all").addEventListener("click", () => showView("reminders"));
+  $("activities-reminders").addEventListener("click", () => showView("reminders"));
+  $("activities-chat").addEventListener("click", () => showView("chat"));
 
   function newThread() {
     // The opaque session is not identity/authentication. Only the Tailscale
@@ -397,6 +423,7 @@
     if (!token) { authorizeAgain(); return; }
     const text = input.value.trim();
     if (!text) return;
+    showView("chat");
     busy = true;
     stopPlayback();
     setStatus("Jade réfléchit…", true);
@@ -835,6 +862,44 @@
       dateStyle:"medium", timeStyle:"short"
     });
   }
+  function renderHomeReminders(items) {
+    const list = $("home-reminder-list");
+    list.replaceChildren();
+    const today = new Date();
+    const upcoming = items.filter(item => {
+      if (!["pending","retry","sending"].includes(item.state)) return false;
+      const when = new Date(item.due_at * 1000);
+      return when.toDateString() === today.toDateString();
+    }).sort((a,b) => a.due_at - b.due_at).slice(0,3);
+    if (!upcoming.length) {
+      const empty = document.createElement("li");
+      empty.className = "dashboard-empty";
+      empty.textContent = "Aucun rappel prévu aujourd'hui. Profite de ta journée.";
+      list.appendChild(empty);
+      return;
+    }
+    for (const item of upcoming) {
+      const li = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "dashboard-card";
+      const title = document.createElement("span");
+      title.className = "dashboard-card-title";
+      title.textContent = item.title;
+      const hour = document.createElement("span");
+      hour.className = "dashboard-card-hour";
+      hour.textContent = new Date(item.due_at * 1000).toLocaleTimeString("fr-FR", {
+        hour:"2-digit", minute:"2-digit"
+      });
+      button.append(title,hour);
+      button.addEventListener("click", () => {
+        showView("reminders");
+        showReminder(item.id);
+      });
+      li.appendChild(button);
+      list.appendChild(li);
+    }
+  }
   function renderReminders(items) {
     remindersList.replaceChildren();
     if (!items.length) {
@@ -888,6 +953,7 @@
     try {
       const result = await reminderRequest("list");
       renderReminders(result.items || []);
+      renderHomeReminders(result.items || []);
       remindersStatus.textContent = "Les états sont ceux observés par le serveur Jade.";
     } catch (error) {
       remindersStatus.textContent = "Rappels indisponibles : " + error.message;
@@ -968,6 +1034,7 @@
   });
   async function showReminder(reminderId) {
     if (!/^[0-9a-f]{24}$/.test(reminderId)) return;
+    showView("reminders");
     remindersPanel.open = true;
     if (!token) return;
     try {
@@ -1011,7 +1078,7 @@
     setStatus("Jeton saisi. Tu peux parler ou écrire à Jade.");
     input.focus();
     openReminderFromHash();
-    if (remindersPanel.open) loadReminders();
+    if (remindersPanel.open || shell.dataset.view === "home") loadReminders();
   });
   form.addEventListener("submit", submitText);
   input.addEventListener("keydown", event => {
