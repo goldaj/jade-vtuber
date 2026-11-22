@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Exécuter les recettes ciblées même quand l'ancien preflight bloque la CI principale
+
+- **QA :** le workflow existant `jade-responses-migration.yml` inclut désormais les tests hors ligne `test_jade_pcm_timing.py`, `test_jade_output_budget.py` et `test_jade_mobile_audio_stream.py`, en plus de ses 29 tests de régression existants. Déclenchement également sur changements mobile, timing, dialogue et nouveaux tests.
+- **Sécurité :** le contrôle `TOKEN_PATTERN` du workflow principal reste strictement inchangé et bloquant. Le workflow ciblé n'appelle pas les API payantes ; il donne un retour sur la correction sans présenter l'échec du scanner historique comme un échec de ces tests.
+
+
 ## 2026-11-22 — REC-029 : mesure PCM mobile et repli vocal des réponses longues (develop)
 
 - **Mobile :** émission PCM HTTP NDJSON ou WebSocket mesurée côté serveur avant le signal TTS `response.done`. La console serveur émet `rec029_mobile_pcm_progress` avec délai d'envoi du premier paquet, fin TTS et verdict ; la console du navigateur Android émet `rec029_mobile_pcm_client`, distinguant premier paquet reçu, premier démarrage WebAudio **programmé**, et fin du flux. Les horloges distinctes PC/téléphone ne sont pas directement soustractibles et ne garantissent pas l'audition matérielle. Aucun audio, token, transcript ni identifiant n'est ajouté à ces événements.
