@@ -1,5 +1,12 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Réparation de CI avant les quick wins VIS-04 et RTE-12
+
+- **Base sauvegardée avant modification :** promotion explicite de `develop` `96b7157` sur `main` via [PR #41](https://github.com/goldaj/jade-vtuber/pull/41), merge `6afbe0c`. Aucun correctif CI ni nouveau développement VIS/RTE inclus dans ce point de référence.
+- **Suite de tests mémoire :** retrait de la dépendance implicite à `pytest` dans deux modules découverts par `unittest` ; assertions anciennes réconciliées avec la décision propriétaire (Core L3 décidée par Jade, lectures globales, demandes L2 obligatoires seulement par propriétaire authentifié, absence d'obligation de citation exacte). Les tests maintiennent les protections de profil, provenance, isolation d'écriture et rejet des JSON invalides. Mise à jour des versions attendues de migration SQLite vers `SCHEMA_VERSION` v8.
+- **Export privé :** le nouvel arrière-plan et le rideau WebP de DEV-010 sont inclus dans l'allowlist de l'aperçu privé, avec validation du format de fichier, sans ajout d'assets tiers ni de secrets.
+- **Périmètre :** adaptation des tests aux comportements approuvés et correction du packaging de l'aperçu privé. Aucun nouveau connecteur, fournisseur, accès ou appel API. CI complète Linux/Windows à confirmer sur le commit final du lot avant de déclarer la réparation terminée.
+
 ## 2026-11-22 — OPS-015 suspendu jusqu'au retour de tokens Codex
 
 - **Décision propriétaire :** passage de **OPS-015** (étude des redondances artistiques et outils inutiles) de `À faire` à **`Bloqué`**, pour reprendre lorsque le quota de tokens Codex sera suffisant.
