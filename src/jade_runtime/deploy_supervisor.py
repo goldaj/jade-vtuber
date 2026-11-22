@@ -76,7 +76,9 @@ class Supervisor:
             if self.child is not None and self.child.poll() is None:
                 raise RuntimeError("jade_already_running")
             self._launch()
-            self.state["running"] = True
+            self.state.update({"running": True,
+                               "sha": self.git("rev-parse", "HEAD"),
+                               "branch": self.git("branch", "--show-current") or "detached"})
 
     def request(self, *, branch=None, restart_only=False):
         if type(restart_only) is not bool or (not restart_only and not branch_valid(branch)):
@@ -194,13 +196,22 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--port", type=int, default=8770)
-    parser.add_argument("--start", nargs="+", required=True,
-                        help="Trusted local executable and arguments, never from HTTP")
-    parser.add_argument("--install", nargs="+", default=None)
+    parser.add_argument("--start-json", required=True,
+                        help="JSON argv array from trusted local configuration")
+    parser.add_argument("--install-json", default=None,
+                        help="Optional trusted JSON argv array for dependencies")
     args = parser.parse_args()
+    command = json.loads(args.start_json)
+    install = json.loads(args.install_json) if args.install_json else None
+    if (not isinstance(command, list) or not command
+            or any(not isinstance(x, str) or not x for x in command)
+            or (install is not None and
+                (not isinstance(install, list) or not install
+                 or any(not isinstance(x, str) or not x for x in install)))):
+        parser.error("start/install must be nonempty JSON argv string arrays")
     from src.utility.private_config import environ
     token = str(environ("JADE_DEPLOY_SUPERVISOR_TOKEN", ""))
-    manager = Supervisor(args.root, args.start, install_command=args.install)
+    manager = Supervisor(args.root, command, install_command=install)
     manager.start()
     serve(manager, token, args.port)
 
