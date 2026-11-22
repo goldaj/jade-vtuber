@@ -61,7 +61,7 @@ class HTTPTests(unittest.IsolatedAsyncioTestCase):
         self.echo.complete = failed
         response = await self.request(key="token" * 9, value={"text": "Jade, aide-moi"})
         self.assertIn(b"503 Service Unavailable", response)
-        payload = json.loads(response.split(b"\\r\\n\\r\\n", 1)[1])
+        payload = json.loads(response.split(b"\r\n\r\n", 1)[1])
         self.assertEqual(payload["error"], "unavailable")  # Stable API contract
         self.assertEqual(payload["incident_code"], "unavailable")
         self.assertIn("indisponible", payload["message"])
