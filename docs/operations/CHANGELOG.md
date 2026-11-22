@@ -1,5 +1,12 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — VIS-07 développé ; LAT-10 inscrit dans la backlog
+
+- **Décision du propriétaire :** VIS-07 (P1) est transféré du catalogue des améliorations vers **DEV-029 (En cours)**, et LAT-10 vers **DEV-030 (À faire)**. Les deux lignes prospectives sont supprimées sans perte d'historique ; **112 idées actives** subsistent, dont **21 P1**.
+- **VIS-07 :** sur le même arbitre que VIS-04, délai d'hystérésis **6500 ms** pour une sortie momentanée du viewport. Retour avant délai : aucune interruption ni redémarrage du ticker. Sortie prolongée : pause graphique effective. Onglet masqué/démontage : arrêt immédiat, sans dépenser 6,5 s de GPU en arrière-plan. Reprise d'une vraie pause : remise au neutre de l'expression, sans rechargement de Cubism ni replay d'Idle, avec voix, bouche, message et mémoire indépendants.
+- **Qualité :** tests Node à horloge simulée des oscillations de visibilité, des hard stops et de la neutralisation, lancés dans le workflow Linux et Windows existant ; vérification de la cohérence backlog/catalogue et aucun changement de `main` ou des délais TTS. **Recette Android réelle encore requise** avant de clôturer.
+- **LAT-10 :** pas encore développé ; inventorier les délais réellement configurés avant toute harmonisation. [Passation et critères](handoffs/2026-11-22-vis07-lat10-quickwins.md).
+
 ## 2026-11-22 — RTE-12 repris : preuves de livraison strictement passives
 
 - La première implémentation DEV-028 était trop intrusive : elle transformait les résultats de `on_reply` et de `_speak_progressive` pour transmettre des accusés à l'orchestrateur. Cette conception a été **rejetée** après réexamen demandé par le propriétaire.
