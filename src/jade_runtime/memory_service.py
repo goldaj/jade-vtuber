@@ -379,8 +379,57 @@ class MemoryService:
             return await self._execute_memory_action(
                 key, person_id, incoming, raw_arguments)
 
+        async def search(raw_arguments: str) -> dict:
+            # Read-only browsing is independent of the optimistic write path.
+            # The trusted identity and profile are pinned by the runtime,
+            # never supplied by the language model.
+            return await self._search_memory(
+                key, person_id, incoming, raw_arguments)
+
+        action.search = search
         action.used = False
         return action
+
+    async def _search_memory(self, key, pinned_person, incoming, raw):
+        """Browse all authorized L2/L3 pages on demand, without an LLM index."""
+        if not isinstance(raw, str) or len(raw) > 1600:
+            return {"status": "refusé", "reason": "invalid_arguments"}
+        try:
+            data = json.loads(raw)
+        except (TypeError, ValueError):
+            return {"status": "refusé", "reason": "invalid_json"}
+        if (not isinstance(data, dict)
+                or set(data) != {"query", "kind", "scope", "cursor", "limit"}
+                or not isinstance(data["query"], str)
+                or len(data["query"]) > 120
+                or data["kind"] not in ("all", "ordinary", "core_self",
+                                       "core_relationship")
+                or data["scope"] not in ("current", "all")
+                or type(data["cursor"]) is not int
+                or not 0 <= data["cursor"] <= 1_000_000
+                or type(data["limit"]) is not int
+                or not 1 <= data["limit"] <= 15):
+            return {"status": "refusé", "reason": "invalid_search_fields"}
+
+        # Public voice and guild speech may use the same authenticated user's
+        # memories in THIS channel only. Private owner sessions may inspect
+        # their full linked-person memory across channels and autobiography.
+        allow_all = data["scope"] == "all" and _private_recall_allowed(incoming)
+        try:
+            result = await asyncio.to_thread(
+                self.store.search_for_assistant, key, _scope(incoming),
+                expected_person_id=pinned_person, query=data["query"],
+                kind=data["kind"], cursor=data["cursor"], limit=data["limit"],
+                allow_other_scopes=allow_all)
+        except Exception:
+            LOG.exception("Memory browsing unavailable (no contents logged)")
+            return {"status": "indisponible", "items": [], "next_cursor": None}
+        event("memory_lookup", source_platform=incoming.platform,
+              scope_mode="all" if allow_all else "current",
+              requested_kind=data["kind"], result_count=len(result["items"]),
+              has_more=result["next_cursor"] is not None,
+              status=result["status"])
+        return result
 
     async def _execute_memory_action(self, key, pinned_person, incoming, raw):
         """Server-owned policy: validate, write and report only a committed outcome."""
@@ -423,9 +472,6 @@ class MemoryService:
             summary + "\n" + significance + "\n" + evidence,
         ):
             return reject("secret_detected")
-        if (kind == "core_self" and key != ("microphone", "goldaj")
-                and not await asyncio.to_thread(self.store.is_goldaj, key)):
-            return reject("core_self_not_authorized")
         level = 2 if kind == "ordinary" else 3
         try:
             if kind == "core_self":
@@ -544,9 +590,8 @@ class MemoryService:
             # Public channels never recall memories originating in a different
             # channel, even if both messages come from the same account.
             if kind == "core_self":
-                if (key != ("microphone", "goldaj")
-                        and not await asyncio.to_thread(self.store.is_goldaj, key)):
-                    return  # Never write autobiography for an unlinked third party.
+                # Jade's own Core is her autonomous choice, independent of
+                # which verified speaker she is conversing with.
                 persisted = await asyncio.to_thread(
                     self.store.put_self_core, key, summary=summary,
                     significance=significance, message_id=incoming.message_id,
