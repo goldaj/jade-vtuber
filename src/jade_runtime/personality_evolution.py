@@ -34,8 +34,8 @@ def _preference_topic(summary: str) -> str | None:
 
 def _normalized(text: str) -> str:
     lowered = unicodedata.normalize("NFKD", text.casefold())
-    return " ".join("".join(ch for ch in lowered
-                           if not unicodedata.combining(ch)).split())
+    folded = "".join(ch for ch in lowered if not unicodedata.combining(ch))
+    return " ".join(folded.replace("'", " ").replace("’", " ").split())
 
 
 def personality_snapshot(memories, autobiography=(), *, max_observations=4) -> dict:
