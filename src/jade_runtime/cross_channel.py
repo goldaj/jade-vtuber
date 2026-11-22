@@ -100,7 +100,10 @@ class CrossChannelContinuity:
     def _tasks(self, key, *, operation, payload=""):
         """Revalidate owner and mutation in one SQLite transaction."""
         with self.store._db() as db:
-            db.execute("BEGIN IMMEDIATE")
+            # Reading the active goal is on the normal conversation path.
+            # Reserve SQLite's writer lock only for actual mutations.
+            if operation in ("add", "resume", "done"):
+                db.execute("BEGIN IMMEDIATE")
             person = self._verified_owner(db, key)
             if person is None:
                 return None
