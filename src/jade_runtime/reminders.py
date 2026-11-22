@@ -80,7 +80,8 @@ def _valid_due(value: str) -> int:
 
 
 def _valid_subscription(value: dict) -> tuple[str, str]:
-    if not isinstance(value, dict) or set(value) != {"endpoint", "keys"}:
+    if (not isinstance(value, dict) or not {"endpoint", "keys"} <= set(value)
+            or set(value) - {"endpoint", "keys", "expirationTime"}):
         raise ValueError("abonnement push invalide")
     endpoint, keys = value["endpoint"], value["keys"]
     if not isinstance(endpoint, str) or len(endpoint) > 2048:
