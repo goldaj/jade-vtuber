@@ -1,5 +1,12 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — QA : tests d'identités et d'écritures mémoire non bloquantes
+
+- Anciennes recettes automatiques `test_jade_explicit_memory_request.py` supposaient que toute demande vocale/Discord imposait un souvenir et que SQLite avait fini avant la réponse. Le contrat validé est différent : Goldaj vérifié force L2 uniquement, Jade décide librement pour les autres et les écritures sont différées.
+- Les tests distinguent désormais reconnaissance de la demande, refus de forçage non-propriétaire, appel volontaire `jade_save_memory`, retour asynchrone, isolation des comptes Discord, unicité des mémoires et annulation après changement de profil.
+- En cas de panne SQLite, l'accusé de **mise en file** demeure (décision produit) tandis que le test vérifie l'absence de persistence. Aucun assouplissement des protections liées au consentement.
+- Validation hors ligne en CI requise ; aucun périphérique physique ni appel facturable utilisé.
+
 ## 2026-11-22 — QA : contrat des outils mémoire Responses
 
 - Les quatre tests de `tests/test_jade_openai_memory_tools.py` utilisaient les objets `chat.completions` retirés de Jade. Simulations actualisées en `responses.create` sans changer le but de chaque contrôle : abstention sans appel supplémentaire, continuation après écriture différée, aucun argument d'outil divulgué dans le flux, fermeture des streams.
