@@ -241,9 +241,8 @@ class RuntimeTurnLoggingTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(delivered[0].text, "Une réponse vérifiée.")
                 expected = ("[contenu privé masqué]"
                             if platform in ("microphone", "local_http")
-                            else "Une réponse vérifiée.")
-                self.assertEqual(events[1]["reply_with_intent"],
-                                 f"[INTENT:serious] {expected}")
+                            else "[INTENT:serious] Une réponse vérifiée.")
+                self.assertEqual(events[1]["reply_with_intent"], expected)
                 self.assertEqual(events[1]["intent"], "serious")
                 self.assertNotIn("[INTENT:", delivered[0].text)
 

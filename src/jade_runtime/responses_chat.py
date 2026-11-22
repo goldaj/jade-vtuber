@@ -8,6 +8,7 @@ Jade and never recovered from an OpenAI conversation identifier.
 from __future__ import annotations
 
 import asyncio
+from contextlib import aclosing
 import inspect
 import json
 import logging
@@ -340,9 +341,10 @@ class ResponsesChat:
             await _close_stream(stream)
 
     async def complete_stream(self, messages):
-        async for fragment in self._stream_text(
-                messages, operation="responses.stream"):
-            yield fragment
+        async with aclosing(self._stream_text(
+                messages, operation="responses.stream")) as stream:
+            async for fragment in stream:
+                yield fragment
 
     async def complete_stream_with_tools(self, messages, memory_action):
         """Stream immediately even with tools; do not await local persistence.
@@ -398,6 +400,7 @@ class ResponsesChat:
         finally:
             await _close_stream(stream)
         # The only unavoidable extra LLM call is for a tool-only response.
-        async for fragment in self._stream_text(
-                continuation, operation="responses.stream_with_tools.followup"):
-            yield fragment
+        async with aclosing(self._stream_text(
+                continuation, operation="responses.stream_with_tools.followup")) as followup:
+            async for fragment in followup:
+                yield fragment

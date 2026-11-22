@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — QA : fermeture du streaming et curation mémoire sans doublon
+
+- **Correctif runtime (streaming) :** `OpenAIServices` et `ResponsesChat` ferment explicitement les générateurs async imbriqués lors de `aclose()`, y compris le suivi après appel d'outil. Le flux transport est fermé dans le `finally` de `_stream_text`.
+- **Correctif runtime (mémoire) :** une demande explicite de souvenir ne déclenche plus de seconde curation LLM en arrière-plan. Le propriétaire vérifié dispose de la file L2, les autres de l'outil volontaire du LLM conversationnel.
+- **Backlog :** `OPS-012` est `Classée sans suite`, conservée dans les vues historiques mais pas dans l'index opérationnel actif. Contrôle du graphe de dépendances conservé ; fixture de dépendance inconnue munie de l'en-tête canonique.
+- **Confidentialité :** le test attend désormais un contenu privé intégralement masqué, sans balise d'intention explicite. Aucune réduction de la protection du runtime.
+- **Validation :** revalidation sur Linux et Windows, sans frais OpenAI.
+
 ## 2026-11-22 — QA : tests d'identités et d'écritures mémoire non bloquantes
 
 - Anciennes recettes automatiques `test_jade_explicit_memory_request.py` supposaient que toute demande vocale/Discord imposait un souvenir et que SQLite avait fini avant la réponse. Le contrat validé est différent : Goldaj vérifié force L2 uniquement, Jade décide librement pour les autres et les écritures sont différées.

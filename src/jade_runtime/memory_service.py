@@ -428,7 +428,11 @@ class MemoryService:
         if self._closed or not self.curator_enabled or len(self.tasks) >= self.max_pending:
             return False
         key = identity_of(incoming)
-        if key is None or COMMAND.fullmatch(incoming.text.strip()):
+        if (key is None or COMMAND.fullmatch(incoming.text.strip())
+                or parse_explicit_memory_intent(incoming.text) is not None):
+            # Explicit owner requests already use the L2 write queue. Other
+            # speakers can propose a memory to the normal conversational LLM.
+            # Neither case needs a second background curation request.
             return False
         if self.batch is not None:
             return self.batch.schedule(key, _scope(incoming), incoming, reply)
