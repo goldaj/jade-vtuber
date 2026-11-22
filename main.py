@@ -256,6 +256,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             mobile_gateway = MobileGateway(
                 runtime, chat, token=config.mobile_token, port=config.mobile_port,
                 billing_admin_key=config.billing_admin_key,
+                deploy_supervisor_token=config.deploy_supervisor_token,
+                deploy_supervisor_port=config.deploy_supervisor_port,
                 owner_login=config.mobile_owner_login,
                 public_origin=config.mobile_public_origin,
                 vendor_dir=Path(config.mobile_vendor_dir) if config.mobile_vendor_dir else None,
