@@ -16,6 +16,9 @@
   let pendingIntent = "neutral";
   let activeChoice = null;
   let observer = null;
+  let visibilityObserver = null;
+  let onScreen = true; // Graceful fallback if IntersectionObserver is unavailable.
+  let renderRunning = false;
   let resetTimer = null;
   let speaking = false;
   const counts = Object.create(null);
@@ -52,6 +55,34 @@
     activeChoice = null;
     mood.textContent = "Jade est attentive.";
     applyExpression("Neutral");
+  }
+
+  function syncRenderVisibility() {
+    if (!pixi || !pixi.ticker) return;
+    // A hidden tab, an unmounted component or one outside the viewport has
+    // no useful GPU output. Audio / LLM / message transport remain independent.
+    const mounted = target.isConnected !== false &&
+      (typeof target.getClientRects !== "function" || target.getClientRects().length > 0);
+    const visible = Boolean(model && mounted && onScreen && !document.hidden);
+    if (renderRunning === visible) return;
+    renderRunning = visible;
+    if (visible) {
+      // A single resume, not a second ticker or a new Idle motion.
+      if (typeof model.autoUpdate === "boolean") model.autoUpdate = true;
+      pixi.ticker.start();
+    } else {
+      pixi.ticker.stop();
+      if (model && typeof model.autoUpdate === "boolean") model.autoUpdate = false;
+    }
+  }
+
+  document.addEventListener("visibilitychange", syncRenderVisibility);
+  if (typeof IntersectionObserver === "function") {
+    visibilityObserver = new IntersectionObserver(([entry]) => {
+      onScreen = Boolean(entry?.isIntersecting);
+      syncRenderVisibility();
+    }, {threshold: .01});
+    visibilityObserver.observe(target);
   }
 
   const avatar = {
@@ -125,6 +156,10 @@
         antialias: true, backgroundAlpha: 0, transparent: true
       });
       target.appendChild(pixi.view);
+      // The SDK can load asynchronously while the tab is invisible.
+      // Prevent any rendering until the model is ready and visible.
+      pixi.ticker.stop();
+      renderRunning = false;
       model = await PIXI.live2d.Live2DModel.from("/model/Jade.model3.json", {
         autoInteract: false
       });
@@ -161,9 +196,11 @@
       // Reapply the SAME chosen reaction after slow SDK loading, not the
       // next variant. One reply must never count as two emotional turns.
       if (activeChoice && palette?.enabled) applyExpression(activeChoice.expression);
+      syncRenderVisibility();
     } catch (error) {
       console.warn("Jade Live2D:", error);
       if (observer) observer.disconnect();
+      if (visibilityObserver) visibilityObserver.disconnect();
       if (pixi) { try { pixi.destroy(true, {children: true}); } catch (_) {} }
       pixi = null;
       model = null;
