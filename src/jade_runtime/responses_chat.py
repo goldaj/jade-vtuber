@@ -212,20 +212,10 @@ class ResponsesChat:
             # saving still uses the verified speaker's own write profile.
             available_tools = []
             if getattr(memory_action, "write_enabled", True):
-                tool = RESPONSES_MEMORY_TOOL
-                allowed_kinds = getattr(memory_action, "allowed_kinds", None)
-                if allowed_kinds is not None:
-                    # The model is shown ONLY permissible memory levels for
-                    # this turn. In particular, a proposal to save a Core
-                    # must never be silently rewritten as an ordinary L2.
-                    parameters = dict(RESPONSES_MEMORY_TOOL["parameters"])
-                    properties = dict(parameters["properties"])
-                    properties["kind"] = {
-                        **properties["kind"], "enum": list(allowed_kinds),
-                    }
-                    parameters["properties"] = properties
-                    tool = {**RESPONSES_MEMORY_TOOL, "parameters": parameters}
-                available_tools.append(tool)
+                # Jade may freely choose an ordinary L2 or a Core L3 write.
+                # The identity and provenance of the speaker stay pinned in
+                # MemoryService, independent of the selected memory level.
+                available_tools.append(RESPONSES_MEMORY_TOOL)
             if callable(getattr(memory_action, "search", None)):
                 available_tools.append(RESPONSES_MEMORY_SEARCH_TOOL)
             params.update(
@@ -282,21 +272,6 @@ class ResponsesChat:
             raise ValueError("OpenAI returned no dialogue text")
         return value
 
-    @staticmethod
-    def _write_kind_allowed(action, raw_arguments):
-        """Validate the proposed level BEFORE accepting an optimistic write.
-
-        This is an argument check, never a SQLite success verification.
-        """
-        allowed = getattr(action, "allowed_kinds", None)
-        if allowed is None:
-            return True
-        try:
-            payload = json.loads(raw_arguments)
-        except (TypeError, ValueError):
-            return False
-        return isinstance(payload, dict) and payload.get("kind") in allowed
-
     async def _prepare_tool_outputs(self, response, action):
         """Resolve reads now; queue writes optimistically without SQLite waits."""
         outputs = []
@@ -305,7 +280,6 @@ class ResponsesChat:
             name = call["name"]
             if (name == "jade_save_memory" and not write_used
                     and len(call["arguments"]) <= 2400
-                    and self._write_kind_allowed(action, call["arguments"])
                     and self._queue_memory_write(
                         action, call["arguments"], call_id=call["call_id"])):
                 # Product decision: an ACCEPTED asynchronous write is treated
