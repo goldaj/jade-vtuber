@@ -234,8 +234,10 @@ def test_read_only_commands_are_global_even_from_unverified_sender(tmp_path):
                              channel="public")
             reply = await service.command(guest)
             assert "premier souvenir" in reply.text
-            guest.text = "!jade-memoire lister-core"
-            reply = await service.command(guest)
+            guest_core = Incoming(
+                "twitch", "Invité", "!jade-memoire lister-core",
+                channel="public")
+            reply = await service.command(guest_core)
             assert "relationnel de Bob" in reply.text
         finally:
             await service.close()
