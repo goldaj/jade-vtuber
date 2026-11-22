@@ -105,7 +105,13 @@ def make_layers(source: np.ndarray) -> tuple[np.ndarray, dict[str, np.ndarray], 
     # wood immediately behind the sheer edge. Never let that wood travel with
     # the cloth, even if it means sacrificing a few lace-edge pixels.
     yy, xx = np.indices((height, width))
-    fabric[(xx >= 1035) & (yy >= 315), 3] = 0
+    # Scalloped underside: no moving rectangle of wall or wooden sill.
+    lower_edge = np.interp(
+        xx, [900, 925, 946, 970, 1005, 1030, 1070, 1110, 1140, 1162],
+        [330, 348, 352, 345, 328, 311, 302, 301, 297, 290],
+    )
+    fade = np.clip((lower_edge - yy) / 4.0, 0, 1)
+    fabric[:, :, 3] = (fabric[:, :, 3].astype(np.float32) * fade).astype(np.uint8)
     fabric[(xx >= 1139) & (yy >= 100), 3] = 0
     crop = CURTAIN_CROP
     layers = {
