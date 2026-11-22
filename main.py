@@ -80,6 +80,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     discord_voice_bridge = None
     local_api = None
     mobile_gateway = None
+    reminders = None
     shutdown_deadline = None
 
     async with AsyncExitStack() as scopes:
@@ -277,12 +278,20 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
 
         from src.jade_runtime.web_search import build_web_search_service
         web_service = build_web_search_service(config) if live else None
+        if live and (mobile or discord):
+            from src.jade_runtime.reminders import ReminderService
+            reminders = ReminderService(
+                Path(config.memory_db_path).with_name("jade-reminders.sqlite3"),
+                memory_store=memory.store if memory is not None else None,
+                vapid_public=config.push_vapid_public,
+                vapid_private=config.push_vapid_private,
+                vapid_subject=config.push_vapid_subject)
         runtime = Runtime(dialogue, on_reply, config.max_queue,
                           on_stream_start=(start_early_voice if speech and config.early_voice else None),
                           delivery_plan=describe_delivery,
                           memory_service=memory, on_incident=on_incident,
                           cross_channel=cross_channel, web_service=web_service,
-                          document_service=documents)
+                          document_service=documents, reminder_service=reminders)
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(
@@ -305,7 +314,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 public_origin=config.mobile_public_origin,
                 vendor_dir=Path(config.mobile_vendor_dir) if config.mobile_vendor_dir else None,
                 model_dir=Path(config.mobile_model_dir) if config.mobile_model_dir else None,
-                avatar_intent_enabled=config.avatar_intent_enabled)
+                avatar_intent_enabled=config.avatar_intent_enabled,
+                reminder_service=reminders)
         social_policy = None
         initiatives = None
         if discord and live and config.memory_enabled:
@@ -388,6 +398,13 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                         tasks.append(asyncio.create_task(local_api.serve_forever()))
                     if mobile_gateway is not None:
                         tasks.append(asyncio.create_task(mobile_gateway.serve_forever()))
+                    if reminders is not None:
+                        async def send_reminder_to_discord(channel, text):
+                            if discord_client is None:
+                                return False
+                            return await discord_client.send_chat(channel, text)
+                        tasks.append(asyncio.create_task(
+                            reminders.run_forever(discord_sender=send_reminder_to_discord)))
                     done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
                     for task in done:
                         task.result()
