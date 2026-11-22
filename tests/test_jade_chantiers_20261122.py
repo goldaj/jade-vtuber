@@ -4,10 +4,14 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 import unittest
 
 from src.jade_runtime.cross_channel import CrossChannelContinuity, natural_command
 from src.jade_runtime.deploy_supervisor import Supervisor, branch_valid
+from src.jade_runtime.dialogue import Dialogue
+from src.jade_runtime.memory_service import MemoryService
+from src.jade_runtime.orchestrator import Runtime
 from src.jade_runtime.group_context import addressed_to_other
 from src.jade_runtime.memory_relevance import rank_memories
 from src.jade_runtime.memory_store import MemoryStore
@@ -63,6 +67,13 @@ class ScopedMemoryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(await cache.candidates(self.owner, "person")), 1)
         deadline = next(iter(cache._entries.values()))[0]
         self.assertLess(deadline - cache.clock(), 3)
+
+    async def test_owner_prefetch_error_never_prevents_startup(self):
+        service = MemoryService(self.store, backend=None)
+        with patch.object(service.presence_cache, "candidates",
+                          new=AsyncMock(side_effect=OSError("sqlite temporarily busy"))):
+            await service.prefetch_owner()  # best effort, not a startup exception
+        await service.close()
 
     async def test_identity_never_uses_nickname(self):
         no_verified = ("discord", "999")
@@ -202,6 +213,37 @@ class ContinuityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.coordinator.context_for(public), "")
         self.assertTrue(self.store.unlink(("discord", "101")))
         self.assertEqual(await self.coordinator.context_for(allowed), "")
+
+    async def test_sqlite_failure_never_blocks_an_unrelated_conversation(self):
+        class DummyBackend:
+            async def complete(self, messages):
+                return "Je peux toujours te répondre normalement."
+
+        delivered = []
+        async def deliver(reply):
+            delivered.append(reply.text)
+
+        runtime = Runtime(
+            Dialogue(DummyBackend(), "Tu es Jade.", random_reply_rate=0),
+            deliver, cross_channel=self.coordinator)
+        await runtime.start()
+        try:
+            with patch.object(self.coordinator, "_tasks",
+                              side_effect=OSError("sqlite failure")):
+                normal = Incoming(platform="mobile", author="Goldaj",
+                                  channel="private", text="Salut Jade")
+                result = asyncio.get_running_loop().create_future()
+                await runtime.submit(normal, result=result)
+                self.assertIn("répondre", await asyncio.wait_for(result, timeout=3))
+                await asyncio.wait_for(runtime.idle(), timeout=3)
+                self.assertEqual(runtime.errors, 0)
+                self.assertEqual(len(delivered), 1)
+                add = Incoming(platform="mobile", author="Goldaj",
+                               channel="private", text="!jade-tache ajouter Une tâche")
+                reply = await self.coordinator.command(add)
+                self.assertIn("Impossible d'enregistrer", reply.text)
+        finally:
+            await runtime.stop(graceful=False)
 
     async def test_explicit_allowlisted_cross_channel_send(self):
         cmd = Incoming(platform="mobile", author="Goldaj", channel="private",
