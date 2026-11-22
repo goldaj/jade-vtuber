@@ -1,5 +1,14 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — DEV-032 : génération et livraison de pièces jointes (travaux sur develop)
+
+- **Cadrage validé par Goldaj** : mobile écrit/oral ; Discord MP/public écrit/vocal (chat associé) ; fichiers véritables, jamais une URL de réponse ; formats PDF/DOCX/TXT/CSV/XLSX/HTML et extensions texte explicites (.py, .js, etc.) ; ZIP de projets multi-fichiers ; Goldaj seulement par défaut via les liaisons d'identité existantes ; configuration `owner|allowlist|all` ; rétention 24 h sur tous les supports.
+- **Implémentation :** `documents.py` (outil Responses, génération de formats, stockage privé éphémère, quota, autorisation), `messages.py` (métadonnées de réponse), `dialogue.py`, `web_search.py`, `responses_chat.py` et `orchestrator.py` (outillage partagé), `main.py` et `config.py` (démarrage et réglages). Les fichiers ne sont pas exécutés ni publiés sur GitHub.
+- **Livraison :** `mobile_gateway.py`, `mobile_duplex.py`, `mobile_web/app.js` et `styles.css` (pièces jointes avec téléchargement GET privé par Bearer + Tailscale) ; `discord_text.py` (pièces jointes dans le canal d'origine ou le chat vocal, suppression différée après expiration, suivi réessayable après redémarrage).
+- **Vérifications :** nouveaux tests `tests/test_jade_documents.py` pour formats, permissions, cycle de vie, refus, ZIP et expiration ; CI Linux/Windows et essais réels PWA/Discord à relever avant clôture. Le moteur PDF de secours est textuel et sa police couvre Latin-1, pas les alphabets Unicode complets ; il reste à confirmer les documents étendus et l'usage réel.
+- **Limites connues :** expiration locale ferme à 24 h, suppression de messages Discord au plus tôt à l'échéance par tâche périodique (une panne Discord peut retarder l'effacement côté Discord) ; copies téléchargées/cache hors contrôle ; cette version ne réalise pas d'import de fichiers entrants ni de traitement de longues générations hors du budget de tokens. Ne jamais prétendre que la livraison est validée par une CI seule.
+- **Suivi :** carte DEV-032 en cours ; [passation spécifique](handoffs/2026-11-22-chatgpt-dev032-documents.md). Pas de merge sur `main`, aucune utilisation payante de fournisseurs pour les tests.
+
 ## 2026-11-22 — Arbitrage produit : quatre cartes à cadrer, six idées retirées
 
 - **Aucune modification de code** : uniquement les choix du propriétaire dans les sources canoniques sur `develop`. Les travaux sur les documents mobiles et la vision ne sont **pas démarrés**.

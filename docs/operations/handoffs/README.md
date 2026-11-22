@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [DEV-032 : fichiers téléchargeables multi-canaux, travail en cours (22/11)](2026-11-22-chatgpt-dev032-documents.md) · code sur `develop`, validations CI/recette encore requises.
+
 - [OPS-017 : décision de protection de `main` et suivi des passations (21/11)](2026-11-21-chatgpt-ops017-protection-branches.md) · carte **Done sur demande expresse du propriétaire**, malgré réglage GitHub encore non appliqué ; pas de protection active présumée.
 
 - [Qualification DEV-010, fenêtre et rideau mobile (21/11)](2026-11-21-chatgpt-qualification-dev010-fenetre-rideau.md) · choix du propriétaire : reconstruction en calques séparés ; carte P2 passée de `À qualifier` à `À faire` sans développement.

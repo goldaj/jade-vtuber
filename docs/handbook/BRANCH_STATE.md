@@ -74,3 +74,8 @@
 [Manuel](README.md) · [architecture](TECHNICAL.md) · [atlas des parcours](../architecture/atlas-fonctionnel-2026-11-16/README.md) · [passation dialogue](../history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md) · [backlog prospectif](../ameliorations/README.md).
 
 Les PR, audits et CI antérieurs sont conservés dans [`docs/history/gpt6-jade/`](../history/gpt6-jade/) et [`docs/history/conversations/`](../history/conversations/). Ils conservent leur date historique, sans se substituer à ce document ou au code actuel. Les passations actives des agents figurent dans [`docs/operations/handoffs/`](../operations/handoffs/).
+
+
+## DEV-032 : documents (22/11/2026, implémentation en cours)
+
+Le moteur partagé propose une création de fichier réelle, autorisée par compte technique (Goldaj PWA, ou Discord lié via SQLite), et produit une liste de pièces jointes dans `Reply`. Les transports Mobile HTTP/NDJSON/WebSocket et Discord texte/vocal suivent cette liste. Les artefacts privés sont conservés au plus 24 h sur disque ; le nettoyage Discord effectue la suppression des messages concernés avec réessai. Les paramètres non secrets sont `JADE_DOCUMENT_DIR`, `JADE_DOCUMENT_ACCESS_MODE` et `JADE_DOCUMENT_ALLOWED_DISCORD_IDS`. Réception de pièces jointes entrantes non prévue. Cette implémentation ne vaut pas recette ; tests et limites de PDF Unicode à confirmer. [DEV-032](../backlog/01-DEVELOPPEMENT.md).

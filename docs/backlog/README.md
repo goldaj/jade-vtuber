@@ -21,7 +21,7 @@
 
 **NEW-20 est maintenant suivi dans DEV-031 (P2, En cours), pour des explications d'indisponibilité sans appel LLM supplémentaire.**
 
-**Cadrage prioritaire à venir : DEV-032 (UX-19, documents téléchargeables dans la PWA), puis DEV-033/034/035 (PER-01/02/03, images). Ces quatre cartes sont « À qualifier » : aucun développement n'est commencé.** Les idées sources ont été retirées du catalogue actif. NEW-12 y est également retirée car REC-038 est Done ; NEW-19 a été écartée, NEW-30 limité aux sondages Twitch et NEW-16 reformulé en rappels/notifications.
+**DEV-032 (UX-19) est en développement sur `develop` après qualification avec le propriétaire : documents téléchargeables dans la PWA et Discord, texte et voix, autorisation et conservation 24 h. La CI et les recettes réelles restent à confirmer. DEV-033/034/035 (PER-01/02/03, images) restent « À qualifier », sans développement.** Les idées sources ont été retirées du catalogue actif. NEW-12 y est également retirée car REC-038 est Done ; NEW-19 a été écartée, NEW-30 limité aux sondages Twitch et NEW-16 reformulé en rappels/notifications.
 
 **Quick wins engagés le 22/11 : DEV-027 (VIS-04) et DEV-028 (RTE-12) sont en développement sur `develop`.** **Élargissement validé le même jour : DEV-029 (VIS-07) en développement, DEV-030 (LAT-10) À faire.** Les idées prospectives correspondantes sont retirées de la liste active, sans duplication. La CI mémoire en cours de remise au vert est suivie séparément.
 
