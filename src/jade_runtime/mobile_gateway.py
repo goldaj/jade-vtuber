@@ -16,7 +16,7 @@ import logging
 from pathlib import Path, PurePosixPath
 import re
 import secrets
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, quote
 import wave
 import time
 
@@ -95,6 +95,7 @@ class MobileGateway:
         if type(port) is not int or not 1024 <= port <= 65535:
             raise ValueError("invalid mobile port")
         self.runtime, self.services = runtime, services
+        self.document_store = getattr(getattr(runtime, "document_service", None), "store", None)
         if owner_login is not None and (not isinstance(owner_login, str)
                                          or not 3 <= len(owner_login.strip()) <= 256
                                          or not owner_login.isascii()):
@@ -161,6 +162,29 @@ class MobileGateway:
             writer.write(payload[start:start + 65536])
             await asyncio.wait_for(writer.drain(), timeout=5)
         if not payload:
+            await asyncio.wait_for(writer.drain(), timeout=5)
+
+    async def _download_document(self, writer, route: str):
+        if self.document_store is None:
+            await self._json(writer, 404, {"error": "document unavailable"})
+            return
+        try:
+            record = await asyncio.to_thread(
+                self.document_store.read, route[len("/api/documents/"):])
+        except ValueError:
+            record = None
+        if record is None:
+            await self._json(writer, 404, {"error": "document expired or unavailable"})
+            return
+        attachment, payload = record
+        disposition = ("Content-Disposition: attachment; filename*=UTF-8''"
+                       + quote(attachment.name, safe="") + "\r\n")
+        header = self._headers(200, "application/octet-stream", len(payload))
+        header = header.replace(b"Connection: close\r\n",
+                                disposition.encode("ascii") + b"Connection: close\r\n")
+        writer.write(header)
+        for start in range(0, len(payload), 65536):
+            writer.write(payload[start:start + 65536])
             await asyncio.wait_for(writer.drain(), timeout=5)
 
     async def _json(self, writer, code: int, value: dict):
@@ -531,6 +555,7 @@ class MobileGateway:
                     )
                     reply = await self._conversation(source)
                     payload = {"reply": reply.text, "intent": reply.intent,
+                               "attachments": [item.public() for item in reply.attachments],
                                "transcript": text if modality == "voice" else None,
                                "audio_wav_b64": None, "audio_unavailable": False}
                     speak = source.requested_speech
@@ -619,6 +644,16 @@ class MobileGateway:
                 await self._json(writer, 403, {"error": "private owner required"})
                 return
             if method == "GET":
+                if route.startswith("/api/documents/"):
+                    if (not self._origin_allowed(headers) or not headers.get("host")):
+                        await self._json(writer, 403, {"error": "invalid origin"})
+                        return
+                    if not hmac.compare_digest(
+                            headers.get("authorization", ""), "Bearer " + self.token):
+                        await self._json(writer, 401, {"error": "authentication required"})
+                        return
+                    await self._download_document(writer, route)
+                    return
                 if route == "/api/duplex":
                     if not self._origin_allowed(headers) or not headers.get("host"):
                         await self._json(writer, 403, {"error": "invalid websocket origin"})

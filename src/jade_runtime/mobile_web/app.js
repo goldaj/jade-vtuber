@@ -72,6 +72,43 @@
     entry.append(content, info);
     log.appendChild(entry);
     log.scrollTop = log.scrollHeight;
+    return entry;
+  }
+
+  function addJadeReply(text, files) {
+    const entry = addBubble(text, "jade");
+    for (const item of Array.isArray(files) ? files.slice(0, 4) : []) {
+      if (!item || !/^\\/api\\/documents\\/[a-f0-9]{32}$/.test(item.url)) continue;
+      const control = document.createElement("button");
+      control.type = "button";
+      control.className = "attachment-button";
+      control.textContent = "Télécharger " + item.name + " · 24 h";
+      control.addEventListener("click", async () => {
+        if (!token) { authorizeAgain(); return; }
+        control.disabled = true;
+        try {
+          const response = await fetch(item.url, {method:"GET", mode:"same-origin",
+            credentials:"omit", cache:"no-store",
+            headers:{"Authorization":"Bearer " + token}});
+          if (response.status === 401) { authorizeAgain(); return; }
+          if (!response.ok) throw new Error("Pièce jointe expirée ou indisponible.");
+          const url = URL.createObjectURL(await response.blob());
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = item.name;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+        } catch (error) {
+          setStatus(error.message || "Téléchargement impossible.");
+        } finally {
+          control.disabled = false;
+        }
+      });
+      entry.appendChild(control);
+    }
+    return entry;
   }
 
   function setReplyIntent(intent) {
@@ -245,7 +282,7 @@
           if (receivedReply) throw new Error("Réponse multiple inattendue.");
           receivedReply = true;
           if (event.transcript) addBubble(event.transcript, "me");
-          addBubble(String(event.reply || "…"), "jade");
+          addJadeReply(String(event.reply || "…"), event.attachments);
           setReplyIntent(event.intent);
         } else if (event.type === "pcm") {
           if (!receivedReply) throw new Error("Audio reçu avant la réponse.");
@@ -339,7 +376,7 @@
 
   async function present(result) {
     if (result.transcript) addBubble(result.transcript, "me");
-    addBubble(String(result.reply || "…"), "jade");
+    addJadeReply(String(result.reply || "…"), result.attachments);
     setReplyIntent(result.intent);
     if (result.audio_wav_b64 && soundEnabled) {
       const played = await playWav(result.audio_wav_b64);
@@ -455,7 +492,7 @@
           onEvent:async event => {
             if (event.type === "reply") {
               if (event.transcript) addBubble(event.transcript, "me");
-              addBubble(String(event.reply || "…"), "jade");
+              addJadeReply(String(event.reply || "…"), event.attachments);
               setReplyIntent(event.intent);
             } else if (event.type === "pcm") {
               duplexTiming.received();

@@ -209,7 +209,8 @@ async def _answer(gateway, peer, pcm, session, speak):
                     requested_speech=speak)
                 reply = await gateway._conversation(source)
                 await peer.send({"type": "reply", "transcript": text,
-                                 "reply": reply.text, "intent": reply.intent})
+                                 "reply": reply.text, "intent": reply.intent,
+                                 "attachments": [item.public() for item in reply.attachments]})
                 if speak:
                     timing = PCMProgressTiming()
                     first_sent_at = None

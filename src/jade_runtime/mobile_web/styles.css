@@ -272,3 +272,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
 .billing-panel p {margin:8px 0}
 .billing-panel a {color:#e7c4f9}
 .billing-panel button {background:#c8b0e7;color:#21182f;border:0;padding:8px;border-radius:8px}
+
+/* DEV-032 : la pièce jointe est un bouton sans HTML issu du modèle. */
+.attachment-button {display:block;max-width:100%;margin:9px 0 0;padding:9px 10px;
+  white-space:normal;overflow-wrap:anywhere;text-align:left;background:#5d4b77;
+  color:#fff;border:1px solid #bfa6db;border-radius:10px;font-size:.8rem}
+.attachment-button:focus-visible {outline:2px solid #e8caff;outline-offset:2px}
