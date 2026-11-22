@@ -102,6 +102,8 @@ class Settings:
     mobile_token: str = field(default="", repr=False)
     mobile_owner_login: str = ""
     mobile_public_origin: str = ""
+    deploy_supervisor_port: int = 8770
+    deploy_supervisor_token: str = field(default="", repr=False)
     mobile_port: int = 8766
     mobile_vendor_dir: str = ""
     mobile_model_dir: str = ""
@@ -166,6 +168,8 @@ class Settings:
             mobile_token=str(environ("JADE_MOBILE_TOKEN", "")),
             mobile_owner_login=str(environ("JADE_MOBILE_OWNER_LOGIN", "")).strip(),
             mobile_public_origin=str(environ("JADE_MOBILE_PUBLIC_ORIGIN", "")).strip(),
+            deploy_supervisor_port=int(environ("JADE_DEPLOY_SUPERVISOR_PORT", "8770")),
+            deploy_supervisor_token=str(environ("JADE_DEPLOY_SUPERVISOR_TOKEN", "")),
             mobile_port=int(environ("JADE_MOBILE_PORT", "8766")),
             mobile_vendor_dir=str(environ("JADE_MOBILE_VENDOR_DIR", "")),
             mobile_model_dir=str(environ("JADE_MOBILE_MODEL_DIR", "")),
@@ -205,6 +209,10 @@ class Settings:
             raise ValueError("invalid Discord text participation limits")
         if not 1024 <= self.http_port <= 65535:
             raise ValueError("invalid local API port")
+        if not 1024 <= self.deploy_supervisor_port <= 65535:
+            raise ValueError("invalid supervisor port")
+        if self.deploy_supervisor_token and not 32 <= len(self.deploy_supervisor_token) <= 256:
+            raise ValueError("invalid supervisor token")
         if not 1024 <= self.mobile_port <= 65535:
             raise ValueError("invalid mobile port")
         if self.mobile_enabled and not 32 <= len(self.mobile_token) <= 256:
