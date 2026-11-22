@@ -151,8 +151,15 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.store.recall_self_core(OWNER), [])
         other_channel = self.request("Jade, bonjour", platform="discord",
                                      account="123", author="Alice", channel="999")
-        self.assertIn("Alice a partagé un souvenir", await self.svc.context_for(other_channel))
-        self.assertIn("Alice a partagé un souvenir", await self.svc.context_for(two))
+        # Context hints rank by the current turn, so they need not contain
+        # all globally readable memories. The explicit search tool can.
+        reader = await self.svc.prepare_memory_action(other_channel)
+        query = json.dumps({"query": "Alice", "level": "2", "kind": "ordinary",
+                            "cursor": 0, "limit": 10})
+        visible = await reader.search(query)
+        self.assertEqual(visible["status"], "ok")
+        self.assertTrue(any("Alice" in item["summary"] for item in visible["items"]))
+        self.assertIn("Bob préfère les plantes", await self.svc.context_for(two))
         self.assertEqual(len(self.store.recall(("discord", "123"), "discord:100")), 1)
         self.assertEqual(len(self.store.recall(("discord", "456"), "discord:100")), 1)
     async def test_voice_and_text_share_verified_discord_scope(self):
@@ -250,7 +257,9 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         async def receive(reply):
             delivered.append(reply)
 
-        service = MemoryService(self.store, backend, curator_enabled=True)
+        service = MemoryService(self.store, backend, curator_enabled=False)
+        # This test exercises Core-proposal routing only, not the separate
+        # asynchronous curator (covered by its own tests).
         runner = Runtime(Dialogue(backend, "Tu es Jade"), receive, memory_service=service)
         await runner.start()
         try:
