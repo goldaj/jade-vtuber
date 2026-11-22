@@ -14,7 +14,7 @@ import json
 import logging
 
 from .memory_actions import MEMORY_TOOL, MEMORY_SEARCH_TOOL
-from .web_search import WEB_TOOL
+from .web_search import WEB_TOOL\nfrom .documents import DOCUMENT_TOOL
 from .session_logging import event, summary
 from .turn_metrics import record_model_usage
 
@@ -39,7 +39,7 @@ RESPONSES_MEMORY_SEARCH_TOOL = {
     "type": "function",
     **MEMORY_SEARCH_TOOL["function"],
 }
-RESPONSES_WEB_TOOL = {"type": "function", **WEB_TOOL["function"]}
+RESPONSES_WEB_TOOL = {"type": "function", **WEB_TOOL["function"]}\nRESPONSES_DOCUMENT_TOOL = {"type": "function", **DOCUMENT_TOOL["function"]}
 MAX_MEMORY_TOOL_ROUNDS = 12
 
 
@@ -348,7 +348,7 @@ class ResponsesChat:
                 audit_outcome = {"status": outcome.get("status"),
                                  "count": len(outcome.get("results", ())),
                                  "search_id": outcome.get("search_id")}
-            event("web_tool_result" if name == "jade_web_search" else "memory_tool_result",
+            if name == "jade_create_document":\n                audit_outcome = {"status": outcome.get("status")}\n            event("document_tool_result" if name == "jade_create_document" else\n                  "web_tool_result" if name == "jade_web_search" else "memory_tool_result",
                   call_index=index, name=name, call_id=call["call_id"],
                   outcome=audit_outcome, confirmation_waited=False)
             outputs.append({
@@ -381,7 +381,7 @@ class ResponsesChat:
             # the next model turn), or fire-and-forget writes. Neither turns
             # a queued write into a synchronous SQLite confirmation.
             conversation = await self._after_tool(conversation, response, memory_action)
-            if value and not any(call["name"] in ("jade_search_memory", "jade_web_search") for call in calls):
+            if value and not any(call["name"] in ("jade_search_memory", "jade_web_search",\n                                                     "jade_create_document") for call in calls):
                 return value
         # Bound the number of billed lookup rounds. The final answer can use
         # what was retrieved; it cannot launch another tool in this turn.

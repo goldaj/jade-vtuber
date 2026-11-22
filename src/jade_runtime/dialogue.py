@@ -75,7 +75,7 @@ class Dialogue:
     async def respond(self, incoming: Incoming, *, valid=lambda: True,
                       on_sentence=None, on_timing=None, defer_history=False,
                       on_intent=None, memory_context="", history_messages=None,
-                      memory_action=None, web_action=None) -> Reply | None:
+                      memory_action=None, web_action=None, document_action=None) -> Reply | None:
         # Reject stale duplicates by transport ID, not by repeated message text.
         if len(incoming.text) > 1200 or not self.should_reply(incoming):
             return None
@@ -126,7 +126,7 @@ class Dialogue:
                 )
                 system_prompt = (self.prompt + "\n\n" + INTENT_PROMPT + owner_note
                                  + (MEMORY_PROMPT if can_use_tools and memory_action is not None else "")
-                                 + (WEB_PROMPT if can_use_tools and web_action is not None else "")
+                                 + (WEB_PROMPT if can_use_tools and web_action is not None else "")\n                                 + (DOCUMENT_PROMPT if document_action is not None else "")
                                  + "\nPour une demande qui appelle une réponse longue, "
                                    "donne plutôt une synthèse claire de 3 à 5 phrases "
                                    "(environ 120 mots, soit ~320 tokens visibles au maximum). "
@@ -197,7 +197,7 @@ class Dialogue:
                     raise TimeoutError("message expired")
                 if not isinstance(answer, str) or not answer.strip():
                     raise ValueError("chat backend returned an empty response")
-                result = Reply(incoming, answer.strip(), intent=selected_intent)
+                result = Reply(incoming, answer.strip(), intent=selected_intent,\n                                attachments=tuple(getattr(document_action, "attachments", ())))
                 if not defer_history:
                     history.extend((user, {"role": "assistant", "content": result.text}))
                     if incoming.message_id:

@@ -42,7 +42,7 @@ class Runtime:
         self.delivery_plan = delivery_plan
         self.memory_service = memory_service
         self.cross_channel = cross_channel
-        self.web_service = web_service
+        self.web_service = web_service\n        self.document_service = document_service
         self.on_incident = on_incident
         self.queue = ArbitratingQueue(maxsize=max_queue)
         self.arbiter = TurnArbiter(dialogue.backend) if isinstance(dialogue, Dialogue) else None
@@ -190,7 +190,7 @@ class Runtime:
         memory_context = ""
         history_messages = None
         memory_action = None
-        web_action = None
+        web_action = None\n        document_action = None
         destinations = ()
         try:
             if self.cross_channel is not None:
@@ -219,7 +219,7 @@ class Runtime:
                     memory_context = (memory_context + "\n" + resumed).strip()
             if command_reply is None and self.web_service is not None:
                 web_action = self.web_service.for_turn(item.message, item.turn)
-            if (command_reply is None and self.on_stream_start is not None
+            if command_reply is None and self.document_service is not None:\n                document_action = await self.document_service.for_turn(item.message)\n            if (command_reply is None and self.on_stream_start is not None
                     and item.message.platform == "discord_voice"
                     and callable(getattr(self.dialogue.backend, "complete_stream", None))):
                 turn = self.on_stream_start(item.message)
@@ -232,7 +232,7 @@ class Runtime:
                                                         memory_context=memory_context,
                                                         history_messages=history_messages,
                                                         memory_action=memory_action,
-                                                        web_action=web_action)
+                                                        web_action=web_action,\n                                                        document_action=document_action)
                 else:
                     reply = await self.dialogue.respond(item.message, valid=item.valid)
             else:

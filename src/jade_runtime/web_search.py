@@ -132,10 +132,10 @@ class SearchJournal:
 class ToolActions:
     """Preserve existing optional memory tools while adding independent web."""
 
-    def __init__(self, memory_action=None, web_action=None):
+    def __init__(self, memory_action=None, web_action=None, document_action=None):
         self.memory_action = memory_action
         self.search = getattr(memory_action, "search", None)
-        self.web_search = web_action
+        self.web_search = web_action\n        self.document_action = document_action\n        self.create_document = (document_action.create_document\n                                if document_action and document_action.allowed else None)
         self.write_enabled = bool(memory_action is not None
                                   and getattr(memory_action, "write_enabled", True))
 
