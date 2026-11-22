@@ -187,3 +187,66 @@ def test_same_turn_optimistic_write_cannot_trigger_verification_lookup(tmp_path)
         finally:
             await service.close()
     asyncio.run(run())
+
+
+def test_public_voice_cannot_read_self_core_from_another_channel(tmp_path):
+    store = _setup(tmp_path)
+    assert store.put_self_core(
+        ALICE, summary="Jade a entendu une confidence dans un autre salon.",
+        scope=f"discord:{OTHER}", expected_person_id=store.account(ALICE))
+    service = MemoryService(store, object())
+
+    async def run():
+        try:
+            current = await service.prepare_memory_action(_voice(ALICE))
+            other = await service.prepare_memory_action(
+                _voice(ALICE, channel=OTHER))
+            assert (await current.search(
+                _request(kind="core_self", query="confidence")))["items"] == []
+            assert len((await other.search(
+                _request(kind="core_self", query="confidence")))["items"]) == 1
+        finally:
+            await service.close()
+    asyncio.run(run())
+
+
+def test_schema_v5_autobiography_migrates_without_public_disclosure(tmp_path):
+    path = tmp_path / "old-private-self-core.sqlite3"
+    with closing(sqlite3.connect(path)) as db:
+        db.execute("""
+            CREATE TABLE jade_self_core(
+                id TEXT PRIMARY KEY, summary TEXT NOT NULL,
+                significance TEXT NOT NULL, fingerprint TEXT NOT NULL UNIQUE,
+                source_platform TEXT NOT NULL, source_account_id TEXT NOT NULL,
+                source_message_id TEXT NOT NULL, created_at TEXT NOT NULL,
+                visibility TEXT NOT NULL DEFAULT 'owner_only')
+        """)
+        db.execute("""
+            INSERT INTO jade_self_core VALUES (?,?,?,?,?,?,?,?,?)
+        """, ("a" * 32, "Jade a retenu un souvenir privé ancien.",
+              "Un épisode à préserver.", "legacy-fingerprint",
+              "discord", ALICE[1], "old-event",
+              "2026-11-18T09:00:00+00:00", "owner_only"))
+        db.execute("PRAGMA user_version=5")
+    store = MemoryStore(path)
+    store.enable(ALICE)
+    store.enable(OWNER)
+    with closing(sqlite3.connect(path)) as db:
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 6
+        assert db.execute(
+            "SELECT source_scope FROM jade_self_core").fetchone()[0] == "legacy_private"
+    service = MemoryService(store, object())
+
+    async def run():
+        try:
+            public = await service.prepare_memory_action(_voice(ALICE))
+            page = await public.search(_request(kind="core_self"))
+            assert page["items"] == []  # No reliable legacy source scope.
+            private = await service.prepare_memory_action(Incoming(
+                "mobile", "Goldaj", "Souvenirs", channel="private"))
+            page = await private.search(_request(scope="all", kind="core_self"))
+            assert len(page["items"]) == 1
+            assert "ancien" in page["items"][0]["summary"]
+        finally:
+            await service.close()
+    asyncio.run(run())
