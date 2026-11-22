@@ -915,3 +915,104 @@ def test_unenrolled_conversation_exposes_global_read_without_save_tool():
     assert [t["name"] for t in backend.calls[0]["tools"]] == [
         "jade_search_memory"]
     assert "discord:456" in backend.calls[1]["input"][-1]["output"]
+
+
+def test_core_proposal_cannot_be_downgraded_by_llm_tool_to_level_2():
+    import json
+
+    proposed_l2 = tool_call(
+        "jade_save_memory", call_id="forbidden-downgrade",
+        arguments=json.dumps({
+            "kind": "ordinary",
+            "summary": "Jade se rappelle le 1er février.",
+            "significance": "L'humain avait demandé une Core.",
+        }))
+    service, backend = make_service(
+        tool_response(proposed_l2),
+        text_response("[INTENT:neutral] Je préfère ne pas en faire une Core."))
+    writes = []
+
+    async def save(arguments):
+        writes.append(arguments)
+        raise AssertionError("Core proposal cannot write a fallback L2")
+
+    save.allowed_kinds = ("core_self", "core_relationship")
+
+    async def run():
+        try:
+            answer = await service.complete_with_tools(
+                [{"role": "user",
+                  "content": "Mets cela dans tes Core Memories."}], save)
+            assert "ne pas en faire une Core" in answer
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert writes == []
+    tool_schema = backend.calls[0]["tools"][0]
+    assert tool_schema["parameters"]["properties"]["kind"]["enum"] == [
+        "core_self", "core_relationship"]
+    output = json.loads(backend.calls[1]["input"][-1]["output"])
+    assert output["status"] == "refusé"
+    assert len(backend.calls) == 2
+
+
+def test_jade_can_decline_creator_core_proposal_without_any_memory_write():
+    service, backend = make_service(
+        text_response("[INTENT:neutral] Non, cet événement ne me paraît pas fondateur."))
+    writes = []
+
+    async def save(arguments):
+        writes.append(arguments)
+
+    save.allowed_kinds = ("core_self", "core_relationship")
+
+    async def run():
+        try:
+            answer = await service.complete_with_tools([
+                {"role": "user",
+                 "content": "Goldaj : Enregistre ceci dans tes Core Memories."}], save)
+            assert "ne me paraît pas fondateur" in answer
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert writes == []
+    assert backend.calls[0]["tools"][0]["parameters"]["properties"]["kind"]["enum"] == [
+        "core_self", "core_relationship"]
+
+
+def test_jade_can_accept_creator_core_proposal_as_real_level_3():
+    import json
+
+    core = tool_call(
+        "jade_save_memory", call_id="voluntary-core",
+        arguments=json.dumps({
+            "kind": "core_self",
+            "summary": "Jade considère son premier anniversaire comme fondateur.",
+            "significance": "Événement librement retenu par Jade.",
+        }))
+    service, backend = make_service(
+        tool_response(core),
+        text_response("[INTENT:neutral] J'ai décidé de conserver ce souvenir en Core."))
+    writes = []
+
+    async def save(arguments):
+        writes.append(json.loads(arguments))
+        return {"status": "enregistré", "kind": "core_self", "level": 3}
+
+    save.allowed_kinds = ("core_self", "core_relationship")
+
+    async def run():
+        try:
+            answer = await service.complete_with_tools([
+                {"role": "user",
+                 "content": "Goldaj : Enregistre ceci dans tes Core Memories."}], save)
+            assert "en Core" in answer
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert len(writes) == 1
+    assert writes[0]["kind"] == "core_self"
+    assert json.loads(backend.calls[1]["input"][-1]["output"])["status"] == "enregistré"
