@@ -101,6 +101,12 @@ def make_layers(source: np.ndarray) -> tuple[np.ndarray, dict[str, np.ndarray], 
     pastel = cv2.GaussianBlur(pastel, (0, 0), 1.3)
     fabric_mask = curtain_mask * np.clip(pastel * 1.18, 0.0, 1.0)
     fabric = alpha_cutout(source, behind, fabric_mask, upper_alpha=0.88)
+    # Conservative fixed-geometry exclusion. The original composite includes
+    # wood immediately behind the sheer edge. Never let that wood travel with
+    # the cloth, even if it means sacrificing a few lace-edge pixels.
+    yy, xx = np.indices((height, width))
+    fabric[(xx >= 1035) & (yy >= 315), 3] = 0
+    fabric[(xx >= 1139) & (yy >= 100), 3] = 0
     crop = CURTAIN_CROP
     layers = {
         "room-curtain.webp": fabric[crop[1]:crop[3], crop[0]:crop[2]],
