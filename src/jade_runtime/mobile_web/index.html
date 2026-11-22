@@ -67,6 +67,17 @@
         <p id="billing-status" role="status">Ouvre ce panneau pour consulter les dépenses.</p>
         <button type="button" id="billing-refresh">Actualiser</button>
       </details>
+      <details class="identity-panel" id="deployment-panel">
+        <summary>Administrer Jade sur le PC (branche et redémarrage)</summary>
+        <p>Fonction réservée au propriétaire. Nécessite le superviseur Windows indépendant et une connexion privée Tailscale. Aucune modification de la branche Git distante.</p>
+        <button type="button" id="deployment-load">Afficher les branches et la version active</button>
+        <p id="deployment-state" role="status">Superviseur non interrogé.</p>
+        <label for="deployment-branch">Branche distante à exécuter</label>
+        <select id="deployment-branch" disabled><option value="">Charger les branches…</option></select>
+        <button type="button" id="deployment-run" disabled>Mettre à jour et redémarrer</button>
+        <button type="button" id="deployment-restart">Redémarrer sans mise à jour</button>
+        <p>En cas de coupure de Jade pendant le redémarrage, reconnecte-toi puis recharge l'état du superviseur.</p>
+      </details>
       <details class="identity-panel" id="identity-panel">
         <summary>Associer mon compte Discord ou Twitch</summary>
         <p>Cette association sert à faire reconnaître ton compte Discord ou Twitch par Jade. Elle n'est pas nécessaire pour activer la mémoire de l'application mobile, déjà associée au profil privé du propriétaire lorsque la mémoire est activée.</p>
