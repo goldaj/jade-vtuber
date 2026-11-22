@@ -110,9 +110,15 @@ class MemoryService:
             return False
 
     async def prefetch_owner(self) -> None:
-        """Prepare owner memory before the first authenticated mobile turn."""
-        if not self._closed:
+        """Best-effort owner cache warmup; a failure must not block startup."""
+        if self._closed:
+            return
+        try:
             await self.presence_cache.candidates(("microphone", "goldaj"), "person")
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            LOG.warning("Owner memory prefetch unavailable; Jade startup continues")
 
     async def prefetch_voice_member(self, member_id: int, channel_id: int) -> None:
         """Prepare only *existing* consenting Discord identities; never enroll."""
