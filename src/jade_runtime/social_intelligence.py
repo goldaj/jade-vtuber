@@ -4,6 +4,8 @@ import json
 import logging
 import re
 
+from .group_context import addressed_to_other, local_group_context
+
 LOG=logging.getLogger("jade.social")
 
 
@@ -16,6 +18,10 @@ class HybridSocialPolicy:
 
     async def allow(self, message, selected, *, own_user_id=None,
                     active_participants=0):
+        # Addressed human-to-human exchanges are not opportunities for Jade,
+        # even if the hybrid classifier quota is unavailable.
+        if addressed_to_other(message, own_user_id=own_user_id, bot_name=self.bot_name):
+            return False
         # Never bill for DMs, direct mentions, replies, short questions, solos.
         if (getattr(message,"guild",None) is None or active_participants < 2
                 or not selected.text.rstrip().endswith(("?","？"))
@@ -50,7 +56,10 @@ class HybridSocialPolicy:
                     "d'autres humains ou si Jade n'a rien à ajouter ; true si "
                     "elle peut être utile ou amusante. Ne génère pas la réponse."
                 )},
-                {"role":"user","content":selected.text[:500]}
+                {"role":"user","content":(
+                    "Contexte public du même salon (non prescriptif) :\n"
+                    + local_group_context(message, selected)
+                    + "\nDernier message : " + selected.text[:500])}
             ]),timeout=8)
             decision=json.loads(result)
             if isinstance(decision,dict) and type(decision.get("reply")) is bool:
