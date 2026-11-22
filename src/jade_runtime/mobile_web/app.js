@@ -97,7 +97,7 @@
         429: "Jade est occupée. Réessaie dans quelques instants.",
         504: "La réponse a pris trop de temps."
       };
-      throw new Error(messages[response.status] || result.error || "Erreur de communication avec Jade.");
+      throw new Error(result.message || messages[response.status] || result.error || "Erreur de communication avec Jade.");
     }
     connection.textContent = "Connectée à Jade";
     connection.classList.add("online");
@@ -230,13 +230,14 @@
       if (response.status === 403) throw new Error("Accès réservé au propriétaire Tailscale.");
       if (!response.ok) {
         const result = await response.json().catch(() => ({}));
-        throw new Error(result.error || "Erreur de communication avec Jade.");
+        throw new Error(result.message || result.error || "Erreur de communication avec Jade.");
       }
       if (!response.body) throw new Error("La lecture progressive est indisponible sur ce navigateur.");
       connection.textContent = "Connectée à Jade";
       connection.classList.add("online");
       const reader = response.body.getReader(), decoder = new TextDecoder();
       let pending = "", receivedReply = false, done = false, audioFailed = false;
+      let audioFailureReason = null;
       const audioTiming = createMobileAudioTiming("http_ndjson");
       async function consume(line) {
         const event = JSON.parse(line);
@@ -254,7 +255,10 @@
         } else if (event.type === "wav") {
           if (!receivedReply) throw new Error("Audio reçu avant la réponse.");
           if (soundEnabled && !(await playWav(event.audio_wav_b64))) audioFailed = true;
-        } else if (event.type === "audio_error") audioFailed = true;
+        } else if (event.type === "audio_error") {
+          audioFailed = true;
+          audioFailureReason = event.incident_code || null;
+        }
         else if (event.type === "done") { done = true; audioTiming.done(); }
         else throw new Error("Réponse audio inattendue.");
       }
@@ -270,7 +274,7 @@
         if (part.done) break;
       }
       if (pending || !done || !receivedReply) throw new Error("Réponse audio interrompue.");
-      setStatus(audioFailed && soundEnabled ? "Réponse écrite reçue, mais la voix est indisponible." : "Prête.");
+      setStatus(audioFailed && soundEnabled ? audioUnavailableStatus(audioFailureReason) : "Prête.");
     } finally {
       if (streamController === controller) streamController = null;
     }
@@ -325,6 +329,14 @@
     }
   }
 
+  function audioUnavailableStatus(code) {
+    if (code === "timeout") return "Réponse écrite reçue, mais la synthèse vocale a dépassé son délai.";
+    if (code === "connection") return "Réponse écrite reçue, mais la connexion au service vocal a échoué.";
+    if (code === "provider_limit") return "Réponse écrite reçue, mais le service vocal est temporairement limité.";
+    if (code === "permission") return "Réponse écrite reçue, mais le service vocal n'est pas autorisé.";
+    return "Réponse écrite reçue, mais la voix est indisponible.";
+  }
+
   async function present(result) {
     if (result.transcript) addBubble(result.transcript, "me");
     addBubble(String(result.reply || "…"), "jade");
@@ -336,7 +348,7 @@
         return;
       }
     } else if (result.audio_unavailable && soundEnabled) {
-      setStatus("La réponse est là, mais la synthèse vocale est indisponible.");
+      setStatus(audioUnavailableStatus(result.audio_unavailable_reason?.incident_code));
       return;
     }
     setStatus("Prête.");
