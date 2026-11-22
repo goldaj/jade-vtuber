@@ -12,6 +12,7 @@ from src.jade_runtime.deploy_supervisor import Supervisor, branch_valid
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.memory_service import MemoryService
 from src.jade_runtime.orchestrator import Runtime
+from src.jade_runtime.responses_chat import OutputTokenLimitError, _require_completed
 from src.jade_runtime.group_context import addressed_to_other
 from src.jade_runtime.memory_relevance import rank_memories
 from src.jade_runtime.memory_store import MemoryStore
@@ -320,6 +321,27 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(values["llm_duration_ms"]["p50_ms"], 250.0)
         self.assertEqual(values["llm_end"]["p50_ms"], 650.0)
         self.assertEqual(values["total_ms"]["p50_ms"], 700.0)
+
+    def test_incomplete_billed_response_has_usage_without_retry(self):
+        clock = [3.0]
+        metrics = TurnMetrics(clock=lambda: clock[0])
+        metrics.begin(9, "mobile", "text", 3.0)
+        token = bind_metrics(metrics, 9)
+        try:
+            with self.assertRaises(OutputTokenLimitError):
+                _require_completed({
+                    "status": "incomplete",
+                    "incomplete_details": {"reason": "max_output_tokens"},
+                    "usage": {"input_tokens": 135, "output_tokens": 2048},
+                })
+        finally:
+            reset_metrics(token)
+        clock[0] = 3.5
+        metrics.end(9, "failed")
+        sample = metrics.summary()[0]
+        self.assertEqual(sample["usage"]["input_tokens"], 135)
+        self.assertEqual(sample["usage"]["output_tokens"], 2048)
+        self.assertIsNone(sample["cost_usd"])
 
     def test_provider_tokens_are_attributed_only_to_current_turn(self):
         clock = [10.0]
