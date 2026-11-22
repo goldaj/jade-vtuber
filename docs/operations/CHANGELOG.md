@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — DEV-010 clôturé après validation explicite du propriétaire
+
+- **Décision :** le propriétaire confirme « ok c'est validé » après la fusion de la [PR #40](https://github.com/goldaj/jade-vtuber/pull/40), couvrant le rideau, la fumée et les ombres animés du décor mobile. La carte **DEV-010 est passée de `À valider` à `Done`**.
+- **Traçabilité :** tests ciblés de génération graphique, géométrie, animation et cycle de vie réussis ; réserves visuelles documentées dans [la revue DEV-010](handoffs/2026-11-22-dev010-living-room-design.md). Les scénarios Android individuels ne sont pas détaillés dans le retour propriétaire et ne sont pas déclarés tous vérifiés séparément.
+- **Portée :** documentation de suivi uniquement. Aucun changement du runtime, de `main`, ni des autres tickets ; les échecs de tests mémoire préexistants restent distincts.
+
 ## 2026-11-22 — DEV-010 : décor mobile vivant (rideau, fumée, ombres)
 
 - **Animation :** rideau extrait en WebP transparent et animé autour des attaches, reconstruction stationnaire des pixels occultés, feuillage SVG sur deux plans avec vent commun à plusieurs fréquences, volutes SVG de vapeur bien plus amples et reflets conservés.
