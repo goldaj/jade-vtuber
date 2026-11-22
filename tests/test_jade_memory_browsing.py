@@ -120,6 +120,7 @@ def test_public_scope_is_clamped_and_private_linked_account_can_browse_all(tmp_p
 def test_self_core_from_other_discord_speaker_is_not_returned_publicly(tmp_path):
     store = _setup(tmp_path)
     assert store.put_self_core(ALICE, summary="Jade s'est fixé une date d'anniversaire.",
+                               scope=f"discord:{CHANNEL}",
                                expected_person_id=store.account(ALICE))
     service = MemoryService(store, object())
 
