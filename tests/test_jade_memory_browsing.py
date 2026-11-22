@@ -50,6 +50,7 @@ def test_discord_voice_can_retrieve_all_same_speaker_same_channel_l2(tmp_path):
         db.execute(
             "UPDATE memories SET expires_at='2000-01-01T00:00:00+00:00' "
             "WHERE summary=?", ("Souvenir important numéro 005 écrit dans le même salon.",))
+        db.commit()
 
     service = MemoryService(store, object())
     async def run():
@@ -161,6 +162,7 @@ def test_malformed_search_and_stale_profile_cannot_retrieve_memories(tmp_path):
             with closing(sqlite3.connect(store.path)) as db:
                 db.execute("PRAGMA foreign_keys=ON")
                 db.execute("DELETE FROM persons WHERE id=?", (original,))
+                db.commit()
             store.enable(ALICE)
             assert (await action.search(_request()))["status"] == "indisponible"
         finally:
@@ -228,6 +230,7 @@ def test_schema_v5_autobiography_migrates_without_public_disclosure(tmp_path):
               "discord", ALICE[1], "old-event",
               "2026-11-18T09:00:00+00:00", "owner_only"))
         db.execute("PRAGMA user_version=5")
+        db.commit()
     store = MemoryStore(path)
     store.enable(ALICE)
     store.enable(OWNER)
