@@ -16,9 +16,11 @@
 
 ## Quick wins VIS-04 / RTE-12, développés le 22 novembre 2026
 
-- **DEV-027, Live2D mobile :** la PWA coupe le ticker de rendu PixiJS et l'auto-actualisation du modèle quand l'onglet est caché, le composant démonté ou l'avatar hors champ. Le dialogue, la voix et les connecteurs restent actifs. L'absence d'IntersectionObserver est gérée ; reprise sans nouveau modèle ni relance de l'Idle. La batterie/FPS Android ne sont pas encore mesurés réellement.
+- **DEV-027, Live2D mobile :** la PWA coupe le ticker PixiJS et l'auto-actualisation du modèle quand l'onglet est caché ou le composant démonté ; pour l'avatar hors viewport, **DEV-029 (VIS-07)** introduit désormais une grâce de **6,5 secondes** avant la pause. Le dialogue, la voix et les connecteurs restent actifs. L'absence d'IntersectionObserver est gérée ; reprise sans nouveau modèle ni relance de l'Idle, et expression visuelle neutralisée après une vraie pause. La batterie/FPS Android ne sont pas encore mesurés réellement.
 - **DEV-028, livraison :** les destinations initialement planifiées sont distinctes des événements `delivery_evidence` : confirmation d'acceptation par l'API Discord texte, fin de lecture ffplay ou consommation audio Discord. Les redirections mobiles/HTTP et Twitch sans accusé réel ne sont jamais présentées comme livrées ; aucun statut n'affirme que l'utilisateur a entendu le son. Pas de contenu privé dans ces nouvelles preuves.
 - Les tests et conditions de recette sont dans [la passation](../operations/handoffs/2026-11-22-chatgpt-vis04-rte12.md) et la [backlog DEV](../backlog/01-DEVELOPPEMENT.md). **Statut de recette réel à vérifier avant Done.**
+
+**DEV-030 (LAT-10, P1) a été inscrit dans la backlog au statut À faire** ; aucun timeout vocal n'a été modifié. Voir la [passation VIS-07/LAT-10](../operations/handoffs/2026-11-22-vis07-lat10-quickwins.md).
 
 ## Recherche web facultative (REC-038, 22 novembre 2026)
 
