@@ -96,17 +96,20 @@ class Supervisor:
 
     def _perform(self, branch, restart_only):
         previous_sha = None
+        previous_branch = None
+        switched = False
         try:
+            previous_sha = self.git("rev-parse", "HEAD")
+            previous_branch = self.git("branch", "--show-current")
             if not restart_only:
                 if self.git("status", "--porcelain"):
                     raise RuntimeError("working_tree_not_clean")
-                previous_sha = self.git("rev-parse", "HEAD")
                 self.git("fetch", "--prune", "origin", timeout=180)
                 if branch not in self.branches():
                     raise RuntimeError("unknown_remote_branch")
                 target = self.git("rev-parse", "refs/remotes/origin/" + branch)
             else:
-                target = self.git("rev-parse", "HEAD")
+                target = previous_sha
             old = self.child
             old.terminate()
             try:
@@ -116,6 +119,7 @@ class Supervisor:
                 old.wait(timeout=5)
             if not restart_only:
                 self.git("switch", "--detach", target)
+                switched = True
                 if self.install_command is not None:
                     installed = subprocess.run(self.install_command, cwd=str(self.root),
                                                timeout=300, check=False)
@@ -127,19 +131,27 @@ class Supervisor:
                                    else self.state["branch"],
                                    "sha": target, "running": True})
         except Exception as exc:
-            # Do not leak paths, repository output, credentials or transcripts.
-            if previous_sha is not None:
-                try:
-                    self.git("switch", "--detach", previous_sha)
-                    if self.child is None or self.child.poll() is not None:
-                        self._launch()
-                except Exception:
-                    pass
+            # A failed restart must attempt to bring the old process back;
+            # never detach a healthy branch when an earlier fetch failed.
+            try:
+                if switched:
+                    if previous_branch:
+                        self.git("switch", previous_branch)
+                    elif previous_sha:
+                        self.git("switch", "--detach", previous_sha)
+                if (previous_sha is not None and
+                        (self.child is None or self.child.poll() is not None)):
+                    self._launch()
+            except Exception:
+                pass  # Report the original failure; never expose local secrets.
             with self.lock:
                 self.state["error"] = (str(exc) if isinstance(exc, RuntimeError)
                                        else "deployment_failed")
                 self.state["running"] = (self.child is not None
                                          and self.child.poll() is None)
+                if self.state["running"] and previous_sha is not None:
+                    self.state["sha"] = previous_sha
+                    self.state["branch"] = previous_branch or "detached"
         finally:
             with self.lock:
                 self.state["phase"] = "idle"
