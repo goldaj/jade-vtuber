@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — REC-006 et REC-029 : clôture produit explicite sur develop
+
+- **Décision du propriétaire :** après revue des logs réels du 22/11, les deux cartes passent de `À valider` à **`Done`**, sans développement ni test supplémentaire requis pour la clôture.
+- **Discord REC-006 :** trois recouvrements PCM/TTS positifs constatés. Le tour long dont la synthèse vocale a échoué reste documenté : `tts_completed_ms=null`, `playback_completed=false`, et les statuts de transfert ne constituent pas une preuve d'audition. Le propriétaire accepte cette réserve. **Early Voice demeure refusé/désactivé**, sans requalification.
+- **Mobile REC-029 :** deux recouvrements PCM/TTS sur WebSocket avec émission terminée ; les logs navigateur Android ne sont pas joints et les autres scénarios de recette ne sont pas tous prouvés. Le propriétaire accepte de clore la carte sans les exiger.
+- **Traçabilité :** `docs/backlog/02-RECETTE.md` mis à jour et [analyse réelle](handoffs/2026-11-22-chatgpt-rec006-rec029-test-log-analysis.md) conservée. **Pas de modification runtime ni de main** : c'est une décision de recette, pas une prétention de résolution des défauts historiques.
+
+
 ## 2026-11-22 — Correctif détecté par la suite REC-029
 
 - **QA :** la première exécution des nouveaux tests ciblés donne 47 réussites et un échec de fermeture du flux PCM lors de l'abandon du lecteur mobile. L'itérateur externe ne refermait pas automatiquement le générateur async interne après `aclose()`.
