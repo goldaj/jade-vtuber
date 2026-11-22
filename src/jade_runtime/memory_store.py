@@ -16,7 +16,7 @@ import uuid
 
 from .session_logging import event
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 CONVERSATION_RETENTION_DAYS = 7
 CONVERSATION_RELOAD_HOURS = 24
 ORDINARY_RETENTION_DAYS = 365
@@ -72,7 +72,7 @@ class MemoryStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._db() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, SCHEMA_VERSION):
+            if version not in (0, 1, 2, 3, 4, 5, SCHEMA_VERSION):
                 raise RuntimeError("unsupported Jade memory schema; migrate before starting")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS persons (
@@ -121,6 +121,7 @@ class MemoryStore:
                     source_platform TEXT NOT NULL,
                     source_account_id TEXT NOT NULL,
                     source_message_id TEXT NOT NULL,
+                    source_scope TEXT NOT NULL DEFAULT 'legacy_private',
                     created_at TEXT NOT NULL,
                     visibility TEXT NOT NULL DEFAULT 'owner_only'
                         CHECK(visibility='owner_only')
@@ -186,6 +187,15 @@ class MemoryStore:
             if version < 5:
                 # Retire obsolete opt-out state without touching saved memories.
                 db.execute("DROP TABLE IF EXISTS memory_auto_enrollment_blocks")
+            if version < 6:
+                # Legacy autobiography has no reliable originating channel.
+                # Keep it private; never infer a public scope from speaker ID.
+                columns = {row["name"] for row in db.execute(
+                    "PRAGMA table_info(jade_self_core)").fetchall()}
+                if "source_scope" not in columns:
+                    db.execute("ALTER TABLE jade_self_core "
+                               "ADD COLUMN source_scope TEXT NOT NULL "
+                               "DEFAULT 'legacy_private'")
             db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
         # Purge expired rows on open, including DBs created before this policy.
         self.prune_expired()
@@ -384,6 +394,7 @@ class MemoryStore:
 
     def put_self_core(self, key: tuple[str, str], *, summary: str,
                       significance: str = "", message_id: str = "",
+                      scope: str = "person",
                       expected_person_id: str | None = None) -> bool:
         """Jade's own lasting episodes, owner-only until explicit promotion exists.
 
@@ -395,7 +406,11 @@ class MemoryStore:
         _validate_key(key)
         if (not isinstance(summary, str) or not 1 <= len(summary.strip()) <= 400
                 or not isinstance(significance, str) or len(significance) > 280
-                or not isinstance(message_id, str)):
+                or not isinstance(message_id, str)
+                or not isinstance(scope, str)
+                or not (scope == "person"
+                        or (scope.startswith(("discord:", "twitch:"))
+                            and 1 <= len(scope) <= 128))):
             raise ValueError("invalid Jade autobiography")
         with self._db() as db:
             # The trusted speaker's profile must still exist when the write
@@ -411,11 +426,11 @@ class MemoryStore:
             written = db.execute("""
                 INSERT OR IGNORE INTO jade_self_core
                 (id,summary,significance,fingerprint,source_platform,
-                 source_account_id,source_message_id,created_at,visibility)
-                VALUES (?,?,?,?,?,?,?,?, 'owner_only')
+                 source_account_id,source_message_id,source_scope,created_at,visibility)
+                VALUES (?,?,?,?,?,?,?,?,?, 'owner_only')
                 """, (uuid.uuid4().hex, summary.strip(), significance.strip(),
                       _fingerprint(summary), key[0], key[1], message_id[:128],
-                      _now().isoformat()))
+                      scope, _now().isoformat()))
             return written.rowcount > 0
 
     def recall_self_core(self, key: tuple[str, str], *, limit: int = 6) -> list[dict]:
@@ -573,6 +588,9 @@ class MemoryStore:
                 if not (allow_other_scopes and owner):
                     clauses += ["source_platform=?", "source_account_id=?"]
                     args.extend(key)
+                    if not allow_other_scopes:
+                        clauses.append("source_scope=?")
+                        args.append(scope)
                 extra, extra_args = filters()
                 clauses.extend(extra)
                 args.extend(extra_args)
