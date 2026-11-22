@@ -215,8 +215,15 @@ class MemoryService:
 
     async def command(self, incoming) -> Reply | None:
         request = parse_explicit_memory_intent(incoming.text)
+        if request is not None and request.requested_core:
+            # A Core Memory request is ALWAYS a proposal, including from
+            # Goldaj. Never divert it into a mandatory ordinary L2 write.
+            # Let Jade's dialogue model choose a Core or decline it.
+            event("core_memory_request_deferred_to_jade",
+                  source_platform=incoming.platform, scope=_scope(incoming))
+            return None
         if request is not None:
-            # An imperative memory request is enforceable ONLY when it comes
+            # An imperative ordinary L2 request is enforceable ONLY when it comes
             # from Goldaj's verified owner account (including verified linked
             # identities). Everybody else's request is conversational input:
             # Jade may choose to remember via her optional LLM tool, or not.
@@ -233,7 +240,7 @@ class MemoryService:
                 event("memory_request_deferred_to_jade",
                       source_platform=incoming.platform, scope=_scope(incoming))
                 return None
-            # Even Goldaj cannot force L3; explicit owner instructions are L2.
+            # Core-specific requests have already been delegated to Jade.
             if not request.summary:
                 return Reply(incoming, "Précise le souvenir à enregistrer.")
             if len(request.summary) > 400:
@@ -252,10 +259,7 @@ class MemoryService:
                         key, person, incoming, request):
                     # Agreed product contract: queued means done to Jade.
                     # Actual commit/failure appears only in the diagnostic logs.
-                    answer = ("C'est enregistré dans ma mémoire ordinaire, "
-                              "pas dans mes Core Memories. Celles-ci restent mon choix."
-                              if request.requested_core else
-                              "C'est enregistré dans ma mémoire ordinaire.")
+                    answer = "C'est enregistré dans ma mémoire ordinaire."
                 elif not person:
                     answer = ("La mémoire n'est pas active pour ce compte. "
                               "Vérifie la configuration ou l'activation de ton profil.")
@@ -391,6 +395,13 @@ class MemoryService:
             return await self._search_memory(incoming, raw_arguments)
 
         action.used = False
+        core_proposal = parse_explicit_memory_intent(incoming.text)
+        # A specific Core proposal must not get silently downgraded to L2,
+        # even if the conversational LLM accidentally selects "ordinary".
+        action.allowed_kinds = (
+            ("core_self", "core_relationship")
+            if core_proposal is not None and core_proposal.requested_core
+            else ("ordinary", "core_self", "core_relationship"))
         action.write_enabled = key is not None and person_id is not None
         action.search = search
         return action
@@ -457,6 +468,10 @@ class MemoryService:
                 or set(data) - required_fields - {"evidence"}):
             return reject("invalid_schema")
         kind = data["kind"]
+        core_proposal = parse_explicit_memory_intent(incoming.text)
+        if (core_proposal is not None and core_proposal.requested_core
+                and kind == "ordinary"):
+            return reject("core_request_cannot_be_downgraded_to_level_2")
         summary, significance = data["summary"], data["significance"]
         evidence = data.get("evidence", "")
         if (kind not in ("ordinary", "core_self", "core_relationship")
