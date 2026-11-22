@@ -1,0 +1,59 @@
+name: DEV-010 artwork build and offline motion tests
+
+# Temporary, isolated build branch; runs before any update to develop.
+on:
+  push:
+    branches:
+      - feature/dev-010-living-room-20261122
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  room-layers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: feature/dev-010-living-room-20261122
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pinned offline art tooling
+        run: python -m pip install --disable-pip-version-check -r scripts/requirements-room-layers.txt
+      - name: Validate animation logic, reflow and fallback
+        run: node tests/room_motion_test.js
+      - name: Validate offline image reconstruction and static geometry
+        run: python tests/room_layers_build_test.py
+      - name: Build four WebP layers from committed original
+        run: python scripts/build_room_layers.py
+      - name: Verify generated image presence and sizes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          root = Path("src/jade_runtime/mobile_web")
+          files = ["room-backdrop.webp", "room-curtain.webp", "room-shadow-left.webp", "room-shadow-right.webp"]
+          sizes = {name: (root / name).stat().st_size for name in files}
+          assert sum(sizes.values()) < 1_500_000, sizes
+          print("Generated total bytes:", sum(sizes.values()))
+          print(sizes)
+          PY
+      - name: Commit generated assets ONLY on isolated feature branch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/jade_runtime/mobile_web/room-backdrop.webp \
+                  src/jade_runtime/mobile_web/room-curtain.webp \
+                  src/jade_runtime/mobile_web/room-shadow-left.webp \
+                  src/jade_runtime/mobile_web/room-shadow-right.webp
+          if git diff --cached --quiet; then
+            echo "Generated assets already committed"
+          else
+            git commit -m "build(dev010): version rendered curtain and shadow layers"
+            git push origin HEAD:feature/dev-010-living-room-20261122
+          fi
