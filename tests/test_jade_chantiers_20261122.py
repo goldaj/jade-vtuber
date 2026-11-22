@@ -6,7 +6,7 @@ import tempfile
 from types import SimpleNamespace
 import unittest
 
-from src.jade_runtime.cross_channel import CrossChannelContinuity
+from src.jade_runtime.cross_channel import CrossChannelContinuity, natural_command
 from src.jade_runtime.deploy_supervisor import Supervisor, branch_valid
 from src.jade_runtime.group_context import addressed_to_other
 from src.jade_runtime.memory_relevance import rank_memories
@@ -14,7 +14,7 @@ from src.jade_runtime.memory_store import MemoryStore
 from src.jade_runtime.messages import Incoming
 from src.jade_runtime.personality_evolution import personality_snapshot
 from src.jade_runtime.presence_memory import PresenceMemoryCache
-from src.jade_runtime.turn_metrics import TurnMetrics
+from src.jade_runtime.turn_metrics import TurnMetrics, bind_metrics, reset_metrics, record_model_usage
 
 
 class ScopedMemoryTests(unittest.IsolatedAsyncioTestCase):
@@ -136,6 +136,30 @@ class ContinuityTests(unittest.IsolatedAsyncioTestCase):
                      + tasks[0]["id"][:8]))).text)
         self.assertFalse(await self.coordinator.context_for(later))
 
+    async def test_natural_phrases_only_execute_explicit_commands(self):
+        natural = Incoming(platform="mobile", author="Goldaj", channel="private",
+                           text="Jade, ajoute une tâche : Terminer le plan de recette")
+        answer = await self.coordinator.command(natural)
+        self.assertIn("Tâche suivie", answer.text)
+        tasks = self.coordinator._tasks(("microphone", "goldaj"), operation="list")
+        self.assertEqual(len(tasks), 1)
+        self.assertIn("Terminer le plan de recette", await self.coordinator.context_for(
+            Incoming(platform="mobile", author="Goldaj", channel="autre-session",
+                     text="On en était où ?")))
+        self.assertIn("Tâches en cours", (await self.coordinator.command(
+            Incoming(platform="mobile", author="Goldaj", channel="private",
+                     text="Jade, liste mes tâches en cours"))).text)
+        transfer = Incoming(platform="mobile", author="Goldaj", channel="private",
+                            text="Jade, envoie ce message sur Discord dans le salon 555 : "
+                                 "La recette commence demain.")
+        self.assertIn("remis", (await self.coordinator.command(transfer)).text)
+        self.assertEqual(self.sent, [("555", "La recette commence demain.")])
+        # An ambiguous conversational mention must not trigger an action.
+        self.assertIsNone(natural_command("Peut-être qu'on pourrait prévenir le Discord."))
+        self.assertIsNone(await self.coordinator.command(
+            Incoming(platform="mobile", author="Goldaj", channel="private",
+                     text="Je pensais envoyer une annonce sur Discord")))
+
     async def test_explicit_allowlisted_cross_channel_send(self):
         cmd = Incoming(platform="mobile", author="Goldaj", channel="private",
                        text="!jade-transfert discord:555 Bonjour à tous")
@@ -192,6 +216,25 @@ class DeploymentSupervisorTests(unittest.TestCase):
 
 
 class MetricsTests(unittest.TestCase):
+    def test_provider_tokens_are_attributed_only_to_current_turn(self):
+        clock = [10.0]
+        metrics = TurnMetrics(clock=lambda: clock[0])
+        metrics.begin(1, "mobile", "text", clock[0])
+        token = bind_metrics(metrics, 1)
+        try:
+            record_model_usage(60, 12)
+            record_model_usage(20, 8)
+            record_model_usage(None, None)
+        finally:
+            reset_metrics(token)
+        record_model_usage(1000, 1000)
+        clock[0] = 11.0
+        metrics.end(1)
+        summary = metrics.summary()[0]
+        self.assertEqual(summary["usage"], {
+            "n": 1, "input_tokens": 80, "output_tokens": 20})
+        self.assertIsNone(summary["cost_usd"])
+
     def test_quantiles_without_private_user_data(self):
         clock = [1.0]
         metrics = TurnMetrics(clock=lambda: clock[0])
