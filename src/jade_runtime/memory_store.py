@@ -572,8 +572,18 @@ class MemoryStore:
                 or type(limit) is not int or not 1 <= limit <= 15):
             raise ValueError("invalid global memory query")
 
+        # Exclude common speech fillers so "quelle est ma date de naissance"
+        # does not return every conversation containing "de" or "ma".
+        stop = {
+            "de", "du", "des", "la", "le", "les", "ma", "mon", "mes",
+            "ton", "ta", "tes", "un", "une", "tu", "vous", "nous",
+            "je", "jai", "est", "que", "qui", "quoi", "quel", "quelle",
+            "quand", "comment", "avec", "dans", "pour", "sur",
+            "me", "te", "en", "aux", "au", "a", "as", "ai", "ce",
+            "cette", "ces", "ses", "elle", "il", "peux", "peut",
+        }
         raw_terms = [word for word in re.findall(r"\w+", query.casefold())
-                     if len(word) >= 2][:8]
+                     if len(word) >= 2 and word not in stop][:8]
         synonyms = {
             "anniversaire": ("naissance", "née", "né"),
             "naissance": ("anniversaire", "née", "né"),
