@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — OPS-015 suspendu jusqu'au retour de tokens Codex
+
+- **Décision propriétaire :** passage de **OPS-015** (étude des redondances artistiques et outils inutiles) de `À faire` à **`Bloqué`**, pour reprendre lorsque le quota de tokens Codex sera suffisant.
+- **Reprise :** sur nouvelle décision du propriétaire, sans échéance ni réactivation automatique ; aucune analyse d'assets ou purge effectuée par ce changement.
+- **Périmètre :** documentation de backlog et de suivi uniquement, sans changement du runtime ni de `main`.
+
 ## 2026-11-22 — DEV-010 clôturé après validation explicite du propriétaire
 
 - **Décision :** le propriétaire confirme « ok c'est validé » après la fusion de la [PR #40](https://github.com/goldaj/jade-vtuber/pull/40), couvrant le rideau, la fumée et les ombres animés du décor mobile. La carte **DEV-010 est passée de `À valider` à `Done`**.
