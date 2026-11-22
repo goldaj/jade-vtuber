@@ -40,6 +40,8 @@ WEB_FILES = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/assets/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/assets/jade-theme.css": ("jade-theme.css", "text/css; charset=utf-8"),
+    "/assets/splash.js": ("splash.js", "text/javascript; charset=utf-8"),
+    "/assets/splash-jade.png": ("splash-jade.png", "image/png"),
     "/assets/avatar.js": ("avatar.js", "text/javascript; charset=utf-8"),
     "/assets/room-motion.js": ("room-motion.js", "text/javascript; charset=utf-8"),
     "/assets/room-spring.webp": ("room-spring.webp", "image/webp"),

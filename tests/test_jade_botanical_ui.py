@@ -20,6 +20,13 @@ class BotanicalUIContract(unittest.TestCase):
         for view in ("home", "reminders", "chat", "activities", "profile"):
             self.assertIn('data-view-target="' + view + '"', html)
         self.assertIn("/assets/jade-theme.css", WEB_FILES)
+        self.assertIn("/assets/splash-jade.png", WEB_FILES)
+        self.assertIn("/assets/splash.js", WEB_FILES)
+        self.assertIn('id="jade-launch-splash"', html)
+        self.assertIn('src="/assets/splash-jade.png"', html)
+        self.assertIn('src="/assets/splash.js"', html)
+        self.assertIn("object-fit:cover", (ROOT / "jade-theme.css").read_text(encoding="utf-8"))
+        self.assertIn('addEventListener("load", dismissSplash', (ROOT / "splash.js").read_text(encoding="utf-8"))
         css = (ROOT / "jade-theme.css").read_text(encoding="utf-8")
         self.assertIn('.shell[data-view="home"]', css)
         self.assertIn('#c8dcc7', css.lower())
@@ -33,6 +40,9 @@ class BotanicalUIContract(unittest.TestCase):
         manifest = json.loads((ROOT / "manifest.webmanifest").read_text(encoding="utf-8"))
         self.assertEqual(manifest["theme_color"].lower(), "#2f5d45")
         self.assertEqual(manifest["background_color"].lower(), "#fffdf7")
+        self.assertTrue(any(x["src"] == "/icon.svg" and x["sizes"] == "any" for x in manifest["icons"]))
+        image = (ROOT / "splash-jade.png").read_bytes()
+        self.assertTrue(image.startswith(b"\x89PNG\r\n\x1a\n"))
         self.assertTrue(any(x["src"] == "/icon-192.png" for x in manifest["icons"]))
         for size in (192, 512):
             png = icon_png(size)

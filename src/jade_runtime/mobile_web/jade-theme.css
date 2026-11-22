@@ -155,3 +155,10 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){
   .app-nav-item,.dashboard-card{transition:none!important}
 }
+
+/* Splash image approved by the owner; web layer after Android-native icon. */
+.jade-launch-splash{position:fixed;inset:0;width:100%;height:100vh;height:100dvh;z-index:99999;display:flex;align-items:center;justify-content:center;background:#fffdf7;overflow:hidden;opacity:1;pointer-events:auto}
+.jade-launch-splash img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+.jade-launch-splash.is-dismissed{opacity:0;pointer-events:none;transition:opacity 220ms ease-out}
+@media(min-width:820px){.jade-launch-splash img{object-fit:contain}}
+@media(prefers-reduced-motion:reduce){.jade-launch-splash.is-dismissed{transition:none}}

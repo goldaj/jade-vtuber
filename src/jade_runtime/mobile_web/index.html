@@ -6,12 +6,14 @@
   <meta name="theme-color" content="#2f5d45">
   <meta name="description" content="Jade, espace privé de conversation avec Goldaj.">
   <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" as="image" href="/assets/splash-jade.png" fetchpriority="high">
   <link rel="icon" type="image/png" href="/icon-192.png">
   <link rel="stylesheet" href="/assets/styles.css">
   <link rel="stylesheet" href="/assets/jade-theme.css">
   <title>Jade · Espace privé</title>
   <!-- All SDK JS files must be installed LOCALLY on the PC after license review.
        No remote CDNs or embedded proprietary Live2D libraries. -->
+  <script src="/assets/splash.js" defer></script>
   <script src="/vendor/pixi.min.js" defer></script>
   <script src="/vendor/pixi-unsafe-eval.min.js" defer></script>
   <script src="/vendor/live2dcubismcore.min.js" defer></script>
@@ -22,6 +24,9 @@
   <script src="/assets/app.js" defer></script>
 </head>
 <body>
+  <div id="jade-launch-splash" class="jade-launch-splash" role="status" aria-label="Ouverture de Jade">
+    <img src="/assets/splash-jade.png" alt="" fetchpriority="high" decoding="async">
+  </div>
   <main class="shell" data-view="home">
     <header class="topbar">
       <div class="mark"><img class="mark-icon" src="/icon-192.png" width="40" height="40" alt=""><span><b>Jade</b><small>Je suis là, avec toi</small></span></div>
