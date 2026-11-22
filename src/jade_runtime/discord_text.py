@@ -39,7 +39,7 @@ class DiscordText:
     def __init__(self, token: str, on_message, *, send_enabled=False,
                  voice_bridge=None, bot_name="Jade", auto_rate=0.20,
                  cooldown_seconds=180, social_policy=None,
-                 initiatives=None):
+                 initiatives=None, document_store=None):
         if not token or token == "example":
             raise ValueError("Discord token required")
         self.token = token
@@ -49,6 +49,8 @@ class DiscordText:
         self.voice_bridge = voice_bridge
         self.social_policy = social_policy
         self.initiatives = initiatives
+        self.document_store = document_store
+        self._expiry_task = None
         self.dropped = 0
         # A real inbound DM provides an authenticated reply destination.
         # Cache only verified DM channels and bound the reference count.
@@ -120,6 +122,10 @@ class DiscordText:
                 if self._shutting_down:
                     return
                 self._gateway_available = True
+                if parent.document_store and (parent._expiry_task is None
+                        or parent._expiry_task.done()):
+                    parent._expiry_task = asyncio.create_task(
+                        parent._expire_documents_loop(), name="jade-discord-documents")
                 bridge = parent.voice_bridge
                 if bridge is None:
                     return
@@ -291,11 +297,40 @@ class DiscordText:
                 if self.voice_bridge is not None:
                     await asyncio.wait_for(self.voice_bridge.close(), timeout=4)
             finally:
+                if self._expiry_task is not None:
+                    self._expiry_task.cancel()
+                    await asyncio.gather(self._expiry_task, return_exceptions=True)
+                    self._expiry_task = None
                 self._dm_channels.clear()
                 await self.client.close()
 
+    async def _expire_documents_loop(self):
+        import discord
+        while True:
+            try:
+                for doc_id, channel, message_id in self.document_store.expired_discord()[:100]:
+                    try:
+                        target = self.client.get_channel(int(channel))
+                        if target is None:
+                            target = self._dm_channels.get(channel)
+                        if target is None:
+                            target = await self.client.fetch_channel(int(channel))
+                        message = await target.fetch_message(message_id)
+                        await message.delete()
+                    except discord.NotFound:
+                        pass
+                    except (discord.Forbidden, discord.HTTPException, AttributeError, ValueError):
+                        LOG.warning("Expired Discord attachment deletion pending")
+                        continue
+                    self.document_store.ack_discord(doc_id, channel, message_id)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                LOG.warning("Discord attachment cleanup unavailable")
+            await asyncio.sleep(60)
+
     async def send_chat(self, channel: str, text: str, *,
-                        source_message_id: str = "") -> bool:
+                        source_message_id: str = "", attachments=()) -> bool:
         if not self.send_enabled or self.client is None or not text.strip():
             return False
         try:
@@ -326,7 +361,21 @@ class DiscordText:
             parts[-1] = parts[-1][:1775] + " … [suite tronquée]"
         first_sent = False
         for part in parts:
-            sent = await target.send(part, allowed_mentions=discord.AllowedMentions.none())
+            if not first_sent and attachments:
+                if self.document_store is None:
+                    return False
+                files = [discord.File(self.document_store.path(item), filename=item.name)
+                         for item in attachments]
+                try:
+                    sent = await target.send(
+                        part, files=files, allowed_mentions=discord.AllowedMentions.none())
+                finally:
+                    for file in files:
+                        file.close()
+                self.document_store.mark_discord(
+                    tuple(attachments), channel, getattr(sent, "id"))
+            else:
+                sent = await target.send(part, allowed_mentions=discord.AllowedMentions.none())
             if not first_sent:
                 self.policy.note_sent(channel, source_message_id=source_message_id,
                                       sent_message_id=getattr(sent, "id", None))
