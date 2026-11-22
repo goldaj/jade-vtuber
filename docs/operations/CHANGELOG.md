@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Correctif détecté par la suite REC-029
+
+- **QA :** la première exécution des nouveaux tests ciblés donne 47 réussites et un échec de fermeture du flux PCM lors de l'abandon du lecteur mobile. L'itérateur externe ne refermait pas automatiquement le générateur async interne après `aclose()`.
+- **Correctif :** `mobile_audio_stream.speech_events` ferme explicitement l'itérateur interne dans un `finally`, puis restaure le contexte de mesure même si la fermeture échoue. Aucun changement de protocole ou d'appel API ; le test historique de fermeture reste l'acceptation ciblée.
+
+
 ## 2026-11-22 — Exécuter les recettes ciblées même quand l'ancien preflight bloque la CI principale
 
 - **QA :** le workflow existant `jade-responses-migration.yml` inclut désormais les tests hors ligne `test_jade_pcm_timing.py`, `test_jade_output_budget.py` et `test_jade_mobile_audio_stream.py`, en plus de ses 29 tests de régression existants. Déclenchement également sur changements mobile, timing, dialogue et nouveaux tests.
