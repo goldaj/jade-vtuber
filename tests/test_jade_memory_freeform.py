@@ -2,7 +2,9 @@
 import asyncio
 import json
 
-import pytest
+import tempfile
+import unittest
+from pathlib import Path
 
 from src.jade_runtime.memory_batch import MemoryBatcher
 from src.jade_runtime.memory_service import MemoryService
@@ -20,46 +22,47 @@ def incoming(message="Jade, veux-tu garder un souvenir de notre soirée ?"):
         force_reply=True, message_id="original-voice-message")
 
 
-@pytest.mark.parametrize("kind,level", [
-    ("ordinary", "2"),
-    ("core_self", "3"),
-    ("core_relationship", "3"),
-])
-@pytest.mark.parametrize("legacy_evidence", [False, True])
-def test_discord_can_store_any_l2_l3_in_jades_own_words(
-        tmp_path, kind, level, legacy_evidence):
-    store = MemoryStore(tmp_path / "freeform.sqlite3")
-    service = MemoryService(store, backend=object())
 
-    async def run():
-        try:
-            message = incoming()
-            action = await service.prepare_memory_action(message)
-            assert action is not None and action.write_enabled
-            payload = {
-                "kind": kind,
-                "summary": "Jade invente librement sa propre formulation d'un jalon.",
-                "significance": "Ce souvenir mérite de compter dans son histoire.",
-            }
-            # An old untrusted payload may have a non-exact quotation or even
-            # a null value. Neither may veto Jade's freely chosen summary.
-            if legacy_evidence:
-                payload["evidence"] = None
-            result = await action(json.dumps(payload, ensure_ascii=False))
-            assert result == {
-                "status": "enregistré", "level": int(level), "kind": kind}
-            stored = store.search_global(level=level, kind=kind)["items"]
-            assert len(stored) == 1
-            assert stored[0]["summary"] == payload["summary"]
-            assert stored[0]["source_account_id"] == SPEAKER[1]
-        finally:
-            await service.close()
+class FreeformMemoryTests(unittest.TestCase):
+    def test_discord_can_store_any_l2_l3_in_jades_own_words(self):
+        # Keep all six combinations under unittest discovery, never needing pytest.
+        for kind, level in (("ordinary", "2"), ("core_self", "3"),
+                            ("core_relationship", "3")):
+            for legacy_evidence in (False, True):
+                with self.subTest(kind=kind, legacy_evidence=legacy_evidence):
+                    with tempfile.TemporaryDirectory() as tmp:
+                        store = MemoryStore(Path(tmp) / "freeform.sqlite3")
+                        service = MemoryService(store, backend=object())
 
-    asyncio.run(run())
+                        async def run():
+                            try:
+                                message = incoming()
+                                action = await service.prepare_memory_action(message)
+                                self.assertIsNotNone(action)
+                                self.assertTrue(action.write_enabled)
+                                payload = {
+                                    "kind": kind,
+                                    "summary": "Jade invente librement sa propre formulation d'un jalon.",
+                                    "significance": "Ce souvenir mérite de compter dans son histoire.",
+                                }
+                                if legacy_evidence:
+                                    payload["evidence"] = None
+                                result = await action(json.dumps(payload, ensure_ascii=False))
+                                self.assertEqual(result, {
+                                    "status": "enregistré", "level": int(level), "kind": kind})
+                                stored = store.search_global(level=level, kind=kind)["items"]
+                                self.assertEqual(len(stored), 1)
+                                self.assertEqual(stored[0]["summary"], payload["summary"])
+                                self.assertEqual(stored[0]["source_account_id"], SPEAKER[1])
+                            finally:
+                                await service.close()
+
+                        asyncio.run(run())
 
 
-def test_single_curator_can_write_reformulated_core_without_evidence(tmp_path):
-    store = MemoryStore(tmp_path / "single.sqlite3")
+def test_single_curator_can_write_reformulated_core_without_evidence():
+    temp = tempfile.TemporaryDirectory()
+    store = MemoryStore(Path(temp.name) / "single.sqlite3")
     store.enable(SPEAKER)
 
     class Model:
@@ -86,16 +89,15 @@ def test_single_curator_can_write_reformulated_core_without_evidence(tmp_path):
         finally:
             await service.close()
 
-    asyncio.run(run())
+    try:
+        asyncio.run(run())
+    finally:
+        temp.cleanup()
 
 
-@pytest.mark.parametrize("kind,level", [
-    ("ordinary", "2"),
-    ("core_self", "3"),
-])
-def test_batch_curator_can_write_reformulated_memory_without_evidence(
-        tmp_path, kind, level):
-    store = MemoryStore(tmp_path / "batch.sqlite3")
+def _test_batch_curator_can_write_reformulated_memory_without_evidence(kind, level):
+    temp = tempfile.TemporaryDirectory()
+    store = MemoryStore(Path(temp.name) / "batch.sqlite3")
     store.enable(SPEAKER)
 
     class Model:
@@ -122,11 +124,15 @@ def test_batch_curator_can_write_reformulated_memory_without_evidence(
         finally:
             await batch.close()
 
-    asyncio.run(run())
+    try:
+        asyncio.run(run())
+    finally:
+        temp.cleanup()
 
 
-def test_jade_does_not_need_to_copy_or_quote_keyword_to_store(tmp_path):
-    store = MemoryStore(tmp_path / "keywords.sqlite3")
+def test_jade_does_not_need_to_copy_or_quote_keyword_to_store():
+    temp = tempfile.TemporaryDirectory()
+    store = MemoryStore(Path(temp.name) / "keywords.sqlite3")
     service = MemoryService(store, backend=object())
 
     async def run():
@@ -144,4 +150,24 @@ def test_jade_does_not_need_to_copy_or_quote_keyword_to_store(tmp_path):
         finally:
             await service.close()
 
-    asyncio.run(run())
+    try:
+        asyncio.run(run())
+    finally:
+        temp.cleanup()
+
+
+class FreeformCuratorTests(unittest.TestCase):
+    def test_single_curator_without_evidence(self):
+        test_single_curator_can_write_reformulated_core_without_evidence()
+
+    def test_batch_curator_without_evidence(self):
+        for kind, level in (("ordinary", "2"), ("core_self", "3")):
+            with self.subTest(kind=kind):
+                _test_batch_curator_can_write_reformulated_memory_without_evidence(kind, level)
+
+    def test_memories_do_not_require_exact_keyword_quotes(self):
+        test_jade_does_not_need_to_copy_or_quote_keyword_to_store()
+
+
+if __name__ == "__main__":
+    unittest.main()
