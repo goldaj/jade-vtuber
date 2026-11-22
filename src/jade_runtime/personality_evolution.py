@@ -53,7 +53,9 @@ def personality_snapshot(memories, autobiography=(), *, max_observations=4) -> d
     selected, used = [], set()
     for core, summary, date in sorted(candidates, key=lambda x: (x[0], x[2]), reverse=True):
         tag = _normalized(summary)
-        if tag in used or (not core and counts[tag] < 2):
+        # A curated Jade statement is already an intentional memory event.
+        # Repetition adds confidence but is not needed for an initial cue.
+        if tag in used:
             continue
         used.add(tag)
         selected.append({"summary": summary[:145], "date": str(date)[:10],
