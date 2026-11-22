@@ -20,7 +20,10 @@ function element(id) {
 }
 const documentHandlers = {};
 global.document = {
-  hidden:false, getElementById:element, createElement:tag => ({tag, children:[],
+  hidden:false, getElementById:element,
+  querySelector: selector => selector === ".shell" ? Object.assign(element("test-shell"), {dataset:{view:"chat"}}) : null,
+  querySelectorAll: () => [],
+  createElement:tag => ({tag, children:[],
     append(...children) {this.children.push(...children);}}),
   addEventListener(name, handler) {documentHandlers[name] = handler;},
   documentElement:{}
