@@ -64,7 +64,12 @@
     const mounted = target.isConnected !== false &&
       (typeof target.getClientRects !== "function" || target.getClientRects().length > 0);
     const visible = Boolean(model && mounted && onScreen && !document.hidden);
-    if (renderRunning === visible) return;
+    if (renderRunning === visible) {
+      // Loading can finish while already hidden. Keep the model's own shared
+      // animation updater suspended even without a ticker state transition.
+      if (!visible && model && typeof model.autoUpdate === "boolean") model.autoUpdate = false;
+      return;
+    }
     renderRunning = visible;
     if (visible) {
       // A single resume, not a second ticker or a new Idle motion.
