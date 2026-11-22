@@ -483,7 +483,7 @@ class MemoryService:
                 created = await asyncio.to_thread(
                     self.store.put_self_core, key, summary=summary.strip(),
                     significance=significance.strip(), message_id=incoming.message_id,
-                    expected_person_id=pinned_person)
+                    scope=_scope(incoming), expected_person_id=pinned_person)
             else:
                 created = await asyncio.to_thread(
                     self.store.put, key, kind=kind, scope=_scope(incoming),
@@ -600,7 +600,7 @@ class MemoryService:
                 persisted = await asyncio.to_thread(
                     self.store.put_self_core, key, summary=summary,
                     significance=significance, message_id=incoming.message_id,
-                    expected_person_id=person_id)
+                    scope=_scope(incoming), expected_person_id=person_id)
             else:
                 persisted = await asyncio.to_thread(
                     self.store.put, key, kind=kind, scope=_scope(incoming),
