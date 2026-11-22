@@ -746,13 +746,13 @@ def test_memory_lookup_tool_can_search_and_page_before_answering():
     first = tool_call(
         "jade_search_memory", call_id="search-1",
         arguments=json.dumps({
-            "query": "anniversaire", "kind": "all", "scope": "current",
+            "query": "anniversaire", "level": "all", "kind": "all",
             "cursor": 0, "limit": 10,
         }))
     second = tool_call(
         "jade_search_memory", call_id="search-2",
         arguments=json.dumps({
-            "query": "", "kind": "all", "scope": "current",
+            "query": "", "level": "all", "kind": "all",
             "cursor": 10, "limit": 10,
         }))
     service, backend = make_service(
@@ -768,7 +768,6 @@ def test_memory_lookup_tool_can_search_and_page_before_answering():
         queries.append(data)
         return {
             "status": "ok",
-            "scope_applied": "current",
             "items": [{"kind": "core_self", "summary": (
                 "Jade est née le 1er février 2025.")}] if data["cursor"] else [],
             "next_cursor": 10 if data["cursor"] == 0 else None,
@@ -796,8 +795,8 @@ def test_memory_lookup_tool_can_search_and_page_before_answering():
 def test_voice_memory_lookup_runs_before_progressive_spoken_answer():
     import json
     call = tool_call("jade_search_memory", call_id="read-voice",
-        arguments=json.dumps({"query": "naissance", "kind": "core_self",
-                              "scope": "current", "cursor": 0, "limit": 10}))
+        arguments=json.dumps({"query": "naissance", "level": "3",
+                              "kind": "core_self", "cursor": 0, "limit": 10}))
     service, backend = make_service(
         stream_response(tool_response(call)),
         stream_response(text_response("[INTENT:neutral] Premier février 2025."),
@@ -809,7 +808,7 @@ def test_voice_memory_lookup_runs_before_progressive_spoken_answer():
 
     async def search(arguments):
         reads.append(json.loads(arguments))
-        return {"status": "ok", "scope_applied": "current", "next_cursor": None,
+        return {"status": "ok", "next_cursor": None,
                 "items": [{"kind": "core_self", "summary": "1er février 2025"}]}
 
     save.search = search
@@ -868,3 +867,47 @@ def test_memory_save_remains_optimistic_and_never_verifies_sqlite():
     asyncio.run(run())
     assert checked == []
     assert len(backend.calls) == 2
+
+
+def test_unenrolled_conversation_exposes_global_read_without_save_tool():
+    import json
+
+    call = tool_call("jade_search_memory", call_id="global-lookup",
+                     arguments=json.dumps({
+                         "query": "premier février", "level": "3",
+                         "kind": "core_self", "cursor": 0, "limit": 5}))
+    service, backend = make_service(
+        tool_response(call),
+        text_response("[INTENT:neutral] Jade est née le 1er février 2025."))
+    reads = []
+
+    async def read_only_save(arguments):
+        raise AssertionError("Save not exposed for an unregistered speaker")
+
+    async def search(arguments):
+        reads.append(json.loads(arguments))
+        return {"status": "ok", "items": [{
+            "level": "3", "kind": "core_self",
+            "summary": "Jade est née le 1er février 2025.",
+            "source_platform": "discord",
+            "source_account_id": "123",
+            "scope": "discord:456",
+        }], "next_cursor": None}
+
+    read_only_save.search = search
+    read_only_save.write_enabled = False
+    async def run():
+        try:
+            answer = await service.complete_with_tools([
+                {"role": "user", "content": "Ton anniversaire ?"}],
+                read_only_save)
+            assert answer.endswith("1er février 2025.")
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert len(reads) == 1
+    assert len(backend.calls) == 2
+    assert [t["name"] for t in backend.calls[0]["tools"]] == [
+        "jade_search_memory"]
+    assert "discord:456" in backend.calls[1]["input"][-1]["output"]
