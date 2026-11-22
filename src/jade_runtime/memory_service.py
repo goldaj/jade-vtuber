@@ -380,7 +380,12 @@ class MemoryService:
                 key, person_id, incoming, raw_arguments)
 
         async def search(raw_arguments: str) -> dict:
-            # Read-only browsing is independent of the optimistic write path.
+            # A write has been accepted in this turn: never inspect SQLite to
+            # check whether it took effect. A later turn can browse normally.
+            if action.used:
+                return {"status": "refusé", "reason": "write_accepted_this_turn",
+                        "items": [], "next_cursor": None}
+            # Read-only browsing is otherwise independent of optimistic writes.
             # The trusted identity and profile are pinned by the runtime,
             # never supplied by the language model.
             return await self._search_memory(
