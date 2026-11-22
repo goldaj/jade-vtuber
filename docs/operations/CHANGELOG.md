@@ -1,5 +1,15 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Branche expérimentale isolée : continuité privée, mémoire et métrologie
+
+- **Périmètre :** travaux `DEV-021` à `DEV-026`, `DEV-010/020` et inventaire lecture seule `OPS-015` sur `feature/jade-multicanal-memoire-observabilite-20261122`. PR #38 brouillon, aucune modification de `develop` ou `main`.
+- **Continuité et permissions :** tâches privées du propriétaire, reprise persistante depuis une session/identité liée, quelques commandes françaises univoques et envoi Discord uniquement sur destination explicitement autorisée. Ambiguïtés et actions autonomes supplémentaires exclues.
+- **Mémoire/personnalité :** rappel ciblé local, cache anticipé et invalidation SQLite, préférence récente cohérente ; les demandes L2 forcées du propriétaire ne déterminent pas la personnalité de Jade. Aucun moteur ou appel LLM supplémentaire en veille.
+- **Métrologie :** quantiles p50/p95 du runtime, durée STT mobile pré-runtime, tokens d'entrée/sortie réellement fournis par Responses. Ne pas déduire un coût USD exact ni une audition effective du premier son sans preuve.
+- **Mobile et exploitation :** superviseur indépendant en loopback pour déploiement de branche choisi et reprise du processus, interface privée correspondante. Rideau mobile en repli statique tant que les calques artistiques indépendants ne sont pas disponibles. Audit d'assets non destructif.
+- **Correctif de régression :** une validation STT a d'abord provoqué un HTTP 503 vocal (`math` manquant dans `messages.py`) ; import ajouté avant la livraison, et tests de non-régression PWA restaurés.
+- **Recette :** 637 tests hors ligne réussis (14 ignorés) sur la suite économique du commit `04f2b10d` et sur les commits suivants de code ; validation physique Windows, Android/Discord et reconstruction CI multi-OS séparée. Les limites exactes sont dans [la passation](handoffs/2026-11-22-dev021-026-multicanal-memoire-latence.md). **Aucun ticket Done** à ce stade.
+
 ## 2026-11-22 — QA : fermeture du streaming et curation mémoire sans doublon
 
 - **Correctif runtime (streaming) :** `OpenAIServices` et `ResponsesChat` ferment explicitement les générateurs async imbriqués lors de `aclose()`, y compris le suivi après appel d'outil. Le flux transport est fermé dans le `finally` de `_stream_text`.
