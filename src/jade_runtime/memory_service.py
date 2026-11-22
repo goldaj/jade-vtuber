@@ -34,12 +34,6 @@ def _scope(incoming) -> str:
     return "person"
 
 
-def _private_recall_allowed(incoming) -> bool:
-    """Never inject memories from other channels into a public prompt."""
-    return (incoming.platform in ("microphone", "mobile")
-            or (incoming.platform == "discord" and incoming.private_channel))
-
-
 class MemoryService:
     def __init__(self, store: MemoryStore, backend, *, max_pending=4,
                  curator_enabled=False, curation_mode="single"):
@@ -259,7 +253,7 @@ class MemoryService:
         action = (match.group(1) or "etat").lower()
         memory_id = match.group(2) or ""
         key = identity_of(incoming)
-        if key is None:
+        if key is None and action not in ("autobiographie", "lister-core"):
             return Reply(incoming, "Je ne peux pas associer ce message à un compte vérifié.")
         try:
             if memory_id and action not in ("supprimer-self", "supprimer-core", "confirmer"):
@@ -276,17 +270,20 @@ class MemoryService:
                 else:
                     linked = await asyncio.to_thread(
                         self.store.complete_link, key, memory_id)
-                    text = ("Comptes associés. Les souvenirs sont repris dans les échanges "
-                            "privés des comptes liés ; les salons publics et "
-                            "historiques complets restent isolés." if linked else
+                    text = ("Comptes associés pour l'écriture des souvenirs. "
+                            "La consultation globale de Jade ne dépend pas des liaisons."
+                            if linked else
                             "Liaison refusée : code expiré, déjà utilisé ou mémoire inactive.")
             elif action == "autobiographie":
-                if key != ("microphone", "goldaj"):
-                    return Reply(incoming, "L'autobiographie privée de Jade est réservée au propriétaire.")
-                found = await asyncio.to_thread(self.store.recall_self_core, key, limit=6)
-                text = ("Autobiographie de Jade vide ou mémoire inactive."
-                        if not found else "Derniers souvenirs de Jade :\n"
-                        + "\n".join(f"{item['id']} : {item['summary']}" for item in found))
+                result = await asyncio.to_thread(
+                    self.store.search_global, level="3", kind="core_self", limit=15)
+                found = result["items"]
+                text = ("Autobiographie de Jade vide."
+                        if not found else "Souvenirs autobiographiques de Jade :\n"
+                        + "\n".join(
+                            f"{item['id']} [{item['source_platform']}/{item['scope']}, "
+                            f"auteur={item['source_account_id']}] : {item['summary']}"
+                            for item in found))
             elif action == "supprimer-self":
                 if key != ("microphone", "goldaj"):
                     return Reply(incoming, "Seul le propriétaire peut corriger l'autobiographie.")
@@ -296,14 +293,16 @@ class MemoryService:
                 text = ("Souvenir autobiographique supprimé." if removed
                         else "Souvenir introuvable ou déjà supprimé.")
             elif action == "lister-core":
-                if key != ("microphone", "goldaj"):
-                    return Reply(incoming, "Les Core Memories privées du créateur ne sont consultables que sur son micro ou sa PWA.")
-                memories = await asyncio.to_thread(self.store.list_for_account, key)
-                found = [item for item in memories
-                         if item["kind"] == "core_relationship" and item["scope"] == "person"][:10]
+                result = await asyncio.to_thread(
+                    self.store.search_global, level="3",
+                    kind="core_relationship", limit=15)
+                found = result["items"]
                 text = ("Aucune Core Memory relationnelle." if not found
-                        else "Core Memories relationnelles privées :\n"
-                        + "\n".join(f"{m['id']} : {m['summary']}" for m in found))
+                        else "Core Memories relationnelles de Jade :\n"
+                        + "\n".join(
+                            f"{m['id']} [{m['source_platform']}/{m['scope']}, "
+                            f"auteur={m['source_account_id']}] : {m['summary']}"
+                            for m in found))
             elif action == "supprimer-core":
                 if key != ("microphone", "goldaj"):
                     return Reply(incoming, "Seul Goldaj via son micro ou sa PWA peut supprimer ces Core Memories.")
