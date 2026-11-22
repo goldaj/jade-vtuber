@@ -1,3 +1,5 @@
+> **ARCHIVE / REMPLACÉ LE 22/11/2026 :** cette proposition de lecture cloisonnée est désormais obsolète. La nouvelle décision produit autorise la consultation globale des trois niveaux, sans filtrage d'identité ni de canal. Voir [`2026-11-22-jade-global-memory.md`](2026-11-22-jade-global-memory.md). Ne pas rétablir les restrictions décrites plus bas.
+
 # Jade — incident mémoire Discord, diagnostic et correction (22/11/2026)
 
 **Branche :** `develop`. **État :** code intégré ; validation Discord/PyCharm réelle à effectuer, **pas** une recette physique validée.
