@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — NEW-20 intégré, NEW-25 supprimée du catalogue
+
+- **NEW-20 → DEV-031 (P2, En cours)** : module déterministe de messages d'incident classés (expiration, indisponibilité de connexion, saturation, autorisation, limite fournisseur, autre). Les contenus bruts des exceptions ne sont jamais publiés, pas de nouvelle génération LLM ni de relance payante.
+- **Discord :** notification uniquement pour une demande directement adressée à Jade, au canal texte/MP d'origine et si aucune tentative de remise de réponse n'a commencé ; saturation de file signalée aux demandes directes. Aucun message d'incident spontané en Twitch, vocal Discord ni autre canal, aucune double publication en cas de panne d'envoi. Callback facultatif borné à 3 secondes.
+- **Mobile et HTTP local :** réponses d'erreur authentifiées enrichies par des champs stables sans modifier le contrat `error` historique ; interface plus explicite. Si la génération de voix échoue après l'obtention de la réponse textuelle, celle-ci est conservée.
+- **NEW-25 retirée** : aucune évolution multilingue souhaitée pour le moment. Audit des onze thèmes sans autre ligne d'idée multilingue. Les mentions de « langage naturel » non linguistiques et le comportement français existant restent intacts.
+- **Tests et recette :** scénarios hors ligne pour erreurs sans secrets, audience correcte, pas de double message ni nouvelle génération, panne du callback et échec vocal partiel. Recette réelle Discord/PWA encore nécessaire. [Passation](handoffs/2026-11-22-new20-incidents-and-new25-retirement.md).
+
 ## 2026-11-22 — VIS-07 développé ; LAT-10 inscrit dans la backlog
 
 - **Décision du propriétaire :** VIS-07 (P1) est transféré du catalogue des améliorations vers **DEV-029 (En cours)**, et LAT-10 vers **DEV-030 (À faire)**. Les deux lignes prospectives sont supprimées sans perte d'historique ; **112 idées actives** subsistent, dont **21 P1**.
