@@ -48,7 +48,8 @@ class IncidentDescriptions(unittest.TestCase):
                 self.assertNotIn("secret", result.message)
                 self.assertNotIn("private", result.message)
                 self.assertNotIn("token", result.message)
-                self.assertNotIn(str(error), result.message)
+                if str(error):
+                    self.assertNotIn(str(error), result.message)
 
 
 class RuntimeIncidentTests(unittest.IsolatedAsyncioTestCase):
