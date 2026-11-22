@@ -9,6 +9,7 @@ from .messages import Incoming, Reply
 from .turn_logging import record_input, record_reply, record_outcome, record_delivery
 from .session_logging import bind_turn, reset_turn, event
 from .turn_arbitration import ArbitratingQueue, TurnArbiter
+from .turn_metrics import TurnMetrics
 
 
 @dataclass
@@ -49,6 +50,7 @@ class Runtime:
         self._turn_sequence = 0
         self.errors = 0
         self._stop_lock = asyncio.Lock()
+        self.metrics = TurnMetrics()
 
     async def start(self):
         if self.state != "STOPPED" or (self.worker and not self.worker.done()):
@@ -64,6 +66,9 @@ class Runtime:
         item = Work(message, deadline, result, turn=self._turn_sequence,
                     finished=asyncio.get_running_loop().create_future())
         self.queue.put_nowait(item)
+        self.metrics.begin(item.turn, message.platform,
+                           "voice" if message.platform in ("discord_voice", "microphone")
+                           else message.input_modality, item.queued_at)
         return item
 
     def cancel_work(self, item):
@@ -118,6 +123,8 @@ class Runtime:
     def mark_timing(self, stage):
         """Optional local timing: no message content or participant identity."""
         item = self.active
+        if item is not None:
+            self.metrics.mark(item.turn, stage)
         if item is not None and self.latency_log.isEnabledFor(logging.INFO):
             # Only technical routing metadata and monotonic elapsed time;
             # never record participants, raw speech or message content.
@@ -316,6 +323,11 @@ class Runtime:
             finally:
                 if timer is not None:
                     timer.cancel()
+                self.metrics.end(
+                    item.turn, "cancelled" if item.cancelled else
+                    "failed" if item.result is not None and item.result.done()
+                    and not item.result.cancelled() and item.result.exception() is not None
+                    else "complete")
                 self.active = None
                 self.queue.task_done()
                 if item.finished is not None and not item.finished.done():
