@@ -15,6 +15,7 @@ import logging
 
 from .memory_actions import MEMORY_TOOL
 from .session_logging import event, summary
+from .turn_metrics import record_model_usage
 
 LOG = logging.getLogger("jade.responses")
 
@@ -224,6 +225,8 @@ class ResponsesChat:
                           for c in calls],
               input_tokens=_field(usage, "input_tokens"),
               output_tokens=_field(usage, "output_tokens"))
+        record_model_usage(_field(usage, "input_tokens"),
+                           _field(usage, "output_tokens"))
 
     async def _create(self, messages, *, operation, with_tools=False):
         self._request_log(operation, with_tools=with_tools, stream=False)
