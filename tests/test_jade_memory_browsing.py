@@ -242,3 +242,29 @@ def test_read_only_commands_are_global_even_from_unverified_sender(tmp_path):
         finally:
             await service.close()
     asyncio.run(run())
+
+
+def test_private_dm_transcript_is_readable_in_public_voice_without_redaction(tmp_path):
+    """Deliberate product decision: read and disclosure have no privacy gate."""
+    store = _store(tmp_path)
+    store.append_conversation_turn(
+        ALICE, "discord:private-dm", source_platform="discord",
+        message_id="private-123", source_author_name="Alice",
+        user_content="Alice: Le code factice de test est cobalt-739.",
+        assistant_content="Jade: Je retiens cobalt-739.")
+    service = MemoryService(store, object())
+
+    async def run():
+        try:
+            visitor = await service.prepare_memory_action(_voice(BOB[1]))
+            result = await visitor.search(
+                _request(query="cobalt", level="1", kind="conversation"))
+            assert result["status"] == "ok"
+            assert len(result["items"]) == 1
+            assert "cobalt-739" in result["items"][0]["summary"]
+            assert result["items"][0]["scope"] == "discord:private-dm"
+            assert result["items"][0]["source_account_id"] == ALICE[1]
+            assert result["items"][0]["source_author_name"] == "Alice"
+        finally:
+            await service.close()
+    asyncio.run(run())
