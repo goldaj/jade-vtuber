@@ -99,6 +99,27 @@
           <button type="button" class="text-button" id="new-chat">Nouveau fil</button>
         </div>
       </div>
+      <details class="identity-panel" id="reminders-panel">
+        <summary>Rappels et notifications</summary>
+        <p>Jade planifie les rappels sur ton PC. Les notifications Android arrivent même
+           lorsque l'application est fermée, si les notifications push sont activées
+           et que le PC reste allumé et connecté.</p>
+        <button type="button" id="enable-notifications">Activer les notifications</button>
+        <button type="button" id="disable-notifications">Désactiver sur cet appareil</button>
+        <p id="notification-status" role="status">Notifications non vérifiées.</p>
+        <form id="reminder-form">
+          <label for="reminder-title">Nouveau rappel</label>
+          <input id="reminder-title" type="text" maxlength="180" required
+                 placeholder="Ex. Appeler le garage">
+          <label for="reminder-date">Date et heure sur ce téléphone</label>
+          <input id="reminder-date" type="datetime-local" required>
+          <button type="submit">Programmer ce rappel</button>
+        </form>
+        <button type="button" id="refresh-reminders">Actualiser les rappels</button>
+        <p id="reminder-status" role="status">Consulte ou modifie les rappels ici,
+           ou demande-le à Jade dans la conversation.</p>
+        <ul id="reminders-list" aria-label="Rappels programmés"></ul>
+      </details>
       <details class="billing-panel" id="billing-panel">
         <summary>Suivi OpenAI</summary>
         <p>Solde prépayé : indisponible dans l’API ; aucune alerte de solde possible. <a href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" rel="noopener noreferrer">Voir la facturation OpenAI</a></p>
