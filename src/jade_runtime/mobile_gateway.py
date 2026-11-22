@@ -555,7 +555,7 @@ class MobileGateway:
                     )
                     reply = await self._conversation(source)
                     payload = {"reply": reply.text, "intent": reply.intent,
-                               "attachments": [item.public() for item in reply.attachments],
+                               "attachments": [item.public() for item in getattr(reply, "attachments", ())],
                                "transcript": text if modality == "voice" else None,
                                "audio_wav_b64": None, "audio_unavailable": False}
                     speak = source.requested_speech

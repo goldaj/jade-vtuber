@@ -208,10 +208,10 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 # Delivery is REQUIRED for a Discord reply, not an optional
                 # decoration: an undelivered DM must not be stored as "sent"
                 # or trigger autonomous curation. Never log private contents.
+                extra = ({"attachments": reply.attachments} if reply.attachments else {})
                 sent = await asyncio.wait_for(discord_client.send_chat(
                     reply.source.channel, reply.text,
-                    source_message_id=reply.source.message_id,
-                    attachments=reply.attachments), timeout=20)
+                    source_message_id=reply.source.message_id, **extra), timeout=20)
                 if not sent:
                     raise RuntimeError("Discord message delivery not confirmed")
                 observe_delivery("transport_accepted", "discord_text", proof="discord_api")
