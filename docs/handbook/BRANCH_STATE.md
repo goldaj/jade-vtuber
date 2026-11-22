@@ -22,6 +22,14 @@
 
 **DEV-030 (LAT-10, P1) a été inscrit dans la backlog au statut À faire** ; aucun timeout vocal n'a été modifié. Voir la [passation VIS-07/LAT-10](../operations/handoffs/2026-11-22-vis07-lat10-quickwins.md).
 
+## Explications d'indisponibilité NEW-20 (DEV-031, 22 novembre 2026)
+
+- **Fonctionnel :** erreurs utilisateur explicites (délai, connexion, saturation, autorisation, service) décrites en français sans appeler le LLM ; aucune assertion de livraison ou de résolution non confirmée.
+- **Discord texte :** uniquement demande directement adressée à Jade, message incident dans le salon/MP d'origine si le tour a échoué avant la première tentative de livraison. Une réponse déjà engagée, un tour spontané ou annulé n'est jamais doublé ; échec du transport d'incident sans nouvelle tentative.
+- **Mobile / HTTP local :** JSON d'erreur authentifié enrichi sans rompre les anciens champs ; le client affiche le motif et garde le texte lorsque seul l'audio échoue.
+- **Prudence :** pas d'incident vocal payant envoyé en Discord/Twitch/OBS, pas d'intelligence factice du LLM sur une opération qu'il n'a pas vue. Le comportement détaillé et les limites sont décrits dans la [passation](../operations/handoffs/2026-11-22-new20-incidents-and-new25-retirement.md). **Recette matérielle encore requise avant Done.**
+- **Catalogue :** NEW-25 est retirée par décision explicite, aucune autre proposition multilingue active trouvée. Cette décision n'altère pas la langue française existante de Jade.
+
 ## Recherche web facultative (REC-038, 22 novembre 2026)
 
 - `JADE_WEB_ENABLED=0` par défaut : aucune recherche web à l'installation ni en veille. Une fois activé, le modèle de dialogue peut appeler librement `jade_web_search` uniquement pendant un tour auquel Jade répond ; ses réponses sans recherche ne déclenchent pas d'appel supplémentaire.
