@@ -1,5 +1,8 @@
 # Jade — plan produit et technique du profil économique (21 novembre 2026)
 
+> **ARCHIVE DE CONCEPTION (22/11/2026) :** ce document explique les décisions du 21/11 et leurs preuves, **il ne constitue plus une liste d'idées actives ni une seconde backlog**. Les développements de contexte, curation et premiers repères de personnalité ont été livrés (DEV-013/014) ; les recettes économiques sont suivies par REC-027 à REC-030, avec leurs statuts propres. La personnalité **durable au-delà des repères existants** est désormais suivie par DEV-026. Référence courante : [backlog opérationnel](../backlog/README.md) ; [catalogue dédoublonné](README.md) ; [passation du 22/11](../operations/handoffs/2026-11-22-catalogue-dedoublonnage.md).
+
+
 **Statut : cible produit confirmée ; développement autorisé ensuite par le propriétaire et engagé sur la PR #34 vers `develop`. Le plan garde les lots de recette et limites restant à traiter.**
 **Référence :** `goldaj/jade-vtuber`, branche `develop`, SHA consulté `58553c05e58374ff33f718bc3f404b654b7a40dc`. Les hypothèses techniques doivent être revérifiées au démarrage de chaque chantier. **La configuration privée actuelle ne change pas.**
 **Finalité :** améliorer l'agrément d'usage de Jade sur mémoire, sociabilité, voix, mobile et personnalité, en évitant des appels IA permanents. Règle de priorité : conserver la qualité et la confidentialité, puis minimiser le coût réel mesuré, plutôt que viser « zéro token » à tout prix.

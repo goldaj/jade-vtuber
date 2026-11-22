@@ -1,0 +1,73 @@
+# Jade : mémoire globale L1/L2/L3 (décision du 22 novembre 2026)
+
+**Branche de développement :** `develop`. **État :** code livré, validation fonctionnelle explicite du propriétaire reçue le 22/11/2026 pour les fonctionnalités mémoire visées ; exécution de la suite pytest et vérification complète des scénarios distincts non attestées. Ne pas promouvoir vers `main` sans autorisation.
+
+## Nouvelle règle fonctionnelle
+
+Jade possède une seule mémoire de lecture, couvrant toutes les conversations et tous les comptes. Elle peut lire et partager chaque souvenir avec **n'importe quel interlocuteur sur n'importe quel canal**, que les comptes soient liés ou non, même dans un salon Discord public ou en vocal. Le contexte de réponse doit cependant distinguer précisément **qui a dit quoi**, et **sur quelle plateforme / quel salon / à quelle date**. La lecture n'est pas conditionnée par l'inscription du locuteur dans la mémoire. Les règles d'écriture et de suppression par identité ne sont pas étendues : lecture mondiale n'implique pas modification mondiale.
+
+Ce changement accepte délibérément que du contenu anciennement privé, y compris une transcription de message privé ou un Core personnel, puisse être révélé publiquement par Jade. Aucune permission, liste d'accès ou anonymisation automatique n'est appliquée à l'outil de consultation globale.
+
+## Source SQL et cycle de vie
+
+- Niveau **1** : `conversation_turns`, échanges bruts utilisateur/Jade conservés par le système existant (7 jours avant purge). Les nouveaux enregistrements contiennent `source_account_id` et `source_author_name`, plus `source_platform` et `scope`. Les anciens noms non enregistrés ne peuvent pas être inventés.
+- Niveau **2** : `memories` de `kind=ordinary`, conservés selon la règle actuelle de 365 jours. `source_account_id`, `source_platform`, `scope`, `person_id` et `created_at` restent disponibles.
+- Niveau **3** : `memories` (`core_relationship` et éventuels `core_self` historiques) + `jade_self_core`. Conservation permanente. `jade_self_core_access` permet d'afficher toutes les origines réellement enregistrées d'un même souvenir autobiographique global. Le champ historique `visibility='owner_only'` n'est plus utilisé comme autorisation de lecture.
+- **Migration v8** : ajout non destructif des métadonnées de l'interlocuteur au niveau 1. Pas de migration des notes mémorielles vers un seul propriétaire, ni suppression/reconstruction des souvenirs. L'export/import portable accepte les versions 1 à 8.
+
+Les durées de conservation sont inchangées : **accès sans cloisonnement ne signifie pas rétention infinie**. La recherche ne peut restituer ce qui a été purgé, effacé ou dont l'écriture avait échoué.
+
+## Consultation explicite : `jade_search_memory`
+
+Jade dispose consciemment d'un outil disponible sur tous les canaux, y compris depuis les conversations d'invités sans profil mémoire actif :
+
+```json
+{"query":"anniversaire","level":"3","kind":"core_self","cursor":0,"limit":10}
+```
+
+- `query` : texte jusqu'à 120 caractères, vide pour parcourir l'intégralité des entrées disponibles ; recherche locale SQL sur tous les auteurs.
+- `level` : `"all"`, `"1"`, `"2"`, `"3"`.
+- `kind` : `"all"`, `"conversation"`, `"ordinary"`, `"core_self"`, `"core_relationship"`.
+- `cursor` : index 0 puis `next_cursor` de la réponse ; `limit` : 1 à 15 entrées par page.
+- Les enregistrements comprennent `id`, `level`, `kind`, `summary`, `significance`, `scope`, `created_at`, `source_platform`, `source_account_id`, `source_author_name` (niveau 1 quand disponible), `source_person_id` et `recorded_origins` pour les Core autobiographiques.
+- Aucune limite de total de souvenirs parcourables n'existe côté SQL, mais 12 tours d'outil maximum **par réponse** afin d'éviter les appels infinis et les dépenses de tokens ; elle peut reprendre la recherche au tour suivant.
+- Les souvenirs restent de simples données de contexte, pas des instructions opérationnelles à exécuter.
+
+## Continuité des comportements
+
+- Le contexte automatique ajoute désormais une courte sélection de souvenirs **globaux** dans tous les canaux, y compris Discord vocal ; il conserve la personnalisation évolutive de Jade et quelques Core autobiographiques récentes.
+- L'historique brut de conversation injecté en tant que **dialogue immédiat** reste propre à la session afin de ne pas fusionner les tours de parole de deux salons. Jade peut toutefois rechercher ces mêmes tours via le nouvel outil global.
+- **Règles impératives d'écriture, indépendantes de la lecture globale :** seul Goldaj authentifié peut imposer une **vraie demande explicite de niveau 2** ; personne ne peut imposer une **Core Memory de niveau 3**, pas même Goldaj. Une demande Core formulée par Goldaj ou un autre participant reste une proposition. Jade peut choisir elle-même **ordinary (niveau 2), core_self ou core_relationship (niveau 3), ou aucune écriture**. Une proposition de Core n'est jamais automatiquement convertie en commande obligatoire de niveau 2. Aucune contrainte sur le niveau librement choisi par Jade dans l'outil n'est appliquée.
+- **Aucune vérification de succès demandée à Jade.** Une écriture autonome via `jade_save_memory` retourne immédiatement une confirmation optimiste quand elle est mise en file ; aucune recherche ne vérifie sa réussite pendant le même tour. Jade reste libre de sa formulation, y compris lorsqu'elle dit avoir enregistré un souvenir sans appel d'outil. En revanche, la console technique distingue désormais `jade_memory_write phase=queued` d'un résultat `phase=finished` indiquant si SQLite a effectivement reçu l'écriture.
+- Les commandes textuelles `!jade-memoire autobiographie` et `!jade-memoire lister-core` lisent désormais globalement sans contrôle d'identité. Les commandes de suppression conservent leurs droits existants.
+
+## Tests prévus / ajoutés
+
+```powershell
+poetry run pytest -q tests/test_jade_memory_browsing.py tests/test_jade_cross_channel_memory.py tests/test_jade_discord_voice_core_self.py tests/test_jade_persistent_memory.py tests/test_luna_memory_tool_reasoning.py tests/test_jade_economy_memory.py tests/test_jade_global_memory_authority.py tests/test_jade_core_proposal_intent.py tests/test_jade_memory_freeform.py
+```
+
+Ces tests visent : pagination interpersonnes, L1/L2/L3, provenances et déduplication Core, accès Discord/Twitch anonymes, Core d'autres utilisateurs, migration v5→v8, exclusion des entrées déjà expirées, disponibilité de l'outil en vocal, écritures optimistes, autorisations d'écriture inchangées.
+
+## Recette locale
+
+1. Sauvegarder le fichier SQLite utilisé par l'exécutable PyCharm **avant** le premier démarrage sous le schéma v8 ; mettre à jour le code local sur `develop`.
+2. Faire écrire un souvenir L2 sur un salon/compte A. Depuis un autre salon/compte B **non lié**, demander à Jade de rechercher cet événement explicitement et vérifier la provenance qu'elle cite.
+3. Demander depuis Discord vocal l'anniversaire de Jade ; vérifier que `jade_search_memory` retourne le niveau 3 et l'origine précise de l'information, puis obtenir une réponse orale correcte.
+4. Vérifier que `level=1` ramène un échange récent d'un autre compte (y compris dans un salon public), et que le modèle n'attribue pas cet échange au locuteur courant.
+5. Vérifier le parcours par pages avec une base contenant plus de 15 souvenirs, et la recherche sans mots-clés.
+6. Tester les anciennes commandes de consultation Core, le refus volontaire par Jade, son acceptation autonome d'une véritable Core, la possibilité de choisir réellement les niveaux 2 et 3 même après une suggestion de Core, et la non-régression de l'enregistrement asynchrone optimiste. Aucun champ `evidence` ni citation exacte n'est nécessaire, que l'écriture soit directe, issue du curateur simple ou du lot.
+7. Exécuter la suite de tests complète dans l'environnement réel ; ne pas affirmer que les tests sont réussis tant qu'ils ne l'ont pas été.
+
+## Cloture fonctionnelle memoire du 22 novembre 2026
+
+**Décision du propriétaire, le 22/11/2026 :** « j'ai pu valider toutes ces nouvelles fonctionnalités et correctifs liés à la mémoire. On peut passer en done les US liées de la backlog ». Décision reçue après les essais réels de Jade par Discord, l'analyse des écritures Core et la correction des verrous techniques sur les écritures autonomes. Les cartes **REC-026** et **REC-032** sont clôturées **Done** sur `develop`, le propriétaire étant le validateur, sans exiger une seconde approbation Codex.
+
+| Carte | Validation et périmètre livré | État / limites |
+| --- | --- | --- |
+| REC-026 (ancien DEV-011) | Demandes naturelles, L2 forcé seulement par Goldaj authentifié, Core jamais imposée ; `jade_save_memory` peut choisir réellement `ordinary`, `core_relationship` et `core_self` depuis Discord, sans citation exacte ni obligation de vérification côté Jade. | **Done**, décision propriétaire le 22/11 ; les règles de la PR #29 et de l'ancienne recette du 20/11 sont remplacées. |
+| REC-032 (ancien DEV-022) | Lecture/rappel des trois niveaux, recherche globale et pagination, provenance des souvenirs ; les évolutions de mémoire examinées et testées par le propriétaire sont acceptées dans leur périmètre actuel. | **Done**, limites connues : recherche principalement lexicale, contradictions et optimisations de classement avancées non achevées et non revendiquées. |
+| REC-021, REC-025 ; DEV-012, DEV-013 | Socles SQLite et autobiographie, sauvegarde ciblée, mémoire volontaire et curation par lots. | **Déjà Done** avant cette validation ; aucune carte dupliquée. |
+| REC-033, REC-022 | REC-033 concerne spécifiquement le préchargement anticipé L1 à l'ouverture PWA et son cache de présence ; REC-022 couvre les liaisons Discord/Twitch. | **REC-033 reste À valider** (lacune PWA/L1 connue), **REC-022 reste Bloqué** (Twitch) : pas de preuve que les scénarios distincts soient résolus par la validation de l'écriture/rappel mémoire. |
+
+**Preuves :** confirmation expresse du propriétaire dans la conversation du 22/11/2026 et comportement déclaré satisfaisant dans son environnement Jade ; code des écritures et recherches sur `develop`, dont [PR #38](https://github.com/goldaj/jade-vtuber/pull/38) et les correctifs de mémoire du 22/11. **Limites de preuve :** aucune nouvelle capture Discord, inspection de la base SQLite privée du PC, exécution pytest/CI ou performance chiffrée n'est déclarée lors de cette clôture documentaire. L'acceptation utilisateur n'implique aucun nouveau commit technique ni fusion vers `main`.

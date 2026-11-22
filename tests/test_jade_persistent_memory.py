@@ -285,8 +285,9 @@ class MemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         public_source = Incoming("discord", "Alice", "Jade, bonjour",
                                  channel="99", message_id="public-a",
                                  force_reply=True, account_id="101")
-        self.assertEqual(await svc.context_for(public_source), "",
-                         "Private memories must never be injected in public rooms")
+        self.assertIn("Alice et Jade ont achevé un roman.",
+                      await svc.context_for(public_source),
+                      "Global memory can be recalled in every channel")
         delivered = []
         async def output(reply):
             delivered.append(reply)

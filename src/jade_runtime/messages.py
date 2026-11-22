@@ -1,5 +1,6 @@
 """Transport-independent messages. Preserve original Unicode content."""
 from dataclasses import dataclass, field
+import math
 import re
 
 
@@ -23,6 +24,7 @@ class Incoming:
     private_channel: bool = field(default=False, repr=False)
     # Mobile PWA requests use the trusted gateway, not the Discord session.
     input_modality: str = field(default="text", repr=False)
+    preprocess_ms: float | None = field(default=None, repr=False)  # trusted STT duration, not user-supplied
     requested_speech: bool = field(default=False, repr=False)
     # Only runtime-created events; never attribute Jade\u0027s speech to a human.
     system_initiative: bool = field(default=False, repr=False)
@@ -35,6 +37,11 @@ class Incoming:
         if (self.input_modality not in ("text", "voice")
                 or type(self.requested_speech) is not bool):
             raise ValueError("invalid input/output modality")
+        if (self.preprocess_ms is not None
+                and (type(self.preprocess_ms) not in (int, float)
+                     or not math.isfinite(self.preprocess_ms)
+                     or not 0 <= self.preprocess_ms <= 120000)):
+            raise ValueError("invalid preprocessing metric")
         if type(self.system_initiative) is not bool:
             raise ValueError("invalid system event flag")
         if type(self.private_channel) is not bool:

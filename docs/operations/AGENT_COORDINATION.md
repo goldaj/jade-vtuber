@@ -25,6 +25,12 @@
 
 **Historique de conversion :** DEV-011 → REC-026 ; DEV-015 → REC-027 ; DEV-016 → REC-028 (reconnexion vocale Discord en échec) ; DEV-017 → REC-029 ; DEV-018 → REC-030. Les autres décisions, définitions de statut, obligations de preuve et suspensions sont dans [la DoD](../backlog/DEFINITION_OF_DONE.md) et [la vue REC](../backlog/02-RECETTE.md). Les idées non engagées P3 vont au catalogue d'améliorations.
 
+## Décision propriétaire du 22 novembre 2026 — promotion et dédoublonnage
+
+Les idées RTE-15/NRM-10/MEM-01/LAT-01/NEW-17/NEW-36 ont été livrées dans la PR #38 et suivies par REC-031 à REC-036. **Sur validation explicite du propriétaire le 22/11, REC-026 et REC-032 sont Done**. REC-031 et REC-033 à REC-037 restent À valider. Les limites de rappel lexical/contradictions avancées de REC-032 sont acceptées pour cette version ; les lacunes distinctes de REC-033/035 restent ouvertes. DEV-010 et OPS-015 demeurent À faire. [Passation de validation mémoire](handoffs/2026-11-22-jade-global-memory.md#cloture-fonctionnelle-memoire-du-22-novembre-2026).
+
+Après revue croisée des statuts et des modules existants, **83 idées ont été retirées du catalogue actif**, ramené de 192 à 109 entrées, puis à 113 après quatre idées P3 différées. [Traçabilité détaillée](handoffs/2026-11-22-catalogue-dedoublonnage.md). Avant de proposer une nouvelle idée, vérifier d'abord la vue canonique et le code de `develop` ; si une proposition comporte seulement un delta encore non livré, conserver **ce delta seulement**, pas un doublon du travail déjà accepté.
+
 ## Definition of Done et validation des tâches
 
 **Routage REC (21/11/2026) :** en priorité, l'agent exécute les recettes automatisables. Si un contrôle de bout en bout ne peut pas être réalisé automatiquement dans l'environnement autorisé, placer directement la carte **`À valider`** en précisant l'essai manuel et les limites ; elle n'est ni exécutée, ni approuvée du seul fait de ce reclassement. Ne pas masquer sous `À valider` les vrais blocages ou les anomalies. Les conditions de `Done` sont inchangées.

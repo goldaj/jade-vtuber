@@ -40,7 +40,7 @@ class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
             return SimpleNamespace(text='Bonjour Jade')
 
         stt = AsyncMock(side_effect=transcribe)
-        chat = AsyncMock(return_value=SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content='Bonjour !'))]))
+        response_create = AsyncMock(return_value=SimpleNamespace(status='completed', output_text='Bonjour !', output=[]))
         tts = AsyncMock(return_value=SimpleNamespace(content=output_wav))
         # Provide 100 ms of PCM at the Realtime TTS sample rate so the
         # Rubber Band filter receives a realistic, processable audio buffer.
@@ -51,7 +51,7 @@ class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
         ])
         sdk.audio = SimpleNamespace(transcriptions=SimpleNamespace(create=stt),
                                     speech=SimpleNamespace(create=tts))
-        sdk.chat = SimpleNamespace(completions=SimpleNamespace(create=chat))
+        sdk.responses = SimpleNamespace(create=response_create)
         settings = Settings(tts_model='gpt-4o-mini-tts') if legacy else Settings()
         services = OpenAIServices(settings, client=sdk)
         gate = AudioCoordinator()
@@ -71,7 +71,7 @@ class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
                 if level:
                     self.assertTrue(result)
                     stt.assert_awaited_once()
-                    chat.assert_awaited_once()
+                    response_create.assert_awaited_once()
                     player.play.assert_awaited_once()
                     if legacy:
                         tts.assert_awaited_once()
@@ -87,7 +87,7 @@ class SyntheticFlow(unittest.IsolatedAsyncioTestCase):
                 else:
                     self.assertFalse(result)
                     stt.assert_not_awaited()
-                    chat.assert_not_awaited()
+                    response_create.assert_not_awaited()
                     tts.assert_not_awaited()
                     self.assertEqual(sdk.calls, [])
                     player.play.assert_not_awaited()

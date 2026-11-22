@@ -45,8 +45,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
   pointer-events:none;
 }
 .room-plane {position:absolute;inset:0}
-.room-plane img {display:block;width:100%;height:100%;object-fit:cover}
-.room-curtain,.room-dapple,.room-reflection,.room-steam {display:none}
+.room-plane > img:first-child {display:block;width:100%;height:100%;object-fit:cover}
+.room-curtain,.room-shadow,.room-reflection,.room-steam {display:none}
 @supports (width: 1cqh) {
   .room-plane {
     inset:50% auto auto 50%;
@@ -54,89 +54,128 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
     aspect-ratio:4 / 3;
     transform:translate(-50%,-50%);
   }
-  .room-curtain,.room-dapple,.room-reflection,.room-steam {display:block}
+  .room-curtain,.room-shadow,.room-reflection,.room-steam {display:block}
 }
+/* No partially assembled layers during image loading, fallback, or reduced motion. */
+.room-curtain[hidden],.room-shadow[hidden],.room-reflection[hidden],.room-steam[hidden] {
+  display:none !important;
+}
+.room-curtain,.room-shadow {
+  position:absolute;
+  object-fit:fill;
+  pointer-events:none;
+  will-change:transform,opacity;
+}
+/* Textile crop x900..1162 / y66..362; pivot close to the fixed rings.
+   Neither this texture nor its transform contains window-sash geometry. */
 .room-curtain {
-  position: absolute;
-  left: 62.57%;
-  top: 4.24%;
-  width: 18.78%;
-  height: 33.89%;
-  mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 87%, transparent);
+  left:62.1547%;
+  top:6.0773%;
+  width:18.0939%;
+  height:27.255%;
+  transform-origin:61% 7%;
+  /* Extra silhouette guard against residual static sill pixels under lace. */
+  clip-path:polygon(49% 0%,100% 0%,100% 74%,91% 76%,74% 79%,58% 79%,48% 83%,38% 87%,28% 92%,15% 98%,3% 97%,0% 91%,12% 77%,29% 51%);
 }
-.room-dapple {
-  position: absolute;
-  left: 12%;
-  top: 12%;
-  width: 34%;
-  height: 40%;
-  /* This crop registers against the painted shadows at rest. */
-  background: url("/assets/room-spring.webp") 18.1818% 20% / 294.1176% 250% no-repeat;
-  mask-image: radial-gradient(ellipse, #000 28%, transparent 70%);
-  animation: room-dapple-sway 8.4s ease-in-out infinite;
+.room-shadow svg {
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  filter:blur(5px);
+}
+.room-shadow .shadow-leaves {
+  fill:#78506b;
+  opacity:.48;
+}
+.room-shadow .shadow-branch {
+  fill:none;
+  stroke:#78506b;
+  stroke-width:7;
+  stroke-linecap:round;
+}
+.room-shadow-left {
+  left:19.7514%;
+  top:12.7993%;
+  width:26.7956%;
+  height:45.2118%;
+  transform-origin:58% 5%;
+}
+.room-shadow-right {
+  left:52.9696%;
+  top:36.5562%;
+  width:18.4392%;
+  height:42.7256%;
+  transform-origin:85% 6%;
 }
 .room-reflection {
-  position: absolute;
-  left: 53%;
-  top: 78%;
-  width: 44%;
-  height: 19%;
-  background: radial-gradient(ellipse, #fff2bc80, transparent 67%);
-  mix-blend-mode: screen;
-  animation: room-sun 8.3s ease-in-out infinite;
+  position:absolute;
+  left:53%;
+  top:78%;
+  width:44%;
+  height:19%;
+  background:radial-gradient(ellipse, #fff2bc75, transparent 67%);
+  mix-blend-mode:screen;
+  pointer-events:none;
+  animation:room-sun 10.2s ease-in-out infinite;
 }
 .room-steam {
-  position: absolute;
-  left: 27.1%;
-  top: 57.85%;
-  width: 1.7%;
-  height: 6%;
+  position:absolute;
+  left:25.05%;
+  top:38.64%;
+  width:8.01%;
+  height:18.88%;
+  pointer-events:none;
+  will-change:transform;
 }
-.room-steam i {
-  position: absolute;
-  bottom: 100%;
-  left: 9%;
-  width: 41%;
-  height: 66%;
-  border-left: 1.5px solid #fff8eac7;
-  border-radius: 63% 49% 48% 62%;
-  filter: blur(.55px);
-  transform-origin: bottom center;
-  animation: room-steam-rise 4.8s linear infinite;
+.room-steam svg {display:block;width:100%;height:100%;overflow:visible}
+.room-steam .wisp {
+  fill:none;
+  stroke:#fff9ee;
+  stroke-width:2.15;
+  stroke-linecap:round;
+  opacity:0;
+  filter:blur(.55px);
+  transform-box:fill-box;
+  transform-origin:50% 100%;
 }
-.room-steam i:nth-child(2) {
-  left: 33%;
-  border-left: 0;
-  border-right: 1px solid #fffcf2cf;
-  animation-delay: -1.6s;
+.room-steam .wisp-one {
+  animation:room-wisp-a 6.7s ease-in-out infinite;
 }
-.room-steam i:nth-child(3) {
-  left: 48%;
-  height: 56%;
-  animation-delay: -3.2s;
+.room-steam .wisp-two {
+  stroke-width:1.7;
+  animation:room-wisp-b 7.9s ease-in-out -2.1s infinite;
 }
-.room-art[data-paused] .room-steam i,
-.room-art[data-paused] .room-reflection,
-.room-art[data-paused] .room-dapple {
-  animation-play-state: paused;
+.room-steam .wisp-three {
+  stroke-width:1.4;
+  animation:room-wisp-a 8.9s ease-in-out -4.3s infinite;
 }
-@keyframes room-dapple-sway {
-  0%, 100% { transform: none; filter: brightness(1); }
-  45% { transform: translate(4%, -3%) rotate(-1.6deg); filter: brightness(.94); }
-  74% { transform: translate(-2%, 1.5%) rotate(.9deg); filter: brightness(.98); }
+.room-steam .wisp-four {
+  stroke-width:1.5;
+  animation:room-wisp-b 7.2s ease-in-out -3.6s infinite;
+}
+.room-art[data-paused] .room-steam .wisp,
+.room-art[data-paused] .room-reflection {
+  animation-play-state:paused;
 }
 @keyframes room-sun {
-  0%, 100% { transform: translate(0); opacity: .22; }
-  47% { transform: translate(-9%, -5%) rotate(-3deg) scale(1.07); opacity: .86; }
+  0%,100% {transform:translate3d(0,0,0) scale(1);opacity:.22}
+  47% {transform:translate3d(-11%,-7%,0) rotate(-3.5deg) scale(1.10);opacity:.78}
 }
-@keyframes room-steam-rise {
-  0% { transform: translate(-12%, 17%) rotate(-8deg) scale(.6); opacity: 0; }
-  23% { opacity: .62; }
-  61% { transform: translate(28%, -59%) rotate(14deg) scale(.95); opacity: .47; }
-  100% { transform: translate(-11%, -135%) rotate(-15deg) scale(1.32); opacity: 0; }
+@keyframes room-wisp-a {
+  0% {transform:translate3d(-11%, 16%, 0) rotate(-8deg) scale(.68);opacity:0}
+  25% {opacity:.66}
+  63% {transform:translate3d(15%,-5%,0) rotate(8deg) scale(.94);opacity:.53}
+  100% {transform:translate3d(-17%,-23%,0) rotate(-9deg) scale(1.12);opacity:0}
+}
+@keyframes room-wisp-b {
+  0% {transform:translate3d(10%,17%,0) rotate(6deg) scale(.72);opacity:0}
+  30% {opacity:.61}
+  65% {transform:translate3d(-16%,-3%,0) rotate(-8deg) scale(.96);opacity:.47}
+  100% {transform:translate3d(19%,-20%,0) rotate(12deg) scale(1.10);opacity:0}
 }
 @media (prefers-reduced-motion:reduce) {
-  .room-curtain,.room-dapple,.room-reflection,.room-steam {display:none}
+  .room-curtain,.room-shadow,.room-reflection,.room-steam {display:none !important}
 }
 #avatar-container{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   overflow:hidden;z-index:1;pointer-events:none}

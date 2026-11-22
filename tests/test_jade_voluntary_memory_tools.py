@@ -92,16 +92,18 @@ class VoluntaryMemoryTests(unittest.IsolatedAsyncioTestCase):
         reply = await self.service.command(request)
         self.assertIn("mémoire ordinaire", reply.text)
         self.assertEqual(self.store.recall_self_core(OWNER), [])
-        # Even when a caller somehow supplies this same raw request to a tool,
-        # it must never upgrade the human instruction.
+        # The human's command never creates L3. A separate autonomous tool
+        # invocation *may* create it: Jade, not the user, chooses that action.
         action = await self.service.prepare_memory_action(request)
+        self.assertEqual(self.store.recall_self_core(OWNER), [])
         candidate = arguments(kind="core_self", evidence="nous avons fini le roman")
-        self.assertEqual((await action(candidate))["status"], "refusé")
+        self.assertEqual((await action(candidate))["status"], "enregistré")
+        self.assertEqual(len(self.store.recall_self_core(OWNER)), 1)
 
     async def test_unfounded_or_sensitive_content_is_refused(self):
         action = await self.service.prepare_memory_action(incoming())
         invalid = [
-            arguments(evidence="phrase non présente dans le message"),
+            # Earlier authorized context need not be quoted in this turn.
             arguments(summary="Mot de passe sk-secret123"),
             arguments(evidence="terminé notre premier roman", summary=""),
             '{"kind":"ordinary","summary":"x"}',

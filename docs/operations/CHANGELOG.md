@@ -1,5 +1,125 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — OPS-015 suspendu jusqu'au retour de tokens Codex
+
+- **Décision propriétaire :** passage de **OPS-015** (étude des redondances artistiques et outils inutiles) de `À faire` à **`Bloqué`**, pour reprendre lorsque le quota de tokens Codex sera suffisant.
+- **Reprise :** sur nouvelle décision du propriétaire, sans échéance ni réactivation automatique ; aucune analyse d'assets ou purge effectuée par ce changement.
+- **Périmètre :** documentation de backlog et de suivi uniquement, sans changement du runtime ni de `main`.
+
+## 2026-11-22 — DEV-010 clôturé après validation explicite du propriétaire
+
+- **Décision :** le propriétaire confirme « ok c'est validé » après la fusion de la [PR #40](https://github.com/goldaj/jade-vtuber/pull/40), couvrant le rideau, la fumée et les ombres animés du décor mobile. La carte **DEV-010 est passée de `À valider` à `Done`**.
+- **Traçabilité :** tests ciblés de génération graphique, géométrie, animation et cycle de vie réussis ; réserves visuelles documentées dans [la revue DEV-010](handoffs/2026-11-22-dev010-living-room-design.md). Les scénarios Android individuels ne sont pas détaillés dans le retour propriétaire et ne sont pas déclarés tous vérifiés séparément.
+- **Portée :** documentation de suivi uniquement. Aucun changement du runtime, de `main`, ni des autres tickets ; les échecs de tests mémoire préexistants restent distincts.
+
+## 2026-11-22 — DEV-010 : décor mobile vivant (rideau, fumée, ombres)
+
+- **Animation :** rideau extrait en WebP transparent et animé autour des attaches, reconstruction stationnaire des pixels occultés, feuillage SVG sur deux plans avec vent commun à plusieurs fréquences, volutes SVG de vapeur bien plus amples et reflets conservés.
+- **Performance et accessibilité :** transformations et opacité pilotées au maximum à 30 mises à jour DOM/s, pause hors écran/onglet caché, respect de `prefers-reduced-motion`, retour intégral à l'illustration fixe si une couche ne se charge pas. Aucune API ou dépense IA supplémentaire.
+- **Qualité :** génération hors ligne reproductible de deux calques (`room-backdrop.webp` 247 534 octets et `room-curtain.webp` 49 110 octets au dernier relevé de l'étude, valeurs susceptibles d'évoluer), tests Node (amplitudes, cycle de vie, repli) et Python (géométrie et intégrité WebP) réussis sur [la branche isolée](https://github.com/goldaj/jade-vtuber/actions/runs/45025747344). Scanner de secrets PR #40 vert. Les suites CI générales demeurent rouges sur les **mêmes erreurs mémoire déjà présentes sur `develop`** avant cette PR ([baseline](https://github.com/goldaj/jade-vtuber/actions/runs/45024566506)).
+- **Backlog :** DEV-010 passe de `À faire` à `À valider`, car l'essai visuel réel sur Android, différents cadrages et mouvement réduit reste nécessaire avant clôture. La peinture du fond derrière le tissu est une approximation prudente et peut bénéficier d'une retouche artistique dédiée.
+- **Revue :** [expertises simulées, coûts et réserves](handoffs/2026-11-22-dev010-living-room-design.md). Aucune modification des moteurs de conversation, de mémoire, de l'avatar, des secrets, ni de `main`.
+
+## 2026-11-22 — UX-19 : documents téléchargeables dans le chat mobile (idée P2)
+
+- **Décision propriétaire :** création de **UX-19 (P2 / P)** dans le seul catalogue des améliorations prospectives, pour permettre à Jade de générer des documents et de les envoyer comme pièces jointes téléchargeables directement dans le chat de la PWA mobile.
+- **Périmètre prospectif :** génération backend des fichiers, transfert privé et téléchargement mobile, formats adaptés à la demande et gestion de leur durée de conservation. Complément distinct de la bibliothèque documentaire de consultation NEW-13.
+- **Suivi :** ajout dans `docs/ameliorations/06-PRODUIT-MOBILE.md`, décompte mis à jour à 5 idées mobiles et 114 idées actives au total. Aucune entrée créée dans la backlog, aucun développement ni déploiement.
+
+## 2026-11-22 — REC-038 validée par le propriétaire : recherche Internet Jade
+
+- **Statut :** REC-038 passée de `À valider` à **`Done`** à la demande explicite du propriétaire, qui confirme que la connexion Internet de Jade fonctionne sur son environnement réel.
+- **Preuves :** code Tavily et journaux par session intégrés sur `develop` ; tests automatisés dédiés à la recherche web réussis dans la [CI de `8a801035`](https://github.com/goldaj/jade-vtuber/actions/runs/45022523090) ; [scan des secrets réussi](https://github.com/goldaj/jade-vtuber/actions/runs/45022523125). La CI globale reste rouge sur des tests mémoire préexistants (Linux : 12 échecs, 5 erreurs).
+- **Réserves transparentes :** le propriétaire valide le fonctionnement de base, sans attestation distincte de tous les scénarios spécifiques de REC-038 (PWA, oral, limites maximales, journal après plusieurs redémarrages, erreurs réseau). Ces scénarios ne sont pas qualifiés de réussis et restent consultables dans la carte clôturée.
+- **Périmètre :** seule la documentation de suivi change ; aucun code, secret, paramètre privé ni branche `main` modifié.
+
+## 2026-11-22 — Historique de recherches web par session
+
+- **Décision :** abandon du journal web unique au profit d'un dossier privé dédié à côté de la mémoire (`D:/Jade/private/jade-web-search/` sur le PC de référence). Un JSONL horodaté et suffixé par PID est créé à chaque démarrage live avec web activé, comme les logs Jade généraux.
+- **Technique :** `SearchJournal.start_session` crée un fichier neuf en mode exclusif avant les recherches, avec un événement `session_started` ; journal append-only avec fsync par événement et refus de requête réseau si l'écriture initiale échoue. Le chemin exact figure dans `web_search_journal_started` au démarrage.
+- **Configuration :** nouvelle option `JADE_WEB_LOG_DIR`, l'ancienne `JADE_WEB_LOG_PATH` est prise en charge en remplaçant le fichier `.jsonl` par un répertoire voisin sans extension. Aucune migration automatique ni modification de l'ancien historique.
+- **QA :** tests hors ligne ajoutés pour la création par démarrage sans recherche, deux fichiers distincts, préservation de l'ancien journal, compatibilité de configuration et impossibilité de journaliser. Résultat CI à contrôler après push. La recette physique Tavily reste REC-038 `À valider`.
+- **Limites :** pas de purge automatique, données de recherches sensibles, conservation privée exclusivement sur le PC.
+
+## 2026-11-22 — Recherche Tavily : dix appels possibles par tour
+
+- **Décision produit :** à la demande du propriétaire, le plafond par défaut passe de **3 à 10 recherches par tour** ; Jade garde sa liberté de n'effectuer aucune recherche ou seulement celles nécessaires.
+- **Configuration :** valeurs par défaut cohérentes dans `Settings`, `Settings.load()` et `WebSearchService` ; plage explicite `JADE_WEB_MAX_PER_TURN=1..10` inchangée. Une valeur privée explicite continue de primer sur le nouveau défaut.
+- **Qualité :** test hors ligne de dix recherches acceptées et de la onzième refusée, avec journalisation. Pas de changement d'API, de fournisseur, de prompt ni de journal. Augmenter la limite augmente le plafond potentiel de crédits Tavily et la latence si Jade multiplie les appels.
+
+## 2026-11-22 — Recherche web : réponses naturelles sans rafale d'URL
+
+- **Retour propriétaire :** Jade ajoutait trop souvent les liens des pages Tavily dans ses réponses, parce que `WEB_PROMPT` l'encourageait à citer les URL.
+- **Correction ciblée :** dans `src/jade_runtime/web_search.py`, aucune URL ou liste de liens par défaut. Un lien n'est fourni que sur demande explicite ou s'il est indispensable à l'action, avec le strict minimum. À l'oral, aucun lien prononcé sauf demande.
+- **Sans régression de la recherche :** les pages consultées restent attribuées et journalisées en JSONL avec leurs URL ; ni adaptateur Tavily ni protocole de recherche modifiés.
+- **Contrôle :** nouvelle assertion de politique dans `tests/test_jade_web_search.py` ; CI hors ligne à consulter après push. La recette REC-038 réelle sur le PC reste `À valider`.
+
+## 2026-11-22 — Recherche Internet Tavily interchangeable et journal privé
+
+- **Décision produit :** recherche web facultative à la demande explicite du modèle conversationnel, sans recherche en veille. Désactivée tant que `JADE_WEB_ENABLED=1` et une clé Tavily privée ne sont pas configurés.
+- **Architecture :** contrat `SearchProvider`, implémentation `TavilyProvider` isolée, `WebSearchService` avec 3 appels maximum par tour par défaut. `jade_web_search` coexiste avec les outils mémoire, même sans profil mémoire ; parcours texte et streaming vocal.
+- **Journal exhaustif des tentatives passant par l'outil :** JSONL privé persistant hors Git, horodatage UTC, motif, requête, ID de tour, canal, fournisseur, statut, durée, crédits annoncés et résultats. Écriture `started` synchronisée sur disque avant tout réseau, puis `success` / `failed` / `rejected`. En cas d'arrêt brutal après `started`, l'enregistrement reste consultable.
+- **Coûts et sécurité :** mode Tavily basic, cinq extraits au plus, pas de HTML brut ni réponse générée par Tavily, pas d'appel de recherche pour les conversations ordinaires. Clé masquée et préflight sans réseau. Aucun secret/version privée commités.
+- **Validation :** tests hors ligne nouveaux dans `tests/test_jade_web_search.py`, CI Linux/Windows à vérifier après intégration ; essai Tavily avec la vraie clé et recette Discord/PWA sur PC à faire par le propriétaire. Suivi unique REC-038.
+
+## 2026-11-22 — Branche expérimentale isolée : continuité privée, mémoire et métrologie
+
+- **Périmètre :** travaux `DEV-021` à `DEV-026`, `DEV-010/020` et inventaire lecture seule `OPS-015` sur `feature/jade-multicanal-memoire-observabilite-20261122`. PR #38 brouillon, aucune modification de `develop` ou `main`.
+- **Continuité et permissions :** tâches privées du propriétaire, reprise persistante depuis une session/identité liée, quelques commandes françaises univoques et envoi Discord uniquement sur destination explicitement autorisée. Ambiguïtés et actions autonomes supplémentaires exclues.
+- **Mémoire/personnalité :** rappel ciblé local, cache anticipé et invalidation SQLite, préférence récente cohérente ; les demandes L2 forcées du propriétaire ne déterminent pas la personnalité de Jade. Aucun moteur ou appel LLM supplémentaire en veille.
+- **Métrologie :** quantiles p50/p95 du runtime, durée STT mobile pré-runtime, tokens d'entrée/sortie réellement fournis par Responses. Ne pas déduire un coût USD exact ni une audition effective du premier son sans preuve.
+- **Mobile et exploitation :** superviseur indépendant en loopback pour déploiement de branche choisi et reprise du processus, interface privée correspondante. Rideau mobile en repli statique tant que les calques artistiques indépendants ne sont pas disponibles. Audit d'assets non destructif.
+- **Correctif de régression :** une validation STT a d'abord provoqué un HTTP 503 vocal (`math` manquant dans `messages.py`) ; import ajouté avant la livraison, et tests de non-régression PWA restaurés.
+- **Recette :** 637 tests hors ligne réussis (14 ignorés) sur la suite économique du commit `04f2b10d` et sur les commits suivants de code ; validation physique Windows, Android/Discord et reconstruction CI multi-OS séparée. Les limites exactes sont dans [la passation](handoffs/2026-11-22-dev021-026-multicanal-memoire-latence.md). **Aucun ticket Done** à ce stade.
+
+## 2026-11-22 — QA : fermeture du streaming et curation mémoire sans doublon
+
+- **Correctif runtime (streaming) :** `OpenAIServices` et `ResponsesChat` ferment explicitement les générateurs async imbriqués lors de `aclose()`, y compris le suivi après appel d'outil. Le flux transport est fermé dans le `finally` de `_stream_text`.
+- **Correctif runtime (mémoire) :** une demande explicite de souvenir ne déclenche plus de seconde curation LLM en arrière-plan. Le propriétaire vérifié dispose de la file L2, les autres de l'outil volontaire du LLM conversationnel.
+- **Backlog :** `OPS-012` est `Classée sans suite`, conservée dans les vues historiques mais pas dans l'index opérationnel actif. Contrôle du graphe de dépendances conservé ; fixture de dépendance inconnue munie de l'en-tête canonique.
+- **Confidentialité :** le test attend désormais un contenu privé intégralement masqué, sans balise d'intention explicite. Aucune réduction de la protection du runtime.
+- **Validation :** revalidation sur Linux et Windows, sans frais OpenAI.
+
+## 2026-11-22 — QA : tests d'identités et d'écritures mémoire non bloquantes
+
+- Anciennes recettes automatiques `test_jade_explicit_memory_request.py` supposaient que toute demande vocale/Discord imposait un souvenir et que SQLite avait fini avant la réponse. Le contrat validé est différent : Goldaj vérifié force L2 uniquement, Jade décide librement pour les autres et les écritures sont différées.
+- Les tests distinguent désormais reconnaissance de la demande, refus de forçage non-propriétaire, appel volontaire `jade_save_memory`, retour asynchrone, isolation des comptes Discord, unicité des mémoires et annulation après changement de profil.
+- En cas de panne SQLite, l'accusé de **mise en file** demeure (décision produit) tandis que le test vérifie l'absence de persistence. Aucun assouplissement des protections liées au consentement.
+- Validation hors ligne en CI requise ; aucun périphérique physique ni appel facturable utilisé.
+
+## 2026-11-22 — QA : contrat des outils mémoire Responses
+
+- Les quatre tests de `tests/test_jade_openai_memory_tools.py` utilisaient les objets `chat.completions` retirés de Jade. Simulations actualisées en `responses.create` sans changer le but de chaque contrôle : abstention sans appel supplémentaire, continuation après écriture différée, aucun argument d'outil divulgué dans le flux, fermeture des streams.
+- Les assertions suivent le contrat validé : l'acceptation de la tentative est immédiate et le résultat SQLite est observé à la fermeture de la tâche, sans imposer une confirmation bloquante au LLM.
+- Suite GitHub Linux/Windows à observer avant clôture.
+
+## 2026-11-22 — QA : isolement des journaux et contrats mémoire/asynchronisme
+
+- **Journalisation :** les tests de compatibilité `jade.conversation` isolent le mode sans fichier de session, au lieu de dépendre de l'état global laissé par les autres tests. Aucune émission de texte privé vers la console réelle n'est ajoutée.
+- **Voix synthétique :** le mock LLM du scénario PCM/micro fictif utilise maintenant la Responses API et vérifie la même génération unique, sans périphérique réel.
+- **Souvenirs volontaires :** le test confirme qu'une demande humaine de Core ne crée pas une Core par commande ; une action volontaire distincte de Jade peut toutefois le faire, et les éléments provenant du contexte antérieur n'exigent pas une citation du dernier tour.
+- **Budget/raisonnement :** le test du contrat actuel vérifie `reasoning.effort=low`, `max_output_tokens=2048`, `store=false` et le streaming Responses.
+- **Validation :** suite offline à relancer. Les tests d'isolement multicanal/consentement restent prioritaires.
+
+## 2026-11-22 — QA : adapter les simulations OpenAI au contrat Responses
+
+- **Diagnostic :** des tests de conversation, streaming et isolation de clés simulaient encore `chat.completions` alors que Jade utilise la Responses API. Échecs de `FakeClient.responses` absente, pas une preuve d'échec du backend actuel.
+- **Correction :** adaptation des réponses synthétiques `status=completed`, `output_text`, événements `response.output_text.delta` / `response.completed`, et du chemin HTTP `/v1/responses`. Contrôles d'un flux tronqué et de fermeture `aclose()` conservés.
+- **Vérification :** tests concernés à rejouer en CI Linux/Windows ; pas de requête réelle, ni modification du runtime ou d'assertion de confidentialité.
+
+## 2026-11-22 — QA : restauration SQLite v5 et fiabilisation des vérifications hors ligne
+
+- **Sauvegarde/restauration :** `memory_transfer.py` accepte désormais explicitement les archives de schéma SQLite v5, déjà produites par `export_memory` et validées par `_check`. Hachage SHA-256, schéma, intégrité SQLite, non-écrasement et limites de taille restent obligatoires. Tests existants REC-025 et migration anciens schémas à contrôler en CI.
+- **Backlog :** le contrôleur documentaire ne lit les ID que dans le tableau canonique `| ID | Prio | Jalon | Statut |`, et non dans les tableaux de résultats des recettes ; dépendance historique `DEV-011` de `DEV-012` renvoyée vers `REC-026`.
+- **Tests :** tests fonctionnels de Luna ne nécessitent plus d'import `pytest` pour être découverts par `unittest` ; le défaut du budget par défaut est mis à jour de 320 vers 2048 dans une assertion ancienne (contrat du 22/11).
+- **Vérification :** diagnostic à partir des erreurs réelles GitHub Actions `45001055153`; exécution et vérification complète à confirmer par les workflows sur ce commit. Aucun appel API payant ni test matériel.
+
+## 2026-11-22 — QA : supprimer un faux positif TOKEN_PATTERN sans affaiblir le scanner
+
+- **Diagnostic :** le préflight Linux/Windows du SHA 5feb9a1b7a2b échouait avant les tests avec `BLOCKED: TOKEN_PATTERN` ; un littéral de test de confidentialité dans `tests/test_session_diagnostics.py` avait le format d'une clé.
+- **Correction :** construire la même valeur de démonstration en trois segments à l'exécution du test, sans garder de token complet dans le code suivi. Le comportement du test et la détection `TOKEN_PATTERN` du scanner restent inchangés.
+- **Vérification :** inspection statique du motif incriminé et des journaux GitHub Actions. Préflight et suite générale doivent être observés sur le commit après push ; aucun succès CI ou test local n'est anticipé.
+
 ## 2026-11-22 — REC-006 et REC-029 : clôture produit explicite sur develop
 
 - **Décision du propriétaire :** après revue des logs réels du 22/11, les deux cartes passent de `À valider` à **`Done`**, sans développement ni test supplémentaire requis pour la clôture.

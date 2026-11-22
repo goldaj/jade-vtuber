@@ -27,6 +27,27 @@ poetry run python main.py
 
 La dernière ligne **est la simulation du moteur en console** : écrire « Bonjour Jade », puis `/exit`. Aucun token ni achat requis pour cette étape. Les ressources Git LFS peuvent être volumineuses ; pour la démo Express seule, les étapes Git LFS/Poetry ne sont pas nécessaires. Sur une machine Linux, la partie console Python peut fonctionner avec les paquets correspondants, mais **le launcher WinForms, la Démo Express et le rendu GPU Windows ne sont pas garantis**.
 
+### Recherche web Tavily, facultative
+
+1. Créer un compte sur [Tavily](https://app.tavily.com/) ; le forfait gratuit suffit pour commencer. Créer une clé de développement dédiée à Jade, conserver sa valeur privée.
+2. Dans le **fichier privé** désigné par `JADE_SECRETS_FILE` (jamais dans Git) :
+
+~~~dotenv
+JADE_WEB_ENABLED=1
+JADE_WEB_PROVIDER=tavily
+TAVILY_API_KEY=tvly-VOTRE_CLE_PRIVEE
+# Facultatif :
+# JADE_WEB_LOG_DIR=D:/Jade/private/jade-web-search
+# JADE_WEB_TIMEOUT_SECONDS=8
+# JADE_WEB_MAX_PER_TURN=10
+~~~
+
+3. Exécuter `poetry run python main.py --preflight` (sans appel Tavily), puis redémarrer Jade. Avec le web activé, **chaque démarrage live** crée immédiatement un fichier `jade-web-search_YYYY-MM-DD_HH-MM-SS_microsecondes+fuseau_pid-XXXX.jsonl` dans `D:/Jade/private/jade-web-search/` (ou `JADE_WEB_LOG_DIR`), même sans recherche. Le chemin exact s'affiche via `web_search_journal_started` dans la console et les logs principaux.
+4. Chaque fichier commence par `session_started` puis les appels `started` et leur résultat (`success`/`failed`/`rejected`). Les anciens fichiers sont conservés. Le dossier **n'est jamais envoyé à GitHub** : requêtes, raisons, URL et extraits restent privés. Si `JADE_WEB_LOG_PATH=D:/Jade/private/jade-web-search.jsonl` existe encore dans la configuration, il reste accepté : sa valeur désigne le répertoire voisin `D:/Jade/private/jade-web-search/`, sans écraser ni migrer l'ancien fichier unique.
+5. Pour désactiver le web, mettre `JADE_WEB_ENABLED=0` et redémarrer. Pour changer de fournisseur plus tard, ajouter un adaptateur conforme à `SearchProvider` et le déclarer dans `build_web_search_service`, sans modifier l'orchestrateur ni l'outil LLM.
+
+**Aucun paiement ni test externe n'est lancé par le préflight ou la suite de tests.** Le coût des crédits Tavily et celui de la continuation OpenAI ne sont pas confondus. `include_usage` fait remonter les crédits quand Tavily les renvoie.
+
 ## 2. Installer le launcher utilisateur Windows
 
 Sur le clone `develop` à jour, double-cliquer `Installer-Launcher-Jade.cmd`. Il installe `D:\Jade\launcher\Lancer-Jade.cmd` **hors du clone Git** (disque D: requis pour ce programme personnalisé). Après une mise à jour du code du launcher, **relancer cet installateur**. Faire un raccourci bureau si souhaité.

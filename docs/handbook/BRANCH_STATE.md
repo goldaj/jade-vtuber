@@ -2,6 +2,26 @@
 
 **Référence :** sources de `goldaj/jade-vtuber`, état préparé pour `develop` sur la PR #34 (21 novembre 2026). **Code raccordé = fonctionnalité implémentée** ; la recette Android/Discord physique reste indépendante, et la configuration privée du PC peut remplacer les valeurs par défaut.
 
+## Livrables PR #38 — code présent, recette en attente (22 novembre 2026)
+
+- **REC-031 (ex DEV-021) :** tâches privées intercanaux et transferts Discord vers destinations explicitement autorisées, recette réelle manquante.
+- **REC-032/033 (ex DEV-022/023) :** rappel local lexical et cache mémoire de présence ; recherche très ancienne, L1 et déclenchement d'ouverture PWA partiels.
+- **REC-034 (ex DEV-024) :** jalons, durées, p50/p95, tokens, STT mobile, sans coût par tour exact ni preuve d'audition physique.
+- **REC-035 (ex DEV-025) :** signaux d'apartés ; discussions multi-fils non pleinement reconnues.
+- **REC-036 (ex DEV-026) :** personnalité mémorielle corrigible ; évolution expérientielle plus profonde différée P3.
+- **REC-037 (ex DEV-020) :** superviseur local Windows et administration mobile ; pas de recette physique.
+- **DEV-010** : décor statique tant que calques manquent ; **OPS-015** : inventaire sans comparaison artistique sémantique. Les deux restent **À faire**.
+
+**Tous les sept REC restent À valider**, pas `Done`. [Audit](../operations/handoffs/2026-11-22-audit-technique-fonctionnel-ci-pr38.md).
+
+## Recherche web facultative (REC-038, 22 novembre 2026)
+
+- `JADE_WEB_ENABLED=0` par défaut : aucune recherche web à l'installation ni en veille. Une fois activé, le modèle de dialogue peut appeler librement `jade_web_search` uniquement pendant un tour auquel Jade répond ; ses réponses sans recherche ne déclenchent pas d'appel supplémentaire.
+- Fournisseur actif : Tavily via l'adaptateur `src/jade_runtime/web_providers/tavily.py`, remplaçable à travers le contrat `SearchProvider`. Le moteur de dialogue, Discord, PWA et les fichiers de logs ne dépendent pas de Tavily directement.
+- Le journal utilise un **dossier privé par défaut `D:/Jade/private/jade-web-search/`**, voisin de `JADE_MEMORY_DB_PATH` (réglage `JADE_WEB_LOG_DIR`) : chaque démarrage live avec recherche web activée crée un nouveau JSONL horodaté avec PID, sans supprimer les sessions précédentes. L'ancienne variable `JADE_WEB_LOG_PATH` reste acceptée comme chemin historique converti vers un dossier voisin ; l'ancien fichier unique reste intact. Toute tentative acceptée est journalisée avant l'appel réseau avec date UTC, requête, raison explicite et provenance ; résultats, statut, coût en crédits disponible et durée sont ensuite ajoutés. Une interruption brutale peut laisser une ligne `started` sans statut final. Un échec d'écriture du journal empêche l'appel réseau.
+- Budget : maximum 10 recherches par tour par défaut (réglable de 1 à 10 via `JADE_WEB_MAX_PER_TURN`), recherche `basic` et jusqu'à 5 sources ; coût IA de la continuation de l'outil distinct des crédits Tavily. Pas de compte ni de clé Tavily dans le dépôt. **REC-038 `Done` sur validation explicite du propriétaire le 22/11/2026**, pour la recherche Internet fonctionnelle observée sur son PC ; la CI dédiée web est réussie, les scénarios complémentaires non démontrés restent des réserves documentées dans la vue REC.
+- **Politique de réponse web :** Jade synthétise les résultats sans exposer par défaut les URL ou les listes de sources ; lien unique/minimal sur demande explicite ou nécessité directe, et pas d'URL prononcée à l'oral sans demande. Les URL restent présentes dans le journal persistant.
+
 ## Fonctions présentes
 
 | Domaine | État observé dans le code |

@@ -1,72 +1,79 @@
-"""DEV-012: OpenAI native tool protocol and streaming tests without paid calls."""
-from types import SimpleNamespace as NS
+"""DEV-012: Responses API memory tools and streaming, with offline synthetic clients."""
 import unittest
+from types import SimpleNamespace as NS
 
+from src.jade_runtime.config import Settings
 from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.memory_actions import MEMORY_TOOL
 
 
-def choice(message=None, finish="stop", delta=None):
-    return NS(choices=[NS(index=0, message=message, finish_reason=finish,
-                          delta=delta)])
+def response(text="", *, calls=()):
+    items = ([NS(type="message", content=[NS(type="output_text", text=text)])]
+             if text else [])
+    return NS(status="completed", output_text=text, output=[*items, *calls])
+
+
+def tool_call(arguments='{"kind":"ordinary"}'):
+    return NS(type="function_call", call_id="call_1",
+              name="jade_save_memory", arguments=arguments)
 
 
 class FakeStream:
-    def __init__(self, chunks):
-        self.chunks = list(chunks)
+    def __init__(self, events):
+        self.events = list(events)
         self.closed = False
 
     def __aiter__(self):
         return self
 
     async def __anext__(self):
-        if not self.chunks:
+        if not self.events:
             raise StopAsyncIteration
-        return self.chunks.pop(0)
+        return self.events.pop(0)
 
-    async def close(self):
+    async def aclose(self):
         self.closed = True
+
+
+class FakeResponses:
+    def __init__(self, replies):
+        self.replies = list(replies)
+        self.calls = []
+
+    async def create(self, **kwargs):
+        self.calls.append(kwargs)
+        if not self.replies:
+            raise AssertionError("Unexpected extra LLM request")
+        return self.replies.pop(0)
 
 
 class FakeClient:
     def __init__(self, replies):
-        self.replies = list(replies)
-        self.calls = []
-        self.chat = NS(completions=NS(create=self.create))
-
-    async def create(self, **kwargs):
-        self.calls.append(kwargs)
-        return self.replies.pop(0)
+        self.responses = FakeResponses(replies)
 
 
 def stub_service(replies):
-    service = OpenAIServices.__new__(OpenAIServices)
-    service.settings = NS(model="test", max_completion_tokens=500,
-                          reasoning_effort="low")
-    service.client = FakeClient(replies)
-    return service
+    client = FakeClient(replies)
+    return OpenAIServices(Settings(), client=client), client.responses
 
 
 class OpenAIToolProtocol(unittest.IsolatedAsyncioTestCase):
     async def test_abstain_uses_one_request(self):
-        service = stub_service([
-            choice(NS(content="[INTENT:neutral] Bonjour.")),
-        ])
+        service, provider = stub_service([response("[INTENT:neutral] Bonjour.")])
         async def unexpected(_):
             raise AssertionError("the model did not request a tool")
         output = await service.complete_with_tools(
             [{"role": "user", "content": "Bonjour"}], unexpected)
         self.assertIn("Bonjour", output)
-        self.assertEqual(len(service.client.calls), 1)
-        self.assertEqual(service.client.calls[0]["tool_choice"], "auto")
+        self.assertEqual(len(provider.calls), 1)
+        self.assertEqual(provider.calls[0]["tool_choice"], "auto")
+        self.assertFalse(provider.calls[0]["store"])
         self.assertEqual(MEMORY_TOOL["function"]["name"], "jade_save_memory")
 
     async def test_tool_call_and_continuation_receive_result(self):
-        called = NS(id="call_1", function=NS(
-            name="jade_save_memory", arguments='{"kind":"ordinary"}'))
-        service = stub_service([
-            choice(NS(content=None, tool_calls=[called]), "tool_calls"),
-            choice(NS(content="Je viens de mémoriser ce fait.")),
+        service, provider = stub_service([
+            response(calls=[tool_call()]),
+            response("Je viens de mémoriser ce fait."),
         ])
         seen = []
         async def execute(raw):
@@ -74,59 +81,55 @@ class OpenAIToolProtocol(unittest.IsolatedAsyncioTestCase):
             return {"status": "enregistré", "level": 2}
         result = await service.complete_with_tools(
             [{"role": "user", "content": "un fait"}], execute)
+        await service._responses.close()
         self.assertIn("mémoriser", result)
         self.assertEqual(seen, ['{"kind":"ordinary"}'])
-        self.assertEqual(len(service.client.calls), 2)
-        followup = service.client.calls[1]["messages"]
-        self.assertEqual(followup[-1]["role"], "tool")
-        self.assertIn("enregistré", followup[-1]["content"])
-        self.assertNotIn("tools", service.client.calls[1])
+        self.assertEqual(len(provider.calls), 2)
+        followup = provider.calls[1]["input"]
+        self.assertEqual(followup[-1]["type"], "function_call_output")
+        self.assertIn("enregistré", followup[-1]["output"])
+        self.assertNotIn("tools", provider.calls[1])
 
     async def test_streamed_arguments_never_reach_voice_and_continue_normally(self):
-        def delta(*, content=None, tool_calls=None):
-            return NS(content=content, tool_calls=tool_calls)
-
+        called = tool_call()
         before = FakeStream([
-            choice(finish=None, delta=delta(tool_calls=[
-                NS(index=0, id="call_", function=NS(
-                    name="jade_save_", arguments='{"kind":'))])),
-            choice(finish=None, delta=delta(tool_calls=[
-                NS(index=0, id="2", function=NS(
-                    name="memory", arguments='"ordinary"}'))])),
-            choice(finish="tool_calls", delta=delta()),
+            NS(type="response.function_call_arguments.delta", delta='{"kind":'),
+            NS(type="response.function_call_arguments.delta", delta='"ordinary"}'),
+            NS(type="response.completed", response=response(calls=[called])),
         ])
+        spoken = "[INTENT:neutral] C'est noté."
         after = FakeStream([
-            choice(finish=None, delta=delta(content="[INTENT:neutral] C'est noté.")),
-            choice(finish="stop", delta=delta()),
+            NS(type="response.output_text.delta", delta=spoken),
+            NS(type="response.completed", response=response(spoken)),
         ])
-        service = stub_service([before, after])
+        service, provider = stub_service([before, after])
         seen = []
         async def execute(raw):
             seen.append(raw)
             return {"status": "échec", "level": 2}
-        output = []
-        async for text in service.complete_stream_with_tools(
-                [{"role": "user", "content": "message"}], execute):
-            output.append(text)
-        self.assertEqual(output, ["[INTENT:neutral] C'est noté."])
+        output = [text async for text in service.complete_stream_with_tools(
+            [{"role": "user", "content": "message"}], execute)]
+        await service._responses.close()
+        self.assertEqual(output, [spoken])
         self.assertEqual(seen, ['{"kind":"ordinary"}'])
-        self.assertEqual(len(service.client.calls), 2)
+        self.assertEqual(len(provider.calls), 2)
         self.assertTrue(before.closed)
         self.assertTrue(after.closed)
 
     async def test_streaming_abstains_without_followup(self):
+        spoken = "Salut."
         stream = FakeStream([
-            choice(finish=None, delta=NS(content="Salut.", tool_calls=None)),
-            choice(finish="stop", delta=NS(content=None, tool_calls=None)),
+            NS(type="response.output_text.delta", delta=spoken),
+            NS(type="response.completed", response=response(spoken)),
         ])
-        service = stub_service([stream])
+        service, provider = stub_service([stream])
         async def unexpected(_):
             raise AssertionError("no tool was called")
-        output = []
-        async for token in service.complete_stream_with_tools([], unexpected):
-            output.append(token)
-        self.assertEqual(output, ["Salut."])
-        self.assertEqual(len(service.client.calls), 1)
+        output = [token async for token in service.complete_stream_with_tools(
+            [], unexpected)]
+        self.assertEqual(output, [spoken])
+        self.assertEqual(len(provider.calls), 1)
+        self.assertTrue(stream.closed)
 
 
 if __name__ == "__main__":

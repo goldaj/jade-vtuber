@@ -90,6 +90,19 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
                         speaker_id=speaker_id, private_channel=private,
                         message_id="test-id")
 
+    async def flush_explicit_writes(self, service=None):
+        pending = tuple((service or self.svc)._explicit_writes)
+        if pending:
+            await asyncio.wait_for(asyncio.gather(*pending), timeout=3)
+
+    async def jade_chooses_memory(self, source, summary):
+        action = await self.svc.prepare_memory_action(source)
+        self.assertIsNotNone(action)
+        return await action(json.dumps({
+            "kind": "ordinary", "summary": summary,
+            "significance": "Décision volontaire de Jade dans le test.",
+        }, ensure_ascii=False))
+
     async def test_owner_core_request_is_always_ordinary_and_persistent(self):
         msg = self.request(
             "Jade, je veux que tu gardes ceci dans tes Core Memories : "
@@ -98,6 +111,7 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("mémoire ordinaire", result.text)
         self.assertIn("mon choix", result.text)
         self.assertNotIn("première conversation", result.text)
+        await self.flush_explicit_writes()
         memories = MemoryStore(self.path).list_for_account(OWNER)
         self.assertEqual(len(memories), 1)
         self.assertEqual(memories[0]["kind"], "ordinary")
@@ -107,19 +121,19 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("première conversation", await self.svc.context_for(msg))
         self.assertFalse(self.svc.schedule(msg, Reply(msg, "Réponse.")))
         self.assertFalse(hasattr(self.store, "put_owner_core"))
-
     async def test_natural_voice_from_micro_and_mobile_deduplicates(self):
         phrase = "Jade, retiens que nous avons finalisé le prototype."
         mobile = self.request(phrase, platform="mobile")
         mic = self.request(phrase, platform="microphone")
         self.assertIn("enregistré", (await self.svc.command(mobile)).text)
-        self.assertIn("déjà", (await self.svc.command(mic)).text)
+        self.assertIn("enregistré", (await self.svc.command(mic)).text)
+        # Both calls merely acknowledge scheduling, not SQLite completion.
+        await self.flush_explicit_writes()
         memories = self.store.list_for_account(OWNER)
         self.assertEqual(len(memories), 1)
         self.assertEqual(memories[0]["kind"], "ordinary")
         self.assertEqual(self.store.recall_self_core(OWNER), [])
         self.assertEqual(len(self.store.recall(OWNER, "person")), 1)
-
     async def test_discord_users_keep_own_ordinary_memories_per_channel(self):
         one = self.request("Jade, ajoute à tes Core Memories : souvenir de Alice.",
                            platform="discord", account="123", author="Alice", channel="100")
@@ -127,10 +141,16 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
                            platform="discord", account="456", author="Bob", channel="100")
         self.assertTrue(await self.svc.ensure_auto_enrolled(one))
         self.assertTrue(await self.svc.ensure_auto_enrolled(two))
-        first = await self.svc.command(one)
-        self.assertIn("mémoire ordinaire", first.text)
-        self.assertIn("mon choix", first.text)
-        self.assertIn("enregistré", (await self.svc.command(two)).text)
+        # Neither non-owner can compel an L2 or L3 write.
+        self.assertIsNone(await self.svc.command(one))
+        self.assertIsNone(await self.svc.command(two))
+        self.assertEqual(self.store.list_for_account(("discord", "123")), [])
+        self.assertEqual(self.store.list_for_account(("discord", "456")), [])
+        # Jade may voluntarily accept each suggestion through her own tool.
+        self.assertEqual((await self.jade_chooses_memory(
+            one, "Alice a partagé un souvenir."))["status"], "enregistré")
+        self.assertEqual((await self.jade_chooses_memory(
+            two, "Bob préfère les plantes."))["status"], "enregistré")
         self.assertEqual(len(self.store.list_for_account(("discord", "123"))), 1)
         self.assertEqual(len(self.store.list_for_account(("discord", "456"))), 1)
         self.assertEqual(self.store.recall_self_core(OWNER), [])
@@ -140,17 +160,19 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("Alice", await self.svc.context_for(two))
         self.assertEqual(len(self.store.recall(("discord", "123"), "discord:100")), 1)
         self.assertEqual(len(self.store.recall(("discord", "456"), "discord:100")), 1)
-
     async def test_voice_and_text_share_verified_discord_scope(self):
         text = self.request("Jade, retiens que ce canal est notre atelier.",
                             platform="discord", account="123", channel="789")
         voice = self.request("Jade, retiens que ce canal est notre atelier.",
                              platform="discord_voice", speaker_id=123, channel="789")
         self.assertTrue(await self.svc.ensure_auto_enrolled(text))
-        self.assertIn("enregistré", (await self.svc.command(voice)).text)
-        self.assertIn("déjà", (await self.svc.command(text)).text)
+        self.assertIsNone(await self.svc.command(voice))
+        self.assertIsNone(await self.svc.command(text))
+        self.assertEqual((await self.jade_chooses_memory(
+            voice, "Ce canal est notre atelier."))["status"], "enregistré")
+        self.assertEqual((await self.jade_chooses_memory(
+            text, "Ce canal est notre atelier."))["status"], "déjà présent")
         self.assertEqual(len(self.store.list_for_account(("discord", "123"))), 1)
-
     async def test_dm_auto_enrolled_but_twitch_remains_manual_opt_in(self):
         dm = self.request("Jade, mémorise que je viens de me connecter.",
                           platform="discord", account="123", channel="dm", private=True)
@@ -158,13 +180,18 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
                               platform="twitch", account="456", channel="stream")
         self.assertTrue(await self.svc.ensure_auto_enrolled(dm))
         self.assertFalse(await self.svc.ensure_auto_enrolled(twitch))
-        self.assertIn("enregistré", (await self.svc.command(dm)).text)
-        self.assertIn("n'est pas active", (await self.svc.command(twitch)).text)
+        self.assertIsNone(await self.svc.command(dm))
+        self.assertEqual((await self.jade_chooses_memory(
+            dm, "Cet utilisateur vient de se connecter."))["status"], "enregistré")
+        self.assertIsNone(await self.svc.command(twitch))
+        self.assertIsNone(await self.svc.prepare_memory_action(twitch))
         self.assertEqual(len(self.store.list_for_account(("discord", "123"))), 1)
         self.assertEqual(self.store.list_for_account(("twitch", "456")), [])
         self.store.enable(("twitch", "456"))
-        self.assertIn("enregistré", (await self.svc.command(twitch)).text)
-
+        # Even after opt-in Twitch remains a suggestion, not a forced command.
+        self.assertIsNone(await self.svc.command(twitch))
+        self.assertEqual((await self.jade_chooses_memory(
+            twitch, "Cet utilisateur est en ligne."))["status"], "enregistré")
     async def test_profile_changes_revoke_pending_write(self):
         key = ("discord", "123")
         old_id = self.store.enable(key)
@@ -195,21 +222,25 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
                           side_effect=OSError("simulated path error")):
             result = await self.svc.command(self.request(
                 "Jade, retiens que notre projet est en cours."))
-        self.assertIn("pas pu enregistrer", result.text)
+            # Product contract: Jade acknowledges queue admission, not commit.
+            self.assertIn("enregistré", result.text)
+            await self.flush_explicit_writes()
+        self.assertEqual(self.store.list_for_account(OWNER), [])
         self.assertEqual(self.store.recall_self_core(OWNER), [])
-
     async def test_targeted_deletion_keeps_owner_memory_isolated(self):
         outsider = ("discord", "123")
         self.store.enable(outsider)
         request = self.request("Jade, retiens que ma couleur est verte.",
                                platform="discord", author="Goldaj", account="123")
-        self.assertIn("enregistré", (await self.svc.command(request)).text)
+        # Display-name spoofing does not grant owner permission.
+        self.assertIsNone(await self.svc.command(request))
+        self.assertEqual((await self.jade_chooses_memory(
+            request, "Cette personne aime le vert."))["status"], "enregistré")
         self.assertEqual(self.store.recall(OWNER, "person"), [])
         memory_id = self.store.list_for_account(outsider)[0]["id"]
         self.assertTrue(self.store.delete_memory(outsider, memory_id))
         self.assertEqual(self.store.list_for_account(outsider), [])
         self.assertEqual(self.store.recall_self_core(OWNER), [])
-
     async def test_orchestrator_routes_request_without_llm_or_core_curator(self):
         class Backend:
             calls = 0
@@ -236,6 +267,7 @@ class ExplicitMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("ordinaire", result.result())
             self.assertEqual(backend.calls, 0)
             self.assertEqual(len(delivered), 1)
+            await self.flush_explicit_writes(service)
             self.assertEqual(self.store.list_for_account(OWNER)[0]["kind"], "ordinary")
             self.assertEqual(self.store.recall_self_core(OWNER), [])
             self.assertFalse(service.tasks)

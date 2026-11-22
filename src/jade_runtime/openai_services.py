@@ -1,5 +1,6 @@
 """The **only** speech/voice AI provider: OpenAI. Lazy SDK initialization."""
 from io import BytesIO
+from contextlib import aclosing
 
 
 from .config import Settings
@@ -34,16 +35,18 @@ class OpenAIServices:
         return await self._responses.complete(messages)
 
     async def complete_stream(self, messages: list[dict[str, str]]):
-        async for fragment in self._responses.complete_stream(messages):
-            yield fragment
+        async with aclosing(self._responses.complete_stream(messages)) as stream:
+            async for fragment in stream:
+                yield fragment
 
     async def complete_with_tools(self, messages, memory_action) -> str:
         return await self._responses.complete_with_tools(messages, memory_action)
 
     async def complete_stream_with_tools(self, messages, memory_action):
-        async for fragment in self._responses.complete_stream_with_tools(
-                messages, memory_action):
-            yield fragment
+        async with aclosing(self._responses.complete_stream_with_tools(
+                messages, memory_action)) as stream:
+            async for fragment in stream:
+                yield fragment
 
     async def transcribe_wav(self, audio: bytes) -> str:
         if not isinstance(audio, bytes) or not 44 <= len(audio) <= 20_000_000:

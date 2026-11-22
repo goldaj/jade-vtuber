@@ -114,7 +114,7 @@ class BatchMemoryTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await batch.close()
 
-    async def test_third_party_core_self_stays_out_of_all_memories(self):
+    async def test_third_party_core_self_is_autobiographical_not_person_memory(self):
         class Model:
             async def complete(self, messages):
                 text = json.loads(messages[1]["content"])[0]["text"]
@@ -131,6 +131,10 @@ class BatchMemoryTests(unittest.IsolatedAsyncioTestCase):
                 self.key, "discord:77", incoming, Reply(incoming, "Je comprends.")))
             await asyncio.wait_for(asyncio.gather(*list(batch.tasks)), 3)
             self.assertEqual(self.store.list_for_account(self.key), [])
+            # Jade's self Core is global autobiography, not Alice's relational memory.
+            with closing(sqlite3.connect(self.store.path)) as db:
+                self.assertEqual(db.execute(
+                    "SELECT COUNT(*) FROM jade_self_core").fetchone()[0], 1)
         finally:
             await batch.close()
 

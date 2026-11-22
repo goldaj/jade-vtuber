@@ -117,6 +117,7 @@ def backlog_integrity_errors(root: Path = ROOT) -> list[str]:
     statuses = {"À qualifier", "À faire", "En cours", "À valider",
                 "Bloqué", "Done", "Classée sans suite"}
     cards: dict[str, tuple[str, list[str]]] = {}
+    archived = set()
     errors = []
     for prefix, filename in views.items():
         try:
@@ -124,8 +125,14 @@ def backlog_integrity_errors(root: Path = ROOT) -> list[str]:
         except OSError:
             errors.append("Missing backlog view: " + filename)
             continue
+        in_card_table = False
         for line in lines:
-            if not re.match(r"^\|\s*\*\*(?:DEV|REC|OPS|ART)-\d{3}\*\*\s*\|", line):
+            if line.startswith("| ID | Prio | Jalon | Statut |"):
+                in_card_table = True
+                continue
+            if not line.strip():
+                in_card_table = False
+            if not in_card_table or not re.match(r"^\|\s*\*\*(?:DEV|REC|OPS|ART)-\d{3}\*\*\s*\|", line):
                 continue
             cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
             if len(cells) != 8:
@@ -141,6 +148,8 @@ def backlog_integrity_errors(root: Path = ROOT) -> list[str]:
             dependencies = [] if cells[7] in ("", "—") else [
                 dep.strip() for dep in cells[7].split(",")]
             cards[ident] = (cells[1], dependencies)
+            if status == "Classée sans suite":
+                archived.add(ident)
     for ident, (_priority, dependencies) in cards.items():
         for dep in dependencies:
             if dep not in cards:
@@ -190,7 +199,8 @@ def backlog_integrity_errors(root: Path = ROOT) -> list[str]:
             errors.append("Priority mismatch for " + ident)
         if priority in counts:
             counts[priority] += 1
-    if len(indexed) != len(cards) or len(set(indexed)) != len(indexed) or set(indexed) != set(cards):
+    active = set(cards) - archived
+    if len(indexed) != len(active) or len(set(indexed)) != len(indexed) or set(indexed) != active:
         errors.append("Backlog index and views do not match")
     if ranks != list(range(1, len(ranks) + 1)):
         errors.append("Invalid backlog rank sequence")

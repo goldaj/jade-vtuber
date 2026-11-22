@@ -19,6 +19,13 @@ def records(captured):
 
 
 class TurnLoggingTests(unittest.TestCase):
+    def setUp(self):
+        # Session logging is process-global; standalone logger tests must not
+        # depend on which other test first initialized the session file.
+        scope = patch("src.jade_runtime.turn_logging.session_file", return_value=None)
+        scope.start()
+        self.addCleanup(scope.stop)
+
     def test_optional_latency_logger_is_configurable_and_private(self):
         with patch("src.jade_runtime.config.environ",
                    side_effect=lambda name, default: "1" if name == "JADE_LATENCY_LOG"
@@ -169,6 +176,11 @@ class RuntimeTimingTests(unittest.IsolatedAsyncioTestCase):
 
 
 class RuntimeTurnLoggingTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        scope = patch("src.jade_runtime.turn_logging.session_file", return_value=None)
+        scope.start()
+        self.addCleanup(scope.stop)
+
     async def test_correlated_input_and_reply_with_intent_not_delivered(self):
         backend = AsyncMock()
         backend.complete.return_value = "[INTENT:curious] Intéressant !"
@@ -229,9 +241,8 @@ class RuntimeTurnLoggingTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(delivered[0].text, "Une réponse vérifiée.")
                 expected = ("[contenu privé masqué]"
                             if platform in ("microphone", "local_http")
-                            else "Une réponse vérifiée.")
-                self.assertEqual(events[1]["reply_with_intent"],
-                                 f"[INTENT:serious] {expected}")
+                            else "[INTENT:serious] Une réponse vérifiée.")
+                self.assertEqual(events[1]["reply_with_intent"], expected)
                 self.assertEqual(events[1]["intent"], "serious")
                 self.assertNotIn("[INTENT:", delivered[0].text)
 

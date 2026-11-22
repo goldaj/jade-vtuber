@@ -15,6 +15,15 @@ def _default_memory_db_path() -> str:
     return str(Path.home() / ".jade" / "jade-memory.sqlite3")
 
 
+def _legacy_web_log_dir(path: str) -> str:
+    """Map a previously configured JSONL file to its sibling session folder."""
+    value = path.strip()
+    if not value:
+        return ""
+    candidate = Path(value)
+    return str(candidate.with_suffix("")) if candidate.suffix.lower() == ".jsonl" else value
+
+
 def _enabled(value: str) -> bool:
     if value in ("1", "true", "yes"):
         return True
@@ -47,6 +56,14 @@ class Settings:
     tts_speed: float = 1.25
     tts_pitch_semitones: float = 2.0  # Étincelle: DSP, not an OpenAI API parameter.
     api_key: str = ""
+    # Optional web search: no external request until Jade explicitly calls the tool.
+    web_enabled: bool = False
+    web_provider: str = "tavily"
+    tavily_api_key: str = field(default="", repr=False)
+    web_log_dir: str = field(default_factory=lambda: str(
+        Path(_default_memory_db_path()).with_name("jade-web-search")))
+    web_timeout_seconds: float = 8.0
+    web_max_per_turn: int = 10
     channel: str = ""
     bot_name: str = "Jade"
     twitch_oauth: str = ""
@@ -63,6 +80,7 @@ class Settings:
     discord_voice_broadcast: bool = False
     discord_voice_consent: bool = False
     discord_voice_allowed_users: tuple[int, ...] = field(default=(), repr=False)
+    cross_channel_discord_targets: tuple[int, ...] = field(default=(), repr=False)
     discord_voice_channel: int = 0
     discord_voice_auto_rate: float = 0.20
     discord_text_auto_rate: float = 0.20
@@ -101,6 +119,8 @@ class Settings:
     mobile_token: str = field(default="", repr=False)
     mobile_owner_login: str = ""
     mobile_public_origin: str = ""
+    deploy_supervisor_port: int = 8770
+    deploy_supervisor_token: str = field(default="", repr=False)
     mobile_port: int = 8766
     mobile_vendor_dir: str = ""
     mobile_model_dir: str = ""
@@ -118,6 +138,15 @@ class Settings:
             tts_speed=float(environ("JADE_TTS_SPEED", "1.25")),
             tts_pitch_semitones=float(environ("JADE_TTS_PITCH_SEMITONES", "2.0")),
             api_key=str(environ("OPENAI_API_KEY", "")),
+            web_enabled=_enabled(str(environ("JADE_WEB_ENABLED", "0")).lower()),
+            web_provider=str(environ("JADE_WEB_PROVIDER", "tavily")).strip().lower(),
+            tavily_api_key=str(environ("TAVILY_API_KEY", "")).strip(),
+            web_log_dir=(str(environ("JADE_WEB_LOG_DIR", "")).strip()
+                or _legacy_web_log_dir(str(environ("JADE_WEB_LOG_PATH", "")))
+                or str(Path(str(environ("JADE_MEMORY_DB_PATH", "")).strip()
+                    or _default_memory_db_path()).with_name("jade-web-search"))),
+            web_timeout_seconds=float(environ("JADE_WEB_TIMEOUT_SECONDS", "8")),
+            web_max_per_turn=int(environ("JADE_WEB_MAX_PER_TURN", "10")),
             channel=str(environ("TWITCH_CHANNEL", "")),
             bot_name=str(environ("BOT_NAME", "Jade")),
             twitch_oauth=str(environ("TWITCH_TOKEN", "")),
@@ -128,6 +157,7 @@ class Settings:
             discord_token=str(environ("DISCORD_TOKEN", "")),
             # Obsolete Discord activation/broadcast/list/confirmation values are not
             # loaded: existing private files are preserved but have no effect.
+            cross_channel_discord_targets=_voice_users(str(environ("JADE_CROSS_CHANNEL_DISCORD_TARGETS", ""))),
             discord_voice_channel=int(environ("DISCORD_VOICE_CHANNEL", "0") or 0),
             discord_voice_auto_rate=float(environ("JADE_DISCORD_VOICE_AUTO_RATE", "0.20")),
             discord_text_auto_rate=float(environ("JADE_DISCORD_TEXT_AUTO_RATE", "0.20")),
@@ -164,6 +194,8 @@ class Settings:
             mobile_token=str(environ("JADE_MOBILE_TOKEN", "")),
             mobile_owner_login=str(environ("JADE_MOBILE_OWNER_LOGIN", "")).strip(),
             mobile_public_origin=str(environ("JADE_MOBILE_PUBLIC_ORIGIN", "")).strip(),
+            deploy_supervisor_port=int(environ("JADE_DEPLOY_SUPERVISOR_PORT", "8770")),
+            deploy_supervisor_token=str(environ("JADE_DEPLOY_SUPERVISOR_TOKEN", "")),
             mobile_port=int(environ("JADE_MOBILE_PORT", "8766")),
             mobile_vendor_dir=str(environ("JADE_MOBILE_VENDOR_DIR", "")),
             mobile_model_dir=str(environ("JADE_MOBILE_MODEL_DIR", "")),
@@ -186,6 +218,16 @@ class Settings:
                 or not math.isfinite(self.tts_pitch_semitones)
                 or not -6 <= self.tts_pitch_semitones <= 6):
             raise ValueError("pitch semitones must be between -6 and 6")
+        if (type(self.web_enabled) is not bool
+                or self.web_provider not in ("tavily",)
+                or not math.isfinite(self.web_timeout_seconds)
+                or not 2 <= self.web_timeout_seconds <= 30
+                or not 1 <= self.web_max_per_turn <= 10
+                or not Path(self.web_log_dir).is_absolute()
+                or Path(self.web_log_dir).suffix.lower() == ".jsonl"):
+            raise ValueError("invalid web search configuration")
+        if self.web_enabled and not self.tavily_api_key:
+            raise ValueError("JADE_WEB_ENABLED needs TAVILY_API_KEY")
         if type(self.latency_logging) is not bool:
             raise ValueError("latency logging must be a boolean")
         if (self.max_history_messages < 2 or self.max_history_messages > 100
@@ -203,6 +245,10 @@ class Settings:
             raise ValueError("invalid Discord text participation limits")
         if not 1024 <= self.http_port <= 65535:
             raise ValueError("invalid local API port")
+        if not 1024 <= self.deploy_supervisor_port <= 65535:
+            raise ValueError("invalid supervisor port")
+        if self.deploy_supervisor_token and not 32 <= len(self.deploy_supervisor_token) <= 256:
+            raise ValueError("invalid supervisor token")
         if not 1024 <= self.mobile_port <= 65535:
             raise ValueError("invalid mobile port")
         if self.mobile_enabled and not 32 <= len(self.mobile_token) <= 256:

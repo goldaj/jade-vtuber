@@ -13,6 +13,7 @@ import re
 import time
 
 from .messages import Incoming
+from .group_context import addressed_to_other
 
 
 @dataclass
@@ -115,6 +116,13 @@ class DiscordTextPolicy:
                        and len(text) <= 500
                        and now - state.last_unsolicited_at >= self.cooldown_seconds
                        and self.rng.random() < self.auto_rate)
+        # An explicit mention/reply to another human is not Jade's turn.
+        other_person = addressed_to_other(
+            message, own_user_id=own_user_id, bot_name=self.bot_name)
+        if other_person and not direct:
+            unsolicited = False
+            followup = False
+            solo = False
         # In a group, only explicit addressing bypasses the 20% sampling.
         # Contextual follow-ups are still sampled; solo conversations are not.
         selected = direct or solo or (followup and self.rng.random() < self.auto_rate) or unsolicited

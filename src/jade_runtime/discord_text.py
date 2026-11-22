@@ -206,6 +206,17 @@ class DiscordText:
                 bridge = parent.voice_bridge
                 if bridge is None:
                     return
+                # Only existing consenting identities; presence never starts LLM.
+                current = getattr(after, "channel", None)
+                previous = getattr(before, "channel", None)
+                memory = getattr(getattr(bridge, "runtime", None), "memory_service", None)
+                if (current is not None and current != previous and memory is not None
+                        and getattr(member, "bot", True) is False
+                        and type(getattr(member, "id", None)) is int
+                        and type(getattr(current, "id", None)) is int
+                        and current.id == bridge.channel_id):
+                    asyncio.create_task(memory.prefetch_voice_member(
+                        member.id, current.id), name="jade-memory-presence")
                 own_bot_id = getattr(getattr(self, "user", None), "id", None)
                 lost_voice = (
                     getattr(bridge, "_open_voice", False) is True

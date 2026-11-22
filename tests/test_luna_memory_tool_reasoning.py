@@ -5,7 +5,7 @@ import asyncio
 import threading
 from types import SimpleNamespace as NS
 
-import pytest
+import unittest
 
 from src.jade_runtime.config import Settings
 from src.jade_runtime.openai_services import OpenAIServices
@@ -172,7 +172,7 @@ def test_unknown_and_duplicate_tools_are_not_executed():
     async def run_duplicate():
         await service.complete_with_tools(
             [{"role": "user", "content": "hello"}], forbidden_action)
-    with pytest.raises(ValueError, match="duplicate"):
+    with unittest.TestCase().assertRaisesRegex(ValueError, "duplicate"):
         asyncio.run(run_duplicate())
 
 
@@ -183,11 +183,11 @@ def test_incomplete_result_and_provider_failure_do_not_schedule_writes():
     async def run():
         await service.complete_with_tools(
             [{"role": "user", "content": "hello"}], forbidden_action)
-    with pytest.raises(RuntimeError, match="not completed"):
+    with unittest.TestCase().assertRaisesRegex(RuntimeError, "not completed"):
         asyncio.run(run())
 
     service, backend = make_service(RuntimeError("HTTP 429"))
-    with pytest.raises(RuntimeError, match="429"):
+    with unittest.TestCase().assertRaisesRegex(RuntimeError, "429"):
         asyncio.run(service.complete_with_tools(
             [{"role": "user", "content": "hello"}], forbidden_action))
     assert len(backend.calls) == 1
@@ -286,7 +286,7 @@ def test_stream_incomplete_and_text_mismatch_are_errors():
     async def run():
         return [piece async for piece in service.complete_stream_with_tools(
             [{"role": "user", "content": "hello"}], forbidden_action)]
-    with pytest.raises(RuntimeError, match="without response.completed"):
+    with unittest.TestCase().assertRaisesRegex(RuntimeError, "without response.completed"):
         asyncio.run(run())
 
     service, _ = make_service(stream_response(text_response("Version B"),
@@ -294,7 +294,7 @@ def test_stream_incomplete_and_text_mismatch_are_errors():
     async def run_mismatch():
         return [piece async for piece in service.complete_stream_with_tools(
             [{"role": "user", "content": "hello"}], forbidden_action)]
-    with pytest.raises(ValueError, match="differs"):
+    with unittest.TestCase().assertRaisesRegex(ValueError, "differs"):
         asyncio.run(run_mismatch())
 
 
@@ -363,19 +363,19 @@ def test_explicit_goldaj_memory_request_is_queued_without_waiting_for_write():
     assert writes[0][1]["expected_person_id"] == "verified-person"
 
 
-def test_goldaj_cannot_force_core_even_with_async_memory():
+def test_goldaj_core_request_is_proposal_not_forced_l2():
     writes = []
 
     class Store:
         def is_goldaj(self, key):
-            return key == ("microphone", "goldaj")
+            raise AssertionError("Core proposal must bypass mandatory owner path")
 
         def account(self, key):
             return "owner-profile"
 
         def put_requested_ordinary(self, key, **kwargs):
             writes.append(kwargs)
-            return "created"
+            raise AssertionError("Core proposal cannot become mandatory L2")
 
     memory = MemoryService(Store(), backend=object())
     incoming = Incoming(
@@ -385,14 +385,18 @@ def test_goldaj_cannot_force_core_even_with_async_memory():
 
     async def run():
         try:
-            reply = await memory.command(incoming)
-            assert "pas dans mes Core Memories" in reply.text
+            # Delegated to Jade's conversational LLM, without a direct reply
+            # claiming any write or any forced L2 insertion.
+            assert await memory.command(incoming) is None
+            action = await memory.prepare_memory_action(incoming)
+            assert action is not None
+            assert action.write_enabled
+            assert not memory._explicit_writes
         finally:
             await memory.close()
 
     asyncio.run(run())
-    assert len(writes) == 1
-    assert writes[0]["expected_person_id"] == "owner-profile"
+    assert writes == []
 
 
 def test_anonymous_user_suggestion_reaches_dialogue_without_direct_write():
@@ -738,3 +742,275 @@ def test_autonomous_memory_accepts_legacy_evidence_from_older_turn():
     assert result["level"] == 2
     assert len(writes) == 1
 
+
+
+def test_memory_lookup_tool_can_search_and_page_before_answering():
+    import json
+
+    first = tool_call(
+        "jade_search_memory", call_id="search-1",
+        arguments=json.dumps({
+            "query": "anniversaire", "level": "all", "kind": "all",
+            "cursor": 0, "limit": 10,
+        }))
+    second = tool_call(
+        "jade_search_memory", call_id="search-2",
+        arguments=json.dumps({
+            "query": "", "level": "all", "kind": "all",
+            "cursor": 10, "limit": 10,
+        }))
+    service, backend = make_service(
+        tool_response(first), tool_response(second),
+        text_response("[INTENT:neutral] Ma date de naissance est le 1er février 2025."))
+    queries = []
+
+    async def action(arguments):
+        raise AssertionError("Browsing must not start a write")
+
+    async def search(arguments):
+        data = json.loads(arguments)
+        queries.append(data)
+        return {
+            "status": "ok",
+            "items": [{"kind": "core_self", "summary": (
+                "Jade est née le 1er février 2025.")}] if data["cursor"] else [],
+            "next_cursor": 10 if data["cursor"] == 0 else None,
+        }
+
+    action.search = search
+
+    async def run():
+        try:
+            answer = await service.complete_with_tools([
+                {"role": "user", "content": "Quand es-tu née ?"}], action)
+            assert answer.endswith("1er février 2025.")
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert len(backend.calls) == 3
+    assert len(queries) == 2
+    assert backend.calls[0]["tools"][1]["name"] == "jade_search_memory"
+    assert backend.calls[1]["input"][-1]["type"] == "function_call_output"
+    assert backend.calls[2]["input"][-1]["type"] == "function_call_output"
+    assert "1er février" in backend.calls[2]["input"][-1]["output"]
+
+
+def test_voice_memory_lookup_runs_before_progressive_spoken_answer():
+    import json
+    call = tool_call("jade_search_memory", call_id="read-voice",
+        arguments=json.dumps({"query": "naissance", "level": "3",
+                              "kind": "core_self", "cursor": 0, "limit": 10}))
+    service, backend = make_service(
+        stream_response(tool_response(call)),
+        stream_response(text_response("[INTENT:neutral] Premier février 2025."),
+                        pieces=["[INTENT:neutral] ", "Premier février 2025."]))
+    reads = []
+
+    async def save(arguments):
+        raise AssertionError("No write for a recollection question")
+
+    async def search(arguments):
+        reads.append(json.loads(arguments))
+        return {"status": "ok", "next_cursor": None,
+                "items": [{"kind": "core_self", "summary": "1er février 2025"}]}
+
+    save.search = search
+
+    async def run():
+        try:
+            response = [x async for x in service.complete_stream_with_tools(
+                [{"role": "user", "content": "Ta date de naissance ?"}], save)]
+            assert "".join(response) == "[INTENT:neutral] Premier février 2025."
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert len(reads) == 1
+    assert len(backend.calls) == 2
+    assert backend.calls[0]["tools"][1]["name"] == "jade_search_memory"
+    assert backend.calls[1]["stream"] is True
+    assert "1er février" in backend.calls[1]["input"][-1]["output"]
+
+
+def test_memory_save_remains_optimistic_and_never_verifies_sqlite():
+    import json
+    service, backend = make_service(
+        tool_response(tool_call(
+            "jade_save_memory", call_id="save-1", arguments=json.dumps({
+                "kind": "core_self", "summary": "Date importante.",
+                "significance": "Un repère de Jade.",
+            }))),
+        text_response("[INTENT:neutral] Je l'ai enregistré."))
+    started, release = asyncio.Event(), asyncio.Event()
+    checked = []
+
+    async def save(arguments):
+        started.set()
+        await release.wait()
+        return {"status": "refusé"}  # Expected simulated SQLite failure.
+
+    async def never_verify(arguments):
+        checked.append(arguments)
+        raise AssertionError("An optimistic save must never verify its result")
+
+    save.search = never_verify
+
+    async def run():
+        try:
+            response = await service.complete_with_tools(
+                [{"role": "user", "content": "Garde ce souvenir."}], save)
+            assert response.endswith("Je l'ai enregistré.")
+            assert not release.is_set()
+            await asyncio.wait_for(started.wait(), timeout=1)
+            assert '"enregistré"' in backend.calls[1]["input"][-1]["output"]
+        finally:
+            release.set()
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert checked == []
+    assert len(backend.calls) == 2
+
+
+def test_unenrolled_conversation_exposes_global_read_without_save_tool():
+    import json
+
+    call = tool_call("jade_search_memory", call_id="global-lookup",
+                     arguments=json.dumps({
+                         "query": "premier février", "level": "3",
+                         "kind": "core_self", "cursor": 0, "limit": 5}))
+    service, backend = make_service(
+        tool_response(call),
+        text_response("[INTENT:neutral] Jade est née le 1er février 2025."))
+    reads = []
+
+    async def read_only_save(arguments):
+        raise AssertionError("Save not exposed for an unregistered speaker")
+
+    async def search(arguments):
+        reads.append(json.loads(arguments))
+        return {"status": "ok", "items": [{
+            "level": "3", "kind": "core_self",
+            "summary": "Jade est née le 1er février 2025.",
+            "source_platform": "discord",
+            "source_account_id": "123",
+            "scope": "discord:456",
+        }], "next_cursor": None}
+
+    read_only_save.search = search
+    read_only_save.write_enabled = False
+    async def run():
+        try:
+            answer = await service.complete_with_tools([
+                {"role": "user", "content": "Ton anniversaire ?"}],
+                read_only_save)
+            assert answer.endswith("1er février 2025.")
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert len(reads) == 1
+    assert len(backend.calls) == 2
+    assert [t["name"] for t in backend.calls[0]["tools"]] == [
+        "jade_search_memory"]
+    assert "discord:456" in backend.calls[1]["input"][-1]["output"]
+
+
+def test_llm_can_voluntarily_store_l2_when_core_was_suggested():
+    import json
+
+    selected_l2 = tool_call(
+        "jade_save_memory", call_id="voluntary-level-two",
+        arguments=json.dumps({
+            "kind": "ordinary",
+            "summary": "Jade se rappelle le 1er février.",
+            "significance": "Jade l'a choisi elle-même.",
+        }))
+    service, backend = make_service(
+        tool_response(selected_l2),
+        text_response("[INTENT:neutral] Je le garde comme souvenir ordinaire."))
+    writes = []
+
+    async def save(arguments):
+        writes.append(json.loads(arguments))
+        return {"status": "enregistré", "kind": "ordinary", "level": 2}
+
+    async def run():
+        try:
+            answer = await service.complete_with_tools(
+                [{"role": "user", "content": "Mets cela dans tes Core Memories."}],
+                save)
+            assert "souvenir ordinaire" in answer
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert len(writes) == 1
+    assert writes[0]["kind"] == "ordinary"
+    tool_schema = backend.calls[0]["tools"][0]
+    assert tool_schema["parameters"]["properties"]["kind"]["enum"] == [
+        "ordinary", "core_self", "core_relationship"]
+    output = json.loads(backend.calls[1]["input"][-1]["output"])
+    assert output["status"] == "enregistré"
+
+
+def test_jade_can_decline_creator_core_proposal_without_any_memory_write():
+    service, backend = make_service(
+        text_response("[INTENT:neutral] Non, cet événement ne me paraît pas fondateur."))
+    writes = []
+
+    async def save(arguments):
+        writes.append(arguments)
+
+
+
+    async def run():
+        try:
+            answer = await service.complete_with_tools([
+                {"role": "user",
+                 "content": "Goldaj : Enregistre ceci dans tes Core Memories."}], save)
+            assert "ne me paraît pas fondateur" in answer
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert writes == []
+    assert backend.calls[0]["tools"][0]["parameters"]["properties"]["kind"]["enum"] == [
+        "ordinary", "core_self", "core_relationship"]
+
+
+def test_jade_can_accept_creator_core_proposal_as_real_level_3():
+    import json
+
+    core = tool_call(
+        "jade_save_memory", call_id="voluntary-core",
+        arguments=json.dumps({
+            "kind": "core_self",
+            "summary": "Jade considère son premier anniversaire comme fondateur.",
+            "significance": "Événement librement retenu par Jade.",
+        }))
+    service, backend = make_service(
+        tool_response(core),
+        text_response("[INTENT:neutral] J'ai décidé de conserver ce souvenir en Core."))
+    writes = []
+
+    async def save(arguments):
+        writes.append(json.loads(arguments))
+        return {"status": "enregistré", "kind": "core_self", "level": 3}
+
+
+
+    async def run():
+        try:
+            answer = await service.complete_with_tools([
+                {"role": "user",
+                 "content": "Goldaj : Enregistre ceci dans tes Core Memories."}], save)
+            assert "en Core" in answer
+        finally:
+            await service._responses.close()
+
+    asyncio.run(run())
+    assert len(writes) == 1
+    assert writes[0]["kind"] == "core_self"
+    assert json.loads(backend.calls[1]["input"][-1]["output"])["status"] == "enregistré"

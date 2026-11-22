@@ -33,14 +33,18 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     enable_console_logs(enable_latency=config.latency_logging)
     summary("runtime_configuration", live=live, discord=discord, discord_voice=discord_voice,
             mobile=mobile, microphone=mic, twitch=twitch, memory=config.memory_enabled,
+            web_search=bool(live and config.web_enabled),
+            web_provider=config.web_provider if config.web_enabled else None,
             early_voice=config.early_voice, llm_model=config.model,
             max_completion_tokens=config.max_completion_tokens)
     event("runtime_configuration", live=live, discord=discord, discord_voice=discord_voice,
           mobile=mobile, microphone=mic, twitch=twitch, memory=config.memory_enabled,
+          web_search=bool(live and config.web_enabled),
+          web_provider=config.web_provider if config.web_enabled else None,
           memory_curator=config.memory_curator_enabled,
           early_voice=config.early_voice, llm_model=config.model,
           reasoning_effort=config.reasoning_effort, tts_model=config.tts_model,
-           max_completion_tokens=config.max_completion_tokens)
+          max_completion_tokens=config.max_completion_tokens)
     if (voice or mic or twitch or discord or vts or discord_voice or http or mobile) and not live:
         raise ValueError("external services require --live; demo never bills OpenAI")
     if live:
@@ -99,6 +103,9 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                                    curator_enabled=bool(config.memory_curator_enabled and live),
                                    curation_mode=("batch" if config.memory_batch_enabled else "single"))
             scopes.push_async_callback(memory.close)
+            if mic or mobile:
+                # No LLM request: authorized owner L1/L2 warm before first turn.
+                await memory.prefetch_owner()
 
             # Retention is enforced even for a long-running, otherwise idle Jade.
             # MemoryStore already prunes once during initialization.
@@ -121,6 +128,20 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     pass
 
             scopes.push_async_callback(stop_memory_retention)
+        # Persistent, verified owner continuity. No background LLM or actions.
+        cross_channel = None
+        if memory is not None:
+            try:
+                from src.jade_runtime.cross_channel import CrossChannelContinuity
+                cross_channel = CrossChannelContinuity(
+                    memory.store, allowed_discord_channels=config.cross_channel_discord_targets,
+                    send_discord=lambda target, text: (
+                        discord_client.send_chat(target, text)
+                        if discord_client is not None else asyncio.sleep(0, result=False)))
+            except Exception:
+                # Optional task continuity cannot prevent the existing dialogue,
+                # memory and transport connectors from starting.
+                LOG.warning("Optional cross-channel continuity unavailable")
         avatar_client = None
         if avatar:
             from src.jade_runtime.avatar import Avatar
@@ -223,10 +244,13 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 local_http=local_api is not None,
                 mobile=mobile_gateway is not None)
 
+        from src.jade_runtime.web_search import build_web_search_service
+        web_service = build_web_search_service(config) if live else None
         runtime = Runtime(dialogue, on_reply, config.max_queue,
                           on_stream_start=(start_early_voice if speech and config.early_voice else None),
                           delivery_plan=describe_delivery,
-                          memory_service=memory)
+                          memory_service=memory,
+                          cross_channel=cross_channel, web_service=web_service)
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(
@@ -243,6 +267,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             mobile_gateway = MobileGateway(
                 runtime, chat, token=config.mobile_token, port=config.mobile_port,
                 billing_admin_key=config.billing_admin_key,
+                deploy_supervisor_token=config.deploy_supervisor_token,
+                deploy_supervisor_port=config.deploy_supervisor_port,
                 owner_login=config.mobile_owner_login,
                 public_origin=config.mobile_public_origin,
                 vendor_dir=Path(config.mobile_vendor_dir) if config.mobile_vendor_dir else None,

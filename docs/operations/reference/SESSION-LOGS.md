@@ -10,6 +10,10 @@ Chaque redémarrage du processus Python crée un nouveau fichier, sans modifier 
 
 Les anciens fichiers restent disponibles pour diagnostic. Ils ne sont ni supprimés ni tronqués au redémarrage. Les traces complètes pouvant être volumineuses, surveiller occasionnellement la taille du dossier.
 
+## Journal dédié des recherches Internet
+
+Quand le web est activé, Jade crée séparément un fichier `.jsonl` par démarrage dans `D:/Jade/private/jade-web-search/` (ou `JADE_WEB_LOG_DIR`). Le nom est `jade-web-search_YYYY-MM-DD_HH-MM-SS_microsecondes+fuseau_pid-XXXX.jsonl`. Le fichier existe même sans recherche et son chemin est annoncé par `web_search_journal_started`. Requêtes, motifs, résultats et URL restent dans ce fichier de session. Les journaux précédents et l'ancien fichier unique ne sont pas supprimés. Le dossier est privé et n'est pas purgé automatiquement.
+
 ## Deux niveaux de visibilité
 
 **Console IDE (synthétique, en direct)** :

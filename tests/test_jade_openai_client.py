@@ -29,7 +29,14 @@ class RuntimeClientIsolationTests(unittest.IsolatedAsyncioTestCase):
             requests.append(request)
             if request.url.path.endswith("/audio/transcriptions"):
                 return httpx2.Response(200, json={"text": "Salut"})
-            return httpx2.Response(200, json={"choices": [{"message": {"content": "Bonjour"}}]})
+            return httpx2.Response(200, json={
+                "id": "resp_offline_test", "object": "response",
+                "created_at": 0, "model": "gpt-6-luna", "status": "completed",
+                "output": [{"id": "msg_offline_test", "type": "message",
+                            "role": "assistant", "status": "completed",
+                            "content": [{"type": "output_text", "text": "Bonjour",
+                                         "annotations": []}]}],
+            })
 
         http = httpx2.AsyncClient(transport=httpx2.MockTransport(respond), trust_env=False)
         with patch.dict(os.environ, HOSTILE_ENV), patch(

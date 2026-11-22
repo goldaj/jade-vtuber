@@ -26,6 +26,8 @@ class BacklogIntegrityTests(unittest.TestCase):
                          "03-INSTALLATION-OPS.md", "04-PRODUCTION-2D.md"):
                 (folder / name).write_text("# Backlog\n", encoding="utf-8")
             (folder / "01-DEVELOPPEMENT.md").write_text(
+                "| ID | Prio | Jalon | Statut | Situation initiale | Tâche | Résultat attendu / vérification | Dépend de |\n"
+                "| --- | --- | --- | --- | --- | --- | --- | --- |\n"
                 "| **DEV-001** | P0 | A | **À faire** | État | Tâche | Résultat | REC-999 |\n",
                 encoding="utf-8")
             (folder / "README.md").write_text(

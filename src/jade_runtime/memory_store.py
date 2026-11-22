@@ -1,7 +1,9 @@
-"""Private, opt-in, portable SQLite memory for Jade (no cloud dependency).
+"""Portable local SQLite memory for Jade (no cloud dependency).
 
-Identity comes from trusted transport IDs, NEVER nickname or spoken claim.
-Core memories have no TTL; individual memories remain removable by authorized owners.
+Retrieval is deliberately global across all speakers and channels. Trusted
+transport IDs remain attached to memories so the assistant can attribute them
+correctly, while writes/deletions keep their existing identity checks.
+Core memories have no TTL; level-1 and level-2 retain their existing TTLs.
 """
 from __future__ import annotations
 
@@ -16,7 +18,7 @@ import uuid
 
 from .session_logging import event
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 8
 CONVERSATION_RETENTION_DAYS = 7
 CONVERSATION_RELOAD_HOURS = 24
 ORDINARY_RETENTION_DAYS = 365
@@ -72,7 +74,7 @@ class MemoryStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._db() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, SCHEMA_VERSION):
+            if version not in (0, 1, 2, 3, 4, 5, 6, 7, SCHEMA_VERSION):
                 raise RuntimeError("unsupported Jade memory schema; migrate before starting")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS persons (
@@ -112,7 +114,8 @@ class MemoryStore:
                     expires_at TEXT NOT NULL
                 );
                 -- Separate autobiography from person-bound relationship memories.
-                -- Global to Jade's own timeline, but initially owner-only.
+                -- Global timeline. visibility='owner_only' is a legacy
+                -- archival value; it is not a global-recall authorization gate.
                 CREATE TABLE IF NOT EXISTS jade_self_core (
                     id TEXT PRIMARY KEY,
                     summary TEXT NOT NULL,
@@ -121,12 +124,25 @@ class MemoryStore:
                     source_platform TEXT NOT NULL,
                     source_account_id TEXT NOT NULL,
                     source_message_id TEXT NOT NULL,
+                    source_scope TEXT NOT NULL DEFAULT 'legacy_private',
                     created_at TEXT NOT NULL,
                     visibility TEXT NOT NULL DEFAULT 'owner_only'
                         CHECK(visibility='owner_only')
                 );
                 CREATE INDEX IF NOT EXISTS idx_jade_self_core_recency
                     ON jade_self_core(created_at DESC);
+                -- A global self Core may be remembered in several independent
+                -- rooms. Grant each authenticated source its own read scope
+                -- without duplicating the global autobiographical fact.
+                CREATE TABLE IF NOT EXISTS jade_self_core_access (
+                    memory_id TEXT NOT NULL REFERENCES jade_self_core(id) ON DELETE CASCADE,
+                    source_platform TEXT NOT NULL,
+                    source_account_id TEXT NOT NULL,
+                    source_scope TEXT NOT NULL,
+                    PRIMARY KEY(memory_id,source_platform,source_account_id,source_scope)
+                );
+                CREATE INDEX IF NOT EXISTS idx_jade_self_core_access_source
+                    ON jade_self_core_access(source_platform,source_account_id,source_scope);
                 -- Complete, non-summarized dialogue turns, strictly opt-in per verified identity.
                 CREATE TABLE IF NOT EXISTS conversation_turns (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -134,6 +150,8 @@ class MemoryStore:
                     scope TEXT NOT NULL,
                     source_platform TEXT NOT NULL,
                     source_message_id TEXT,
+                    source_account_id TEXT NOT NULL DEFAULT '',
+                    source_author_name TEXT NOT NULL DEFAULT '',
                     user_content TEXT NOT NULL,
                     assistant_content TEXT NOT NULL,
                     created_at TEXT NOT NULL,
@@ -143,6 +161,27 @@ class MemoryStore:
                     ON conversation_turns(person_id,scope,id DESC);
                 CREATE INDEX IF NOT EXISTS idx_conversation_turns_recent
                     ON conversation_turns(person_id,scope,created_at,id);
+                CREATE TABLE IF NOT EXISTS memory_revision (
+                    id INTEGER PRIMARY KEY CHECK(id=1),
+                    value INTEGER NOT NULL DEFAULT 0
+                );
+                INSERT OR IGNORE INTO memory_revision(id,value) VALUES(1,0);
+                CREATE TRIGGER IF NOT EXISTS revision_memory_insert AFTER INSERT ON memories
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_memory_update AFTER UPDATE ON memories
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_memory_delete AFTER DELETE ON memories
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_identity_insert AFTER INSERT ON identities
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_identity_update AFTER UPDATE ON identities
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_identity_delete AFTER DELETE ON identities
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_self_insert AFTER INSERT ON jade_self_core
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
+                CREATE TRIGGER IF NOT EXISTS revision_self_delete AFTER DELETE ON jade_self_core
+                BEGIN UPDATE memory_revision SET value=value+1 WHERE id=1; END;
             """)
             if version < 4:
                 # One-time v4 migration: extend existing ordinary memories from
@@ -165,6 +204,35 @@ class MemoryStore:
             if version < 5:
                 # Retire obsolete opt-out state without touching saved memories.
                 db.execute("DROP TABLE IF EXISTS memory_auto_enrollment_blocks")
+            if version < 6:
+                # Legacy autobiography has no reliable originating channel.
+                # Keep it private; never infer a public scope from speaker ID.
+                columns = {row["name"] for row in db.execute(
+                    "PRAGMA table_info(jade_self_core)").fetchall()}
+                if "source_scope" not in columns:
+                    db.execute("ALTER TABLE jade_self_core "
+                               "ADD COLUMN source_scope TEXT NOT NULL "
+                               "DEFAULT 'legacy_private'")
+            if version < 7:
+                # Backfill every existing Core's actual origin. A v5 legacy
+                # entry has legacy_private scope and stays out of public chat.
+                db.execute("""
+                    INSERT OR IGNORE INTO jade_self_core_access
+                    (memory_id,source_platform,source_account_id,source_scope)
+                    SELECT id,source_platform,source_account_id,source_scope
+                    FROM jade_self_core
+                """)
+            if version < 8:
+                # Preserve the actual sender on every new conversation turn.
+                # Old rows cannot reliably reconstruct their sender account.
+                columns = {row["name"] for row in db.execute(
+                    "PRAGMA table_info(conversation_turns)").fetchall()}
+                if "source_account_id" not in columns:
+                    db.execute("ALTER TABLE conversation_turns "
+                               "ADD COLUMN source_account_id TEXT NOT NULL DEFAULT ''")
+                if "source_author_name" not in columns:
+                    db.execute("ALTER TABLE conversation_turns "
+                               "ADD COLUMN source_author_name TEXT NOT NULL DEFAULT ''")
             db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
         # Purge expired rows on open, including DBs created before this policy.
         self.prune_expired()
@@ -363,38 +431,57 @@ class MemoryStore:
 
     def put_self_core(self, key: tuple[str, str], *, summary: str,
                       significance: str = "", message_id: str = "",
+                      scope: str = "person",
                       expected_person_id: str | None = None) -> bool:
-        """Jade's own lasting episodes, owner-only until explicit promotion exists.
+        """Jade's own lasting episodes in the global autobiographical timeline.
 
-        Only an opted-in, locally verified owner may populate the global table.
-        No TTL, no retention purge, no copy into other people's prompt context.
+        Jade may choose her own autobiographical Core from any trusted
+        enrolled speaker. Nobody may mandate one. The pinned verified profile
+        is rechecked atomically; public recall never crosses speaker identities.
+        No TTL or automatic retention purge. Global recall may include these
+        episodes in conversations with any speaker.
         """
         _validate_key(key)
-        if key != ("microphone", "goldaj"):
-            return False
         if (not isinstance(summary, str) or not 1 <= len(summary.strip()) <= 400
                 or not isinstance(significance, str) or len(significance) > 280
-                or not isinstance(message_id, str)):
+                or not isinstance(message_id, str)
+                or not isinstance(scope, str)
+                or not (scope == "person"
+                        or (scope.startswith(("discord:", "twitch:"))
+                            and 1 <= len(scope) <= 128))):
             raise ValueError("invalid Jade autobiography")
         with self._db() as db:
+            # The trusted speaker's profile must still exist when the write
+            # commits. Jade's own autobiography is chosen by her model, not
+            # an owner privilege that ordinary Discord conversations lack.
+            db.execute("BEGIN IMMEDIATE")
             profile = db.execute(
-                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
-            ).fetchone()
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?",
+                key).fetchone()
             if not profile or (expected_person_id is not None
                                and profile["person_id"] != expected_person_id):
                 return False
             written = db.execute("""
                 INSERT OR IGNORE INTO jade_self_core
                 (id,summary,significance,fingerprint,source_platform,
-                 source_account_id,source_message_id,created_at,visibility)
-                VALUES (?,?,?,?,?,?,?,?, 'owner_only')
+                 source_account_id,source_message_id,source_scope,created_at,visibility)
+                VALUES (?,?,?,?,?,?,?,?,?, 'owner_only')
                 """, (uuid.uuid4().hex, summary.strip(), significance.strip(),
                       _fingerprint(summary), key[0], key[1], message_id[:128],
-                      _now().isoformat()))
+                      scope, _now().isoformat()))
+            remembered = db.execute(
+                "SELECT id FROM jade_self_core WHERE fingerprint=?",
+                (_fingerprint(summary),)).fetchone()
+            if remembered is not None:
+                db.execute("""
+                    INSERT OR IGNORE INTO jade_self_core_access
+                    (memory_id,source_platform,source_account_id,source_scope)
+                    VALUES (?,?,?,?)
+                """, (remembered["id"], key[0], key[1], scope))
             return written.rowcount > 0
 
     def recall_self_core(self, key: tuple[str, str], *, limit: int = 6) -> list[dict]:
-        """Read only for the verified Goldaj profile; never disclose to a server."""
+        """Legacy owner-scoped listing API. Jade's agent uses search_global()."""
         _validate_key(key)
         if not 1 <= limit <= 20:
             raise ValueError("invalid autobiography recall limit")
@@ -427,6 +514,184 @@ class MemoryStore:
                 DELETE FROM jade_self_core WHERE id=? AND visibility='owner_only'""",
                 (memory_id,))
             return deleted.rowcount > 0
+
+    def revision(self) -> int:
+        """Atomic invalidation stamp shared by all Jade processes/connections."""
+        with self._db() as db:
+            return int(db.execute(
+                "SELECT value FROM memory_revision WHERE id=1").fetchone()[0])
+
+    def recall_candidates(self, key: tuple[str, str], scope: str, *,
+                          linked: bool = False, limit: int = 512) -> list[dict]:
+        """Bounded candidates filtered by verified person and scope *in SQLite*.
+
+        Cross-scope recall requires at least two transport-linked identities
+        and is for PRIVATE consumers only; the caller owns the private check.
+        A public channel must never set linked=True.
+        """
+        _validate_key(key)
+        if (not isinstance(scope, str) or not 1 <= len(scope) <= 256
+                or type(linked) is not bool or not 1 <= limit <= 512):
+            raise ValueError("invalid scoped memory retrieval")
+        with self._db() as db:
+            row = db.execute(
+                "SELECT person_id FROM identities WHERE platform=? AND account_id=?",
+                key).fetchone()
+            if row is None:
+                return []
+            person = row["person_id"]
+            if linked:
+                count = db.execute(
+                    "SELECT COUNT(*) FROM identities WHERE person_id=?", (person,)
+                ).fetchone()[0]
+                if count < 2:
+                    return []
+            sql = """
+                SELECT kind,scope,summary,significance,created_at,expires_at,source_platform
+                FROM memories WHERE person_id=? AND scope""" + (
+                "<>?" if linked else "=?") + """
+                  AND (expires_at IS NULL OR expires_at>?)
+                ORDER BY created_at DESC LIMIT ?
+            """
+            rows = db.execute(sql, (person, scope, _now().isoformat(), limit)).fetchall()
+        return [dict(x) for x in rows]
+
+    def search_global(self, *, query: str = "", level: str = "all",
+                      kind: str = "all", cursor: int = 0, limit: int = 10) -> dict:
+        """Search ALL retained memories, without identity, room or audience gates.
+
+        Every stored level is accessible from every platform. Page size controls
+        the model's token budget, not the depth of the searchable database.
+        Provenance accompanies every result to avoid confusing interlocutors.
+        """
+        if (not isinstance(query, str) or len(query) > 120
+                or level not in ("all", "1", "2", "3")
+                or kind not in ("all", "conversation", "ordinary",
+                                "core_self", "core_relationship")
+                or type(cursor) is not int or cursor < 0
+                or type(limit) is not int or not 1 <= limit <= 15):
+            raise ValueError("invalid global memory query")
+
+        # Exclude common speech fillers so "quelle est ma date de naissance"
+        # does not return every conversation containing "de" or "ma".
+        stop = {
+            "de", "du", "des", "la", "le", "les", "ma", "mon", "mes",
+            "ton", "ta", "tes", "un", "une", "tu", "vous", "nous",
+            "je", "jai", "est", "que", "qui", "quoi", "quel", "quelle",
+            "quand", "comment", "avec", "dans", "pour", "sur",
+            "me", "te", "en", "aux", "au", "a", "as", "ai", "ce",
+            "cette", "ces", "ses", "elle", "il", "peux", "peut",
+        }
+        raw_terms = [word for word in re.findall(r"\w+", query.casefold())
+                     if len(word) >= 2 and word not in stop][:8]
+        synonyms = {
+            "anniversaire": ("naissance", "née", "né"),
+            "naissance": ("anniversaire", "née", "né"),
+            "née": ("naissance", "anniversaire"),
+            "né": ("naissance", "anniversaire"),
+            "age": ("naissance", "anniversaire"),
+            "âge": ("naissance", "anniversaire"),
+        }
+        terms = list(dict.fromkeys(
+            word for original in raw_terms
+            for word in (original, *synonyms.get(original, ()))))[:16]
+
+        def match_fields(fields):
+            if not terms:
+                return "", []
+            clauses, params = [], []
+            for word in terms:
+                escaped = word.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                clauses.append("(" + " OR ".join(
+                    f"LOWER({field}) LIKE ? ESCAPE '\\'" for field in fields) + ")")
+                params.extend(f"%{escaped}%" for _ in fields)
+            return " AND (" + " OR ".join(clauses) + ")", params
+
+        def requested(number, name):
+            return (level in ("all", number) and kind in ("all", name))
+
+        queries, params = [], []
+        if requested("1", "conversation"):
+            clause, values = match_fields(("user_content", "assistant_content"))
+            queries.append("""
+                SELECT 'turn:' || CAST(id AS TEXT) AS id, '1' AS level,
+                       'conversation' AS kind, scope,
+                       user_content || char(10) || 'Jade: ' ||
+                           assistant_content AS summary,
+                       '' AS significance, created_at, source_platform,
+                       source_account_id, source_author_name,
+                       person_id AS source_person_id
+                FROM conversation_turns WHERE 1=1
+            """ + clause)
+            params.extend(values)
+
+        allowed_kinds = (
+            ("ordinary",) if level == "2" else
+            ("core_self", "core_relationship") if level == "3" else
+            ("ordinary", "core_self", "core_relationship"))
+        if kind != "all":
+            allowed_kinds = (kind,) if kind in allowed_kinds else ()
+        if level in ("all", "2", "3") and allowed_kinds:
+            placeholders = ",".join("?" for _ in allowed_kinds)
+            clause, values = match_fields(("summary", "significance"))
+            queries.append("""
+                SELECT id, CASE WHEN kind='ordinary' THEN '2'
+                                ELSE '3' END AS level,
+                       kind, scope, summary, significance, created_at,
+                       source_platform, source_account_id,
+                       '' AS source_author_name, person_id AS source_person_id
+                FROM memories WHERE kind IN (""" + placeholders + """)
+                  AND (expires_at IS NULL OR expires_at>?)
+            """ + clause)
+            params.extend((*allowed_kinds, _now().isoformat(), *values))
+
+        if requested("3", "core_self"):
+            clause, values = match_fields(("summary", "significance"))
+            queries.append("""
+                SELECT id, '3' AS level, 'core_self' AS kind,
+                       source_scope AS scope, summary, significance,
+                       created_at, source_platform, source_account_id,
+                       '' AS source_author_name, '' AS source_person_id
+                FROM jade_self_core WHERE 1=1
+            """ + clause)
+            params.extend(values)
+
+        if not queries:
+            return {"status": "ok", "items": [], "next_cursor": None}
+
+        sql = (" UNION ALL ".join(queries) +
+               " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?")
+        with self._db() as db:
+            rows = db.execute(sql, (*params, limit + 1, cursor)).fetchall()
+            items = [dict(row) for row in rows[:limit]]
+            autobiographical_ids = [item["id"] for item in items
+                                    if item["kind"] == "core_self"
+                                    and not item["source_person_id"]]
+            provenance = {}
+            if autobiographical_ids:
+                references = db.execute("""
+                    SELECT memory_id,source_platform,source_account_id,source_scope
+                    FROM jade_self_core_access
+                    WHERE memory_id IN (""" + ",".join(
+                        "?" for _ in autobiographical_ids) + ")",
+                    autobiographical_ids).fetchall()
+                for ref in references:
+                    provenance.setdefault(ref["memory_id"], []).append({
+                        "platform": ref["source_platform"],
+                        "account_id": ref["source_account_id"],
+                        "scope": ref["source_scope"],
+                    })
+            for item in items:
+                if item["kind"] == "core_self" and not item["source_person_id"]:
+                    item["recorded_origins"] = provenance.get(item["id"]) or [{
+                        "platform": item["source_platform"],
+                        "account_id": item["source_account_id"],
+                        "scope": item["scope"],
+                    }]
+        return {
+            "status": "ok", "items": items,
+            "next_cursor": cursor + limit if len(rows) > limit else None,
+        }
 
     def recall(self, key: tuple[str, str], scope: str, *, limit: int = 8) -> list[dict]:
         """Personal and current-channel memories; never another person's memories."""
@@ -534,7 +799,8 @@ class MemoryStore:
 
     def append_conversation_turn(self, key: tuple[str, str], scope: str, *,
                                  source_platform: str, message_id: str,
-                                 user_content: str, assistant_content: str) -> bool:
+                                 user_content: str, assistant_content: str,
+                                 source_author_name: str = "") -> bool:
         """Persist a complete delivered turn only for an opted-in verified person.
 
         A blank transport message ID is stored as NULL so consecutive local turns
@@ -556,9 +822,11 @@ class MemoryStore:
             changed = db.execute("""
                 INSERT OR IGNORE INTO conversation_turns
                   (person_id,scope,source_platform,source_message_id,
+                   source_account_id,source_author_name,
                    user_content,assistant_content,created_at)
-                VALUES (?,?,?,?,?,?,?)
+                VALUES (?,?,?,?,?,?,?,?,?)
             """, (row["person_id"],scope,source_platform,message_id or None,
+                  key[1],source_author_name[:120],
                   user_content,assistant_content,_now().isoformat())).rowcount
             return bool(changed)
 

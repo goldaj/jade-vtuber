@@ -68,6 +68,11 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
         except ValueError:
             prompt_ok = False
         checks.append(Check("Persona", prompt_ok, "Fichier lisible et non vide, contenu masqué"))
+    if live and settings.web_enabled:
+        checks.append(Check("Tavily API", bool(settings.tavily_api_key.strip()),
+                            "Clé présente (non affichée), accès réseau non testé"))
+        checks.append(Check("Journal web", os.path.isabs(settings.web_log_dir),
+                            "Dossier privé des journaux JSONL par session ; écriture non testée"))
     if voice:
         parent = settings.subtitle_path.parent
         checks.append(Check("Sous-titres", parent.is_dir() and os.access(parent, os.W_OK),

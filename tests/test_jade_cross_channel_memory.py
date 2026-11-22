@@ -1,4 +1,5 @@
-"""Cross-platform memory regressions without real connectors or paid calls."""
+"""Cross-platform global memory regression suite, no real connectors or paid calls."""
+import json
 from contextlib import closing
 from pathlib import Path
 import sqlite3
@@ -14,6 +15,13 @@ DISCORD = ("discord", "101")
 TWITCH = ("twitch", "202")
 
 
+def request(query="", level="all", kind="all"):
+    return json.dumps({
+        "query": query, "level": level, "kind": kind,
+        "cursor": 0, "limit": 15,
+    })
+
+
 class CrossChannelMemoryTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -27,104 +35,103 @@ class CrossChannelMemoryTests(unittest.IsolatedAsyncioTestCase):
     async def asyncTearDown(self):
         await self.service.close()
 
-    def mobile(self):
-        return Incoming("mobile", "Goldaj", "Tu te souviens ?", channel="private")
+    def mobile(self, text="Retrouve ce souvenir"):
+        return Incoming("mobile", "Goldaj", text, channel="private")
 
-    def dm(self):
-        return Incoming("discord", "Goldaj", "Tu te souviens ?", channel="dm101",
-                        account_id="101", private_channel=True)
+    def discord(self, text="Retrouve ce souvenir", *, channel="server1"):
+        return Incoming("discord", "Alice", text, channel=channel,
+                        account_id=DISCORD[1])
 
-    def server(self):
-        return Incoming("discord", "Goldaj", "Tu te souviens ?", channel="server1",
-                        account_id="101")
+    def twitch(self, text="Retrouve ce souvenir"):
+        return Incoming("twitch", "Bob", text, channel="live",
+                        account_id=TWITCH[1])
 
-    def link(self, target=DISCORD):
-        code = self.store.begin_link(OWNER, target=target)
-        self.assertTrue(self.store.complete_link(target, code))
+    async def browse(self, incoming, **filters):
+        action = await self.service.prepare_memory_action(incoming)
+        self.assertIsNotNone(action)
+        return await action.search(request(**filters))
 
-    async def test_both_directions_only_after_link(self):
+    async def test_unlinked_users_read_the_same_global_memory(self):
         self.store.put(OWNER, kind="ordinary", scope="person",
-                       summary="Son roman s'appelle Les Ressuscités.")
+                       summary="Le roman s'appelle Les Ressuscités.")
         self.store.put(DISCORD, kind="core_relationship", scope="discord:server1",
                        summary="Il a terminé le chapitre sept.")
-        self.assertNotIn("chapitre sept", await self.service.context_for(self.mobile()))
-        self.assertNotIn("Les Ressuscités", await self.service.context_for(self.dm()))
-        self.link()
-        self.assertIn("chapitre sept", await self.service.context_for(self.mobile()))
-        self.assertIn("autre canal: discord", await self.service.context_for(self.mobile()))
-        self.assertIn("Les Ressuscités", await self.service.context_for(self.dm()))
+        for caller in (self.mobile(), self.discord(), self.twitch()):
+            found = await self.browse(caller)
+            self.assertEqual(len(found["items"]), 2)
+            self.assertEqual({
+                mem["source_account_id"] for mem in found["items"]
+            }, {"goldaj", DISCORD[1]})
+        # Linking accounts must not be a prerequisite for global read.
+        self.assertNotEqual(self.store.account(OWNER), self.store.account(DISCORD))
 
-    async def test_public_cannot_read_private_or_other_server_memories(self):
+    async def test_public_discord_recalls_other_servers_and_private_origins(self):
         self.store.put(OWNER, kind="ordinary", scope="person",
-                       summary="Confidentiel : projet non public.")
+                       summary="Projet personnel du propriétaire.")
         self.store.put(DISCORD, kind="ordinary", scope="discord:server2",
-                       summary="Une conversation dans un autre serveur.")
-        self.store.put(DISCORD, kind="ordinary", scope="discord:server1",
-                       summary="Ce salon a son information locale.")
-        self.link()
-        public = await self.service.context_for(self.server())
-        # Person-scoped memories may be personal even when created in a room.
-        # Only a private conversation may re-inject them into the model.
-        self.assertEqual(public, "")
-        self.assertNotIn("Confidentiel", public)
-        self.assertNotIn("autre serveur", public)
-        self.assertIn("Confidentiel", await self.service.context_for(self.dm()))
-
-    async def test_twitch_public_memory_recalled_on_mobile_only(self):
+                       summary="Une discussion dans un autre serveur.")
         self.store.put(TWITCH, kind="ordinary", scope="twitch:live",
-                       summary="Souvenir d'une discussion Twitch.")
-        self.link(TWITCH)
-        self.assertIn("discussion Twitch", await self.service.context_for(self.mobile()))
-        public = Incoming("twitch", "Goldaj", "Tu sais ?", channel="live",
-                          account_id="202")
-        self.assertEqual(await self.service.context_for(public), "")
-        self.assertNotIn("discussion Twitch", await self.service.context_for(self.server()))
+                       summary="Un événement Twitch mémorable.")
+        public = await self.browse(self.discord(), level="2")
+        self.assertEqual(len(public["items"]), 3)
+        self.assertEqual({x["scope"] for x in public["items"]}, {
+            "person", "discord:server2", "twitch:live"})
 
-    async def test_unlinked_person_and_unlink_are_isolated(self):
+    async def test_global_context_can_inject_public_memories(self):
+        self.store.put(TWITCH, kind="ordinary", scope="twitch:live",
+                       summary="Jade s'est souvenue d'un tournoi de curling Twitch.")
+        # A relevant query in a public Discord channel can see this memory.
+        text = await self.service.context_for(
+            self.discord("Parle-moi du tournoi de curling Twitch"))
+        self.assertIn("tournoi de curling Twitch", text)
+        self.assertIn("interlocuteur=202", text)
+
+    async def test_unlink_does_not_hide_saved_memories(self):
         self.store.put(OWNER, kind="ordinary", scope="person",
                        summary="Information spécifique au créateur.")
-        self.store.enable(("discord", "303"))
-        self.link()
-        stranger = Incoming("discord", "Goldaj", "Tu sais ?", channel="dm303",
-                            account_id="303", private_channel=True)
-        self.assertNotIn("spécifique", await self.service.context_for(stranger))
-        self.assertIn("spécifique", await self.service.context_for(self.dm()))
+        token = self.store.begin_link(OWNER, target=DISCORD)
+        self.assertTrue(self.store.complete_link(DISCORD, token))
+        before = await self.browse(self.discord(), query="spécifique")
+        self.assertEqual(len(before["items"]), 1)
         self.assertTrue(self.store.unlink(DISCORD))
-        self.assertNotIn("spécifique", await self.service.context_for(self.dm()))
-        self.assertIn("spécifique", await self.service.context_for(self.mobile()))
+        after = await self.browse(self.discord(), query="spécifique")
+        self.assertEqual(len(after["items"]), 1)
 
-    async def test_expired_and_target_deleted_memories_are_excluded(self):
+    async def test_expired_and_deleted_memories_do_not_reappear(self):
         self.store.put(DISCORD, kind="ordinary", scope="discord:server1",
                        summary="Souvenir ordinaire expiré.")
-        self.store.put(DISCORD, kind="core_relationship", scope="discord:server1",
+        self.store.put(DISCORD, kind="core_relationship",
+                       scope="discord:server1",
                        summary="Souvenir fondateur non expiré.")
-        self.link()
         with closing(sqlite3.connect(self.path)) as db:
             db.execute("UPDATE memories SET expires_at='2000-01-01T00:00:00+00:00' "
-                       "WHERE kind='ordinary' AND source_platform='discord'")
+                       "WHERE kind='ordinary'")
             db.commit()
-        context = await self.service.context_for(self.mobile())
-        self.assertNotIn("ordinaire expiré", context)
-        self.assertIn("fondateur non expiré", context)
-        memory_id = next(item["id"] for item in self.store.list_for_account(DISCORD)
-                         if item["kind"] == "core_relationship")
+        found = await self.browse(self.twitch())
+        self.assertEqual(len(found["items"]), 1)
+        memory_id = found["items"][0]["id"]
         self.assertTrue(self.store.delete_memory(DISCORD, memory_id))
-        self.assertNotIn("fondateur non expiré", await self.service.context_for(self.mobile()))
-        self.assertTrue(self.store.auto_enable(DISCORD))
+        self.assertEqual((await self.browse(self.mobile()))["items"], [])
 
-    async def test_raw_turns_and_jade_autobiography_do_not_cross(self):
+    async def test_raw_history_stays_session_local_but_is_globally_browsable(self):
         self.store.append_conversation_turn(
             DISCORD, "discord:server1", source_platform="discord",
-            message_id="d-1", user_content="Contenu du serveur",
-            assistant_content="Réponse du serveur")
+            source_author_name="Alice", message_id="d-1",
+            user_content="Alice: Contenu du serveur",
+            assistant_content="Jade: Réponse du serveur")
         self.store.put_self_core(OWNER, summary="Jade a vécu un épisode personnel.")
-        self.link()
+        # Level-1 session reload remains restricted to the ongoing dialogue
+        # to avoid merging separate conversations in the LLM's raw history.
         self.assertEqual(await self.service.history_for(self.mobile()), [])
-        self.assertEqual(await self.service.history_for(self.dm()), [])
-        self.assertEqual(len(self.store.recent_conversation_turns(
-            DISCORD, "discord:server1")), 2)
-        self.assertIn("épisode personnel", await self.service.context_for(self.mobile()))
-        self.assertNotIn("épisode personnel", await self.service.context_for(self.dm()))
+        self.assertEqual(await self.service.history_for(self.discord(
+            channel="server2")), [])
+        for caller in (self.mobile(), self.twitch(), self.discord()):
+            raw = await self.browse(caller, level="1")
+            self.assertEqual(len(raw["items"]), 1)
+            self.assertEqual(raw["items"][0]["source_author_name"], "Alice")
+            core = await self.browse(caller, level="3", kind="core_self")
+            self.assertEqual(len(core["items"]), 1)
+            self.assertEqual(core["items"][0]["source_account_id"], "goldaj")
 
 
 if __name__ == "__main__":
