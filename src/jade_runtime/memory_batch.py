@@ -175,7 +175,7 @@ class MemoryBatcher:
                     persisted = await asyncio.to_thread(
                         self.store.put_self_core, key, summary=summary,
                         significance=significance, message_id=incoming.message_id,
-                        expected_person_id=person_id)
+                        scope=scope, expected_person_id=person_id)
                 else:
                     persisted = await asyncio.to_thread(
                         self.store.put, key, kind=kind, scope=scope,
