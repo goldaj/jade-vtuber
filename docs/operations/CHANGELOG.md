@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — NEW-16 → DEV-036 : rappels et notifications, backlog uniquement
+
+- **Décision explicite du propriétaire :** promouvoir l'idée prospective `NEW-16` (P2) vers une carte de développement `DEV-036`, au statut **À qualifier**, puis retirer son entrée du catalogue actif des idées. Aucune implémentation autorisée ni démarrée.
+- **Périmètre conservé pour qualification :** rappels/événements demandés, échéance et fuseau, destinataire et audience, envoi Discord ciblé ; option de notifications mobiles, modification/annulation, redémarrages, échéances manquées, déduplication, statut réel et déclenchement sans appel LLM permanent. **Choix non décidés** : calendrier interne ou connexion externe, récurrence et mécanisme des notifications mobiles.
+- **Suivi sans doublon :** `NEW-16` reste seulement un identifiant d'origine historique ; la carte active est [`DEV-036`](../backlog/01-DEVELOPPEMENT.md). Les index de priorisation et décomptes des idées sont actualisés.
+
 ## 2026-11-22 — REC-039 : acceptation fonctionnelle du propriétaire, Done
 
 - **Validation explicite de Goldaj :** « je confirme et valide la recette de l'ensemble de cette US. Tout marche, tu peux mettre à done ». Les parcours PWA écrits/vocaux avaient été confirmés et les anciens échecs Discord MP, salon public écrit et vocal public sont déclarés résolus par cette recette finale réelle. Ne pas prétendre disposer de métriques ou de captures supplémentaires.

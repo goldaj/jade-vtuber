@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [DEV-036 : qualification des rappels et notifications, NEW-16 (22/11)](2026-11-22-chatgpt-dev036-rappels-notifications.md) · transfert documentaire uniquement, statut **À qualifier**, aucun développement commencé.
+
 - [DEV-032 : fichiers téléchargeables multi-canaux, travail en cours (22/11)](2026-11-22-chatgpt-dev032-documents.md) · code sur `develop`, validations CI/recette encore requises.
 
 - [OPS-017 : décision de protection de `main` et suivi des passations (21/11)](2026-11-21-chatgpt-ops017-protection-branches.md) · carte **Done sur demande expresse du propriétaire**, malgré réglage GitHub encore non appliqué ; pas de protection active présumée.

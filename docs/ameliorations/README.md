@@ -23,8 +23,8 @@
 | Pilotage volontaire du modèle 2D | [08-MODELE-2D.md](08-MODELE-2D.md) | 1 | Commandes choisies par Jade, connaissance du résultat et arbitrage avec les animations automatiques |
 | Perception multimodale | [09-PERCEPTION-MULTIMODALE.md](09-PERCEPTION-MULTIMODALE.md) | 7 | Consentement des images, sources vidéo, temporalité, réactions live et budgets ; PER-01/02/03 désormais en backlog |
 | Données et normalisation | [10-NORMALISATION-DONNEES-MEMOIRE.md](10-NORMALISATION-DONNEES-MEMOIRE.md) | 10 | Contrats d'événements, données structurées, provenance, migrations |
-| Capacités et comportement | [11-CAPACITES-COMPORTEMENT-CONTROLE.md](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | 30 | Sécurité, outils, vie sociale avancée, autonomie, registre des actions et connaissance des opérations exécutées |
-| **Total** | | **104** | |
+| Capacités et comportement | [11-CAPACITES-COMPORTEMENT-CONTROLE.md](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | 29 | Sécurité, outils, vie sociale avancée, autonomie, registre des actions et connaissance des opérations exécutées |
+| **Total** | | **103** | |
 
 **Décision supplémentaire du 22/11/2026 :** NEW-20 est transférée dans [DEV-031](../backlog/01-DEVELOPPEMENT.md) (explications d'indisponibilité), tandis que NEW-25 (proposition multilingue) a été **abandonnée** à la demande du propriétaire. Une recherche sur les 11 thèmes n'a trouvé aucune autre proposition de fonctionnalité multilingue à retirer. Les fonctions et contenus existants ne sont pas modifiés par cette décision.
 
@@ -35,11 +35,11 @@
 - **NEW-12 retirée** du catalogue actif : fonctionnalité de recherche Internet déjà livrée, tracée et validée en [REC-038](../backlog/02-RECETTE.md) (Done). Il n'y a pas de seconde idée de recherche à développer.
 - **NEW-19 abandonnée** : Jade doit conserver **une seule personnalité**, sans profils personnels concurrents selon les canaux. Les règles de confidentialité et de diffusion propres aux canaux ne sont pas des personas.
 - **NEW-30 recentrée exclusivement sur les sondages Twitch** ; aucun quiz, mini-jeu, devinette ou sondage Discord. L'idée reste prospective et le développement Twitch reste suspendu.
-- **NEW-16 reformulée en rappels et notifications d'événements** : informer au bon moment via message Discord adressé au canal/MP autorisé ou, si techniquement réalisable et consenti, notification mobile.
+- **NEW-16 reformulée puis transférée à [DEV-036](../backlog/01-DEVELOPPEMENT.md) le 22/11/2026** : rappels et notifications d'événements, à qualifier, sans démarrage. L'ancien ID est historique et n'est plus proposé dans la liste active.
 - **UX-19 → [DEV-032](../backlog/01-DEVELOPPEMENT.md)** : pièces jointes et documents téléchargeables dans le chat PWA. **PER-01/02/03 → [DEV-033/034/035](../backlog/01-DEVELOPPEMENT.md)** : recevoir, comprendre et commenter des images. Quatre cartes P2 **À qualifier**, rien n'est développé avant cadrage. UX-19 est la première à discuter avec le propriétaire.
 - **Règle du propriétaire :** une idée transférée en backlog ou explicitement écartée est immédiatement retirée des **lignes actives** du catalogue et de ses décomptes. Son identifiant reste traçable dans l'historique Git et les passations, mais **ne doit plus être proposée comme idée en attente**.
 
-**Bilan : 104 idées actives**, dont **21 P1**, et **89 cartes de backlog**, dont quatre nouvelles à qualifier. [Passation détaillée](../operations/handoffs/2026-11-22-chatgpt-ux19-perceptions-catalogue.md).
+**Bilan actuel après transfert de NEW-16 : 103 idées actives**, dont **21 P1**, et **90 cartes de backlog**, avec **DEV-036 « À qualifier »**. [Passation détaillée](../operations/handoffs/2026-11-22-chatgpt-ux19-perceptions-catalogue.md).
 
 ## Évolutions différées acceptées le 22/11/2026
 
