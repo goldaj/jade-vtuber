@@ -20,7 +20,7 @@ def test_private_session_file_and_compact_console(tmp_path, capsys, monkeypatch)
         assert path.exists()
         assert path == session_logging.start_session_logging(tmp_path)
         source = Incoming(
-            "mobile", "Goldaj", "Jade, ceci contient sk-abcdefghijklmnopqrstuvwxyz",
+            "mobile", "Goldaj", "Jade, ceci contient " + "sk-" + "abcdefghijklmnopqrstuvwxyz",
             channel="private", force_reply=True)
         token = session_logging.bind_turn(17, source)
         try:

@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — QA : supprimer un faux positif TOKEN_PATTERN sans affaiblir le scanner
+
+- **Diagnostic :** le préflight Linux/Windows du SHA 5feb9a1b7a2b échouait avant les tests avec `BLOCKED: TOKEN_PATTERN` ; un littéral de test de confidentialité dans `tests/test_session_diagnostics.py` avait le format d'une clé.
+- **Correction :** construire la même valeur de démonstration en trois segments à l'exécution du test, sans garder de token complet dans le code suivi. Le comportement du test et la détection `TOKEN_PATTERN` du scanner restent inchangés.
+- **Vérification :** inspection statique du motif incriminé et des journaux GitHub Actions. Préflight et suite générale doivent être observés sur le commit après push ; aucun succès CI ou test local n'est anticipé.
+
 ## 2026-11-22 — REC-006 et REC-029 : clôture produit explicite sur develop
 
 - **Décision du propriétaire :** après revue des logs réels du 22/11, les deux cartes passent de `À valider` à **`Done`**, sans développement ni test supplémentaire requis pour la clôture.
