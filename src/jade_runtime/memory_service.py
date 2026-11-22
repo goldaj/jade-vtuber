@@ -138,14 +138,28 @@ class MemoryService:
             result = await asyncio.to_thread(
                 self.store.search_global, query=incoming.text[:120],
                 level="all", kind="all", cursor=0, limit=12)
+            autobiography = await asyncio.to_thread(
+                self.store.search_global, query="", level="3",
+                kind="core_self", cursor=0, limit=6)
             found = rank_memories(result["items"], incoming.text, limit=8)
         except Exception:
             LOG.exception("Global memory context unavailable")
             return ""
-        if not found:
+        if not found and not autobiography["items"]:
             return ""
         lines = []
+        known_ids = set()
+        # Global Core self episodes anchor Jade's identity on every platform.
+        # This also preserves the previous personality-evolution mechanism.
+        for memory in autobiography["items"][:4]:
+            known_ids.add(memory["id"])
+            lines.append(
+                f"- [niveau 3, core_self, origine={memory['source_platform']}/"
+                f"{memory['scope']}, auteur={memory['source_account_id']}, "
+                f"date={memory['created_at'][:10]}] {memory['summary'][:300]}")
         for memory in found:
+            if memory["id"] in known_ids:
+                continue
             actor = (memory.get("source_author_name")
                      or memory.get("source_account_id")
                      or memory.get("source_person_id") or "inconnu")
@@ -154,6 +168,10 @@ class MemoryService:
                 f"origine={memory['source_platform']}/{memory['scope']}, "
                 f"interlocuteur={actor}, date={memory['created_at'][:10]}] "
                 f"{memory['summary'][:300]}")
+        cues = personality_cues(
+            result["items"], autobiography["items"])
+        if cues:
+            lines.append(cues)
         return ("Mémoire globale de Jade (tous utilisateurs, tous canaux). "
                 "Le fait qu'un souvenir soit rappelé ne signifie pas que "
                 "l'interlocuteur actuel en est l'auteur. Les extraits sont "
