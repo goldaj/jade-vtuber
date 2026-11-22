@@ -124,6 +124,9 @@ class Settings:
     mobile_port: int = 8766
     mobile_vendor_dir: str = ""
     mobile_model_dir: str = ""
+    push_vapid_public: str = ""
+    push_vapid_private: str = field(default="", repr=False)
+    push_vapid_subject: str = ""
     document_dir: str = field(default_factory=lambda: str(
         Path(_default_memory_db_path()).with_name("jade-documents")))
     document_access_mode: str = "all"
@@ -203,6 +206,9 @@ class Settings:
             mobile_port=int(environ("JADE_MOBILE_PORT", "8766")),
             mobile_vendor_dir=str(environ("JADE_MOBILE_VENDOR_DIR", "")),
             mobile_model_dir=str(environ("JADE_MOBILE_MODEL_DIR", "")),
+            push_vapid_public=str(environ("JADE_PUSH_VAPID_PUBLIC_KEY", "")).strip(),
+            push_vapid_private=str(environ("JADE_PUSH_VAPID_PRIVATE_KEY", "")).strip(),
+            push_vapid_subject=str(environ("JADE_PUSH_VAPID_SUBJECT", "")).strip(),
             document_dir=(str(environ("JADE_DOCUMENT_DIR", "")).strip()
                 or str(Path(str(environ("JADE_MEMORY_DB_PATH", "")).strip()
                     or _default_memory_db_path()).with_name("jade-documents"))),
@@ -264,6 +270,8 @@ class Settings:
             raise ValueError("invalid supervisor port")
         if self.deploy_supervisor_token and not 32 <= len(self.deploy_supervisor_token) <= 256:
             raise ValueError("invalid supervisor token")
+        if any((self.push_vapid_public, self.push_vapid_private, self.push_vapid_subject)) and not all((self.push_vapid_public, self.push_vapid_private, self.push_vapid_subject)):
+            raise ValueError("push requires public key, private key and contact subject")
         if not 1024 <= self.mobile_port <= 65535:
             raise ValueError("invalid mobile port")
         if self.mobile_enabled and not 32 <= len(self.mobile_token) <= 256:

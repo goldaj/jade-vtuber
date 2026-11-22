@@ -12,6 +12,7 @@ from .intent_engine import INTENT_PROMPT, IntentStreamParser, parse_reply
 from .memory_actions import MEMORY_PROMPT
 from .web_search import WEB_PROMPT, ToolActions
 from .documents import DOCUMENT_PROMPT, DOCUMENT_ALLOWED_PROMPT, DOCUMENT_DENIED_PROMPT
+from .reminders import REMINDER_PROMPT
 from .session_logging import event
 
 
@@ -76,7 +77,8 @@ class Dialogue:
     async def respond(self, incoming: Incoming, *, valid=lambda: True,
                       on_sentence=None, on_timing=None, defer_history=False,
                       on_intent=None, memory_context="", history_messages=None,
-                      memory_action=None, web_action=None, document_action=None) -> Reply | None:
+                      memory_action=None, web_action=None, document_action=None,
+                       reminder_action=None) -> Reply | None:
         # Reject stale duplicates by transport ID, not by repeated message text.
         if len(incoming.text) > 1200 or not self.should_reply(incoming):
             return None
@@ -117,8 +119,9 @@ class Dialogue:
                     + memory_context[:3500]}] if memory_context else [])
                 selected_history = (select_context(history, incoming.text)
                                     if self.selective_context else history)
-                tools_action = (ToolActions(memory_action, web_action, document_action)
-                                if (web_action is not None or
+                tools_action = (ToolActions(memory_action, web_action, document_action,
+                                            reminder_action)
+                                if (web_action is not None or reminder_action is not None or
                                     (document_action is not None and document_action.allowed))
                                 else memory_action)
                 can_use_tools = (
@@ -142,6 +145,7 @@ class Dialogue:
                                  + (MEMORY_PROMPT if can_use_tools and memory_action is not None else "")
                                  + (WEB_PROMPT if can_use_tools and web_action is not None else "")
                                  + document_note
+                                 + (REMINDER_PROMPT if can_use_tools and reminder_action is not None else "")
                                  + "\nPour une demande qui appelle une réponse longue, "
                                    "donne plutôt une synthèse claire de 3 à 5 phrases "
                                    "(environ 120 mots, soit ~320 tokens visibles au maximum). "
