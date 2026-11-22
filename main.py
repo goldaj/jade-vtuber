@@ -127,12 +127,17 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         # Persistent, verified owner continuity. No background LLM or actions.
         cross_channel = None
         if memory is not None:
-            from src.jade_runtime.cross_channel import CrossChannelContinuity
-            cross_channel = CrossChannelContinuity(
-                memory.store, allowed_discord_channels=config.cross_channel_discord_targets,
-                send_discord=lambda target, text: (
-                    discord_client.send_chat(target, text)
-                    if discord_client is not None else asyncio.sleep(0, result=False)))
+            try:
+                from src.jade_runtime.cross_channel import CrossChannelContinuity
+                cross_channel = CrossChannelContinuity(
+                    memory.store, allowed_discord_channels=config.cross_channel_discord_targets,
+                    send_discord=lambda target, text: (
+                        discord_client.send_chat(target, text)
+                        if discord_client is not None else asyncio.sleep(0, result=False)))
+            except Exception:
+                # Optional task continuity cannot prevent the existing dialogue,
+                # memory and transport connectors from starting.
+                LOG.warning("Optional cross-channel continuity unavailable")
         avatar_client = None
         if avatar:
             from src.jade_runtime.avatar import Avatar
