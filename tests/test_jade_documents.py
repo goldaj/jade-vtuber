@@ -1,6 +1,7 @@
 """DEV-032: local document generation and verified authorization."""
 import asyncio
 import json
+import time
 from pathlib import Path
 import tempfile
 import unittest
@@ -61,7 +62,7 @@ class DocumentTests(unittest.TestCase):
             self.assertEqual(store.expired_discord(), [])  # expiry based on real clock
             # Use artificially expired metadata to exercise a restart sweep.
             record = store._load(item.id)
-            record["expires_at"] = 1
+            record["expires_at"] = time.time() - 1
             store._write_metadata(record)
             self.assertEqual(len(store.expired_discord()), 1)
             store.ack_discord(item.id, "100", 200)

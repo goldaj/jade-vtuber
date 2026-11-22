@@ -80,7 +80,8 @@ class Reply:
     source: Incoming
     text: str
     spoken: bool = False  # Voice already delivered by early pipeline.
-    intent: str = "neutral"  # Trusted metadata, not part of visible/speakable text.\n    attachments: tuple = field(default=(), repr=False)  # DEV-032: trusted server artifacts
+    intent: str = "neutral"  # Trusted metadata, not part of visible/speakable text.
+    attachments: tuple = field(default=(), repr=False)  # DEV-032: trusted server artifacts
 
     def __post_init__(self):
         if not isinstance(self.text, str) or not self.text.strip():
