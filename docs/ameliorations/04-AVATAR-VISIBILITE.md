@@ -9,13 +9,14 @@ La présence d'un spectateur et la visibilité de l'avatar ne sont pas synonymes
 | VIS-01 | P1 / P | Créer **AvatarVisibilityManager** indépendant des canaux avec état visible / invisible / inconnu **par surface** (PC, OBS, Discord stream, PWA). |
 | VIS-02 | P1 / P | **OBS/Twitch :** signal OBS WebSocket de stream + scène et source effectivement affichées. Compteur Twitch éventuellement informatif, jamais preuve suffisante de visibilité du modèle. |
 | VIS-03 | P2 / P | **Discord :** détecter l'activité de partage d'écran quand accessible ; vérifier séparément que la fenêtre montrée est Jade, ou fournir un toggle manuel. Ne pas inventer un détecteur de spectateur absent des API. |
-| VIS-04 | P1 / P | **PWA mobile :** exploiter visibilité de page, onglet et composant Live2D monté ; suspendre les animations en arrière-plan ou lorsque seule la conversation vocale reste active. |
 | VIS-05 | P1 / P | **Fenêtre PC :** minimisée/fermée/cachée versus visible ou capturée par OBS ; ne pas arrêter les animations d'une fenêtre capturée même si elle n'a pas le focus. |
 | VIS-06 | P1 / P | **Arrêt effectif du travail graphique** : pause render loop/GPU, calcul de bouche, envoi de hotkeys et messages IPC lorsqu'aucune sortie visuelle utile n'est active. Ne pas simplement masquer le personnage. |
 | VIS-07 | P1 / P | **Hystérésis** à l'extinction (premier candidat : 5–10 s) et reprise depuis un état neutre ; éviter les redémarrages fréquents quand on change de fenêtre. |
 | VIS-10 | P2 / E | Uniformiser synchronisation PC/Discord/PWA : déclencher bouche sur **audio effectivement consommé**, expression seulement pour une audience autorisée, retour au neutre, silence et annulation. |
 | VIS-13 | P1 / P | **Filtrage par audience** : une question privée/mobile ou un salon Discord sans visibilité ne pilote pas l'avatar d'un live Twitch public. Si OBS montre Jade, l'Idle peut continuer sans réagir aux conversations hors diffusion. |
 | VIS-14 | P2 / P | Mesurer charge CPU/GPU, consommation mémoire, FPS et délai de bascule visible/invisible. Ne pas prétendre gagner une seconde de LLM parce que l'avatar est éteint. |
+
+**Promotion du 22/11/2026 :** VIS-04 est retirée des idées actives et transférée en [DEV-027](../backlog/01-DEVELOPPEMENT.md) (suspension du moteur Live2D mobile hors champ).
 
 ## Contrat fonctionnel
 
