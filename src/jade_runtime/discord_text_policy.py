@@ -146,7 +146,7 @@ class DiscordTextPolicy:
             state.pending[incoming.message_id] = author_id
             if len(state.pending) > 32:
                 state.pending.popitem(last=False)
-        return replace(incoming, force_reply=True, context=recent)
+        return replace(incoming, force_reply=True, direct_request=direct, context=recent)
 
     def note_sent(self, channel: str, *, source_message_id: str = "",
                   sent_message_id: int | None = None) -> None:
