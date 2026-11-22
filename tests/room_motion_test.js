@@ -15,7 +15,7 @@ function element(initial = "") {
   const style = { transform: "", opacity: "" };
   return {
     hidden: true, src: initial, style,
-    getAttribute(name) { return name === "src" ? initial : null; },
+    getAttribute(name) { return name === "src" ? this.src : null; },
     toggleAttribute(name, value) {
       if (value) attributes.add(name);
       else attributes.delete(name);
