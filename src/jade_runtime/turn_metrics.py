@@ -6,6 +6,7 @@ never presented as proof that the end user heard the first audio sample.
 from __future__ import annotations
 
 from collections import defaultdict, deque
+from contextvars import ContextVar
 import math
 import time
 
@@ -18,6 +19,28 @@ def _percentile(values, q):
     left = int(pos)
     right = min(len(ordered) - 1, left + 1)
     return round(ordered[left] + (ordered[right] - ordered[left]) * (pos - left), 1)
+
+# Local to the active async request, never a global model/provider cost counter.
+_ACTIVE = ContextVar("jade_active_metrics", default=None)
+
+
+def bind_metrics(metrics, turn):
+    return _ACTIVE.set((metrics, turn))
+
+
+def reset_metrics(token):
+    _ACTIVE.reset(token)
+
+
+def record_model_usage(input_tokens, output_tokens):
+    active = _ACTIVE.get()
+    if active is None:
+        return
+    if (type(input_tokens) is not int or input_tokens < 0
+            or type(output_tokens) is not int or output_tokens < 0):
+        return  # Missing usage cannot be estimated from the text length.
+    metrics, turn = active
+    metrics.add_tokens(turn, input_tokens=input_tokens, output_tokens=output_tokens)
 
 
 class TurnMetrics:
@@ -42,11 +65,21 @@ class TurnMetrics:
         current["stages"].setdefault(stage, round(
             (self.clock() - current["queued_at"]) * 1000, 1))
 
+    def add_tokens(self, turn, *, input_tokens, output_tokens):
+        current = self.pending.get(turn)
+        if current is None:
+            return
+        current["input_tokens"] = current.get("input_tokens", 0) + input_tokens
+        current["output_tokens"] = current.get("output_tokens", 0) + output_tokens
+
     def end(self, turn, outcome="complete"):
         current = self.pending.pop(turn, None)
         if current is None:
             return
         row = dict(current["stages"])
+        if "input_tokens" in current:
+            row["input_tokens"] = current["input_tokens"]
+            row["output_tokens"] = current["output_tokens"]
         if outcome == "complete":
             if "turn_failed" in row:
                 outcome = "failed"
@@ -62,7 +95,7 @@ class TurnMetrics:
             data = list(samples)
             points = {}
             stages = sorted({k for record in data for k in record
-                             if k not in ("outcome",)})
+                             if k not in ("outcome", "input_tokens", "output_tokens")})
             for stage in stages:
                 values = [record[stage] for record in data
                           if isinstance(record.get(stage), (int, float))
@@ -72,6 +105,11 @@ class TurnMetrics:
             result.append({"platform": platform, "modality": modality,
                            "samples": len(data), "latency": points,
                            "failed": sum(x["outcome"] != "complete" for x in data),
-                           "first_audible_ms": None,  # client-side evidence required
-                           "cost_usd": None})  # not inferred from delayed billing
+                           "usage": {
+                               "n": sum("input_tokens" in item for item in data),
+                               "input_tokens": sum(item.get("input_tokens", 0) for item in data),
+                               "output_tokens": sum(item.get("output_tokens", 0) for item in data),
+                           },
+                           "first_audible_ms": None,  # device/OS cannot confirm ears
+                           "cost_usd": None})  # no unverified unit-price estimate
         return result
