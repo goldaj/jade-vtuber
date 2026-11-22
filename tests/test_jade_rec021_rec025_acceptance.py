@@ -48,8 +48,8 @@ class MemoryAcceptance(unittest.TestCase):
             scope="discord:10", summary="Bob private draft"))
         self.assertTrue(self.store.put_self_core(OWNER,
             summary="Jade autobiographical moment"))
-        self.assertFalse(self.store.put_self_core(ALICE,
-            summary="Alice cannot write autobiography"))
+        self.assertTrue(self.store.put_self_core(ALICE,
+            summary="Jade independently chose a Core after Alice's conversation"))
         fresh = MemoryStore(self.path)
         self.assertEqual({m["kind"] for m in fresh.recall(ALICE, "discord:10")},
                          {"ordinary", "core_relationship"})
@@ -57,7 +57,8 @@ class MemoryAcceptance(unittest.TestCase):
         self.assertEqual(len(fresh.recall(BOB, "discord:10")), 1)
         self.assertNotIn("Alice", str(fresh.recall(BOB, "discord:10")))
         self.assertEqual(fresh.recall_self_core(ALICE), [])
-        self.assertEqual(len(fresh.recall_self_core(OWNER)), 1)
+        self.assertEqual(len(fresh.recall_self_core(OWNER)), 2)
+        self.assertEqual(len(fresh.search_global(level="3", kind="core_self")["items"]), 2)
 
     def test_rec021_retention_and_unlimited_24h_recovery(self):
         self.assertEqual((CONVERSATION_RETENTION_DAYS, CONVERSATION_RELOAD_HOURS,
