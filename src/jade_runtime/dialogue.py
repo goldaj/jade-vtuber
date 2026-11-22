@@ -11,6 +11,7 @@ from .sentence_stream import SentenceAccumulator
 from .intent_engine import INTENT_PROMPT, IntentStreamParser, parse_reply
 from .memory_actions import MEMORY_PROMPT
 from .web_search import WEB_PROMPT, ToolActions
+from .documents import DOCUMENT_PROMPT
 from .session_logging import event
 
 
@@ -116,8 +117,9 @@ class Dialogue:
                     + memory_context[:3500]}] if memory_context else [])
                 selected_history = (select_context(history, incoming.text)
                                     if self.selective_context else history)
-                tools_action = (ToolActions(memory_action, web_action)
-                                if web_action is not None else memory_action)
+                tools_action = (ToolActions(memory_action, web_action, document_action)
+                                if web_action is not None or document_action is not None
+                                else memory_action)
                 can_use_tools = (
                     tools_action is not None
                     and callable(getattr(type(self.backend), "complete_with_tools", None))
@@ -126,7 +128,8 @@ class Dialogue:
                 )
                 system_prompt = (self.prompt + "\n\n" + INTENT_PROMPT + owner_note
                                  + (MEMORY_PROMPT if can_use_tools and memory_action is not None else "")
-                                 + (WEB_PROMPT if can_use_tools and web_action is not None else "")\n                                 + (DOCUMENT_PROMPT if document_action is not None else "")
+                                 + (WEB_PROMPT if can_use_tools and web_action is not None else "")
+                                 + (DOCUMENT_PROMPT if document_action is not None else "")
                                  + "\nPour une demande qui appelle une réponse longue, "
                                    "donne plutôt une synthèse claire de 3 à 5 phrases "
                                    "(environ 120 mots, soit ~320 tokens visibles au maximum). "
@@ -197,7 +200,8 @@ class Dialogue:
                     raise TimeoutError("message expired")
                 if not isinstance(answer, str) or not answer.strip():
                     raise ValueError("chat backend returned an empty response")
-                result = Reply(incoming, answer.strip(), intent=selected_intent,\n                                attachments=tuple(getattr(document_action, "attachments", ())))
+                result = Reply(incoming, answer.strip(), intent=selected_intent,
+                                attachments=tuple(getattr(document_action, "attachments", ())))
                 if not defer_history:
                     history.extend((user, {"role": "assistant", "content": result.text}))
                     if incoming.message_id:
