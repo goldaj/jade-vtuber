@@ -117,6 +117,11 @@ def bind_turn(turn: int, incoming):
 def reset_turn(token) -> None:
     _CONTEXT.reset(token)
 
+def current_turn_id() -> int | None:
+    """Current diagnostic correlation only; never a delivery authority."""
+    value = _CONTEXT.get().get("turn")
+    return value if type(value) is int and value >= 0 else None
+
 
 def event(event_type: str, **fields) -> None:
     """Detailed JSON line; structured fields may safely include 'name'."""
