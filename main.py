@@ -11,7 +11,7 @@ from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming
 from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.orchestrator import Runtime
-from src.jade_runtime.turn_logging import enable_console_logs, planned_destinations
+from src.jade_runtime.turn_logging import enable_console_logs, planned_destinations, observe_delivery
 from src.jade_runtime.session_logging import start_session_logging, event, summary
 from src.jade_runtime.output import AudioOutput, SpeechOutput
 from src.jade_runtime.twitch_token import validate_twitch_token
@@ -203,6 +203,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     source_message_id=reply.source.message_id), timeout=20)
                 if not sent:
                     raise RuntimeError("Discord message delivery not confirmed")
+                observe_delivery("transport_accepted", "discord_text", proof="discord_api")
             if (vts_client is not None and speech is not None and config.vts_speak_hotkey
                     and not reply.spoken
                     and reply.source.platform in ("microphone", "discord_voice", "console")):
