@@ -84,6 +84,26 @@ class PersonalityTests(unittest.TestCase):
         ])["observations"], [])
 
 
+class PersonalityEvolutionPolicyTests(unittest.TestCase):
+    def test_owner_forced_ordinary_is_not_automatic_personality_choice(self):
+        forced = {
+            "kind": "ordinary",
+            "summary": "Jade déteste le café",
+            "significance": "Souvenir conservé à la demande explicite de l'interlocuteur.",
+            "created_at": "2026-11-22",
+        }
+        self.assertEqual(personality_snapshot([forced])["observations"], [])
+
+    def test_recent_autonomous_preference_supersedes_older_opinion(self):
+        old = {"kind": "ordinary", "summary": "Jade aime les poires",
+               "significance": "Goût ancien", "created_at": "2025-02-01"}
+        new = {"kind": "ordinary", "summary": "Jade n'aime plus les poires",
+               "significance": "Son goût a changé", "created_at": "2026-11-22"}
+        observations = personality_snapshot([old, new])["observations"]
+        self.assertEqual(len(observations), 1)
+        self.assertEqual(observations[0]["summary"], new["summary"])
+
+
 class GroupTests(unittest.TestCase):
     def test_reply_to_other_human_without_jade(self):
         person = SimpleNamespace(id=15)
