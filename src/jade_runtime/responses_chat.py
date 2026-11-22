@@ -13,7 +13,7 @@ import inspect
 import json
 import logging
 
-from .memory_actions import MEMORY_TOOL
+from .memory_actions import MEMORY_TOOL, MEMORY_SEARCH_TOOL
 from .session_logging import event, summary
 from .turn_metrics import record_model_usage
 
@@ -34,6 +34,11 @@ RESPONSES_MEMORY_TOOL = {
     "type": "function",
     **MEMORY_TOOL["function"],
 }
+RESPONSES_MEMORY_SEARCH_TOOL = {
+    "type": "function",
+    **MEMORY_SEARCH_TOOL["function"],
+}
+MAX_MEMORY_TOOL_ROUNDS = 6
 
 
 def _field(item, name, default=None):
@@ -193,7 +198,8 @@ class ResponsesChat:
         event("memory_write_scheduled", call_id=call_id)
         return True
 
-    def _arguments(self, messages, *, with_tools=False, stream=False):
+    def _arguments(self, messages, *, with_tools=False, stream=False,
+                   memory_action=None):
         params = {
             "model": self.settings.model,
             "input": list(messages),
@@ -202,8 +208,11 @@ class ResponsesChat:
             "store": False,
         }
         if with_tools:
+            available_tools = [RESPONSES_MEMORY_TOOL]
+            if callable(getattr(memory_action, "search", None)):
+                available_tools.append(RESPONSES_MEMORY_SEARCH_TOOL)
             params.update(
-                tools=[RESPONSES_MEMORY_TOOL],
+                tools=available_tools,
                 tool_choice="auto",
                 parallel_tool_calls=False,
                 include=["reasoning.encrypted_content"],
@@ -233,10 +242,12 @@ class ResponsesChat:
         record_model_usage(_field(usage, "input_tokens"),
                            _field(usage, "output_tokens"))
 
-    async def _create(self, messages, *, operation, with_tools=False):
+    async def _create(self, messages, *, operation, with_tools=False,
+                      memory_action=None):
         self._request_log(operation, with_tools=with_tools, stream=False)
         response = await self.client.responses.create(
-            **self._arguments(messages, with_tools=with_tools))
+            **self._arguments(messages, with_tools=with_tools,
+                              memory_action=memory_action))
         # Raise on incomplete outputs, even when some visible text is present.
         _require_completed(response)
         self._response_log(operation, response)
@@ -254,22 +265,43 @@ class ResponsesChat:
             raise ValueError("OpenAI returned no dialogue text")
         return value
 
-    def _prepare_tool_outputs(self, response, action):
-        """Accept a local write request immediately; actual result goes to logs."""
+    async def _prepare_tool_outputs(self, response, action):
+        """Resolve reads now; queue writes optimistically without SQLite waits."""
         outputs = []
+        write_used = False
         for index, call in enumerate(_tool_calls(response)):
-            if (index == 0 and call["name"] == "jade_save_memory"
+            name = call["name"]
+            if (name == "jade_save_memory" and not write_used
                     and len(call["arguments"]) <= 2400
                     and self._queue_memory_write(
                         action, call["arguments"], call_id=call["call_id"])):
-                # Product decision DEV-012: Jade treats an accepted attempt as
-                # successful without waiting for a SQLite confirmation.
+                # Product decision: an ACCEPTED asynchronous write is treated
+                # as saved. No confirmation query, no waiting on SQLite.
+                write_used = True
                 outcome = {"status": "enregistré"}
+            elif (name == "jade_search_memory"
+                  and len(call["arguments"]) <= 1600
+                  and callable(getattr(action, "search", None))):
+                try:
+                    outcome = await action.search(call["arguments"])
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    LOG.exception("Memory lookup tool failed (contents omitted)")
+                    outcome = {"status": "indisponible", "items": [],
+                               "next_cursor": None}
             else:
                 outcome = {"status": "refusé", "level": None}
+
+            # Never put private retrieved summaries into audit events.
+            audit_outcome = ({"status": outcome.get("status"),
+                              "count": len(outcome.get("items", ())),
+                              "has_more": outcome.get("next_cursor") is not None}
+                             if name == "jade_search_memory" and isinstance(outcome, dict)
+                             else outcome)
             event("memory_tool_result", call_index=index,
-                  name=call["name"], call_id=call["call_id"],
-                  outcome=outcome, confirmation_waited=False)
+                  name=name, call_id=call["call_id"],
+                  outcome=audit_outcome, confirmation_waited=False)
             outputs.append({
                 "type": "function_call_output",
                 "call_id": call["call_id"],
@@ -277,32 +309,34 @@ class ResponsesChat:
             })
         return outputs
 
-    def _after_tool(self, messages, response, action):
-        outputs = self._prepare_tool_outputs(response, action)
+    async def _after_tool(self, messages, response, action):
+        outputs = await self._prepare_tool_outputs(response, action)
         return [*messages, *_output_items(response), *outputs]
 
     async def complete_with_tools(self, messages, memory_action) -> str:
-        try:
-            response = await self._create(
-                messages, operation="responses.complete_with_tools", with_tools=True)
-        except OutputTokenLimitError:
-            # An incomplete answer is not a valid tool invocation.
-            return OUTPUT_TOO_LONG_FALLBACK
-        calls = _tool_calls(response)
-        if not calls:
+        conversation = list(messages)
+        for round_index in range(MAX_MEMORY_TOOL_ROUNDS):
+            try:
+                response = await self._create(
+                    conversation, operation="responses.complete_with_tools",
+                    with_tools=True, memory_action=memory_action)
+            except OutputTokenLimitError:
+                return OUTPUT_TOO_LONG_FALLBACK
+            calls = _tool_calls(response)
             value = _text(response)
-            if not value:
-                raise ValueError("OpenAI returned no dialogue text")
-            return value
-        # Model may provide text and function call in the same response. In
-        # that case there is nothing to wait for and no reason to answer twice.
-        continuation = self._after_tool(messages, response, memory_action)
-        value = _text(response)
-        if value:
-            return value
-        # A tool-only response needs a second LLM call to produce a sentence.
-        # Crucially, the SQLite write is already running independently.
-        return await self.complete(continuation)
+            if not calls:
+                if not value:
+                    raise ValueError("OpenAI returned no dialogue text")
+                return value
+            # Tool calls may be read-only (and need the fetched memories in
+            # the next model turn), or fire-and-forget writes. Neither turns
+            # a queued write into a synchronous SQLite confirmation.
+            conversation = await self._after_tool(conversation, response, memory_action)
+            if value and not any(call["name"] == "jade_search_memory" for call in calls):
+                return value
+        # Bound the number of billed lookup rounds. The final answer can use
+        # what was retrieved; it cannot launch another tool in this turn.
+        return await self.complete(conversation)
 
     async def _stream_text(self, messages, *, operation):
         self._request_log(operation, with_tools=False, stream=True)
@@ -355,60 +389,68 @@ class ResponsesChat:
                 yield fragment
 
     async def complete_stream_with_tools(self, messages, memory_action):
-        """Stream immediately even with tools; do not await local persistence.
+        """Progressive speech with on-demand multi-page lookup.
 
-        The first response may contain text, calls, or both. If it contains
-        text, never synthesize a second, duplicate answer. If it contains only
-        a function call, a follow-up LLM request is inherently necessary to
-        obtain speech, but the SQLite write runs in the background.
+        Search tools may run over several model rounds; accepted SQLite writes
+        never wait for a commit and never trigger verification reads.
         """
-        operation = "responses.stream_with_tools"
-        self._request_log(operation, with_tools=True, stream=True)
-        stream = await self.client.responses.create(
-            **self._arguments(messages, with_tools=True, stream=True))
-        completed = None
-        fragments = []
-        try:
-            async for update in stream:
-                kind = _field(update, "type")
-                if kind == "response.output_text.delta":
-                    fragment = _field(update, "delta")
-                    if isinstance(fragment, str) and fragment:
-                        fragments.append(fragment)
-                        yield fragment
-                elif kind == "response.completed":
-                    completed = _field(update, "response")
-                    _require_completed(completed)
-                elif kind in ("response.failed", "response.incomplete", "error"):
-                    details = (_field(update, "response") or
-                               _field(update, "error") or _field(update, "message"))
-                    if kind == "response.incomplete" and details is not None:
-                        _require_completed(details)
-                    raise RuntimeError(f"Responses stream failed ({kind}): {details}")
-            if completed is None:
-                raise RuntimeError("Responses stream ended without response.completed")
-            self._response_log(operation, completed)
-            value = _text(completed)
-            if fragments and "".join(fragments) != value:
-                raise ValueError("Responses stream text differs from final response")
-            calls = _tool_calls(completed)
-            continuation = (self._after_tool(messages, completed, memory_action)
-                            if calls else None)
-            if value:
-                if not fragments:
-                    yield value
-                # Already spoken progressively: no duplicate follow-up.
+        conversation = list(messages)
+        for round_index in range(MAX_MEMORY_TOOL_ROUNDS):
+            operation = ("responses.stream_with_tools" if round_index == 0
+                         else "responses.stream_with_tools.followup")
+            self._request_log(operation, with_tools=True, stream=True)
+            stream = await self.client.responses.create(
+                **self._arguments(conversation, with_tools=True, stream=True,
+                                  memory_action=memory_action))
+            completed = None
+            fragments = []
+            try:
+                async for update in stream:
+                    kind = _field(update, "type")
+                    if kind == "response.output_text.delta":
+                        fragment = _field(update, "delta")
+                        if isinstance(fragment, str) and fragment:
+                            fragments.append(fragment)
+                            yield fragment
+                    elif kind == "response.completed":
+                        completed = _field(update, "response")
+                        _require_completed(completed)
+                    elif kind in ("response.failed", "response.incomplete", "error"):
+                        details = (_field(update, "response") or
+                                   _field(update, "error") or _field(update, "message"))
+                        if kind == "response.incomplete" and details is not None:
+                            _require_completed(details)
+                        raise RuntimeError(f"Responses stream failed ({kind}): {details}")
+                if completed is None:
+                    raise RuntimeError("Responses stream ended without response.completed")
+                self._response_log(operation, completed)
+                value = _text(completed)
+                if fragments and "".join(fragments) != value:
+                    raise ValueError("Responses stream text differs from final response")
+                calls = _tool_calls(completed)
+                if not calls:
+                    if not value:
+                        raise ValueError("OpenAI returned no dialogue text")
+                    if not fragments:
+                        yield value
+                    return
+                conversation = await self._after_tool(conversation, completed, memory_action)
+                if value:
+                    # Audio already delivered progressively, so do not generate
+                    # a second answer. A search requested alongside spoken text
+                    # cannot retroactively change that text.
+                    if not fragments:
+                        yield value
+                    return
+            except OutputTokenLimitError:
+                yield (" Je m'arrête ici ; demande-moi de continuer." if fragments
+                       else OUTPUT_TOO_LONG_FALLBACK)
                 return
-            if not calls:
-                raise ValueError("OpenAI returned no dialogue text")
-        except OutputTokenLimitError:
-            yield (" Je m'arrête ici ; demande-moi de continuer." if fragments
-                   else OUTPUT_TOO_LONG_FALLBACK)
-            return
-        finally:
-            await _close_stream(stream)
-        # The only unavoidable extra LLM call is for a tool-only response.
+            finally:
+                await _close_stream(stream)
+
+        # No unbounded tool loops or additional paid polling.
         async with aclosing(self._stream_text(
-                continuation, operation="responses.stream_with_tools.followup")) as followup:
-            async for fragment in followup:
+                conversation, operation="responses.stream_with_tools.final")) as last:
+            async for fragment in last:
                 yield fragment
