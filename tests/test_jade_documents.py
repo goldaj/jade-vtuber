@@ -9,6 +9,7 @@ from zipfile import ZipFile
 from io import BytesIO
 
 from src.jade_runtime.documents import DocumentService, DocumentStore, TTL_SECONDS
+from src.jade_runtime.memory_store import MemoryStore
 from src.jade_runtime.messages import Incoming
 
 
@@ -103,3 +104,49 @@ class PermissionTests(unittest.IsolatedAsyncioTestCase):
             any_user = DocumentService(directory, access_mode="all")
             self.assertTrue((await whitelist.for_turn(inc)).allowed)
             self.assertTrue((await any_user.for_turn(inc)).allowed)
+
+
+
+class LinkedDiscordRegressionTests(unittest.IsolatedAsyncioTestCase):
+    """A real SQLite link must work in DM, public text and voice.
+
+    In particular the link remains usable if memory processing is disabled:
+    ownership is not a memory feature toggle.
+    """
+    async def test_existing_link_is_authorized_in_all_discord_channels(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db = Path(directory) / "jade-memories.sqlite3"
+            store = MemoryStore(db)
+            owner_key = ("microphone", "goldaj")
+            discord_key = ("discord", "123456789012345678")
+            other_key = ("discord", "234567890123456789")
+            store.enable(owner_key)
+            store.enable(discord_key)
+            store.enable(other_key)
+            token = store.begin_link(owner_key, target=discord_key)
+            self.assertTrue(store.complete_link(discord_key, token))
+            incoming_messages = (
+                Incoming("discord", "Goldaj", "Crée un txt", channel="dm",
+                         account_id=discord_key[1], private_channel=True),
+                Incoming("discord", "Autre pseudo", "Crée un txt", channel="public",
+                         account_id=discord_key[1]),
+                Incoming("discord_voice", "Autre pseudo", "Crée un txt",
+                         channel="vocal", speaker_id=int(discord_key[1])),
+            )
+            for memory in (store, None):
+                with self.subTest(memory_enabled=memory is not None):
+                    service = DocumentService(Path(directory) / "documents",
+                                              memory_store=memory, identity_db_path=db)
+                    for incoming in incoming_messages:
+                        action = await service.for_turn(incoming)
+                        self.assertTrue(action.allowed, incoming.platform)
+                        self.assertTrue(action.owner_verified)
+                        outcome = await action.create_document(json.dumps({
+                            "filename": "test.txt", "content": "bonjour"}))
+                        self.assertEqual(outcome["status"], "created")
+                        self.assertEqual(len(action.attachments), 1)
+                    attacker = Incoming("discord", "Goldaj", "Crée un txt",
+                                        account_id=other_key[1])
+                    self.assertFalse((await service.for_turn(attacker)).allowed)
+                    disguised = Incoming("discord", "Goldaj", "Crée un txt")
+                    self.assertFalse((await service.for_turn(disguised)).allowed)

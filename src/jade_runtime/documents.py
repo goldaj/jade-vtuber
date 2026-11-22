@@ -15,12 +15,14 @@ import os
 from pathlib import Path
 import re
 import secrets
+import sqlite3
 import time
 from urllib.parse import quote
 from xml.sax.saxutils import escape
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from .memory_store import identity_of
+from .session_logging import event
 
 TTL_SECONDS = 24 * 60 * 60
 MAX_TEXT = 180_000
@@ -66,9 +68,8 @@ DOCUMENT_TOOL = {
 
 DOCUMENT_PROMPT = (
     "\n\nDocuments DEV-032 : lorsqu'une personne te DEMANDE explicitement de "
-    "fabriquer un fichier, utilise jade_create_document si cet outil est disponible. "
-    "S'il n'est pas disponible, refuse brièvement : la création est réservée "
-    "aux comptes autorisés. Ne prétends jamais avoir joint un fichier sans "
+    "fabriquer un fichier, utilise jade_create_document pour créer une véritable "
+    "pièce jointe. Ne prétends jamais avoir joint un fichier sans "
     "confirmation de l'outil. Le fichier sera livré automatiquement comme pièce "
     "jointe dans le canal d'origine : ne prononce ni n'imprime de lien URL. "
     "Respecte strictement toute extension demandée. Par défaut, choisis PDF "
@@ -79,6 +80,19 @@ DOCUMENT_PROMPT = (
     "En Discord public ou vocal, n'inclus aucune information privée provenant "
     "d'autres canaux ou personnes dans le fichier, sauf publication explicitement "
     "autorisée par le propriétaire. Évite tout envoi spontané."
+)
+
+DOCUMENT_ALLOWED_PROMPT = (
+    "\nOutil jade_create_document disponible et autorisé POUR CETTE CONVERSATION, "
+    "y compris sur Discord en MP, en salon écrit et dans le vocal. "
+    "Si cet interlocuteur te demande explicitement un fichier, appelle cet outil "
+    "avec le contenu et l'extension demandés. Ne dis pas que la fonctionnalité "
+    "est indisponible sur Discord. Le transport joindra le fichier automatiquement."
+)
+DOCUMENT_DENIED_PROMPT = (
+    "\nL'outil de création de fichiers n'est pas accordé à CET interlocuteur "
+    "sur ce canal. S'il le demande, explique que son compte n'est pas autorisé. "
+    "N'affirme jamais que Discord est techniquement incapable de recevoir des fichiers."
 )
 
 
@@ -341,9 +355,11 @@ class DocumentStore:
 
 
 class DocumentAction:
-    def __init__(self, store: DocumentStore, allowed: bool):
+    def __init__(self, store: DocumentStore, allowed: bool, *,
+                 owner_verified: bool = False):
         self.store = store
         self.allowed = allowed
+        self.owner_verified = owner_verified
         self.attachments: list[Attachment] = []
 
     async def create_document(self, raw: str) -> dict:
@@ -366,11 +382,14 @@ class DocumentAction:
 
 class DocumentService:
     def __init__(self, directory: str | Path, *, memory_store=None,
+                 identity_db_path: str | Path | None = None,
                  access_mode: str = "owner", allowed_discord_ids=()):
         if access_mode not in ("owner", "allowlist", "all"):
             raise ValueError("invalid document access mode")
         self.store = DocumentStore(directory)
         self.memory_store = memory_store
+        self.identity_db_path = (Path(identity_db_path).expanduser()
+                                 if identity_db_path is not None else None)
         self.access_mode = access_mode
         self.allowed_discord_ids = frozenset(str(x) for x in allowed_discord_ids)
         self._cleaner: asyncio.Task | None = None
@@ -390,19 +409,58 @@ class DocumentService:
             self._cleaner.cancel()
             await asyncio.gather(self._cleaner, return_exceptions=True)
 
+    def _linked_owner_on_disk(self, key: tuple[str, str]) -> bool:
+        """Read existing verified account links without enabling memory.
+
+        JADE_MEMORY_ENABLED controls memory processing, not account linkage.
+        The private SQLite store is opened read-only; no identity is created
+        from a Discord username, speech transcript or unverified handle.
+        """
+        path = self.identity_db_path
+        if path is None or not path.is_absolute() or not path.is_file():
+            return False
+        with sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=2) as db:
+            row = db.execute("""
+                SELECT 1 FROM identities AS discord
+                JOIN identities AS owner ON owner.person_id = discord.person_id
+                WHERE discord.platform=? AND discord.account_id=?
+                  AND owner.platform='microphone' AND owner.account_id='goldaj'
+                LIMIT 1
+            """, key).fetchone()
+        return row is not None
+
     async def for_turn(self, incoming) -> DocumentAction:
         key = identity_of(incoming)
         eligible = incoming.platform in ("mobile", "discord", "discord_voice")
         owner = bool(eligible and incoming.platform == "mobile")
-        if (eligible and not owner and key and self.memory_store is not None):
+        reason = "mobile_owner" if owner else "not_linked"
+        if eligible and not owner and key is not None:
             try:
-                owner = await asyncio.to_thread(self.memory_store.is_goldaj, key)
-            except (ValueError, OSError):
+                if self.memory_store is not None:
+                    owner = await asyncio.to_thread(self.memory_store.is_goldaj, key)
+                else:
+                    owner = await asyncio.to_thread(self._linked_owner_on_disk, key)
+                if owner:
+                    reason = "verified_link"
+            except (ValueError, OSError, sqlite3.Error):
+                reason = "identity_lookup_failed"
                 owner = False
+        elif not eligible or key is None:
+            reason = "missing_verified_identity"
+
         permitted = owner
         if eligible and key and self.access_mode == "all":
             permitted = True
+            if not owner:
+                reason = "all_users"
         if (eligible and key and self.access_mode == "allowlist"
                 and key[0] == "discord" and key[1] in self.allowed_discord_ids):
             permitted = True
-        return DocumentAction(self.store, permitted)
+            if not owner:
+                reason = "allowlist"
+
+        # Only non-sensitive decision metadata. Never log account IDs or text.
+        event("document_access_decision", source_platform=incoming.platform,
+              permitted=permitted, verified_owner=owner, reason=reason,
+              access_mode=self.access_mode)
+        return DocumentAction(self.store, permitted, owner_verified=owner)

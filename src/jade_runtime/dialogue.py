@@ -11,7 +11,7 @@ from .sentence_stream import SentenceAccumulator
 from .intent_engine import INTENT_PROMPT, IntentStreamParser, parse_reply
 from .memory_actions import MEMORY_PROMPT
 from .web_search import WEB_PROMPT, ToolActions
-from .documents import DOCUMENT_PROMPT
+from .documents import DOCUMENT_PROMPT, DOCUMENT_ALLOWED_PROMPT, DOCUMENT_DENIED_PROMPT
 from .session_logging import event
 
 
@@ -127,10 +127,21 @@ class Dialogue:
                     and (on_sentence is None or callable(getattr(
                         type(self.backend), "complete_stream_with_tools", None)))
                 )
+                document_note = ""
+                if document_action is not None:
+                    document_note = DOCUMENT_PROMPT + (
+                        DOCUMENT_ALLOWED_PROMPT
+                        if (document_action.allowed and can_use_tools)
+                        else DOCUMENT_DENIED_PROMPT)
+                if (document_action is not None
+                        and document_action.owner_verified
+                        and incoming.platform in ("discord", "discord_voice")):
+                    owner_note += ("\nCompte Discord de cet interlocuteur : "
+                                   "identité Goldaj vérifiée par liaison existante.")
                 system_prompt = (self.prompt + "\n\n" + INTENT_PROMPT + owner_note
                                  + (MEMORY_PROMPT if can_use_tools and memory_action is not None else "")
                                  + (WEB_PROMPT if can_use_tools and web_action is not None else "")
-                                 + (DOCUMENT_PROMPT if document_action is not None else "")
+                                 + document_note
                                  + "\nPour une demande qui appelle une réponse longue, "
                                    "donne plutôt une synthèse claire de 3 à 5 phrases "
                                    "(environ 120 mots, soit ~320 tokens visibles au maximum). "

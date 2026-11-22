@@ -172,6 +172,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             from src.jade_runtime.documents import DocumentService
             documents = DocumentService(
                 config.document_dir, memory_store=memory.store if memory else None,
+                identity_db_path=config.memory_db_path,
                 access_mode=config.document_access_mode,
                 allowed_discord_ids=config.document_allowed_discord_ids)
             await documents.start()
