@@ -43,8 +43,6 @@ WEB_FILES = {
     "/assets/room-spring.webp": ("room-spring.webp", "image/webp"),
     "/assets/room-backdrop.webp": ("room-backdrop.webp", "image/webp"),
     "/assets/room-curtain.webp": ("room-curtain.webp", "image/webp"),
-    "/assets/room-shadow-left.webp": ("room-shadow-left.webp", "image/webp"),
-    "/assets/room-shadow-right.webp": ("room-shadow-right.webp", "image/webp"),
     "/assets/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/assets/duplex-client.js": ("duplex-client.js", "text/javascript; charset=utf-8"),
     "/manifest.webmanifest": ("manifest.webmanifest", "application/manifest+json"),
