@@ -6,7 +6,7 @@ import logging
 import re
 import sys
 
-from .session_logging import event, session_file, summary
+from .session_logging import current_turn_id, event, session_file, summary
 
 LOG = logging.getLogger("jade.conversation")
 _VOICE_INPUTS = frozenset(("discord_voice", "microphone"))
@@ -123,13 +123,27 @@ def record_reply(turn: int, reply, destinations) -> None:
                                       else f"[INTENT:{reply.intent}] {reply.text}")})
 
 
+def _emit_delivery_diagnostic(kind: str, payload: dict) -> None:
+    """Fail-open and independent for each sink; observability is optional.
+
+    File system faults, custom logging handlers and malformed tracing metadata
+    must NEVER become a delivery/voice/memory failure.
+    """
+    for sink in (summary, event):
+        try:
+            sink(kind, **payload)
+        except Exception:
+            # Deliberately no recursive LOG.warning here: logging itself failed.
+            pass
+
+
 def record_delivery(turn: int, status: str, *, destinations=(), reason="") -> None:
+    # Existing handoff statuses are historical diagnostics, not receipts.
     data = {"turn": turn, "delivery_status": status,
             "output_destinations": list(destinations)}
     if reason:
         data["reason"] = reason
-    summary("delivery_outcome", **data)
-    event("delivery_outcome", **data)
+    _emit_delivery_diagnostic("delivery_outcome", data)
 
 
 _DELIVERY_PROOFS = {
@@ -139,23 +153,28 @@ _DELIVERY_PROOFS = {
 }
 
 
-def record_delivery_evidence(turn: int, stage: str, destination: str, *,
-                             proof: str) -> None:
-    """Evidence that a *specific* transport action happened, not user receipt.
+def observe_delivery(stage: str, destination: str, *, proof: str) -> None:
+    """Passive, best-effort observation after a transport's real success.
 
-    A reply planned for a destination, or handed to a callback, is NEVER
-    counted as delivered. The only supported stages are explicit positive
-    observations from the corresponding transport. No message text or
-    personal identity is written into operational evidence.
+    This function cannot change the caller's return value or raise. It never
+    verifies what a person read or heard. Uncorrelated/unknown events are
+    discarded rather than being assigned to the wrong conversation.
     """
-    if type(turn) is not int or turn < 0 or not isinstance(stage, str) or not isinstance(destination, str):
-        raise ValueError("invalid delivery evidence")
-    if _DELIVERY_PROOFS.get((stage, destination)) != proof:
-        raise ValueError("unsupported delivery proof")
-    data = {"turn": turn, "destination": destination,
-            "delivery_stage": stage, "evidence": proof}
-    summary("delivery_evidence", **data)
-    event("delivery_evidence", **data)
+    try:
+        if _DELIVERY_PROOFS.get((stage, destination)) != proof:
+            return
+        turn = current_turn_id()
+        if turn is None:
+            return
+        _emit_delivery_diagnostic("delivery_evidence", {
+            "turn": turn,
+            "destination": destination,
+            "delivery_stage": stage,
+            "evidence": proof,
+        })
+    except Exception:
+        # Even unexpected instrumentation defects cannot break delivery.
+        pass
 
 
 def record_outcome(turn: int, outcome: str) -> None:
