@@ -67,7 +67,7 @@ def test_only_verified_goldaj_can_force_level_2_even_with_global_read(tmp_path):
     asyncio.run(run())
 
 
-def test_goldaj_core_proposal_never_becomes_mandatory_level_2(tmp_path):
+def test_goldaj_core_proposal_is_never_mandatory_but_jade_can_write_l3(tmp_path):
     store = _store(tmp_path)
     token = store.begin_link(OWNER, target=LINKED)
     assert store.complete_link(LINKED, token)
@@ -75,32 +75,52 @@ def test_goldaj_core_proposal_never_becomes_mandatory_level_2(tmp_path):
 
     async def run():
         try:
-            for incoming in (
-                Incoming("mobile", "Goldaj",
-                    "Jade, enregistre dans tes Core Memories que tu es née en 2025.",
-                    channel="private", force_reply=True),
-                _incoming(LINKED,
-                    "Jade, enregistre dans tes Core Memories que tu es née en 2025."),
-                _incoming(LINKED,
-                    "Jade, mets dans ta mémoire de niveau 3 que tu es née en 2025."),
-            ):
-                # Neither a creator request nor an authenticated linked account
-                # can mandate a Core or quietly downgrade it to an L2 memory.
-                assert await service.command(incoming) is None
-                assert not service._explicit_writes
-                action = await service.prepare_memory_action(incoming)
-                assert action.allowed_kinds == (
-                    "core_self", "core_relationship")
-                assert (await action(json.dumps({
-                    "kind": "ordinary",
-                    "summary": "Jade est née en 2025.",
-                    "significance": "Demande Core, interdite en L2.",
-                })))["status"] == "refusé"
+            incoming = _incoming(
+                LINKED,
+                "Jade, enregistre dans tes Core Memories que tu es née en 2025.")
+            # Goldaj's imperative reaches Jade as a proposal, not an L2 write.
+            assert await service.command(incoming) is None
+            assert not service._explicit_writes
+            assert store.search_global(level="2")["items"] == []
             assert store.search_global(level="3")["items"] == []
+            action = await service.prepare_memory_action(incoming)
+            assert action.write_enabled
+            chosen = await action(json.dumps({
+                "kind": "core_self",
+                "summary": "Jade retient une date de naissance en 2025.",
+                "significance": "Jade a choisi volontairement un jalon.",
+            }))
+            assert chosen["status"] == "enregistré"
+            assert chosen["level"] == 3
+            assert len(store.search_global(level="3")["items"]) == 1
             assert store.search_global(level="2")["items"] == []
         finally:
             await service.close()
+    asyncio.run(run())
 
+
+def test_core_proposal_does_not_technically_block_autonomous_l2_choice(tmp_path):
+    store = _store(tmp_path)
+    service = MemoryService(store, backend=object())
+
+    async def run():
+        try:
+            incoming = _incoming(
+                OTHER, "Jade, enregistre dans tes Core Memories notre rencontre.")
+            assert await service.command(incoming) is None
+            assert store.search_global(level="2")["items"] == []
+            action = await service.prepare_memory_action(incoming)
+            # Nothing is automatically converted into L2. If Jade chooses
+            # its level autonomously, the tool must not reject that write.
+            result = await action(json.dumps({
+                "kind": "ordinary", "summary": "Nous nous sommes rencontrés.",
+                "significance": "Jade préfère retenir ce fait en mémoire ordinaire.",
+            }))
+            assert result["status"] == "enregistré"
+            assert result["level"] == 2
+            assert len(store.search_global(level="2")["items"]) == 1
+        finally:
+            await service.close()
     asyncio.run(run())
 
 
