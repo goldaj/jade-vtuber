@@ -31,6 +31,7 @@ async function boot({ failure = false, supported = true } = {}) {
   const right = element();
   const steam = element();
   const reflection = element();
+  const kitchen = element();
   const nodes = new Map([
     [".room-plane > img", backdrop],
     [".room-curtain", curtain],
@@ -38,10 +39,12 @@ async function boot({ failure = false, supported = true } = {}) {
     [".room-shadow-right", right],
     [".room-steam", steam],
     [".room-reflection", reflection],
+    [".kitchen-effects", kitchen],
   ]);
   const scene = {
     querySelector(q) { return nodes.get(q); },
     ...element(),
+    dataset: {},
   };
   const handlers = new Map();
   const state = { hidden: false, reduced: false, intersecting: true };
@@ -76,13 +79,23 @@ async function boot({ failure = false, supported = true } = {}) {
     get naturalWidth() { return 100; }
     get naturalHeight() { return 100; }
   }
+  const roomSelect = {
+    value: "bedroom",
+    addEventListener(type, fn) { handlers.set("selector:" + type, fn); },
+  };
+  const window = {
+    location: new URL("https://jade.local/"),
+    history: { state: null, replaceState() {} },
+  };
   const doc = {
     querySelector(q) { return q === ".room-art" ? scene : null; },
+    getElementById(id) { return id === "room-selector" ? roomSelect : null; },
     get hidden() { return state.hidden; },
     addEventListener(type, fn) { handlers.set(type, fn); },
   };
   vm.runInNewContext(script, {
-    document: doc, CSS: { supports: () => supported },
+    document: doc, window, URL, URLSearchParams,
+    CSS: { supports: () => supported },
     Image: FakeImage,
     matchMedia: () => media,
     requestAnimationFrame(fn) { const id = ++nextId; frames.set(id, fn); return id; },
@@ -96,7 +109,7 @@ async function boot({ failure = false, supported = true } = {}) {
   // Flush the async Image.decode -> Promise.all -> then/catch chain.
   for (let i = 0; i < 10; i++) await Promise.resolve();
   return {
-    backdrop, curtain, left, right, steam, reflection,
+    backdrop, curtain, left, right, steam, reflection, kitchen,
     scene, state, handlers, clock,
     intersection(value) { observer?.([{ isIntersecting: value }]); },
   };
@@ -116,6 +129,7 @@ async function boot({ failure = false, supported = true } = {}) {
   assert.equal(r.left.hidden, false);
   assert.equal(r.right.hidden, false);
   assert.equal(r.steam.hidden, false);
+  assert.equal(r.kitchen.hidden, true);
   assert.ok(r.clock.pending > 0);
 
   let leftMin = Infinity, leftMax = -Infinity;
@@ -172,6 +186,7 @@ async function boot({ failure = false, supported = true } = {}) {
   assert.equal(failed.clock.pending, 0);
   assert.equal(failed.curtain.hidden, true);
   assert.equal(failed.steam.hidden, true);
+  assert.equal(failed.kitchen.hidden, true);
   const oldBrowser = await boot({ supported: false });
   assert.equal(oldBrowser.backdrop.src, "/assets/room-spring.webp");
   assert.equal(oldBrowser.clock.pending, 0);

@@ -3,8 +3,8 @@
 ## PWA · Décors interchangeables Chambre/Cuisine (22/11/2026)
 
 - Le bouton « Décor » placé sur la vue de Jade permet de choisir **Chambre** ou **Cuisine**, sans modifier ni remonter le modèle Live2D. Le choix persiste dans l’URL locale via `?room=kitchen` ; l’absence du paramètre conserve la chambre par défaut. Le sélecteur disparaît en mode plein écran immersif pour conserver le rendu uniquement Jade + décor.
-- Chambre : le décor et ses calques animés existants restent inchangés (rideau, ombres, reflets, vapeur). Cuisine : nouveau fond `room-kitchen.webp` statique, **sans aucun calque ni animation emprunté à la chambre**. Le moteur arrête la boucle d’animation de la chambre pendant l’affichage de la cuisine et la reprend au retour.
-- La recette visuelle sur Android et les animations propres à la cuisine restent à faire : aucune animation cuisine n’est promise dans ce lot.
+- Chambre : le décor et les calques animés existants restent inchangés (rideau, ombres, reflets, vapeur). Cuisine : le fond `room-kitchen.webp` reste statique avec trois types de détails animés **propres à la cuisine** : vapeur discrète de la bouilloire, fins rameaux végétaux sur trois retombées et lumière solaire lente au sol. Ce sont des calques SVG/CSS transparents ajoutés au premier plan ; les plantes peintes, armoires, fenêtre et parquet de la photo ne sont jamais déplacés ni déformés.
+- Le passage en cuisine suspend la boucle JavaScript de la chambre ; les effets cuisine sont pilotés exclusivement en CSS et désactivés dans la chambre. L'arrêt hors écran/onglet, `prefers-reduced-motion` et le fallback statique sur navigateurs sans unités de conteneur sont conservés. À vérifier sur Android : alignement des trois rameaux et de la vapeur, qualité de l'effet solaire, portrait/paysage et non-régression chambre.
 
 
 ## Splash de lancement PWA (22/11/2026)

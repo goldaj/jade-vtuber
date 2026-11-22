@@ -12,6 +12,7 @@
   const right = scene.querySelector(".room-shadow-right");
   const steam = scene.querySelector(".room-steam");
   const reflection = scene.querySelector(".room-reflection");
+  const kitchenEffects = scene.querySelector(".kitchen-effects");
   if (![backdrop, curtain, left, right, steam, reflection].every(Boolean)) return;
 
   const original = backdrop.getAttribute("src");
@@ -76,17 +77,19 @@
 
   function sync() {
     const reduced = preference.matches;
-    // Each room owns its visual layers. The bedroom renderer never paints on
-    // the kitchen, which deliberately ships without any animations yet.
+    // Bedroom retains the rAF renderer. Kitchen owns independent CSS-only accents.
     const bedroomLayers = activeRoom === "bedroom" && supportsRoomLayers && ready && !reduced;
+    const kitchenLayers = activeRoom === "kitchen" && supportsRoomLayers && !reduced;
     const source = activeRoom === "kitchen"
       ? ROOM_IMAGES.kitchen
       : (bedroomLayers ? "/assets/room-backdrop.webp" : original);
     if (backdrop.getAttribute("src") !== source) backdrop.src = source;
     for (const layer of optionalLayers) layer.hidden = !bedroomLayers;
+    if (kitchenEffects) kitchenEffects.hidden = !kitchenLayers;
 
     const running = bedroomLayers && visible && !document.hidden;
-    scene.toggleAttribute("data-paused", !running);
+    const kitchenRunning = kitchenLayers && visible && !document.hidden;
+    scene.toggleAttribute("data-paused", !(running || kitchenRunning));
     if (running && frame === null) {
       frame = requestAnimationFrame(paint);
     } else if (!running) {
