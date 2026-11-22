@@ -94,13 +94,9 @@
   Promise.all([
     loadLayer("/assets/room-backdrop.webp"),
     loadLayer("/assets/room-curtain.webp"),
-    loadLayer("/assets/room-shadow-left.webp"),
-    loadLayer("/assets/room-shadow-right.webp"),
-  ]).then(([clean, fabric, shadowLeft, shadowRight]) => {
+  ]).then(([clean, fabric]) => {
     backdrop.src = clean.src;
     curtain.src = fabric.src;
-    left.src = shadowLeft.src;
-    right.src = shadowRight.src;
     ready = true;
     sync();
   }).catch(() => {
