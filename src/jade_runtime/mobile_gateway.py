@@ -89,13 +89,15 @@ class MobileGateway:
                  vendor_dir: Path | None = None, owner_login: str | None = None,
                  public_origin: str | None = None,
                  avatar_intent_enabled: bool = True, billing_admin_key: str = "",
-                 deploy_supervisor_token: str = "", deploy_supervisor_port: int = 8770):
+                 deploy_supervisor_token: str = "", deploy_supervisor_port: int = 8770,
+                 reminder_service=None):
         if not isinstance(token, str) or len(token) < 32 or len(token) > 256:
             raise ValueError("JADE_MOBILE_TOKEN must contain 32-256 characters")
         if type(port) is not int or not 1024 <= port <= 65535:
             raise ValueError("invalid mobile port")
         self.runtime, self.services = runtime, services
         self.document_store = getattr(getattr(runtime, "document_service", None), "store", None)
+        self.reminders = reminder_service
         if owner_login is not None and (not isinstance(owner_login, str)
                                          or not 3 <= len(owner_login.strip()) <= 256
                                          or not owner_login.isascii()):
@@ -394,6 +396,70 @@ class MobileGateway:
             self.pending.pop(incoming.message_id, None)
 
     async def _post(self, writer, route: str, headers: dict, body: bytes, *, streaming=False):
+        if route in ("/api/push", "/api/reminders"):
+            if headers.get("content-type", "").split(";")[0].strip() != "application/json":
+                await self._json(writer, 400, {"error": "expected JSON"})
+                return
+            try:
+                request = json.loads(body)
+            except (UnicodeDecodeError, ValueError):
+                await self._json(writer, 400, {"error": "invalid JSON"})
+                return
+            if not isinstance(request, dict) or not isinstance(request.get("action"), str):
+                await self._json(writer, 400, {"error": "invalid action"})
+                return
+            if self.reminders is None:
+                await self._json(writer, 409, {"error": "reminders unavailable"})
+                return
+            if route == "/api/push":
+                action = request["action"]
+                if action == "config" and set(request) == {"action"}:
+                    await self._json(writer, 200, {
+                        "enabled": self.reminders.push.configured,
+                        "vapid_public_key": (self.reminders.push.public_key
+                                             if self.reminders.push.configured else ""),
+                        "reason": ("ready" if self.reminders.push.configured else
+                                   "push_not_configured"),
+                    })
+                    return
+                if not self.reminders.push.configured:
+                    await self._json(writer, 409, {"error": "push_not_configured"})
+                    return
+                try:
+                    if action == "subscribe" and set(request) == {"action", "subscription"}:
+                        await asyncio.to_thread(
+                            self.reminders.store.subscribe, request["subscription"])
+                    elif (action == "unsubscribe"
+                          and set(request) == {"action", "endpoint"}):
+                        await asyncio.to_thread(
+                            self.reminders.store.unsubscribe, request["endpoint"])
+                    else:
+                        raise ValueError("invalid push operation")
+                except (ValueError, TypeError, KeyError):
+                    await self._json(writer, 400, {"error": "invalid push subscription"})
+                    return
+                await self._json(writer, 200, {"status": "ok"})
+                return
+            action = request["action"]
+            if action == "get" and set(request) == {"action", "id"}:
+                try:
+                    item = await asyncio.to_thread(
+                        self.reminders.store.get, request["id"])
+                except (ValueError, TypeError):
+                    item = None
+                await self._json(writer, 200 if item else 404,
+                                 {"status": "ok", "reminder": item} if item
+                                 else {"error": "reminder_not_found"})
+                return
+            if set(request) != {"action", "id", "title", "due_at"}:
+                await self._json(writer, 400, {"error": "invalid reminder request"})
+                return
+            from .reminders import ReminderAction
+            result = await ReminderAction(
+                self.reminders, "mobile", "").manage_reminder(
+                    json.dumps(request, ensure_ascii=False))
+            await self._json(writer, 200 if result["status"] == "ok" else 400, result)
+            return
         if route == "/api/deployment":
             if headers.get("content-type", "").split(";")[0].strip() != "application/json":
                 await self._json(writer, 400, {"error": "expected JSON"})
@@ -663,7 +729,8 @@ class MobileGateway:
                     return
                 await self._static(writer, route)
                 return
-            if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing", "/api/metrics", "/api/deployment"):
+            if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing", "/api/metrics", "/api/deployment",
+                              "/api/push", "/api/reminders"):
                 await self._json(writer, 404, {"error": "unknown route"})
                 return
             if (headers.get("transfer-encoding") or not self._origin_allowed(headers)
@@ -679,7 +746,7 @@ class MobileGateway:
                 await self._json(writer, 400, {"error": "Content-Length required"})
                 return
             size = int(size_str)
-            max_size = MAX_WAV if route == "/api/voice" else 4096
+            max_size = MAX_WAV if route == "/api/voice" else (12288 if route == "/api/push" else 4096)
             if not 1 <= size <= max_size:
                 await self._json(writer, 413, {"error": "request too large"})
                 return
