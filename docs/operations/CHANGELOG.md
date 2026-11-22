@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — REC-039 : acceptation fonctionnelle du propriétaire, Done
+
+- **Validation explicite de Goldaj :** « je confirme et valide la recette de l'ensemble de cette US. Tout marche, tu peux mettre à done ». Les parcours PWA écrits/vocaux avaient été confirmés et les anciens échecs Discord MP, salon public écrit et vocal public sont déclarés résolus par cette recette finale réelle. Ne pas prétendre disposer de métriques ou de captures supplémentaires.
+- **Intégration :** documents générables par tout utilisateur Discord identifié par défaut (`all`), avec modes `owner` / `allowlist` optionnels et authentification PWA privée inchangée. Livraison sur `develop` au commit [`c4eba34a`](https://github.com/goldaj/jade-vtuber/commit/c4eba34a2e7427ff54aaaffff4d44457694baf3c).
+- **Statut :** `REC-039` classée **Done** à la demande du propriétaire, clôturant l'ancienne `DEV-032`. Le catalogue `NEW-16` (P2, rappels et notifications d'événements planifiés) est le prochain sujet **de qualification seulement**, non engagé en développement.
+
 ## 2026-11-22 — REC-039 : génération de fichiers ouverte par défaut
 
 - **Décision du propriétaire :** pour faciliter les essais, toute personne disposant d'une identité de transport Discord valide peut demander la génération d'un document. Mode `all` par défaut dans `DocumentService` et `Settings`, sans prérequis de liaison Goldaj ; `owner` et `allowlist` restent facultatifs. La PWA ne perd pas son authentification privée, et les événements synthétiques restent exclus.
