@@ -66,14 +66,31 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
   pointer-events:none;
   will-change:transform,opacity;
 }
-/* Native asset crop x892..1181 / y49..370, 1448x1086 source. Pivot is fixed
-   close to the curtain rings; the wooden sash belongs to the still backdrop. */
+/* Textile crop x900..1162 / y66..362; pivot close to the fixed rings.
+   Neither this texture nor its transform contains window-sash geometry. */
 .room-curtain {
-  left:61.6022%;
-  top:4.51197%;
-  width:19.9586%;
-  height:29.558%;
-  transform-origin:58% 8%;
+  left:62.1547%;
+  top:6.0773%;
+  width:18.0939%;
+  height:27.255%;
+  transform-origin:61% 7%;
+}
+.room-shadow svg {
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  filter:blur(5px);
+}
+.room-shadow .shadow-leaves {
+  fill:#78506b;
+  opacity:.48;
+}
+.room-shadow .shadow-branch {
+  fill:none;
+  stroke:#78506b;
+  stroke-width:7;
+  stroke-linecap:round;
 }
 .room-shadow-left {
   left:19.7514%;
