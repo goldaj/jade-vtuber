@@ -395,23 +395,9 @@ class MemoryService:
             return await self._search_memory(incoming, raw_arguments)
 
         action.used = False
-        core_proposal = parse_explicit_memory_intent(incoming.text)
-        # A specific Core proposal must not get silently downgraded to L2,
-        # even if the conversational LLM accidentally selects "ordinary".
-        action.allowed_kinds = (
-            ("core_self", "core_relationship")
-            if core_proposal is not None and core_proposal.requested_core
-            else ("ordinary", "core_self", "core_relationship"))
-        # An explicit Core proposal is neither a forced write nor a silent
-        # fallback to ordinary L2. Jade must make its own save/decline choice.
-        # The Responses adapter uses these per-turn flags to make the choice
-        # explicit before allowing a spoken "I saved it" confirmation.
-        action.requires_core_decision = bool(
-            core_proposal is not None and core_proposal.requested_core)
-        action.core_decision = None
-        action.monitor_core_claim = bool(re.search(
-            r"(?i)(core|m[ée]moir|souvenir|m[ée]moris|enregistr|"
-            r"conserv|reten|gard|jalon|souviens|souvenir)", incoming.text))
+        # Reading is global. Writing is voluntary and accepts either L2 or
+        # L3 whenever Jade chooses; Core proposals are never mandatory writes.
+        # The authenticated origin is retained for correct attribution.
         action.write_enabled = key is not None and person_id is not None
         action.search = search
         return action
@@ -478,10 +464,9 @@ class MemoryService:
                 or set(data) - required_fields - {"evidence"}):
             return reject("invalid_schema")
         kind = data["kind"]
-        core_proposal = parse_explicit_memory_intent(incoming.text)
-        if (core_proposal is not None and core_proposal.requested_core
-                and kind == "ordinary"):
-            return reject("core_request_cannot_be_downgraded_to_level_2")
+        # Jade decides the level autonomously. Never block L2/L3 just because
+        # the speaker used the phrase "Core Memory" in the conversation.
+        # A forced write from Goldaj still runs only in the dedicated L2 path.
         summary, significance = data["summary"], data["significance"]
         evidence = data.get("evidence", "")
         if (kind not in ("ordinary", "core_self", "core_relationship")
