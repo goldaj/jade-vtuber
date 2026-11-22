@@ -21,7 +21,7 @@
 
 **NEW-20 est maintenant suivi dans DEV-031 (P2, En cours), pour des explications d'indisponibilité sans appel LLM supplémentaire.**
 
-**DEV-032 (UX-19) est en développement sur `develop` après qualification avec le propriétaire : documents téléchargeables dans la PWA et Discord, texte et voix, autorisation et conservation 24 h. La CI et les recettes réelles restent à confirmer. DEV-033/034/035 (PER-01/02/03, images) restent « À qualifier », sans développement.** Les idées sources ont été retirées du catalogue actif. NEW-12 y est également retirée car REC-038 est Done ; NEW-19 a été écartée, NEW-30 limité aux sondages Twitch et NEW-16 reformulé en rappels/notifications.
+**DEV-032 (UX-19) → REC-039 (P2, À valider)** : l'implémentation de création et livraison de fichiers PWA/Discord, écrite et vocale, droits et expiration 24 h est intégrée dans `develop`. La [CI Linux/Windows](https://github.com/goldaj/jade-vtuber/actions/runs/45043574769) et les contrôles Responses/secrets sont verts ; seuls les essais de recette réelle restent à valider. **Aucun DEV-032 actif en parallèle.** DEV-033/034/035 (PER-01/02/03, images) restent « À qualifier », sans développement. Les idées sources ont été retirées du catalogue actif. NEW-12 est retirée car REC-038 est Done ; NEW-19 écartée, NEW-30 limité aux sondages Twitch, NEW-16 reformulé en rappels/notifications.
 
 **Quick wins engagés le 22/11 : DEV-027 (VIS-04) et DEV-028 (RTE-12) sont en développement sur `develop`.** **Élargissement validé le même jour : DEV-029 (VIS-07) en développement, DEV-030 (LAT-10) À faire.** Les idées prospectives correspondantes sont retirées de la liste active, sans duplication. La CI mémoire en cours de remise au vert est suivie séparément.
 
@@ -176,7 +176,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 
 | 85 | DEV-031 | Transverse | Explications d'indisponibilité sur demandes directes, PWA et client local (NEW-20) | [DEV](01-DEVELOPPEMENT.md) |
 
-| 86 | DEV-032 | A | Créer des documents téléchargeables dans le chat mobile (UX-19), cadrage d'abord | [DEV](01-DEVELOPPEMENT.md) |
+| 86 | REC-039 | A | Valider les fichiers téléchargeables PWA et Discord, texte et voix (UX-19, ancienne DEV-032) | [REC](02-RECETTE.md) |
 | 87 | DEV-033 | A | Réception explicite d'images fixes par Jade (PER-01) | [DEV](01-DEVELOPPEMENT.md) |
 | 88 | DEV-034 | A | Compréhension des images et du texte visible (PER-02) | [DEV](01-DEVELOPPEMENT.md) |
 | 89 | DEV-035 | A | Réactions conversationnelles contextualisées aux images (PER-03) | [DEV](01-DEVELOPPEMENT.md) |

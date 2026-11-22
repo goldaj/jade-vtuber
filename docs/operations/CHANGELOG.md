@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — DEV-032 → REC-039 : réalisation achevée, recette en attente
+
+- La [CI Linux/Windows](https://github.com/goldaj/jade-vtuber/actions/runs/45043574769) du SHA `dc8f0fb2` est entièrement verte ; les vérifications Responses API et secrets sont réussies.
+- **Décision du propriétaire :** le budget de sortie du modèle est la limite souhaitée de taille des documents ; le moteur PDF minimal est accepté. Ces deux points ne sont pas des manques de développement. La confidentialité et les cinq parcours texte/voix PWA/Discord seront évalués en recette.
+- Conformément à la règle de suivi unique, ancienne `DEV-032` retirée des DEV actives et conservée comme référence historique ; **`REC-039` (P2, À valider)** porte seule les scénarios de recette. L'index, la passation et les guides sont alignés. Aucun changement de code ni merge sur `main`.
+
 ## 2026-11-22 — DEV-032 : génération et livraison de pièces jointes (travaux sur develop)
 
 - **Cadrage validé par Goldaj** : mobile écrit/oral ; Discord MP/public écrit/vocal (chat associé) ; fichiers véritables, jamais une URL de réponse ; formats PDF/DOCX/TXT/CSV/XLSX/HTML et extensions texte explicites (.py, .js, etc.) ; ZIP de projets multi-fichiers ; Goldaj seulement par défaut via les liaisons d'identité existantes ; configuration `owner|allowlist|all` ; rétention 24 h sur tous les supports.
