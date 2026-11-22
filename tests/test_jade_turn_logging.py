@@ -10,7 +10,8 @@ from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming, Reply
 from src.jade_runtime.orchestrator import Runtime
 from src.jade_runtime.turn_logging import (
-    planned_destinations, record_input, record_reply, enable_console_logs,
+    planned_destinations, record_input, record_reply, record_delivery_evidence,
+    enable_console_logs,
 )
 
 
@@ -95,6 +96,29 @@ class TurnLoggingTests(unittest.TestCase):
         self.assertEqual(item["output_destinations"], ["discord_text"])
         self.assertEqual(item["delivery_status"], "planned_not_confirmed")
         self.assertEqual(reply.text, "Bonjour !")
+
+    def test_evidence_is_explicit_and_cannot_be_forged_by_other_destinations(self):
+        with patch("src.jade_runtime.turn_logging.summary") as summary, \
+             patch("src.jade_runtime.turn_logging.event") as event:
+            record_delivery_evidence(12, "transport_accepted", "discord_text",
+                                     proof="discord_api")
+            record_delivery_evidence(12, "playback_completed", "discord_voice",
+                                     proof="discord_audio_consumer")
+        self.assertEqual(summary.call_count, 2)
+        self.assertEqual(event.call_count, 2)
+        first = event.call_args_list[0]
+        self.assertEqual(first.args[0], "delivery_evidence")
+        self.assertEqual(first.kwargs["turn"], 12)
+        self.assertEqual(first.kwargs["destination"], "discord_text")
+        self.assertEqual(first.kwargs["delivery_stage"], "transport_accepted")
+        self.assertNotIn("text", first.kwargs)
+        for stage, destination, proof in (
+            ("transport_accepted", "mobile_text", "discord_api"),
+            ("playback_completed", "discord_voice", "twitch_irc"),
+            ("playback_completed", "local_audio", "discord_api"),
+        ):
+            with self.subTest(stage=stage, destination=destination), self.assertRaises(ValueError):
+                record_delivery_evidence(12, stage, destination, proof=proof)
 
     def test_private_dialogues_never_log_text_or_transport_identifiers(self):
         samples = [
