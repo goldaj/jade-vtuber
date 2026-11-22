@@ -6,7 +6,7 @@ from collections.abc import Awaitable, Callable
 import time
 from .dialogue import Dialogue
 from .messages import Incoming, Reply
-from .turn_logging import record_input, record_reply, record_outcome, record_delivery, record_delivery_evidence
+from .turn_logging import record_input, record_reply, record_outcome, record_delivery
 from .session_logging import bind_turn, reset_turn, event
 from .turn_arbitration import ArbitratingQueue, TurnArbiter
 from .turn_metrics import TurnMetrics, bind_metrics, reset_metrics
@@ -261,28 +261,7 @@ class Runtime:
             if reply is not None and item.valid():
                 self.mark_timing("delivery_start")
                 try:
-                    evidence = await self.on_reply(
-                        replace(reply, spoken=True) if turn is not None else reply)
-                    # Legacy callbacks return None. Structured acknowledgements
-                    # are strictly scoped to this turn's planned destinations.
-                    # Unknown fields or a claimed destination never create proof.
-                    if isinstance(evidence, dict):
-                        accepted = evidence.get("transport_accepted", ())
-                        completed = evidence.get("playback_completed", ())
-                        if isinstance(accepted, (tuple, list)):
-                            if "discord_text" in destinations and "discord_text" in accepted:
-                                record_delivery_evidence(
-                                    item.turn, "transport_accepted", "discord_text",
-                                    proof="discord_api")
-                        if isinstance(completed, (tuple, list)):
-                            for destination, proof in (
-                                ("discord_voice", "discord_audio_consumer"),
-                                ("local_audio", "ffplay_exit_zero"),
-                            ):
-                                if destination in destinations and destination in completed:
-                                    record_delivery_evidence(
-                                        item.turn, "playback_completed", destination,
-                                        proof=proof)
+                    await self.on_reply(replace(reply, spoken=True) if turn is not None else reply)
                     record_delivery(item.turn, "handoff_completed", destinations=destinations)
                 except Exception:
                     record_delivery(item.turn, "failed", destinations=destinations)
@@ -292,12 +271,6 @@ class Runtime:
             played = True
             if turn is not None:
                 played = await turn.wait()
-                # The early Discord PCM bridge returns success only once the
-                # authorized consumer has drained playback, not at enqueue.
-                if played and reply is not None and "discord_voice" in destinations:
-                    record_delivery_evidence(
-                        item.turn, "playback_completed", "discord_voice",
-                        proof="discord_audio_consumer")
                 await self.dialogue.commit_stream_response(item.message,
                                                            reply.text if played else None)
                 committed = True
