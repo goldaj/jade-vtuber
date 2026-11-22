@@ -124,6 +124,15 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     pass
 
             scopes.push_async_callback(stop_memory_retention)
+        # Persistent, verified owner continuity. No background LLM or actions.
+        cross_channel = None
+        if memory is not None:
+            from src.jade_runtime.cross_channel import CrossChannelContinuity
+            cross_channel = CrossChannelContinuity(
+                memory.store, allowed_discord_channels=config.cross_channel_discord_targets,
+                send_discord=lambda target, text: (
+                    discord_client.send_chat(target, text)
+                    if discord_client is not None else asyncio.sleep(0, result=False)))
         avatar_client = None
         if avatar:
             from src.jade_runtime.avatar import Avatar
@@ -229,7 +238,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         runtime = Runtime(dialogue, on_reply, config.max_queue,
                           on_stream_start=(start_early_voice if speech and config.early_voice else None),
                           delivery_plan=describe_delivery,
-                          memory_service=memory)
+                          memory_service=memory,
+                          cross_channel=cross_channel)
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(
