@@ -5,9 +5,10 @@ These are offline tests. They do not call Discord, OpenAI, or TTS.
 import asyncio
 import json
 
+from src.jade_runtime.memory_batch import MemoryBatcher
 from src.jade_runtime.memory_service import MemoryService
 from src.jade_runtime.memory_store import MemoryStore
-from src.jade_runtime.messages import Incoming
+from src.jade_runtime.messages import Incoming, Reply
 
 
 OWNER = ("microphone", "goldaj")
@@ -114,5 +115,35 @@ def test_unlinked_before_deferred_voice_write_revokes_self_core(tmp_path):
             assert store.recall_self_core(OWNER) == []
         finally:
             await service.close()
+
+    asyncio.run(run())
+
+
+def test_batch_curator_accepts_linked_owner_discord_voice_core_self(tmp_path):
+    """The default batched curator follows the same verified owner policy."""
+    store = _store(tmp_path)
+    _link_owner(store)
+
+    class Model:
+        async def complete(self, messages):
+            incoming_text = "Que souhaites-tu retenir de notre histoire ?"
+            return json.dumps([{
+                "index": 0, "kind": "core_self", "summary": FACT,
+                "significance": "Épisode fondateur de Jade.",
+                "evidence": incoming_text,
+            }], ensure_ascii=False)
+
+    async def run():
+        batch = MemoryBatcher(store, Model(), batch_size=1, delay_seconds=0.01)
+        try:
+            incoming = _voice(DISCORD_OWNER)
+            assert batch.schedule(
+                DISCORD_OWNER, f"discord:{incoming.channel}", incoming,
+                Reply(incoming, "J'ai choisi de retenir cette date.")
+            )
+            await asyncio.wait_for(asyncio.gather(*tuple(batch.tasks)), timeout=3)
+            assert len(store.recall_self_core(OWNER)) == 1
+        finally:
+            await batch.close()
 
     asyncio.run(run())
