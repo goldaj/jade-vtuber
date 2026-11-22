@@ -10,6 +10,7 @@ from collections import OrderedDict
 from dataclasses import replace
 
 from .session_logging import event
+from .incidents import explain_incident
 from .messages import Incoming
 from .discord_text_policy import DiscordTextPolicy
 
@@ -192,9 +193,20 @@ class DiscordText:
                             selected = replace(selected, conversation_id=linked)
                         try:
                             await parent.on_message(selected)
-                        except (asyncio.QueueFull, RuntimeError):
+                        except (asyncio.QueueFull, RuntimeError) as exc:
                             parent.dropped += 1
                             parent.policy.forget_pending(selected.channel, selected.message_id)
+                            # A full queue or stopped worker never reaches Runtime.
+                            # Only an explicitly addressed user may be notified.
+                            if selected.direct_request:
+                                try:
+                                    await asyncio.wait_for(parent.send_chat(
+                                        selected.channel, explain_incident(exc).message,
+                                        source_message_id=selected.message_id), timeout=3.0)
+                                except asyncio.CancelledError:
+                                    raise
+                                except Exception:
+                                    LOG.warning("Optional Discord incident notice unavailable")
                     elif (linked and incoming.message_id and len(incoming.text) <= 1200
                           and not incoming.text.lstrip().startswith(("!", "/", "."))):
                         # No LLM call for passive text. Its owner can resume
