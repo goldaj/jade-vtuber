@@ -8,10 +8,9 @@
 
 | ID | Priorité / nature | Proposition et conditions de réussite |
 | --- | --- | --- |
-| PER-01 | P2 / P | **Réception d'images fixes** via connecteurs compatibles : pièces jointes et images de messages, dépôt explicite d'image sur la PWA/PC, capture d'écran partagée volontairement ; prévoir un adaptateur pour les sources futures sans coupler le moteur à une plateforme. |
-| PER-02 | P2 / P | **Compréhension visuelle et textuelle** : photo, dessin, capture, texte intégré à l'image, interface, schéma ; utiliser une capacité de vision multimodale et, au besoin, une extraction de texte adaptée, en conservant les limites d'interprétation et l'incertitude. |
-| PER-03 | P2 / P | **Réaction conversationnelle contextualisée** : identifier le contenu montré, relier l'observation à la discussion, pouvoir commenter ou répondre à une question sur l'image, avec sortie sur le seul canal autorisé. Éviter les réactions non sollicitées répétitives ; permettre d'activer/désactiver les commentaires spontanés. |
 | PER-04 | P1 / C | **Consentement et périmètre** : aucune surveillance de bureau, capture de fenêtre, ingestion d'images privées ou propagation en stream par défaut ; sources explicitement autorisées, sessions isolées, limites de taille/format, politique de conservation et masquage des données sensibles. |
+
+**PER-01, PER-02 et PER-03 sont désormais dans la backlog : [DEV-033 à DEV-035](../backlog/01-DEVELOPPEMENT.md).** Réception d'images, compréhension visuelle et réactions conversationnelles sont acceptées comme besoins futurs, mais aucun développement n'est lancé. **PER-04 reste une idée distincte de contrôle du consentement** dont les exigences devront être respectées dès le cadrage de ces développements.
 
 ### Scénarios attendus
 - Un utilisateur montre à Jade une photo, un dessin ou un mème : elle peut le décrire, poser une remarque pertinente ou répondre oralement à une question si le canal est vocal.
@@ -44,4 +43,4 @@
 4. **Qualité mesurable** : pour les images, justesse et délai de réaction ; pour les vidéos, pertinence temporelle, retard entre événement et réaction, coût/minute, consommation des ressources, fausses observations, interruptions et fonctionnement simultané avec les autres canaux.
 5. **Livraison incrémentale** : commencer par quelques formats et une source image explicitement choisie ; ensuite captation vidéo échantillonnée et comparaison de fournisseurs ; ajouter l'audio synchronisé et les commentaires spontanés seulement après validation de la confidentialité et des coûts.
 
-**Statut au 18/11/2026 :** propositions documentaires uniquement. Aucun code, connecteur de capture ou abonnement facturé ajouté par cette note.
+**État au 22/11/2026 :** PER-01/02/03 transférées en DEV-033/034/035 au statut À qualifier ; les autres idées de perception restent prospectives. Aucun code, connecteur de capture ou abonnement facturé ajouté par ce transfert.
