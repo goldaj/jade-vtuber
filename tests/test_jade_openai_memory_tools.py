@@ -88,7 +88,10 @@ class OpenAIToolProtocol(unittest.IsolatedAsyncioTestCase):
         followup = provider.calls[1]["input"]
         self.assertEqual(followup[-1]["type"], "function_call_output")
         self.assertIn("enregistré", followup[-1]["output"])
-        self.assertNotIn("tools", provider.calls[1])
+        # Jade can elect another voluntary action after seeing the first result.
+        self.assertIn("tools", provider.calls[1])
+        self.assertTrue(any(tool.get("name") == "jade_save_memory"
+                            for tool in provider.calls[1]["tools"]))
 
     async def test_streamed_arguments_never_reach_voice_and_continue_normally(self):
         called = tool_call()
