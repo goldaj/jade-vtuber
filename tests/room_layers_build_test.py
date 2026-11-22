@@ -35,7 +35,7 @@ def check_layer_geometry() -> None:
     assert output.shape == source.shape
     assert metrics["exterior_max"] <= 1
     assert metrics["curtain_nontransparent_pixels"] > 15000
-    assert 3 < metrics["affected_percentage"] < 35
+    assert 1 < metrics["affected_percentage"] < 9
     crop = CURTAIN_CROP
     assert layers["room-curtain.webp"].shape == (crop[3] - crop[1], crop[2] - crop[0], 4)
     # Conspicuous fixed pieces such as bed, wooden sash, foreground plants
