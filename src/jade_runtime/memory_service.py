@@ -423,7 +423,8 @@ class MemoryService:
             summary + "\n" + significance + "\n" + evidence,
         ):
             return reject("secret_detected")
-        if kind == "core_self" and key != ("microphone", "goldaj"):
+        if (kind == "core_self" and key != ("microphone", "goldaj")
+                and not await asyncio.to_thread(self.store.is_goldaj, key)):
             return reject("core_self_not_authorized")
         level = 2 if kind == "ordinary" else 3
         try:
@@ -543,8 +544,9 @@ class MemoryService:
             # Public channels never recall memories originating in a different
             # channel, even if both messages come from the same account.
             if kind == "core_self":
-                if key != ("microphone", "goldaj"):
-                    return  # Autobiography never becomes a third-party memory.
+                if (key != ("microphone", "goldaj")
+                        and not await asyncio.to_thread(self.store.is_goldaj, key)):
+                    return  # Never write autobiography for an unlinked third party.
                 persisted = await asyncio.to_thread(
                     self.store.put_self_core, key, summary=summary,
                     significance=significance, message_id=incoming.message_id,
