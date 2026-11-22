@@ -1,7 +1,9 @@
-"""Private, opt-in, portable SQLite memory for Jade (no cloud dependency).
+"""Portable local SQLite memory for Jade (no cloud dependency).
 
-Identity comes from trusted transport IDs, NEVER nickname or spoken claim.
-Core memories have no TTL; individual memories remain removable by authorized owners.
+Retrieval is deliberately global across all speakers and channels. Trusted
+transport IDs remain attached to memories so the assistant can attribute them
+correctly, while writes/deletions keep their existing identity checks.
+Core memories have no TTL; level-1 and level-2 retain their existing TTLs.
 """
 from __future__ import annotations
 
@@ -112,7 +114,8 @@ class MemoryStore:
                     expires_at TEXT NOT NULL
                 );
                 -- Separate autobiography from person-bound relationship memories.
-                -- Global to Jade's own timeline, but initially owner-only.
+                -- Global timeline. visibility='owner_only' is a legacy
+                -- archival value; it is not a global-recall authorization gate.
                 CREATE TABLE IF NOT EXISTS jade_self_core (
                     id TEXT PRIMARY KEY,
                     summary TEXT NOT NULL,
@@ -430,12 +433,13 @@ class MemoryStore:
                       significance: str = "", message_id: str = "",
                       scope: str = "person",
                       expected_person_id: str | None = None) -> bool:
-        """Jade's own lasting episodes, owner-only until explicit promotion exists.
+        """Jade's own lasting episodes in the global autobiographical timeline.
 
         Jade may choose her own autobiographical Core from any trusted
         enrolled speaker. Nobody may mandate one. The pinned verified profile
         is rechecked atomically; public recall never crosses speaker identities.
-        No TTL, no retention purge, no copy into other people's prompt context.
+        No TTL or automatic retention purge. Global recall may include these
+        episodes in conversations with any speaker.
         """
         _validate_key(key)
         if (not isinstance(summary, str) or not 1 <= len(summary.strip()) <= 400
@@ -477,7 +481,7 @@ class MemoryStore:
             return written.rowcount > 0
 
     def recall_self_core(self, key: tuple[str, str], *, limit: int = 6) -> list[dict]:
-        """Read only for the verified Goldaj profile; never disclose to a server."""
+        """Legacy owner-scoped listing API. Jade's agent uses search_global()."""
         _validate_key(key)
         if not 1 <= limit <= 20:
             raise ValueError("invalid autobiography recall limit")
