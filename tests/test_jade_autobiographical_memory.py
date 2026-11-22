@@ -1,4 +1,4 @@
-"""Tests for Jade's global owner-only autobiography, migration and erasure."""
+"""Tests for Jade's global autobiography, source attribution, migration and erasure."""
 import asyncio
 from contextlib import closing
 import json
@@ -24,9 +24,9 @@ class Autobiography(unittest.IsolatedAsyncioTestCase):
         self.path = Path(self.temp.name) / "jade.sqlite3"
         self.store = MemoryStore(self.path)
 
-    async def test_owner_only_global_core_and_duplicate_control(self):
+    async def test_global_core_from_consented_speakers_and_duplicate_control(self):
         self.store.enable(ALICE)
-        self.assertFalse(self.store.put_self_core(ALICE, summary="Jade a appris un secret."))
+        self.assertTrue(self.store.put_self_core(ALICE, summary="Jade a appris un secret."))
         self.assertFalse(self.store.put_self_core(OWNER, summary="Jade a fini un projet."))
         self.store.enable(OWNER)
         self.assertTrue(self.store.put_self_core(
@@ -38,14 +38,14 @@ class Autobiography(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.store.recall(ALICE, "discord:22"), [])
         self.assertEqual(self.store.list_for_account(OWNER), [])
         owner = self.store.recall_self_core(OWNER)
-        self.assertEqual(len(owner), 1)
-        self.assertEqual(owner[0]["visibility"], "owner_only")
+        self.assertEqual(len(owner), 2)
+        self.assertTrue(all(m["visibility"] == "owner_only" for m in owner))
         with closing(sqlite3.connect(self.path)) as db:
             self.assertEqual(db.execute(
-                "SELECT COUNT(*) FROM jade_self_core").fetchone()[0], 1)
+                "SELECT COUNT(*) FROM jade_self_core").fetchone()[0], 2)
             self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], SCHEMA_VERSION)
 
-    async def test_personal_dialogue_reads_self_core_but_discord_does_not(self):
+    async def test_all_dialogues_read_global_self_core_with_owner_only_deletion(self):
         self.store.enable(OWNER)
         self.store.enable(ALICE)
         self.store.put_self_core(
@@ -58,8 +58,8 @@ class Autobiography(unittest.IsolatedAsyncioTestCase):
         self.assertIn("premier roman", text_mobile)
         text_public = await svc.context_for(Incoming(
             "discord", "Goldaj", "Salut", account_id="101", channel="99"))
-        self.assertNotIn("premier roman", text_public)
-        self.assertIn("réservée", (await svc.command(
+        self.assertIn("premier roman", text_public)
+        self.assertIn("premier roman", (await svc.command(
             Incoming("discord", "Alice", "!jade-memoire autobiographie",
                      account_id="101"))).text)
         await svc.close()
