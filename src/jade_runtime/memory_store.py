@@ -397,6 +397,8 @@ class MemoryStore:
                 or not isinstance(message_id, str)):
             raise ValueError("invalid Jade autobiography")
         with self._db() as db:
+            # The owner link must still exist at the instant of insertion.
+            db.execute("BEGIN IMMEDIATE")
             profile = db.execute("""
                 SELECT actor.person_id FROM identities AS actor
                 JOIN identities AS owner ON owner.person_id=actor.person_id
