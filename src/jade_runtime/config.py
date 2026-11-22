@@ -47,6 +47,14 @@ class Settings:
     tts_speed: float = 1.25
     tts_pitch_semitones: float = 2.0  # Étincelle: DSP, not an OpenAI API parameter.
     api_key: str = ""
+    # Optional web search: no external request until Jade explicitly calls the tool.
+    web_enabled: bool = False
+    web_provider: str = "tavily"
+    tavily_api_key: str = field(default="", repr=False)
+    web_log_path: str = field(default_factory=lambda: str(
+        Path(_default_memory_db_path()).with_name("jade-web-search.jsonl")))
+    web_timeout_seconds: float = 8.0
+    web_max_per_turn: int = 3
     channel: str = ""
     bot_name: str = "Jade"
     twitch_oauth: str = ""
@@ -121,6 +129,14 @@ class Settings:
             tts_speed=float(environ("JADE_TTS_SPEED", "1.25")),
             tts_pitch_semitones=float(environ("JADE_TTS_PITCH_SEMITONES", "2.0")),
             api_key=str(environ("OPENAI_API_KEY", "")),
+            web_enabled=_enabled(str(environ("JADE_WEB_ENABLED", "0")).lower()),
+            web_provider=str(environ("JADE_WEB_PROVIDER", "tavily")).strip().lower(),
+            tavily_api_key=str(environ("TAVILY_API_KEY", "")).strip(),
+            web_log_path=(str(environ("JADE_WEB_LOG_PATH", "")).strip()
+                or str(Path(str(environ("JADE_MEMORY_DB_PATH", "")).strip()
+                    or _default_memory_db_path()).with_name("jade-web-search.jsonl"))),
+            web_timeout_seconds=float(environ("JADE_WEB_TIMEOUT_SECONDS", "8")),
+            web_max_per_turn=int(environ("JADE_WEB_MAX_PER_TURN", "3")),
             channel=str(environ("TWITCH_CHANNEL", "")),
             bot_name=str(environ("BOT_NAME", "Jade")),
             twitch_oauth=str(environ("TWITCH_TOKEN", "")),
@@ -192,6 +208,16 @@ class Settings:
                 or not math.isfinite(self.tts_pitch_semitones)
                 or not -6 <= self.tts_pitch_semitones <= 6):
             raise ValueError("pitch semitones must be between -6 and 6")
+        if (type(self.web_enabled) is not bool
+                or self.web_provider not in ("tavily",)
+                or not math.isfinite(self.web_timeout_seconds)
+                or not 2 <= self.web_timeout_seconds <= 30
+                or not 1 <= self.web_max_per_turn <= 10
+                or not Path(self.web_log_path).is_absolute()
+                or Path(self.web_log_path).suffix != ".jsonl"):
+            raise ValueError("invalid web search configuration")
+        if self.web_enabled and not self.tavily_api_key:
+            raise ValueError("JADE_WEB_ENABLED needs TAVILY_API_KEY")
         if type(self.latency_logging) is not bool:
             raise ValueError("latency logging must be a boolean")
         if (self.max_history_messages < 2 or self.max_history_messages > 100

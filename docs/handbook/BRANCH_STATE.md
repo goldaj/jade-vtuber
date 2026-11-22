@@ -14,6 +14,13 @@
 
 **Tous les sept REC restent À valider**, pas `Done`. [Audit](../operations/handoffs/2026-11-22-audit-technique-fonctionnel-ci-pr38.md).
 
+## Recherche web facultative (REC-038, 22 novembre 2026)
+
+- `JADE_WEB_ENABLED=0` par défaut : aucune recherche web à l'installation ni en veille. Une fois activé, le modèle de dialogue peut appeler librement `jade_web_search` uniquement pendant un tour auquel Jade répond ; ses réponses sans recherche ne déclenchent pas d'appel supplémentaire.
+- Fournisseur actif : Tavily via l'adaptateur `src/jade_runtime/web_providers/tavily.py`, remplaçable à travers le contrat `SearchProvider`. Le moteur de dialogue, Discord, PWA et les fichiers de logs ne dépendent pas de Tavily directement.
+- Le journal `JADE_WEB_LOG_PATH` est un JSONL append-only privé (par défaut à côté de `JADE_MEMORY_DB_PATH`). Toute tentative acceptée est journalisée avant l'appel réseau avec date UTC, requête, raison explicite et provenance ; résultats, statut, coût en crédits disponible et durée sont ensuite ajoutés. Une interruption brutale peut laisser une ligne `started` sans statut final. Un échec d'écriture du journal empêche l'appel réseau.
+- Budget : maximum 3 recherches par tour par défaut, recherche `basic` et jusqu'à 5 sources ; coût IA de la continuation de l'outil distinct des crédits Tavily. Pas de compte ni de clé Tavily dans le dépôt. Les tests du vrai service et de l'intégration physique restent REC-038 `À valider`.
+
 ## Fonctions présentes
 
 | Domaine | État observé dans le code |

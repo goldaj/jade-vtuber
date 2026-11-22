@@ -33,14 +33,18 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     enable_console_logs(enable_latency=config.latency_logging)
     summary("runtime_configuration", live=live, discord=discord, discord_voice=discord_voice,
             mobile=mobile, microphone=mic, twitch=twitch, memory=config.memory_enabled,
+            web_search=bool(live and config.web_enabled),
+            web_provider=config.web_provider if config.web_enabled else None,
             early_voice=config.early_voice, llm_model=config.model,
             max_completion_tokens=config.max_completion_tokens)
     event("runtime_configuration", live=live, discord=discord, discord_voice=discord_voice,
           mobile=mobile, microphone=mic, twitch=twitch, memory=config.memory_enabled,
+          web_search=bool(live and config.web_enabled),
+          web_provider=config.web_provider if config.web_enabled else None,
           memory_curator=config.memory_curator_enabled,
           early_voice=config.early_voice, llm_model=config.model,
           reasoning_effort=config.reasoning_effort, tts_model=config.tts_model,
-           max_completion_tokens=config.max_completion_tokens)
+          max_completion_tokens=config.max_completion_tokens)
     if (voice or mic or twitch or discord or vts or discord_voice or http or mobile) and not live:
         raise ValueError("external services require --live; demo never bills OpenAI")
     if live:
@@ -240,11 +244,13 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 local_http=local_api is not None,
                 mobile=mobile_gateway is not None)
 
+        from src.jade_runtime.web_search import build_web_search_service
+        web_service = build_web_search_service(config) if live else None
         runtime = Runtime(dialogue, on_reply, config.max_queue,
                           on_stream_start=(start_early_voice if speech and config.early_voice else None),
                           delivery_plan=describe_delivery,
                           memory_service=memory,
-                          cross_channel=cross_channel)
+                          cross_channel=cross_channel, web_service=web_service)
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(

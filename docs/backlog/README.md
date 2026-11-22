@@ -6,6 +6,8 @@
 
 **Clôtures du 22/11/2026 :** `REC-021` (mémoire SQLite), `REC-025` (sauvegarde/restauration ciblée) et `REC-027` (sélection sociale hybride) sont **`Done`** par décision explicite du propriétaire. Réserves et preuves dans la [vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-021-rec-025-rec-027). `REC-020` (variantes d'intention A/B) a également été clôturée en **`Done`** sur validation explicite du propriétaire le 22/11/2026, [détails et réserves dans la vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-020).
 
+**Nouvelle fonctionnalité engagée (22/11) :** recherche Internet Tavily modulaire et journaux privés, suivie par l'unique recette **REC-038 (P1, À valider)** dans [la vue REC](02-RECETTE.md). Tests automatiques et essai physique réel distingués.
+
 ## REPRISE PRIORITAIRE — validations du 22 novembre 2026
 
 **REC-031, REC-032, REC-033 et REC-034 sont `Done`**, après acceptation explicite du propriétaire. REC-032 l'était déjà à la suite de la validation mémoire ; REC-031/033/034 viennent d'être clôturées. Les limites documentées sont **acceptées pour cette version et ne sont pas déclarées corrigées**.
@@ -95,7 +97,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 22 | DEV-003 | A | Corriger la sortie indésirable du repli WAV s'il se produit réellement | [DEV](01-DEVELOPPEMENT.md) |
 | 23 | REC-034 | Transverse | Mesure du temps réellement perçu, du coût et des p50/p95 par canal | [REC](02-RECETTE.md) |
 
-### P1 · 46 tâches
+### P1 · 47 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
@@ -145,21 +147,22 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 67 | REC-028 | ECO | Initiatives spontanées sur événement sans relance si ignorée | [REC](02-RECETTE.md) |
 | 68 | REC-029 | ECO | Audio mobile PCM WebSocket et réponse progressive | [REC](02-RECETTE.md) |
 | 69 | REC-030 | ECO | VAD locale et annulation mobile | [REC](02-RECETTE.md) |
+| 70 | REC-038 | A | Recherche Internet Tavily interchangeable et journal privé exhaustif | [REC](02-RECETTE.md) |
 
 ### P2 · 10 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 70 | REC-032 | Transverse | Recherche de souvenirs ciblée, pertinente et sécurisée | [REC](02-RECETTE.md) |
-| 71 | REC-035 | Transverse | Compréhension des apartés et fils de discussion de groupe | [REC](02-RECETTE.md) |
-| 72 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
-| 73 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
-| 74 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
-| 75 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
-| 76 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
-| 77 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
-| 78 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
-| 79 | REC-037 | Transverse | Choisir une branche Git et redéployer/redémarrer Jade depuis l'application mobile | [REC](02-RECETTE.md) |
+| 71 | REC-032 | Transverse | Recherche de souvenirs ciblée, pertinente et sécurisée | [REC](02-RECETTE.md) |
+| 72 | REC-035 | Transverse | Compréhension des apartés et fils de discussion de groupe | [REC](02-RECETTE.md) |
+| 73 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
+| 74 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
+| 75 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
+| 76 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
+| 77 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
+| 78 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
+| 79 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
+| 80 | REC-037 | Transverse | Choisir une branche Git et redéployer/redémarrer Jade depuis l'application mobile | [REC](02-RECETTE.md) |
 
 ### Décision classée sans suite (hors liste de priorisation)
 
