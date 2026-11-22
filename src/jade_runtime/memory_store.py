@@ -16,7 +16,7 @@ import uuid
 
 from .session_logging import event
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 CONVERSATION_RETENTION_DAYS = 7
 CONVERSATION_RELOAD_HOURS = 24
 ORDINARY_RETENTION_DAYS = 365
@@ -72,7 +72,7 @@ class MemoryStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._db() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3, 4, 5, 6, SCHEMA_VERSION):
+            if version not in (0, 1, 2, 3, 4, 5, 6, 7, SCHEMA_VERSION):
                 raise RuntimeError("unsupported Jade memory schema; migrate before starting")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS persons (
@@ -147,6 +147,8 @@ class MemoryStore:
                     scope TEXT NOT NULL,
                     source_platform TEXT NOT NULL,
                     source_message_id TEXT,
+                    source_account_id TEXT NOT NULL DEFAULT '',
+                    source_author_name TEXT NOT NULL DEFAULT '',
                     user_content TEXT NOT NULL,
                     assistant_content TEXT NOT NULL,
                     created_at TEXT NOT NULL,
@@ -217,6 +219,17 @@ class MemoryStore:
                     SELECT id,source_platform,source_account_id,source_scope
                     FROM jade_self_core
                 """)
+            if version < 8:
+                # Preserve the actual sender on every new conversation turn.
+                # Old rows cannot reliably reconstruct their sender account.
+                columns = {row["name"] for row in db.execute(
+                    "PRAGMA table_info(conversation_turns)").fetchall()}
+                if "source_account_id" not in columns:
+                    db.execute("ALTER TABLE conversation_turns "
+                               "ADD COLUMN source_account_id TEXT NOT NULL DEFAULT ''")
+                if "source_author_name" not in columns:
+                    db.execute("ALTER TABLE conversation_turns "
+                               "ADD COLUMN source_author_name TEXT NOT NULL DEFAULT ''")
             db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
         # Purge expired rows on open, including DBs created before this policy.
         self.prune_expired()
@@ -769,7 +782,8 @@ class MemoryStore:
 
     def append_conversation_turn(self, key: tuple[str, str], scope: str, *,
                                  source_platform: str, message_id: str,
-                                 user_content: str, assistant_content: str) -> bool:
+                                 user_content: str, assistant_content: str,
+                                 source_author_name: str = "") -> bool:
         """Persist a complete delivered turn only for an opted-in verified person.
 
         A blank transport message ID is stored as NULL so consecutive local turns
@@ -791,9 +805,11 @@ class MemoryStore:
             changed = db.execute("""
                 INSERT OR IGNORE INTO conversation_turns
                   (person_id,scope,source_platform,source_message_id,
+                   source_account_id,source_author_name,
                    user_content,assistant_content,created_at)
-                VALUES (?,?,?,?,?,?,?)
+                VALUES (?,?,?,?,?,?,?,?,?)
             """, (row["person_id"],scope,source_platform,message_id or None,
+                  key[1],source_author_name[:120],
                   user_content,assistant_content,_now().isoformat())).rowcount
             return bool(changed)
 
