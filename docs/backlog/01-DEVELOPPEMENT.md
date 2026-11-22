@@ -2,7 +2,7 @@
 
 **Branche :** develop · **Révision :** 22 novembre 2026 · **Type :** DEV.
 
-Au relevé du 18 novembre, aucune issue/PR de développement ouverte ; un lot de quick wins a été réalisé le 19 novembre sur une branche dédiée et soumis à validation après CI verte. **DEV-004** couvre le correctif P0 des sous-titres OBS ; il ne remplace pas la recette physique **REC-005**. Les fonctionnalités existantes ne sont pas à recoder. Ce tableau distingue un travail futur **déjà nécessaire pour livrer le r21** des **anomalies candidates qui ne deviennent du développement qu'après reproduction en recette**. Six améliorations ont été développées et intégrées via PR #38, puis transférées en REC-031 à REC-036, et DEV-020 en REC-037. Les recettes déjà codées restent suivies dans les vues REC ; **DEV-010 est Done** après validation explicite du propriétaire le 22/11/2026 (PR #40 intégrée) ; **OPS-015 reste À faire**.
+Au relevé du 18 novembre, aucune issue/PR de développement ouverte ; un lot de quick wins a été réalisé le 19 novembre sur une branche dédiée et soumis à validation après CI verte. **DEV-004** couvre le correctif P0 des sous-titres OBS ; il ne remplace pas la recette physique **REC-005**. Les fonctionnalités existantes ne sont pas à recoder. Ce tableau distingue un travail futur **déjà nécessaire pour livrer le r21** des **anomalies candidates qui ne deviennent du développement qu'après reproduction en recette**. Six améliorations ont été développées et intégrées via PR #38, puis transférées en REC-031 à REC-036, et DEV-020 en REC-037. Les recettes déjà codées restent suivies dans les vues REC ; **DEV-010 est Done** après validation explicite du propriétaire le 22/11/2026 (PR #40 intégrée) ; **OPS-015 est Bloqué** en attente de tokens Codex, par décision du propriétaire le 22/11/2026.
 
 **Priorité :** valeur et dépendances, pas un engagement de calendrier. **DoD officielle :** [règle de clôture commune](DEFINITION_OF_DONE.md). La situation initiale décrit le constat technique ; seul **Statut** indique l'avancement. Les critères spécifiques restent distincts de la DoD. **Validation positive par Codex (tout modèle ou sous-agent) OU par le propriétaire**, sans double approbation.
 
@@ -28,7 +28,7 @@ Au relevé du 18 novembre, aucune issue/PR de développement ouverte ; un lot de
 **Règle de livraison :** les spécifications initiales des DEV-021 à DEV-026 sont conservées intégralement dans [REC-031 à REC-036](02-RECETTE.md) ; DEV-020 est suivie en REC-037. Les anciennes cartes DEV ne sont plus actives, sans déclaration `Done`.
 
 ## Transfert PR #38 (22/11/2026)
-**Sans doublon :** DEV-021→REC-031, DEV-022→REC-032, DEV-023→REC-033, DEV-024→REC-034, DEV-025→REC-035, DEV-026→REC-036 et DEV-020→REC-037. Toutes **À valider**, réserves connues conservées. DEV-010 est **Done** (validation propriétaire du 22/11/2026) ; OPS-015 demeure **À faire**.
+**Sans doublon :** DEV-021→REC-031, DEV-022→REC-032, DEV-023→REC-033, DEV-024→REC-034, DEV-025→REC-035, DEV-026→REC-036 et DEV-020→REC-037. Toutes **À valider**, réserves connues conservées. DEV-010 est **Done** (validation propriétaire du 22/11/2026) ; OPS-015 demeure **Bloqué** (en attente de tokens Codex).
 
 ## Historique des transferts vers REC (21/11/2026)
 
