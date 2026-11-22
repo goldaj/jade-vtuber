@@ -12,7 +12,7 @@ from src.jade_runtime.messages import Incoming
 from src.jade_runtime.responses_chat import ResponsesChat
 from src.jade_runtime.web_search import (
     SearchHit, SearchJournal, SearchResponse, ToolActions,
-    WebSearchService, build_web_search_service,
+    WebSearchService, build_web_search_service, WEB_PROMPT,
 )
 from src.jade_runtime.web_providers.tavily import TavilyProvider
 
@@ -207,6 +207,16 @@ class ToolTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(entries[1]["error_type"], "RuntimeError")
         self.assertNotIn("private-header-token-should-not-appear",
                          self.path.read_text(encoding="utf-8"))
+
+
+class WebPromptBehaviorTests(unittest.TestCase):
+    def test_source_urls_are_optional_in_user_facing_answers(self):
+        # Documentation of the product policy, independent of provider output.
+        self.assertIn("ne joins PAS automatiquement de liens", WEB_PROMPT)
+        self.assertIn("demande explicitement un lien", WEB_PROMPT)
+        self.assertIn("Ne prononce aucune URL à l'oral", WEB_PROMPT)
+        self.assertIn("journal de recherche", WEB_PROMPT)
+        self.assertNotIn("cite les URL utiles", WEB_PROMPT)
 
 
 class TavilyProviderTests(unittest.IsolatedAsyncioTestCase):

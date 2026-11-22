@@ -1,5 +1,12 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Recherche web : réponses naturelles sans rafale d'URL
+
+- **Retour propriétaire :** Jade ajoutait trop souvent les liens des pages Tavily dans ses réponses, parce que `WEB_PROMPT` l'encourageait à citer les URL.
+- **Correction ciblée :** dans `src/jade_runtime/web_search.py`, aucune URL ou liste de liens par défaut. Un lien n'est fourni que sur demande explicite ou s'il est indispensable à l'action, avec le strict minimum. À l'oral, aucun lien prononcé sauf demande.
+- **Sans régression de la recherche :** les pages consultées restent attribuées et journalisées en JSONL avec leurs URL ; ni adaptateur Tavily ni protocole de recherche modifiés.
+- **Contrôle :** nouvelle assertion de politique dans `tests/test_jade_web_search.py` ; CI hors ligne à consulter après push. La recette REC-038 réelle sur le PC reste `À valider`.
+
 ## 2026-11-22 — Recherche Internet Tavily interchangeable et journal privé
 
 - **Décision produit :** recherche web facultative à la demande explicite du modèle conversationnel, sans recherche en veille. Désactivée tant que `JADE_WEB_ENABLED=1` et une clé Tavily privée ne sont pas configurés.

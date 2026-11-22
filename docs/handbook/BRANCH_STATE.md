@@ -20,6 +20,7 @@
 - Fournisseur actif : Tavily via l'adaptateur `src/jade_runtime/web_providers/tavily.py`, remplaçable à travers le contrat `SearchProvider`. Le moteur de dialogue, Discord, PWA et les fichiers de logs ne dépendent pas de Tavily directement.
 - Le journal `JADE_WEB_LOG_PATH` est un JSONL append-only privé (par défaut à côté de `JADE_MEMORY_DB_PATH`). Toute tentative acceptée est journalisée avant l'appel réseau avec date UTC, requête, raison explicite et provenance ; résultats, statut, coût en crédits disponible et durée sont ensuite ajoutés. Une interruption brutale peut laisser une ligne `started` sans statut final. Un échec d'écriture du journal empêche l'appel réseau.
 - Budget : maximum 3 recherches par tour par défaut, recherche `basic` et jusqu'à 5 sources ; coût IA de la continuation de l'outil distinct des crédits Tavily. Pas de compte ni de clé Tavily dans le dépôt. Les tests du vrai service et de l'intégration physique restent REC-038 `À valider`.
+- **Politique de réponse web :** Jade synthétise les résultats sans exposer par défaut les URL ou les listes de sources ; lien unique/minimal sur demande explicite ou nécessité directe, et pas d'URL prononcée à l'oral sans demande. Les URL restent présentes dans le journal persistant.
 
 ## Fonctions présentes
 
