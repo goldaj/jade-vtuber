@@ -38,7 +38,7 @@ RESPONSES_MEMORY_SEARCH_TOOL = {
     "type": "function",
     **MEMORY_SEARCH_TOOL["function"],
 }
-MAX_MEMORY_TOOL_ROUNDS = 6
+MAX_MEMORY_TOOL_ROUNDS = 12
 
 
 def _field(item, name, default=None):
@@ -208,7 +208,11 @@ class ResponsesChat:
             "store": False,
         }
         if with_tools:
-            available_tools = [RESPONSES_MEMORY_TOOL]
+            # Reading the global memory needs no personal enrollment, but
+            # saving still uses the verified speaker's own write profile.
+            available_tools = []
+            if getattr(memory_action, "write_enabled", True):
+                available_tools.append(RESPONSES_MEMORY_TOOL)
             if callable(getattr(memory_action, "search", None)):
                 available_tools.append(RESPONSES_MEMORY_SEARCH_TOOL)
             params.update(
