@@ -65,6 +65,14 @@ class TurnMetrics:
         current["stages"].setdefault(stage, round(
             (self.clock() - current["queued_at"]) * 1000, 1))
 
+    def duration(self, turn, stage, milliseconds):
+        """A known pre-runtime duration; not a pseudo wall-clock timestamp."""
+        current = self.pending.get(turn)
+        if (current is not None and stage in ("stt_duration",)
+                and type(milliseconds) in (int, float)
+                and math.isfinite(milliseconds) and milliseconds >= 0):
+            current["stages"].setdefault(stage, round(milliseconds, 1))
+
     def add_tokens(self, turn, *, input_tokens, output_tokens):
         current = self.pending.get(turn)
         if current is None:
