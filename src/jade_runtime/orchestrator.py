@@ -69,6 +69,8 @@ class Runtime:
         self.metrics.begin(item.turn, message.platform,
                            "voice" if message.platform in ("discord_voice", "microphone")
                            else message.input_modality, item.queued_at)
+        if message.preprocess_ms is not None:
+            self.metrics.duration(item.turn, "stt_duration", message.preprocess_ms)
         return item
 
     def cancel_work(self, item):
