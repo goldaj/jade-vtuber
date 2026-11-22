@@ -506,8 +506,12 @@ class MobileGateway:
             stream_started = False
             try:
                 async with asyncio.timeout(self.request_timeout):
+                    stt_duration_ms = None
                     if modality == "voice":
+                        stt_started_at = time.monotonic()
                         text = (await self.services.transcribe_wav(body)).strip()
+                        stt_duration_ms = round(
+                            (time.monotonic() - stt_started_at) * 1000, 1)
                         if not text or len(text) > 1200:
                             await self._json(writer, 400, {"error": "transcription unavailable"})
                             return
@@ -516,6 +520,7 @@ class MobileGateway:
                         channel=session, message_id=secrets.token_hex(16),
                         text=text, force_reply=True,
                         input_modality=modality,
+                        preprocess_ms=stt_duration_ms,
                         requested_speech=(speak_header == "1" if modality == "voice"
                                           else request["speak"]),
                     )
