@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — DEV-010 : décor mobile vivant (rideau, fumée, ombres)
+
+- **Animation :** rideau extrait en WebP transparent et animé autour des attaches, reconstruction stationnaire des pixels occultés, feuillage SVG sur deux plans avec vent commun à plusieurs fréquences, volutes SVG de vapeur bien plus amples et reflets conservés.
+- **Performance et accessibilité :** transformations et opacité pilotées au maximum à 30 mises à jour DOM/s, pause hors écran/onglet caché, respect de `prefers-reduced-motion`, retour intégral à l'illustration fixe si une couche ne se charge pas. Aucune API ou dépense IA supplémentaire.
+- **Qualité :** génération hors ligne reproductible de deux calques (`room-backdrop.webp` 247 534 octets et `room-curtain.webp` 49 110 octets au dernier relevé de l'étude, valeurs susceptibles d'évoluer), tests Node (amplitudes, cycle de vie, repli) et Python (géométrie et intégrité WebP) réussis sur [la branche isolée](https://github.com/goldaj/jade-vtuber/actions/runs/45025747344). Scanner de secrets PR #40 vert. Les suites CI générales demeurent rouges sur les **mêmes erreurs mémoire déjà présentes sur `develop`** avant cette PR ([baseline](https://github.com/goldaj/jade-vtuber/actions/runs/45024566506)).
+- **Backlog :** DEV-010 passe de `À faire` à `À valider`, car l'essai visuel réel sur Android, différents cadrages et mouvement réduit reste nécessaire avant clôture. La peinture du fond derrière le tissu est une approximation prudente et peut bénéficier d'une retouche artistique dédiée.
+- **Revue :** [expertises simulées, coûts et réserves](handoffs/2026-11-22-dev010-living-room-design.md). Aucune modification des moteurs de conversation, de mémoire, de l'avatar, des secrets, ni de `main`.
+
 ## 2026-11-22 — UX-19 : documents téléchargeables dans le chat mobile (idée P2)
 
 - **Décision propriétaire :** création de **UX-19 (P2 / P)** dans le seul catalogue des améliorations prospectives, pour permettre à Jade de générer des documents et de les envoyer comme pièces jointes téléchargeables directement dans le chat de la PWA mobile.
