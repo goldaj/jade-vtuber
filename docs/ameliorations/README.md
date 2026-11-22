@@ -6,7 +6,7 @@
 
 - **192 idées initialement identifiées** dans 11 thèmes le 21/11/2026 (dont ajouts du 20 et du 21 novembre).
 - **83 entrées retirées du catalogue actif** le 22/11/2026 : six transférées dans DEV, les autres déjà couvertes par une carte de backlog, par le code actuellement livré, ou absorbées dans une autre idée prospective conservée. Le détail des décisions figure dans [la passation de dédoublonnage](../operations/handoffs/2026-11-22-catalogue-dedoublonnage.md).
-- **109 idées prospectives après le dédoublonnage**, puis **4 perspectives complémentaires différées** et une idée mobile additionnelle consignées le 22/11/2026 : **114 idées actives avant les deux présentes inscriptions**. Avec **L2D-01 (P1)** et **NEW-38 (P2)** : **116 idées prospectives actives avant promotion de VIS-04 et RTE-12** ; après leur transfert explicite en DEV-027 et DEV-028 le 22/11/2026 : **110 idées prospectives actives, dans 11 thèmes**, après promotion supplémentaire de VIS-07 et LAT-10 vers DEV-029/DEV-030. Les identifiants retirés ne sont **pas** réattribués ; la version précédente reste consultable dans l'historique Git.
+- **109 idées prospectives après le dédoublonnage**, puis **4 perspectives complémentaires différées** et une idée mobile additionnelle consignées le 22/11/2026 : **114 idées actives avant les deux présentes inscriptions**. Avec **L2D-01 (P1)** et **NEW-38 (P2)** : **116 idées prospectives actives avant promotion de VIS-04 et RTE-12** ; après leur transfert explicite en DEV-027 et DEV-028 le 22/11/2026 : **110 idées prospectives après les retraits précédents**, puis **104 idées actives dans 11 thèmes** après les six nouvelles décisions (retraits NEW-12 et NEW-19 ; promotions UX-19 et PER-01/02/03), après promotion supplémentaire de VIS-07 et LAT-10 vers DEV-029/DEV-030. Les identifiants retirés ne sont **pas** réattribués ; la version précédente reste consultable dans l'historique Git.
 - Les six idées promues ont été codées via PR #38 et suivies désormais dans **`RTE-15 → REC-031`, `NRM-10 → REC-032`, `MEM-01 → REC-033`, `LAT-01 → REC-034`, `NEW-17 → REC-035`, `NEW-36 → REC-036`**, toutes À valider. Les ID DEV-021 à DEV-026 sont historiques.
 
 ## Idées encore actives par thème
@@ -18,17 +18,28 @@
 | Canaux, concurrence | [03-CANAUX-ROUTAGE.md](03-CANAUX-ROUTAGE.md) | 10 | Routeur de sortie, tour non bloquant, annulation étendue, livraison, extensions Discord et intentions intercanaux avancées |
 | Avatar, visibilité | [04-AVATAR-VISIBILITE.md](04-AVATAR-VISIBILITE.md) | 8 | Rendu conditionnel à la visibilité, filtrage par audience et économies GPU |
 | Architecture IA | [05-ARCHITECTURE-IA.md](05-ARCHITECTURE-IA.md) | 9 | Moteurs/fournisseurs échangeables, contrats de modules, tests et comparaison de modèles |
-| Produit, mobile | [06-PRODUIT-MOBILE.md](06-PRODUIT-MOBILE.md) | 5 | Reconnexion, Authenticator, client alternatif, solde prépayé et génération de documents téléchargeables dans le chat mobile |
+| Produit, mobile | [06-PRODUIT-MOBILE.md](06-PRODUIT-MOBILE.md) | 4 | Reconnexion, Authenticator, client alternatif et solde prépayé ; UX-19 désormais dans la backlog |
 | Qualité, exploitation | [07-QUALITE-EXPLOITATION.md](07-QUALITE-EXPLOITATION.md) | 5 | Protection des anciennes archives, robustesse CI, tableau de supervision, rollback, exploitation Windows |
 | Pilotage volontaire du modèle 2D | [08-MODELE-2D.md](08-MODELE-2D.md) | 1 | Commandes choisies par Jade, connaissance du résultat et arbitrage avec les animations automatiques |
-| Perception multimodale | [09-PERCEPTION-MULTIMODALE.md](09-PERCEPTION-MULTIMODALE.md) | 10 | Photos, capture consentie, vidéo, temporalité, réactions et budgets |
+| Perception multimodale | [09-PERCEPTION-MULTIMODALE.md](09-PERCEPTION-MULTIMODALE.md) | 7 | Consentement des images, sources vidéo, temporalité, réactions live et budgets ; PER-01/02/03 désormais en backlog |
 | Données et normalisation | [10-NORMALISATION-DONNEES-MEMOIRE.md](10-NORMALISATION-DONNEES-MEMOIRE.md) | 10 | Contrats d'événements, données structurées, provenance, migrations |
-| Capacités et comportement | [11-CAPACITES-COMPORTEMENT-CONTROLE.md](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | 32 | Sécurité, outils, vie sociale avancée, autonomie, registre des actions et connaissance des opérations exécutées |
-| **Total** | | **110** | |
+| Capacités et comportement | [11-CAPACITES-COMPORTEMENT-CONTROLE.md](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | 30 | Sécurité, outils, vie sociale avancée, autonomie, registre des actions et connaissance des opérations exécutées |
+| **Total** | | **104** | |
 
 **Décision supplémentaire du 22/11/2026 :** NEW-20 est transférée dans [DEV-031](../backlog/01-DEVELOPPEMENT.md) (explications d'indisponibilité), tandis que NEW-25 (proposition multilingue) a été **abandonnée** à la demande du propriétaire. Une recherche sur les 11 thèmes n'a trouvé aucune autre proposition de fonctionnalité multilingue à retirer. Les fonctions et contenus existants ne sont pas modifiés par cette décision.
 
 **Quick wins transférés au backlog le 22/11/2026 :** VIS-04 → [DEV-027](../backlog/01-DEVELOPPEMENT.md) et RTE-12 → [DEV-028](../backlog/01-DEVELOPPEMENT.md). Il reste **21 idées P1** et aucune idée P0 dans le catalogue prospectif. Les lignes retirées restent visibles dans l'historique Git, sans réutiliser leurs identifiants. Les nouveaux transferts du même jour sont **VIS-07 → [DEV-029](../backlog/01-DEVELOPPEMENT.md)** et **LAT-10 → [DEV-030](../backlog/01-DEVELOPPEMENT.md)** ; seul DEV-029 a commencé.
+
+## Décisions produit supplémentaires du 22 novembre 2026
+
+- **NEW-12 retirée** du catalogue actif : fonctionnalité de recherche Internet déjà livrée, tracée et validée en [REC-038](../backlog/02-RECETTE.md) (Done). Il n'y a pas de seconde idée de recherche à développer.
+- **NEW-19 abandonnée** : Jade doit conserver **une seule personnalité**, sans profils personnels concurrents selon les canaux. Les règles de confidentialité et de diffusion propres aux canaux ne sont pas des personas.
+- **NEW-30 recentrée exclusivement sur les sondages Twitch** ; aucun quiz, mini-jeu, devinette ou sondage Discord. L'idée reste prospective et le développement Twitch reste suspendu.
+- **NEW-16 reformulée en rappels et notifications d'événements** : informer au bon moment via message Discord adressé au canal/MP autorisé ou, si techniquement réalisable et consenti, notification mobile.
+- **UX-19 → [DEV-032](../backlog/01-DEVELOPPEMENT.md)** : pièces jointes et documents téléchargeables dans le chat PWA. **PER-01/02/03 → [DEV-033/034/035](../backlog/01-DEVELOPPEMENT.md)** : recevoir, comprendre et commenter des images. Quatre cartes P2 **À qualifier**, rien n'est développé avant cadrage. UX-19 est la première à discuter avec le propriétaire.
+- **Règle du propriétaire :** une idée transférée en backlog ou explicitement écartée est immédiatement retirée des **lignes actives** du catalogue et de ses décomptes. Son identifiant reste traçable dans l'historique Git et les passations, mais **ne doit plus être proposée comme idée en attente**.
+
+**Bilan : 104 idées actives**, dont **21 P1**, et **89 cartes de backlog**, dont quatre nouvelles à qualifier. [Passation détaillée](../operations/handoffs/2026-11-22-chatgpt-ux19-perceptions-catalogue.md).
 
 ## Évolutions différées acceptées le 22/11/2026
 
