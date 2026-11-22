@@ -4,7 +4,7 @@
 
 **Recettes automatisées du 21/11/2026 :** `REC-021` et `REC-025` ont maintenant **des tests d'acceptation exécutés avec succès sous Linux et Windows**, [CI sur le SHA `955ca2e255`](https://github.com/goldaj/jade-vtuber/actions/runs/44947197393). **Mise à jour du 22/11/2026 :** les deux cartes sont maintenant **`Done` sur validation expresse du propriétaire**, avec réserves documentées ; aucune inspection nouvelle des archives privées n'est affirmée pour REC-025. La vue [REC](02-RECETTE.md#compte-rendu-des-recettes-automatiques-rec-021-et-rec-025-21-novembre-2026) décrit les preuves.
 
-**Clôtures du 22/11/2026 :** `REC-021` (mémoire SQLite), `REC-025` (sauvegarde/restauration ciblée) et `REC-027` (sélection sociale hybride) sont **`Done`** par décision explicite du propriétaire. Réserves et preuves dans la [vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-021-rec-025-rec-027). `REC-020` demeure **`À valider`** et est sans lien avec ces clôtures.
+**Clôtures du 22/11/2026 :** `REC-021` (mémoire SQLite), `REC-025` (sauvegarde/restauration ciblée) et `REC-027` (sélection sociale hybride) sont **`Done`** par décision explicite du propriétaire. Réserves et preuves dans la [vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-021-rec-025-rec-027). `REC-020` (variantes d'intention A/B) a également été clôturée en **`Done`** sur validation explicite du propriétaire le 22/11/2026, [détails et réserves dans la vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-020).
 
 ## REPRISE PRIORITAIRE — première lecture au prochain token Codex
 
