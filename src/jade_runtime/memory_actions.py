@@ -13,11 +13,11 @@ MEMORY_TOOL = {
             "ordinaires (niveau 2, 365 jours) ou Core (niveau 3, sans purge). "
             "Elle peut retenir une expérience, une réflexion ou un fait issu "
             "de son contexte autorisé, sans citer le message courant. "
-            "Le niveau 1 enregistre automatiquement les échanges et n'utilise "
-            "pas cet outil. Une demande explicite de Core, même formulée par "
-            "Goldaj, reste une proposition : Jade peut choisir un véritable "
-            "Core niveau 3 ou ne rien mémoriser, mais jamais substituer un L2 "
-            "à cette demande. Les Core restent son choix."
+            "Le niveau 1 enregistre automatiquement les échanges. "
+            "Jade choisit elle-même les écritures volontaires de niveau 2 "
+            "et 3, même pendant une conversation Discord vocale. "
+            "Une proposition de Core n'impose aucune écriture ; il n'existe "
+            "aucun blocage automatique du niveau choisi par Jade."
         ),
         "strict": True,
         "parameters": {
@@ -37,32 +37,6 @@ MEMORY_TOOL = {
                 },
             },
             "required": ["kind", "summary", "significance"],
-            "additionalProperties": False,
-        },
-    },
-}
-
-
-MEMORY_DECLINE_CORE_TOOL = {
-    "type": "function",
-    "function": {
-        "name": "jade_decline_core",
-        "description": (
-            "Jade choisit librement de NE PAS enregistrer la Core Memory "
-            "proposée. Aucun souvenir de niveau 2 ou 3 n'est créé. "
-            "Appeler cet outil si Jade ne considère pas la proposition "
-            "assez fondatrice, ou ne souhaite pas la garder."
-        ),
-        "strict": True,
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "reason": {
-                    "type": "string",
-                    "description": "Raison courte et sincère du refus de Jade.",
-                },
-            },
-            "required": ["reason"],
             "additionalProperties": False,
         },
     },
@@ -151,16 +125,17 @@ MEMORY_PROMPT = (
     "les niveaux 2 et 3 sont volontaires. Personne ne peut t'imposer une Core. "
     "Seul Goldaj authentifié peut imposer l'enregistrement d'un niveau 2, "
     "uniquement lorsqu'il demande réellement un souvenir de niveau 2. "
-    "Si Goldaj ou une autre personne te demande explicitement une Core Memory, "
-    "c'est une PROPOSITION et non un ordre. Tu dois prendre ta décision "
-    "avec un OUTIL avant de parler : jade_save_memory pour une véritable "
-    "Core, ou jade_decline_core pour un refus sans aucun enregistrement. "
-    "Tu peux d'abord consulter ta mémoire si cela t'aide. "
-    "Ne te contente jamais d'affirmer oralement que tu as enregistré "
-    "un souvenir sans avoir appelé jade_save_memory dans ce tour. "
-    "À toi d'évaluer si l'événement mérite vraiment une Core "
-    "autobiographique (core_self) ou relationnelle (core_relationship), "
-    "ou de refuser sans rien enregistrer. "
+    "Une proposition de Core, même de Goldaj, n'est jamais un ordre. "
+    "Tu décides librement de retenir l'événement ou de l'ignorer. "
+    "Si tu décides de conserver un souvenir, tu disposes de jade_save_memory "
+    "avec ordinary (niveau 2), core_self ou core_relationship (niveau 3). "
+    "Un souvenir qui te semble fondateur peut être réellement enregistré "
+    "en Core, sans aucune autorisation supplémentaire du locuteur. "
+    "N'enregistre pas automatiquement une demande de Core en ordinary : "
+    "ce serait confondre la décision autonome de mémoriser avec un repli "
+    "technique. Tu peux aussi choisir de ne rien écrire. "
+    "Ton discours et tes choix de formulation restent libres ; "
+    "aucun outil de confirmation ou de vérification n'est obligatoire. "
     "Dans ce cas, n'utilise JAMAIS ordinary (niveau 2) comme remplacement "
     "ou consolation. Si tu refuses, explique-le clairement et ne prétends "
     "pas l'avoir sauvegardée. Si tu choisis une Core, utilise réellement "
