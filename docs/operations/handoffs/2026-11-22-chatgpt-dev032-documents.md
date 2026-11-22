@@ -3,6 +3,10 @@
 ## Objectif validé par Goldaj
 Pièce jointe téléchargeable sur demande explicite : mobile texte / oral (oral + réponse écrite), Discord MP texte, salon texte, vocal (oral + chat texte natif au même salon). Goldaj seul par défaut avec son lien de compte Discord préexistant ; droits futurs configurables ; format explicite respecté, HTML par défaut pour code/site non précisé, ZIP multi-fichiers ; expiration au bout de 24 heures, y compris suppression des messages Discord porteurs de fichiers. Pas d'URL brute envoyée par Jade.
 
+## Décision de modification du 22/11/2026 : génération ouverte par défaut
+
+Sur décision explicite du propriétaire, **tout compte utilisateur réellement identifié par le transport Discord a le droit de générer un fichier par défaut**, en MP, salon public ou vocal, même sans liaison avec Goldaj. Le mode `all` devient le réglage initial du code et de la configuration ; `owner` et `allowlist` sont conservés comme modes restrictifs à activer volontairement. Le service n'a plus besoin de consulter SQLite pour autoriser un utilisateur Discord dans le mode ouvert. Les événements synthétiques et les identités de transport absentes restent exclus ; la PWA demeure protégée par son authentification habituelle. **La version précédente du besoin « Goldaj seulement » est remplacée, et non simultanément active.** L'expiration 24 h, les canaux de livraison et la confidentialité des fichiers publics restent inchangés. Les éventuelles valeurs privées `JADE_DOCUMENT_ACCESS_MODE=owner` explicitement définies dans un environnement continueront de primer sur le défaut et devront être ajustées sur ce poste pour appliquer la nouvelle politique.
+
 ## Retour de recette et correctif ciblé du 22/11/2026
 
 - **Recette réelle par le propriétaire :** mobile écrit OK, mobile vocal OK ; **Discord MP écrit KO, salon public écrit KO, vocal public KO**. Sur Discord, Jade dit explicitement que la fonctionnalité est indisponible ; aucune pièce jointe observée. REC-039 reste **À valider** avec échec Discord documenté, sans revenir sur les parcours mobile réussis.

@@ -126,7 +126,7 @@ class Settings:
     mobile_model_dir: str = ""
     document_dir: str = field(default_factory=lambda: str(
         Path(_default_memory_db_path()).with_name("jade-documents")))
-    document_access_mode: str = "owner"
+    document_access_mode: str = "all"
     document_allowed_discord_ids: tuple[int, ...] = field(default=(), repr=False)
 
     @classmethod
@@ -206,7 +206,7 @@ class Settings:
             document_dir=(str(environ("JADE_DOCUMENT_DIR", "")).strip()
                 or str(Path(str(environ("JADE_MEMORY_DB_PATH", "")).strip()
                     or _default_memory_db_path()).with_name("jade-documents"))),
-            document_access_mode=str(environ("JADE_DOCUMENT_ACCESS_MODE", "owner")).strip().lower(),
+            document_access_mode=str(environ("JADE_DOCUMENT_ACCESS_MODE", "all")).strip().lower(),
             document_allowed_discord_ids=_voice_users(str(
                 environ("JADE_DOCUMENT_ALLOWED_DISCORD_IDS", ""))),
         )

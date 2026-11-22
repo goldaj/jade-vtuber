@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — REC-039 : génération de fichiers ouverte par défaut
+
+- **Décision du propriétaire :** pour faciliter les essais, toute personne disposant d'une identité de transport Discord valide peut demander la génération d'un document. Mode `all` par défaut dans `DocumentService` et `Settings`, sans prérequis de liaison Goldaj ; `owner` et `allowlist` restent facultatifs. La PWA ne perd pas son authentification privée, et les événements synthétiques restent exclus.
+- **Tests :** vérification du nouveau comportement en MP, écrit public et vocal Discord, plus tests de conservation du mode `owner`, rejet des messages synthétiques et absence de changement des autres transports. La recette réelle de Discord reste **KO** tant que le propriétaire n'a pas retesté.
+- **Attention :** une valeur explicite `JADE_DOCUMENT_ACCESS_MODE=owner` dans un fichier d'environnement privé reste prioritaire sur le nouveau défaut et doit être corrigée séparément si présente.
+
 ## 2026-11-22 — REC-039 : corriger le refus systématique de génération sur Discord
 
 - **Recette propriétaire :** mobile texte et voix confirmés OK ; Discord MP écrit, public écrit et public vocal KO, Jade déclarant explicitement l'outil indisponible.

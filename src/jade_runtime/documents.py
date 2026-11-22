@@ -383,7 +383,7 @@ class DocumentAction:
 class DocumentService:
     def __init__(self, directory: str | Path, *, memory_store=None,
                  identity_db_path: str | Path | None = None,
-                 access_mode: str = "owner", allowed_discord_ids=()):
+                 access_mode: str = "all", allowed_discord_ids=()):
         if access_mode not in ("owner", "allowlist", "all"):
             raise ValueError("invalid document access mode")
         self.store = DocumentStore(directory)
@@ -433,6 +433,17 @@ class DocumentService:
         key = identity_of(incoming)
         eligible = incoming.platform in ("mobile", "discord", "discord_voice")
         owner = bool(eligible and incoming.platform == "mobile")
+        # The default open mode does not depend on private memory enrollment
+        # or account linking. Only trusted real transport identities qualify.
+        # Synthetic system initiatives and unknown accounts remain ineligible.
+        if self.access_mode == "all":
+            permitted = bool(eligible and key is not None)
+            event("document_access_decision", source_platform=incoming.platform,
+                  permitted=permitted, verified_owner=owner,
+                  reason="all_users" if permitted else "missing_verified_identity",
+                  access_mode=self.access_mode)
+            return DocumentAction(self.store, permitted, owner_verified=owner)
+
         reason = "mobile_owner" if owner else "not_linked"
         if eligible and not owner and key is not None:
             try:
@@ -449,10 +460,6 @@ class DocumentService:
             reason = "missing_verified_identity"
 
         permitted = owner
-        if eligible and key and self.access_mode == "all":
-            permitted = True
-            if not owner:
-                reason = "all_users"
         if (eligible and key and self.access_mode == "allowlist"
                 and key[0] == "discord" and key[1] in self.allowed_discord_ids):
             permitted = True

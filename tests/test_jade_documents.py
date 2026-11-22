@@ -83,7 +83,8 @@ class DocumentTests(unittest.TestCase):
 class PermissionTests(unittest.IsolatedAsyncioTestCase):
     async def test_mobile_and_linked_discord_only(self):
         with tempfile.TemporaryDirectory() as directory:
-            service = DocumentService(directory, memory_store=LinkedIdentities())
+            service = DocumentService(directory, memory_store=LinkedIdentities(),
+                                      access_mode="owner")
             for incoming, expected in (
                 (Incoming("mobile", "Goldaj", "Crée un PDF"), True),
                 (Incoming("discord", "alias", "Crée un PDF", account_id="123456"), True),
@@ -104,7 +105,7 @@ class PermissionTests(unittest.IsolatedAsyncioTestCase):
             inc = Incoming("discord", "autre", "Crée un fichier", account_id="987")
             whitelist = DocumentService(directory, access_mode="allowlist",
                                         allowed_discord_ids=(987,))
-            any_user = DocumentService(directory, access_mode="all")
+            any_user = DocumentService(directory)  # default open
             self.assertTrue((await whitelist.for_turn(inc)).allowed)
             self.assertTrue((await any_user.for_turn(inc)).allowed)
 
@@ -139,7 +140,8 @@ class LinkedDiscordRegressionTests(unittest.IsolatedAsyncioTestCase):
             for memory in (store, None):
                 with self.subTest(memory_enabled=memory is not None):
                     service = DocumentService(Path(directory) / "documents",
-                                              memory_store=memory, identity_db_path=db)
+                                              memory_store=memory, identity_db_path=db,
+                                              access_mode="owner")
                     for incoming in incoming_messages:
                         action = await service.for_turn(incoming)
                         self.assertTrue(action.allowed, incoming.platform)
@@ -243,7 +245,7 @@ class DiscordPromptRegressionTests(unittest.IsolatedAsyncioTestCase):
             code = memory.begin_link(("microphone", "goldaj"), target=discord_key)
             self.assertTrue(memory.complete_link(discord_key, code))
             documents = DocumentService(Path(directory) / "documents",
-                                        identity_db_path=db)
+                                        identity_db_path=db, access_mode="owner")
             action = await documents.for_turn(Incoming(
                 "discord", "N'importe quel pseudo", "Crée un HTML",
                 account_id=discord_key[1], channel="salon"))
@@ -256,3 +258,45 @@ class DiscordPromptRegressionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(reply.attachments[0].name, "jadesite.html")
             self.assertIn("identité Goldaj vérifiée", backend.instructions)
             self.assertIn("Outil jade_create_document disponible", backend.instructions)
+
+
+
+class DefaultOpenDiscordDocumentTests(unittest.IsolatedAsyncioTestCase):
+    async def test_unlinked_discord_accounts_get_document_tool_in_all_channels(self):
+        """New default: no owner link or enrollment required for Discord files."""
+        with tempfile.TemporaryDirectory() as directory:
+            service = DocumentService(Path(directory) / "files", memory_store=None)
+            self.assertEqual(service.access_mode, "all")
+            for incoming in (
+                Incoming("discord", "Someone", "Crée un TXT", channel="dm-1",
+                         account_id="987", private_channel=True),
+                Incoming("discord", "Someone", "Crée un TXT", channel="public-2",
+                         account_id="987"),
+                Incoming("discord_voice", "Someone", "Crée un TXT",
+                         channel="voice-3", speaker_id=987),
+            ):
+                with self.subTest(platform=incoming.platform, channel=incoming.channel):
+                    action = await service.for_turn(incoming)
+                    self.assertTrue(action.allowed)
+                    outcome = await action.create_document(json.dumps({
+                        "filename": "essai.txt", "content": "bonjour"}))
+                    self.assertEqual(outcome["status"], "created")
+                    self.assertEqual(len(action.attachments), 1)
+
+    async def test_unverified_and_synthetic_events_cannot_generate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            service = DocumentService(directory)
+            for incoming in (
+                Incoming("discord", "Anonymous", "Crée un PDF"),
+                Incoming("discord_voice", "Unknown", "Crée un TXT"),
+                Incoming("discord", "Jade", "Crée un TXT",
+                         account_id="987", system_initiative=True),
+            ):
+                self.assertFalse((await service.for_turn(incoming)).allowed)
+
+    async def test_owner_only_can_still_be_configured(self):
+        with tempfile.TemporaryDirectory() as directory:
+            service = DocumentService(directory, access_mode="owner")
+            action = await service.for_turn(
+                Incoming("discord", "Unlinked", "Crée un PDF", account_id="987"))
+            self.assertFalse(action.allowed)
