@@ -39,3 +39,32 @@
 ## Limites fonctionnelles explicites
 
 Ce chantier constitue une **première implémentation testable**, pas une conformité intégrale déclarée aux attentes de toutes les cartes : DEV-021 n'orchestre pas encore spontanément une tâche sans commande explicite ; DEV-025 n'a pas de suivi sémantique complet des fils parallèles ; DEV-024 ne sait pas corréler chaque facture fournisseur ni confirmer le rendu sonore côté appareil ; DEV-010 attend ses vrais calques ; DEV-020 doit être validé sur Windows. Traiter ces différences comme **reste à faire**, pas comme erreurs de documentation effacées.
+
+## Compléments de la reprise : stabilité prioritaire (22/11/2026)
+
+**Consigne propriétaire nouvelle :** si un résultat demande une refonte disproportionnée, des appels modèle permanents ou menace le comportement actuel, **ne pas forcer** ; documenter l'écart, ne pas annoncer `Done`.
+
+### Actions intercanaux, option A uniquement
+
+- `CrossChannelContinuity` dispose désormais de quelques formulations françaises non ambiguës en plus des commandes `!jade-` : « Jade, ajoute une tâche : ... », « Jade, liste mes tâches en cours », « Jade, reprends la tâche ID », « Jade, termine la tâche ID », « Jade, envoie ce message sur Discord dans le salon 123 : ... ». Il n'exécute **pas** une intention ambiguë, n'effectue aucune action externe autre que l'envoi explicitement autorisé et ne déclenche pas d'appel LLM.
+- La sélection de la tâche active est persistée pour le **propriétaire vérifié**, accessible depuis un MP Discord **réellement lié** ou la PWA privée, jamais un salon public. La lecture ne prend plus systématiquement un verrou SQLite d'écriture.
+- **Limite délibérée :** ne pas interpréter toutes les formulations libres comme des actions, ni confier au LLM des outils d'envoi arbitraire : cela exigerait davantage de contrats, de tokens et de recettes de sécurité. Une commande floue aboutit à une conversation ordinaire sans action implicite. Cela ne remplit donc pas encore la promesse d'une orchestration intercanaux pleinement autonome et universelle.
+
+### Personnalité évolutive
+
+- Recalcul déterministe à partir des souvenirs autorisés, sans deuxième LLM ; le profil tient compte de la récence et évite d'énoncer plusieurs préférences contradictoires sur un même sujet.
+- Une mémoire L2 explicitement **imposée par le propriétaire** ne devient plus automatiquement un goût personnel de Jade : sa personnalité et ses Core Memories restent de son ressort.
+- **Limite délibérée :** ne pas créer un nouvel entraînement, une IA d'auto-évaluation permanente ou un agent autonome de modification de prompt. Un jugement fiable de son « évolution réelle » nécessite une recette longitudinalement observée sur plusieurs sessions. Le profil mémoriel est une base contrôlée, pas une preuve d'apprentissage humain ou d'expérience indépendante.
+
+### Objectifs de performance
+
+- Les métriques serveur conservent p50/p95, statuts et étapes ; désormais les **tokens d'entrée/sortie réellement rapportés par le fournisseur** sont attribués au tour actif, et la **durée STT mobile** est capturée avant l'entrée dans la file.
+- **Limite technique incontournable :** le serveur peut voir le premier PCM transmis ou joué par un périphérique logiciel, mais **ne peut pas confirmer que le son a été réellement entendu** (volume matériel, système muet, écouteurs, Bluetooth). L'application mesure déjà première trame reçue et première programmation audio ; ne pas rebaptiser cette métrique « audible ».
+- **Limite économique :** les compteurs de tokens ne constituent **pas un prix par tour confirmé** ; les API/budgets du compte peuvent être agrégés ou différés. `cost_usd=null` est préférable à une estimation affichée comme facture exacte.
+- **Aucune cible chiffrée arbitraire** ni nouvelle invocation OpenAI pour profiler, évaluer la personnalité ou interpréter les groupes. La mesure de base sur vrais dispositifs appartient à la recette.
+
+### Garantie de non-régression
+
+- La suite GitHub Actions sert de garde-fou. Une régression transitoire des tests vocaux PWA a été identifiée après l'ajout des métadonnées STT (import `math` manquant dans `messages.py`) puis corrigée sur la branche isolée. Ne jamais propager cette version intermédiaire en production.
+- Les tests hors ligne couvrent maintenant la compréhension restreinte des ordres, l'association/révocation de comptes, la confidentialité des salons publics, l'expiration mémoire, les préférences corrigées et l'attribution des tokens au tour en cours. Les versions intermédiaires échouées ne sont pas déclarées validées.
+- Priorité d'acceptation : **tout le fonctionnement existant continue de répondre avant d'augmenter la couverture du backlog**. Aucune fusion ni clôture de carte avant les contrôles finaux.
