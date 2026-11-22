@@ -46,7 +46,8 @@ class AudioContext {
     start() {played.push(Array.from(this.buffer.getChannelData(0)));}};}
 }
 const avatar = {setMouth(){}, setIntent(){}, setSpeaking(){}, resetIntent(){}};
-global.window = {crypto:global.crypto, AudioContext, JadeAvatar:avatar, addEventListener(){}};
+global.window = {crypto:global.crypto, AudioContext, JadeAvatar:avatar,
+  location:{hash:""}, addEventListener(){}};
 let fetchCount = 0, lastSignal;
 global.fetch = async (_path, options) => {
   lastSignal = options.signal;
