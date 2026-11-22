@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Splash conservé derrière la connexion mobile
+
+- **Décision UX :** le splash `splash-jade.png` devient également l'image nette de fond de l'écran privé de connexion. Aucun voile opaque ni flou ; le contenu existant de l'application reste inaccessible tant que le formulaire est visible.
+- **Fenêtre compacte, légèrement abaissée :** icône SVG locale, « Espace privé de Jade », « Jeton d'accès », saisie masquée, « Entrer dans le salon » ; textes d'instruction et note de bas de carte retirés. Mise en page réduite, adaptation en faible hauteur et préservation des zones sûres.
+- **Portée :** HTML/CSS PWA et contrat de test seulement ; validateur de jeton, Tailscale, Bearer et `app.js` inchangés. Recette physique sur Redmi et retour après 401 à vérifier dans `REC-040`. [Passation](handoffs/2026-11-22-chatgpt-login-splash.md). Aucune modification de `main`.
+
 ## 2026-11-22 — Simplification UX PWA Jade
 
 - **Besoin :** rappels retirés de l'Accueil et Activités supprimé ; Rappels en liste immédiatement visible, formulaire sous accordéon fermé, notifications Android en choix radio exclusif synchronisé avec l'abonnement effectif.

@@ -209,13 +209,13 @@
   </main>
   <div id="auth-modal" class="auth-layer" role="dialog" aria-modal="true" aria-labelledby="auth-title">
     <form id="auth-form" class="auth-card">
-      <div class="auth-icon" aria-hidden="true">✧</div>
-      <h1 id="auth-title">L'espace privé de Jade</h1>
-      <p>Réservé à Goldaj. Connecte ton téléphone à Tailscale, puis saisis le jeton privé du client mobile.</p>
+      <div class="auth-heading">
+        <img class="auth-icon" src="/icon.svg" width="44" height="44" alt="">
+        <h1 id="auth-title">Espace privé de Jade</h1>
+      </div>
       <label for="auth-token">Jeton d'accès</label>
-      <input id="auth-token" type="password" required minlength="32" maxlength="256" autocomplete="off" spellcheck="false" placeholder="Jeton privé de Jade">
+      <input id="auth-token" type="password" required minlength="32" maxlength="256" autocomplete="off" spellcheck="false">
       <button class="unlock" type="submit">Entrer dans le salon</button>
-      <small>Le jeton reste uniquement en mémoire pendant cette session. Il n'est jamais sauvegardé sur ton téléphone.</small>
     </form>
   </div>
 </body>

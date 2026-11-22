@@ -2,7 +2,7 @@
 
 ## Splash de lancement PWA (22/11/2026)
 
-- Image propriétaire `splash-jade.png` servie et affichée plein écran au lancement de l'interface HTML, puis retirée automatiquement. Android contrôle toujours **la phase native préalable**, constituée de l'icône, du nom et du fond du manifeste. L'icône SVG est ajoutée comme ressource vectorielle alternative ; les PNG restent des fallbacks à source raster 96 px.
+- Image propriétaire `splash-jade.png` servie et affichée plein écran au lancement de l'interface HTML, puis retirée automatiquement. Sur la **connexion par jeton**, la même image reste nette en fond jusqu'à l'entrée dans le salon ; une carte compacte légèrement sous le centre affiche seulement l'icône, « Espace privé de Jade », « Jeton d'accès », le champ et « Entrer dans le salon ». Le formulaire et l'authentification ne changent pas. Android contrôle toujours **la phase native préalable**, constituée de l'icône, du nom et du fond du manifeste. L'icône SVG est ajoutée comme ressource vectorielle alternative ; les PNG restent des fallbacks à source raster 96 px.
 - Chargement sans appel IA ni capture, UI/Live2D intacts. Recette sur Redmi Note 13 non encore réalisée.
 
 ## PWA · Nouvelle DA Jade inspirée de la robe (22/11/2026)

@@ -47,6 +47,28 @@ class BotanicalUIContract(unittest.TestCase):
         self.assertNotIn("renderHomeReminders", app)
         self.assertIn('.shell.is-room-only .room{', css)
 
+    def test_login_card_is_minimal_and_sharp_splash_is_preserved(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        auth = html.split('<div id="auth-modal"', 1)[1].split("</form>", 1)[0]
+        for fragment in ('class="auth-heading"', 'src="/icon.svg" width="44"',
+                         '>Espace privé de Jade</h1>', ">Jeton d'accès</label>",
+                         'id="auth-token" type="password"', '>Entrer dans le salon</button>'):
+            self.assertIn(fragment, auth)
+        self.assertNotIn("<p>", auth)
+        self.assertNotIn("<small>", auth)
+        self.assertNotIn("Tailscale", auth)
+        self.assertNotIn("placeholder=", auth)
+        css = (ROOT / "jade-theme.css").read_text(encoding="utf-8")
+        auth_layer = css.split(".auth-layer{", 1)[1].split("}", 1)[0]
+        self.assertIn('url("/assets/splash-jade.png")', auth_layer)
+        self.assertIn("backdrop-filter:none", auth_layer)
+        self.assertIn("cover no-repeat", auth_layer)
+        self.assertIn("transform:translateY(clamp(", css)
+        self.assertIn("@media(max-height:520px)", css)
+        js = (ROOT / "app.js").read_text(encoding="utf-8")
+        self.assertIn('modal.classList.add("hidden")', js)
+        self.assertIn('modal.classList.remove("hidden")', js)
+
     def test_manifest_flower_palette_and_png_contract(self):
         manifest = json.loads((ROOT / "manifest.webmanifest").read_text(encoding="utf-8"))
         self.assertEqual(manifest["theme_color"].lower(), "#2f5d45")
