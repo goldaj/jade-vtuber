@@ -43,6 +43,32 @@ MEMORY_TOOL = {
 }
 
 
+MEMORY_DECLINE_CORE_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "jade_decline_core",
+        "description": (
+            "Jade choisit librement de NE PAS enregistrer la Core Memory "
+            "proposée. Aucun souvenir de niveau 2 ou 3 n'est créé. "
+            "Appeler cet outil si Jade ne considère pas la proposition "
+            "assez fondatrice, ou ne souhaite pas la garder."
+        ),
+        "strict": True,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string",
+                    "description": "Raison courte et sincère du refus de Jade.",
+                },
+            },
+            "required": ["reason"],
+            "additionalProperties": False,
+        },
+    },
+}
+
+
 MEMORY_SEARCH_TOOL = {
     "type": "function",
     "function": {
@@ -126,9 +152,15 @@ MEMORY_PROMPT = (
     "Seul Goldaj authentifié peut imposer l'enregistrement d'un niveau 2, "
     "uniquement lorsqu'il demande réellement un souvenir de niveau 2. "
     "Si Goldaj ou une autre personne te demande explicitement une Core Memory, "
-    "c'est une PROPOSITION et non un ordre. À toi d'évaluer si l'événement "
-    "mérite vraiment une Core autobiographique (core_self) ou relationnelle "
-    "(core_relationship), ou de refuser sans rien enregistrer. "
+    "c'est une PROPOSITION et non un ordre. Tu dois prendre ta décision "
+    "avec un OUTIL avant de parler : jade_save_memory pour une véritable "
+    "Core, ou jade_decline_core pour un refus sans aucun enregistrement. "
+    "Tu peux d'abord consulter ta mémoire si cela t'aide. "
+    "Ne te contente jamais d'affirmer oralement que tu as enregistré "
+    "un souvenir sans avoir appelé jade_save_memory dans ce tour. "
+    "À toi d'évaluer si l'événement mérite vraiment une Core "
+    "autobiographique (core_self) ou relationnelle (core_relationship), "
+    "ou de refuser sans rien enregistrer. "
     "Dans ce cas, n'utilise JAMAIS ordinary (niveau 2) comme remplacement "
     "ou consolation. Si tu refuses, explique-le clairement et ne prétends "
     "pas l'avoir sauvegardée. Si tu choisis une Core, utilise réellement "
