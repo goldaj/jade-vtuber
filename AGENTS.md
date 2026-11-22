@@ -15,7 +15,7 @@
 - **[Catalogue des améliorations futures](docs/ameliorations/README.md)** : idées prospectives distinctes, non engagées automatiquement comme tâches du backlog opérationnel.
 - [Archives et index des conversations](docs/history/conversations/INDEX.md) : contexte historique, pas des ordres d'exécution actuels.
 
-**Décisions datées :** Goldaj a autorisé les quick wins DEV-003/005–008 le 19 novembre ; le **22 novembre, les six idées promues ont été intégrées via PR #38**, puis suivies en **REC-031..036**. **Après validation explicite du propriétaire le 22/11, REC-026 et REC-032 sont Done** ; REC-031 et REC-033..037 restent À valider. Les écarts REC-033/035 restent ouverts ; les limites de pertinence avancée de REC-032 sont connues et acceptées pour le périmètre livré. DEV-010 et OPS-015 restent `À faire`.
+**Décisions datées :** Goldaj a autorisé les quick wins DEV-003/005–008 le 19 novembre ; le **22 novembre, les six idées promues ont été intégrées via PR #38**, puis suivies en **REC-031..036**. **Après validations explicites du propriétaire le 22/11, REC-026 et REC-031/032/033/034 sont Done** ; REC-035/036/037 restent À valider. La limite de préchargement de REC-033 est acceptée pour cette version mais demeure techniquement non corrigée ; la gestion des fils parallèles REC-035 reste à recetter. Les limites de REC-032 et REC-034 restent connues et acceptées. DEV-010 et OPS-015 restent `À faire`.
 
 ## Branches, poste et confidentialité
 
