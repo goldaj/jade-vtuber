@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request, build_opener, ProxyHandler
 
 
 class DeploymentClient:
@@ -21,7 +21,8 @@ class DeploymentClient:
             "Content-Type": "application/json", "Accept": "application/json",
         })
         try:
-            with urlopen(request, timeout=5) as reply:
+            # A private loopback control plane must not use HTTP(S) proxies.
+            with build_opener(ProxyHandler({})).open(request, timeout=5) as reply:
                 return reply.status, json.loads(reply.read(8192))
         except HTTPError as error:
             return error.code, {"error": "supervisor_rejected"}
