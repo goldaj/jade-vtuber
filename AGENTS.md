@@ -15,7 +15,7 @@
 - **[Catalogue des améliorations futures](docs/ameliorations/README.md)** : idées prospectives distinctes, non engagées automatiquement comme tâches du backlog opérationnel.
 - [Archives et index des conversations](docs/history/conversations/INDEX.md) : contexte historique, pas des ordres d'exécution actuels.
 
-**Décision générale maintenue, avec exception du 19 novembre :** Goldaj a explicitement autorisé les quick wins DEV-003/005–008 avant les recettes PC ; les autres idées restent différées ; le backlog **opérationnel** créé le 18 novembre organise au contraire installation, recette, modèle r21 et maintenance déjà attendues. Ne pas engager de développement à partir du catalogue prospectif sans nouvelle demande ; la création du backlog opérationnel n'autorise pas à elle seule l'exécution de ses tâches ni des appels facturés. Le routage exclusivement par canal source, le préchargement mémoire, la visibilité conditionnelle de l'avatar et le moteur Realtime sans Luna sont des objectifs **non intégrés**. Luna reste le modèle configuré par défaut dans le code actuel.
+**Décision générale maintenue, avec exceptions datées :** Goldaj a autorisé les quick wins DEV-003/005–008 le 19 novembre ; le **22 novembre, il a explicitement transféré six idées** (RTE-15, NRM-10, MEM-01, LAT-01, NEW-17, NEW-36) vers DEV-021 à DEV-026 en statut `À faire`, **sans autoriser leur développement immédiat**. Les autres idées restent prospectives ; le backlog opérationnel couvre les travaux réellement engagés ou acceptés. Ne pas engager de développement à partir du catalogue prospectif sans nouvelle demande ; la création du backlog opérationnel n'autorise pas à elle seule l'exécution de ses tâches ni des appels facturés. Le routage exclusivement par canal source, le préchargement mémoire, la visibilité conditionnelle de l'avatar et le moteur Realtime sans Luna sont des objectifs **non intégrés**. Luna reste le modèle configuré par défaut dans le code actuel.
 
 ## Branches, poste et confidentialité
 
@@ -45,6 +45,10 @@
 5. **Clôture :** suivre les cinq conditions de [la DoD officielle](docs/backlog/DEFINITION_OF_DONE.md), avec validation explicite de Codex **ou** du propriétaire et preuves pertinentes. Une acceptation partielle conserve la carte ouverte et le détail des points réussis/échoués. Mettre à jour les références de l'index et le guide [AGENT_COORDINATION](docs/operations/AGENT_COORDINATION.md) si la structure ou les règles évoluent.
 
 **Transferts déjà exécutés, ne pas recréer ces anciennes cartes DEV :** `DEV-011 → REC-026`, `DEV-015 → REC-027`, `DEV-016 → REC-028`, `DEV-017 → REC-029`, `DEV-018 → REC-030`. **REC-028** conserve un échec du scénario de nouvelle arrivée après reconnexion vocale Discord ; les autres validations partielles restent tracées dans leurs REC.
+
+## Réconciliation du catalogue d'améliorations (22/11/2026)
+
+Le catalogue a été dédoublonné : **192 entrées initiales, 83 retirées, 109 idées réellement prospectives restantes**. Les six idées promues sont détaillées dans la [vue DEV](docs/backlog/01-DEVELOPPEMENT.md) et retirées de leur ancienne liste thématique. L'[index central du catalogue](docs/ameliorations/README.md) et la [passation de revue](docs/operations/handoffs/2026-11-22-catalogue-dedoublonnage.md) documentent le tri et conservent les anciens identifiants. **Ne pas ressusciter** un ticket déjà présent dans DEV/REC/OPS/ART, ni une fonctionnalité déjà intégrée au code. Pour les idées partiellement réalisées, définir uniquement la **valeur incrémentale non livrée**. Ne pas engager les nouveaux DEV sans demande explicite d'exécution.
 
 ## Validation du backlog opérationnel
 
