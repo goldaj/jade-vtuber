@@ -387,20 +387,22 @@ class MemoryStore:
                       expected_person_id: str | None = None) -> bool:
         """Jade's own lasting episodes, owner-only until explicit promotion exists.
 
-        Only an opted-in, locally verified owner may populate the global table.
+        Only the verified owner (local or linked account) may populate
+        the global table. This is checked atomically with the insertion.
         No TTL, no retention purge, no copy into other people's prompt context.
         """
         _validate_key(key)
-        if key != ("microphone", "goldaj"):
-            return False
         if (not isinstance(summary, str) or not 1 <= len(summary.strip()) <= 400
                 or not isinstance(significance, str) or len(significance) > 280
                 or not isinstance(message_id, str)):
             raise ValueError("invalid Jade autobiography")
         with self._db() as db:
-            profile = db.execute(
-                "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
-            ).fetchone()
+            profile = db.execute("""
+                SELECT actor.person_id FROM identities AS actor
+                JOIN identities AS owner ON owner.person_id=actor.person_id
+                WHERE actor.platform=? AND actor.account_id=?
+                  AND owner.platform='microphone' AND owner.account_id='goldaj'
+            """, key).fetchone()
             if not profile or (expected_person_id is not None
                                and profile["person_id"] != expected_person_id):
                 return False
