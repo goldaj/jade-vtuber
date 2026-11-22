@@ -1,5 +1,6 @@
 """Bounded per-channel conversation. No paid calls in unit tests."""
 import asyncio
+from datetime import datetime, timezone
 from collections import deque
 import random
 import time
@@ -145,7 +146,9 @@ class Dialogue:
                                  + (MEMORY_PROMPT if can_use_tools and memory_action is not None else "")
                                  + (WEB_PROMPT if can_use_tools and web_action is not None else "")
                                  + document_note
-                                 + (REMINDER_PROMPT if can_use_tools and reminder_action is not None else "")
+                                 + (REMINDER_PROMPT + "\nHeure serveur UTC de ce tour : " +
+                                    datetime.now(timezone.utc).isoformat(timespec="seconds")
+                                  if can_use_tools and reminder_action is not None else "")
                                  + "\nPour une demande qui appelle une réponse longue, "
                                    "donne plutôt une synthèse claire de 3 à 5 phrases "
                                    "(environ 120 mots, soit ~320 tokens visibles au maximum). "

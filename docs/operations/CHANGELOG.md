@@ -2,6 +2,8 @@
 
 ## 2026-11-22 — DEV-036 : rappels persistants, push Android et ouverture ciblée
 
+- **Complément de recette CI :** ajouter l'horloge UTC de chaque tour au contexte outil pour convertir les demandes relatives (« dans 10 minutes »), et conserver le deep link de notification dans l'URL quand une PWA existante doit encore être déverrouillée. Les contrôles automatiques ont signalé une dépendance non canonique dans la carte DEV-036, corrigée par `REC-014, REC-022` avant relance.
+
 - **Décision produit approuvée :** les trois étapes d'origine forment une seule US, avec la création/gestion des rappels, les notifications Web Push après fermeture courante de la PWA ou sur écran verrouillé, et le deep link vers le rappel ciblé. Contrat détaillé et critères d'acceptation dans la [carte DEV-036](../backlog/01-DEVELOPPEMENT.md).
 - **Implémentation sur develop :** service SQLite privé et scheduler sans appels IA en veille ; outils Responses sur canaux propriétaire autorisés ; routage Discord limité au salon/MP d'origine ; API mobile authentifiée pour consulter, créer, modifier, annuler, inscrire/désinscrire la subscription ; PWA et Service Worker sans stockage du Bearer ni microphone actif en arrière-plan ; notifications génériques et identifiant opaque, click-to-open.
 - **Fichiers :** reminders.py, mobile_gateway.py, mobile_web (app.js, sw.js, index.html, styles.css), config.py, web_search.py, dialogue.py, responses_chat.py, orchestrator.py, main.py, setup_web_push.py, tests/test_jade_reminders.py, documentation de la PWA et du backlog.

@@ -991,8 +991,12 @@
   window.addEventListener("hashchange", openReminderFromHash);
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.addEventListener("message", event => {
-      if (event.data && event.data.type === "jade-open-reminder")
-        showReminder(event.data.id);
+      if (event.data && event.data.type === "jade-open-reminder" &&
+          typeof event.data.id === "string" && /^[0-9a-f]{24}$/.test(event.data.id)) {
+        const target = "#reminder-" + event.data.id;
+        if (window.location.hash === target) showReminder(event.data.id);
+        else window.location.hash = target;
+      }
     });
   }
   openReminderFromHash();
