@@ -62,7 +62,12 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
   top: 4.24%;
   width: 18.78%;
   height: 33.89%;
-  mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 87%, transparent);
+  transform-origin: top center;
+  object-fit: contain;
+  will-change: transform;
+}
+.room-curtain[hidden] {
+  display: none !important;
 }
 .room-dapple {
   position: absolute;
