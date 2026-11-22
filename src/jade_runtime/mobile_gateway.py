@@ -41,6 +41,8 @@ WEB_FILES = {
     "/assets/avatar.js": ("avatar.js", "text/javascript; charset=utf-8"),
     "/assets/room-motion.js": ("room-motion.js", "text/javascript; charset=utf-8"),
     "/assets/room-spring.webp": ("room-spring.webp", "image/webp"),
+    "/assets/room-backdrop.webp": ("room-backdrop.webp", "image/webp"),
+    "/assets/room-curtain.webp": ("room-curtain.webp", "image/webp"),
     "/assets/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/assets/duplex-client.js": ("duplex-client.js", "text/javascript; charset=utf-8"),
     "/manifest.webmanifest": ("manifest.webmanifest", "application/manifest+json"),
