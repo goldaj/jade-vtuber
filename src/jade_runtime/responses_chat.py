@@ -92,6 +92,11 @@ def _tool_calls(response) -> list[dict[str, str]]:
 def _require_completed(response) -> None:
     status = _field(response, "status")
     if status != "completed":
+        # A failed or output-limited response can still be billable. Capture
+        # provider-reported usage once, without retrying or estimating it.
+        usage_on_error = _field(response, "usage")
+        record_model_usage(_field(usage_on_error, "input_tokens"),
+                           _field(usage_on_error, "output_tokens"))
         details = _field(response, "incomplete_details") or _field(response, "error")
         if status == "incomplete" and _field(details, "reason") == "max_output_tokens":
             usage = _field(response, "usage")
