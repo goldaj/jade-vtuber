@@ -1,12 +1,13 @@
 """Offline acceptance tests: memory, social, continuity, metrics; no paid API."""
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
 
 from src.jade_runtime.cross_channel import CrossChannelContinuity
+from src.jade_runtime.deploy_supervisor import Supervisor, branch_valid
 from src.jade_runtime.group_context import addressed_to_other
 from src.jade_runtime.memory_relevance import rank_memories
 from src.jade_runtime.memory_store import MemoryStore
@@ -51,6 +52,17 @@ class ScopedMemoryTests(unittest.IsolatedAsyncioTestCase):
         self.store.put(self.owner, kind="ordinary", scope="person",
                        summary="Jade joue aux échecs", significance="important")
         self.assertEqual(len(await cache.candidates(self.owner, "person")), 1)
+
+    async def test_cache_never_outlives_ordinary_memory_expiry(self):
+        self.store.put(self.owner, kind="ordinary", scope="person",
+                       summary="Jade prépare un rendez-vous", significance="utile")
+        imminent = (datetime.now(timezone.utc) + timedelta(seconds=2)).isoformat()
+        with self.store._db() as db:
+            db.execute("UPDATE memories SET expires_at=?", (imminent,))
+        cache = PresenceMemoryCache(self.store, ttl_seconds=600)
+        self.assertEqual(len(await cache.candidates(self.owner, "person")), 1)
+        deadline = next(iter(cache._entries.values()))[0]
+        self.assertLess(deadline - cache.clock(), 3)
 
     async def test_identity_never_uses_nickname(self):
         no_verified = ("discord", "999")
@@ -137,6 +149,46 @@ class ContinuityTests(unittest.IsolatedAsyncioTestCase):
                           account_id="123", text=cmd.text)
         self.assertIn("privée", (await self.coordinator.command(public)).text)
         self.assertEqual(len(self.sent), 1)
+
+
+class DeploymentSupervisorTests(unittest.TestCase):
+    def test_untrusted_branch_names_rejected(self):
+        self.assertTrue(branch_valid("develop"))
+        self.assertTrue(branch_valid("feature/jade"))
+        for value in ("../secrets", "feature//oops", "bad..ref", "-bad", "", "@{x}"):
+            self.assertFalse(branch_valid(value))
+
+    def test_failed_restart_restores_previous_process(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            (Path(temporary) / ".git").mkdir()
+            manager = Supervisor(Path(temporary), ["jade-local"])
+            class FakeChild:
+                stopped = False
+                def terminate(self):
+                    self.stopped = True
+                def wait(self, timeout):
+                    return 0
+                def poll(self):
+                    return 0 if self.stopped else None
+
+            manager.child = FakeChild()
+            manager.state["branch"] = "develop"
+            manager.state["phase"] = "working"
+            manager.git = lambda *args, **kwargs: (
+                "abc123" if args[0] == "rev-parse" else "develop")
+            attempts = []
+            def launch():
+                attempts.append("launch")
+                if len(attempts) == 1:
+                    raise RuntimeError("jade_exited_on_start")
+                manager.child = FakeChild()
+            manager._launch = launch
+            manager._perform(None, restart_only=True)
+            self.assertEqual(len(attempts), 2)
+            self.assertTrue(manager.snapshot()["running"])
+            self.assertEqual(manager.snapshot()["sha"], "abc123")
+            self.assertEqual(manager.snapshot()["phase"], "idle")
+            self.assertEqual(manager.snapshot()["error"], "jade_exited_on_start")
 
 
 class MetricsTests(unittest.TestCase):
