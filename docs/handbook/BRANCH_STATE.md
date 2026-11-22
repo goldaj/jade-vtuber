@@ -10,9 +10,15 @@
 - **REC-035 (ex DEV-025) :** signaux d'apartés ; discussions multi-fils non pleinement reconnues.
 - **REC-036 (ex DEV-026) :** personnalité mémorielle corrigible ; évolution expérientielle plus profonde différée P3.
 - **REC-037 (ex DEV-020) :** superviseur local Windows et administration mobile ; pas de recette physique.
-- **DEV-010** : décor statique tant que calques manquent ; **OPS-015** : inventaire sans comparaison artistique sémantique. Les deux restent **À faire**.
+- **DEV-010** : décor mobile animé en calques et validé par le propriétaire, **Done** ; **OPS-015** : inventaire artistique **Bloqué** dans l'attente de tokens Codex.
 
-**Tous les sept REC restent À valider**, pas `Done`. [Audit](../operations/handoffs/2026-11-22-audit-technique-fonctionnel-ci-pr38.md).
+**REC-031/032/033/034 sont Done après validation du propriétaire ; REC-035/036/037 restent À valider.** Les réserves historiques sont détaillées dans l'[audit](../operations/handoffs/2026-11-22-audit-technique-fonctionnel-ci-pr38.md) et dans la vue REC.
+
+## Quick wins VIS-04 / RTE-12, développés le 22 novembre 2026
+
+- **DEV-027, Live2D mobile :** la PWA coupe le ticker de rendu PixiJS et l'auto-actualisation du modèle quand l'onglet est caché, le composant démonté ou l'avatar hors champ. Le dialogue, la voix et les connecteurs restent actifs. L'absence d'IntersectionObserver est gérée ; reprise sans nouveau modèle ni relance de l'Idle. La batterie/FPS Android ne sont pas encore mesurés réellement.
+- **DEV-028, livraison :** les destinations initialement planifiées sont distinctes des événements `delivery_evidence` : confirmation d'acceptation par l'API Discord texte, fin de lecture ffplay ou consommation audio Discord. Les redirections mobiles/HTTP et Twitch sans accusé réel ne sont jamais présentées comme livrées ; aucun statut n'affirme que l'utilisateur a entendu le son. Pas de contenu privé dans ces nouvelles preuves.
+- Les tests et conditions de recette sont dans [la passation](../operations/handoffs/2026-11-22-chatgpt-vis04-rte12.md) et la [backlog DEV](../backlog/01-DEVELOPPEMENT.md). **Statut de recette réel à vérifier avant Done.**
 
 ## Recherche web facultative (REC-038, 22 novembre 2026)
 
