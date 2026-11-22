@@ -88,7 +88,8 @@ def test_goldaj_cannot_force_level_3_anywhere_even_when_linked(tmp_path):
                 await asyncio.gather(*tuple(service._explicit_writes))
             # Mandatory owner requests enter L2, never L3.
             assert store.search_global(level="3")["items"] == []
-            assert len(store.search_global(level="2")["items"]) == 1
+            # Two different source scopes each retain the same owner fact.
+            assert len(store.search_global(level="2")["items"]) == 2
         finally:
             await service.close()
 
