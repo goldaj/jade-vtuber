@@ -130,7 +130,11 @@ class CrossChannelContinuity:
             try:
                 delivered = await asyncio.wait_for(
                     self.send_discord(str(dest), content), timeout=15)
-            except (TimeoutError, OSError):
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                # Discord permission/network errors are not necessarily OSError.
+                # They must never be reported as a successful delivery.
                 delivered = False
             return Reply(incoming, "Message remis sur le canal Discord autorisé."
                          if delivered else "Envoi non confirmé, aucun succès supposé.")
