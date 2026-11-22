@@ -30,6 +30,8 @@ MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/avatar.js",
     "src/jade_runtime/mobile_web/room-motion.js",
     "src/jade_runtime/mobile_web/room-spring.webp",
+    "src/jade_runtime/mobile_web/room-backdrop.webp",
+    "src/jade_runtime/mobile_web/room-curtain.webp",
     "src/jade_runtime/mobile_web/intent-visuals.json",
     "src/jade_runtime/mobile_web/app.js",
     "src/jade_runtime/mobile_web/duplex-client.js",
@@ -112,6 +114,12 @@ def create_preview(root: Path, dest: Path, paths: list[str], *, include_portrait
             if (image[:4] != b"RIFF" or image[8:12] != b"WEBP"
                     or hashlib.sha256(image).hexdigest() != ROOM_BACKGROUND_SHA256):
                 raise ValueError("Mobile background digest does not match the reviewed source")
+        elif source in MOBILE_WEB_PUBLIC and source.endswith(".webp"):
+            image = sourcefile.read_bytes()
+            # Generated room layers are explicit allowlisted local illustrations.
+            if (len(image) < 20 or len(image) > 500_000
+                    or image[:4] != b"RIFF" or image[8:12] != b"WEBP"):
+                raise ValueError("Invalid mobile room layer")
         elif scan_text(sourcefile.read_text(encoding="utf-8")):
             raise ValueError("Potential credential in preview source")
     portrait = _verified_portrait(root, paths) if include_portrait else None
