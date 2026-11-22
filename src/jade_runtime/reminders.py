@@ -7,7 +7,8 @@ A push service acknowledging a message is not proof of handset presentation.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from contextlib import contextmanager
+from datetime import datetime
 import importlib.util
 import ipaddress
 import json
@@ -139,10 +140,18 @@ class ReminderStore:
         except OSError:
             pass
 
+    @contextmanager
     def _db(self):
         db = sqlite3.connect(self.path, timeout=5)
         db.row_factory = sqlite3.Row
-        return db
+        try:
+            yield db
+            db.commit()
+        except BaseException:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
     def create(self, title: str, due_at: str, destination: str, channel="") -> dict:
         if not isinstance(title, str) or not 1 <= len(title.strip()) <= 180:
@@ -174,6 +183,15 @@ class ReminderStore:
                 " ORDER BY CASE state WHEN 'pending' THEN 0 WHEN 'retry' THEN 0 "
                 "ELSE 1 END, due_at DESC LIMIT 40", args).fetchall()
         return [dict(row) for row in rows]
+
+    def get(self, reminder_id: str) -> dict | None:
+        if not isinstance(reminder_id, str) or not _ID.fullmatch(reminder_id):
+            raise ValueError("identifiant invalide")
+        with self._db() as db:
+            row = db.execute(
+                "SELECT id,title,due_at,destination,state,sent_at FROM reminders "
+                "WHERE id=?", (reminder_id,)).fetchone()
+        return dict(row) if row is not None else None
 
     def change(self, reminder_id: str, *, cancel=False, title=None, due_at=None,
                destination=None, channel="") -> dict:
@@ -321,7 +339,7 @@ class ReminderAction:
             action = value["action"]
             if action == "list":
                 items = await asyncio.to_thread(
-                    self.service.store.list, self.destination, self.channel)
+                    self.service.store.list)
                 return {"status": "ok", "items": items}
             if action == "create":
                 result = await asyncio.to_thread(
@@ -331,8 +349,7 @@ class ReminderAction:
                 result = await asyncio.to_thread(
                     self.service.store.change, value["id"],
                     cancel=(action == "cancel"), title=value["title"],
-                    due_at=value["due_at"], destination=self.destination,
-                    channel=self.channel)
+                    due_at=value["due_at"])
             else:
                 raise ValueError("action inconnue")
             return {"status": "ok", "reminder": result}
