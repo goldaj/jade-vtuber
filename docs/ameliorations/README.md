@@ -7,7 +7,7 @@
 - **192 idées initialement identifiées** dans 11 thèmes le 21/11/2026 (dont ajouts du 20 et du 21 novembre).
 - **83 entrées retirées du catalogue actif** le 22/11/2026 : six transférées dans DEV, les autres déjà couvertes par une carte de backlog, par le code actuellement livré, ou absorbées dans une autre idée prospective conservée. Le détail des décisions figure dans [la passation de dédoublonnage](../operations/handoffs/2026-11-22-catalogue-dedoublonnage.md).
 - **109 idées prospectives après le dédoublonnage**, puis **4 perspectives complémentaires distinctes** consignées le 22/11/2026 après arbitrage de limites techniques : **113 idées prospectives actives**, dans 10 thèmes. Les identifiants retirés ne sont **pas** réattribués ; la version précédente reste consultable dans l'historique Git.
-- Les six idées explicitement promues par le propriétaire sont maintenant **une carte DEV chacune** : `RTE-15 → DEV-021`, `NRM-10 → DEV-022`, `MEM-01 → DEV-023`, `LAT-01 → DEV-024`, `NEW-17 → DEV-025`, `NEW-36 → DEV-026`. Aucune n'a été développée dans le cadre de ce transfert documentaire.
+- Les six idées promues ont été codées via PR #38 et suivies désormais dans **`RTE-15 → REC-031`, `NRM-10 → REC-032`, `MEM-01 → REC-033`, `LAT-01 → REC-034`, `NEW-17 → REC-035`, `NEW-36 → REC-036`**, toutes À valider. Les ID DEV-021 à DEV-026 sont historiques.
 
 ## Idées encore actives par thème
 
@@ -31,12 +31,12 @@
 
 | ID prospectif | Plus-value réellement nouvelle | Prérequis de réexamen |
 | --- | --- | --- |
-| [RTE-18](03-CANAUX-ROUTAGE.md) | Compréhension d'actions intercanaux en langage libre, au-delà des commandes explicites de **DEV-021** | Consentement, destination non ambiguë, droits, contrôle des erreurs, coût/latence acceptables |
-| [NEW-37](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | Évolution expérientielle réévaluée dans la durée, au-delà des repères mémoriels de **DEV-026** | Choix autonome de Jade, réversibilité, absence de polling LLM sans interlocuteur, évaluation comportementale fiable |
-| [LAT-21](01-LATENCE-VOIX.md) | Constater côté lecteur le premier signal utile effectivement programmé/consommé, au-delà des jalons de **DEV-024** | Preuve technique réalisable ; **ne jamais confondre signal lu et audition physique certaine** |
-| [LAT-22](01-LATENCE-VOIX.md) | Estimer et rapprocher les coûts réels des tours avec des données de facturation fournisseur, au-delà des tokens de **DEV-024** | Granularité officiellement disponible ; coût **exact** jamais inventé quand les données manquent |
+| [RTE-18](03-CANAUX-ROUTAGE.md) | Compréhension d'actions intercanaux en langage libre, au-delà des commandes explicites de **REC-031** | Consentement, destination non ambiguë, droits, contrôle des erreurs, coût/latence acceptables |
+| [NEW-37](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | Évolution expérientielle réévaluée dans la durée, au-delà des repères mémoriels de **REC-036** | Choix autonome de Jade, réversibilité, absence de polling LLM sans interlocuteur, évaluation comportementale fiable |
+| [LAT-21](01-LATENCE-VOIX.md) | Constater côté lecteur le premier signal utile effectivement programmé/consommé, au-delà des jalons de **REC-034** | Preuve technique réalisable ; **ne jamais confondre signal lu et audition physique certaine** |
+| [LAT-22](01-LATENCE-VOIX.md) | Estimer et rapprocher les coûts réels des tours avec des données de facturation fournisseur, au-delà des tokens de **REC-034** | Granularité officiellement disponible ; coût **exact** jamais inventé quand les données manquent |
 
-Ces quatre idées **ne rouvrent pas** DEV-021, DEV-024 ou DEV-026, **ne constituent pas un manque bloquant** pour la version actuelle et ne promettent aucune capacité physiquement impossible. Elles ne seront engagées que sur nouvelle décision du propriétaire après vérification de l'intérêt, des risques de régression et des contraintes réelles. Pas de nouvel appel IA, de changement d'autorisation ou de mise en production par cette inscription.
+Ces quatre idées **ne rouvrent pas** REC-031, REC-034 ou REC-036, **ne constituent pas un manque bloquant** pour la version actuelle et ne promettent aucune capacité physiquement impossible. Elles ne seront engagées que sur nouvelle décision du propriétaire après vérification de l'intérêt, des risques de régression et des contraintes réelles. Pas de nouvel appel IA, de changement d'autorisation ou de mise en production par cette inscription.
 
 Le [thème 08, modèle 2D](08-MODELE-2D.md) est conservé comme **fiche d'archivage sans proposition active** : le travail artistique est déjà identifié et priorisé dans la vue [ART de la backlog](../backlog/04-PRODUCTION-2D.md).
 
@@ -52,7 +52,7 @@ Le [thème 08, modèle 2D](08-MODELE-2D.md) est conservé comme **fiche d'archiv
 ## Références
 
 - [Backlog opérationnel et index de priorités](../backlog/README.md)
-- [Spécifications des six améliorations devenues DEV-021 à DEV-026](../backlog/01-DEVELOPPEMENT.md)
+- [Spécifications et recettes REC-031 à REC-036](../backlog/02-RECETTE.md)
 - [Passation d'audit et traçabilité des 83 suppressions](../operations/handoffs/2026-11-22-catalogue-dedoublonnage.md)
 - [État technique et coordination des agents](../../AGENTS.md)
 - [Plan économique historique du 21/11](PLAN-ECONOMIE-API-20261121.md) : document de conception antérieur à plusieurs livraisons, **pas** un second backlog actif.

@@ -2,6 +2,18 @@
 
 **Référence :** sources de `goldaj/jade-vtuber`, état préparé pour `develop` sur la PR #34 (21 novembre 2026). **Code raccordé = fonctionnalité implémentée** ; la recette Android/Discord physique reste indépendante, et la configuration privée du PC peut remplacer les valeurs par défaut.
 
+## Livrables PR #38 — code présent, recette en attente (22 novembre 2026)
+
+- **REC-031 (ex DEV-021) :** tâches privées intercanaux et transferts Discord vers destinations explicitement autorisées, recette réelle manquante.
+- **REC-032/033 (ex DEV-022/023) :** rappel local lexical et cache mémoire de présence ; recherche très ancienne, L1 et déclenchement d'ouverture PWA partiels.
+- **REC-034 (ex DEV-024) :** jalons, durées, p50/p95, tokens, STT mobile, sans coût par tour exact ni preuve d'audition physique.
+- **REC-035 (ex DEV-025) :** signaux d'apartés ; discussions multi-fils non pleinement reconnues.
+- **REC-036 (ex DEV-026) :** personnalité mémorielle corrigible ; évolution expérientielle plus profonde différée P3.
+- **REC-037 (ex DEV-020) :** superviseur local Windows et administration mobile ; pas de recette physique.
+- **DEV-010** : décor statique tant que calques manquent ; **OPS-015** : inventaire sans comparaison artistique sémantique. Les deux restent **À faire**.
+
+**Tous les sept REC restent À valider**, pas `Done`. [Audit](../operations/handoffs/2026-11-22-audit-technique-fonctionnel-ci-pr38.md).
+
 ## Fonctions présentes
 
 | Domaine | État observé dans le code |

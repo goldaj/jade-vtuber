@@ -27,9 +27,9 @@
 
 ## Décision propriétaire du 22 novembre 2026 — promotion et dédoublonnage
 
-Les idées `RTE-15`, `NRM-10`, `MEM-01`, `LAT-01`, `NEW-17`, `NEW-36` sont désormais les **seules cartes actives** `DEV-021` à `DEV-026` respectivement, toutes `À faire`. Dépendances, critères d'acceptation et non-régression figurent dans la [vue DEV](../backlog/01-DEVELOPPEMENT.md) et les priorités dans l'[index](../backlog/README.md). Le transfert n'implique **ni implémentation commencée, ni autorisation de dépense API**.
+Les idées RTE-15/NRM-10/MEM-01/LAT-01/NEW-17/NEW-36 ont été livrées dans la PR #38 ; les seules cartes actives sont **REC-031 à REC-036, toutes À valider**. DEV-020 devient REC-037. Les lacunes REC-032/033/035 restent documentées ; DEV-010 et OPS-015 demeurent À faire.
 
-Après revue croisée des statuts et des modules existants, **83 idées ont été retirées du catalogue actif**, ramené de 192 à 109 entrées. [Traçabilité détaillée](handoffs/2026-11-22-catalogue-dedoublonnage.md). Avant de proposer une nouvelle idée, vérifier d'abord la vue canonique et le code de `develop` ; si une proposition comporte seulement un delta encore non livré, conserver **ce delta seulement**, pas un doublon du travail déjà accepté.
+Après revue croisée des statuts et des modules existants, **83 idées ont été retirées du catalogue actif**, ramené de 192 à 109 entrées, puis à 113 après quatre idées P3 différées. [Traçabilité détaillée](handoffs/2026-11-22-catalogue-dedoublonnage.md). Avant de proposer une nouvelle idée, vérifier d'abord la vue canonique et le code de `develop` ; si une proposition comporte seulement un delta encore non livré, conserver **ce delta seulement**, pas un doublon du travail déjà accepté.
 
 ## Definition of Done et validation des tâches
 

@@ -6,25 +6,26 @@
 
 **Clôtures du 22/11/2026 :** `REC-021` (mémoire SQLite), `REC-025` (sauvegarde/restauration ciblée) et `REC-027` (sélection sociale hybride) sont **`Done`** par décision explicite du propriétaire. Réserves et preuves dans la [vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-021-rec-025-rec-027). `REC-020` (variantes d'intention A/B) a également été clôturée en **`Done`** sur validation explicite du propriétaire le 22/11/2026, [détails et réserves dans la vue REC](02-RECETTE.md#clôture-propriétaire-du-22-novembre-2026--rec-020).
 
-## REPRISE PRIORITAIRE — état actualisé le 22 novembre 2026
+## REPRISE PRIORITAIRE — code PR #38 intégré, recettes ouvertes
 
-Les cartes et statuts des quatre vues restent canoniques. **Ne pas réouvrir** des opérations `Done` sur la foi d'anciens tableaux de reprise. Les six sujets ajoutés à la demande du propriétaire sont des développements nouveaux, **aucun n'a encore commencé**.
+**REC-031 à REC-037 sont `À valider`, et non `Done`.** Les écarts de REC-032/033/035 restent connus et l'acceptation doit tenir compte des critères non remplis. Une CI verte ne vaut pas recette réelle.
 
-| Ordre conseillé | Tickets | Reprise pour les développeurs |
+| Ordre | Recette | Vérification principale |
 | ---: | --- | --- |
-| 1 | **DEV-024** (P0) | Compléter la mesure de latence réelle à partir de DEV-008, sans payer des tests API ni dépendre des canaux suspendus. |
-| 2 | **DEV-021** (P1) | Architecturer l'état partagé + les actions intercanaux autorisées avec protections d'audience. |
-| 3 | **DEV-022** (P2) | Recherche ciblée parmi les souvenirs autorisés ; mesurer précision, tokens, latence. |
-| 4 | **DEV-023** (P1) | Cache anticipé des identités présentes, après les contrats de rappel et d'invalidation DEV-022. |
-| 5 | **DEV-026** (P1) | Personnalité durable distincte des repères déjà livrés dans DEV-014. |
-| 6 | **DEV-025** (P2) | Compréhension des fils de groupe en complément de REC-027 déjà validée. |
-| En parallèle | ART-001 à ART-012 ; DEV-010/020 | Travaux r21 et correctifs/ergonomie indépendants des six tickets. |
+| 1 | **REC-034** (P0) | Latences et coûts par canal, limites physiques P3 acceptées. |
+| 2 | **REC-031** (P1) | Continuité privée et envois Discord strictement autorisés. |
+| 3 | **REC-032** (P2) | Pertinence des souvenirs anciens et contradictions encore partielles. |
+| 4 | **REC-033** (P1) | Cache présence, ouverture PWA et L1 encore partiels. |
+| 5 | **REC-036** (P1) | Profil de personnalité et stabilité entre sessions. |
+| 6 | **REC-035** (P2) | Dialogues de groupe, fils parallèles encore partiels. |
+| 7 | **REC-037** (P2) | Déploiement Windows depuis PWA Android sur appareil réel. |
+| En parallèle | **DEV-010**, **OPS-015**, ART-001 à ART-012 | Calques et comparaison artistique restent **À faire**. |
 
-**Suspensions conservées :** les recettes nécessitant le microphone physique PC, Twitch ou OBS restent `Bloqué` jusqu'à décision contraire du propriétaire. **Ne jamais déduire** de cette liste une autorisation d'appels payants, de modification du PC ou de fusion sur `main`.
+**Microphone physique du PC, Twitch et OBS restent suspendus**, sans réactivation implicite. [Rapport d'audit](../operations/handoffs/2026-11-22-audit-technique-fonctionnel-ci-pr38.md).
 
 ## Focus de travail léger (limite indicative : 3 tâches réellement « En cours »)
 
-**Mise à jour du 22 novembre :** les six nouvelles cartes DEV-021 à DEV-026 sont `À faire`. Aucun travail entamé n'est affirmé. Prioriser selon les dépendances réelles et conserver les blocages documentés. Ne jamais réactiver une carte déjà `Done` ou `Bloqué` via cet ancien focus.
+**Mise à jour :** les anciennes DEV-021 à DEV-026 sont dans REC-031 à REC-036, toutes **À valider** ; DEV-020 dans REC-037. Ne pas créer de doublons.
 
 **Règle pratique :** viser au plus **trois tâches en cours simultanément**, sans en faire un verrou automatique ; les autres restent « À faire », « À qualifier » ou « Bloqué ». Mettre à jour la colonne **Statut** de la vue canonique, pas ce texte historique. Pas de cadence Scrum obligatoire ni de tableau parallèle.
 
@@ -40,8 +41,8 @@ Les cartes et statuts des quatre vues restent canoniques. **Ne pas réouvrir** d
 
 | Type | Vue | Objet | Nombre actuel |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 21 |
-| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, y compris cinq anciennes cartes DEV | 30 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 14 |
+| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, y compris cinq anciennes cartes DEV | 37 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 17 |
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 12 |
 | **Total** | | **Tâches uniques identifiées, dont les six évolutions économiques de la PR #34** | **80 (dont 1 classée sans suite)** |
@@ -96,15 +97,15 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 20 | REC-009 | A | Arbitrage multi-conversations | [REC](02-RECETTE.md) |
 | 21 | REC-010 | A | Latence et coût d'une session réelle | [REC](02-RECETTE.md) |
 | 22 | DEV-003 | A | Corriger la sortie indésirable du repli WAV s'il se produit réellement | [DEV](01-DEVELOPPEMENT.md) |
-| 23 | DEV-024 | Transverse | Mesure du temps réellement perçu, du coût et des p50/p95 par canal | [DEV](01-DEVELOPPEMENT.md) |
+| 23 | REC-034 | Transverse | Mesure du temps réellement perçu, du coût et des p50/p95 par canal | [REC](02-RECETTE.md) |
 
 ### P1 · 46 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 24 | DEV-021 | Transverse | Conscience unique Jade et actions intercanaux autorisées | [DEV](01-DEVELOPPEMENT.md) |
-| 25 | DEV-023 | Transverse | Cache mémoire anticipé par présence et identité vérifiée | [DEV](01-DEVELOPPEMENT.md) |
-| 26 | DEV-026 | Transverse | Personnalité durable, cohérente et corrigible | [DEV](01-DEVELOPPEMENT.md) |
+| 24 | REC-031 | Transverse | Conscience unique Jade et actions intercanaux autorisées | [REC](02-RECETTE.md) |
+| 25 | REC-033 | Transverse | Cache mémoire anticipé par présence et identité vérifiée | [REC](02-RECETTE.md) |
+| 26 | REC-036 | Transverse | Personnalité durable, cohérente et corrigible | [REC](02-RECETTE.md) |
 | 27 | REC-021 | A | Mémoire SQLite, Core et autobiographie | [REC](02-RECETTE.md) |
 | 28 | DEV-012 | A | Donner au LLM de Jade le contrôle conscient et confirmé des écritures mémoire L2/L3 | [DEV](01-DEVELOPPEMENT.md) |
 | 29 | REC-025 | A | Sauvegarde/restauration et suppression ciblée | [REC](02-RECETTE.md) |
@@ -153,8 +154,8 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 70 | DEV-022 | Transverse | Recherche de souvenirs ciblée, pertinente et sécurisée | [DEV](01-DEVELOPPEMENT.md) |
-| 71 | DEV-025 | Transverse | Compréhension des apartés et fils de discussion de groupe | [DEV](01-DEVELOPPEMENT.md) |
+| 70 | REC-032 | Transverse | Recherche de souvenirs ciblée, pertinente et sécurisée | [REC](02-RECETTE.md) |
+| 71 | REC-035 | Transverse | Compréhension des apartés et fils de discussion de groupe | [REC](02-RECETTE.md) |
 | 72 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
 | 73 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
 | 74 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
@@ -162,7 +163,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 76 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
 | 77 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
 | 78 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
-| 79 | DEV-020 | Transverse | Choisir une branche Git et redéployer/redémarrer Jade depuis l'application mobile | [DEV](01-DEVELOPPEMENT.md) |
+| 79 | REC-037 | Transverse | Choisir une branche Git et redéployer/redémarrer Jade depuis l'application mobile | [REC](02-RECETTE.md) |
 
 ### Décision classée sans suite (hors liste de priorisation)
 
