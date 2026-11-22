@@ -118,7 +118,8 @@ class Dialogue:
                 selected_history = (select_context(history, incoming.text)
                                     if self.selective_context else history)
                 tools_action = (ToolActions(memory_action, web_action, document_action)
-                                if web_action is not None or document_action is not None
+                                if (web_action is not None or
+                                    (document_action is not None and document_action.allowed))
                                 else memory_action)
                 can_use_tools = (
                     tools_action is not None

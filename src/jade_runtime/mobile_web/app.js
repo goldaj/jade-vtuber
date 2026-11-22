@@ -78,7 +78,7 @@
   function addJadeReply(text, files) {
     const entry = addBubble(text, "jade");
     for (const item of Array.isArray(files) ? files.slice(0, 4) : []) {
-      if (!item || !/^\\/api\\/documents\\/[a-f0-9]{32}$/.test(item.url)) continue;
+      if (!item || !/^\/api\/documents\/[a-f0-9]{32}$/.test(item.url)) continue;
       const control = document.createElement("button");
       control.type = "button";
       control.className = "attachment-button";

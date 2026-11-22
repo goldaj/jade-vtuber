@@ -356,7 +356,8 @@ class ResponsesChat:
                                  "count": len(outcome.get("results", ())),
                                  "search_id": outcome.get("search_id")}
             if name == "jade_create_document":
-                audit_outcome = {"status": outcome.get("status")}\n            event("document_tool_result" if name == "jade_create_document" else
+                audit_outcome = {"status": outcome.get("status")}
+            event("document_tool_result" if name == "jade_create_document" else
                   "web_tool_result" if name == "jade_web_search" else "memory_tool_result",
                   call_index=index, name=name, call_id=call["call_id"],
                   outcome=audit_outcome, confirmation_waited=False)
