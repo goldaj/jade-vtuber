@@ -1,5 +1,12 @@
 # État de develop — fonctionnalités codées
 
+## PWA · Décors interchangeables Chambre/Cuisine (22/11/2026)
+
+- Le bouton « Décor » placé sur la vue de Jade permet de choisir **Chambre** ou **Cuisine**, sans modifier ni remonter le modèle Live2D. Le choix persiste dans l’URL locale via `?room=kitchen` ; l’absence du paramètre conserve la chambre par défaut. Le sélecteur disparaît en mode plein écran immersif pour conserver le rendu uniquement Jade + décor.
+- Chambre : le décor et ses calques animés existants restent inchangés (rideau, ombres, reflets, vapeur). Cuisine : nouveau fond `room-kitchen.webp` statique, **sans aucun calque ni animation emprunté à la chambre**. Le moteur arrête la boucle d’animation de la chambre pendant l’affichage de la cuisine et la reprend au retour.
+- La recette visuelle sur Android et les animations propres à la cuisine restent à faire : aucune animation cuisine n’est promise dans ce lot.
+
+
 ## Splash de lancement PWA (22/11/2026)
 
 - Image propriétaire `splash-jade.png` servie et affichée plein écran au lancement de l'interface HTML, puis retirée automatiquement. Sur la **connexion par jeton**, la même image reste nette en fond jusqu'à l'entrée dans le salon ; une carte compacte légèrement sous le centre affiche seulement l'icône, « Espace privé de Jade », « Jeton d'accès », le champ et « Entrer dans le salon ». Le formulaire et l'authentification ne changent pas. Android contrôle toujours **la phase native préalable**, constituée de l'icône, du nom et du fond du manifeste. L'icône SVG est ajoutée comme ressource vectorielle alternative ; les PNG restent des fallbacks à source raster 96 px.

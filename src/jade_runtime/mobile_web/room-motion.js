@@ -1,7 +1,10 @@
 "use strict";
 (() => {
   const scene = document.querySelector(".room-art");
-  if (!scene || !CSS.supports("width", "1cqh")) return;
+  const roomSelect = document.getElementById("room-selector");
+  if (!scene || !roomSelect) return;
+  // The room selection works even when container query units are unavailable.
+  const supportsRoomLayers = typeof CSS !== "undefined" && CSS.supports("width", "1cqh");
 
   const backdrop = scene.querySelector(".room-plane > img");
   const curtain = scene.querySelector(".room-curtain");
@@ -12,6 +15,15 @@
   if (![backdrop, curtain, left, right, steam, reflection].every(Boolean)) return;
 
   const original = backdrop.getAttribute("src");
+  const ROOM_IMAGES = Object.freeze({
+    bedroom: original,
+    kitchen: "/assets/room-kitchen.webp",
+  });
+  const requested = new URLSearchParams(window.location.search).get("room");
+  let activeRoom = Object.prototype.hasOwnProperty.call(ROOM_IMAGES, requested) ? requested : "bedroom";
+  let selectionRevision = 0;
+  scene.dataset.room = activeRoom;
+  roomSelect.value = activeRoom;
   const preference = matchMedia("(prefers-reduced-motion: reduce)");
   const movingLayers = [curtain, left, right, steam];
   const optionalLayers = [...movingLayers, reflection];
@@ -64,10 +76,16 @@
 
   function sync() {
     const reduced = preference.matches;
-    backdrop.src = ready && !reduced ? "/assets/room-backdrop.webp" : original;
-    for (const layer of optionalLayers) layer.hidden = !ready || reduced;
+    // Each room owns its visual layers. The bedroom renderer never paints on
+    // the kitchen, which deliberately ships without any animations yet.
+    const bedroomLayers = activeRoom === "bedroom" && supportsRoomLayers && ready && !reduced;
+    const source = activeRoom === "kitchen"
+      ? ROOM_IMAGES.kitchen
+      : (bedroomLayers ? "/assets/room-backdrop.webp" : original);
+    if (backdrop.getAttribute("src") !== source) backdrop.src = source;
+    for (const layer of optionalLayers) layer.hidden = !bedroomLayers;
 
-    const running = ready && visible && !document.hidden && !reduced;
+    const running = bedroomLayers && visible && !document.hidden;
     scene.toggleAttribute("data-paused", !running);
     if (running && frame === null) {
       frame = requestAnimationFrame(paint);
@@ -91,20 +109,47 @@
     return image;
   }
 
-  Promise.all([
-    loadLayer("/assets/room-backdrop.webp"),
-    loadLayer("/assets/room-curtain.webp"),
-  ]).then(([clean, fabric]) => {
-    backdrop.src = clean.src;
-    curtain.src = fabric.src;
-    ready = true;
+  // Room images are preloaded before a user-visible change to avoid flashes.
+  // No storage of credentials or other private data in the browser.
+  async function changeRoom(next) {
+    if (!Object.prototype.hasOwnProperty.call(ROOM_IMAGES, next)) return;
+    const revision = ++selectionRevision;
+    const image = new Image();
+    try {
+      image.src = ROOM_IMAGES[next];
+      await image.decode();
+      if (!image.naturalWidth || !image.naturalHeight) throw Error("room image unavailable");
+    } catch (_) {
+      if (revision === selectionRevision) roomSelect.value = activeRoom;
+      return;
+    }
+    if (revision !== selectionRevision) return;
+    activeRoom = next;
+    scene.dataset.room = next;
+    roomSelect.value = next;
     sync();
-  }).catch(() => {
-    // Never expose a half-assembled scene. Keep the original composite if
-    // an asset is absent, corrupt, or unapproved by the gateway allowlist.
-    ready = false;
-    sync();
-  });
+    const url = new URL(window.location.href);
+    if (next === "bedroom") url.searchParams.delete("room");
+    else url.searchParams.set("room", next);
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+  }
+  roomSelect.addEventListener("change", () => { void changeRoom(roomSelect.value); });
+
+  if (supportsRoomLayers) {
+    Promise.all([
+      loadLayer("/assets/room-backdrop.webp"),
+      loadLayer("/assets/room-curtain.webp"),
+    ]).then(([, fabric]) => {
+      // An asset finishing loading does not change the selected room.
+      curtain.src = fabric.src;
+      ready = true;
+      sync();
+    }).catch(() => {
+      // Never expose a half-assembled bedroom. Use its original composite.
+      ready = false;
+      sync();
+    });
+  }
 
   document.addEventListener("visibilitychange", sync);
   if (typeof preference.addEventListener === "function") preference.addEventListener("change", sync);
