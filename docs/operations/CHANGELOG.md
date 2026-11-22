@@ -1,5 +1,12 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — REC-038 validée par le propriétaire : recherche Internet Jade
+
+- **Statut :** REC-038 passée de `À valider` à **`Done`** à la demande explicite du propriétaire, qui confirme que la connexion Internet de Jade fonctionne sur son environnement réel.
+- **Preuves :** code Tavily et journaux par session intégrés sur `develop` ; tests automatisés dédiés à la recherche web réussis dans la [CI de `8a801035`](https://github.com/goldaj/jade-vtuber/actions/runs/45022523090) ; [scan des secrets réussi](https://github.com/goldaj/jade-vtuber/actions/runs/45022523125). La CI globale reste rouge sur des tests mémoire préexistants (Linux : 12 échecs, 5 erreurs).
+- **Réserves transparentes :** le propriétaire valide le fonctionnement de base, sans attestation distincte de tous les scénarios spécifiques de REC-038 (PWA, oral, limites maximales, journal après plusieurs redémarrages, erreurs réseau). Ces scénarios ne sont pas qualifiés de réussis et restent consultables dans la carte clôturée.
+- **Périmètre :** seule la documentation de suivi change ; aucun code, secret, paramètre privé ni branche `main` modifié.
+
 ## 2026-11-22 — Historique de recherches web par session
 
 - **Décision :** abandon du journal web unique au profit d'un dossier privé dédié à côté de la mémoire (`D:/Jade/private/jade-web-search/` sur le PC de référence). Un JSONL horodaté et suffixé par PID est créé à chaque démarrage live avec web activé, comme les logs Jade généraux.
