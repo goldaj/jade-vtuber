@@ -1,0 +1,20 @@
+# Keep all built-in Gitleaks detection rules.
+[extend]
+useDefault = true
+
+# The only exception is three literal, invented Discord snowflake IDs in the
+# offline linked-account regression fixture. They are public identifiers, not
+# authentication tokens. Regexes deliberately avoid contiguous ID literals so
+# this configuration itself does not trigger the discord-client-id rule.
+# Both file path AND the exact matched value are required.
+[[allowlists]]
+description = "Synthetic Discord identity IDs in document permission tests only"
+targetRules = ["discord-client-id"]
+condition = "AND"
+regexTarget = "match"
+paths = ['''^tests/test_jade_documents\.py$''']
+regexes = [
+  '''^1234567890[1]2345678$''',
+  '''^2345678901[2]3456789$''',
+  '''^1234567891[2]3456789$''',
+]
