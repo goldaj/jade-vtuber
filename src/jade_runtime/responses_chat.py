@@ -13,7 +13,7 @@ import json
 import logging
 
 from .memory_actions import MEMORY_TOOL
-from .session_logging import event
+from .session_logging import event, summary
 
 LOG = logging.getLogger("jade.responses")
 
@@ -81,6 +81,17 @@ def _require_completed(response) -> None:
     status = _field(response, "status")
     if status != "completed":
         details = _field(response, "incomplete_details") or _field(response, "error")
+        if status == "incomplete" and _field(details, "reason") == "max_output_tokens":
+            usage = _field(response, "usage")
+            token_details = _field(usage, "output_tokens_details")
+            fields = {
+                "configured_cap": _field(response, "max_output_tokens"),
+                "output_tokens": _field(usage, "output_tokens"),
+                "reasoning_tokens": _field(token_details, "reasoning_tokens"),
+            }
+            # Technical, text-free diagnostics: never retry a potentially billed turn.
+            summary("llm_output_limit_reached", **fields)
+            event("llm_output_limit_reached", **fields)
         raise RuntimeError(f"Responses API not completed (status={status}, details={details})")
 
 

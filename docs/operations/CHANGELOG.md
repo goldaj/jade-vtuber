@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Réponse longue tronquée : budget de sortie Luna (develop)
+
+- **Incident réel :** 22/11/2026 08:20 et 08:21, tours Discord vocal 1 et 3 en `status=incomplete` / `reason=max_output_tokens`. Ce n'était pas un plantage du processus ni un défaut TTS : le tour vocal 2 a poursuivi normalement et a confirmé `rec006_pcm_progress=progressive_confirmed` côté lecteur.
+- **Cause probable :** `max_completion_tokens=320` par défaut sur la Responses API, partagé entre raisonnement et texte visible ; une réponse longue peut épuiser ce plafond avant toute livraison. La configuration privée peut surcharger cette valeur et n'a pas été inspectée.
+- **Correctif préventif :** plafond par défaut relevé à 2048, **sans appel API supplémentaire, retry automatique, changement du niveau de raisonnement ou d'Early Voice**. Ce plafond ne force pas Jade à produire 2048 tokens et peut rester surchargé par `JADE_MAX_COMPLETION_TOKENS`. Le journal de démarrage affiche la valeur réellement chargée ; en cas de nouveau dépassement, `llm_output_limit_reached` indique le budget et les consommations connues sans texte privé.
+- **Fichiers :** `config.py`, `main.py`, `responses_chat.py`, tests unitaires du budget et des traces, guide des logs. **Limites :** aucun appel API réel ni test PC ; une sortie dépassant encore 2048 peut rester incomplète. La CI existante échouait déjà au contrôle `TOKEN_PATTERN` sur le commit précédent ; ce contrôle n'a pas été contourné.
+
+
 ## 2026-11-22 — REC-006 : preuve de progression PCM Discord (develop)
 
 - **Besoin :** comparer les instants techniques de la première trame PCM non silencieuse consommée par le lecteur Discord et de la réponse TTS OpenAI terminée, sans confondre ces horodatages avec la durée totale du tour ou le son réellement entendu chez un utilisateur.

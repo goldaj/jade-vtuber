@@ -18,6 +18,8 @@ Les anciens fichiers restent disponibles pour diagnostic. Ils ne sont ni supprim
 - reply_planned : destinations et médias prévus, intention sans contenu privé ;
 - delivery_outcome : transfert réussi vers le connecteur ou échec ; ce n'est pas la confirmation qu'un destinataire a entendu ou lu ;
 - turn_outcome, avertissements, erreurs et tracebacks Python complets ;
+- llm_output_limit_reached : dépassement du plafond de tokens Responses, avec `configured_cap`, `output_tokens` et `reasoning_tokens` lorsque disponibles, sans contenu de réponse ;
+- `runtime_configuration` inclut désormais `max_completion_tokens`, plafond effectif chargé depuis la configuration privée ou la valeur par défaut ;
 - rec006_pcm_progress : à chaque tentative de lecture PCM Discord, `first_pcm_ms` (première trame non silencieuse consommée par le lecteur), `tts_completed_ms` (réponse TTS validée), `pcm_before_tts_complete` (booléen ou null), `playback_completed` et `verdict`.
 
 **Fichier de session (détaillé, local)** :
