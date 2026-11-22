@@ -93,6 +93,14 @@ class TurnMetrics:
                 outcome = "failed"
             elif "turn_cancelled" in row:
                 outcome = "cancelled"
+        # Markers are times since queue admission, not individual phase durations.
+        # Report explicit deltas too so operators do not mistake one for the other.
+        for prefix in ("memory", "llm", "delivery"):
+            start = row.get(prefix + "_start")
+            finish = row.get(prefix + "_end")
+            if (isinstance(start, (int, float))
+                    and isinstance(finish, (int, float)) and finish >= start):
+                row[prefix + "_duration_ms"] = round(finish - start, 1)
         row["total_ms"] = round((self.clock() - current["queued_at"]) * 1000, 1)
         row["outcome"] = outcome
         self.samples[current["key"]].append(row)
