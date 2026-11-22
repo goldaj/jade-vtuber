@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from datetime import datetime, timezone
 import asyncio
 import time
 
@@ -14,6 +15,24 @@ class PresenceMemoryCache:
         self.clock = clock
         self._entries = OrderedDict()
         self._locks = {}
+
+    def _deadline(self, rows):
+        # A cached L2 memory must not survive its SQLite retention expiry even
+        # if the hourly pruning task has not run yet.
+        remaining = self.ttl_seconds
+        now = datetime.now(timezone.utc)
+        for memory in rows:
+            expiry = memory.get("expires_at")
+            if not expiry:
+                continue  # Core memories have no retention deadline.
+            try:
+                at = datetime.fromisoformat(expiry)
+                if at.tzinfo is None:
+                    at = at.replace(tzinfo=timezone.utc)
+                remaining = min(remaining, (at - now).total_seconds())
+            except (TypeError, ValueError):
+                remaining = 0
+        return self.clock() + max(0, remaining)
 
     async def candidates(self, key, scope: str, *, linked=False):
         # Consent and revision are checked on *every* read, including cache hits.
@@ -45,7 +64,7 @@ class PresenceMemoryCache:
                     or await asyncio.to_thread(self.store.revision) != revision_again):
                 self.invalidate(key)
                 return []
-            self._entries[cache_key] = (self.clock() + self.ttl_seconds,
+            self._entries[cache_key] = (self._deadline(rows),
                                         revision_again, tuple(dict(x) for x in rows))
             self._entries.move_to_end(cache_key)
             while len(self._entries) > self.max_entries:
