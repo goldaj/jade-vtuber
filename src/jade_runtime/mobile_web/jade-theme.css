@@ -84,6 +84,11 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .auth-card label{color:#45664f;font-size:.82rem;font-weight:600;margin-bottom:8px}
 .auth-card input{min-height:45px;border-radius:12px}
 .unlock{background:var(--forest);color:#fff;min-height:45px;margin:13px 0 0;padding:10px}
+/* Owner-approved option 2: lower the login popup on portrait phones only.
+ * Keep the existing layout on desktop and short/landscape viewports. */
+@media(max-width:819px) and (orientation:portrait) and (min-height:521px){
+  .auth-card{transform:translateY(clamp(125px,25dvh,235px))}
+}
 @media(min-width:820px){.auth-layer{background-size:contain}}
 @media(max-height:520px){.auth-layer{overflow-y:auto}.auth-card{transform:none;margin:auto}}
 .app-nav{display:flex;justify-content:space-around;align-items:stretch;gap:2px;background:#fffdf8;
