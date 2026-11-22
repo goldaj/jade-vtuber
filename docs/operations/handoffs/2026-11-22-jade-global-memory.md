@@ -44,7 +44,7 @@ Jade dispose consciemment d'un outil disponible sur tous les canaux, y compris d
 ## Tests prévus / ajoutés
 
 ```powershell
-poetry run pytest -q tests/test_jade_memory_browsing.py tests/test_jade_cross_channel_memory.py tests/test_jade_discord_voice_core_self.py tests/test_jade_persistent_memory.py tests/test_luna_memory_tool_reasoning.py tests/test_jade_economy_memory.py tests/test_jade_global_memory_authority.py
+poetry run pytest -q tests/test_jade_memory_browsing.py tests/test_jade_cross_channel_memory.py tests/test_jade_discord_voice_core_self.py tests/test_jade_persistent_memory.py tests/test_luna_memory_tool_reasoning.py tests/test_jade_economy_memory.py tests/test_jade_global_memory_authority.py tests/test_jade_core_proposal_intent.py
 ```
 
 Ces tests visent : pagination interpersonnes, L1/L2/L3, provenances et déduplication Core, accès Discord/Twitch anonymes, Core d'autres utilisateurs, migration v5→v8, exclusion des entrées déjà expirées, disponibilité de l'outil en vocal, écritures optimistes, autorisations d'écriture inchangées.
