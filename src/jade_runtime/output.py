@@ -274,7 +274,7 @@ class SpeechOutput:
                 require_session()
             if await self._speak_progressive(
                     reply, context, require_session, discord_voice=discord_voice):
-                return
+                return True
             # New adapters can report the words actually spoken; legacy service
             # doubles still provide synthesize_wav only.
             rich_synthesis = getattr(type(self.services), "synthesize_speech", None)
