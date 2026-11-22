@@ -45,7 +45,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
   pointer-events:none;
 }
 .room-plane {position:absolute;inset:0}
-.room-plane img {display:block;width:100%;height:100%;object-fit:cover}
+.room-plane > img:first-child {display:block;width:100%;height:100%;object-fit:cover}
 .room-curtain,.room-dapple,.room-reflection,.room-steam {display:none}
 @supports (width: 1cqh) {
   .room-plane {
