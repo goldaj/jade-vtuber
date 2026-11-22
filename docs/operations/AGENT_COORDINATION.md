@@ -27,7 +27,7 @@
 
 ## Décision propriétaire du 22 novembre 2026 — promotion et dédoublonnage
 
-Les idées RTE-15/NRM-10/MEM-01/LAT-01/NEW-17/NEW-36 ont été livrées dans la PR #38 ; les seules cartes actives sont **REC-031 à REC-036, toutes À valider**. DEV-020 devient REC-037. Les lacunes REC-032/033/035 restent documentées ; DEV-010 et OPS-015 demeurent À faire.
+Les idées RTE-15/NRM-10/MEM-01/LAT-01/NEW-17/NEW-36 ont été livrées dans la PR #38 et suivies par REC-031 à REC-036. **Sur validation explicite du propriétaire le 22/11, REC-026 et REC-032 sont Done**. REC-031 et REC-033 à REC-037 restent À valider. Les limites de rappel lexical/contradictions avancées de REC-032 sont acceptées pour cette version ; les lacunes distinctes de REC-033/035 restent ouvertes. DEV-010 et OPS-015 demeurent À faire. [Passation de validation mémoire](handoffs/2026-11-22-jade-global-memory.md#cloture-fonctionnelle-memoire-du-22-novembre-2026).
 
 Après revue croisée des statuts et des modules existants, **83 idées ont été retirées du catalogue actif**, ramené de 192 à 109 entrées, puis à 113 après quatre idées P3 différées. [Traçabilité détaillée](handoffs/2026-11-22-catalogue-dedoublonnage.md). Avant de proposer une nouvelle idée, vérifier d'abord la vue canonique et le code de `develop` ; si une proposition comporte seulement un delta encore non livré, conserver **ce delta seulement**, pas un doublon du travail déjà accepté.
 
