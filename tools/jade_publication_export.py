@@ -43,6 +43,8 @@ MOBILE_WEB_PUBLIC = frozenset({
 })
 ROOM_BACKGROUND = "src/jade_runtime/mobile_web/room-spring.webp"
 ROOM_BACKGROUND_SHA256 = "5b7217ff8c1351a22c9ccb51d76889b3a9bb3fe8b7894d7855e2cd4961fe3671"
+ICON_SOURCE = "src/jade_runtime/mobile_web/icon-source-96.png"
+ICON_SOURCE_SHA256 = "6898ee1d8853948fb014f3f4e301916484960fc361963cfcf81df93e412a71ef"
 PUBLIC_TOOLS = frozenset({
     "tools/jade_publication_audit.py",
     "tools/jade_publication_export.py",
@@ -116,6 +118,11 @@ def create_preview(root: Path, dest: Path, paths: list[str], *, include_portrait
             if (image[:4] != b"RIFF" or image[8:12] != b"WEBP"
                     or hashlib.sha256(image).hexdigest() != ROOM_BACKGROUND_SHA256):
                 raise ValueError("Mobile background digest does not match the reviewed source")
+        elif source == ICON_SOURCE:
+            image = sourcefile.read_bytes()
+            if (not image.startswith(b"\x89PNG\r\n\x1a\n")
+                    or hashlib.sha256(image).hexdigest() != ICON_SOURCE_SHA256):
+                raise ValueError("Mobile icon does not match owner's approved source")
         elif source in MOBILE_WEB_PUBLIC and source.endswith(".webp"):
             image = sourcefile.read_bytes()
             # Generated room layers are explicit allowlisted local illustrations.
