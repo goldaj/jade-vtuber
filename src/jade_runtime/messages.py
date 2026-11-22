@@ -1,5 +1,6 @@
 """Transport-independent messages. Preserve original Unicode content."""
 from dataclasses import dataclass, field
+import math
 import re
 
 
