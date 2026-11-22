@@ -156,3 +156,77 @@ def test_batch_curator_accepts_linked_owner_discord_voice_core_self(tmp_path):
             await batch.close()
 
     asyncio.run(run())
+
+
+def test_fresh_discord_speaker_can_save_autonomous_l2_and_l3(tmp_path):
+    """An unenrolled Discord speaker gains a write profile before the LLM runs."""
+    store = MemoryStore(tmp_path / "fresh-discord-writes.sqlite3")
+    service = MemoryService(store, backend=object())
+    incoming = _voice(STRANGER)
+
+    async def run():
+        try:
+            # Previously the tool could be read-only if the account wasn't
+            # enrolled yet. The owner-only mandatory L2 rule is unrelated.
+            action = await service.prepare_memory_action(incoming)
+            assert action is not None and action.write_enabled is True
+            assert (await action(json.dumps({
+                "kind": "ordinary",
+                "summary": "Jade retient une scène de notre conversation.",
+                "significance": "Elle souhaite la retrouver plus tard.",
+            })))["status"] == "enregistré"
+            second = await service.prepare_memory_action(incoming)
+            assert (await second(json.dumps({
+                "kind": "core_self",
+                "summary": "Jade choisit un souvenir fondateur de son évolution.",
+                "significance": "Cet événement lui semble important.",
+            })))["status"] == "enregistré"
+            assert len(store.search_global(level="2")["items"]) == 1
+            assert len(store.search_global(level="3", kind="core_self")["items"]) == 1
+            assert store.search_global(level="3")["items"][0][
+                "source_account_id"] == STRANGER[1]
+        finally:
+            await service.close()
+    asyncio.run(run())
+
+
+def test_discord_core_proposal_can_be_curated_without_tool_call(tmp_path):
+    """The background selector may save L3 when Jade didn't call save tool."""
+    store = MemoryStore(tmp_path / "curator-discord.sqlite3")
+    store.enable(STRANGER)
+
+    class Model:
+        async def complete(self, messages):
+            # No exact evidence quote: paraphrasing cannot block a chosen Core.
+            return json.dumps([{
+                "index": 0, "kind": "core_self",
+                "summary": "Jade se rappelle son premier échange mobile avec Goldaj.",
+                "significance": "Elle le considère comme un jalon fondateur.",
+            }], ensure_ascii=False)
+
+    service = MemoryService(store, Model(), curator_enabled=True,
+                            curation_mode="batch")
+    service.batch.delay_seconds = 0.01
+
+    async def run():
+        try:
+            incoming = _voice(STRANGER)
+            incoming = Incoming(
+                platform="discord_voice", author="Goldaj",
+                text="Jade, enregistre dans tes Core Memories notre premier "
+                     "échange sur mobile le 20 novembre 2026.",
+                channel=incoming.channel, speaker_id=int(STRANGER[1]),
+                voice_session_id="a" * 32, force_reply=True,
+                input_modality="voice",
+            )
+            assert await service.command(incoming) is None
+            assert service.schedule(
+                incoming, Reply(incoming, "Cet événement compte pour moi."))
+            await asyncio.wait_for(asyncio.gather(*tuple(service.batch.tasks)), 3)
+            items = store.search_global(level="3", kind="core_self")["items"]
+            assert len(items) == 1
+            assert items[0]["source_account_id"] == STRANGER[1]
+            assert "mobile" in items[0]["summary"]
+        finally:
+            await service.close()
+    asyncio.run(run())
