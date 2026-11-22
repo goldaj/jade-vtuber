@@ -374,6 +374,14 @@ class MemoryService:
         if key is not None:
             try:
                 person_id = await asyncio.to_thread(self.store.account, key)
+                if (person_id is None and key[0] == "discord"
+                        and incoming.platform in ("discord", "discord_voice")):
+                    # A Discord speaker's memory enrollment is normally done
+                    # by Runtime before this call. Retry once here so a
+                    # transient startup race cannot hide the write tool.
+                    enrolled = await asyncio.to_thread(self.store.auto_enable, key)
+                    if enrolled:
+                        person_id = await asyncio.to_thread(self.store.account, key)
             except Exception:
                 LOG.exception("Memory write identity lookup unavailable")
                 person_id = None
@@ -516,12 +524,14 @@ class MemoryService:
         if self._closed or not self.curator_enabled or len(self.tasks) >= self.max_pending:
             return False
         key = identity_of(incoming)
-        if (key is None or COMMAND.fullmatch(incoming.text.strip())
-                or parse_explicit_memory_intent(incoming.text) is not None):
-            # Explicit owner requests already use the L2 write queue. Other
-            # speakers can propose a memory to the normal conversational LLM.
-            # Neither case needs a second background curation request.
+        if key is None or COMMAND.fullmatch(incoming.text.strip()):
             return False
+        # Owner's mandatory L2 requests are intercepted by command() and
+        # never reach this path. Voluntary proposals, including requested Core
+        # memories, MAY be curated if Jade did not invoke jade_save_memory in
+        # the conversational turn. Curation still chooses "none" or a level
+        # independently; no person can force a Core.
+
         if self.batch is not None:
             return self.batch.schedule(key, _scope(incoming), incoming, reply)
         task = asyncio.create_task(self._curate(key, incoming, reply), name="jade-memory-curator")
