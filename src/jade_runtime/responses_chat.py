@@ -16,6 +16,7 @@ import logging
 from .memory_actions import MEMORY_TOOL, MEMORY_SEARCH_TOOL
 from .web_search import WEB_TOOL
 from .documents import DOCUMENT_TOOL
+from .reminders import REMINDER_TOOL
 from .session_logging import event, summary
 from .turn_metrics import record_model_usage
 
@@ -42,6 +43,7 @@ RESPONSES_MEMORY_SEARCH_TOOL = {
 }
 RESPONSES_WEB_TOOL = {"type": "function", **WEB_TOOL["function"]}
 RESPONSES_DOCUMENT_TOOL = {"type": "function", **DOCUMENT_TOOL["function"]}
+RESPONSES_REMINDER_TOOL = {"type": "function", **REMINDER_TOOL["function"]}
 MAX_MEMORY_TOOL_ROUNDS = 12
 
 
@@ -249,6 +251,8 @@ class ResponsesChat:
                 available_tools.append(RESPONSES_WEB_TOOL)
             if callable(getattr(memory_action, "create_document", None)):
                 available_tools.append(RESPONSES_DOCUMENT_TOOL)
+            if callable(getattr(memory_action, "manage_reminder", None)):
+                available_tools.append(RESPONSES_REMINDER_TOOL)
             params.update(
                 tools=available_tools,
                 tool_choice="auto",
@@ -342,6 +346,10 @@ class ResponsesChat:
             elif (name == "jade_create_document"
                   and callable(getattr(action, "create_document", None))):
                 outcome = await action.create_document(call["arguments"])
+            elif (name == "jade_manage_reminders"
+                  and len(call["arguments"]) <= 1500
+                  and callable(getattr(action, "manage_reminder", None))):
+                outcome = await action.manage_reminder(call["arguments"])
             else:
                 outcome = {"status": "refusé", "level": None}
 
@@ -357,8 +365,12 @@ class ResponsesChat:
                                  "search_id": outcome.get("search_id")}
             if name == "jade_create_document":
                 audit_outcome = {"status": outcome.get("status")}
+            if name == "jade_manage_reminders":
+                # Only a status enters audit logs, never private titles or IDs.
+                audit_outcome = {"status": outcome.get("status")}
             event("document_tool_result" if name == "jade_create_document" else
-                  "web_tool_result" if name == "jade_web_search" else "memory_tool_result",
+                  "web_tool_result" if name == "jade_web_search" else
+                  "reminder_tool_result" if name == "jade_manage_reminders" else "memory_tool_result",
                   call_index=index, name=name, call_id=call["call_id"],
                   outcome=audit_outcome, confirmation_waited=False)
             outputs.append({
@@ -392,7 +404,8 @@ class ResponsesChat:
             # a queued write into a synchronous SQLite confirmation.
             conversation = await self._after_tool(conversation, response, memory_action)
             if value and not any(call["name"] in ("jade_search_memory", "jade_web_search",
-                                                     "jade_create_document") for call in calls):
+                                                     "jade_create_document",
+                                                     "jade_manage_reminders") for call in calls):
                 return value
         # Bound the number of billed lookup rounds. The final answer can use
         # what was retrieved; it cannot launch another tool in this turn.
