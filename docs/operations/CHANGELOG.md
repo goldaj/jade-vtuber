@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — UX-19 : documents téléchargeables dans le chat mobile (idée P2)
+
+- **Décision propriétaire :** création de **UX-19 (P2 / P)** dans le seul catalogue des améliorations prospectives, pour permettre à Jade de générer des documents et de les envoyer comme pièces jointes téléchargeables directement dans le chat de la PWA mobile.
+- **Périmètre prospectif :** génération backend des fichiers, transfert privé et téléchargement mobile, formats adaptés à la demande et gestion de leur durée de conservation. Complément distinct de la bibliothèque documentaire de consultation NEW-13.
+- **Suivi :** ajout dans `docs/ameliorations/06-PRODUIT-MOBILE.md`, décompte mis à jour à 5 idées mobiles et 114 idées actives au total. Aucune entrée créée dans la backlog, aucun développement ni déploiement.
+
 ## 2026-11-22 — REC-038 validée par le propriétaire : recherche Internet Jade
 
 - **Statut :** REC-038 passée de `À valider` à **`Done`** à la demande explicite du propriétaire, qui confirme que la connexion Internet de Jade fonctionne sur son environnement réel.
