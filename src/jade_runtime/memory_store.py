@@ -532,7 +532,22 @@ class MemoryStore:
         # Unicode-friendly enough for a first lexical search; an empty query
         # deliberately lists everything. Tokens are ORed so an imperfect
         # recollection still yields useful candidates. No fixed candidate cap.
-        terms = [word for word in re.findall(r"\w+", query.casefold()) if len(word) >= 2][:8]
+        raw_terms = [word for word in re.findall(r"\w+", query.casefold())
+                     if len(word) >= 2][:8]
+        # A small lexical expansion avoids missing obvious French paraphrases
+        # such as "anniversaire" versus "date de naissance". No embeddings,
+        # external requests or arbitrary truncation of the result collection.
+        equivalents = {
+            "anniversaire": ("naissance", "née", "né"),
+            "naissance": ("anniversaire", "née", "né"),
+            "née": ("naissance", "anniversaire"),
+            "né": ("naissance", "anniversaire"),
+            "age": ("naissance", "anniversaire"),
+            "âge": ("naissance", "anniversaire"),
+        }
+        terms = list(dict.fromkeys(
+            word for original in raw_terms
+            for word in (original, *equivalents.get(original, ()))))[:16]
         def filters():
             clauses = []
             params = []
