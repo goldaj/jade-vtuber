@@ -28,6 +28,14 @@ def rank_memories(candidates: list[dict], question: str, *, limit: int = 8,
     if not 1 <= limit <= 32:
         raise ValueError("invalid memory selection limit")
     query = terms(question[:1200])
+    # A generic "what do you remember about me?" is a request for an overview,
+    # not a literal search for the words "remember" and "me".
+    overview = bool(re.search(
+        r"(?i)(souvenirs?|souviens|rappelle.moi|que sais.tu de moi|"
+        r"que connais.tu de moi|what do you remember)",
+        question[:1200]))
+    if overview or not query:
+        return candidates[:limit]
     clock = now or datetime.now(timezone.utc)
     ranked = []
     for index, memory in enumerate(candidates):
