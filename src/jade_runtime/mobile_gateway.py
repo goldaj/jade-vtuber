@@ -85,7 +85,8 @@ class MobileGateway:
                  web_root: Path | None = None, model_dir: Path | None = None,
                  vendor_dir: Path | None = None, owner_login: str | None = None,
                  public_origin: str | None = None,
-                 avatar_intent_enabled: bool = True, billing_admin_key: str = ""):
+                 avatar_intent_enabled: bool = True, billing_admin_key: str = "",
+                 deploy_supervisor_token: str = "", deploy_supervisor_port: int = 8770):
         if not isinstance(token, str) or len(token) < 32 or len(token) > 256:
             raise ValueError("JADE_MOBILE_TOKEN must contain 32-256 characters")
         if type(port) is not int or not 1024 <= port <= 65535:
@@ -118,6 +119,11 @@ class MobileGateway:
         self.request_timeout = 75
         from .billing import BillingCosts
         self.billing = BillingCosts(billing_admin_key)
+        self.deployment = None
+        if deploy_supervisor_token:
+            from .deployment_client import DeploymentClient
+            self.deployment = DeploymentClient(
+                deploy_supervisor_token, port=deploy_supervisor_port)
 
     def deliver(self, reply) -> None:
         """Called on the shared Runtime's response callback, before local TTS."""
@@ -360,6 +366,37 @@ class MobileGateway:
             self.pending.pop(incoming.message_id, None)
 
     async def _post(self, writer, route: str, headers: dict, body: bytes, *, streaming=False):
+        if route == "/api/deployment":
+            if headers.get("content-type", "").split(";")[0].strip() != "application/json":
+                await self._json(writer, 400, {"error": "expected JSON"})
+                return
+            try:
+                request = json.loads(body)
+            except (UnicodeDecodeError, ValueError):
+                await self._json(writer, 400, {"error": "invalid JSON"})
+                return
+            if (self.deployment is None or type(request) is not dict
+                    or request.get("operation") not in (
+                        "status", "branches", "deploy", "restart")):
+                await self._json(writer, 409, {"error": "supervisor_not_configured"})
+                return
+            operation = request["operation"]
+            if operation in ("status", "branches") and set(request) == {"operation"}:
+                params = {}
+            elif operation == "restart" and request == {
+                    "operation": "restart", "confirm": True}:
+                params = {"confirm": True}
+            elif (operation == "deploy" and set(request) ==
+                  {"operation", "branch", "confirm"} and request["confirm"] is True
+                  and isinstance(request["branch"], str)
+                  and 1 <= len(request["branch"]) <= 100):
+                params = {"branch": request["branch"], "confirm": True}
+            else:
+                await self._json(writer, 400, {"error": "invalid_deployment_request"})
+                return
+            code, result = await self.deployment.request(operation, **params)
+            await self._json(writer, code, result)
+            return
         if route == "/api/metrics":
             if (headers.get("content-type", "").split(";")[0].strip() != "application/json"
                     or body.strip() != b"{}"):
@@ -577,7 +614,7 @@ class MobileGateway:
                     return
                 await self._static(writer, route)
                 return
-            if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing", "/api/metrics"):
+            if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing", "/api/metrics", "/api/deployment"):
                 await self._json(writer, 404, {"error": "unknown route"})
                 return
             if (headers.get("transfer-encoding") or not self._origin_allowed(headers)
