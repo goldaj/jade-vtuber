@@ -165,3 +165,24 @@ def test_malformed_search_and_stale_profile_cannot_retrieve_memories(tmp_path):
         finally:
             await service.close()
     asyncio.run(run())
+
+
+def test_same_turn_optimistic_write_cannot_trigger_verification_lookup(tmp_path):
+    store = _setup(tmp_path)
+    service = MemoryService(store, object())
+    async def run():
+        try:
+            action = await service.prepare_memory_action(_voice(ALICE))
+            assert action is not None
+            # This flag is set by the Responses adapter upon accepting the
+            # queued write. The lookup must not inspect persistence afterward.
+            action.used = True
+            forbidden = await action.search(_request(query="anniversaire"))
+            assert forbidden["status"] == "refusé"
+            assert forbidden["reason"] == "write_accepted_this_turn"
+            next_turn = await service.prepare_memory_action(_voice(ALICE))
+            allowed = await next_turn.search(_request(query="anniversaire"))
+            assert allowed["status"] == "ok"
+        finally:
+            await service.close()
+    asyncio.run(run())
