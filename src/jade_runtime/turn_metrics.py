@@ -47,6 +47,11 @@ class TurnMetrics:
         if current is None:
             return
         row = dict(current["stages"])
+        if outcome == "complete":
+            if "turn_failed" in row:
+                outcome = "failed"
+            elif "turn_cancelled" in row:
+                outcome = "cancelled"
         row["total_ms"] = round((self.clock() - current["queued_at"]) * 1000, 1)
         row["outcome"] = outcome
         self.samples[current["key"]].append(row)
