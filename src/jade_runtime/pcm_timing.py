@@ -55,3 +55,30 @@ class PCMProgressTiming:
 active_pcm_timing: ContextVar[PCMProgressTiming | None] = ContextVar(
     "jade_active_discord_pcm_timing", default=None
 )
+
+
+
+def log_mobile_progress(timing: PCMProgressTiming, first_sent_at: float | None, *,
+                        transfer_completed: bool, transport: str) -> None:
+    """One server-side transport measurement; no assumption about phone playback."""
+    first_ms = (None if first_sent_at is None else
+                round((first_sent_at - timing.started_at) * 1000))
+    done_ms = (None if timing.tts_completed_at is None else
+               round((timing.tts_completed_at - timing.started_at) * 1000))
+    overlap = (None if first_sent_at is None or timing.tts_completed_at is None
+               else first_sent_at < timing.tts_completed_at)
+    verdict = ("inconclusive" if overlap is None else
+               "progressive_transport_confirmed" if overlap and transfer_completed else
+               "progressive_transport_incomplete" if overlap else
+               "no_overlap_observed")
+    fields = {
+        "source_platform": "mobile",
+        "transport": transport,
+        "first_pcm_sent_ms": first_ms,
+        "tts_completed_ms": done_ms,
+        "pcm_sent_before_tts_complete": overlap,
+        "transfer_completed": transfer_completed,
+        "verdict": verdict,
+    }
+    summary("rec029_mobile_pcm_progress", **fields)
+    event("rec029_mobile_pcm_progress", **fields)

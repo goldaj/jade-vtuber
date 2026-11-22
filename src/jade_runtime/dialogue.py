@@ -122,7 +122,12 @@ class Dialogue:
                         type(self.backend), "complete_stream_with_tools", None)))
                 )
                 system_prompt = (self.prompt + "\n\n" + INTENT_PROMPT + owner_note
-                                 + (MEMORY_PROMPT if can_use_memory_tool else ""))
+                                 + (MEMORY_PROMPT if can_use_memory_tool else "")
+                                 + "\nPour une demande qui appelle une réponse longue, "
+                                   "donne plutôt une synthèse claire de 3 à 5 phrases "
+                                   "(environ 120 mots, soit ~320 tokens visibles au maximum). "
+                                   "Ne commence pas une longue dissertation tronquée ; "
+                                   "propose d'approfondir ensuite un point précis.")
                 messages = [{"role": "system", "content": system_prompt},
                             *selected_history, *memory_notes, *context, user]
                 event("llm_request", streaming=on_sentence is not None,

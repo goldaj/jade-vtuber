@@ -69,3 +69,21 @@ class MobileAudioStreamTests(unittest.IsolatedAsyncioTestCase):
         )
         with self.assertRaises(ValueError):
             _ = [event async for event in speech_events(services, "Bonjour", "neutral")]
+
+
+class MobileProgressContextTests(unittest.IsolatedAsyncioTestCase):
+    async def test_tts_stream_inherits_mobile_timing_context(self):
+        from src.jade_runtime.pcm_timing import PCMProgressTiming, active_pcm_timing
+        timing = PCMProgressTiming()
+        observed = []
+        async def source():
+            observed.append(active_pcm_timing.get() is timing)
+            yield b"\x01\x02"
+        services = types.SimpleNamespace(
+            settings=types.SimpleNamespace(tts_pitch_semitones=0),
+            stream_speech_pcm=lambda text, *, intent: source())
+        result = [item async for item in speech_events(
+            services, "Bonjour", "neutral", timing=timing)]
+        self.assertEqual(result[0]["type"], "pcm")
+        self.assertEqual(observed, [True])
+        self.assertIsNone(active_pcm_timing.get())

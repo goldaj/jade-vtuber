@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — REC-029 : mesure PCM mobile et repli vocal des réponses longues (develop)
+
+- **Mobile :** émission PCM HTTP NDJSON ou WebSocket mesurée côté serveur avant le signal TTS `response.done`. La console serveur émet `rec029_mobile_pcm_progress` avec délai d'envoi du premier paquet, fin TTS et verdict ; la console du navigateur Android émet `rec029_mobile_pcm_client`, distinguant premier paquet reçu, premier démarrage WebAudio **programmé**, et fin du flux. Les horloges distinctes PC/téléphone ne sont pas directement soustractibles et ne garantissent pas l'audition matérielle. Aucun audio, token, transcript ni identifiant n'est ajouté à ces événements.
+- **Conversation :** les demandes exigeant une réponse longue sont résumées à l'avance en 3 à 5 phrases (~120 mots / ordre de grandeur 320 tokens visibles). Si la Responses API épuise son budget total (raisonnement inclus), Jade produit une phrase standard courte, transmise au TTS habituel, **sans deuxième requête LLM** ni exécution de mémoire sur résultat incomplet. Les vrais échecs réseau et API restent visibles ; Early Voice reste désactivé par défaut.
+- **Budget :** plafond technique total par défaut 2048 depuis le correctif précédent ; seuls les tokens effectivement produits sont consommés, pas automatiquement le plafond. `JADE_MAX_COMPLETION_TOKENS` privé conserve priorité. Le TTS de la phrase de repli reste payant quand activé.
+- **Modules :** `pcm_timing.py`, `mobile_audio_stream.py`, `mobile_gateway.py`, `mobile_duplex.py`, `mobile_web/app.js`, `responses_chat.py`, `dialogue.py` et tests. Les tests hors ligne et la CI doivent être vérifiés après publication ; aucun appel API réel ni validation Android physique revendiqués. REC-029 et REC-006 restent `À valider` ; les CI antérieures étaient déjà bloquées par `TOKEN_PATTERN` sans modification de ce contrôle.
+
+
 ## 2026-11-22 — Réponse longue tronquée : budget de sortie Luna (develop)
 
 - **Incident réel :** 22/11/2026 08:20 et 08:21, tours Discord vocal 1 et 3 en `status=incomplete` / `reason=max_output_tokens`. Ce n'était pas un plantage du processus ni un défaut TTS : le tour vocal 2 a poursuivi normalement et a confirmé `rec006_pcm_progress=progressive_confirmed` côté lecteur.

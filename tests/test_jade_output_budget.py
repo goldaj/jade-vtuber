@@ -44,5 +44,63 @@ class OutputBudgetTests(unittest.TestCase):
         summary.assert_not_called()
 
 
+class OutputLimitFallbackTests(unittest.IsolatedAsyncioTestCase):
+    async def test_tool_response_exhaustion_uses_one_call_and_no_memory_action(self):
+        from src.jade_runtime.responses_chat import OUTPUT_TOO_LONG_FALLBACK
+        response = NS(status="incomplete",
+                      incomplete_details=NS(reason="max_output_tokens"),
+                      output_text="PRIVATE PARTIAL", output=[], usage=None)
+        class FakeResponses:
+            def __init__(self):
+                self.calls = 0
+            async def create(self, **kwargs):
+                self.calls += 1
+                return response
+        stub = FakeResponses()
+        backend = ResponsesChat(NS(responses=stub),
+                                NS(model="test", max_completion_tokens=320,
+                                   reasoning_effort="low"))
+        async def forbidden_action(raw):
+            raise AssertionError("Never execute incomplete memory actions")
+        result = await backend.complete_with_tools([], forbidden_action)
+        self.assertEqual(result, OUTPUT_TOO_LONG_FALLBACK)
+        self.assertEqual(stub.calls, 1)
+        self.assertNotIn("PRIVATE PARTIAL", result)
+
+    async def test_tool_free_response_exhaustion_returns_short_fallback(self):
+        from src.jade_runtime.responses_chat import OUTPUT_TOO_LONG_FALLBACK
+        class FakeResponses:
+            async def create(self, **kwargs):
+                return NS(status="incomplete",
+                          incomplete_details=NS(reason="max_output_tokens"),
+                          output_text="PRIVATE PARTIAL")
+        backend = ResponsesChat(NS(responses=FakeResponses()),
+                                NS(model="test", max_completion_tokens=320,
+                                   reasoning_effort="low"))
+        self.assertEqual(await backend.complete([]), OUTPUT_TOO_LONG_FALLBACK)
+
+    async def test_stream_incomplete_without_audio_yields_fallback(self):
+        from src.jade_runtime.responses_chat import OUTPUT_TOO_LONG_FALLBACK
+        class FakeStream:
+            def __aiter__(self):
+                return self
+            async def __anext__(self):
+                if getattr(self, "read", False):
+                    raise StopAsyncIteration
+                self.read = True
+                return NS(type="response.incomplete", response=NS(
+                    status="incomplete", incomplete_details=NS(reason="max_output_tokens")))
+            async def aclose(self):
+                self.closed = True
+        class FakeResponses:
+            async def create(self, **kwargs):
+                return FakeStream()
+        backend = ResponsesChat(NS(responses=FakeResponses()),
+                                NS(model="test", max_completion_tokens=320,
+                                   reasoning_effort="low"))
+        pieces = [part async for part in backend.complete_stream_with_tools([], None)]
+        self.assertEqual(pieces, [OUTPUT_TOO_LONG_FALLBACK])
+
+
 if __name__ == "__main__":
     unittest.main()

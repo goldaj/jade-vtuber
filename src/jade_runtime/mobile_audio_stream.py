@@ -3,13 +3,25 @@
 import base64
 
 from .pitch_shift import shift_pcm, shift_wav
+from .pcm_timing import active_pcm_timing
 
 PCM_RATE = 24_000
 MAX_AUDIO_BYTES = 7_000_000
 PCM_EVENT_BYTES = 8_192
 
 
-async def speech_events(services, text, intent):
+async def speech_events(services, text, intent, *, timing=None):
+    """Bind timing to this synthesis, including its spawned Realtime producer."""
+    token = active_pcm_timing.set(timing) if timing is not None else None
+    try:
+        async for item in _speech_events(services, text, intent):
+            yield item
+    finally:
+        if token is not None:
+            active_pcm_timing.reset(token)
+
+
+async def _speech_events(services, text, intent):
     """Stream one synthesis as PCM, or one WAV for non-Realtime models.
 
     Selection is made before synthesis. Once a PCM request has started, an

@@ -70,5 +70,28 @@ class RealtimeTTSCompletionTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(timing.tts_completed_at)
 
 
+class MobileProgressTests(unittest.TestCase):
+    def test_mobile_socket_transmitted_before_tts_finished(self):
+        from src.jade_runtime.pcm_timing import log_mobile_progress
+        timing = PCMProgressTiming(started_at=100.0, tts_completed_at=102.0)
+        with (patch("src.jade_runtime.pcm_timing.summary") as summary,
+              patch("src.jade_runtime.pcm_timing.event") as event):
+            log_mobile_progress(timing, 100.5, transfer_completed=True, transport="websocket")
+        values = summary.call_args.kwargs
+        self.assertEqual(summary.call_args.args, ("rec029_mobile_pcm_progress",))
+        self.assertEqual(values["first_pcm_sent_ms"], 500)
+        self.assertEqual(values["tts_completed_ms"], 2000)
+        self.assertTrue(values["pcm_sent_before_tts_complete"])
+        self.assertEqual(values["verdict"], "progressive_transport_confirmed")
+        self.assertEqual(values, event.call_args.kwargs)
+
+    def test_wav_transport_without_pcm_is_inconclusive(self):
+        from src.jade_runtime.pcm_timing import log_mobile_progress
+        timing = PCMProgressTiming(started_at=100.0)
+        with patch("src.jade_runtime.pcm_timing.summary") as summary:
+            log_mobile_progress(timing, None, transfer_completed=True, transport="http_ndjson")
+        self.assertEqual(summary.call_args.kwargs["verdict"], "inconclusive")
+
+
 if __name__ == "__main__":
     unittest.main()

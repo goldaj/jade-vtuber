@@ -1,0 +1,7 @@
+# Passation : REC-029 mobile et réponses longues sans panne (22/11/2026)
+
+- **Demande :** ajouter les mêmes observations de progression TTS/PCM au mobile et éviter les tours `max_output_tokens` silencieusement perdus sur tous les canaux.
+- **Branche :** `develop` seulement, basée sur `f58c2f30024def3317e88adfe33c521aea397d67` (correctif initial des 320 → 2048 tokens de budget maximal). `main` inchangée.
+- **Mesures :** côté PC, `rec029_mobile_pcm_progress` sur WebSocket et HTTP streaming suit le premier paquet PCM **envoyé** avant la fin TTS, et la fin du transport. Sur Chrome Android, la console `jade.mobile.audio` trace le paquet **reçu** et l'audio **programmé**. Les horloges restent indépendantes, aucun son réel ni audio privé n'est capturé.
+- **Produit :** le LLM doit privilégier une courte synthèse d'une demande qui demanderait normalement une réponse longue. En cas de `status=incomplete, reason=max_output_tokens`, remplacement de la réponse partielle par une phrase courte standard, dans la même livraison orale ou écrite ; **zéro nouvelle génération LLM**, aucun outil de mémoire incomplet exécuté. Seul le TTS de la phrase courte peut coûter.
+- **QA :** tests unitaires de la classification temporelle, du contexte TTS mobile, des réponses longues incomplètes avec et sans outils, du flux streaming ; vérifier CI. Essai mobile physique et vérification auditive restant à faire. REC-029 et REC-006 non clôturées.

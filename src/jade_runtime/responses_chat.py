@@ -17,6 +17,16 @@ from .session_logging import event, summary
 
 LOG = logging.getLogger("jade.responses")
 
+# The output-token cap also includes hidden reasoning: do not retry a billed call.
+OUTPUT_TOO_LONG_FALLBACK = (
+    "[INTENT:neutral] Je ne peux pas développer autant en une seule réponse. "
+    "Demande-moi une version courte ou de répondre étape par étape."
+)
+
+
+class OutputTokenLimitError(RuntimeError):
+    """A Responses request exhausted its output budget without a final answer."""
+
 # Responses uses the flat function-tool schema, unlike Chat Completions.
 RESPONSES_MEMORY_TOOL = {
     "type": "function",
@@ -92,6 +102,7 @@ def _require_completed(response) -> None:
             # Technical, text-free diagnostics: never retry a potentially billed turn.
             summary("llm_output_limit_reached", **fields)
             event("llm_output_limit_reached", **fields)
+            raise OutputTokenLimitError("Responses API exhausted max_output_tokens")
         raise RuntimeError(f"Responses API not completed (status={status}, details={details})")
 
 
@@ -223,7 +234,10 @@ class ResponsesChat:
         return response
 
     async def complete(self, messages) -> str:
-        response = await self._create(messages, operation="responses.complete")
+        try:
+            response = await self._create(messages, operation="responses.complete")
+        except OutputTokenLimitError:
+            return OUTPUT_TOO_LONG_FALLBACK
         if _tool_calls(response):
             raise ValueError("unexpected tool call in tool-free response")
         value = _text(response)
@@ -259,8 +273,12 @@ class ResponsesChat:
         return [*messages, *_output_items(response), *outputs]
 
     async def complete_with_tools(self, messages, memory_action) -> str:
-        response = await self._create(
-            messages, operation="responses.complete_with_tools", with_tools=True)
+        try:
+            response = await self._create(
+                messages, operation="responses.complete_with_tools", with_tools=True)
+        except OutputTokenLimitError:
+            # An incomplete answer is not a valid tool invocation.
+            return OUTPUT_TOO_LONG_FALLBACK
         calls = _tool_calls(response)
         if not calls:
             value = _text(response)
@@ -296,6 +314,8 @@ class ResponsesChat:
                     _require_completed(completed)
                 elif kind in ("response.failed", "response.incomplete", "error"):
                     details = _field(update, "response") or _field(update, "error") or _field(update, "message")
+                    if kind == "response.incomplete" and details is not None:
+                        _require_completed(details)
                     raise RuntimeError(f"Responses stream failed ({kind}): {details}")
             if completed is None:
                 raise RuntimeError("Responses stream ended without response.completed")
@@ -311,6 +331,11 @@ class ResponsesChat:
                 # Never speak an unverified extra suffix after fragments that
                 # the listener may already have heard.
                 raise ValueError("Responses stream text differs from final response")
+        except OutputTokenLimitError:
+            # An early, already-audible fragment cannot be taken back.
+            yield (" Je m'arrête ici ; demande-moi de continuer." if fragments
+                   else OUTPUT_TOO_LONG_FALLBACK)
+            return
         finally:
             await _close_stream(stream)
 
@@ -347,6 +372,8 @@ class ResponsesChat:
                 elif kind in ("response.failed", "response.incomplete", "error"):
                     details = (_field(update, "response") or
                                _field(update, "error") or _field(update, "message"))
+                    if kind == "response.incomplete" and details is not None:
+                        _require_completed(details)
                     raise RuntimeError(f"Responses stream failed ({kind}): {details}")
             if completed is None:
                 raise RuntimeError("Responses stream ended without response.completed")
@@ -364,6 +391,10 @@ class ResponsesChat:
                 return
             if not calls:
                 raise ValueError("OpenAI returned no dialogue text")
+        except OutputTokenLimitError:
+            yield (" Je m'arrête ici ; demande-moi de continuer." if fragments
+                   else OUTPUT_TOO_LONG_FALLBACK)
+            return
         finally:
             await _close_stream(stream)
         # The only unavoidable extra LLM call is for a tool-only response.
