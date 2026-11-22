@@ -27,6 +27,8 @@ PUBLIC_PREFIXES = ("src/", "tests/", "config/profiles/")
 MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/index.html",
     "src/jade_runtime/mobile_web/styles.css",
+    "src/jade_runtime/mobile_web/jade-theme.css",
+    "src/jade_runtime/mobile_web/icon-source-96.png",
     "src/jade_runtime/mobile_web/avatar.js",
     "src/jade_runtime/mobile_web/room-motion.js",
     "src/jade_runtime/mobile_web/room-spring.webp",

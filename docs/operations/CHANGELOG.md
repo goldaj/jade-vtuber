@@ -7,6 +7,7 @@
 - **Navigation :** Accueil (chambre + saisie + aperçu des vrais rappels), Rappels (gestion et Web Push de DEV-036), Chat (historique), Activités (raccourcis vers les fonctions existantes), Profil (réglages techniques/identité). Aucun faux service calendrier, fonctionnalité facturée ni notification n'est créé à partir de la maquette.
 - **Compatibilité :** CSS autonome jade-theme.css sur le CSS historique, canvas et mémoire conservés dans le DOM lors des changements de vue ; palette du manifest/PWA et icônes alignées ; pas de modification de main. Les ressources restent servies par le gateway localhost derrière Tailscale Serve.
 - **Validation :** tests automatisés des routes/manifest/contrats d'interface et CI à lancer après le push ; conformité exacte du rendu dépend du SDK Live2D et de l'écran Android. Un dessin de maquette n'est pas une capture d'interface réelle.
+- **Correctif de packaging :** l'exporteur de preview privée conserve maintenant jade-theme.css et icon-source-96.png, car mobile_icons.py dépend de la source raster autorisée ; sans cela les tests du snapshot échouaient sur des fichiers absents.
 
 ## 2026-11-22 — DEV-036 : rappels persistants, push Android et ouverture ciblée
 

@@ -7,6 +7,7 @@ Utiliser le dernier visuel de référence approuvé : la chambre et le personnag
 Sources : src/jade_runtime/mobile_web/index.html, jade-theme.css, app.js, manifest.webmanifest et icônes, avec les routes statiques dans mobile_gateway.py. On conserve room-spring.webp, room-motion.js, avatar.js, sw.js, le modèle r20 et les éléments DOM du gateway. La navigation entre vues est une opération CSS et non le démontage du canvas pour éviter les rechargements Live2D. Le tableau de bord ne fait qu'afficher la vraie liste des rappels retournée par l'API propriétaire.
 
 ## Contrôle
+La première CI Linux (f3b0e35) a signalé un défaut d'allowlist dans tools/jade_publication_export.py : la copie de prévisualisation privée perdait jade-theme.css et icon-source-96.png. Les deux ressources sont ajoutées à l'export avec le correctif.
 CI et tests d'intégrité après push. Vérifier sur téléphone : rendu du modèle dans la chambre à l'accueil, passage Chat/Accueil, visibilité des panneaux sur petit écran, permission Push, ouverture du rappel depuis notification, installation PWA/actualisation d'icône. La conformité de pixel à pixel du visuel conceptuel n'est pas prouvée sans test physique ; les calques graphiques du décor original sont volontairement conservés.
 
 ## Limites
