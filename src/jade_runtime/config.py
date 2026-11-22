@@ -124,6 +124,10 @@ class Settings:
     mobile_port: int = 8766
     mobile_vendor_dir: str = ""
     mobile_model_dir: str = ""
+    document_dir: str = field(default_factory=lambda: str(
+        Path(_default_memory_db_path()).with_name("jade-documents")))
+    document_access_mode: str = "owner"
+    document_allowed_discord_ids: tuple[int, ...] = field(default=(), repr=False)
 
     @classmethod
     def load(cls) -> "Settings":
@@ -199,6 +203,12 @@ class Settings:
             mobile_port=int(environ("JADE_MOBILE_PORT", "8766")),
             mobile_vendor_dir=str(environ("JADE_MOBILE_VENDOR_DIR", "")),
             mobile_model_dir=str(environ("JADE_MOBILE_MODEL_DIR", "")),
+            document_dir=(str(environ("JADE_DOCUMENT_DIR", "")).strip()
+                or str(Path(str(environ("JADE_MEMORY_DB_PATH", "")).strip()
+                    or _default_memory_db_path()).with_name("jade-documents"))),
+            document_access_mode=str(environ("JADE_DOCUMENT_ACCESS_MODE", "owner")).strip().lower(),
+            document_allowed_discord_ids=_voice_users(str(
+                environ("JADE_DOCUMENT_ALLOWED_DISCORD_IDS", ""))),
         )
         cfg.validate()
         return cfg
@@ -228,6 +238,11 @@ class Settings:
             raise ValueError("invalid web search configuration")
         if self.web_enabled and not self.tavily_api_key:
             raise ValueError("JADE_WEB_ENABLED needs TAVILY_API_KEY")
+        if (self.document_access_mode not in ("owner", "allowlist", "all")
+                or not Path(self.document_dir).is_absolute()
+                or Path(self.document_dir).suffix
+                or Path(self.document_dir).is_symlink()):
+            raise ValueError("invalid private document configuration")
         if type(self.latency_logging) is not bool:
             raise ValueError("latency logging must be a boolean")
         if (self.max_history_messages < 2 or self.max_history_messages > 100

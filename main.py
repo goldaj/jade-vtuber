@@ -167,6 +167,16 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             if vts_tasks:
                 await asyncio.gather(*vts_tasks, return_exceptions=True)
 
+        documents = None
+        if live and (mobile or discord):
+            from src.jade_runtime.documents import DocumentService
+            documents = DocumentService(
+                config.document_dir, memory_store=memory.store if memory else None,
+                access_mode=config.document_access_mode,
+                allowed_discord_ids=config.document_allowed_discord_ids)
+            await documents.start()
+            scopes.push_async_callback(documents.close)
+
         async def on_reply(reply):
             if local_api is not None:
                 local_api.deliver(reply)
@@ -200,10 +210,19 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 # or trigger autonomous curation. Never log private contents.
                 sent = await asyncio.wait_for(discord_client.send_chat(
                     reply.source.channel, reply.text,
-                    source_message_id=reply.source.message_id), timeout=20)
+                    source_message_id=reply.source.message_id,
+                    attachments=reply.attachments), timeout=20)
                 if not sent:
                     raise RuntimeError("Discord message delivery not confirmed")
                 observe_delivery("transport_accepted", "discord_text", proof="discord_api")
+            if (reply.source.platform == "discord_voice" and reply.attachments
+                    and discord_client is not None):
+                sent = await discord_client.send_chat(
+                    reply.source.channel,
+                    "Voici les documents demandés (disponibles pendant 24 h).",
+                    attachments=reply.attachments)
+                if not sent:
+                    raise RuntimeError("Discord voice document not delivered")
             if (vts_client is not None and speech is not None and config.vts_speak_hotkey
                     and not reply.spoken
                     and reply.source.platform in ("microphone", "discord_voice", "console")):
@@ -261,7 +280,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                           on_stream_start=(start_early_voice if speech and config.early_voice else None),
                           delivery_plan=describe_delivery,
                           memory_service=memory, on_incident=on_incident,
-                          cross_channel=cross_channel, web_service=web_service)
+                          cross_channel=cross_channel, web_service=web_service,
+                          document_service=documents)
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(
@@ -345,7 +365,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     voice_bridge=discord_voice_bridge, bot_name=config.bot_name,
                     auto_rate=config.discord_text_auto_rate,
                     cooldown_seconds=config.discord_text_cooldown_seconds,
-                    social_policy=social_policy, initiatives=initiatives)
+                    social_policy=social_policy, initiatives=initiatives,
+                    document_store=documents.store if documents else None)
 
             if twitch or discord or mic or http or mobile:
                 print("Jade connecteurs activés. Quitter avec Ctrl+C.")
