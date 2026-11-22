@@ -1,5 +1,9 @@
 # Plan de nettoyage des branches Git pour Codex
 
+## Arbitrage de protection — 21 novembre 2026
+
+**Décision validée par le propriétaire (OPS-017)** : protéger uniquement `main` contre suppression et force-push, garder `develop` sans nouvelle restriction et ne pas rendre les PR obligatoires. La protection **n'a pas été appliquée** : dernier contrôle GitHub `main.protected=false`, `develop.protected=false`, aucun ruleset, et aucune action administrative GitHub n'est disponible dans cette connexion. Une intervention dans les paramètres GitHub reste requise pour obtenir cette protection. **OPS-017 est néanmoins notée Done sur demande expresse du propriétaire le 21/11/2026**, en acceptant explicitement que le réglage n'ait pas été appliqué ; ce statut ne prouve donc pas une protection active. [Passation](../operations/handoffs/2026-11-21-chatgpt-ops017-protection-branches.md).
+
 ## Audit ciblé du 18 novembre 2026
 
 **Base :** pointe de `develop` au SHA `3bba7d51db5216f718f1ad3fe80485636f6ccfb7` ; inventaire de **25 branches dont main/develop** ; **aucune suppression réalisée**. Comparaison GitHub de chaque branche avec `develop` : `behind_by=0` signifie que la pointe est ancêtre de `develop`, et `behind_by>0` indique des commits propres à examiner ; une fusion par squash peut faire apparaître des commits propres malgré un contenu repris. Cette photographie **ne dispense pas de refaire les comparaisons juste avant de supprimer**.

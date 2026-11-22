@@ -5,6 +5,14 @@ on:
     branches: [develop]
     paths:
       - "src/jade_runtime/responses_chat.py"
+      - "src/jade_runtime/mobile_audio_stream.py"
+      - "src/jade_runtime/mobile_gateway.py"
+      - "src/jade_runtime/mobile_duplex.py"
+      - "src/jade_runtime/pcm_timing.py"
+      - "src/jade_runtime/dialogue.py"
+      - "tests/test_jade_pcm_timing.py"
+      - "tests/test_jade_output_budget.py"
+      - "tests/test_jade_mobile_audio_stream.py"
       - "src/jade_runtime/openai_services.py"
       - "src/jade_runtime/memory_actions.py"
       - "tests/test_luna_memory_tool_reasoning.py"
@@ -30,5 +38,6 @@ jobs:
           python -m pip install -e . "pytest>=8,<10"
       - name: Syntax-check Jade Python modules
         run: python -m compileall -q src/jade_runtime main.py
-      - name: Run offline Responses regression tests
-        run: python -m pytest -q tests/test_luna_memory_tool_reasoning.py tests/test_session_diagnostics.py
+      - name: Run offline Responses and mobile PCM regressions
+        run: |
+          python -m pytest -q tests/test_luna_memory_tool_reasoning.py tests/test_session_diagnostics.py tests/test_jade_pcm_timing.py tests/test_jade_output_budget.py tests/test_jade_mobile_audio_stream.py

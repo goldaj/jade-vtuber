@@ -40,7 +40,7 @@ def _voice_users(value: str) -> tuple[int, ...]:
 class Settings:
     model: str = "gpt-6-luna"
     reasoning_effort: str = "low"
-    max_completion_tokens: int = 320
+    max_completion_tokens: int = 2048
     stt_model: str = "gpt-transcribe"
     tts_model: str = "gpt-realtime-2.1-mini"
     voice: str = "shimmer"
@@ -111,7 +111,7 @@ class Settings:
         cfg = cls(
             model=str(environ("JADE_LLM_MODEL", "gpt-6-luna")),
             reasoning_effort=str(environ("JADE_LLM_REASONING_EFFORT", "low")).lower(),
-            max_completion_tokens=int(environ("JADE_MAX_COMPLETION_TOKENS", "320")),
+            max_completion_tokens=int(environ("JADE_MAX_COMPLETION_TOKENS", "2048")),
             stt_model=str(environ("JADE_STT_MODEL", "gpt-transcribe")),
             tts_model=str(environ("JADE_TTS_MODEL", "gpt-realtime-2.1-mini")),
             voice=str(environ("JADE_TTS_VOICE", "shimmer")),

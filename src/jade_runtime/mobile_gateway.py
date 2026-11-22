@@ -18,6 +18,7 @@ import re
 import secrets
 from urllib.parse import urlsplit
 import wave
+import time
 
 from .messages import Incoming
 from .intent_visuals import public_visual_contract
@@ -164,15 +165,23 @@ class MobileGateway:
 
     async def _stream_reply(self, writer, payload, speak):
         from .mobile_audio_stream import speech_events
+        from .pcm_timing import PCMProgressTiming, log_mobile_progress
         headers = self._headers(200, "application/x-ndjson; charset=utf-8", 0)
         headers = headers.replace(b"Content-Length: 0\r\n", b"Transfer-Encoding: chunked\r\n")
         writer.write(headers)
         await self._stream_event(writer, {"type": "reply", **payload})
         if speak:
-            events = speech_events(self.services, payload["reply"], payload["intent"])
+            timing = PCMProgressTiming()
+            first_sent_at = None
+            transfer_completed = False
+            events = speech_events(self.services, payload["reply"], payload["intent"],
+                                   timing=timing)
             try:
                 async for event in events:
                     await self._stream_event(writer, event)
+                    if event["type"] == "pcm" and first_sent_at is None:
+                        first_sent_at = time.monotonic()
+                transfer_completed = True
             except asyncio.CancelledError:
                 raise
             except (ConnectionError, OSError):
@@ -181,7 +190,12 @@ class MobileGateway:
                 LOG.warning("Mobile streaming voice unavailable; text answer preserved")
                 await self._stream_event(writer, {"type": "audio_error"})
             finally:
-                await events.aclose()
+                try:
+                    await events.aclose()
+                finally:
+                    log_mobile_progress(timing, first_sent_at,
+                                        transfer_completed=transfer_completed,
+                                        transport="http_ndjson")
         await self._stream_event(writer, {"type": "done"})
         writer.write(b"0\r\n\r\n")
         await asyncio.wait_for(writer.drain(), timeout=5)

@@ -1,5 +1,49 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — REC-006 et REC-029 : clôture produit explicite sur develop
+
+- **Décision du propriétaire :** après revue des logs réels du 22/11, les deux cartes passent de `À valider` à **`Done`**, sans développement ni test supplémentaire requis pour la clôture.
+- **Discord REC-006 :** trois recouvrements PCM/TTS positifs constatés. Le tour long dont la synthèse vocale a échoué reste documenté : `tts_completed_ms=null`, `playback_completed=false`, et les statuts de transfert ne constituent pas une preuve d'audition. Le propriétaire accepte cette réserve. **Early Voice demeure refusé/désactivé**, sans requalification.
+- **Mobile REC-029 :** deux recouvrements PCM/TTS sur WebSocket avec émission terminée ; les logs navigateur Android ne sont pas joints et les autres scénarios de recette ne sont pas tous prouvés. Le propriétaire accepte de clore la carte sans les exiger.
+- **Traçabilité :** `docs/backlog/02-RECETTE.md` mis à jour et [analyse réelle](handoffs/2026-11-22-chatgpt-rec006-rec029-test-log-analysis.md) conservée. **Pas de modification runtime ni de main** : c'est une décision de recette, pas une prétention de résolution des défauts historiques.
+
+
+## 2026-11-22 — Correctif détecté par la suite REC-029
+
+- **QA :** la première exécution des nouveaux tests ciblés donne 47 réussites et un échec de fermeture du flux PCM lors de l'abandon du lecteur mobile. L'itérateur externe ne refermait pas automatiquement le générateur async interne après `aclose()`.
+- **Correctif :** `mobile_audio_stream.speech_events` ferme explicitement l'itérateur interne dans un `finally`, puis restaure le contexte de mesure même si la fermeture échoue. Aucun changement de protocole ou d'appel API ; le test historique de fermeture reste l'acceptation ciblée.
+
+
+## 2026-11-22 — Exécuter les recettes ciblées même quand l'ancien preflight bloque la CI principale
+
+- **QA :** le workflow existant `jade-responses-migration.yml` inclut désormais les tests hors ligne `test_jade_pcm_timing.py`, `test_jade_output_budget.py` et `test_jade_mobile_audio_stream.py`, en plus de ses 29 tests de régression existants. Déclenchement également sur changements mobile, timing, dialogue et nouveaux tests.
+- **Sécurité :** le contrôle `TOKEN_PATTERN` du workflow principal reste strictement inchangé et bloquant. Le workflow ciblé n'appelle pas les API payantes ; il donne un retour sur la correction sans présenter l'échec du scanner historique comme un échec de ces tests.
+
+
+## 2026-11-22 — REC-029 : mesure PCM mobile et repli vocal des réponses longues (develop)
+
+- **Mobile :** émission PCM HTTP NDJSON ou WebSocket mesurée côté serveur avant le signal TTS `response.done`. La console serveur émet `rec029_mobile_pcm_progress` avec délai d'envoi du premier paquet, fin TTS et verdict ; la console du navigateur Android émet `rec029_mobile_pcm_client`, distinguant premier paquet reçu, premier démarrage WebAudio **programmé**, et fin du flux. Les horloges distinctes PC/téléphone ne sont pas directement soustractibles et ne garantissent pas l'audition matérielle. Aucun audio, token, transcript ni identifiant n'est ajouté à ces événements.
+- **Conversation :** les demandes exigeant une réponse longue sont résumées à l'avance en 3 à 5 phrases (~120 mots / ordre de grandeur 320 tokens visibles). Si la Responses API épuise son budget total (raisonnement inclus), Jade produit une phrase standard courte, transmise au TTS habituel, **sans deuxième requête LLM** ni exécution de mémoire sur résultat incomplet. Les vrais échecs réseau et API restent visibles ; Early Voice reste désactivé par défaut.
+- **Budget :** plafond technique total par défaut 2048 depuis le correctif précédent ; seuls les tokens effectivement produits sont consommés, pas automatiquement le plafond. `JADE_MAX_COMPLETION_TOKENS` privé conserve priorité. Le TTS de la phrase de repli reste payant quand activé.
+- **Modules :** `pcm_timing.py`, `mobile_audio_stream.py`, `mobile_gateway.py`, `mobile_duplex.py`, `mobile_web/app.js`, `responses_chat.py`, `dialogue.py` et tests. Les tests hors ligne et la CI doivent être vérifiés après publication ; aucun appel API réel ni validation Android physique revendiqués. REC-029 et REC-006 restent `À valider` ; les CI antérieures étaient déjà bloquées par `TOKEN_PATTERN` sans modification de ce contrôle.
+
+
+## 2026-11-22 — Réponse longue tronquée : budget de sortie Luna (develop)
+
+- **Incident réel :** 22/11/2026 08:20 et 08:21, tours Discord vocal 1 et 3 en `status=incomplete` / `reason=max_output_tokens`. Ce n'était pas un plantage du processus ni un défaut TTS : le tour vocal 2 a poursuivi normalement et a confirmé `rec006_pcm_progress=progressive_confirmed` côté lecteur.
+- **Cause probable :** `max_completion_tokens=320` par défaut sur la Responses API, partagé entre raisonnement et texte visible ; une réponse longue peut épuiser ce plafond avant toute livraison. La configuration privée peut surcharger cette valeur et n'a pas été inspectée.
+- **Correctif préventif :** plafond par défaut relevé à 2048, **sans appel API supplémentaire, retry automatique, changement du niveau de raisonnement ou d'Early Voice**. Ce plafond ne force pas Jade à produire 2048 tokens et peut rester surchargé par `JADE_MAX_COMPLETION_TOKENS`. Le journal de démarrage affiche la valeur réellement chargée ; en cas de nouveau dépassement, `llm_output_limit_reached` indique le budget et les consommations connues sans texte privé.
+- **Fichiers :** `config.py`, `main.py`, `responses_chat.py`, tests unitaires du budget et des traces, guide des logs. **Limites :** aucun appel API réel ni test PC ; une sortie dépassant encore 2048 peut rester incomplète. La CI existante échouait déjà au contrôle `TOKEN_PATTERN` sur le commit précédent ; ce contrôle n'a pas été contourné.
+
+
+## 2026-11-22 — REC-006 : preuve de progression PCM Discord (develop)
+
+- **Besoin :** comparer les instants techniques de la première trame PCM non silencieuse consommée par le lecteur Discord et de la réponse TTS OpenAI terminée, sans confondre ces horodatages avec la durée totale du tour ou le son réellement entendu chez un utilisateur.
+- **Implémentation :** trace par lecture vocale et contexte asynchrone dans `pcm_timing.py`, mesure monotone dans `discord_pcm.py`, récapitulatif `rec006_pcm_progress` dans `discord_voice.py`, marquage de `response.done` accepté dans `realtime_tts.py`. Une seule ligne synthétique par tentative PCM, même interrompue ; champs numériques, booléen de recouvrement et verdict, sans voix, transcription, identité ni secret.
+- **Périmètre :** pas de changement de routage, de synthèse, de coût API, de mode Early Voice ou de réglage privé. `JADE_EARLY_VOICE=0` reste le choix du propriétaire. Le compteur commence au démarrage de la lecture Discord, pas au début de la question ; une trame consommée localement ne prouve pas l'audition distante.
+- **Vérification :** tests hors ligne ciblés ajoutés ; CI Windows/Linux et essai Discord réel à constater après le push. REC-006 reste `À valider` ; aucune mesure réelle ni acceptation du PCM anticipée.
+
+
 ## 2026-11-21 — Retrait de la commande d'oubli global et du blocage Discord (develop)
 
 - **Décision produit :** suppression complète de `!jade-memoire oublier` et du mécanisme de blocage de réinscription Discord. Les comptes Discord vérifiés continuent à s'inscrire automatiquement ; l'activation Twitch, la déliaison, les historiques L1, souvenirs L2/L3 et les commandes de suppression ciblée des Core sont préservés.

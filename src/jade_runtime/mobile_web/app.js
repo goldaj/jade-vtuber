@@ -135,8 +135,33 @@
     if (streamController) streamController.abort();
   }
 
+  function createMobileAudioTiming(transport) {
+    const startedAt = performance.now();
+    let firstReceivedAt = null, firstScheduledAt = null;
+    return {
+      received() {
+        if (firstReceivedAt === null) firstReceivedAt = performance.now();
+      },
+      scheduled(when) {
+        if (firstScheduledAt === null && typeof when === "number") firstScheduledAt = when;
+      },
+      done() {
+        const endedAt = performance.now();
+        const ms = value => value === null ? null : Math.round(value - startedAt);
+        console.info("jade.mobile.audio", JSON.stringify({
+          event: "rec029_mobile_pcm_client", transport,
+          first_pcm_received_ms: ms(firstReceivedAt),
+          first_play_scheduled_ms: ms(firstScheduledAt),
+          stream_finished_ms: ms(endedAt),
+          play_scheduled_before_stream_finished:
+            firstScheduledAt === null ? null : firstScheduledAt < endedAt
+        }));
+      }
+    };
+  }
+
   async function playPcm(base64Audio, rate) {
-    if (!soundEnabled || document.hidden) return;
+    if (!soundEnabled || document.hidden) return null;
     if (rate !== 24000 || base64Audio.length > 12000) throw new Error("Fragment audio invalide.");
     const binary = atob(base64Audio);
     if (!binary.length || binary.length % 2) throw new Error("Fragment audio incomplet.");
@@ -182,7 +207,9 @@
         avatar().setSpeaking(false);
       }
     };
+    const scheduledAt = performance.now() + Math.max(0, start - context.currentTime) * 1000;
     source.start(start);
+    return scheduledAt;
   }
 
   async function makeStreamingRequest(path, body, extraHeaders) {
@@ -210,6 +237,7 @@
       connection.classList.add("online");
       const reader = response.body.getReader(), decoder = new TextDecoder();
       let pending = "", receivedReply = false, done = false, audioFailed = false;
+      const audioTiming = createMobileAudioTiming("http_ndjson");
       async function consume(line) {
         const event = JSON.parse(line);
         if (event.type === "reply") {
@@ -220,12 +248,14 @@
           setReplyIntent(event.intent);
         } else if (event.type === "pcm") {
           if (!receivedReply) throw new Error("Audio reçu avant la réponse.");
-          try { await playPcm(event.pcm_b64, event.sample_rate); } catch (_) { audioFailed = true; }
+          audioTiming.received();
+          try { audioTiming.scheduled(await playPcm(event.pcm_b64, event.sample_rate)); }
+          catch (_) { audioFailed = true; }
         } else if (event.type === "wav") {
           if (!receivedReply) throw new Error("Audio reçu avant la réponse.");
           if (soundEnabled && !(await playWav(event.audio_wav_b64))) audioFailed = true;
         } else if (event.type === "audio_error") audioFailed = true;
-        else if (event.type === "done") done = true;
+        else if (event.type === "done") { done = true; audioTiming.done(); }
         else throw new Error("Réponse audio inattendue.");
       }
       while (true) {
@@ -406,6 +436,7 @@
       const chunks = [];
       let frames = 0;
       let duplex = null;
+      const duplexTiming = createMobileAudioTiming("websocket");
       if (window.JadeDuplex?.supported()) {
         duplex = window.JadeDuplex.create({
           token, session:thread, speak:soundEnabled,
@@ -415,12 +446,14 @@
               addBubble(String(event.reply || "…"), "jade");
               setReplyIntent(event.intent);
             } else if (event.type === "pcm") {
-              await playPcm(event.pcm_b64, event.sample_rate);
+              duplexTiming.received();
+              duplexTiming.scheduled(await playPcm(event.pcm_b64, event.sample_rate));
             } else if (event.type === "wav") {
               if (soundEnabled) await playWav(event.audio_wav_b64);
             } else if (event.type === "audio_error") {
               setStatus("Réponse écrite reçue, mais la voix est indisponible.");
             } else if (event.type === "done") {
+              duplexTiming.done();
               setStatus("Prête.");
             }
           }

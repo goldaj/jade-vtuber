@@ -20,6 +20,7 @@ import wave
 
 from .messages import Incoming
 from .discord_pcm import DiscordPCMBuffer, make_discord_source
+from .pcm_timing import PCMProgressTiming, active_pcm_timing
 from .orchestrator import Work
 from .voice_turns import PcmTurnSegmenter
 from .voice_decision import ConversationTurnDecider
@@ -930,6 +931,9 @@ class DiscordVoiceBridge:
                 pass
 
         buffer = DiscordPCMBuffer(on_frame=observed_frame, prebuffer_frames=5)
+        timing = PCMProgressTiming()
+        timing_token = active_pcm_timing.set(timing)
+        playback_completed = False
         def after(err):
             if err is not None:
                 failure.append(True)  # Do not log Discord's exception text.
@@ -972,9 +976,14 @@ class DiscordVoiceBridge:
             if failure:
                 raise RuntimeError("Discord PCM playback failed")
             await self._require_playback_authorization(connection, generation, session_id)
+            playback_completed = True
             return True
         finally:
             buffer.abort()
+            try:
+                timing.log(buffer.first_nonzero_read_at, playback_completed=playback_completed)
+            finally:
+                active_pcm_timing.reset(timing_token)
             # Never attribute metrics from a revoked channel/session to its
             # replacement. No text or PCM is retained in these counters.
             with self.buffers_lock:

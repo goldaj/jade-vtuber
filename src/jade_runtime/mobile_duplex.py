@@ -16,10 +16,12 @@ import logging
 import re
 import secrets
 import struct
+import time
 import wave
 
 from .messages import Incoming
 from .mobile_audio_stream import speech_events
+from .pcm_timing import PCMProgressTiming, log_mobile_progress
 
 LOG = logging.getLogger("jade.mobile.duplex")
 _GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
@@ -209,14 +211,24 @@ async def _answer(gateway, peer, pcm, session, speak):
                 await peer.send({"type": "reply", "transcript": text,
                                  "reply": reply.text, "intent": reply.intent})
                 if speak:
+                    timing = PCMProgressTiming()
+                    first_sent_at = None
+                    transfer_completed = False
                     try:
                         async for event in speech_events(
-                                gateway.services, reply.text, reply.intent):
+                                gateway.services, reply.text, reply.intent, timing=timing):
                             await peer.send(event)
+                            if event["type"] == "pcm" and first_sent_at is None:
+                                first_sent_at = time.monotonic()
+                        transfer_completed = True
                     except asyncio.CancelledError:
                         raise
                     except Exception:
                         await peer.send({"type": "audio_error"})
+                    finally:
+                        log_mobile_progress(timing, first_sent_at,
+                                            transfer_completed=transfer_completed,
+                                            transport="websocket")
                 await peer.send({"type": "done"})
     except asyncio.CancelledError:
         raise
