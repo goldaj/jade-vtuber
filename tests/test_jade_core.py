@@ -85,9 +85,9 @@ class CoreTests(unittest.IsolatedAsyncioTestCase):
         speech = AsyncMock()
         speech.content = b"RIFFmocked-data"
         client = types.SimpleNamespace(
-            chat=types.SimpleNamespace(completions=types.SimpleNamespace(
-                create=AsyncMock(return_value=types.SimpleNamespace(
-                    choices=[types.SimpleNamespace(message=types.SimpleNamespace(content="Salut"))])))),
+            responses=types.SimpleNamespace(create=AsyncMock(
+                return_value=types.SimpleNamespace(
+                    status="completed", output_text="Salut", output=[]))),
             audio=types.SimpleNamespace(
                 transcriptions=types.SimpleNamespace(create=AsyncMock(
                     return_value=types.SimpleNamespace(text="Texte"))),

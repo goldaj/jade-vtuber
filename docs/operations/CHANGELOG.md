@@ -1,5 +1,11 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — QA : adapter les simulations OpenAI au contrat Responses
+
+- **Diagnostic :** des tests de conversation, streaming et isolation de clés simulaient encore `chat.completions` alors que Jade utilise la Responses API. Échecs de `FakeClient.responses` absente, pas une preuve d'échec du backend actuel.
+- **Correction :** adaptation des réponses synthétiques `status=completed`, `output_text`, événements `response.output_text.delta` / `response.completed`, et du chemin HTTP `/v1/responses`. Contrôles d'un flux tronqué et de fermeture `aclose()` conservés.
+- **Vérification :** tests concernés à rejouer en CI Linux/Windows ; pas de requête réelle, ni modification du runtime ou d'assertion de confidentialité.
+
 ## 2026-11-22 — QA : restauration SQLite v5 et fiabilisation des vérifications hors ligne
 
 - **Sauvegarde/restauration :** `memory_transfer.py` accepte désormais explicitement les archives de schéma SQLite v5, déjà produites par `export_memory` et validées par `_check`. Hachage SHA-256, schéma, intégrité SQLite, non-écrasement et limites de taille restent obligatoires. Tests existants REC-025 et migration anciens schémas à contrôler en CI.

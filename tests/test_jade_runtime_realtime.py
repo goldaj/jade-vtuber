@@ -80,27 +80,29 @@ class RuntimeRealtimeTests(unittest.IsolatedAsyncioTestCase):
         class Stream:
             def __init__(self):
                 self.closed = False
-            def __aiter__(self):
                 self.parts = iter([
-                    SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content="Bon"), finish_reason=None)]),
-                    SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content="jour"), finish_reason=None)]),
-                    SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=None), finish_reason="stop")]),
+                    SimpleNamespace(type="response.output_text.delta", delta="Bon"),
+                    SimpleNamespace(type="response.output_text.delta", delta="jour"),
+                    SimpleNamespace(type="response.completed", response=SimpleNamespace(
+                        status="completed", output_text="Bonjour", output=[])),
                 ])
+            def __aiter__(self):
                 return self
             async def __anext__(self):
                 try:
                     return next(self.parts)
                 except StopIteration:
                     raise StopAsyncIteration
-            async def close(self):
+            async def aclose(self):
                 self.closed = True
         stream = Stream()
         create = AsyncMock(return_value=stream)
-        client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+        client = SimpleNamespace(responses=SimpleNamespace(create=create))
         service = OpenAIServices(Settings(), client=client)
         self.assertEqual([part async for part in service.complete_stream([])], ["Bon", "jour"])
         self.assertTrue(stream.closed)
         self.assertTrue(create.await_args.kwargs["stream"])
+        self.assertFalse(create.await_args.kwargs["store"])
 
         stream = Stream()
         create.return_value = stream

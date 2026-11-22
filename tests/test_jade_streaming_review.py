@@ -22,24 +22,33 @@ from tests.test_jade_streaming_pcm import FakeConnection
 
 
 def chunk(text=None, finish=None):
-    choice = SimpleNamespace(index=0, finish_reason=finish,
-                             delta=SimpleNamespace(content=text))
-    return SimpleNamespace(choices=[choice])
+    return {"text": text, "finish": finish}
 
 
 class MockChat:
+    """Synthetic Responses events, no actual OpenAI requests."""
     def __init__(self, *events):
         self.events = events
         self.calls = []
-        self.chat = SimpleNamespace(completions=SimpleNamespace(
-            create=self.create))
+        self.responses = SimpleNamespace(create=self.create)
 
     async def create(self, **kwargs):
         self.calls.append(kwargs)
 
         async def stream():
-            for event in self.events:
-                yield event
+            visible = []
+            for item in self.events:
+                value = item["text"]
+                if value:
+                    visible.append(value)
+                    yield SimpleNamespace(type="response.output_text.delta", delta=value)
+                if item["finish"] == "stop":
+                    yield SimpleNamespace(type="response.completed", response=SimpleNamespace(
+                        status="completed", output_text="".join(visible), output=[]))
+                elif item["finish"] == "length":
+                    yield SimpleNamespace(type="response.incomplete", response=SimpleNamespace(
+                        status="incomplete", incomplete_details=SimpleNamespace(
+                            reason="content_filter")))
         return stream()
 
 
@@ -48,7 +57,7 @@ class TruncatedLLMTests(unittest.IsolatedAsyncioTestCase):
         provider = MockChat(chunk("Réponse partielle"))
         services = OpenAIServices(Settings(), client=provider)
         fragments = []
-        with self.assertRaisesRegex(ValueError, "without completion"):
+        with self.assertRaisesRegex(RuntimeError, "without response.completed"):
             async for fragment in services.complete_stream([{"role": "user", "content": "Test"}]):
                 fragments.append(fragment)
         self.assertEqual(fragments, ["Réponse partielle"])
@@ -58,12 +67,12 @@ class TruncatedLLMTests(unittest.IsolatedAsyncioTestCase):
     async def test_length_truncation_is_an_error_not_a_complete_reply(self):
         provider = MockChat(chunk("Partie 1"), chunk(finish="length"))
         services = OpenAIServices(Settings(), client=provider)
-        with self.assertRaisesRegex(ValueError, "incompletely"):
+        with self.assertRaisesRegex(RuntimeError, "not completed"):
             _ = [x async for x in services.complete_stream([{"role": "user", "content": "Test"}])]
         self.assertEqual(len(provider.calls), 1)
 
     async def test_last_text_and_stop_marker_can_share_one_chunk(self):
-        provider = MockChat(chunk("Bonjour ", finish=None), chunk("Jade.", finish="stop"))
+        provider = MockChat(chunk("Bonjour "), chunk("Jade.", finish="stop"))
         services = OpenAIServices(Settings(), client=provider)
         result = [x async for x in services.complete_stream([{"role": "user", "content": "Test"}])]
         self.assertEqual(result, ["Bonjour ", "Jade."])
