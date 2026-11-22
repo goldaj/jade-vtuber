@@ -86,13 +86,38 @@ class SearchProvider(Protocol):
 
 
 class SearchJournal:
-    """Unrotated, append-only JSONL outside Git. A failed write blocks search."""
+    """Append-only JSONL per process session outside Git. Failed writes block search."""
 
     def __init__(self, path: str | Path):
         self.path = Path(path)
         if not self.path.is_absolute() or self.path.suffix != ".jsonl":
             raise ValueError("web search log needs an absolute .jsonl path")
         self._lock = threading.Lock()
+
+    @classmethod
+    def start_session(cls, directory: str | Path) -> "SearchJournal":
+        """Create a fresh timestamped private journal at runtime startup."""
+        folder = Path(directory)
+        if not folder.is_absolute():
+            raise ValueError("web search log directory must be absolute")
+        folder.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now(timezone.utc).astimezone().strftime(
+            "%Y-%m-%d_%H-%M-%S_%f%z")
+        filepath = folder / f"jade-web-search_{stamp}_pid-{os.getpid()}.jsonl"
+        with filepath.open("x", encoding="utf-8") as file:
+            record = {
+                "event": "session_started",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "pid": os.getpid(),
+            }
+            file.write(json.dumps(record, ensure_ascii=False) + "\n")
+            file.flush()
+            os.fsync(file.fileno())
+        try:
+            os.chmod(filepath, 0o600)
+        except OSError:
+            pass  # Windows permissions remain controlled by the account.
+        return cls(filepath)
 
     def append(self, entry: dict) -> None:
         record = json.dumps(entry, ensure_ascii=False, separators=(",", ":")) + "\n"
@@ -239,8 +264,12 @@ def build_web_search_service(settings) -> WebSearchService | None:
         provider = TavilyProvider(settings.tavily_api_key)
     else:
         raise ValueError("unsupported JADE_WEB_PROVIDER")
+    journal = SearchJournal.start_session(settings.web_log_dir)
+    from .session_logging import event, summary
+    summary("web_search_journal_started", log_file=str(journal.path))
+    event("web_search_journal_started", log_file=str(journal.path))
     return WebSearchService(
-        provider, SearchJournal(settings.web_log_path),
+        provider, journal,
         timeout_seconds=settings.web_timeout_seconds,
         max_per_turn=settings.web_max_per_turn,
     )

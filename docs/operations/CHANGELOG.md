@@ -1,5 +1,13 @@
 # Journal technique unique — develop
 
+## 2026-11-22 — Historique de recherches web par session
+
+- **Décision :** abandon du journal web unique au profit d'un dossier privé dédié à côté de la mémoire (`D:/Jade/private/jade-web-search/` sur le PC de référence). Un JSONL horodaté et suffixé par PID est créé à chaque démarrage live avec web activé, comme les logs Jade généraux.
+- **Technique :** `SearchJournal.start_session` crée un fichier neuf en mode exclusif avant les recherches, avec un événement `session_started` ; journal append-only avec fsync par événement et refus de requête réseau si l'écriture initiale échoue. Le chemin exact figure dans `web_search_journal_started` au démarrage.
+- **Configuration :** nouvelle option `JADE_WEB_LOG_DIR`, l'ancienne `JADE_WEB_LOG_PATH` est prise en charge en remplaçant le fichier `.jsonl` par un répertoire voisin sans extension. Aucune migration automatique ni modification de l'ancien historique.
+- **QA :** tests hors ligne ajoutés pour la création par démarrage sans recherche, deux fichiers distincts, préservation de l'ancien journal, compatibilité de configuration et impossibilité de journaliser. Résultat CI à contrôler après push. La recette physique Tavily reste REC-038 `À valider`.
+- **Limites :** pas de purge automatique, données de recherches sensibles, conservation privée exclusivement sur le PC.
+
 ## 2026-11-22 — Recherche Tavily : dix appels possibles par tour
 
 - **Décision produit :** à la demande du propriétaire, le plafond par défaut passe de **3 à 10 recherches par tour** ; Jade garde sa liberté de n'effectuer aucune recherche ou seulement celles nécessaires.

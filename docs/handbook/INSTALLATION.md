@@ -37,13 +37,13 @@ JADE_WEB_ENABLED=1
 JADE_WEB_PROVIDER=tavily
 TAVILY_API_KEY=tvly-VOTRE_CLE_PRIVEE
 # Facultatif :
-# JADE_WEB_LOG_PATH=D:/Jade/private/jade-web-search.jsonl
+# JADE_WEB_LOG_DIR=D:/Jade/private/jade-web-search
 # JADE_WEB_TIMEOUT_SECONDS=8
 # JADE_WEB_MAX_PER_TURN=10
 ~~~
 
-3. Exécuter `poetry run python main.py --preflight` (vérification locale **sans requête** Tavily), puis redémarrer le runtime réel. Pour une recherche réellement confirmée, demander en Discord ou dans la PWA un fait d'actualité et regarder `D:\Jade\private\jade-web-search.jsonl` ou le chemin `JADE_WEB_LOG_PATH`.
-4. Le journal n'est **jamais envoyé à GitHub**. Chaque recherche possède une ligne `started` puis une ligne `success` ou `failed`. Un `started` isolé indique notamment un éventuel arrêt brutal. Les résultats contenus dans le fichier peuvent contenir du texte protégé ou sensible issu des pages : le conserver privé.
+3. Exécuter `poetry run python main.py --preflight` (sans appel Tavily), puis redémarrer Jade. Avec le web activé, **chaque démarrage live** crée immédiatement un fichier `jade-web-search_YYYY-MM-DD_HH-MM-SS_microsecondes+fuseau_pid-XXXX.jsonl` dans `D:/Jade/private/jade-web-search/` (ou `JADE_WEB_LOG_DIR`), même sans recherche. Le chemin exact s'affiche via `web_search_journal_started` dans la console et les logs principaux.
+4. Chaque fichier commence par `session_started` puis les appels `started` et leur résultat (`success`/`failed`/`rejected`). Les anciens fichiers sont conservés. Le dossier **n'est jamais envoyé à GitHub** : requêtes, raisons, URL et extraits restent privés. Si `JADE_WEB_LOG_PATH=D:/Jade/private/jade-web-search.jsonl` existe encore dans la configuration, il reste accepté : sa valeur désigne le répertoire voisin `D:/Jade/private/jade-web-search/`, sans écraser ni migrer l'ancien fichier unique.
 5. Pour désactiver le web, mettre `JADE_WEB_ENABLED=0` et redémarrer. Pour changer de fournisseur plus tard, ajouter un adaptateur conforme à `SearchProvider` et le déclarer dans `build_web_search_service`, sans modifier l'orchestrateur ni l'outil LLM.
 
 **Aucun paiement ni test externe n'est lancé par le préflight ou la suite de tests.** Le coût des crédits Tavily et celui de la continuation OpenAI ne sont pas confondus. `include_usage` fait remonter les crédits quand Tavily les renvoie.

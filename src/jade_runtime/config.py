@@ -15,6 +15,15 @@ def _default_memory_db_path() -> str:
     return str(Path.home() / ".jade" / "jade-memory.sqlite3")
 
 
+def _legacy_web_log_dir(path: str) -> str:
+    """Map a previously configured JSONL file to its sibling session folder."""
+    value = path.strip()
+    if not value:
+        return ""
+    candidate = Path(value)
+    return str(candidate.with_suffix("")) if candidate.suffix.lower() == ".jsonl" else value
+
+
 def _enabled(value: str) -> bool:
     if value in ("1", "true", "yes"):
         return True
@@ -51,8 +60,8 @@ class Settings:
     web_enabled: bool = False
     web_provider: str = "tavily"
     tavily_api_key: str = field(default="", repr=False)
-    web_log_path: str = field(default_factory=lambda: str(
-        Path(_default_memory_db_path()).with_name("jade-web-search.jsonl")))
+    web_log_dir: str = field(default_factory=lambda: str(
+        Path(_default_memory_db_path()).with_name("jade-web-search")))
     web_timeout_seconds: float = 8.0
     web_max_per_turn: int = 10
     channel: str = ""
@@ -132,9 +141,10 @@ class Settings:
             web_enabled=_enabled(str(environ("JADE_WEB_ENABLED", "0")).lower()),
             web_provider=str(environ("JADE_WEB_PROVIDER", "tavily")).strip().lower(),
             tavily_api_key=str(environ("TAVILY_API_KEY", "")).strip(),
-            web_log_path=(str(environ("JADE_WEB_LOG_PATH", "")).strip()
+            web_log_dir=(str(environ("JADE_WEB_LOG_DIR", "")).strip()
+                or _legacy_web_log_dir(str(environ("JADE_WEB_LOG_PATH", "")))
                 or str(Path(str(environ("JADE_MEMORY_DB_PATH", "")).strip()
-                    or _default_memory_db_path()).with_name("jade-web-search.jsonl"))),
+                    or _default_memory_db_path()).with_name("jade-web-search"))),
             web_timeout_seconds=float(environ("JADE_WEB_TIMEOUT_SECONDS", "8")),
             web_max_per_turn=int(environ("JADE_WEB_MAX_PER_TURN", "10")),
             channel=str(environ("TWITCH_CHANNEL", "")),
@@ -213,8 +223,8 @@ class Settings:
                 or not math.isfinite(self.web_timeout_seconds)
                 or not 2 <= self.web_timeout_seconds <= 30
                 or not 1 <= self.web_max_per_turn <= 10
-                or not Path(self.web_log_path).is_absolute()
-                or Path(self.web_log_path).suffix != ".jsonl"):
+                or not Path(self.web_log_dir).is_absolute()
+                or Path(self.web_log_dir).suffix.lower() == ".jsonl"):
             raise ValueError("invalid web search configuration")
         if self.web_enabled and not self.tavily_api_key:
             raise ValueError("JADE_WEB_ENABLED needs TAVILY_API_KEY")

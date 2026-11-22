@@ -1,12 +1,14 @@
 """Offline coverage for the provider-neutral, persistent Jade web tool."""
 import asyncio
 import json
+import os
 from pathlib import Path
+from unittest.mock import patch
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 import unittest
 
-from src.jade_runtime.config import Settings
+from src.jade_runtime.config import Settings, _legacy_web_log_dir
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming
 from src.jade_runtime.responses_chat import ResponsesChat
@@ -65,7 +67,7 @@ class ToolTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(WebSearchService(self.provider, SearchJournal(self.path)).max_per_turn, 10)
         config = Settings(
             web_enabled=True, tavily_api_key="tvly-test",
-            web_log_path=str(self.path))
+            web_log_dir=str(Path(self.temp.name) / "session-logs"))
         self.assertEqual(build_web_search_service(config).max_per_turn, 10)
         self.assertEqual(config.web_max_per_turn, 10)
         action = WebSearchService(
@@ -81,6 +83,72 @@ class ToolTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(blocked["status"], "limite_atteinte")
         self.assertEqual(len(self.provider.queries), 10)
         self.assertEqual(self.entries()[-1]["status"], "rejected")
+
+    async def test_session_files_have_timestamp_and_never_overwrite(self):
+        folder = Path(self.temp.name) / "search-sessions"
+        first = SearchJournal.start_session(folder)
+        self.assertTrue(first.path.is_file())
+        self.assertEqual(first.path.parent, folder)
+        self.assertRegex(first.path.name,
+            r"^jade-web-search_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_\d{6}[+-]\d{4}_pid-\d+\.jsonl$")
+        first_event = json.loads(first.path.read_text().splitlines()[0])
+        self.assertEqual(first_event["event"], "session_started")
+        await WebSearchService(self.provider, first).for_turn(self.incoming, 1)(
+            json.dumps({"query": "première session", "reason": "vérifier"})
+        )
+        original = first.path.read_bytes()
+        second = SearchJournal.start_session(folder)
+        self.assertNotEqual(first.path, second.path)
+        self.assertEqual(first.path.read_bytes(), original)
+        self.assertEqual(json.loads(second.path.read_text().splitlines()[0])["event"],
+                         "session_started")
+        self.assertEqual(len(list(folder.glob("*.jsonl"))), 2)
+        if os.name != "nt":
+            self.assertEqual(second.path.stat().st_mode & 0o777, 0o600)
+
+    async def test_factory_creates_file_even_if_no_search(self):
+        folder = Path(self.temp.name) / "factory-sessions"
+        cfg = Settings(web_enabled=True, tavily_api_key="tvly-test",
+                       web_log_dir=str(folder))
+        first = build_web_search_service(cfg)
+        self.assertTrue(first.journal.path.is_file())
+        self.assertEqual(len(first.journal.path.read_text().splitlines()), 1)
+        second = build_web_search_service(cfg)
+        self.assertNotEqual(first.journal.path, second.journal.path)
+        self.assertEqual(len(list(folder.glob("*.jsonl"))), 2)
+        self.assertEqual(self.provider.queries, [])
+
+    async def test_legacy_file_is_not_modified_and_old_config_still_loads(self):
+        old = Path(self.temp.name) / "jade-web-search.jsonl"
+        old.write_text('{"status":"success"}\n', encoding="utf-8")
+        expected = old.with_suffix("")
+        self.assertEqual(_legacy_web_log_dir(str(old)), str(expected))
+        env = {
+            "JADE_WEB_ENABLED": "1",
+            "TAVILY_API_KEY": "tvly-test",
+            "JADE_WEB_LOG_PATH": str(old),
+            "JADE_MEMORY_DB_PATH": str(Path(self.temp.name) / "memory.sqlite3"),
+        }
+        with patch("src.jade_runtime.config.environ",
+                   side_effect=lambda name, default="": env.get(name, default)):
+            cfg = Settings.load()
+        self.assertEqual(cfg.web_log_dir, str(expected))
+        self.assertEqual(build_web_search_service(cfg).journal.path.parent, expected)
+        self.assertEqual(old.read_text(encoding="utf-8"), '{"status":"success"}\n')
+        env["JADE_WEB_LOG_DIR"] = str(Path(self.temp.name) / "explicit")
+        with patch("src.jade_runtime.config.environ",
+                   side_effect=lambda name, default="": env.get(name, default)):
+            newer = Settings.load()
+        self.assertEqual(newer.web_log_dir, env["JADE_WEB_LOG_DIR"])
+
+    async def test_unwritable_session_directory_blocks_service_start(self):
+        blocked = Path(self.temp.name) / "not-a-directory"
+        blocked.write_text("unrelated file", encoding="utf-8")
+        cfg = Settings(web_enabled=True, tavily_api_key="tvly-test",
+                       web_log_dir=str(blocked))
+        with self.assertRaises(OSError):
+            build_web_search_service(cfg)
+        self.assertEqual(self.provider.queries, [])
 
     async def test_invalid_arguments_and_turn_limit_are_audited(self):
         action = self.service.for_turn(self.incoming, 2)
@@ -160,7 +228,7 @@ class ToolTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             Settings(web_enabled=True).validate()
         cfg = Settings(web_enabled=True, tavily_api_key="tvly-test",
-                       web_log_path=str(self.path))
+                       web_log_dir=str(Path(self.temp.name) / "session-logs"))
         cfg.validate()
         service = build_web_search_service(cfg)
         self.assertEqual(service.provider.name, "tavily")
