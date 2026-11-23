@@ -59,8 +59,12 @@ def check_develop(root: Path) -> None:
         raise LaunchError("Le test PyCharm de Jade exige develop (ou sa branche d'essai autorisée).")
 
 
-def load_environment(env: dict[str, str]) -> None:
-    """Populate the established PC profile without displaying private values."""
+def load_environment(env: dict[str, str], *, preserve_runtime: bool = False) -> None:
+    """Load the owner's private mobile identity without leaking it.
+
+    For a custom Run configuration preserve application-specific settings from
+    the selected private .env instead of imposing the shared test profile.
+    """
     private = Path(env.get("JADE_PYCHARM_PRIVATE_DIR", r"D:\Codex\private\jade-runtime"))
     config_path = private / "develop-mobile.json"
     token_path = private / "develop-mobile.token"
@@ -75,6 +79,30 @@ def load_environment(env: dict[str, str]) -> None:
             raise ValueError
     except (OSError, ValueError, TypeError):
         raise LaunchError("Configuration privee Discord/mobile absente ou invalide sur ce PC.") from None
+
+    if preserve_runtime:
+        from src.utility.private_config import environ
+        # Keep the caller's environment and the selected private .env as the
+        # sources of truth. The profile's JSON/token are fallback values only.
+        env.setdefault("PYTHONUTF8", "1")
+        env.setdefault("PYTHONPYCACHEPREFIX", r"D:\\Codex\\caches\\python")
+        env["JADE_SECRETS_FILE"] = str(secrets_path)
+        defaults = {
+            "JADE_MOBILE_ENABLED": "1",
+            "JADE_MOBILE_PUBLIC_ORIGIN": config["origin"],
+            "JADE_MOBILE_OWNER_LOGIN": config["owner"],
+            "JADE_MOBILE_TOKEN": token,
+            "JADE_MOBILE_PORT": "8766",
+            "JADE_MOBILE_VENDOR_DIR": r"D:\\Jade\\private\\mobile-sdk",
+        }
+        for key, fallback in defaults.items():
+            env.setdefault(key, str(environ(key, fallback)))
+        # In particular do not force JADE_AUDIO_OUTPUT=none: the existing
+        # 'discord & mobile' setup may play sound on the Windows host.
+        ffmpeg = env.get("JADE_FFMPEG_DIR", r"D:\\Codex\\tools\\ffmpeg-2025-02-20\\bin")
+        tailscale = env.get("JADE_TAILSCALE_DIR", r"D:\\Codex\\tools\\Tailscale")
+        env["PATH"] = os.pathsep.join((ffmpeg, tailscale, env.get("PATH", "")))
+        return
 
     env.update({
         "PYTHONUTF8": "1",
@@ -179,7 +207,7 @@ def main() -> int:
     check_develop(ROOT)
     with single_instance():
         check_other_runtime()
-        load_environment(os.environ)
+        load_environment(os.environ, preserve_runtime=any(flag in MODE_FLAGS for flag in sys.argv[1:]))
         os.chdir(ROOT)
         preflight = subprocess.run([sys.executable, str(ROOT / "main.py"), "--preflight", *modes],
                                    check=False)
