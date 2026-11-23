@@ -30,8 +30,12 @@ def check_develop(root: Path) -> None:
                                 capture_output=True, text=True, timeout=10, check=True)
     except (OSError, subprocess.SubprocessError):
         raise LaunchError("Impossible de verifier la branche Git de Jade.") from None
-    if result.stdout.strip() != "develop":
-        raise LaunchError("Le test PyCharm de Jade exige la branche develop.")
+    branch = result.stdout.strip()
+    # Optional local-only recipe before merge; never enables mobile branch switching.
+    test_ref = os.environ.get("JADE_PYCHARM_TEST_BRANCH", "").strip()
+    if branch != "develop" and not (test_ref == branch
+                                     and branch == "feat/jade-pycharm-remote-control-20261123"):
+        raise LaunchError("Le test PyCharm de Jade exige develop (ou sa branche d'essai autorisée).")
 
 
 def load_environment(env: dict[str, str]) -> None:
