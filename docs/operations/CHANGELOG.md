@@ -1,3 +1,9 @@
+## 2026-11-24 — Raccordement de la véritable configuration PyCharm « discord & mobile »
+
+- **Diagnostic confirmé par captures du propriétaire :** la configuration effectivement utilisée pointe sur \u0060main.py\u0060 avec les cinq options \u0060--live --discord --discord-voice --voice --mobile\u0060, tandis que le contrôleur ne sait piloter qu'un moteur lancé par le parent persistant. Le symptôme est \u0060pycharm_run_not_available\u0060 (port 8772 absent), même si le contrôleur 8771 est accessible.
+- **Correctif sur develop :** le lanceur \u0060tools/jade_pycharm_runner.py\u0060 accepte les options CLI de \u0060main.py\u0060, conserve leur ordre et les transmet au préflight et au processus enfant lors des redémarrages. Le profil partagé de test sans paramètres conserve ses valeurs historiques. En mode personnalisé, l'environnement existant et les valeurs du .env sélectionné ne sont pas remplacés par les réglages audio du profil de test. Le parent géré conserve l'interpréteur PyCharm actif.
+- **Tests :** contrats ajoutés pour les cinq options exactes, le passage au parent, le redémarrage et le rejet des drapeaux inconnus. Le résultat de la CI est à vérifier ; la recette Windows/PyCharm/Android reste à réaliser. Le changement à effectuer dans la configuration privée est limité au champ Script path, détaillé dans le guide PyCharm. Aucun changement de main.
+
 ## 2026-11-23 — Contrôle distant de la session PyCharm Run (branche expérimentale)
 
 - **Implémenté sur feat/jade-pycharm-remote-control-20261123 seulement :** parent persistant dans Run, moteur unique enfant avec arrêt propre par signal privé, IPC loopback authentifié, contrôleur Windows invisible et indépendant de Jade, mise à jour fast-forward develop uniquement, logs Run dupliqués en fichier privé rotatif, page de secours /control via Tailscale Serve.
