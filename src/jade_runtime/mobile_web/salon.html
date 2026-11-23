@@ -100,10 +100,16 @@
           </div>
         </div>
       </div>
-      <div id="avatar-container" aria-label="Avatar Live2D de Jade">
-        <div id="avatar-fallback" class="avatar-fallback" role="status">
-          <span class="avatar-sigil" aria-hidden="true">✧</span>
-          <span id="avatar-state">Chargement du modèle Live2D…</span>
+      <!-- Bedroom only: fixed portrait coordinate space holds backdrop, seated body,
+           and masked animated head. Kitchen retains the historical renderer. -->
+      <div class="avatar-frame" id="avatar-frame">
+        <img id="portrait-bedroom" class="portrait-bedroom" alt="" aria-hidden="true" decoding="async">
+        <img id="portrait-seated-body" class="portrait-seated-body" alt="" aria-hidden="true" decoding="async">
+        <div id="avatar-container" aria-label="Avatar Live2D de Jade">
+          <div id="avatar-fallback" class="avatar-fallback" role="status">
+            <span class="avatar-sigil" aria-hidden="true">✧</span>
+            <span id="avatar-state">Chargement du modèle Live2D…</span>
+          </div>
         </div>
       </div>
       <div class="room-bottom">

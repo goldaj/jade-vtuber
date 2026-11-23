@@ -1,6 +1,7 @@
 "use strict";
 (() => {
   const scene = document.querySelector(".room-art");
+  const room = document.querySelector(".room");
   const roomSelect = document.getElementById("room-selector");
   if (!scene || !roomSelect) return;
   // The room selection works even when container query units are unavailable.
@@ -24,6 +25,7 @@
   let activeRoom = Object.prototype.hasOwnProperty.call(ROOM_IMAGES, requested) ? requested : "bedroom";
   let selectionRevision = 0;
   scene.dataset.room = activeRoom;
+  if (room) room.dataset.room = activeRoom;
   roomSelect.value = activeRoom;
   const preference = matchMedia("(prefers-reduced-motion: reduce)");
   const movingLayers = [curtain, left, right, steam];
@@ -78,7 +80,8 @@
   function sync() {
     const reduced = preference.matches;
     // Bedroom retains the rAF renderer. Kitchen owns independent CSS-only accents.
-    const bedroomLayers = activeRoom === "bedroom" && supportsRoomLayers && ready && !reduced;
+    const bedroomLayers = activeRoom === "bedroom" &&
+      room?.dataset.seatedReady !== "true" && supportsRoomLayers && ready && !reduced;
     const kitchenLayers = activeRoom === "kitchen" && supportsRoomLayers && !reduced;
     const source = activeRoom === "kitchen"
       ? ROOM_IMAGES.kitchen
@@ -129,6 +132,7 @@
     if (revision !== selectionRevision) return;
     activeRoom = next;
     scene.dataset.room = next;
+    if (room) room.dataset.room = next;
     roomSelect.value = next;
     sync();
     const url = new URL(window.location.href);
@@ -137,6 +141,7 @@
     window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
   }
   roomSelect.addEventListener("change", () => { void changeRoom(roomSelect.value); });
+  room?.addEventListener("jade-seated-ready", syncVisuals);
 
   if (supportsRoomLayers) {
     Promise.all([

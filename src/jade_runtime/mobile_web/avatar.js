@@ -173,8 +173,20 @@
     const naturalWidth = Math.max(model.width / (model.scale.x || 1), 1);
     const naturalHeight = Math.max(model.height / (model.scale.y || 1), 1);
     const scale = Math.min((width * .95) / naturalWidth, (height * 1.32) / naturalHeight);
-    // The 2D model zooms independently of the undistorted room in full screen.
-    const immersive = document.querySelector?.(".shell")?.classList.contains("is-room-only");
+    const shell = document.querySelector?.(".shell");
+    const room = document.querySelector?.(".room");
+    const seated = room?.dataset.room === "bedroom" && room?.dataset.seatedReady === "true";
+    if (seated) {
+      // Both layers share a single 941x1672 scene; never use phone-specific pixels.
+      // The head pose is fixed in scene space and only face/hair motion remains.
+      // These values are calibration constants, not layout-dependent positions.
+      const headScale = 1.30;
+      model.scale.set(Math.max(.05, scale * headScale));
+      model.position.set(width * .50, height * .61);
+      return;
+    }
+    // Kitchen and missing-art fallback remain compatible with the existing r20 pose.
+    const immersive = shell?.classList.contains("is-room-only");
     model.scale.set(Math.max(.05, scale * (immersive ? 1.9 : 1.5)));
     model.position.set(width * (immersive ? .55 : .58), height * (immersive ? .82 : .79));
   }
@@ -229,6 +241,9 @@
       observer = new ResizeObserver(resize);
       observer.observe(target);
       fallback.classList.add("hidden");
+      // Hybrid body activation needs a real head renderer, never a fallback.
+      if (typeof Event === "function")
+        document.querySelector?.(".room")?.dispatchEvent?.(new Event("jade-avatar-ready"));
       pixi.ticker.add(() => {
         try {
           const core = model?.internalModel?.coreModel;

@@ -34,5 +34,7 @@ jobs:
           node tests/mobile_avatar_visibility_test.js
           node --check src/jade_runtime/mobile_web/room-motion.js
           node tests/mobile_room_selection_test.js
+          node --check src/jade_runtime/mobile_web/seated-scene.js
+          node tests/seated_scene_test.js
       - name: Offline unit and contract tests
         run: python -m unittest discover -s tests -v

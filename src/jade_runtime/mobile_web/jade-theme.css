@@ -285,3 +285,42 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
     grid-template-rows:51px minmax(120px,25dvh) minmax(0,1fr) calc(60px + var(--safe));
   }
 }
+
+/* Seated Jade v1: exact scene-space coordinates, no per-phone fixed dimensions.
+ * Switching screens changes one shared camera, never the joint alignment.
+ * Historical kitchen rendering and old bedroom fallback remain unchanged. */
+.avatar-frame{position:absolute;inset:0;z-index:2;pointer-events:none}
+.avatar-frame #avatar-container{z-index:3}
+.portrait-bedroom,.portrait-seated-body{display:none}
+.room[data-room="bedroom"][data-seated-ready="true"]{
+  background:#aa7b8f url("/assets/room-bedroom-portrait.avif") center / cover no-repeat;
+}
+.room[data-room="bedroom"][data-seated-ready="true"] .room-art{display:none}
+.room[data-room="bedroom"][data-seated-ready="true"] .avatar-frame{
+  inset:auto;left:50%;top:50%;height:auto;
+  width:100%;aspect-ratio:941 / 1672;
+  transform:translate(-50%,-50%);
+}
+@supports(width:1cqh){
+  .room[data-room="bedroom"][data-seated-ready="true"] .avatar-frame{
+    width:max(100cqw,56.28cqh);
+  }
+}
+.room[data-room="bedroom"][data-seated-ready="true"] .portrait-bedroom{
+  display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:fill;
+}
+.room[data-room="bedroom"][data-seated-ready="true"] .portrait-seated-body{
+  display:block;position:absolute;
+  left:12.7524%;top:40.6699%;width:71.2009%;height:56.2201%;
+  object-fit:fill;z-index:2;
+}
+/* Keep face and independently swaying hair, but never the legacy standing
+ * torso, arms, dress or legs. Center cutoff ends just beneath the chin.
+ * The side lobes preserve moving hair tips without exposing shoulder geometry. */
+.room[data-room="bedroom"][data-seated-ready="true"] #avatar-container{
+  clip-path:polygon(
+    0 0,100% 0,100% 34%,85% 34%,81% 42%,78% 49%,72% 54%,
+    64% 51%,60% 43%,40% 43%,36% 51%,28% 54%,22% 49%,
+    19% 42%,15% 34%,0 34%
+  );
+}

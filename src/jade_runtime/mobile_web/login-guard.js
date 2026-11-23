@@ -68,6 +68,7 @@
       for (const url of [
         "/assets/duplex-client.js",
         "/assets/room-motion.js",
+        "/assets/seated-scene.js",
         "/vendor/pixi.min.js",
         "/vendor/pixi-unsafe-eval.min.js",
         "/vendor/live2dcubismcore.min.js",
