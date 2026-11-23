@@ -338,3 +338,41 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
 .room-art[data-paused] .kitchen-vine,
 .room-art[data-paused] .kitchen-sunlight::before{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){.kitchen-effects{display:none!important}}
+
+
+/* PyCharm Run remote admin: readable, scrollable mobile console. */
+.deployment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: .65rem;
+  margin: .75rem 0;
+}
+.deployment-actions button { flex: 1 1 11rem; min-height: 2.8rem; }
+.deployment-console-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+.deployment-console-head h3 { margin: 0; flex: 1 1 100%; font-size: 1rem; }
+.deployment-console-head select,
+.deployment-console-head button { flex: 1 1 auto; max-width: 100%; }
+.deployment-console {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 10rem;
+  height: min(42dvh, 24rem);
+  padding: .85rem;
+  overflow: auto;
+  color: #d8e8d9;
+  background: #13241b;
+  border: 1px solid rgba(130, 185, 148, .35);
+  border-radius: .65rem;
+  font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+}
