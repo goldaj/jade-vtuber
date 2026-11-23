@@ -168,3 +168,24 @@ et la cuisine sont inchangés. Le rendu final de la couture et son maintien
 en expression/mouvement nécessitent **encore une validation sur téléphone**
 après déploiement ; les tests automatiques ne prouvent pas la qualité
 visuelle du cou.
+
+
+## Correction définitive du cou dans l’AVIF (23 novembre, v7)
+
+Le corps assis validé est toujours `src/jade_runtime/mobile_web/jade-seated-body.avif`
+au format **AVIF RGBA 670×940**. À partir des pixels du corps de
+`develop`, la retouche ne concerne que la zone supérieure du col
+(les 110 premières lignes) et remplace le fragment de peau détaché par
+un cou et des clavicules continus. Les autres pixels du corps et du pouf
+restent inchangés *avant réencodage AVIF*. Aucun cheveu n’est intégré à
+l’asset statique.
+
+La tentative antérieure de faux cou dessiné dans PixiJS et en CSS est
+**retirée** des sources. L’AVIF contient maintenant toute la peau du
+raccord ; les passes WebGL restent cheveux arrière → image assise →
+visage et cheveux avant. Les composantes Live2D et la cuisine ne changent pas.
+
+L’asset est au bon chemin et la correction est incluse dans la PR #45.
+Le visuel et le chevauchement pendant les animations doivent encore être
+confirmés en recette sur le téléphone. Les tests automatiques ne permettent
+pas de prouver une jonction esthétique en mouvement.
