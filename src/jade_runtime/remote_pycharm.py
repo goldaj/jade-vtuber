@@ -240,7 +240,8 @@ class PycharmManager:
                         or git(self.root, "rev-parse", "HEAD") != before
                         or git(self.root, "status", "--porcelain")):
                     raise GitRefusal("checkout_changed_before_update")
-                git(self.root, "merge", "--ff-only", "FETCH_HEAD", timeout=180)
+                # Merge the vetted commit, never a mutable FETCH_HEAD from another fetch.
+                git(self.root, "merge", "--ff-only", target, timeout=180)
                 # LFS data is fetched only for the checked-out develop commit.
                 git(self.root, "lfs", "pull", timeout=180)
             with self.lock:
