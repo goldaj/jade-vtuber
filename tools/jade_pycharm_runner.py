@@ -85,7 +85,7 @@ def load_environment(env: dict[str, str], *, preserve_runtime: bool = False) -> 
         # Keep the caller's environment and the selected private .env as the
         # sources of truth. The profile's JSON/token are fallback values only.
         env.setdefault("PYTHONUTF8", "1")
-        env.setdefault("PYTHONPYCACHEPREFIX", r"D:\\Codex\\caches\\python")
+        env.setdefault("PYTHONPYCACHEPREFIX", r"D:\Codex\caches\python")
         env["JADE_SECRETS_FILE"] = str(secrets_path)
         defaults = {
             "JADE_MOBILE_ENABLED": "1",
@@ -93,14 +93,14 @@ def load_environment(env: dict[str, str], *, preserve_runtime: bool = False) -> 
             "JADE_MOBILE_OWNER_LOGIN": config["owner"],
             "JADE_MOBILE_TOKEN": token,
             "JADE_MOBILE_PORT": "8766",
-            "JADE_MOBILE_VENDOR_DIR": r"D:\\Jade\\private\\mobile-sdk",
+            "JADE_MOBILE_VENDOR_DIR": r"D:\Jade\private\mobile-sdk",
         }
         for key, fallback in defaults.items():
             env.setdefault(key, str(environ(key, fallback)))
         # In particular do not force JADE_AUDIO_OUTPUT=none: the existing
         # 'discord & mobile' setup may play sound on the Windows host.
-        ffmpeg = env.get("JADE_FFMPEG_DIR", r"D:\\Codex\\tools\\ffmpeg-2025-02-20\\bin")
-        tailscale = env.get("JADE_TAILSCALE_DIR", r"D:\\Codex\\tools\\Tailscale")
+        ffmpeg = env.get("JADE_FFMPEG_DIR", r"D:\Codex\tools\ffmpeg-2025-02-20\bin")
+        tailscale = env.get("JADE_TAILSCALE_DIR", r"D:\Codex\tools\Tailscale")
         env["PATH"] = os.pathsep.join((ffmpeg, tailscale, env.get("PATH", "")))
         return
 
