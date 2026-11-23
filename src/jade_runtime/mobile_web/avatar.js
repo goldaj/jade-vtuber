@@ -252,9 +252,9 @@
       sprite.height = height * .562201;
       const headScale = 1.30;
       model.scale.set(Math.max(.05, scale * headScale));
-      // The r20 face is left of the model pivot. Shift the pivot right until
-      // face/neck sit above the static torso, without moving the room/body.
-      model.position.set(width * .575, height * .61);
+      // The r20 face sits left of the model pivot. Align the face centre with
+      // the static seated neckline rather than with the canvas midpoint.
+      model.position.set(width * .655, height * .61);
       return;
     }
     // Kitchen and missing-art fallback remain compatible with the existing r20 pose.
