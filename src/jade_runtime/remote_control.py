@@ -176,6 +176,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Hidden Jade control on Windows")
     parser.add_argument("--config", required=True, type=Path)
     args = parser.parse_args()
+    args.config.parent.mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(filename=str(args.config.parent / "jade-control.log"),
+                        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     config = json.loads(args.config.read_text(encoding="utf-8-sig"))
     repo = Path(config["repo"])
     if not (repo / "tools" / "jade_pycharm_runner.py").is_file():
@@ -185,15 +188,19 @@ def main() -> None:
     # Reuse the actual PyCharm mobile credentials, never introduce a new account.
     from tools.jade_pycharm_runner import load_environment
     load_environment(os.environ)
-    logging.basicConfig(filename=str(args.config.parent / "jade-control.log"),
-                        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     service = ControlService(
         repo, owner=os.environ["JADE_MOBILE_OWNER_LOGIN"],
         origin=os.environ["JADE_MOBILE_PUBLIC_ORIGIN"],
         mobile_token=os.environ["JADE_MOBILE_TOKEN"],
         ipc_token=str(environ("JADE_DEPLOY_SUPERVISOR_TOKEN", "")),
         log_dir=Path(os.environ["JADE_PYCHARM_PRIVATE_DIR"]) / "logs")
-    server = service.server()
+    try:
+        server = service.server()
+    except OSError as error:
+        if error.errno in (48, 98, 10048) or getattr(error, "winerror", None) == 10048:
+            logging.info("Jade controller already running on port %s", service.port)
+            return
+        raise
     logging.info("Jade controller started on loopback port %s", service.port)
     try:
         server.serve_forever()
@@ -202,4 +209,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        logging.exception("Jade control could not start")
+        raise
