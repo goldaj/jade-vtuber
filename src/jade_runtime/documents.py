@@ -6,6 +6,7 @@ tool; the server renders a file and returns an opaque attachment reference.
 from __future__ import annotations
 
 import asyncio
+from contextlib import closing
 import csv
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -419,7 +420,11 @@ class DocumentService:
         path = self.identity_db_path
         if path is None or not path.is_absolute() or not path.is_file():
             return False
-        with sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=2) as db:
+        # sqlite3.Connection's context manager commits/rolls back but does NOT
+        # close the handle. Windows must release it before temporary DB cleanup.
+        with closing(sqlite3.connect(
+            path.as_uri() + "?mode=ro", uri=True, timeout=2
+        )) as db:
             row = db.execute("""
                 SELECT 1 FROM identities AS discord
                 JOIN identities AS owner ON owner.person_id = discord.person_id

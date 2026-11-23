@@ -1,7 +1,9 @@
 """DEV-036: authenticated HTTP routes, independent of any real push provider."""
 import asyncio
+from contextlib import closing
 from datetime import datetime, timedelta, timezone
 import json
+import sqlite3
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -101,8 +103,7 @@ class MobileReminderHTTPTests(unittest.IsolatedAsyncioTestCase):
         status, _ = await self.request("/api/reminders", payload)
         self.assertEqual(status, 400)
         store = self.mobile.reminders.store
-        import sqlite3
-        with sqlite3.connect(store.path) as db:
+        with closing(sqlite3.connect(store.path)) as db, db:
             db.execute("UPDATE reminders SET due_at=1 WHERE id=?", (reminder_id,))
         self.assertEqual(len(store.claim_due()), 1)
         store.complete(reminder_id, True)

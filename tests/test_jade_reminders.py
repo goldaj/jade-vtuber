@@ -1,5 +1,6 @@
 """DEV-036: private persistence and push scheduler, no network or billed LLM."""
 import asyncio
+from contextlib import closing
 from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
@@ -44,7 +45,7 @@ class TestReminderStore(unittest.TestCase):
         created = self.store.create("Relire", future(), "mobile")
         changed = self.store.change(created["id"], title="Relire le chapitre")
         self.assertEqual(changed["title"], "Relire le chapitre")
-        with sqlite3.connect(self.path) as db:
+        with closing(sqlite3.connect(self.path)) as db, db:
             db.execute("UPDATE reminders SET due_at=1 WHERE id=?", (created["id"],))
         self.assertEqual(len(self.store.claim_due()), 1)
         self.assertEqual(self.store.claim_due(), [])
@@ -65,7 +66,7 @@ class TestReminderStore(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "non encore envoyé"):
             self.store.acknowledge(upcoming["id"])
         self.store.change(cancelled["id"], cancel=True)
-        with sqlite3.connect(self.path) as db:
+        with closing(sqlite3.connect(self.path)) as db, db:
             db.execute("UPDATE reminders SET due_at=1 WHERE id=?",
                        (expired["id"],))
             db.execute("UPDATE reminders SET due_at=1,state='failed' WHERE id=?",
@@ -139,7 +140,7 @@ class TestReminderAction(unittest.IsolatedAsyncioTestCase):
                 "keys": {"p256dh": "y" * 87, "auth": "z" * 22}}
         self.service.store.subscribe(fake)
         self.service.push.send = Mock(return_value=True)
-        with sqlite3.connect(self.service.store.path) as db:
+        with closing(sqlite3.connect(self.service.store.path)) as db, db:
             db.execute("UPDATE reminders SET due_at=1 WHERE id=?", (created["id"],))
         task = asyncio.create_task(self.service.run_forever())
         try:
