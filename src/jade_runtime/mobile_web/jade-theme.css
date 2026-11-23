@@ -317,3 +317,7 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 /* No hard CSS face polygon. The r20 standing body is hidden using real
  * Cubism part opacities; moving side and rear hair stay fully intact. */
 .room[data-room="bedroom"][data-seated-ready="true"] #avatar-container{clip-path:none}
+
+/* In seated mode the body is drawn INSIDE the single Pixi WebGL canvas,
+ * between back-hair and front-hair passes. The DOM image only preloads it. */
+.room[data-room="bedroom"][data-seated-ready="true"][data-seated-compositor="true"] .portrait-seated-body{display:none}

@@ -32,15 +32,18 @@ async function test(available) {
       getElementById(id){return id==="portrait-bedroom" ? backdrop :
         id==="portrait-seated-body" ? body : null;}
     },
-    window:{JadeAvatar:{ready:true,canIsolateHead:true,resize(){calls.push("resize");}}}
+    window:{JadeAvatar:{ready:true,canComposeSeated:true,
+      prepareSeatedComposition(image){calls.push("compose");return image.naturalWidth===670;},
+      resize(){calls.push("resize");}}}
   };
   vm.runInNewContext(source, context);
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(requests.length, 2);
   if (available) {
     assert.equal(room.dataset.seatedReady,"true");
+    assert.equal(room.dataset.seatedCompositor,"true");
     assert.equal(room.events.length,1);
-    assert.deepEqual(calls,["resize"]);
+    assert.deepEqual(calls,["compose","resize"]);
     assert.equal(backdrop.src,"/assets/room-bedroom-portrait.avif");
     assert.equal(body.src,"/assets/jade-seated-body.avif");
   } else {

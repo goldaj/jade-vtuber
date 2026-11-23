@@ -11,6 +11,7 @@
   const mood = document.getElementById("mood-line");
   let model = null;
   let headIsolation = null;
+  let seatedComposition = null;
   let pixi = null;
   let mouth = 0;
   let palette = null;
@@ -140,6 +141,58 @@
     resize: () => resize(),
     get ready() { return Boolean(model); },
     get canIsolateHead() { return Boolean(headIsolation); },
+    get canComposeSeated() {
+      return Boolean(model && pixi && headIsolation?.canLayerHair &&
+        window.PIXI?.Sprite?.from && window.PIXI?.Container);
+    },
+    prepareSeatedComposition(image) {
+      if (seatedComposition) return true;
+      if (!this.canComposeSeated || !image?.naturalWidth || !image?.naturalHeight) return false;
+      const PIXI = window.PIXI;
+      let back = null;
+      let seatedBody = null;
+      try {
+        seatedBody = PIXI.Sprite.from(image);
+        if (!seatedBody.texture?.valid) return false;
+        back = new PIXI.Container();
+        const originalRender = model._render.bind(model);
+        const originalDraw = model.internalModel.draw.bind(model.internalModel);
+        let pass = null;
+        // A single Cubism model is animated once; only its output is rendered
+        // twice. The opacity mask runs AFTER its normal physics/motion update.
+        model.internalModel.draw = gl => pass
+          ? headIsolation.drawPass(pass, () => originalDraw(gl))
+          : originalDraw(gl);
+        function renderPass(renderer, name) {
+          pass = name;
+          try { originalRender(renderer); }
+          finally { pass = null; }
+        }
+        back._render = renderer => {
+          if (!isSeated()) return;
+          // The foreground model is later in stage order. Ensure that its
+          // world matrix already reflects the current camera for the rear pass.
+          model.updateTransform();
+          renderPass(renderer, "rear");
+        };
+        model._render = renderer => {
+          if (isSeated()) renderPass(renderer, "front");
+          else originalRender(renderer);
+        };
+        back.visible = false;
+        seatedBody.visible = false;
+        pixi.stage.addChildAt(back, 0);
+        pixi.stage.addChildAt(seatedBody, 1);
+        seatedComposition = {back, body: seatedBody};
+        return true;
+      } catch (error) {
+        if (back?.parent) back.parent.removeChild(back);
+        if (seatedBody?.parent) seatedBody.parent.removeChild(seatedBody);
+        if (seatedBody) seatedBody.destroy();
+        console.warn("Seated Jade compositor:", error);
+        return false;
+      }
+    },
     setMouth(value) {
       mouth = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
     },
@@ -168,6 +221,12 @@
   };
   window.JadeAvatar = avatar;
 
+  function isSeated() {
+    const room = document.querySelector?.(".room");
+    return room?.dataset.room === "bedroom" &&
+      room?.dataset.seatedReady === "true" && Boolean(seatedComposition);
+  }
+
   function resize() {
     if (!pixi || !model) return;
     const width = Math.max(1, target.clientWidth);
@@ -178,16 +237,24 @@
     const scale = Math.min((width * .95) / naturalWidth, (height * 1.32) / naturalHeight);
     const shell = document.querySelector?.(".shell");
     const room = document.querySelector?.(".room");
-    const seated = room?.dataset.room === "bedroom" &&
-      room?.dataset.seatedReady === "true" && Boolean(headIsolation);
+    const seated = isSeated();
     headIsolation?.sync(seated);
+    if (seatedComposition) {
+      seatedComposition.back.visible = seated;
+      seatedComposition.body.visible = seated;
+    }
     if (seated) {
-      // Both layers share a single 941x1672 scene; never use phone-specific pixels.
-      // The head pose is fixed in scene space and only face/hair motion remains.
-      // These values are calibration constants, not layout-dependent positions.
+      // Align the seated sprite inside the exact same 941x1672 scene plane.
+      // These values come from the image crop, not device-specific pixels.
+      const sprite = seatedComposition.body;
+      sprite.position.set(width * .127524, height * .406699);
+      sprite.width = width * .712009;
+      sprite.height = height * .562201;
       const headScale = 1.30;
       model.scale.set(Math.max(.05, scale * headScale));
-      model.position.set(width * .50, height * .61);
+      // The r20 face is left of the model pivot. Shift the pivot right until
+      // face/neck sit above the static torso, without moving the room/body.
+      model.position.set(width * .575, height * .61);
       return;
     }
     // Kitchen and missing-art fallback remain compatible with the existing r20 pose.
@@ -254,7 +321,7 @@
         try {
           const activeRoom = document.querySelector?.(".room");
           headIsolation?.sync(activeRoom?.dataset.room === "bedroom" &&
-            activeRoom?.dataset.seatedReady === "true");
+            activeRoom?.dataset.seatedReady === "true" && Boolean(seatedComposition));
           const core = model?.internalModel?.coreModel;
           if (core && typeof core.setParameterValueById === "function") {
             core.setParameterValueById("ParamMouthOpenY", mouth);
@@ -280,6 +347,7 @@
       pixi = null;
       model = null;
       headIsolation = null;
+      seatedComposition = null;
       status.textContent = "Impossible de charger le modèle r20 : vérifier Git LFS, WebGL et les composants Cubism.";
       fallback.classList.remove("hidden");
     }

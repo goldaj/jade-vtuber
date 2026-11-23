@@ -42,12 +42,14 @@
   };
 
   function activateWhenComplete() {
-    if (!preparedImages || !window.JadeAvatar?.ready || !window.JadeAvatar?.canIsolateHead || ready) return;
+    if (!preparedImages || !window.JadeAvatar?.ready || !window.JadeAvatar?.canComposeSeated || ready) return;
     const [roomImage, bodyImage] = preparedImages;
+    if (!window.JadeAvatar.prepareSeatedComposition(bodyImage)) return;
     backdrop.src = roomImage.src;
     body.src = bodyImage.src;
     ready = true;
     room.dataset.seatedReady = "true";
+    room.dataset.seatedCompositor = "true";
     room.dispatchEvent?.(new Event("jade-seated-ready"));
     window.JadeAvatar.resize();
   }

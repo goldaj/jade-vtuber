@@ -79,3 +79,32 @@ sur téléphone encore à terminer. L'alignement parfait n'est pas affirmé.
 - Référentiel et camera responsive inchangés, pas de dimensions propres
   à un téléphone. Le rendu exact en portrait, paysage et plein écran
   nécessite encore la recette visuelle sur le vrai appareil.
+
+## Correctif de profondeur Live2D et recentrage (23 novembre, v3)
+
+Après recette sur Redmi Note 13, il était confirmé que l'affichage complet
+du Live2D devant l'image statique recouvrait les épaules avec les cheveux
+arrière. Un simple `z-index` ne peut pas résoudre ce problème puisque
+cheveux avant et cheveux arrière appartiennent au même modèle Live2D.
+
+En mode chambre assise, le moteur Pixi utilise maintenant un **seul** modèle
+r20, mis à jour **une seule fois** par frame, mais dessiné deux fois avec un
+masque de `drawables.opacities` restauré après chaque passe :
+
+1. passe arrière : seuls les ArtMesh rattachés aux parties `HAIR_BACK*`;
+2. sprite AVIF du corps assis, dans le même canevas WebGL ;
+3. passe avant : visage, oreilles et `HAIR_FRONT*`, sans corps debout.
+
+La sélection s'appuie sur `drawables.parentPartIndices` et sur les parents
+des parts Cubism, et ne s'active pas si ces métadonnées sont indisponibles.
+Aucune seconde instance Cubism ni perte des mouvements de cheveux n'est
+introduite. Le DOM conserve le fichier AVIF pour le préchargement, mais
+ne le peint plus en doublon.
+
+L'ancrage Live2D horizontal en scène passe de `50 %` à `57,5 %` pour
+corriger le visage visiblement décentré à gauche sur la recette réelle.
+La chambre, le corps, la cuisine et leur géométrie de cadre ne changent pas.
+
+**Reste à valider sur appareil** : après déploiement, confirmer la couture
+au cou en mouvement, les mèches arrière occultées par le buste, le retour
+cuisine et le plein écran. Aucun test headless ne remplace cette recette.

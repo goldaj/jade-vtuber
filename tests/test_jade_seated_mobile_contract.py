@@ -20,6 +20,7 @@ class SeatedMobileContract(unittest.TestCase):
         self.assertIn('width:max(100cqw,56.28cqh)', css)
         self.assertIn('top:40.6699%;width:71.2009%;height:56.2201%', css)
         self.assertIn('clip-path:none', css)
+        self.assertIn('[data-seated-compositor="true"] .portrait-seated-body{display:none}', css)
 
     def test_feature_only_activates_with_both_images(self):
         scene = (WEB / "seated-scene.js").read_text(encoding="utf-8")
@@ -27,7 +28,8 @@ class SeatedMobileContract(unittest.TestCase):
         room = (WEB / "room-motion.js").read_text(encoding="utf-8")
         self.assertIn('Promise.all([preload(ASSETS.room), preload(ASSETS.body)])', scene)
         self.assertIn('room.dataset.seatedReady = "true"', scene)
-        self.assertIn('window.JadeAvatar?.canIsolateHead', scene)
+        self.assertIn('window.JadeAvatar?.canComposeSeated', scene)
+        self.assertIn('prepareSeatedComposition(bodyImage)', scene)
         self.assertIn('room.dataset.seatedReady = "false"', scene)
         self.assertIn('"/assets/seated-scene.js"', guard)
         self.assertIn('room?.dataset.seatedReady !== "true"', room)
@@ -36,7 +38,10 @@ class SeatedMobileContract(unittest.TestCase):
     def test_animated_head_not_scaled_independently_by_phone(self):
         avatar = (WEB / "avatar.js").read_text(encoding="utf-8")
         self.assertIn('const headScale = 1.30', avatar)
-        self.assertIn('model.position.set(width * .50, height * .61)', avatar)
+        self.assertIn('model.position.set(width * .575, height * .61)', avatar)
+        self.assertIn('renderPass(renderer, "rear")', avatar)
+        self.assertIn('renderPass(renderer, "front")', avatar)
+        self.assertIn('PIXI.Sprite.from(image)', avatar)
         self.assertIn('const seated = room?.dataset.room === "bedroom"', avatar)
         self.assertNotIn("Redmi", avatar)
 
