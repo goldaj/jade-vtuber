@@ -42,7 +42,8 @@ class SeatedMobileContract(unittest.TestCase):
         self.assertIn('renderPass(renderer, "rear")', avatar)
         self.assertIn('renderPass(renderer, "front")', avatar)
         self.assertIn('PIXI.Sprite.from(image)', avatar)
-        self.assertIn('const seated = room?.dataset.room === "bedroom"', avatar)
+        self.assertIn('const seated = isSeated()', avatar)
+        self.assertIn('room?.dataset.room === "bedroom"', avatar)
         self.assertNotIn("Redmi", avatar)
 
     def test_new_media_paths_are_whitelisted(self):
