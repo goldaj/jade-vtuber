@@ -2,7 +2,7 @@ param([Parameter(Mandatory = $true)][string] $RunConfig)
 $ErrorActionPreference = 'Stop'
 # Same Windows mutex as the PyCharm Run wrapper. Prevent a second Jade from
 # being started later by the legacy standalone launcher.
-$runtimeMutex = New-Object System.Threading.Mutex($false, 'Local\JadeDevelopRuntime')
+$runtimeMutex = [System.Threading.Mutex]::new($false, 'Local\JadeDevelopRuntime')
 $ownsMutex = $false
 try {
     try {
