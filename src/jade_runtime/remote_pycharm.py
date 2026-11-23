@@ -195,7 +195,7 @@ class PycharmManager:
         threading.Thread(target=self._tee, args=(child,), daemon=True,
                          name="jade-pycharm-console-tee").start()
         with self.lock:
-            self.state.update(phase="idle", error=None, pid=child.pid,
+            self.state.update(error=None, pid=child.pid,
                               sha=git(self.root, "rev-parse", "HEAD"))
         print("[Jade Control] Moteur lancé dans cette session PyCharm Run.", flush=True)
 
@@ -209,7 +209,12 @@ class PycharmManager:
             child.wait(timeout=20)
         except subprocess.TimeoutExpired:
             print("[Jade Control] Arrêt gracieux expiré, arrêt forcé.", flush=True)
-            child.kill()
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/PID", str(child.pid), "/T", "/F"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                               timeout=10, check=False)
+            if child.poll() is None:
+                child.kill()
             child.wait(timeout=5)
         finally:
             if self.stop_file:
@@ -230,6 +235,10 @@ class PycharmManager:
             if operation == "update" and before != target:
                 with self.lock:
                     self.state["phase"] = "updating"
+                if (git(self.root, "branch", "--show-current") != "develop"
+                        or git(self.root, "rev-parse", "HEAD") != before
+                        or git(self.root, "status", "--porcelain")):
+                    raise GitRefusal("checkout_changed_before_update")
                 git(self.root, "merge", "--ff-only", "FETCH_HEAD", timeout=180)
                 # LFS data is fetched only for the checked-out develop commit.
                 git(self.root, "lfs", "pull", timeout=180)
