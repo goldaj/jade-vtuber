@@ -2,6 +2,7 @@
 import argparse
 import asyncio
 import logging
+import os
 from contextlib import AsyncExitStack
 from pathlib import Path
 
@@ -18,6 +19,17 @@ from src.jade_runtime.twitch_token import validate_twitch_token
 from src.jade_runtime.voice_pipeline import VoiceInput
 
 LOG = logging.getLogger("jade.main")
+
+
+class _RunnerStopRequested(Exception):
+    """Private request to stop a PyCharm child, without exiting its Run tab."""
+
+
+async def _watch_runner_stop(path: str) -> None:
+    """Only enabled for the child launched by PyCharm's remote manager."""
+    while not Path(path).is_file():
+        await asyncio.sleep(0.25)
+    raise _RunnerStopRequested()
 
 
 class DemoChat:
@@ -405,9 +417,13 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                             return await discord_client.send_chat(channel, text)
                         tasks.append(asyncio.create_task(
                             reminders.run_forever(discord_sender=send_reminder_to_discord)))
+                    stop_signal = os.environ.get("JADE_RUNNER_STOP_FILE", "")
+                    if stop_signal:
+                        tasks.append(asyncio.create_task(_watch_runner_stop(stop_signal)))
                     done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
                     for task in done:
-                        task.result()
+                        if not task.cancelled() and not isinstance(task.exception(), _RunnerStopRequested):
+                            task.result()
                 finally:
                     shutdown_deadline = asyncio.get_running_loop().time() + 5
                     runtime.begin_shutdown()
