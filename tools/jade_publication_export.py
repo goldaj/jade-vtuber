@@ -150,6 +150,12 @@ def create_preview(root: Path, dest: Path, paths: list[str], *, include_portrait
             if (len(image) < 20 or len(image) > 500_000
                     or image[:4] != b"RIFF" or image[8:12] != b"WEBP"):
                 raise ValueError("Invalid mobile room layer")
+        elif source in MOBILE_WEB_PUBLIC and source.endswith(".avif"):
+            # Keep visual artwork binary; never decode compressed bytes as text.
+            image = sourcefile.read_bytes()
+            if (len(image) < 32 or len(image) > 500_000
+                    or image[4:8] != b"ftyp" or image[8:12] != b"avif"):
+                raise ValueError("Invalid mobile seated illustration")
         elif scan_text(sourcefile.read_text(encoding="utf-8")):
             raise ValueError("Potential credential in preview source")
     portrait = _verified_portrait(root, paths) if include_portrait else None
