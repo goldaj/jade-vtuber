@@ -1,7 +1,7 @@
 """Launch the owner's local Discord/mobile test profile in PyCharm on Windows.
 
 Private configuration is read on this PC, never embedded in the IDE project.
-The Python runtime remains in the debugger process, so breakpoints work.
+The Run tab owns one child runtime; debugger breakpoints are not preserved.
 """
 from __future__ import annotations
 
@@ -13,7 +13,6 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 from pathlib import Path
-import runpy
 import subprocess
 import sys
 
@@ -163,17 +162,13 @@ def main() -> int:
                                    check=False)
         if preflight.returncode or args.preflight_only:
             return preflight.returncode
-        # Run in this interpreter, not in a subprocess invisible to PyCharm.
-        sys.argv = [str(ROOT / "main.py"), *MODES]
-        if str(ROOT) not in sys.path:
-            sys.path.insert(0, str(ROOT))
+        # The PyCharm Run tab stays alive while its single Jade child restarts.
+        # Direct Python debugger breakpoints are intentionally not supported.
+        from src.jade_runtime.remote_pycharm import PycharmManager
+        from src.utility.private_config import environ
+        token = str(environ("JADE_DEPLOY_SUPERVISOR_TOKEN", ""))
         log_dir = Path(os.environ.get("JADE_PYCHARM_PRIVATE_DIR", r"D:\Codex\private\jade-runtime")) / "logs"
-        with technical_log(log_dir):
-            try:
-                runpy.run_path(str(ROOT / "main.py"), run_name="__main__")
-            except Exception:
-                logging.getLogger("jade.pycharm").exception("Arret inattendu du programme Jade")
-                raise
+        PycharmManager(ROOT, token, log_dir=log_dir).run()
     return 0
 
 
