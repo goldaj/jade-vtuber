@@ -56,6 +56,37 @@ class TestReminderStore(unittest.TestCase):
         self.store.change(created["id"], cancel=True)
         self.assertEqual(self.store.get(created["id"])["state"], "cancelled")
 
+    def test_mobile_list_and_manual_acknowledgement(self):
+        upcoming = self.store.create("À venir", future(), "mobile")
+        expired = self.store.create("Échéance dépassée", future(), "mobile")
+        cancelled = self.store.create("Annulé", future(), "mobile")
+        sent = self.store.create("Envoyé", future(), "discord", "1" * 18)
+        failed = self.store.create("Échec", future(), "mobile")
+        with self.assertRaisesRegex(ValueError, "non encore envoyé"):
+            self.store.acknowledge(upcoming["id"])
+        self.store.change(cancelled["id"], cancel=True)
+        with sqlite3.connect(self.path) as db:
+            db.execute("UPDATE reminders SET due_at=1 WHERE id=?",
+                       (expired["id"],))
+            db.execute("UPDATE reminders SET due_at=1,state='failed' WHERE id=?",
+                       (failed["id"],))
+            db.execute("UPDATE reminders SET due_at=1 WHERE id=?", (sent["id"],))
+        self.assertEqual({item["id"] for item in self.store.claim_due()},
+                         {expired["id"], sent["id"]})
+        self.store.complete(sent["id"], True)
+        self.store.complete(expired["id"], False)
+        visible = {item["id"] for item in self.store.list(visible_only=True)}
+        self.assertEqual(visible, {upcoming["id"], sent["id"]})
+        self.assertEqual(self.store.get(sent["id"])["state"], "sent")
+        confirmed = self.store.acknowledge(sent["id"])
+        self.assertEqual(confirmed["state"], "acknowledged")
+        self.assertEqual(self.store.acknowledge(sent["id"])["state"], "acknowledged")
+        self.assertEqual([item["id"] for item in ReminderStore(self.path).list(
+            visible_only=True)], [upcoming["id"]])
+        self.assertEqual(ReminderStore(self.path).get(sent["id"])["state"],
+                         "acknowledged")
+        self.assertEqual(len(self.store.list()), 5)
+
     def test_expired_push_subscription_and_allowlisted_https_only(self):
         fake = {"endpoint": "https://fcm.googleapis.com/fcm/send/" + "x" * 40,
                 "keys": {"p256dh": "y" * 87, "auth": "z" * 22}}

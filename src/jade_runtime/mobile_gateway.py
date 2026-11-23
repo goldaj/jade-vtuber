@@ -458,6 +458,23 @@ class MobileGateway:
             if set(request) != {"action", "id", "title", "due_at"}:
                 await self._json(writer, 400, {"error": "invalid reminder request"})
                 return
+            if action == "list":
+                items = await asyncio.to_thread(
+                    self.reminders.store.list, visible_only=True)
+                await self._json(writer, 200, {"status": "ok", "items": items})
+                return
+            if action == "ack":
+                if request["title"] is not None or request["due_at"] is not None:
+                    await self._json(writer, 400, {"error": "invalid reminder request"})
+                    return
+                try:
+                    item = await asyncio.to_thread(
+                        self.reminders.store.acknowledge, request["id"])
+                except (ValueError, TypeError):
+                    await self._json(writer, 400, {"error": "reminder_not_sent"})
+                    return
+                await self._json(writer, 200, {"status": "ok", "reminder": item})
+                return
             from .reminders import ReminderAction
             result = await ReminderAction(
                 self.reminders, "mobile", "").manage_reminder(

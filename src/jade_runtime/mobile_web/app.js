@@ -868,13 +868,29 @@
       line.tabIndex = -1;
       const info = document.createElement("span");
       const states = {pending:"programmé", retry:"en attente d'envoi",
-        sending:"envoi en cours", sent:"remis au transport (pas de preuve de lecture)",
-        failed:"échec d'envoi", cancelled:"annulé"};
+        sending:"envoi en cours", sent:"envoyé (en attente de ton OK)"};
       info.textContent = reminder.title + " · " + formatReminderDate(reminder.due_at)
         + " · " + (states[reminder.state] || reminder.state)
         + " · " + (reminder.destination === "discord" ? "Discord" : "mobile");
       line.appendChild(info);
-      if (reminder.state !== "cancelled") {
+      if (reminder.state === "sent") {
+        const acknowledge = document.createElement("button");
+        acknowledge.type = "button";
+        acknowledge.textContent = "OK";
+        acknowledge.setAttribute("aria-label", "Confirmer le rappel " + reminder.title);
+        acknowledge.addEventListener("click", async () => {
+          acknowledge.disabled = true;
+          try {
+            await reminderRequest("ack", reminder.id);
+            await loadReminders();
+            remindersStatus.textContent = "Rappel confirmé.";
+          } catch (error) {
+            remindersStatus.textContent = error.message;
+            acknowledge.disabled = false;
+          }
+        });
+        line.appendChild(acknowledge);
+      } else {
         const defer = document.createElement("button");
         defer.type = "button";
         defer.textContent = "Reporter 10 min";
@@ -888,7 +904,7 @@
         });
         line.appendChild(defer);
       }
-      if (!["cancelled", "sent"].includes(reminder.state)) {
+      if (reminder.state !== "sent") {
         const cancel = document.createElement("button");
         cancel.type = "button";
         cancel.textContent = "Annuler";
@@ -904,16 +920,25 @@
       remindersList.appendChild(line);
     }
   }
+  let remindersLoadVersion = 0;
   async function loadReminders() {
     if (!token) return;
+    const version = ++remindersLoadVersion;
     try {
       const result = await reminderRequest("list");
+      if (version !== remindersLoadVersion) return;
       renderReminders(result.items || []);
-      remindersStatus.textContent = "Les états sont ceux observés par le serveur Jade.";
+      remindersStatus.textContent = "Les rappels envoyés restent visibles jusqu'à ton OK.";
     } catch (error) {
-      remindersStatus.textContent = "Rappels indisponibles : " + error.message;
+      if (version === remindersLoadVersion)
+        remindersStatus.textContent = "Rappels indisponibles : " + error.message;
     }
   }
+  // Refresh only while the reminders tab is actually open. No background PWA polling.
+  setInterval(() => {
+    if (token && !document.hidden && shell.dataset.view === "reminders")
+      loadReminders();
+  }, 30000);
   reminderForm.addEventListener("submit", async event => {
     event.preventDefault();
     if (!token) { authorizeAgain(); return; }
@@ -1099,6 +1124,8 @@
       abortMobileStream();
       if (activeDuplex) { activeDuplex.cancel(); activeDuplex = null; }
       stopPlayback();
+    } else if (token && shell.dataset.view === "reminders") {
+      loadReminders();
     }
   });
   window.addEventListener("pagehide", () => {

@@ -88,6 +88,41 @@ class MobileReminderHTTPTests(unittest.IsolatedAsyncioTestCase):
                                        {"action": "get", "id": "f" * 24})
         self.assertEqual(status, 404)
 
+    async def test_sent_reminder_requires_manual_ack_on_mobile(self):
+        stamp = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
+        _, created = await self.request("/api/reminders", {
+            "action": "create", "id": None, "title": "Lire le rappel",
+            "due_at": stamp})
+        reminder_id = created["reminder"]["id"]
+        payload = {"action": "ack", "id": reminder_id, "title": None, "due_at": None}
+        status, _ = await self.request("/api/reminders", payload,
+                                       authenticated=False)
+        self.assertEqual(status, 401)
+        status, _ = await self.request("/api/reminders", payload)
+        self.assertEqual(status, 400)
+        store = self.mobile.reminders.store
+        import sqlite3
+        with sqlite3.connect(store.path) as db:
+            db.execute("UPDATE reminders SET due_at=1 WHERE id=?", (reminder_id,))
+        self.assertEqual(len(store.claim_due()), 1)
+        store.complete(reminder_id, True)
+        status, listed = await self.request("/api/reminders", {
+            "action": "list", "id": None, "title": None, "due_at": None})
+        self.assertEqual(status, 200)
+        self.assertEqual([r["id"] for r in listed["items"]], [reminder_id])
+        self.assertEqual(listed["items"][0]["state"], "sent")
+        status, acknowledged = await self.request("/api/reminders", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(acknowledged["reminder"]["state"], "acknowledged")
+        status, listed = await self.request("/api/reminders", {
+            "action": "list", "id": None, "title": None, "due_at": None})
+        self.assertEqual(status, 200)
+        self.assertEqual(listed["items"], [])
+        status, fetched = await self.request("/api/reminders",
+                                              {"action": "get", "id": reminder_id})
+        self.assertEqual(status, 200)
+        self.assertEqual(fetched["reminder"]["state"], "acknowledged")
+
     async def test_push_requires_configuration_and_auth(self):
         status, body = await self.request("/api/push", {"action": "config"},
                                           authenticated=False)

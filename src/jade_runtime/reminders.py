@@ -171,18 +171,30 @@ class ReminderStore:
         return {"id": reminder_id, "title": title.strip(), "due_at": stamp,
                 "destination": destination, "state": "pending"}
 
-    def list(self, destination=None, channel="") -> list[dict]:
-        where, args = "", []
+    def list(self, destination=None, channel="", *, visible_only=False) -> list[dict]:
+        conditions, args = [], []
         if destination == "discord":
-            where, args = " WHERE destination='discord' AND channel=?", [channel]
+            conditions.append("destination='discord' AND channel=?")
+            args.append(channel)
         elif destination == "mobile":
-            where = " WHERE destination='mobile'"
+            conditions.append("destination='mobile'")
+        if visible_only:
+            # The phone lists upcoming reminders and sent ones awaiting the owner's OK.
+            # Expired unsent, cancelled, failed and acknowledged records remain in SQLite.
+            conditions.append(
+                "(state='sent' OR "
+                "(state IN ('pending','retry','sending') AND due_at>?))"
+            )
+            args.append(int(time.time()))
+        where = " WHERE " + " AND ".join(conditions) if conditions else ""
         with self._db() as db:
             rows = db.execute(
                 "SELECT id,title,due_at,destination,state,sent_at "
                 "FROM reminders" + where +
-                " ORDER BY CASE state WHEN 'pending' THEN 0 WHEN 'retry' THEN 0 "
-                "ELSE 1 END, due_at DESC LIMIT 40", args).fetchall()
+                " ORDER BY CASE state WHEN 'sent' THEN 0 "
+                "WHEN 'pending' THEN 1 WHEN 'retry' THEN 1 "
+                "WHEN 'sending' THEN 1 ELSE 2 END, due_at DESC LIMIT 40", args
+            ).fetchall()
         return [dict(row) for row in rows]
 
     def get(self, reminder_id: str) -> dict | None:
@@ -231,6 +243,30 @@ class ReminderStore:
             updated = db.execute(
                 "SELECT id,title,due_at,destination,state FROM reminders WHERE id=?",
                 (reminder_id,)).fetchone()
+        return dict(updated)
+
+    def acknowledge(self, reminder_id: str) -> dict:
+        """Only a sent reminder can be dismissed by an explicit user OK."""
+        if not isinstance(reminder_id, str) or not _ID.fullmatch(reminder_id):
+            raise ValueError("identifiant invalide")
+        with self._db() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute(
+                "SELECT state FROM reminders WHERE id=?", (reminder_id,)
+            ).fetchone()
+            if row is None:
+                raise ValueError("rappel introuvable")
+            if row["state"] not in ("sent", "acknowledged"):
+                raise ValueError("rappel non encore envoyé")
+            if row["state"] == "sent":
+                db.execute(
+                    "UPDATE reminders SET state='acknowledged',updated_at=? WHERE id=?",
+                    (int(time.time()), reminder_id)
+                )
+            updated = db.execute(
+                "SELECT id,title,due_at,destination,state,sent_at "
+                "FROM reminders WHERE id=?", (reminder_id,)
+            ).fetchone()
         return dict(updated)
 
     def subscribe(self, data: dict) -> None:
