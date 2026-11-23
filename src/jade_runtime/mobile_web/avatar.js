@@ -166,12 +166,21 @@
         // This neck sits over the seated dress but UNDER the moving r20 face.
         neck = new PIXI.Graphics();
         neck.beginFill(0xfff1e9, 1);
-        neck.drawPolygon([447,720, 501,720, 499,744, 505,756, 510,766,
-                          492,780, 480,785, 461,780, 448,768, 451,755]);
+        neck.moveTo(447, 716);
+        neck.bezierCurveTo(453, 729, 452, 744, 448, 758);
+        neck.bezierCurveTo(444, 765, 454, 777, 465, 782);
+        neck.bezierCurveTo(480, 791, 489, 781, 497, 777);
+        neck.bezierCurveTo(505, 772, 511, 767, 507, 760);
+        neck.bezierCurveTo(500, 746, 497, 728, 501, 716);
+        neck.closePath();
         neck.endFill();
-        neck.beginFill(0xdcb2a3, .18);
-        neck.drawPolygon([493,744, 499,744, 505,756, 510,766,
-                          492,780, 486,783, 500,765]);
+        // Faint contour shading, clipped by its smaller interior silhouette.
+        neck.beginFill(0xdcb2a3, .14);
+        neck.moveTo(492, 743);
+        neck.bezierCurveTo(498, 754, 506, 764, 507, 766);
+        neck.bezierCurveTo(499, 775, 488, 781, 481, 784);
+        neck.bezierCurveTo(497, 768, 497, 757, 492, 743);
+        neck.closePath();
         neck.endFill();
         previousRender = model._render;
         previousDraw = model.internalModel.draw;
