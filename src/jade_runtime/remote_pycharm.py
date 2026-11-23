@@ -17,6 +17,7 @@ import os
 from pathlib import Path
 from queue import Empty, Queue
 import subprocess
+import socket
 import sys
 import threading
 import time
@@ -222,14 +223,33 @@ class PycharmManager:
                 self.stop_file.unlink(missing_ok=True)
         self.child = None
 
+    def _wait_ready(self, timeout: float = 55.0) -> None:
+        """Do not report success until the existing mobile gateway is listening."""
+        port = int(os.environ.get("JADE_MOBILE_PORT", "8766"))
+        until = time.monotonic() + timeout
+        while time.monotonic() < until:
+            if self.child is None or self.child.poll() is not None:
+                raise RuntimeError("jade_exited_on_start")
+            try:
+                with socket.create_connection(("127.0.0.1", port), timeout=0.4):
+                    return
+            except OSError:
+                time.sleep(0.4)
+        raise RuntimeError("jade_mobile_gateway_not_ready")
+
     def _restart(self, operation: str) -> None:
         with self.lock:
             self.state["phase"] = "checking"
             self.state["error"] = None
         before = target = None
         try:
+            changed_dependencies = False
             if operation == "update":
                 before, target = plan_develop_update(self.root)
+                if before != target:
+                    changed_dependencies = bool(git(
+                        self.root, "diff", "--name-only", before, target, "--",
+                        "pyproject.toml", "poetry.lock"))
             with self.lock:
                 self.state["phase"] = "stopping"
             self._stop_child()
@@ -244,12 +264,19 @@ class PycharmManager:
                 git(self.root, "merge", "--ff-only", target, timeout=180)
                 # LFS data is fetched only for the checked-out develop commit.
                 git(self.root, "lfs", "pull", timeout=180)
+                if changed_dependencies:
+                    print("[Jade Control] Dépendances modifiées : synchronisation Poetry.", flush=True)
+                    install = subprocess.run(
+                        ["poetry", "sync", "--only", "main", "-E", "all", "--no-interaction"],
+                        cwd=str(self.root), stdin=subprocess.DEVNULL,
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                        timeout=600, check=False)
+                    if install.returncode:
+                        raise RuntimeError("poetry_sync_failed")
             with self.lock:
                 self.state["phase"] = "starting"
             self._start_child()
-            time.sleep(1)
-            if self.child is None or self.child.poll() is not None:
-                raise RuntimeError("jade_exited_on_start")
+            self._wait_ready()
             print("[Jade Control] " + ("Mise à jour et redémarrage" if operation == "update"
                                       else "Redémarrage") + " terminés.", flush=True)
         except Exception as exc:
