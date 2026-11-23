@@ -40,7 +40,7 @@ class SeatedMobileContract(unittest.TestCase):
     def test_animated_head_not_scaled_independently_by_phone(self):
         avatar = (WEB / "avatar.js").read_text(encoding="utf-8")
         self.assertIn('const headScale = 1.30', avatar)
-        self.assertIn('model.position.set(width * .565, height * .61)', avatar)
+        self.assertIn('model.position.set(width * .565, height * .590)', avatar)
         self.assertIn('renderPass(renderer, "rear")', avatar)
         self.assertIn('renderPass(renderer, "front")', avatar)
         self.assertIn('PIXI.Sprite.from(image)', avatar)
