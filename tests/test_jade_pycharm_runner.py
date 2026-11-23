@@ -33,7 +33,7 @@ class SelectedRunModeTests(unittest.TestCase):
              patch.object(runner, "check_develop"), \
              patch.object(runner, "single_instance", return_value=nullcontext()), \
              patch.object(runner, "check_other_runtime"), \
-             patch.object(runner, "load_environment"), \
+             patch.object(runner, "load_environment") as loaded, \
              patch.object(runner.os, "chdir"), \
              patch.object(runner.subprocess, "run", return_value=SimpleNamespace(returncode=0)) as preflight, \
              patch("src.utility.private_config.environ", return_value="x" * 40), \
@@ -41,7 +41,7 @@ class SelectedRunModeTests(unittest.TestCase):
             self.assertEqual(runner.main(), 0)
         self.assertEqual(preflight.call_args.args[0][-len(requested):], requested)
         self.assertEqual(manager.call_args.kwargs["flags"], tuple(requested))
-        self.assertTrue(runner.load_environment.call_args.kwargs["preserve_runtime"])
+        self.assertTrue(loaded.call_args.kwargs["preserve_runtime"])
 
 
 class EnvironmentTests(unittest.TestCase):
