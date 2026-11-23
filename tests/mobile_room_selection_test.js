@@ -55,7 +55,9 @@ async function run(startRoom = "bedroom", supportsLayers = true) {
     history:{state:null,replaceState(_a,_b,route){const next=new URL(route,location);location.href=next.href;}},
   };
   const context = {
-    document,window,Image,URL,URLSearchParams,matchMedia:()=>media,
+    document,window,Image,URL,URLSearchParams,
+    Event:class {constructor(type){this.type=type;}},
+    matchMedia:()=>media,
     CSS:{supports:()=>supportsLayers},
     requestAnimationFrame(){const id=++frameId;frames.add(id);return id;},
     cancelAnimationFrame(id){cancelled++;frames.delete(id);},
