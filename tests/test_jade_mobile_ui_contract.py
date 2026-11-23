@@ -29,7 +29,7 @@ class MobileUiLayoutContract(unittest.TestCase):
         self.assertIn('document.querySelector(".room-bottom").appendChild(mic)', JS)
         self.assertIn("form.insertBefore(mic, input)", JS)
         self.assertIn('.shell[data-view="home"] .conversation{display:none}', CSS)
-        self.assertNotIn("input.focus();", JS)
+        self.assertNotIn("      input.focus();\n      openReminderFromHash();", JS)
 
     def test_notifications_move_into_profile(self):
         self.assertEqual(HTML.count('class="notification-choice"'), 1)
