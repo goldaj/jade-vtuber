@@ -283,8 +283,10 @@
       }
       const headScale = 1.30;
       model.scale.set(Math.max(.05, scale * headScale));
-      // Face and hair use the same scene-space anchor as the AVIF seated body.
-      model.position.set(width * .565, height * .61);
+      // Keep the face above the illustrated neckline: the AVIF already
+      // carries a full neck. Raise only the animated head and hair,
+      // leaving the seated body and the kitchen camera unchanged.
+      model.position.set(width * .565, height * .590);
       return;
     }
     // Kitchen and missing-art fallback remain compatible with the existing r20 pose.
