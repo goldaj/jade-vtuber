@@ -189,3 +189,14 @@ L’asset est au bon chemin et la correction est incluse dans la PR #45.
 Le visuel et le chevauchement pendant les animations doivent encore être
 confirmés en recette sur le téléphone. Les tests automatiques ne permettent
 pas de prouver une jonction esthétique en mouvement.
+
+## Calibrage vertical du visage dans la chambre (24 novembre, v8)
+
+Sur les nouvelles captures Android, après retrait du faux cou, le menton animé
+reste trop près du col du corps assis. L'AVIF existant est conservé tel quel.
+L'ancrage de la tête et des cheveux Live2D pour la seule chambre assise passe
+de `height * .61` à `height * .590`, soit environ 2 % de hauteur de scène vers
+le haut (près de 23 px sur les captures à 1151 px de scène). La position
+horizontale reste `.565` et l'échelle `1.30`. Le corps, la cuisine, les deux
+images AVIF, les effets de pièces et les animations des cheveux sont inchangés.
+La couture en mouvement nécessite encore une validation sur le téléphone.
