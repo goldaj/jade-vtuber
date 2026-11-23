@@ -293,6 +293,7 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .avatar-frame #avatar-container{z-index:3}
 .portrait-bedroom,.portrait-seated-body{display:none}
 .room[data-room="bedroom"][data-seated-ready="true"]{
+  container-type:size; /* cqw / cqh must refer to the room, not the viewport */
   background:#aa7b8f url("/assets/room-bedroom-portrait.avif") center / cover no-repeat;
 }
 .room[data-room="bedroom"][data-seated-ready="true"] .room-art{display:none}

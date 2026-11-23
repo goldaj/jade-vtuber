@@ -112,3 +112,31 @@ cuisine et le plein écran. Aucun test headless ne remplace cette recette.
 ## Ajustement après captures du 23 novembre (v4)
 
 Les captures montrent un visage trop à gauche du col du corps statique et une jonction horizontale visible. La caméra du modèle r20 est déplacée de x=.575 à x=.655 dans le repère responsive de la scène, sans toucher aux images ni à la cuisine. **Ce changement est une correction de position, pas une validation du raccord graphique.** La jonction du cou reste à retoucher sur l'asset statique et à vérifier en animation sur téléphone ; ne pas déclarer la recette réussie sans nouvelles captures.
+
+## Correction de la régression de profondeur et assise (v5)
+
+Les dernières captures Android montrent Jade **debout** sur un vieux décor 4:3,
+avec des bandes vides en portrait : ce n'est pas une couture insuffisante mais
+une non-activation du mode hybride. Le contrôleur cherchait par erreur
+`parts.parentPartIndices`; le vrai Cubism Web Core fournit
+`parts.parentIndices` (les ArtMeshes utilisent `drawables.parentPartIndices`).
+Le test précédent reproduisait aussi cette erreur, d'où un faux positif CI.
+
+Correctifs :
+- La hiérarchie des parts vient de la bonne propriété API. Les éléments de
+  coiffure arrière, de corps et du visage sont séparés en passes WebGL.
+- Le corps assis et la chambre portrait sont activés dès que les images et
+  l'isolation du corps debout sont prêtes, sans condition liée à Pixi.
+- Si le compositeur échoue, le corps assis reste dans le DOM et le corps
+  debout reste isolé dans Cubism ; la profondeur des cheveux est dégradée
+  mais la posture assise n'est jamais supprimée.
+- La chambre devient le conteneur de mesure `cqw/cqh`, évitant les unités
+  prises par erreur dans le viewport.
+- `jade-seated-ready` invoque la vraie fonction `sync` du moteur de décor ;
+  les anciens éléments 4:3 ne sont plus superposés à la chambre portrait.
+- La position x de la tête est recalibrée à .565 du repère de la scène,
+  avec le même référentiel pour le corps et les deux passes Live2D.
+
+Ces correctifs vérifient la structure et les contrats hors WebGL. La couture
+réelle cou/épaules et les oscillations des mèches doivent être observées sur
+le Redmi après déploiement ; aucune CI ne prouve la qualité du dessin.

@@ -151,12 +151,27 @@
       const PIXI = window.PIXI;
       let back = null;
       let seatedBody = null;
+      let previousRender = null;
+      let previousDraw = null;
       try {
+        // An already loaded HTML image can have a temporarily unuploaded Pixi
+        // texture. Let Pixi upload it on the next frame rather than aborting.
         seatedBody = PIXI.Sprite.from(image);
-        if (!seatedBody.texture?.valid) return false;
+        if (!seatedBody.texture) return false;
         back = new PIXI.Container();
-        const originalRender = model._render.bind(model);
-        const originalDraw = model.internalModel.draw.bind(model.internalModel);
+        previousRender = model._render;
+        previousDraw = model.internalModel.draw;
+        const originalRender = previousRender.bind(model);
+        const originalDraw = previousDraw.bind(model.internalModel);
+        function gracefulFallback(error) {
+          console.warn("Jade seated compositor disabled; static body retained:", error);
+          const room = document.querySelector?.(".room");
+          if (room) room.dataset.seatedCompositor = "false";
+          if (seatedComposition) {
+            seatedComposition.back.visible = false;
+            seatedComposition.body.visible = false;
+          }
+        }
         let pass = null;
         // A single Cubism model is animated once; only its output is rendered
         // twice. The opacity mask runs AFTER its normal physics/motion update.
@@ -169,15 +184,22 @@
           finally { pass = null; }
         }
         back._render = renderer => {
-          if (!isSeated()) return;
-          // The foreground model is later in stage order. Ensure that its
-          // world matrix already reflects the current camera for the rear pass.
-          model.updateTransform();
-          renderPass(renderer, "rear");
+          if (!isSeatedLayered()) return;
+          try {
+            model.updateTransform();
+            renderPass(renderer, "rear");
+          } catch (error) { gracefulFallback(error); }
         };
         model._render = renderer => {
-          if (isSeated()) renderPass(renderer, "front");
-          else originalRender(renderer);
+          if (!isSeatedLayered()) {
+            originalRender(renderer);
+            return;
+          }
+          try { renderPass(renderer, "front"); }
+          catch (error) {
+            gracefulFallback(error);
+            originalRender(renderer);
+          }
         };
         back.visible = false;
         seatedBody.visible = false;
@@ -186,6 +208,8 @@
         seatedComposition = {back, body: seatedBody};
         return true;
       } catch (error) {
+        if (previousRender) model._render = previousRender;
+        if (previousDraw) model.internalModel.draw = previousDraw;
         if (back?.parent) back.parent.removeChild(back);
         if (seatedBody?.parent) seatedBody.parent.removeChild(seatedBody);
         if (seatedBody) seatedBody.destroy();
@@ -227,6 +251,11 @@
       room?.dataset.seatedReady === "true" && Boolean(seatedComposition);
   }
 
+  function isSeatedLayered() {
+    const room = document.querySelector?.(".room");
+    return isSeated() && room?.dataset.seatedCompositor === "true";
+  }
+
   function resize() {
     if (!pixi || !model) return;
     const width = Math.max(1, target.clientWidth);
@@ -240,8 +269,8 @@
     const seated = isSeated();
     headIsolation?.sync(seated);
     if (seatedComposition) {
-      seatedComposition.back.visible = seated;
-      seatedComposition.body.visible = seated;
+      seatedComposition.back.visible = seated && isSeatedLayered();
+      seatedComposition.body.visible = seated && isSeatedLayered();
     }
     if (seated) {
       // Align the seated sprite inside the exact same 941x1672 scene plane.
@@ -252,9 +281,8 @@
       sprite.height = height * .562201;
       const headScale = 1.30;
       model.scale.set(Math.max(.05, scale * headScale));
-      // The r20 face sits left of the model pivot. Align the face centre with
-      // the static seated neckline rather than with the canvas midpoint.
-      model.position.set(width * .655, height * .61);
+      // Face / hair share a stable scene-space anchor above the static neck.
+      model.position.set(width * .565, height * .61);
       return;
     }
     // Kitchen and missing-art fallback remain compatible with the existing r20 pose.

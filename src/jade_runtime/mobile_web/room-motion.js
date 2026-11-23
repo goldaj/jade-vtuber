@@ -142,7 +142,7 @@
     window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
   }
   roomSelect.addEventListener("change", () => { void changeRoom(roomSelect.value); });
-  room?.addEventListener("jade-seated-ready", syncVisuals);
+  room?.addEventListener("jade-seated-ready", sync);
 
   if (supportsRoomLayers) {
     Promise.all([

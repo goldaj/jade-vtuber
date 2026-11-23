@@ -42,14 +42,21 @@
   };
 
   function activateWhenComplete() {
-    if (!preparedImages || !window.JadeAvatar?.ready || !window.JadeAvatar?.canComposeSeated || ready) return;
+    if (!preparedImages || !window.JadeAvatar?.ready || !window.JadeAvatar?.canIsolateHead || ready) return;
     const [roomImage, bodyImage] = preparedImages;
-    if (!window.JadeAvatar.prepareSeatedComposition(bodyImage)) return;
+    // A depth compositor failure must NEVER replace seated Jade with a standing model.
+    let layered = false;
+    try {
+      if (window.JadeAvatar.canComposeSeated)
+        layered = Boolean(window.JadeAvatar.prepareSeatedComposition(bodyImage));
+    } catch (error) {
+      console.warn("Jade seated depth compositor unavailable:", error);
+    }
     backdrop.src = roomImage.src;
     body.src = bodyImage.src;
     ready = true;
     room.dataset.seatedReady = "true";
-    room.dataset.seatedCompositor = "true";
+    room.dataset.seatedCompositor = layered ? "true" : "false";
     room.dispatchEvent?.(new Event("jade-seated-ready"));
     window.JadeAvatar.resize();
   }

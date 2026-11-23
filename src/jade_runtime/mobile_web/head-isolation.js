@@ -43,7 +43,8 @@
     // would leave the already-evaluated drawable opacities unchanged.
     const parts = raw.parts;
     const drawables = raw.drawables;
-    const partParents = parts?.parentPartIndices;
+    // Actual Cubism Web Core property: parts.parentIndices.
+    const partParents = parts?.parentIndices ?? parts?.parentPartIndices;
     const drawableParents = drawables?.parentPartIndices;
     const alpha = drawables?.opacities;
     const drawableCount = drawables?.count;
@@ -66,6 +67,7 @@
       const bodyBits = new Uint8Array(drawableCount);
       let rearCount = 0;
       let foregroundCount = 0;
+      let bodyCount = 0;
       for (let i = 0; i < drawableCount; i++) {
         const parent = drawableParents[i];
         if (!Number.isInteger(parent) || parent < 0 || parent >= count) continue;
@@ -75,10 +77,13 @@
         } else {
           foregroundCount++;
         }
-        if (isPart(parent, id => id === "PartJAD_BODY")) bodyBits[i] = 1;
+        if (isPart(parent, id => HIDE.includes(id))) {
+          bodyBits[i] = 1;
+          bodyCount++;
+        }
       }
       // Never enter a hybrid scene unless both depth passes contain meshes.
-      if (rearCount > 0 && foregroundCount > 0) {
+      if (rearCount > 0 && foregroundCount > 0 && bodyCount > 0) {
         rear = rearBits;
         body = bodyBits;
       }

@@ -19,7 +19,8 @@ const opacity = new Float32Array([.7,.8,.9,1,.6]);
 const initial = Array.from(opacity);
 const calls = [];
 const partOpacity = ids.map(() => 1);
-const raw = {parts:{ids,count:ids.length,parentPartIndices:partParents},
+// Actual Cubism Web Core property rather than an inaccurate test double.
+const raw = {parts:{ids,count:ids.length,parentIndices:partParents},
   drawables:{count:opacity.length,parentPartIndices:drawableParents,opacities:opacity}};
 const core = {
   getModel(){return raw;},
@@ -54,4 +55,8 @@ assert.equal(window.JadeHeadIsolation.forModel(broken),null);
 // compositor unless the parent-part mapping is actually present.
 const noHierarchy={...core,getModel(){return {parts:{ids,count:ids.length}}}};
 assert.equal(window.JadeHeadIsolation.forModel(noHierarchy).canLayerHair,false);
+const noAlphas={...core,getModel(){return {parts:{ids,count:ids.length,parentIndices:partParents},
+  drawables:{count:5,parentPartIndices:drawableParents}};}};
+assert.equal(window.JadeHeadIsolation.forModel(noAlphas).canLayerHair,false,
+  "no renderer compositor without mutable drawable opacities");
 console.log("Seated Jade: one Live2D model, rear hair -> body -> front hair");

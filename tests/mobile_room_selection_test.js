@@ -27,13 +27,18 @@ async function run(startRoom = "bedroom", supportsLayers = true) {
     dataset:{}, attributes:{}, querySelector(q){return selectors[q];},
     toggleAttribute(n, flag){this.attributes[n] = flag;},
   };
+  const room = {
+    dataset:{room:"bedroom"},
+    addEventListener(name,fn){events["room:"+name]=fn;},
+    dispatchEvent(event){events["room:"+event.type]?.(event);}
+  };
   const chooser = {
     value:"bedroom",
     addEventListener(name, fn){events["choose:"+name] = fn;},
   };
   const document = {
     hidden:false,
-    querySelector(q){return q === ".room-art" ? scene : null;},
+    querySelector(q){return q === ".room-art" ? scene : q === ".room" ? room : null;},
     getElementById(id){return id === "room-selector" ? chooser : null;},
     addEventListener(n, fn){events[n] = fn;},
   };
@@ -59,7 +64,7 @@ async function run(startRoom = "bedroom", supportsLayers = true) {
   window.CSS=context.CSS;
   vm.runInNewContext(source,context,{filename:"room-motion.js"});
   for (let i=0;i<6;i++) await Promise.resolve();
-  return {layers,backdrop,scene,chooser,events,media,mediaHandlers,window,frames,document,
+  return {layers,backdrop,scene,room,chooser,events,media,mediaHandlers,window,frames,document,
     intersection(visible){onIntersection([{isIntersecting:visible}]);},
     get cancelled(){return cancelled;},
     async change(room) {
@@ -76,6 +81,13 @@ async function run(startRoom = "bedroom", supportsLayers = true) {
   for (const key of ["curtain","left","right","steam","reflection"]) assert.equal(a.layers[key].hidden,false);
   assert.equal(a.layers.kitchen.hidden,true,"kitchen stays inactive in bedroom");
   assert.equal(a.frames.size,1,"bedroom starts exactly one render loop");
+  a.room.dataset.seatedReady="true";
+  a.room.dispatchEvent({type:"jade-seated-ready"});
+  assert.equal(a.frames.size,0,"seated portrait disables old 4:3 room motion");
+  assert.equal(a.layers.curtain.hidden,true,"no old curtain over portrait room");
+  a.room.dataset.seatedReady="false";
+  a.room.dispatchEvent({type:"jade-seated-ready"});
+  assert.equal(a.frames.size,1,"old bedroom layers resume in a real fallback");
   await a.change("kitchen");
   assert.equal(a.backdrop.src,"/assets/room-kitchen.webp");
   assert.equal(a.scene.dataset.room,"kitchen");
