@@ -18,6 +18,27 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 MODES = ("--live", "--voice", "--discord", "--discord-voice", "--avatar", "--mobile")
+# Accepted flags mirror main.py. A user-owned PyCharm Run configuration may
+# pass its exact modes through this wrapper rather than adopting the test preset.
+MODE_FLAGS = (
+    "--live", "--voice", "--mic", "--twitch", "--discord", "--vts",
+    "--http", "--discord-voice", "--avatar", "--mobile", "--all-channels",
+)
+
+
+def selected_modes(argv: list[str]) -> tuple[bool, tuple[str, ...]]:
+    """Return preflight-only and the requested Jade flags, preserving their order.
+
+    The historical shared test configuration has no arguments; keep its
+    existing preset. Explicit flags must never pick up an extra --avatar/mic.
+    """
+    parser = argparse.ArgumentParser(description="Profil PyCharm Jade géré à distance")
+    parser.add_argument("--preflight-only", action="store_true")
+    for flag in MODE_FLAGS:
+        parser.add_argument(flag, action="store_true")
+    args = parser.parse_args(argv)
+    explicit = tuple(flag for flag in argv if flag in MODE_FLAGS)
+    return args.preflight_only, explicit if explicit else MODES
 
 
 class LaunchError(Exception):
@@ -154,17 +175,15 @@ def technical_log(directory: Path):
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Profil local de test Jade pour PyCharm")
-    parser.add_argument("--preflight-only", action="store_true")
-    args = parser.parse_args()
+    preflight_only, modes = selected_modes(sys.argv[1:])
     check_develop(ROOT)
     with single_instance():
         check_other_runtime()
         load_environment(os.environ)
         os.chdir(ROOT)
-        preflight = subprocess.run([sys.executable, str(ROOT / "main.py"), "--preflight", *MODES],
+        preflight = subprocess.run([sys.executable, str(ROOT / "main.py"), "--preflight", *modes],
                                    check=False)
-        if preflight.returncode or args.preflight_only:
+        if preflight.returncode or preflight_only:
             return preflight.returncode
         # The PyCharm Run tab stays alive while its single Jade child restarts.
         # Direct Python debugger breakpoints are intentionally not supported.
@@ -172,7 +191,7 @@ def main() -> int:
         from src.utility.private_config import environ
         token = str(environ("JADE_DEPLOY_SUPERVISOR_TOKEN", ""))
         log_dir = Path(os.environ.get("JADE_PYCHARM_PRIVATE_DIR", r"D:\Codex\private\jade-runtime")) / "logs"
-        PycharmManager(ROOT, token, log_dir=log_dir).run()
+        PycharmManager(ROOT, token, log_dir=log_dir, flags=modes).run()
     return 0
 
 
