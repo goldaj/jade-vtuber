@@ -27,6 +27,9 @@ from src.jade_runtime.session_logging import redact
 
 LOG = logging.getLogger("jade.pycharm.remote")
 FLAGS = ("--live", "--voice", "--discord", "--discord-voice", "--avatar", "--mobile")
+FLAGS_ALLOWED = frozenset(("--live", "--voice", "--mic", "--twitch", "--discord",
+                          "--vts", "--http", "--discord-voice", "--avatar",
+                          "--mobile", "--all-channels"))
 
 
 class GitRefusal(RuntimeError):
@@ -123,7 +126,11 @@ class _WindowsJob:
 
 class PycharmManager:
     def __init__(self, root: Path, token: str, *, port: int = 8772,
-                 log_dir: Path | None = None):
+                 log_dir: Path | None = None, flags: tuple[str, ...] | None = None):
+        if flags is not None and (not isinstance(flags, tuple) or
+                                  any(flag not in FLAGS_ALLOWED for flag in flags)):
+            raise ValueError("invalid Jade launch flags")
+        self.flags = FLAGS if flags is None else flags
         if not 32 <= len(token) <= 256:
             raise ValueError("JADE_DEPLOY_SUPERVISOR_TOKEN must be 32-256 chars")
         self.root = root.resolve()
@@ -182,7 +189,7 @@ class PycharmManager:
         env["JADE_RUNNER_STOP_FILE"] = str(self.stop_file)
         env["PYTHONUNBUFFERED"] = "1"
         child = subprocess.Popen(
-            [sys.executable, "-u", str(self.root / "main.py"), *FLAGS],
+            [sys.executable, "-u", str(self.root / "main.py"), *self.flags],
             cwd=str(self.root), env=env, stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, encoding="utf-8", errors="replace", bufsize=1,
