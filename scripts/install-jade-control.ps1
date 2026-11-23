@@ -65,4 +65,28 @@ Write-Host ('Tâche automatique installée : Jade Remote Control (' + $task.Stat
 Write-Host "Raccourci bureau créé : Jade Control.lnk"
 Write-Host "Contrôleur : 127.0.0.1:8771. PyCharm Run doit être lancé séparément."
 Write-Host "Le fichier control.json contient uniquement des chemins, aucun jeton."
-Write-Host "Pour la route mobile, vérifier Tailscale Serve puis ajouter /control vers 127.0.0.1:8771."
+# Preserve the existing root / -> Jade PWA route; add only /control.
+# On Windows this operation may require an elevated terminal. Failure is
+# reported, but does not undo the installed task and desktop shortcut.
+$tailscale = Get-Command 'tailscale.exe' -ErrorAction SilentlyContinue
+if (-not $tailscale) {
+    $fallback = 'D:\Codex\tools\Tailscale\tailscale.exe'
+    if (Test-Path -LiteralPath $fallback -PathType Leaf) {
+        $tailscalePath = $fallback
+    } else {
+        $tailscalePath = $null
+    }
+} else {
+    $tailscalePath = $tailscale.Source
+}
+if ($tailscalePath) {
+    & $tailscalePath serve --bg --set-path=/control http://127.0.0.1:8771
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host 'Tailscale Serve : /control ajouté sans modifier la route / existante.'
+    } else {
+        Write-Warning 'Tailscale Serve /control non configuré : exécuter la commande ci-dessus en terminal Windows administrateur.'
+    }
+} else {
+    Write-Warning 'Tailscale CLI introuvable : /control reste à ajouter via tailscale serve.'
+}
+
