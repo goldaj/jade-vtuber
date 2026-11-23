@@ -48,7 +48,14 @@ $action = New-ScheduledTaskAction -Execute $PythonW -Argument ('-m src.jade_runt
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $user
 $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Limited
 $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-Register-ScheduledTask -TaskName 'Jade Remote Control' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
+$taskInstalled = $false
+try {
+    Register-ScheduledTask -TaskName 'Jade Remote Control' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
+    $taskInstalled = $true
+} catch {
+    Write-Warning ('Tâche Windows non installée : ' + $_.Exception.Message)
+    Write-Warning 'Réexécuter le programme avec les droits nécessaires. Le raccourci manuel sera créé.'
+}
 
 $desktop = [Environment]::GetFolderPath('Desktop')
 $link = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desktop 'Jade Control.lnk'))
@@ -58,10 +65,16 @@ $link.WorkingDirectory = $repo
 $link.Description = 'Lancer le contrôleur de Jade sans fenêtre'
 $link.Save()
 
-Start-ScheduledTask -TaskName 'Jade Remote Control'
-Start-Sleep -Seconds 2
-$task = Get-ScheduledTask -TaskName 'Jade Remote Control'
-Write-Host ('Tâche automatique installée : Jade Remote Control (' + $task.State + ')')
+if ($taskInstalled) {
+    try {
+        Start-ScheduledTask -TaskName 'Jade Remote Control'
+        Start-Sleep -Seconds 2
+        $task = Get-ScheduledTask -TaskName 'Jade Remote Control'
+        Write-Host ('Tâche automatique installée : Jade Remote Control (' + $task.State + ')')
+    } catch {
+        Write-Warning ('Tâche installée mais lancement à vérifier : ' + $_.Exception.Message)
+    }
+}
 Write-Host "Raccourci bureau créé : Jade Control.lnk"
 Write-Host "Contrôleur : 127.0.0.1:8771. PyCharm Run doit être lancé séparément."
 Write-Host "Le fichier control.json contient uniquement des chemins, aucun jeton."
