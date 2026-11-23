@@ -759,9 +759,11 @@
           " · Phase : " + (current.phase || "inconnue") +
           (current.error ? " · Incident : " + current.error : "")
         : "PyCharm Run indisponible ; le contrôleur Windows répond encore.";
-      deploymentVersion.textContent = "Branche : develop · commit : " + (current.sha || "inconnu");
+      deploymentVersion.textContent = "Branche : " + (current.branch || "inconnue") +
+        " · commit : " + (current.sha || "inconnu");
       const ready = current.pycharm_run && current.phase === "idle";
-      deploymentRun.disabled = deploymentRestart.disabled = !ready;
+      deploymentRun.disabled = !ready || current.branch !== "develop";
+      deploymentRestart.disabled = !ready;
       if (journal && typeof journal.text === "string") {
         deploymentRaw = journal.text;
         renderDeploymentLogs();
