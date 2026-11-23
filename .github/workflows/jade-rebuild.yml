@@ -61,6 +61,9 @@ jobs:
         run: poetry run python -m compileall -q src main.py
       - name: Browser Live2D visibility lifecycle
         run: |
+          node --check src/jade_runtime/mobile_web/app.js
+          node --check src/jade_runtime/mobile_web/login-guard.js
+          node tests/mobile_login_flow_test.js
           node --check src/jade_runtime/mobile_web/avatar.js
           node tests/mobile_avatar_visibility_test.js
           node --check src/jade_runtime/mobile_web/room-motion.js

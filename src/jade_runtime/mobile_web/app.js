@@ -8,6 +8,8 @@
   const form = $("composer"), input = $("message"), log = $("messages");
   const mic = $("mic"), send = $("send"), status = $("status");
   const modal = $("auth-modal"), authForm = $("auth-form"), authInput = $("auth-token");
+  const authFeedback = $("auth-feedback"), authSubmit = authForm.querySelector('button[type="submit"]');
+  let authPending = false;
   const connection = $("connection-status"), soundToggle = $("sound-toggle");
   const newChat = $("new-chat");
   const linkForm = $("identity-link-form"), linkResult = $("identity-result");
@@ -72,6 +74,7 @@
     linkResult.textContent = "";
     linkCopy.disabled = true;
     authInput.value = "";
+    authFeedback.textContent = "";
     modal.classList.remove("hidden");
     connection.classList.remove("online");
     connection.textContent = "Hors connexion";
@@ -1087,21 +1090,56 @@
   }
   openReminderFromHash();
 
-  authForm.addEventListener("submit", event => {
+  authForm.addEventListener("submit", async event => {
     event.preventDefault();
+    if (authPending) return;
     const value = authInput.value;
-    if (value.length < 32 || value.length > 256) return;
-    token = value;
-    authInput.value = "";
-    modal.classList.add("hidden");
-    setStatus("Jeton saisi. Tu peux parler ou écrire à Jade.");
-    input.focus();
-    openReminderFromHash();
-    if (shell.dataset.view === "reminders") {
-      loadReminders();
-      refreshNotificationChoice();
+    if (value.length < 32 || value.length > 256) {
+      authFeedback.textContent = "Le jeton doit contenir entre 32 et 256 caractères.";
+      authInput.focus();
+      return;
+    }
+    authPending = true;
+    authSubmit.disabled = true;
+    authFeedback.textContent = "Vérification du jeton auprès de Jade…";
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 8000);
+    try {
+      const response = await fetch("/api/auth", {
+        method:"POST", mode:"same-origin", credentials:"omit", cache:"no-store",
+        headers:{"Authorization":"Bearer " + value, "Content-Type":"application/json"},
+        body:"{}", signal:controller.signal
+      });
+      if (response.status === 401) throw new Error("Jeton refusé. Vérifie celui configuré sur le PC.");
+      if (response.status === 403) throw new Error("Accès privé refusé. Vérifie Tailscale et le compte autorisé.");
+      if (!response.ok) throw new Error("Connexion refusée par Jade (HTTP " + response.status + ").");
+      if ((await response.json()).status !== "ok") throw new Error("Réponse de connexion inattendue.");
+      token = value;
+      authInput.value = "";
+      authFeedback.textContent = "";
+      modal.classList.add("hidden");
+      connection.textContent = "Connectée à Jade";
+      connection.classList.add("online");
+      setStatus("Connexion vérifiée. Tu peux parler ou écrire à Jade.");
+      input.focus();
+      openReminderFromHash();
+      if (shell.dataset.view === "reminders") {
+        loadReminders();
+        refreshNotificationChoice();
+      }
+    } catch (error) {
+      authFeedback.textContent = error.name === "AbortError"
+        ? "Délai dépassé. Vérifie Jade sur le PC et Tailscale."
+        : error instanceof TypeError
+          ? "Serveur Jade inaccessible. Vérifie la connexion et Tailscale."
+          : (error.message || "Connexion impossible.");
+    } finally {
+      window.clearTimeout(timeout);
+      authPending = false;
+      authSubmit.disabled = false;
     }
   });
+  window.JadeAuthReady = true;
   form.addEventListener("submit", submitText);
   input.addEventListener("keydown", event => {
     if (event.key === "Enter" && !event.shiftKey) {

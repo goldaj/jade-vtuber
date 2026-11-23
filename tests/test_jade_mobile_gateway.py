@@ -105,6 +105,31 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         return {"Authorization": "Bearer " + "x" * 40,
                 "Content-Type": content_type}
 
+    async def test_login_handshake_auth_and_origin(self):
+        status, _, _ = await self.request(
+            "POST", "/api/auth", body=b"{}",
+            headers={"Content-Type": "application/json"})
+        self.assertEqual(status, 401)
+        status, _, _ = await self.request(
+            "POST", "/api/auth", body=b"{}",
+            headers={**self.headers("application/json"),
+                     "Authorization": "Bearer " + "z" * 40})
+        self.assertEqual(status, 401)
+        status, _, _ = await self.request(
+            "POST", "/api/auth", body=b"{}",
+            headers={**self.headers("application/json"),
+                     "Origin": "https://evil.example"})
+        self.assertEqual(status, 403)
+        status, _, _ = await self.request(
+            "POST", "/api/auth", body=b'{"other":true}',
+            headers=self.headers("application/json"))
+        self.assertEqual(status, 400)
+        status, body, raw = await self.request(
+            "POST", "/api/auth", body=b"{}", headers=self.headers("application/json"))
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body), {"status": "ok"})
+        self.assertIn(b"Cache-Control: no-store", raw)
+
     async def test_billing_requires_auth_and_validates_requests(self):
         self.mobile.billing.get = AsyncMock(return_value={"status": "ok", "month": {"usd": "1.25"}})
         status, _, _ = await self.request("POST", "/api/billing", body=b"{}",

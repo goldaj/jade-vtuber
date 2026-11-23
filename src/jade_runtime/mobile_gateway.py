@@ -41,6 +41,7 @@ WEB_FILES = {
     "/assets/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/assets/jade-theme.css": ("jade-theme.css", "text/css; charset=utf-8"),
     "/assets/splash.js": ("splash.js", "text/javascript; charset=utf-8"),
+    "/assets/login-guard.js": ("login-guard.js", "text/javascript; charset=utf-8"),
     "/assets/splash-jade.png": ("splash-jade.png", "image/png"),
     "/assets/avatar.js": ("avatar.js", "text/javascript; charset=utf-8"),
     "/assets/room-motion.js": ("room-motion.js", "text/javascript; charset=utf-8"),
@@ -481,6 +482,14 @@ class MobileGateway:
                     json.dumps(request, ensure_ascii=False))
             await self._json(writer, 200 if result["status"] == "ok" else 400, result)
             return
+        if route == "/api/auth":
+            # Bearer and Tailscale identity are checked at the common gateway.
+            if (headers.get("content-type", "").split(";")[0].strip()
+                    != "application/json" or body.strip() != b"{}"):
+                await self._json(writer, 400, {"error": "expected empty JSON object"})
+                return
+            await self._json(writer, 200, {"status": "ok"})
+            return
         if route == "/api/deployment":
             if headers.get("content-type", "").split(";")[0].strip() != "application/json":
                 await self._json(writer, 400, {"error": "expected JSON"})
@@ -751,7 +760,7 @@ class MobileGateway:
                 await self._static(writer, route)
                 return
             if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing", "/api/metrics", "/api/deployment",
-                              "/api/push", "/api/reminders"):
+                              "/api/push", "/api/reminders", "/api/auth"):
                 await self._json(writer, 404, {"error": "unknown route"})
                 return
             if (headers.get("transfer-encoding") or not self._origin_allowed(headers)

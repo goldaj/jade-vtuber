@@ -14,6 +14,7 @@
   <!-- All SDK JS files must be installed LOCALLY on the PC after license review.
        No remote CDNs or embedded proprietary Live2D libraries. -->
   <script src="/assets/splash.js" defer></script>
+  <script src="/assets/login-guard.js" defer></script>
   <script src="/vendor/pixi.min.js" defer></script>
   <script src="/vendor/pixi-unsafe-eval.min.js" defer></script>
   <script src="/vendor/live2dcubismcore.min.js" defer></script>
@@ -252,7 +253,7 @@
     </nav>
   </main>
   <div id="auth-modal" class="auth-layer" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-    <form id="auth-form" class="auth-card">
+    <form id="auth-form" class="auth-card" novalidate>
       <div class="auth-heading">
         <img class="auth-icon" src="/icon.svg" width="44" height="44" alt="">
         <h1 id="auth-title">Espace privé de Jade</h1>
@@ -260,6 +261,7 @@
       <label for="auth-token">Jeton d'accès</label>
       <input id="auth-token" type="password" required minlength="32" maxlength="256" autocomplete="off" spellcheck="false">
       <button class="unlock" type="submit">Entrer dans le salon</button>
+      <output id="auth-feedback" role="status" aria-live="polite"></output>
     </form>
   </div>
 </body>

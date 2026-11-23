@@ -25,6 +25,8 @@ class BotanicalUIContract(unittest.TestCase):
         self.assertIn('id="jade-launch-splash"', html)
         self.assertIn('src="/assets/splash-jade.png"', html)
         self.assertIn('src="/assets/splash.js"', html)
+        self.assertIn('src="/assets/login-guard.js"', html)
+        self.assertIn("/assets/login-guard.js", WEB_FILES)
         self.assertIn("object-fit:cover", (ROOT / "jade-theme.css").read_text(encoding="utf-8"))
         splash_js = (ROOT / "splash.js").read_text(encoding="utf-8")
         self.assertNotIn('addEventListener("load", dismissSplash', splash_js)
@@ -56,6 +58,9 @@ class BotanicalUIContract(unittest.TestCase):
                          '>Espace privé de Jade</h1>', ">Jeton d'accès</label>",
                          'id="auth-token" type="password"', '>Entrer dans le salon</button>'):
             self.assertIn(fragment, auth)
+        self.assertIn('id="auth-feedback"', auth)
+        self.assertIn("novalidate", auth)
+        self.assertIn('"/api/auth"', (ROOT / "app.js").read_text(encoding="utf-8"))
         self.assertNotIn("<p>", auth)
         self.assertNotIn("<small>", auth)
         self.assertNotIn("Tailscale", auth)
