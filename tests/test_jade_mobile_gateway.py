@@ -415,9 +415,16 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
     async def test_safe_assets_served_and_r20_idle_is_virtual(self):
         status, page, headers = await self.request("GET", "/")
         self.assertEqual(status, 200)
-        self.assertIn(b'id="avatar-container"', page)
-        self.assertIn(b'/assets/room-motion.js', page)
-        self.assertIn(b'/assets/room-spring.webp', page)
+        self.assertIn(b'id="auth-form"', page)
+        self.assertNotIn(b'id="avatar-container"', page)
+        self.assertNotIn(b'/vendor/', page)
+        status, salon, _ = await self.request(
+            "GET", "/assets/salon.html", headers=self.headers("application/json"))
+        self.assertEqual(status, 200)
+        self.assertIn(b'id="avatar-container"', salon)
+        self.assertIn(b'/assets/room-spring.webp', salon)
+        loader = (WEB_ROOT / "login-guard.js").read_text(encoding="utf-8")
+        self.assertIn("/assets/room-motion.js", loader)
         status, image, response = await self.request("GET", "/assets/room-spring.webp")
         self.assertEqual(status, 200)
         self.assertEqual(image[:4], b"RIFF")
@@ -427,8 +434,8 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(b"script-src 'self' 'wasm-unsafe-eval'", headers)
         self.assertNotIn(b" 'unsafe-eval'", headers)
         patch_url = "/vendor/pixi-unsafe-eval.min.js"
-        self.assertLess(page.index(b"/vendor/pixi.min.js"), page.index(patch_url.encode()))
-        self.assertLess(page.index(patch_url.encode()), page.index(b"/assets/avatar.js"))
+        self.assertLess(loader.index("/vendor/pixi.min.js"), loader.index(patch_url))
+        self.assertLess(loader.index(patch_url), loader.index("/assets/avatar.js"))
         self.mobile.vendor_dir = Path(self.temp.name)
         (self.mobile.vendor_dir / "pixi-unsafe-eval.min.js").write_bytes(b"/* local patch */")
         status, patch, _ = await self.request("GET", patch_url)
@@ -485,7 +492,9 @@ class MobileAppAssetsTests(unittest.TestCase):
         self.assertNotIn("https://cdn", app)
         web = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
         self.assertIn("manifest.webmanifest", web)
-        self.assertIn("/vendor/live2dcubismcore.min.js", web)
+        self.assertNotIn("/vendor/live2dcubismcore.min.js", web)
+        self.assertIn("/vendor/live2dcubismcore.min.js",
+                      (WEB_ROOT / "login-guard.js").read_text(encoding="utf-8"))
 
     def test_js_syntax_when_node_is_installed(self):
         node = shutil.which("node")
