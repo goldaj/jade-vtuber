@@ -5,6 +5,13 @@
 - **Android :** retrait de la sélection de branche et de l'ancien endpoint de déploiement ; boutons de mise à jour/redémarrage et logs filtrables dans Profil.
 - **Contrôles :** tests unitaires hors ligne ajoutés, validation GitHub CI à observer et recette PC/Android non réalisée. Pas de merge vers develop ni main, ni d'installation effective sur le PC. Référence : [guide spécifique](reference/REMOTE-PYCHARM-CONTROL-20261123.md).
 
+## 2026-11-23 — Jade assise : cou illustré intégré directement dans l’AVIF
+
+- **Graphisme :** correction ciblée de `src/jade_runtime/mobile_web/jade-seated-body.avif` (670 × 940, transparence conservée) à partir du corps assis validé sur `develop`. Reconstruction du cou, des clavicules et de la jonction des épaules sans cheveux ni seconde silhouette ; suppression du fragment de peau détaché. La robe, les bras, les mains, les jambes, les chaussures et le pouf restent issus de l’illustration originale.
+- **Rendu :** suppression de la forme de cou PixiJS et du pseudo-élément CSS ajoutés provisoirement. Le corps AVIF et les cheveux arrière/avant restent ordonnés par le compositeur Live2D unique existant ; ni les paramètres de la tête ni les décors cuisine/chambre ne sont déplacés.
+- **Contrats :** `tests/test_jade_seated_mobile_contract.py` vérifie l’absence des faux calques et le maintien du rendu assis et du fallback. Vérification manuelle du conteneur AVIF, de l’alpha et des dimensions. L’alignement exact avec la tête en mouvement et le contour sur Redmi nécessitent encore une recette visuelle sur le téléphone.
+- **Portée :** uniquement `develop` après fusion de la PR de correction, aucun changement de `main`.
+
 # Journal technique unique — develop
 
 ## 2026-11-22 — Correctif popup de connexion masquée par le splash

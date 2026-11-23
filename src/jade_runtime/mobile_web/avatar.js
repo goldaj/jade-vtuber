@@ -143,7 +143,7 @@
     get canIsolateHead() { return Boolean(headIsolation); },
     get canComposeSeated() {
       return Boolean(model && pixi && headIsolation?.canLayerHair &&
-        window.PIXI?.Sprite?.from && window.PIXI?.Container && window.PIXI?.Graphics);
+        window.PIXI?.Sprite?.from && window.PIXI?.Container);
     },
     prepareSeatedComposition(image) {
       if (seatedComposition) return true;
@@ -151,7 +151,6 @@
       const PIXI = window.PIXI;
       let back = null;
       let seatedBody = null;
-      let neck = null;
       let previousRender = null;
       let previousDraw = null;
       try {
@@ -160,28 +159,6 @@
         seatedBody = PIXI.Sprite.from(image);
         if (!seatedBody.texture) return false;
         back = new PIXI.Container();
-        // The r20 BODY_SKIN part also contains standing-body artwork, so it
-        // cannot be switched back on just for the neck. Keep the seated body
-        // unchanged, and paint a small static neck in the SAME 941x1672 plane.
-        // This neck sits over the seated dress but UNDER the moving r20 face.
-        neck = new PIXI.Graphics();
-        neck.beginFill(0xfff1e9, 1);
-        neck.moveTo(447, 716);
-        neck.bezierCurveTo(453, 729, 452, 744, 448, 758);
-        neck.bezierCurveTo(444, 765, 454, 777, 465, 782);
-        neck.bezierCurveTo(480, 791, 489, 781, 497, 777);
-        neck.bezierCurveTo(505, 772, 511, 767, 507, 760);
-        neck.bezierCurveTo(500, 746, 497, 728, 501, 716);
-        neck.closePath();
-        neck.endFill();
-        // Faint contour shading, clipped by its smaller interior silhouette.
-        neck.beginFill(0xdcb2a3, .14);
-        neck.moveTo(492, 743);
-        neck.bezierCurveTo(498, 754, 506, 764, 507, 766);
-        neck.bezierCurveTo(499, 775, 488, 781, 481, 784);
-        neck.bezierCurveTo(497, 768, 497, 757, 492, 743);
-        neck.closePath();
-        neck.endFill();
         previousRender = model._render;
         previousDraw = model.internalModel.draw;
         const originalRender = previousRender.bind(model);
@@ -193,7 +170,6 @@
           if (seatedComposition) {
             seatedComposition.back.visible = false;
             seatedComposition.body.visible = false;
-            seatedComposition.neck.visible = false;
           }
         }
         let pass = null;
@@ -227,20 +203,16 @@
         };
         back.visible = false;
         seatedBody.visible = false;
-        neck.visible = false;
         pixi.stage.addChildAt(back, 0);
         pixi.stage.addChildAt(seatedBody, 1);
-        pixi.stage.addChildAt(neck, 2);
-        seatedComposition = {back, body: seatedBody, neck};
+        seatedComposition = {back, body: seatedBody};
         return true;
       } catch (error) {
         if (previousRender) model._render = previousRender;
         if (previousDraw) model.internalModel.draw = previousDraw;
         if (back?.parent) back.parent.removeChild(back);
         if (seatedBody?.parent) seatedBody.parent.removeChild(seatedBody);
-        if (neck?.parent) neck.parent.removeChild(neck);
         if (seatedBody) seatedBody.destroy();
-        if (neck) neck.destroy();
         console.warn("Seated Jade compositor:", error);
         return false;
       }
@@ -299,8 +271,6 @@
     if (seatedComposition) {
       seatedComposition.back.visible = seated && isSeatedLayered();
       seatedComposition.body.visible = seated && isSeatedLayered();
-      seatedComposition.neck.visible = seated && isSeatedLayered();
-      seatedComposition.neck.scale.set(width / 941, height / 1672);
     }
     if (seated) {
       // Align the seated sprite inside the exact same 941x1672 scene plane.
@@ -313,7 +283,7 @@
       }
       const headScale = 1.30;
       model.scale.set(Math.max(.05, scale * headScale));
-      // Face / hair share a stable scene-space anchor above the static neck.
+      // Face and hair use the same scene-space anchor as the AVIF seated body.
       model.position.set(width * .565, height * .61);
       return;
     }
