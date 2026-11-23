@@ -51,7 +51,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:55dvh;overflow:auto;b
         : "PyCharm Run indisponible. Lance la configuration Run sur ton PC.";
       $("logs").textContent = logs.text || "Pas encore de logs.";
       const allowed = state.pycharm_run && state.phase === "idle";
-      $("update").disabled = $("restart").disabled = !allowed;
+      $("restart").disabled = !allowed;
+      $("update").disabled = !allowed || state.branch !== "develop";
     } catch (error) {
       $("status").textContent = error.message;
       $("update").disabled = $("restart").disabled = true;
