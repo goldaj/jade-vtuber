@@ -143,7 +143,7 @@
     get canIsolateHead() { return Boolean(headIsolation); },
     get canComposeSeated() {
       return Boolean(model && pixi && headIsolation?.canLayerHair &&
-        window.PIXI?.Sprite?.from && window.PIXI?.Container);
+        window.PIXI?.Sprite?.from && window.PIXI?.Container && window.PIXI?.Graphics);
     },
     prepareSeatedComposition(image) {
       if (seatedComposition) return true;
@@ -151,6 +151,7 @@
       const PIXI = window.PIXI;
       let back = null;
       let seatedBody = null;
+      let neck = null;
       let previousRender = null;
       let previousDraw = null;
       try {
@@ -159,6 +160,19 @@
         seatedBody = PIXI.Sprite.from(image);
         if (!seatedBody.texture) return false;
         back = new PIXI.Container();
+        // The r20 BODY_SKIN part also contains standing-body artwork, so it
+        // cannot be switched back on just for the neck. Keep the seated body
+        // unchanged, and paint a small static neck in the SAME 941x1672 plane.
+        // This neck sits over the seated dress but UNDER the moving r20 face.
+        neck = new PIXI.Graphics();
+        neck.beginFill(0xfff1e9, 1);
+        neck.drawPolygon([447,720, 501,720, 499,744, 505,756, 510,766,
+                          492,780, 480,785, 461,780, 448,768, 451,755]);
+        neck.endFill();
+        neck.beginFill(0xdcb2a3, .18);
+        neck.drawPolygon([493,744, 499,744, 505,756, 510,766,
+                          492,780, 486,783, 500,765]);
+        neck.endFill();
         previousRender = model._render;
         previousDraw = model.internalModel.draw;
         const originalRender = previousRender.bind(model);
@@ -170,6 +184,7 @@
           if (seatedComposition) {
             seatedComposition.back.visible = false;
             seatedComposition.body.visible = false;
+            seatedComposition.neck.visible = false;
           }
         }
         let pass = null;
@@ -203,16 +218,20 @@
         };
         back.visible = false;
         seatedBody.visible = false;
+        neck.visible = false;
         pixi.stage.addChildAt(back, 0);
         pixi.stage.addChildAt(seatedBody, 1);
-        seatedComposition = {back, body: seatedBody};
+        pixi.stage.addChildAt(neck, 2);
+        seatedComposition = {back, body: seatedBody, neck};
         return true;
       } catch (error) {
         if (previousRender) model._render = previousRender;
         if (previousDraw) model.internalModel.draw = previousDraw;
         if (back?.parent) back.parent.removeChild(back);
         if (seatedBody?.parent) seatedBody.parent.removeChild(seatedBody);
+        if (neck?.parent) neck.parent.removeChild(neck);
         if (seatedBody) seatedBody.destroy();
+        if (neck) neck.destroy();
         console.warn("Seated Jade compositor:", error);
         return false;
       }
@@ -248,7 +267,7 @@
   function isSeated() {
     const room = document.querySelector?.(".room");
     return room?.dataset.room === "bedroom" &&
-      room?.dataset.seatedReady === "true" && Boolean(seatedComposition);
+      room?.dataset.seatedReady === "true";
   }
 
   function isSeatedLayered() {
@@ -271,14 +290,18 @@
     if (seatedComposition) {
       seatedComposition.back.visible = seated && isSeatedLayered();
       seatedComposition.body.visible = seated && isSeatedLayered();
+      seatedComposition.neck.visible = seated && isSeatedLayered();
+      seatedComposition.neck.scale.set(width / 941, height / 1672);
     }
     if (seated) {
       // Align the seated sprite inside the exact same 941x1672 scene plane.
       // These values come from the image crop, not device-specific pixels.
-      const sprite = seatedComposition.body;
-      sprite.position.set(width * .127524, height * .406699);
-      sprite.width = width * .712009;
-      sprite.height = height * .562201;
+      const sprite = seatedComposition?.body;
+      if (sprite) {
+        sprite.position.set(width * .127524, height * .406699);
+        sprite.width = width * .712009;
+        sprite.height = height * .562201;
+      }
       const headScale = 1.30;
       model.scale.set(Math.max(.05, scale * headScale));
       // Face / hair share a stable scene-space anchor above the static neck.
