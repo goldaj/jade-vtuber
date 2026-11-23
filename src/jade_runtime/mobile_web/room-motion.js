@@ -134,6 +134,7 @@
     scene.dataset.room = next;
     if (room) room.dataset.room = next;
     roomSelect.value = next;
+    room?.dispatchEvent?.(new Event("jade-room-changed"));
     sync();
     const url = new URL(window.location.href);
     if (next === "bedroom") url.searchParams.delete("room");

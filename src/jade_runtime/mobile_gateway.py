@@ -48,6 +48,7 @@ WEB_FILES = {
     "/assets/avatar.js": ("avatar.js", "text/javascript; charset=utf-8"),
     "/assets/room-motion.js": ("room-motion.js", "text/javascript; charset=utf-8"),
     "/assets/seated-scene.js": ("seated-scene.js", "text/javascript; charset=utf-8"),
+    "/assets/head-isolation.js": ("head-isolation.js", "text/javascript; charset=utf-8"),
     "/assets/room-bedroom-portrait.avif": ("room-bedroom-portrait.avif", "image/avif"),
     "/assets/jade-seated-body.avif": ("jade-seated-body.avif", "image/avif"),
     "/assets/room-spring.webp": ("room-spring.webp", "image/webp"),

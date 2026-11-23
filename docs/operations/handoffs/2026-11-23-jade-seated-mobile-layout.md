@@ -60,3 +60,22 @@ Ne jamais remplacer l'ancienne image de chambre avant validation visuelle.
 
 **Statut** : architecture intégrée, ressources graphiques et recette WebGL
 sur téléphone encore à terminer. L'alignement parfait n'est pas affirmé.
+
+## Correctif du 23 novembre : corps statique v2 et tête réellement isolée
+
+- Le vrai `jade-seated-body.avif` (670×940, avec alpha) est maintenant commité.
+  L'ancien calque comportait des mèches vertes à la base du cou :
+  le nouveau ne contient **aucun cheveu ni visage**. Le haut du corps est
+  recomposé à partir de l'illustration sans tête ; une petite zone de peau
+  au cou se trouve derrière la tête animée. La silhouette a été abaissée.
+- Le `clip-path` polygonal qui coupait visiblement le menton est supprimé.
+  `head-isolation.js` désactive, par les opacités des *parts* Cubism,
+  exclusivement les éléments BODY / ARMS / DRESS du modèle r20.
+  Les yeux, le visage, les oreilles, tous les cheveux et leurs mouvements
+  restent à l'origine dans le Live2D.
+- En changeant de chambre vers cuisine, les opacités originales sont
+  restaurées. Si l'API de séparation des parts n'existe pas ou si les IDs
+  sont incompatibles, le mode assis ne s'active pas (ancienne chambre).
+- Référentiel et camera responsive inchangés, pas de dimensions propres
+  à un téléphone. Le rendu exact en portrait, paysage et plein écran
+  nécessite encore la recette visuelle sur le vrai appareil.

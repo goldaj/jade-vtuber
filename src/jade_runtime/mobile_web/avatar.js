@@ -10,6 +10,7 @@
   const status = document.getElementById("avatar-state");
   const mood = document.getElementById("mood-line");
   let model = null;
+  let headIsolation = null;
   let pixi = null;
   let mouth = 0;
   let palette = null;
@@ -126,6 +127,7 @@
   }
 
   document.addEventListener("visibilitychange", syncRenderVisibility);
+  document.querySelector?.(".room")?.addEventListener?.("jade-room-changed", () => resize());
   if (typeof IntersectionObserver === "function") {
     visibilityObserver = new IntersectionObserver(([entry]) => {
       onScreen = Boolean(entry?.isIntersecting);
@@ -137,6 +139,7 @@
   const avatar = {
     resize: () => resize(),
     get ready() { return Boolean(model); },
+    get canIsolateHead() { return Boolean(headIsolation); },
     setMouth(value) {
       mouth = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
     },
@@ -175,7 +178,9 @@
     const scale = Math.min((width * .95) / naturalWidth, (height * 1.32) / naturalHeight);
     const shell = document.querySelector?.(".shell");
     const room = document.querySelector?.(".room");
-    const seated = room?.dataset.room === "bedroom" && room?.dataset.seatedReady === "true";
+    const seated = room?.dataset.room === "bedroom" &&
+      room?.dataset.seatedReady === "true" && Boolean(headIsolation);
+    headIsolation?.sync(seated);
     if (seated) {
       // Both layers share a single 941x1672 scene; never use phone-specific pixels.
       // The head pose is fixed in scene space and only face/hair motion remains.
@@ -235,6 +240,7 @@
         }
         cubism.getDrawableRenderOrders = () => core.getRenderOrders();
       }
+      headIsolation = window.JadeHeadIsolation?.forModel?.(cubism) ?? null;
       model.anchor.set(.5, .5);
       pixi.stage.addChild(model);
       resize();
@@ -246,6 +252,9 @@
         document.querySelector?.(".room")?.dispatchEvent?.(new Event("jade-avatar-ready"));
       pixi.ticker.add(() => {
         try {
+          const activeRoom = document.querySelector?.(".room");
+          headIsolation?.sync(activeRoom?.dataset.room === "bedroom" &&
+            activeRoom?.dataset.seatedReady === "true");
           const core = model?.internalModel?.coreModel;
           if (core && typeof core.setParameterValueById === "function") {
             core.setParameterValueById("ParamMouthOpenY", mouth);
@@ -270,6 +279,7 @@
       if (pixi) { try { pixi.destroy(true, {children: true}); } catch (_) {} }
       pixi = null;
       model = null;
+      headIsolation = null;
       status.textContent = "Impossible de charger le modèle r20 : vérifier Git LFS, WebGL et les composants Cubism.";
       fallback.classList.remove("hidden");
     }

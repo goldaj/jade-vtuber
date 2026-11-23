@@ -33,8 +33,7 @@
   function valid(roomImage, bodyImage) {
     const ratio = roomImage.naturalWidth / roomImage.naturalHeight;
     return Math.abs(ratio - 941 / 1672) < .004 &&
-      bodyImage.naturalWidth / bodyImage.naturalHeight > .709 &&
-      bodyImage.naturalWidth / bodyImage.naturalHeight < .717;
+      bodyImage.naturalWidth === 670 && bodyImage.naturalHeight === 940;
   }
 
   window.JadeSeatedScene = {
@@ -43,7 +42,7 @@
   };
 
   function activateWhenComplete() {
-    if (!preparedImages || !window.JadeAvatar?.ready || ready) return;
+    if (!preparedImages || !window.JadeAvatar?.ready || !window.JadeAvatar?.canIsolateHead || ready) return;
     const [roomImage, bodyImage] = preparedImages;
     backdrop.src = roomImage.src;
     body.src = bodyImage.src;

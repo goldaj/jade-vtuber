@@ -32,7 +32,7 @@ async function test(available) {
       getElementById(id){return id==="portrait-bedroom" ? backdrop :
         id==="portrait-seated-body" ? body : null;}
     },
-    window:{JadeAvatar:{ready:true,resize(){calls.push("resize");}}}
+    window:{JadeAvatar:{ready:true,canIsolateHead:true,resize(){calls.push("resize");}}}
   };
   vm.runInNewContext(source, context);
   await new Promise(resolve=>setImmediate(resolve));

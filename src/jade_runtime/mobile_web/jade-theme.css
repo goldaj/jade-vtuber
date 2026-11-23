@@ -314,13 +314,6 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
   left:12.7524%;top:40.6699%;width:71.2009%;height:56.2201%;
   object-fit:fill;z-index:2;
 }
-/* Keep face and independently swaying hair, but never the legacy standing
- * torso, arms, dress or legs. Center cutoff ends just beneath the chin.
- * The side lobes preserve moving hair tips without exposing shoulder geometry. */
-.room[data-room="bedroom"][data-seated-ready="true"] #avatar-container{
-  clip-path:polygon(
-    0 0,100% 0,100% 34%,85% 34%,81% 42%,78% 49%,72% 54%,
-    64% 51%,60% 43%,40% 43%,36% 51%,28% 54%,22% 49%,
-    19% 42%,15% 34%,0 34%
-  );
-}
+/* No hard CSS face polygon. The r20 standing body is hidden using real
+ * Cubism part opacities; moving side and rear hair stay fully intact. */
+.room[data-room="bedroom"][data-seated-ready="true"] #avatar-container{clip-path:none}

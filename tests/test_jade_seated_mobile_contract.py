@@ -19,7 +19,7 @@ class SeatedMobileContract(unittest.TestCase):
         self.assertIn('aspect-ratio:941 / 1672', css)
         self.assertIn('width:max(100cqw,56.28cqh)', css)
         self.assertIn('top:40.6699%;width:71.2009%;height:56.2201%', css)
-        self.assertIn('clip-path:polygon(', css)
+        self.assertIn('clip-path:none', css)
 
     def test_feature_only_activates_with_both_images(self):
         scene = (WEB / "seated-scene.js").read_text(encoding="utf-8")
@@ -27,6 +27,7 @@ class SeatedMobileContract(unittest.TestCase):
         room = (WEB / "room-motion.js").read_text(encoding="utf-8")
         self.assertIn('Promise.all([preload(ASSETS.room), preload(ASSETS.body)])', scene)
         self.assertIn('room.dataset.seatedReady = "true"', scene)
+        self.assertIn('window.JadeAvatar?.canIsolateHead', scene)
         self.assertIn('room.dataset.seatedReady = "false"', scene)
         self.assertIn('"/assets/seated-scene.js"', guard)
         self.assertIn('room?.dataset.seatedReady !== "true"', room)
