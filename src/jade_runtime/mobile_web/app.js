@@ -761,10 +761,11 @@
       const live = state.running ? "En cours" : "Arrêtée";
       const pycharm = state.pycharm_run ? "Run ouvert" : "PyCharm non connecté";
       deploymentState.textContent = "Jade : " + live + " · " + pycharm +
-        " · develop " + (state.sha ? String(state.sha).slice(0, 8) : "(version inconnue)") +
+        " · " + (state.branch || "branche inconnue") + " " +
+        (state.sha ? String(state.sha).slice(0, 8) : "(version inconnue)") +
         " · " + phase + (state.error ? " · Erreur : " + state.error : "");
-      deploymentRun.disabled = deploymentRestart.disabled = !state.pycharm_run ||
-        !["idle"].includes(phase);
+      deploymentRestart.disabled = !state.pycharm_run || phase !== "idle";
+      deploymentRun.disabled = deploymentRestart.disabled || state.branch !== "develop";
       deploymentRawLogs = typeof result.text === "string" ? result.text : "";
       renderDeploymentLogs();
     } catch (error) {
