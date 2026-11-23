@@ -196,7 +196,8 @@ class PycharmManager:
                          name="jade-pycharm-console-tee").start()
         with self.lock:
             self.state.update(error=None, pid=child.pid,
-                              sha=git(self.root, "rev-parse", "HEAD"))
+                              sha=git(self.root, "rev-parse", "HEAD"),
+                              branch=git(self.root, "branch", "--show-current"))
         print("[Jade Control] Moteur lancé dans cette session PyCharm Run.", flush=True)
 
     def _stop_child(self) -> None:
