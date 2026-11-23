@@ -1,3 +1,10 @@
+## 2026-11-23 — Contrôle distant de la session PyCharm Run (branche expérimentale)
+
+- **Implémenté sur feat/jade-pycharm-remote-control-20261123 seulement :** parent persistant dans Run, moteur unique enfant avec arrêt propre par signal privé, IPC loopback authentifié, contrôleur Windows invisible et indépendant de Jade, mise à jour fast-forward develop uniquement, logs Run dupliqués en fichier privé rotatif, page de secours /control via Tailscale Serve.
+- **Windows :** installateur créant une tâche à l'ouverture de session et un raccourci bureau sans fenêtre ; la route Tailscale /control est ajoutée sans remplacer la route / existante, sous réserve des permissions CLI Windows.
+- **Android :** retrait de la sélection de branche et de l'ancien endpoint de déploiement ; boutons de mise à jour/redémarrage et logs filtrables dans Profil.
+- **Contrôles :** tests unitaires hors ligne ajoutés, validation GitHub CI à observer et recette PC/Android non réalisée. Pas de merge vers develop ni main, ni d'installation effective sur le PC. Référence : [guide spécifique](reference/REMOTE-PYCHARM-CONTROL-20261123.md).
+
 # Journal technique unique — develop
 
 ## 2026-11-22 — Correctif popup de connexion masquée par le splash

@@ -45,10 +45,10 @@ class EnvironmentTests(unittest.TestCase):
              patch.object(runner, "check_other_runtime"), patch.object(runner, "load_environment"), \
              patch.object(runner.os, "chdir"), \
              patch.object(runner.subprocess, "run", return_value=SimpleNamespace(returncode=0)) as preflight, \
-             patch.object(runner.runpy, "run_path") as run:
+             patch("src.jade_runtime.remote_pycharm.PycharmManager") as manager:
             self.assertEqual(runner.main(), 0)
         self.assertIn("--preflight", preflight.call_args.args[0])
-        run.assert_not_called()
+        manager.assert_not_called()
 
     def test_previous_legacy_runtime_is_rejected_without_exposing_command_line(self):
         with patch.object(runner.subprocess, "run", return_value=SimpleNamespace(stdout="123\n")), \

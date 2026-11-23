@@ -136,11 +136,8 @@ class MobileGateway:
         self.request_timeout = 75
         from .billing import BillingCosts
         self.billing = BillingCosts(billing_admin_key)
-        self.deployment = None
-        if deploy_supervisor_token:
-            from .deployment_client import DeploymentClient
-            self.deployment = DeploymentClient(
-                deploy_supervisor_token, port=deploy_supervisor_port)
+        # Remote administration now lives outside Jade, at /control via Tailscale
+        # Serve, and stays available while this runtime is restarting.
 
     def deliver(self, reply) -> None:
         """Called on the shared Runtime's response callback, before local TTS."""
@@ -496,37 +493,6 @@ class MobileGateway:
                 return
             await self._json(writer, 200, {"status": "ok"})
             return
-        if route == "/api/deployment":
-            if headers.get("content-type", "").split(";")[0].strip() != "application/json":
-                await self._json(writer, 400, {"error": "expected JSON"})
-                return
-            try:
-                request = json.loads(body)
-            except (UnicodeDecodeError, ValueError):
-                await self._json(writer, 400, {"error": "invalid JSON"})
-                return
-            if (self.deployment is None or type(request) is not dict
-                    or request.get("operation") not in (
-                        "status", "branches", "deploy", "restart")):
-                await self._json(writer, 409, {"error": "supervisor_not_configured"})
-                return
-            operation = request["operation"]
-            if operation in ("status", "branches") and set(request) == {"operation"}:
-                params = {}
-            elif operation == "restart" and request == {
-                    "operation": "restart", "confirm": True}:
-                params = {"confirm": True}
-            elif (operation == "deploy" and set(request) ==
-                  {"operation", "branch", "confirm"} and request["confirm"] is True
-                  and isinstance(request["branch"], str)
-                  and 1 <= len(request["branch"]) <= 100):
-                params = {"branch": request["branch"], "confirm": True}
-            else:
-                await self._json(writer, 400, {"error": "invalid_deployment_request"})
-                return
-            code, result = await self.deployment.request(operation, **params)
-            await self._json(writer, code, result)
-            return
         if route == "/api/metrics":
             if (headers.get("content-type", "").split(";")[0].strip() != "application/json"
                     or body.strip() != b"{}"):
@@ -771,7 +737,7 @@ class MobileGateway:
                     return
                 await self._static(writer, route)
                 return
-            if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing", "/api/metrics", "/api/deployment",
+            if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing", "/api/metrics",
                               "/api/push", "/api/reminders", "/api/auth"):
                 await self._json(writer, 404, {"error": "unknown route"})
                 return

@@ -1,7 +1,7 @@
 """Launch the owner's local Discord/mobile test profile in PyCharm on Windows.
 
 Private configuration is read on this PC, never embedded in the IDE project.
-The Python runtime remains in the debugger process, so breakpoints work.
+The Run tab owns one child runtime; debugger breakpoints are not preserved.
 """
 from __future__ import annotations
 
@@ -13,7 +13,6 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 from pathlib import Path
-import runpy
 import subprocess
 import sys
 
@@ -31,8 +30,12 @@ def check_develop(root: Path) -> None:
                                 capture_output=True, text=True, timeout=10, check=True)
     except (OSError, subprocess.SubprocessError):
         raise LaunchError("Impossible de verifier la branche Git de Jade.") from None
-    if result.stdout.strip() != "develop":
-        raise LaunchError("Le test PyCharm de Jade exige la branche develop.")
+    branch = result.stdout.strip()
+    # Optional local-only recipe before merge; never enables mobile branch switching.
+    test_ref = os.environ.get("JADE_PYCHARM_TEST_BRANCH", "").strip()
+    if branch != "develop" and not (test_ref == branch
+                                     and branch == "feat/jade-pycharm-remote-control-20261123"):
+        raise LaunchError("Le test PyCharm de Jade exige develop (ou sa branche d'essai autorisée).")
 
 
 def load_environment(env: dict[str, str]) -> None:
@@ -163,17 +166,13 @@ def main() -> int:
                                    check=False)
         if preflight.returncode or args.preflight_only:
             return preflight.returncode
-        # Run in this interpreter, not in a subprocess invisible to PyCharm.
-        sys.argv = [str(ROOT / "main.py"), *MODES]
-        if str(ROOT) not in sys.path:
-            sys.path.insert(0, str(ROOT))
+        # The PyCharm Run tab stays alive while its single Jade child restarts.
+        # Direct Python debugger breakpoints are intentionally not supported.
+        from src.jade_runtime.remote_pycharm import PycharmManager
+        from src.utility.private_config import environ
+        token = str(environ("JADE_DEPLOY_SUPERVISOR_TOKEN", ""))
         log_dir = Path(os.environ.get("JADE_PYCHARM_PRIVATE_DIR", r"D:\Codex\private\jade-runtime")) / "logs"
-        with technical_log(log_dir):
-            try:
-                runpy.run_path(str(ROOT / "main.py"), run_name="__main__")
-            except Exception:
-                logging.getLogger("jade.pycharm").exception("Arret inattendu du programme Jade")
-                raise
+        PycharmManager(ROOT, token, log_dir=log_dir).run()
     return 0
 
 

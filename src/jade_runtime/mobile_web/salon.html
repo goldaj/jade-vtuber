@@ -165,17 +165,29 @@
         <button type="button" id="billing-refresh">Actualiser</button>
       </details>
       <details class="identity-panel" id="deployment-panel">
-        <summary>Administrer Jade sur le PC (branche et redémarrage)</summary>
-        <p>Fonction réservée au propriétaire. Nécessite le superviseur Windows indépendant et une connexion privée Tailscale. Aucune modification de la branche Git distante.</p>
-        <button type="button" id="deployment-load">Afficher les branches et la version active</button>
-        <p id="deployment-state" role="status">Superviseur non interrogé.</p>
-        <label for="deployment-branch">Branche distante à exécuter</label>
-        <select id="deployment-branch" disabled><option value="">Charger les branches…</option></select>
-        <div class="deployment-actions" role="group" aria-label="Actions de redémarrage">
-          <button type="button" id="deployment-run" disabled>Mettre à jour et redémarrer</button>
+        <summary>Administrer Jade sur le PC</summary>
+        <p>Contrôle privé du Run PyCharm sur <strong>develop</strong>. Le service Windows reste accessible pendant un redémarrage.</p>
+        <p id="deployment-state" role="status">État non interrogé.</p>
+        <div class="deployment-actions" role="group" aria-label="Administration à distance">
+          <button type="button" id="deployment-load">Actualiser l'état</button>
+          <button type="button" id="deployment-run">Mettre à jour et redémarrer</button>
           <button type="button" id="deployment-restart">Redémarrer sans mise à jour</button>
         </div>
-        <p>En cas de coupure de Jade pendant le redémarrage, reconnecte-toi puis recharge l'état du superviseur.</p>
+        <div class="deployment-log-heading">
+          <h3>Console PyCharm</h3>
+          <button type="button" id="deployment-logs-load">Actualiser les logs</button>
+        </div>
+        <div class="deployment-log-controls">
+          <label for="deployment-level">Afficher</label>
+          <select id="deployment-level">
+            <option value="all">Tous les événements</option>
+            <option value="warning">Avertissements et erreurs</option>
+            <option value="error">Erreurs uniquement</option>
+          </select>
+          <label><input id="deployment-autoscroll" type="checkbox" checked> Défilement auto</label>
+        </div>
+        <pre id="deployment-logs" class="deployment-logs" role="log" aria-live="off">Ouvre ce panneau pour charger les logs.</pre>
+        <p>Si Jade ne répond plus pendant un redémarrage, l'administration reste accessible via <a href="/control" target="_blank" rel="noopener noreferrer">la page de secours</a> (même Tailscale).</p>
       </details>
       <details class="identity-panel" id="identity-panel">
         <summary>Associer mon compte Discord ou Twitch</summary>

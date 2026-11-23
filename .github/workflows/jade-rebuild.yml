@@ -36,7 +36,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          $files = @('scripts/jade-launcher.ps1', 'scripts/jade-runner.ps1', 'scripts/install-jade-launcher.ps1')
+          $files = @('scripts/jade-launcher.ps1', 'scripts/jade-runner.ps1', 'scripts/install-jade-launcher.ps1', 'scripts/install-jade-control.ps1')
           foreach ($file in $files) {
             $tokens = $null
             $errors = $null
