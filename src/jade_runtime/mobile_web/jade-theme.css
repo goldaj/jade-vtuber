@@ -290,8 +290,19 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
  * Switching screens changes one shared camera, never the joint alignment.
  * Historical kitchen rendering and old bedroom fallback remain unchanged. */
 .avatar-frame{position:absolute;inset:0;z-index:2;pointer-events:none}
-.avatar-frame #avatar-container{z-index:3}
+.avatar-frame #avatar-container{z-index:4}
 .portrait-bedroom,.portrait-seated-body{display:none}
+/* Non-WebGL fallback: identical neck art in the shared 941x1672 scene plane.
+ * The live Pixi compositor paints the same shape between the seated sprite
+ * and animated face; only one copy is visible at any time. */
+.room[data-room="bedroom"][data-seated-ready="true"][data-seated-compositor="false"] .avatar-frame::before{
+  content:"";display:block;position:absolute;inset:0;z-index:3;
+  pointer-events:none;
+  background:linear-gradient(96deg,#efd9ce 0%,#fff1e9 22%,#fff2eb 68%,#e8c7b8 100%);
+  clip-path:polygon(47.50% 43.06%,53.24% 43.06%,53.03% 44.50%,
+                    53.67% 45.22%,54.20% 45.81%,52.28% 46.65%,
+                    51.01% 46.95%,49.00% 46.65%,47.61% 45.93%,47.93% 45.16%);
+}
 .room[data-room="bedroom"][data-seated-ready="true"]{
   container-type:size; /* cqw / cqh must refer to the room, not the viewport */
   background:#aa7b8f url("/assets/room-bedroom-portrait.avif") center / cover no-repeat;
