@@ -23,7 +23,7 @@
 
 ## Limites importantes
 
-- La branche expérimentale ne peut pas être essayée avec le profil Run normal qui exige develop tant que les développements ne sont pas intégrés. Pour la recette avant merge, prévoir un essai contrôlé hors profil de production et sans deuxième instance.
+- **Recette avant merge :** le profil Run exige develop par défaut. Pour tester cette branche isolée sans l'intégrer, sélectionner localement feat/jade-pycharm-remote-control-20261123 dans PyCharm, définir temporairement JADE_PYCHARM_TEST_BRANCH=feat/jade-pycharm-remote-control-20261123 dans l'environnement Run puis lancer normalement. Le bouton « Mettre à jour develop » reste désactivé sur cette branche, mais le redémarrage et les logs peuvent être éprouvés. Supprimer la variable après la recette et revenir sur develop. Ne jamais lancer deux instances simultanément.
 - Le contrôleur ne démarre pas Jade lui-même ; il exige la session Run PyCharm. Cliquer sur le raccourci ne crée aucune connexion IA/Discord.
 - Le filtre de secrets sur les logs est imparfait : l'accès doit rester privé et les journaux ne doivent jamais être publiés.
 - Une mise à jour qui change les dépendances Python, les assets ou le schéma de données peut exiger une intervention locale. La procédure ne promet pas de rollback automatique.
