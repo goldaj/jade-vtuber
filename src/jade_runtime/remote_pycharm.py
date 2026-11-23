@@ -266,12 +266,20 @@ class PycharmManager:
                 git(self.root, "lfs", "pull", timeout=180)
                 if changed_dependencies:
                     print("[Jade Control] Dépendances modifiées : synchronisation Poetry.", flush=True)
+                    if sys.prefix == sys.base_prefix:
+                        raise RuntimeError("pycharm_python_virtualenv_required")
+                    # Poetry must update the exact venv used by the PyCharm Run parent.
+                    poetry_env = dict(os.environ)
+                    poetry_env["VIRTUAL_ENV"] = sys.prefix
                     install = subprocess.run(
                         ["poetry", "sync", "--only", "main", "-E", "all", "--no-interaction"],
-                        cwd=str(self.root), stdin=subprocess.DEVNULL,
-                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                        cwd=str(self.root), env=poetry_env, stdin=subprocess.DEVNULL,
+                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                        text=True, encoding="utf-8", errors="replace",
                         timeout=600, check=False)
                     if install.returncode:
+                        print("[Jade Control] Poetry : " +
+                              redact((install.stdout or "")[-3000:]), flush=True)
                         raise RuntimeError("poetry_sync_failed")
             with self.lock:
                 self.state["phase"] = "starting"
