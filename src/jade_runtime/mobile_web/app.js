@@ -813,6 +813,7 @@
     if (!deploymentPaused) refreshDeployment();
   });
 
+  const billingPanel = $("billing-panel");
   const billingStatus = $("billing-status"), billingToday = $("billing-today"), billingMonth = $("billing-month");
   let billingPending = false;
   function formatCosts(costs) {
