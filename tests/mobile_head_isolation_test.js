@@ -16,6 +16,7 @@ const ids = [
 const partParents = [-1,0,1,0,0,0,5,5,5,5,5,5,5,5];
 const drawableParents = [2,3,4,5,6]; // rear, face, front hair, body, skin
 const opacity = new Float32Array([.7,.8,.9,1,.6]);
+const initial = Array.from(opacity);
 const calls = [];
 const partOpacity = ids.map(() => 1);
 const raw = {parts:{ids,count:ids.length,parentPartIndices:partParents},
@@ -37,13 +38,13 @@ assert.equal(calls.length,HIDE.length);
 assert.ok(calls.every(([i,v])=>HIDE.includes(ids[i]) && v===0));
 let captured;
 controller.drawPass("rear",()=>{captured=Array.from(opacity);});
-assert.deepEqual(captured,[.7,0,0,0,0]);
-assert.deepEqual(Array.from(opacity),[.7,.8,.9,1,.6]);
+assert.deepEqual(captured,[initial[0],0,0,0,0]);
+assert.deepEqual(Array.from(opacity),initial);
 controller.drawPass("front",()=>{captured=Array.from(opacity);});
-assert.deepEqual(captured,[0,.8,.9,0,0]);
-assert.deepEqual(Array.from(opacity),[.7,.8,.9,1,.6]);
+assert.deepEqual(captured,[0,initial[1],initial[2],0,0]);
+assert.deepEqual(Array.from(opacity),initial);
 assert.throws(()=>controller.drawPass("rear",()=>{throw Error("WebGL");}),/WebGL/);
-assert.deepEqual(Array.from(opacity),[.7,.8,.9,1,.6]);
+assert.deepEqual(Array.from(opacity),initial);
 controller.sync(false);
 assert.equal(calls.length,HIDE.length*2);
 assert.ok(calls.slice(-HIDE.length).every(([i,v])=>HIDE.includes(ids[i]) && v===1));
