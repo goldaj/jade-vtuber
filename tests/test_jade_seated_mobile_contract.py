@@ -50,23 +50,17 @@ class SeatedMobileContract(unittest.TestCase):
         # The seated posture must survive a missing Pixi depth compositor.
         self.assertIn('room?.dataset.seatedReady === "true";', avatar)
         self.assertIn("const sprite = seatedComposition?.body", avatar)
-        self.assertIn("neck = new PIXI.Graphics()", avatar)
-        self.assertIn("pixi.stage.addChildAt(neck, 2)", avatar)
-        self.assertIn("seatedComposition.neck.visible = seated && isSeatedLayered()", avatar)
-        self.assertIn("seatedComposition.neck.scale.set(width / 941, height / 1672)", avatar)
+        self.assertNotIn("new PIXI.Graphics()", avatar)
+        self.assertNotIn("seatedComposition.neck", avatar)
         self.assertNotIn("Redmi", avatar)
 
-    def test_neck_uses_static_body_plane_without_clipping_animated_head(self):
+    def test_corrected_avif_has_no_runtime_graphics_neck(self):
         avatar = (WEB / "avatar.js").read_text(encoding="utf-8")
         css = (WEB / "jade-theme.css").read_text(encoding="utf-8")
-        isolation = (WEB / "head-isolation.js").read_text(encoding="utf-8")
-        self.assertIn('neck.beginFill(0xfff1e9, 1)', avatar)
-        self.assertIn('clip-path:polygon(47.50% 43.06%', css)
-        self.assertIn('[data-seated-compositor="false"] .avatar-frame::before', css)
-        self.assertIn('[data-seated-compositor="true"] .portrait-seated-body{display:none}', css)
+        self.assertNotIn("neck = new PIXI.Graphics()", avatar)
+        self.assertNotIn("seatedComposition.neck", avatar)
+        self.assertNotIn('data-seated-compositor="false"] .avatar-frame::before', css)
         self.assertIn('clip-path:none', css)
-        self.assertIn('"PartJAD_BODY", "PartJAD_BODY_SKIN"', isolation)
-
 
     def test_new_media_paths_are_whitelisted(self):
         gateway = (ROOT / "src" / "jade_runtime" / "mobile_gateway.py").read_text(
