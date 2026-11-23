@@ -135,6 +135,7 @@
   }
 
   const avatar = {
+    resize: () => resize(),
     get ready() { return Boolean(model); },
     setMouth(value) {
       mouth = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
@@ -172,10 +173,10 @@
     const naturalWidth = Math.max(model.width / (model.scale.x || 1), 1);
     const naturalHeight = Math.max(model.height / (model.scale.y || 1), 1);
     const scale = Math.min((width * .95) / naturalWidth, (height * 1.32) / naturalHeight);
-    // Close framing places the unfinished lower edges of r20 below the scene.
-    model.scale.set(Math.max(.05, scale * 1.5));
-    // Offset the close-up to keep the bedside cup visible.
-    model.position.set(width * .58, height * .79);
+    // The 2D model zooms independently of the undistorted room in full screen.
+    const immersive = document.querySelector(".shell")?.classList.contains("is-room-only");
+    model.scale.set(Math.max(.05, scale * (immersive ? 1.9 : 1.5)));
+    model.position.set(width * (immersive ? .55 : .58), height * (immersive ? .82 : .79));
   }
 
   async function load() {

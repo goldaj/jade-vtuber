@@ -1,9 +1,8 @@
   <main class="shell" data-view="home">
     <header class="topbar">
-      <div class="mark"><img class="mark-icon" src="/icon.svg" width="40" height="40" alt="Icône de Jade"><span><b>Jade</b><small>Je suis là, avec toi</small></span></div>
+      <div class="mark"><img class="mark-icon" src="/icon.svg" width="40" height="40" alt="Icône de Jade"><span><b>Jade</b></span></div>
       <div class="top-actions">
-        <span id="connection-status" class="connection" role="status">Hors connexion</span>
-        <button type="button" class="notification-button" id="header-notifications" aria-label="Ouvrir les rappels et notifications" title="Rappels et notifications"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="notification-dot" aria-hidden="true"></span></button>
+        <span id="connection-status" class="connection visually-hidden" role="status" aria-live="polite">Hors connexion</span>
         <button type="button" class="icon-button" id="fullscreen" aria-label="Plein écran" title="Plein écran">⛶</button>
       </div>
     </header>
@@ -108,18 +107,25 @@
         </div>
       </div>
       <div class="room-bottom">
-        <div class="character-label"><span class="tiny-star">✧</span> Jade <span class="label-small">· à tes côtés</span></div>
-        <div class="mood-line" id="mood-line" aria-live="off">Je suis là.</div>
+        <button type="button" id="mic" class="mic" aria-label="Démarrer l'enregistrement vocal" aria-pressed="false" title="Parler à Jade">🎙</button>
+        <span id="mood-line" hidden aria-hidden="true"></span>
       </div>
     </section>
 
     <section class="conversation" aria-label="Discussion">
       <section class="profile-intro" id="profile-intro" aria-label="Mon espace privé">
         <h2>Mon espace privé</h2>
-        <p>Paramètres, compte lié et informations techniques de Jade.</p>
+        <p>Paramètres, compte lié et informations techniques.</p>
       </section>
+        <fieldset class="notification-choice">
+          <legend>Recevoir les rappels sur ce téléphone</legend>
+          <div class="notification-options" role="group" aria-label="Notifications de rappels">
+            <label><input type="radio" id="notifications-on" name="reminder-notifications" value="on" disabled> Activer</label>
+            <label><input type="radio" id="notifications-off" name="reminder-notifications" value="off" disabled> Désactiver</label>
+          </div>
+          <p id="notification-status" role="status">État des notifications non vérifié.</p>
+        </fieldset>
       <div class="chat-heading">
-        <span><span class="chat-pulse"></span> Conversation avec Jade</span>
         <div class="chat-tools">
           <button type="button" class="text-button" id="sound-toggle" aria-pressed="true">Voix activée</button>
           <button type="button" class="text-button" id="new-chat">Nouveau fil</button>
@@ -127,7 +133,7 @@
       </div>
       <section class="identity-panel reminders-panel" id="reminders-panel" aria-labelledby="reminders-heading">
         <div class="reminders-heading">
-          <div><h2 id="reminders-heading">Mes rappels</h2><p>Jade gère les rappels depuis ton PC.</p></div>
+          <div><h2 id="reminders-heading">Mes rappels</h2></div>
           <button type="button" id="refresh-reminders" aria-label="Actualiser la liste des rappels">Actualiser</button>
         </div>
         <p id="reminder-status" role="status">Connecte-toi pour consulter tes rappels.</p>
@@ -142,15 +148,7 @@
             <button type="submit">Programmer ce rappel</button>
           </form>
         </details>
-        <fieldset class="notification-choice">
-          <legend>Recevoir les rappels sur ce téléphone</legend>
-          <div class="notification-options" role="group" aria-label="Notifications de rappels">
-            <label><input type="radio" id="notifications-on" name="reminder-notifications" value="on" disabled> Activer</label>
-            <label><input type="radio" id="notifications-off" name="reminder-notifications" value="off" disabled> Désactiver</label>
-          </div>
-          <p>Ce réglage concerne les notifications Android, pas les rappels enregistrés sur le PC.</p>
-          <p id="notification-status" role="status">État des notifications non vérifié.</p>
-        </fieldset>
+
       </section>
       <details class="billing-panel" id="billing-panel">
         <summary>Suivi OpenAI</summary>
@@ -205,10 +203,8 @@
         <p>Depuis Discord ou Twitch, <code>!jade-memoire delier</code> sépare les comptes sans effacer leurs souvenirs ; <code>!jade-memoire oublier</code> efface les données du compte concerné.</p>
       </details>
       <div class="messages" id="messages" role="log" aria-live="polite" aria-label="Historique de la discussion">
-        <div class="welcome">Bienvenue chez nous. Parle-moi ou écris-moi, comme tu préfères.</div>
       </div>
       <form id="composer" class="composer">
-        <button type="button" id="mic" class="mic" aria-label="Démarrer l'enregistrement vocal" aria-pressed="false" title="Parler à Jade">🎙</button>
         <label class="visually-hidden" for="message">Ton message</label>
         <textarea id="message" rows="1" maxlength="1200" placeholder="Écris à Jade…" autocomplete="off"></textarea>
         <button type="submit" id="send" class="send" aria-label="Envoyer le message">➤</button>

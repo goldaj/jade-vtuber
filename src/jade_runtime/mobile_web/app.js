@@ -36,20 +36,20 @@
   function showView(view) {
     if (!["home", "chat", "reminders", "profile"].includes(view)) return;
     shell.dataset.view = view;
+    // One microphone control, reparented between Accueil and Chat.
+    if (view === "home") document.querySelector(".room-bottom").appendChild(mic);
+    else if (mic.parentElement !== form) form.insertBefore(mic, input);
     navItems.forEach(button => {
       const active = button.dataset.viewTarget === view;
       button.classList.toggle("is-active", active);
       if (active) button.setAttribute("aria-current", "page");
       else button.removeAttribute("aria-current");
     });
-    if (view === "reminders" && token) {
-      loadReminders();
-      refreshNotificationChoice();
-    }
+    if (view === "reminders" && token) loadReminders();
+    if (view === "profile" && token) refreshNotificationChoice();
   }
   navItems.forEach(button => button.addEventListener("click", () =>
     showView(button.dataset.viewTarget)));
-  $("header-notifications").addEventListener("click", () => showView("reminders"));
 
   function newThread() {
     // The opaque session is not identity/authentication. Only the Tailscale
@@ -931,7 +931,7 @@
       const result = await reminderRequest("list");
       if (version !== remindersLoadVersion) return;
       renderReminders(result.items || []);
-      remindersStatus.textContent = "Les rappels envoyés restent visibles jusqu'à ton OK.";
+      remindersStatus.textContent = "";
     } catch (error) {
       if (version === remindersLoadVersion)
         remindersStatus.textContent = "Rappels indisponibles : " + error.message;
@@ -1133,21 +1133,25 @@
     stopPlayback();
     avatar().resetIntent();
     log.replaceChildren();
-    const intro = document.createElement("div");
-    intro.className = "welcome";
-    intro.textContent = "Un nouveau fil commence. Jade est prête.";
-    log.appendChild(intro);
     setStatus("Nouveau fil.");
   });
   const fullscreenButton = $("fullscreen");
+  const roomPlane = document.querySelector(".room-plane");
   let nativeRoomFullscreen = false;
   function setRoomFullscreen(active) {
+    // Freeze the 4:3 background width before its enclosing viewport expands.
+    if (active && roomPlane) {
+      const width = roomPlane.getBoundingClientRect().width;
+      if (width > 0) shell.style.setProperty("--room-immersive-width", width + "px");
+    }
     shell.classList.toggle("is-room-only", active);
+    if (!active) shell.style.removeProperty("--room-immersive-width");
     fullscreenButton.textContent = active ? "⤢" : "⛶";
     const description = active ? "Quitter le plein écran" : "Afficher uniquement Jade en plein écran";
     fullscreenButton.setAttribute("aria-label", description);
     fullscreenButton.setAttribute("title", description);
     fullscreenButton.setAttribute("aria-pressed", String(active));
+    window.JadeAvatar?.resize?.();
   }
   fullscreenButton.addEventListener("click", async () => {
     if (shell.classList.contains("is-room-only")) {
@@ -1182,12 +1186,12 @@
       connection.textContent = "Connectée à Jade";
       connection.classList.add("online");
       setStatus("Connexion vérifiée. Tu peux parler ou écrire à Jade.");
-      input.focus();
+      // Do not display the Android keyboard on the room-first landing page.
       openReminderFromHash();
       if (shell.dataset.view === "reminders") {
         loadReminders();
-        refreshNotificationChoice();
       }
+      if (shell.dataset.view === "profile") refreshNotificationChoice();
     }
   };
 })();
