@@ -105,6 +105,19 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         return {"Authorization": "Bearer " + "x" * 40,
                 "Content-Type": content_type}
 
+    async def test_salon_document_requires_token_but_login_does_not(self):
+        status, body, _ = await self.request("GET", "/")
+        self.assertEqual(status, 200)
+        self.assertIn(b'id="auth-form"', body)
+        self.assertNotIn(b'id="avatar-container"', body)
+        status, _, _ = await self.request("GET", "/assets/salon.html")
+        self.assertEqual(status, 401)
+        status, body, _ = await self.request(
+            "GET", "/assets/salon.html",
+            headers={"Authorization": "Bearer " + "x" * 40})
+        self.assertEqual(status, 200)
+        self.assertIn(b'id="avatar-container"', body)
+
     async def test_login_handshake_auth_and_origin(self):
         status, _, _ = await self.request(
             "POST", "/api/auth", body=b"{}",

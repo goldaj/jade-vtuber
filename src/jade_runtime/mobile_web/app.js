@@ -79,7 +79,7 @@
     connection.classList.remove("online");
     connection.textContent = "Hors connexion";
     setStatus("Accès expiré : ressaisis ton jeton.");
-    authInput.focus();
+    window.JadeLogin?.show();
   }
 
   function addBubble(text, kind, when = new Date()) {
@@ -1090,55 +1090,6 @@
   }
   openReminderFromHash();
 
-  authForm.addEventListener("submit", async event => {
-    event.preventDefault();
-    if (authPending) return;
-    const value = authInput.value;
-    if (value.length < 32 || value.length > 256) {
-      authFeedback.textContent = "Le jeton doit contenir entre 32 et 256 caractères.";
-      authInput.focus();
-      return;
-    }
-    authPending = true;
-    authSubmit.disabled = true;
-    authFeedback.textContent = "Vérification du jeton auprès de Jade…";
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 8000);
-    try {
-      const response = await fetch("/api/auth", {
-        method:"POST", mode:"same-origin", credentials:"omit", cache:"no-store",
-        headers:{"Authorization":"Bearer " + value, "Content-Type":"application/json"},
-        body:"{}", signal:controller.signal
-      });
-      if (response.status === 401) throw new Error("Jeton refusé. Vérifie celui configuré sur le PC.");
-      if (response.status === 403) throw new Error("Accès privé refusé. Vérifie Tailscale et le compte autorisé.");
-      if (!response.ok) throw new Error("Connexion refusée par Jade (HTTP " + response.status + ").");
-      if ((await response.json()).status !== "ok") throw new Error("Réponse de connexion inattendue.");
-      token = value;
-      authInput.value = "";
-      authFeedback.textContent = "";
-      modal.classList.add("hidden");
-      connection.textContent = "Connectée à Jade";
-      connection.classList.add("online");
-      setStatus("Connexion vérifiée. Tu peux parler ou écrire à Jade.");
-      input.focus();
-      openReminderFromHash();
-      if (shell.dataset.view === "reminders") {
-        loadReminders();
-        refreshNotificationChoice();
-      }
-    } catch (error) {
-      authFeedback.textContent = error.name === "AbortError"
-        ? "Délai dépassé. Vérifie Jade sur le PC et Tailscale."
-        : error instanceof TypeError
-          ? "Serveur Jade inaccessible. Vérifie la connexion et Tailscale."
-          : (error.message || "Connexion impossible.");
-    } finally {
-      window.clearTimeout(timeout);
-      authPending = false;
-      authSubmit.disabled = false;
-    }
-  });
   form.addEventListener("submit", submitText);
   input.addEventListener("keydown", event => {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -1221,8 +1172,22 @@
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   }
-  // Only mark the salon ready after all essential handlers are bound.
-  // A submit tapped during slow loading is replayed exactly once.
-  window.JadeAuthReady = true;
-  window.JadeAuthResume?.();
+  // Chat is initialized independently of the optional Live2D renderer.
+  window.JadeMobileApp = {
+    login(value) {
+      token = value;
+      authInput.value = "";
+      authFeedback.textContent = "";
+      modal.classList.add("hidden");
+      connection.textContent = "Connectée à Jade";
+      connection.classList.add("online");
+      setStatus("Connexion vérifiée. Tu peux parler ou écrire à Jade.");
+      input.focus();
+      openReminderFromHash();
+      if (shell.dataset.view === "reminders") {
+        loadReminders();
+        refreshNotificationChoice();
+      }
+    }
+  };
 })();

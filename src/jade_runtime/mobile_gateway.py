@@ -38,6 +38,8 @@ VENDOR_NAMES = frozenset((
 ))
 WEB_FILES = {
     "/": ("index.html", "text/html; charset=utf-8"),
+    "/assets/salon.html": ("salon.html", "text/html; charset=utf-8"),
+    "/assets/login.css": ("login.css", "text/css; charset=utf-8"),
     "/assets/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/assets/jade-theme.css": ("jade-theme.css", "text/css; charset=utf-8"),
     "/assets/splash.js": ("splash.js", "text/javascript; charset=utf-8"),
@@ -740,6 +742,12 @@ class MobileGateway:
                 await self._json(writer, 403, {"error": "private owner required"})
                 return
             if method == "GET":
+                if route == "/assets/salon.html":
+                    # Only deliver the salon document after token validation.
+                    if not hmac.compare_digest(
+                            headers.get("authorization", ""), "Bearer " + self.token):
+                        await self._json(writer, 401, {"error": "authentication required"})
+                        return
                 if route.startswith("/api/documents/"):
                     if (not self._origin_allowed(headers) or not headers.get("host")):
                         await self._json(writer, 403, {"error": "invalid origin"})

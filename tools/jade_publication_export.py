@@ -26,6 +26,8 @@ PUBLIC_PREFIXES = ("src/", "tests/", "config/profiles/")
 # Never include SDK vendor binaries, LFS model art or private configuration.
 MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/index.html",
+    "src/jade_runtime/mobile_web/salon.html",
+    "src/jade_runtime/mobile_web/login.css",
     "src/jade_runtime/mobile_web/styles.css",
     "src/jade_runtime/mobile_web/jade-theme.css",
     "src/jade_runtime/mobile_web/splash.js",

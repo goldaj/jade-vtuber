@@ -81,8 +81,7 @@ global.fetch = async (_path, options) => {
 vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mobile_web/app.js"), "utf8"));
 
 (async () => {
-  element("auth-token").value = "x".repeat(40);
-  await element("auth-form").handlers.submit({preventDefault(){}});
+  window.JadeMobileApp.login("x".repeat(40));
   element("message").value = "Bonjour";
   await element("composer").handlers.submit({preventDefault(){}});
   assert.equal(played.length, 1);

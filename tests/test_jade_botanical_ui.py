@@ -11,21 +11,28 @@ ROOT = Path(__file__).resolve().parents[1] / "src/jade_runtime/mobile_web"
 
 class BotanicalUIContract(unittest.TestCase):
     def test_navigation_and_immersive_room_keep_the_live_room(self):
-        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        login = (ROOT / "index.html").read_text(encoding="utf-8")
+        html = (ROOT / "salon.html").read_text(encoding="utf-8")
         for fragment in ('id="avatar-container"', 'class="room"', 'room-spring.webp',
                          'id="reminders-panel"', 'id="reminders-list"',
-                         'id="messages"', 'id="composer"', 'id="mic"',
-                         'id="auth-modal"', 'id="auth-token"'):
+                         'id="messages"', 'id="composer"', 'id="mic"'):
             self.assertIn(fragment, html)
         for view in ("home", "reminders", "chat", "profile"):
             self.assertIn('data-view-target="' + view + '"', html)
         self.assertIn("/assets/jade-theme.css", WEB_FILES)
         self.assertIn("/assets/splash-jade.png", WEB_FILES)
         self.assertIn("/assets/splash.js", WEB_FILES)
-        self.assertIn('id="jade-launch-splash"', html)
-        self.assertIn('src="/assets/splash-jade.png"', html)
-        self.assertIn('src="/assets/splash.js"', html)
-        self.assertIn('src="/assets/login-guard.js"', html)
+        self.assertIn('id="jade-launch-splash"', login)
+        self.assertIn('src="/assets/splash-jade.png"', login)
+        self.assertIn('src="/assets/splash.js"', login)
+        self.assertIn('src="/assets/login-guard.js"', login)
+        self.assertNotIn('src="/assets/app.js"', login)
+        self.assertNotIn('src="/vendor/', login)
+        self.assertNotIn('href="/assets/styles.css"', login)
+        self.assertNotIn('class="room"', login)
+        self.assertIn('href="/assets/login.css"', login)
+        self.assertIn("/assets/salon.html", WEB_FILES)
+        self.assertIn("/assets/login.css", WEB_FILES)
         self.assertIn("/assets/login-guard.js", WEB_FILES)
         self.assertIn("object-fit:cover", (ROOT / "jade-theme.css").read_text(encoding="utf-8"))
         splash_js = (ROOT / "splash.js").read_text(encoding="utf-8")
@@ -60,12 +67,12 @@ class BotanicalUIContract(unittest.TestCase):
             self.assertIn(fragment, auth)
         self.assertIn('id="auth-feedback"', auth)
         self.assertIn("novalidate", auth)
-        self.assertIn('"/api/auth"', (ROOT / "app.js").read_text(encoding="utf-8"))
+        self.assertIn('"/api/auth"', (ROOT / "login-guard.js").read_text(encoding="utf-8"))
         self.assertNotIn("<p>", auth)
         self.assertNotIn("<small>", auth)
         self.assertNotIn("Tailscale", auth)
         self.assertNotIn("placeholder=", auth)
-        css = (ROOT / "jade-theme.css").read_text(encoding="utf-8")
+        css = (ROOT / "login.css").read_text(encoding="utf-8")
         auth_layer = css.split(".auth-layer{", 1)[1].split("}", 1)[0]
         self.assertIn('url("/assets/splash-jade.png")', auth_layer)
         # The initial splash used to mask the modal until window.load fired.
