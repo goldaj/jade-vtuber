@@ -7,6 +7,7 @@ const root = "src/jade_runtime/mobile_web/";
 const html = fs.readFileSync(root + "index.html", "utf8");
 const ids = [...html.matchAll(new RegExp('id="([^"]+)"', "g"))].map(m => m[1]);
 const registry = new Map();
+const pendingReplays = [];
 function node(id) {
   if (registry.has(id)) return registry.get(id);
   const handlers = {};
@@ -17,6 +18,7 @@ function node(id) {
     classList:{add:x=>classes.add(x),remove:x=>classes.delete(x),
       contains:x=>classes.has(x),toggle:(x,on)=>on?classes.add(x):classes.delete(x)},
     addEventListener:(event,cb)=>{(handlers[event]??=[]).push(cb)},
+    requestSubmit(){pendingReplays.push(Promise.all((handlers.submit||[]).map(cb=>cb({preventDefault(){}}))))},
     setAttribute(){},removeAttribute(){},focus(){},replaceChildren(){},appendChild(){},
     querySelector:()=>node("submit-button"),
     handlers,classes
@@ -51,10 +53,18 @@ async function submit(value) {
   assert.equal(event.prevented,true);
 }
 (async()=>{
+  // A slow/missing Live2D SDK must not delay the essential app script.
+  assert(html.indexOf('src="/assets/app.js"') < html.indexOf('src="/vendor/pixi.min.js"'));
   await submit("x".repeat(40));
-  assert.match(node("auth-feedback").textContent,/n'a pas pu démarrer/);
+  assert.match(node("auth-feedback").textContent,/Chargement du salon/);
+  assert.equal(node("auth-modal").classes.has("hidden"),false);
+  // The lightweight app loads later, without any model/SDK present.
   vm.runInNewContext(fs.readFileSync(root+"app.js","utf8"),context);
   assert.equal(window.JadeAuthReady,true);
+  await Promise.all(pendingReplays);
+  assert.equal(pendingReplays.length,1);
+  assert.equal(node("auth-modal").classes.has("hidden"),true);
+  assert.equal(node("connection-status").textContent,"Connectée à Jade");
   await submit("short");
   assert.match(node("auth-feedback").textContent,/32 et 256/);
   response={status:401,ok:false,json:async()=>({error:"auth"})};
@@ -66,5 +76,5 @@ async function submit(value) {
   assert.equal(node("auth-modal").classes.has("hidden"),true);
   assert.equal(node("auth-token").value,"");
   assert.equal(node("connection-status").textContent,"Connectée à Jade");
-  console.log("Mobile login OK: script missing, invalid length, refused, accepted");
+  console.log("Mobile login OK: slow load queued once, invalid length, refused, accepted, no SDK");
 })().catch(e=>{console.error(e);process.exitCode=1});

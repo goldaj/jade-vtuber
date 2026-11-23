@@ -1139,7 +1139,6 @@
       authSubmit.disabled = false;
     }
   });
-  window.JadeAuthReady = true;
   form.addEventListener("submit", submitText);
   input.addEventListener("keydown", event => {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -1222,4 +1221,8 @@
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   }
+  // Only mark the salon ready after all essential handlers are bound.
+  // A submit tapped during slow loading is replayed exactly once.
+  window.JadeAuthReady = true;
+  window.JadeAuthResume?.();
 })();
