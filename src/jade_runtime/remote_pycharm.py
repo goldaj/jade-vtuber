@@ -185,7 +185,8 @@ class PycharmManager:
             [sys.executable, "-u", str(self.root / "main.py"), *FLAGS],
             cwd=str(self.root), env=env, stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, encoding="utf-8", errors="replace", bufsize=1)
+            text=True, encoding="utf-8", errors="replace", bufsize=1,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
         try:
             self.job.assign(child)
         except Exception:
