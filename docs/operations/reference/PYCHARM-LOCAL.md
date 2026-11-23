@@ -12,3 +12,10 @@ Le lanceur [jade_pycharm_runner.py](../../../tools/jade_pycharm_runner.py) retro
 Les configurations partagées ont été préparées pour le format Python de PyCharm ; leur reconnaissance par la version installée doit encore être vérifiée dans l'interface. Le mutex et le contrôle des anciens processus protègent les méthodes de lancement connues, sans garantir la détection d'un programme tiers lancé avec des arguments différents.
 
 Le journal technique est limité à trois fichiers d'environ 5 Mo et exclut les événements du logger de conversation ; les exceptions peuvent néanmoins contenir des informations sensibles. Il n'intercepte pas les sorties natives qui n'utilisent pas le module Python `logging` ; elles restent visibles dans la console Run/Debug. Si l'onglet dédié n'apparaît pas sur PyCharm 2022.3, l'ajouter dans les options de logs de la configuration en indiquant le chemin ci-dessus.
+
+
+## Changement expérimental du 23 novembre 2026 (hors develop)
+
+Sur la branche feat/jade-pycharm-remote-control-20261123, le profil PyCharm « Jade - Discord mobile (test) » ouvre une session Run **persistante** propriétaire du moteur. Le moteur est exécuté comme enfant de cette session et peut être relancé par le contrôleur Windows depuis Android, mais le débogage Python direct de cet enfant n'est plus disponible. Le profil préflight reste indépendant.
+
+Le contrôleur est lancé par une tâche utilisateur au logon Windows via pythonw.exe, sans console, avec raccourci manuel. Son port privé 8771 et la route Tailscale /control restent accessibles même si Jade est en cours de redémarrage. L'ancien superviseur de clone distinct n'est plus utilisé depuis l'application. [Procédure complète](REMOTE-PYCHARM-CONTROL-20261123.md). **Tests PC à réaliser avant merge.**
