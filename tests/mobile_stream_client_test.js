@@ -47,9 +47,15 @@ class AudioContext {
 }
 const avatar = {setMouth(){}, setIntent(){}, setSpeaking(){}, resetIntent(){}};
 global.window = {crypto:global.crypto, AudioContext, JadeAvatar:avatar,
-  location:{hash:""}, addEventListener(){}};
+  location:{hash:""}, addEventListener(){}, setTimeout, clearTimeout};
 let fetchCount = 0, lastSignal;
 global.fetch = async (_path, options) => {
+  // The login handshake is independent of paid chat and streaming turns.
+  if (_path === "/api/auth") {
+    assert.equal(options.method, "POST");
+    assert.equal(options.headers.Authorization, "Bearer " + "x".repeat(40));
+    return {status:200, ok:true, json:async () => ({status:"ok"})};
+  }
   lastSignal = options.signal;
   fetchCount++;
   if (fetchCount === 3) {
@@ -76,7 +82,7 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
 
 (async () => {
   element("auth-token").value = "x".repeat(40);
-  element("auth-form").handlers.submit({preventDefault(){}});
+  await element("auth-form").handlers.submit({preventDefault(){}});
   element("message").value = "Bonjour";
   await element("composer").handlers.submit({preventDefault(){}});
   assert.equal(played.length, 1);
