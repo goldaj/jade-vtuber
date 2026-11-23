@@ -31,6 +31,8 @@ Au relevé du 18 novembre, aucune issue/PR de développement ouverte ; un lot de
 | **DEV-034** | P2 | A | **À qualifier** | **PER-02 transférée du catalogue le 22/11/2026.** Dépend de la réception d'images et d'un fournisseur de vision réellement compatible, non choisi à ce stade. | **Permettre à Jade de comprendre les contenus d'images (PER-02)** | Comprendre et décrire photos, illustrations, captures, interfaces, schémas et texte présent à l'image ; distinguer éléments visibles, illisibles et incertains. Définir périmètre d'usage, fournisseur et coût autorisé, données transmises, formats, isolation de session, gestion des erreurs et recette avec images représentatives. Pas d'appel IA de vision lancé ni d'engagement sur une précision non prouvée. **Respecter les exigences de PER-04. Aucun développement engagé.** | DEV-033 |
 | **DEV-035** | P2 | A | **À qualifier** | **PER-03 transférée du catalogue le 22/11/2026.** Première capacité conversationnelle à cadrer après réception/compréhension visuelle. | **Permettre à Jade de réagir à une image dans la conversation (PER-03)** | Jade relie l'image montrée au message et à l'historique autorisé, répond aux questions ou commente en texte ou voix **uniquement sur le canal d'origine autorisé**. Distinguer plusieurs images et leur ordre ; éviter les réactions spontanées répétées ; prévoir activation/désactivation des commentaires volontaires/spontanés. Recette sur le lien image-question, les incertitudes et la non-divulgation intercanaux. **Respecter les exigences de PER-04. Aucun développement engagé.** | DEV-033, DEV-034 |
 | **DEV-036** | P2 | Transverse | **En cours** | **NEW-16 transférée et qualifiée le 22/11/2026.** Code de rappels, service worker et interfaces ajoutés sur develop ; recette Android réelle non validée. | **Rappels persistants, Discord et notifications push Android** | Spécification et critères détaillés dans la section DEV-036 ci-dessous. Trois étapes indissociables ; pas de fonctionnement conversationnel continu du téléphone en arrière-plan. | REC-014, REC-022 |
+| **DEV-037** | P2 | A | **À qualifier** | **NEW-29 transférée le 23/11/2026.** Les sous-titres locaux/OBS existants ne couvrent pas les sous-titres synchronisés dans la PWA. Aucun développement commencé. | **Sous-titres synchronisés des paroles de Jade dans l'application mobile (NEW-29)** | Afficher les sous-titres pendant que Jade parle sur Android, calés sur les segments audio effectivement lus ; arrêt/interruption/reconnexion, affichage contrôlable, lisibilité et isolation de session. Détails dans DEV-037 ci-dessous. | REC-015, REC-029 |
+| **DEV-038** | P1 | Transverse | **À qualifier** | **NEW-38 transférée le 23/11/2026 et élevée de P2 à P1.** Aucun développement commencé. | **Conscience des capacités et initiative autonome de Jade (NEW-38)** | Jade connaît les fonctions réellement disponibles, peut les déclencher volontairement et constate les résultats de ses propres actions comme ceux des automatismes. Étendre progressivement à presque toutes les fonctions exposées ; détail ci-dessous. | REC-031, REC-036 ; articulation NEW-21 / L2D-01 |
 ## DEV-036 · Rappels persistants et notifications push Android
 
 **Décision produit du 22/11/2026 :** le propriétaire accepte les trois étapes et les critères de recette précédemment proposés. Une seule US : (1) stockage/déclenchement sur le PC, (2) réception push Android même après fermeture normale ou écran verrouillé, (3) ouverture du bon rappel depuis la notification. **Aucun besoin de maintenir la conversation, le microphone ou le LLM actifs sur le téléphone.**
@@ -66,6 +68,39 @@ Au relevé du 18 novembre, aucune issue/PR de développement ouverte ; un lot de
 - **AC-08 :** permission et désinscription push gérées depuis le téléphone ; aucune donnée du rappel en clair dans le payload, pas de persistance du Bearer sur l'appareil.
 
 **État de travail : En cours.** Le code de develop est un livrable de développement et non une preuve que les notifications ont été réellement affichées sur Android. L'installation pywebpush, la configuration privée, les essais réels et la validation des recettes restent nécessaires avant Done.
+
+## DEV-037 · Sous-titres synchronisés sur l'application mobile (NEW-29, P2)
+
+**Statut : À qualifier**. Nouvelle capacité pour l'application PWA Android, **sans développement lancé**. Il ne s'agit pas de redévelopper les sous-titres OBS ni d'afficher simplement la réponse complète déjà présente dans le chat.
+
+**Besoin :** pendant une conversation orale avec Jade sur téléphone, afficher en direct ses paroles sous forme de sous-titres lisibles au rythme de la voix réellement jouée sur le mobile.
+
+**Critères d'acceptation proposés :**
+- Afficher progressivement les phrases/segments prononcés par Jade pendant sa réponse vocale mobile. Synchroniser sur les segments audio consommés par le lecteur quand les événements de lecture le permettent ; ne pas présenter un alignement précis mot à mot si les données manquent.
+- Conserver le chat, le décor et le modèle, avec une zone lisible et adaptée à l'écran mobile (portrait/paysage) sans gêner les commandes. Ajouter une option simple pour afficher/masquer les sous-titres.
+- Sur arrêt, interruption, nouvelle réponse, changement de session, perte du réseau ou annulation, retirer/figer correctement l'ancien sous-titre et éviter de l'attribuer à une autre réponse.
+- Les sous-titres n'affichent que les propos de Jade destinés à la session mobile autorisée ; aucune fuite vers Discord, Twitch, OBS ou un autre utilisateur. Réutiliser le texte et le flux audio existants, sans nouvel appel IA ou TTS payant dédié.
+- Tester sur un vrai téléphone Android : réponse vocale courte/longue, flux progressif, interruption, reconnexion, rotation de l'écran, texte du chat conservé.
+
+**Hors périmètre :** transcription des paroles du microphone utilisateur, sous-titrage sur d'autres plateformes et refonte du TTS.
+
+## DEV-038 · Connaissance et initiative sur les capacités logicielles (NEW-38, P1)
+
+**Statut : À qualifier.** Promue de P2 à **P1** sur décision explicite du propriétaire le 23/11/2026. Aucun développement lancé.
+
+**Besoin :** Jade doit connaître presque toutes les fonctions réelles de son logiciel, savoir ce qui s'exécute effectivement, qu'elle l'ait déclenché ou que le logiciel l'ait fait automatiquement, et pouvoir choisir elle-même de lancer les fonctions disponibles au moment opportun.
+
+**Critères d'acceptation proposés :**
+- Registre dynamique des actions effectivement exposées par le runtime, avec objectifs, paramètres, conditions, permissions, coûts éventuels, disponibilité et effets possibles. Ne jamais annoncer disponible une fonction que le logiciel ne peut pas exécuter.
+- Jade peut volontairement **décider et appeler** ces actions lors d'une interaction ou d'un événement autorisé, sans dépendre exclusivement de déclencheurs fixes ni d'une commande utilisateur explicite pour chaque initiative.
+- Retour de résultat structuré pour chaque action : demandée, démarrée, exécutée, refusée, échouée ou annulée, avec effet réellement constaté. Jade distingue l'intention, la tentative et la réussite.
+- Les automatismes du logiciel publient aussi des événements pertinents que Jade peut comprendre : opération lancée, source, contexte, succès/échec et résultat, sans réinterroger un LLM à chaque événement insignifiant ou en permanence en inactivité.
+- Arbitrage commun des conflits entre automatismes, actions choisies par Jade et contrôles humains : annulation, absence d'exécution double, états cohérents. Maintenir une seule instance Jade et l'isolation des personnes, audiences et canaux.
+- Couverture **progressive de presque toutes les fonctions réellement exécutables**, notamment conversation, mémoire, recherche, rappels, médias et gestion de sessions ; compléter les adaptateurs manquants et tracer explicitement les fonctions non exposées. Les commandes 2D spécialisées restent suivies par L2D-01.
+- Recetter des actions représentatives sur mobile et Discord, texte et voix lorsque pertinent. Vérifier que Jade explique correctement **ce qu'elle peut faire**, **ce qu'elle a demandé** et **ce qui a vraiment été fait**.
+- Respecter les permissions et confirmations nécessaires, le coût borné et l'interdiction de boucle LLM permanente sans interaction. Le passage en backlog n'autorise ni nouvelles dépenses API ni nouveaux accès.
+
+**Articulation :** REC-031 couvre la continuité et des actions intercanaux existantes, NEW-21 les tâches longues, et L2D-01 la gestion temps réel du modèle 2D ; DEV-038 traite du registre et de l'initiative transversale sans créer de doublon.
 
 ## Spécifications des améliorations transférées le 22 novembre 2026
 

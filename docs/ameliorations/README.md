@@ -1,6 +1,6 @@
 # Catalogue des améliorations prospectives de Jade
 
-**Référence :** `goldaj/jade-vtuber`, branche `develop`, état consolidé au **22 novembre 2026**. Ce catalogue contient uniquement des **propositions encore distinctes** ; elles ne constituent pas un ordre de développement, une recette en attente ni une autorisation de coûts API ou de mise en production. Le [backlog opérationnel](../backlog/README.md) est la source de vérité pour les travaux acceptés, les recettes, les OPS et le modèle 2D r21.
+**Référence :** `goldaj/jade-vtuber`, branche `develop`, état consolidé au **23 novembre 2026**. Ce catalogue contient uniquement des **propositions encore distinctes** ; elles ne constituent pas un ordre de développement, une recette en attente ni une autorisation de coûts API ou de mise en production. Le [backlog opérationnel](../backlog/README.md) est la source de vérité pour les travaux acceptés, les recettes, les OPS et le modèle 2D r21.
 
 ## État après dédoublonnage
 
@@ -23,8 +23,8 @@
 | Pilotage volontaire du modèle 2D | [08-MODELE-2D.md](08-MODELE-2D.md) | 1 | Commandes choisies par Jade, connaissance du résultat et arbitrage avec les animations automatiques |
 | Perception multimodale | [09-PERCEPTION-MULTIMODALE.md](09-PERCEPTION-MULTIMODALE.md) | 7 | Consentement des images, sources vidéo, temporalité, réactions live et budgets ; PER-01/02/03 désormais en backlog |
 | Données et normalisation | [10-NORMALISATION-DONNEES-MEMOIRE.md](10-NORMALISATION-DONNEES-MEMOIRE.md) | 10 | Contrats d'événements, données structurées, provenance, migrations |
-| Capacités et comportement | [11-CAPACITES-COMPORTEMENT-CONTROLE.md](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | 29 | Sécurité, outils, vie sociale avancée, autonomie, registre des actions et connaissance des opérations exécutées |
-| **Total** | | **103** | |
+| Capacités et comportement | [11-CAPACITES-COMPORTEMENT-CONTROLE.md](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | 27 | Sécurité, outils et interactions sociales encore prospectifs ; NEW-29 et NEW-38 sont en backlog |
+| **Total** | | **101** | |
 
 **Décision supplémentaire du 22/11/2026 :** NEW-20 est transférée dans [DEV-031](../backlog/01-DEVELOPPEMENT.md) (explications d'indisponibilité), tandis que NEW-25 (proposition multilingue) a été **abandonnée** à la demande du propriétaire. Une recherche sur les 11 thèmes n'a trouvé aucune autre proposition de fonctionnalité multilingue à retirer. Les fonctions et contenus existants ne sont pas modifiés par cette décision.
 
@@ -39,7 +39,7 @@
 - **UX-19 → [DEV-032](../backlog/01-DEVELOPPEMENT.md)** : pièces jointes et documents téléchargeables dans le chat PWA. **PER-01/02/03 → [DEV-033/034/035](../backlog/01-DEVELOPPEMENT.md)** : recevoir, comprendre et commenter des images. Quatre cartes P2 **À qualifier**, rien n'est développé avant cadrage. UX-19 est la première à discuter avec le propriétaire.
 - **Règle du propriétaire :** une idée transférée en backlog ou explicitement écartée est immédiatement retirée des **lignes actives** du catalogue et de ses décomptes. Son identifiant reste traçable dans l'historique Git et les passations, mais **ne doit plus être proposée comme idée en attente**.
 
-**Bilan actuel après transfert de NEW-16 : 103 idées actives**, dont **21 P1**, et **90 cartes de backlog**, avec **DEV-036 « À qualifier »**. [Passation détaillée](../operations/handoffs/2026-11-22-chatgpt-ux19-perceptions-catalogue.md).
+**Bilan historique après NEW-16 : 103 idées actives**, dont 21 P1. **État actuel au 23/11 après NEW-29 et NEW-38 : 101 idées actives, dont 21 P1**. Les deux demandes ont été déplacées vers **DEV-037 (P2)** et **DEV-038 (P1)**, toutes deux **À qualifier**, sans développement engagé. [Passation détaillée](../operations/handoffs/2026-11-22-chatgpt-ux19-perceptions-catalogue.md).
 
 ## Évolutions différées acceptées le 22/11/2026
 
@@ -54,7 +54,13 @@
 
 Ces quatre idées **ne rouvrent pas** REC-031, REC-034 ou REC-036, **ne constituent pas un manque bloquant** pour la version actuelle et ne promettent aucune capacité physiquement impossible. Elles ne seront engagées que sur nouvelle décision du propriétaire après vérification de l'intérêt, des risques de régression et des contraintes réelles. Pas de nouvel appel IA, de changement d'autorisation ou de mise en production par cette inscription.
 
-Le [thème 08, modèle 2D](08-MODELE-2D.md) conserve l'archivage des anciennes idées ART et accueille désormais **L2D-01**, capacité prospective de pilotage volontaire du modèle par Jade, **distincte** du travail artistique suivi dans la [backlog ART](../backlog/04-PRODUCTION-2D.md). L'amélioration transversale **NEW-38** décrit le catalogue des actions réellement disponibles et l'initiative de Jade, sans déplacer ni modifier le backlog.
+Le [thème 08, modèle 2D](08-MODELE-2D.md) conserve l'archivage des anciennes idées ART et accueille désormais **L2D-01**, capacité prospective de pilotage volontaire du modèle par Jade, **distincte** du travail artistique suivi dans la [backlog ART](../backlog/04-PRODUCTION-2D.md). L'amélioration transversale **NEW-38** est désormais suivie dans [DEV-038](../backlog/01-DEVELOPPEMENT.md) en P1 et ne figure plus dans les idées actives.
+
+## Transferts du 23 novembre 2026
+
+- **NEW-29 → [DEV-037](../backlog/01-DEVELOPPEMENT.md), P2, À qualifier** : sous-titres des paroles de Jade en direct, synchronisés avec le flux audio de l'application mobile PWA.
+- **NEW-38 → [DEV-038](../backlog/01-DEVELOPPEMENT.md), P1, À qualifier** : connaissance des fonctions exécutables, retour sur les actions réelles et initiative volontaire de Jade.
+- Ces deux entrées sont retirées des tableaux prospectifs actifs ; elles conservent leur identifiant historique. Pas de développement lancé.
 
 ## Règles pour les prochains agents
 
