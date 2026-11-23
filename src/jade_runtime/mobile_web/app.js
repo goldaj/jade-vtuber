@@ -37,8 +37,9 @@
     if (!["home", "chat", "reminders", "profile"].includes(view)) return;
     shell.dataset.view = view;
     // One microphone control, reparented between Accueil and Chat.
-    if (view === "home") document.querySelector(".room-bottom").appendChild(mic);
-    else if (mic.parentElement !== form) form.insertBefore(mic, input);
+    if (view === "home") document.querySelector?.(".room-bottom")?.appendChild?.(mic);
+    else if (mic.parentElement !== form && typeof form.insertBefore === "function")
+      form.insertBefore(mic, input);
     navItems.forEach(button => {
       const active = button.dataset.viewTarget === view;
       button.classList.toggle("is-active", active);

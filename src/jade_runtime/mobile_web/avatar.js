@@ -174,7 +174,7 @@
     const naturalHeight = Math.max(model.height / (model.scale.y || 1), 1);
     const scale = Math.min((width * .95) / naturalWidth, (height * 1.32) / naturalHeight);
     // The 2D model zooms independently of the undistorted room in full screen.
-    const immersive = document.querySelector(".shell")?.classList.contains("is-room-only");
+    const immersive = document.querySelector?.(".shell")?.classList.contains("is-room-only");
     model.scale.set(Math.max(.05, scale * (immersive ? 1.9 : 1.5)));
     model.position.set(width * (immersive ? .55 : .58), height * (immersive ? .82 : .79));
   }
