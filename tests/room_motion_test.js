@@ -7,7 +7,7 @@ const path = require("node:path");
 
 const web = path.join(__dirname, "../src/jade_runtime/mobile_web");
 const script = fs.readFileSync(path.join(web, "room-motion.js"), "utf8");
-const html = fs.readFileSync(path.join(web, "index.html"), "utf8");
+const html = fs.readFileSync(path.join(web, "salon.html"), "utf8");
 const css = fs.readFileSync(path.join(web, "styles.css"), "utf8");
 
 function element(initial = "") {

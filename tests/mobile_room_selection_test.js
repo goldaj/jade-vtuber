@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const source = fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mobile_web/room-motion.js"), "utf8");
-const html = fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mobile_web/index.html"), "utf8");
+const html = fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mobile_web/salon.html"), "utf8");
 const css = fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mobile_web/styles.css"), "utf8");
 
 async function run(startRoom = "bedroom", supportsLayers = true) {
