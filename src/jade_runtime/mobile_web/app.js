@@ -716,87 +716,101 @@
   });
 
   const deploymentPanel = $("deployment-panel");
-  const deploymentLoad = $("deployment-load"), deploymentRun = $("deployment-run");
-  const deploymentRestart = $("deployment-restart"), deploymentBranch = $("deployment-branch");
-  const deploymentState = $("deployment-state");
-  let deploymentPending = false;
+  const deploymentLoad = $("deployment-load");
+  const deploymentRun = $("deployment-run");
+  const deploymentRestart = $("deployment-restart");
+  const deploymentState = $("deployment-state"), deploymentVersion = $("deployment-version");
+  const deploymentConsole = $("deployment-console"), deploymentFilter = $("deployment-filter");
+  const deploymentPause = $("deployment-pause");
+  let deploymentPending = false, deploymentTimer = null, deploymentRaw = "", deploymentPaused = false;
 
-  async function deploymentRequest(operation, extras = {}) {
-    return makeRequest("/api/deployment",
-      JSON.stringify(Object.assign({operation}, extras)),
-      {"Content-Type":"application/json"});
+  async function controlRequest(path, operation = "GET") {
+    const response = await fetch("/control/api/" + path, {
+      method: operation, mode: "same-origin", cache: "no-store", credentials: "omit",
+      headers: {"Authorization": "Bearer " + token,
+                ...(operation === "POST" ? {"Content-Type": "application/json"} : {})},
+      ...(operation === "POST" ? {body: JSON.stringify({confirm: true})} : {})
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Contrôleur indisponible (HTTP " + response.status + ")");
+    return result;
+  }
+
+  function renderDeploymentLogs() {
+    const lines = deploymentRaw.split("\n");
+    const level = deploymentFilter.value;
+    const filtered = level === "all" ? lines
+      : lines.filter(line => level === "ERROR"
+        ? /\b(ERROR|CRITICAL|Traceback|Exception)\b/i.test(line)
+        : /\b(WARNING|WARN|ERROR|CRITICAL|Traceback|Exception)\b/i.test(line));
+    deploymentConsole.textContent = filtered.join("\n") || "Aucun log pour ce filtre.";
+    if (!deploymentPaused) deploymentConsole.scrollTop = deploymentConsole.scrollHeight;
   }
 
   async function refreshDeployment() {
-    if (deploymentPending || !token) return;
+    if (deploymentPending || !token || !deploymentPanel.open || document.hidden) return;
     deploymentPending = true;
-    deploymentLoad.disabled = true;
-    deploymentState.textContent = "Interrogation du superviseur local…";
     try {
-      const [current, response] = await Promise.all([
-        deploymentRequest("status"), deploymentRequest("branches")
+      const [current, journal] = await Promise.all([
+        controlRequest("status"), deploymentPaused ? Promise.resolve(null) : controlRequest("logs")
       ]);
-      const branchNames = Array.isArray(response.branches) ? response.branches : [];
-      const former = deploymentBranch.value;
-      deploymentBranch.replaceChildren();
-      for (const name of branchNames) {
-        if (typeof name !== "string") continue;
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        deploymentBranch.appendChild(option);
+      deploymentState.textContent = current.pycharm_run
+        ? "PyCharm Run : connecté · Jade : " + (current.running ? "en marche" : "arrêtée") +
+          " · Phase : " + (current.phase || "inconnue") +
+          (current.error ? " · Incident : " + current.error : "")
+        : "PyCharm Run indisponible ; le contrôleur Windows répond encore.";
+      deploymentVersion.textContent = "Branche : develop · commit : " + (current.sha || "inconnu");
+      const ready = current.pycharm_run && current.phase === "idle";
+      deploymentRun.disabled = deploymentRestart.disabled = !ready;
+      if (journal && typeof journal.text === "string") {
+        deploymentRaw = journal.text;
+        renderDeploymentLogs();
       }
-      if (branchNames.includes(former)) deploymentBranch.value = former;
-      deploymentBranch.disabled = !branchNames.length;
-      deploymentRun.disabled = !branchNames.length;
-      deploymentState.textContent =
-        "Version active : " + (current.sha || "non connue") +
-        " ; statut : " + (current.phase || "inconnu") +
-        " ; processus : " + (current.running ? "en marche" : "arrêté") +
-        (current.error ? " ; incident : " + current.error : "");
     } catch (error) {
-      deploymentState.textContent = error.message || "Superviseur indisponible.";
-      deploymentBranch.disabled = true;
-      deploymentRun.disabled = true;
+      deploymentState.textContent = error.message || "Contrôle indisponible : vérifier Tailscale et le service Windows.";
+      deploymentRun.disabled = deploymentRestart.disabled = true;
     } finally {
       deploymentPending = false;
-      deploymentLoad.disabled = false;
     }
   }
 
   async function submitDeployment(operation) {
     if (deploymentPending || !token) return;
-    const branch = deploymentBranch.value;
-    if (operation === "deploy" && (!branch || deploymentBranch.disabled)) return;
-    const question = operation === "deploy"
-      ? "Redéployer la branche " + branch + " et redémarrer Jade ?"
-      : "Redémarrer Jade sans mettre à jour le code ?";
-    if (!window.confirm(question)) return;
+    if (!window.confirm(operation === "update"
+      ? "Mettre à jour develop et redémarrer la session Jade de PyCharm ?"
+      : "Redémarrer Jade dans PyCharm sans mise à jour du code ?")) return;
     deploymentPending = true;
     deploymentRun.disabled = deploymentRestart.disabled = true;
-    deploymentState.textContent = "Demande de redémarrage envoyée…";
+    deploymentState.textContent = "Transmission au contrôleur Windows…";
     try {
-      await deploymentRequest(operation,
-        operation === "deploy" ? {branch, confirm:true} : {confirm:true});
-      deploymentState.textContent =
-        "Redémarrage engagé. La connexion peut être interrompue ; actualise ici après le retour de Jade.";
+      await controlRequest(operation, "POST");
+      deploymentState.textContent = "Commande acceptée. Suivi du redémarrage en cours.";
     } catch (error) {
-      deploymentState.textContent = error.message || "Redémarrage non confirmé.";
+      deploymentState.textContent = error.message || "Commande refusée.";
     } finally {
       deploymentPending = false;
-      deploymentRestart.disabled = false;
-      deploymentRun.disabled = deploymentBranch.disabled;
+      refreshDeployment();
     }
   }
 
   deploymentPanel.addEventListener("toggle", () => {
-    if (deploymentPanel.open) refreshDeployment();
+    if (deploymentTimer) { clearInterval(deploymentTimer); deploymentTimer = null; }
+    if (deploymentPanel.open) {
+      refreshDeployment();
+      deploymentTimer = setInterval(refreshDeployment, 2500);
+    }
   });
   deploymentLoad.addEventListener("click", refreshDeployment);
-  deploymentRun.addEventListener("click", () => submitDeployment("deploy"));
+  deploymentRun.addEventListener("click", () => submitDeployment("update"));
   deploymentRestart.addEventListener("click", () => submitDeployment("restart"));
+  deploymentFilter.addEventListener("change", renderDeploymentLogs);
+  deploymentPause.addEventListener("click", () => {
+    deploymentPaused = !deploymentPaused;
+    deploymentPause.textContent = deploymentPaused ? "Reprendre" : "Pause";
+    deploymentPause.setAttribute("aria-pressed", String(deploymentPaused));
+    if (!deploymentPaused) refreshDeployment();
+  });
 
-  const billingPanel = $("billing-panel"), billingRefresh = $("billing-refresh");
   const billingStatus = $("billing-status"), billingToday = $("billing-today"), billingMonth = $("billing-month");
   let billingPending = false;
   function formatCosts(costs) {
