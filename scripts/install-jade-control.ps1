@@ -57,6 +57,16 @@ try {
     Write-Warning 'Réexécuter le programme avec les droits nécessaires. Le raccourci manuel sera créé.'
 }
 
+# Prefer the scheduled task: multiple manual clicks never spawn new controllers.
+if ($taskInstalled) {
+    @'
+Option Explicit
+Dim shell
+Set shell = CreateObject("WScript.Shell")
+shell.Run "schtasks.exe /run /tn ""Jade Remote Control""", 0, False
+'@ | Set-Content -LiteralPath $vbsPath -Encoding ASCII
+}
+
 $desktop = [Environment]::GetFolderPath('Desktop')
 $link = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desktop 'Jade Control.lnk'))
 $link.TargetPath = Join-Path $env:WINDIR 'System32\wscript.exe'
