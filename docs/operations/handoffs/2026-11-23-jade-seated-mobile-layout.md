@@ -140,3 +140,31 @@ Correctifs :
 Ces correctifs vérifient la structure et les contrats hors WebGL. La couture
 réelle cou/épaules et les oscillations des mèches doivent être observées sur
 le Redmi après déploiement ; aucune CI ne prouve la qualité du dessin.
+
+## Correctif du cou et du mode de secours (23 novembre, v6)
+
+Après cinq captures Redmi de la chambre assise, la zone vert foncé entre le
+menton animé et le col statique apparaît sans cou humain visible. Le modèle
+r20 ne fournit pas de partie de cou explicitement isolée : réactiver
+`PartJAD_BODY_SKIN` exposerait potentiellement d'autres éléments du corps
+debout. Conserver donc l'AVIF validé et l'isolation des parties du r20.
+
+Le cou est un petit dessin vectoriel fixe, aux contours adoucis, assorti à
+la peau du visage, **dans le même repère 941×1672 que le corps assis**.
+En mode compositeur Pixi il est dessiné entre le sprite du corps statique
+et la passe de la tête animée (l'ordre est cheveux arrière → corps assis →
+cou → visage/cheveux avant). Sur un navigateur sans compositeur, la même
+silhouette est rendue comme calque CSS juste au-dessus du corps AVIF,
+toujours sous le canvas Live2D. Aucune seconde instance du modèle n'est
+créée et aucune animation de cheveux n'est modifiée.
+
+Une régression découverte pendant la correction est supprimée :
+`isSeated()` ne dépend plus de la disponibilité du compositeur. Si
+le mode dégradé est choisi, la pose assise et l'isolation du corps debout
+restent actives ; seule la profondeur parfaite des cheveux est dégradée.
+
+La position calibrée de la tête, les deux AVIF, l'alignement responsive
+et la cuisine sont inchangés. Le rendu final de la couture et son maintien
+en expression/mouvement nécessitent **encore une validation sur téléphone**
+après déploiement ; les tests automatiques ne prouvent pas la qualité
+visuelle du cou.
