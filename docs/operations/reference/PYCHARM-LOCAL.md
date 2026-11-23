@@ -19,3 +19,23 @@ Le journal technique est limité à trois fichiers d'environ 5 Mo et exclut les 
 Sur la branche feat/jade-pycharm-remote-control-20261123, le profil PyCharm « Jade - Discord mobile (test) » ouvre une session Run **persistante** propriétaire du moteur. Le moteur est exécuté comme enfant de cette session et peut être relancé par le contrôleur Windows depuis Android, mais le débogage Python direct de cet enfant n'est plus disponible. Le profil préflight reste indépendant.
 
 Le contrôleur est lancé par une tâche utilisateur au logon Windows via pythonw.exe, sans console, avec raccourci manuel. Son port privé 8771 et la route Tailscale /control restent accessibles même si Jade est en cours de redémarrage. L'ancien superviseur de clone distinct n'est plus utilisé depuis l'application. [Procédure complète](REMOTE-PYCHARM-CONTROL-20261123.md). **Tests PC à réaliser avant merge.**
+
+
+## Configuration personnelle « discord & mobile » (pilotage depuis le téléphone)
+
+Le propriétaire utilise **discord & mobile**, et non « Jade - Discord mobile (test) ». Cette configuration était restée sur `main.py` après la livraison du contrôle distant : Jade fonctionnait, mais le contrôleur Windows (8771) ne trouvait aucun gestionnaire PyCharm (8772). La session PyCharm doit désormais lancer le parent persistant **dans cette même configuration**, plutôt que lancer `main.py` directement.
+
+Dans **Run > Edit Configurations > discord & mobile** :
+
+- **Script path** : `D:\Codex\projects\jade-officiel-public-20261102\tools\jade_pycharm_runner.py` (remplace uniquement `main.py`).
+- **Parameters** : `--live --discord --discord-voice --voice --mobile` (**conserver** ces cinq paramètres, sans ajout implicite de `--avatar`).
+- **Working directory** : `D:\Codex\projects\jade-officiel-public-20261102` (inchangé).
+- **Python interpreter** : conserver l'interpréteur Poetry déjà sélectionné, y compris s'il est différent de l'interpréteur du profil de test.
+- **Environment variables** : conserver les variables existantes, notamment `JADE_SECRETS_FILE`, sans copier le jeton en clair dans le dépôt.
+- Démarrer avec **Run**, pas Debug. Arrêter toute ancienne instance `main.py` avant le premier redémarrage.
+
+`tools/jade_pycharm_runner.py` accepte désormais les drapeaux de `main.py`. Quand ils sont explicitement fournis, il les transmet à la vérification préalable et au moteur relancé, tout en préservant les réglages d'exécution de la configuration personnelle. Sans paramètre, le profil partagé historique conserve ses options prédéfinies. Le contrôleur indépendant (tâche Windows) ne démarre pas Jade : il s'adresse au parent PyCharm par HTTP authentifié sur `127.0.0.1:8772`.
+
+Après lancement, contrôler `Get-NetTCPConnection -State Listen -LocalPort 8771,8772` et réactualiser l'onglet Profil de l'application. **8771 seul** = service Windows présent mais parent PyCharm absent ou non démarré. Les paramètres peuvent générer des appels facturés ; les tests hors ligne n'ouvrent aucun canal réel.
+
+> Note : les instructions historiques du début de ce document sur les points d'arrêt Debug concernent l'ancien lancement direct. Le contrôle distant actuel nécessite le Run persistant et ne conserve pas les breakpoints dans l'enfant Jade. La configuration locale discord & mobile est gérée dans PyCharm sur le PC et ne peut pas être modifiée depuis un simple push GitHub.
