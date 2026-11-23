@@ -108,3 +108,7 @@ La chambre, le corps, la cuisine et leur géométrie de cadre ne changent pas.
 **Reste à valider sur appareil** : après déploiement, confirmer la couture
 au cou en mouvement, les mèches arrière occultées par le buste, le retour
 cuisine et le plein écran. Aucun test headless ne remplace cette recette.
+
+## Ajustement après captures du 23 novembre (v4)
+
+Les captures montrent un visage trop à gauche du col du corps statique et une jonction horizontale visible. La caméra du modèle r20 est déplacée de x=.575 à x=.655 dans le repère responsive de la scène, sans toucher aux images ni à la cuisine. **Ce changement est une correction de position, pas une validation du raccord graphique.** La jonction du cou reste à retoucher sur l'asset statique et à vérifier en animation sur téléphone ; ne pas déclarer la recette réussie sans nouvelles captures.
