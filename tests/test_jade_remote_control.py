@@ -41,6 +41,36 @@ class GitUpdateTests(unittest.TestCase):
         self.assertEqual(git.call_args_list[3].args[1:], ("fetch", "origin", "develop"))
 
 
+class CustomRunOptionsTests(unittest.TestCase):
+    def test_manager_starts_child_with_exact_pycharm_flags(self):
+        expected = ("--live", "--discord", "--discord-voice", "--voice", "--mobile")
+        with tempfile.TemporaryDirectory() as folder, \
+             patch.object(remote_pycharm, "_WindowsJob") as job, \
+             patch.object(remote_pycharm, "git", side_effect=["abc123", "develop"]), \
+             patch.object(remote_pycharm.subprocess, "Popen") as popen:
+            child = popen.return_value
+            child.pid = 12345
+            child.stdout = None
+            manager = remote_pycharm.PycharmManager(
+                Path(folder), "x" * 40, log_dir=Path(folder), flags=expected)
+            try:
+                manager._start_child()
+                self.assertEqual(popen.call_args.args[0][-len(expected):], list(expected))
+                self.assertNotIn("--avatar", popen.call_args.args[0])
+                self.assertEqual(manager.status()["pid"], 12345)
+                job.return_value.assign.assert_called_once_with(child)
+            finally:
+                manager.file_handler.close()
+                manager.job.close()
+
+    def test_manager_rejects_unexpected_flags(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaises(ValueError):
+                remote_pycharm.PycharmManager(
+                    Path(folder), "x" * 40, log_dir=Path(folder),
+                    flags=("--discord", "--arbitrary-command"))
+
+
 class RuntimeStopTests(unittest.TestCase):
     def test_pycharms_stop_flag_is_not_a_global_runtime_setting(self):
         # A separate process only reacts when its own private flag is present.
