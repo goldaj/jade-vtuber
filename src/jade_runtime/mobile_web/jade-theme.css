@@ -329,6 +329,17 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"][data-seated-ready="true"] .portrait-seated-body{
   transform:translateY(calc(-1 * var(--seated-home-lift)));
 }
+/* Windowed portrait room: move the backdrop with the existing home lift and
+ * magnify its furnishings instead of shrinking the room around seated Jade.
+ * Only the bedroom artwork is reframed; do not scale Jade, her seated AVIF,
+ * the Live2D head, the kitchen, or immersive fullscreen rendering. */
+@media(max-width:819px) and (orientation:portrait){
+  .shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"][data-seated-ready="true"] .portrait-bedroom{
+    transform:translateY(calc(-1 * var(--seated-home-lift))) scale(1.25);
+    transform-origin:center center;
+  }
+}
+
 
 /* In seated mode the body is drawn INSIDE the single Pixi WebGL canvas,
  * between back-hair and front-hair passes. The DOM image only preloads it. */
