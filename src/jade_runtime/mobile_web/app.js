@@ -33,13 +33,19 @@
   let thread = newThread();
   const shell = document.querySelector(".shell");
   const navItems = Array.from(document.querySelectorAll(".app-nav-item"));
+  // Move the existing control, preserving its recording and disabled states.
+  function syncMicPlacement() {
+    if (shell.dataset.view === "home" || shell.classList.contains("is-room-only")) {
+      const dock = document.querySelector?.(".room-bottom");
+      if (dock && mic.parentElement !== dock) dock.appendChild?.(mic);
+    } else if (mic.parentElement !== form && typeof form.insertBefore === "function") {
+      form.insertBefore(mic, input);
+    }
+  }
   function showView(view) {
     if (!["home", "chat", "reminders", "profile"].includes(view)) return;
     shell.dataset.view = view;
-    // One microphone control, reparented between Accueil and Chat.
-    if (view === "home") document.querySelector?.(".room-bottom")?.appendChild?.(mic);
-    else if (mic.parentElement !== form && typeof form.insertBefore === "function")
-      form.insertBefore(mic, input);
+    syncMicPlacement();
     navItems.forEach(button => {
       const active = button.dataset.viewTarget === view;
       button.classList.toggle("is-active", active);
@@ -1163,6 +1169,7 @@
       if (width > 0) shell.style.setProperty("--room-immersive-width", width + "px");
     }
     shell.classList.toggle("is-room-only", active);
+    syncMicPlacement();
     if (!active) shell.style.removeProperty("--room-immersive-width");
     fullscreenButton.textContent = active ? "⤢" : "⛶";
     const description = active ? "Quitter le plein écran" : "Afficher uniquement Jade en plein écran";
