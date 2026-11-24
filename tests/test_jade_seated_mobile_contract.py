@@ -90,7 +90,7 @@ class SeatedMobileContract(unittest.TestCase):
                         html.index('id="portrait-seated-body"'))
         self.assertIn('z-index:1;pointer-events:none', css)
         self.assertIn('.portrait-bedroom-motion[hidden]{display:none!important}', css)
-        self.assertIn('.portrait-bedroom-motion{\\n    transform:translateY(calc(-1 * var(--seated-home-lift))) scale(1.25);', css)
+        self.assertIn('.portrait-bedroom-motion{\n    transform:translateY(calc(-1 * var(--seated-home-lift))) scale(1.25);', css)
         self.assertIn('"/assets/portrait-bedroom-motion.js"', guard)
 
     def test_new_media_paths_are_whitelisted(self):

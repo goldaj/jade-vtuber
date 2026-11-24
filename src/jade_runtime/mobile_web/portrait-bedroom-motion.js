@@ -57,7 +57,7 @@
   function curtainOffset(y,t,wind=windAt(t)) {
     // Folds flutter more toward the bottom; the attachment stays fixed.
     const pin=smooth(308,445,y);
-    return pin*(6.5*wind+2.1*Math.sin(1.48*t-y*.018));
+    return pin===0?0:pin*(6.5*wind+2.1*Math.sin(1.48*t-y*.018));
   }
   function lightAlpha(r,g,b) {
     return smooth(144,187,g)*smooth(193,236,r)*smooth(7,24,g-b)*

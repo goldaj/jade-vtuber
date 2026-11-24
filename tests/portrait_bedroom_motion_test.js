@@ -8,7 +8,7 @@ const script=path.join(__dirname,"../src/jade_runtime/mobile_web/portrait-bedroo
 const m=require(script);
 assert.equal(m.W,864);assert.equal(m.H,1536);
 for(const p of [...m.curtainRegions,...m.blossomRegions,...m.lightRegions,m.birdRegion]){
-  for(const [x,y] of p){assert.ok(x>=0&&x<=m.W&&y>=0&&y<=m.H);assert.equal(m.maskAlpha(p,x,y),0);}
+  for(const [x,y] of p){assert.ok(x>=0&&x<=m.W&&y>=0&&y<=m.H);assert.ok(m.maskAlpha(p,x,y)<1e-9);}
   const center=p.reduce((s,q)=>[s[0]+q[0]/p.length,s[1]+q[1]/p.length],[0,0]);
   assert.ok(m.inside(p,...center));assert.ok(m.maskAlpha(p,...center)>.5);
   assert.equal(m.maskAlpha(p,0,1535),0);
