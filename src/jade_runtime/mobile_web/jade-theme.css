@@ -319,6 +319,17 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
  * Cubism part opacities; moving side and rear hair stay fully intact. */
 .room[data-room="bedroom"][data-seated-ready="true"] #avatar-container{clip-path:none}
 
+/* Lift the complete seated character above the home microphone, without
+ * moving the bedroom artwork or changing any internal registration.
+ * Both the Pixi composition and its DOM body fallback share this offset. */
+.shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"][data-seated-ready="true"]{
+  --seated-home-lift:clamp(84px,12cqh,120px);
+}
+.shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"][data-seated-ready="true"] #avatar-container,
+.shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"][data-seated-ready="true"] .portrait-seated-body{
+  transform:translateY(calc(-1 * var(--seated-home-lift)));
+}
+
 /* In seated mode the body is drawn INSIDE the single Pixi WebGL canvas,
  * between back-hair and front-hair passes. The DOM image only preloads it. */
 .room[data-room="bedroom"][data-seated-ready="true"][data-seated-compositor="true"] .portrait-seated-body{display:none}
