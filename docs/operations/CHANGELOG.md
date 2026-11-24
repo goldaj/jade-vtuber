@@ -1,3 +1,9 @@
+## 2026-11-24 — Microphone en plein écran mobile
+
+- Le mode immersif natif ou CSS conserve le bouton micro en bas, centré et accessible, sans afficher la navigation, le chat ou le sélecteur de décor. Le bouton unique est déplacé dans la scène à l'entrée, puis revient à son emplacement selon l'onglet à la sortie, sans réinitialiser l'enregistrement ni la préférence de synthèse vocale.
+- Fichiers : `mobile_web/app.js`, `mobile_web/jade-theme.css`, contrat de non-régression dédié et état fonctionnel. Aucun changement de proportions du modèle, du décor, des API vocales ni de main.
+- Vérification : revue statique des transitions et des sélecteurs, test de contrat ajouté ; CI et essai physique Android à confirmer (entrée depuis Accueil/Chat, enregistrement, écoute et sortie).
+
 ## 2026-11-24 — Correction de la mise à jour distante PyCharm
 
 - REC-037 : redémarrage simple confirmé par le propriétaire, mise à jour non effective. Suppression du refus global des modifications locales ; Git fast-forward sans autostash ni écrasement des fichiers ignorés, refus des conflits et des branches divergentes. Fetch explicite de develop, contrôle du SHA réellement lancé, reprise LFS même après un merge antérieur.
