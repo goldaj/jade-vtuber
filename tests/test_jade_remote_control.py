@@ -2,6 +2,8 @@
 import asyncio
 from pathlib import Path
 import tempfile
+import shutil
+import subprocess
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -17,15 +19,9 @@ class GitUpdateTests(unittest.TestCase):
                 remote_pycharm.plan_develop_update(Path("."))
         self.assertEqual(git.call_count, 1)
 
-    def test_dirty_checkout_does_not_fetch(self):
-        with patch.object(remote_pycharm, "git", side_effect=["develop", " M main.py"]) as git:
-            with self.assertRaisesRegex(remote_pycharm.GitRefusal, "not_clean"):
-                remote_pycharm.plan_develop_update(Path("."))
-        self.assertEqual(git.call_count, 2)
-
     def test_reject_divergent_remote_head(self):
         with patch.object(remote_pycharm, "git",
-                          side_effect=["develop", "", "old-sha", "", "new-sha"]), \
+                          side_effect=["develop", "old-sha", "", "new-sha"]), \
              patch.object(remote_pycharm.subprocess, "run",
                           return_value=SimpleNamespace(returncode=1)):
             with self.assertRaisesRegex(remote_pycharm.GitRefusal, "not_fast_forward"):
@@ -33,12 +29,61 @@ class GitUpdateTests(unittest.TestCase):
 
     def test_accept_fast_forward_only(self):
         with patch.object(remote_pycharm, "git",
-                          side_effect=["develop", "", "old-sha", "", "new-sha"]) as git, \
+                          side_effect=["develop", "old-sha", "", "new-sha"]) as git, \
              patch.object(remote_pycharm.subprocess, "run",
                           return_value=SimpleNamespace(returncode=0)):
             self.assertEqual(remote_pycharm.plan_develop_update(Path(".")),
                              ("old-sha", "new-sha"))
-        self.assertEqual(git.call_args_list[3].args[1:], ("fetch", "origin", "develop"))
+        self.assertEqual(git.call_args_list[2].args[1:], ("fetch", "origin", "+refs/heads/develop:refs/remotes/origin/develop"))
+
+
+@unittest.skipUnless(shutil.which("git"), "Git required for local integration tests")
+class RealGitUpdateTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        root = Path(self.tmp.name)
+        self.origin, self.checkout = root / "origin", root / "checkout"
+        self.origin.mkdir()
+        self.run_git(self.origin, "init", "-b", "develop")
+        self.run_git(self.origin, "config", "user.email", "test@example.invalid")
+        self.run_git(self.origin, "config", "user.name", "Test")
+        for name in ("runtime.txt", "local.txt"):
+            (self.origin / name).write_text("old\n", encoding="utf-8")
+        self.run_git(self.origin, "add", ".")
+        self.run_git(self.origin, "commit", "-m", "initial")
+        self.run_git(root, "clone", str(self.origin), str(self.checkout))
+        (self.origin / "runtime.txt").write_text("new\n", encoding="utf-8")
+        self.run_git(self.origin, "commit", "-am", "update")
+
+    def run_git(self, root, *args):
+        return subprocess.run(["git", "-C", str(root), *args], check=True,
+                              capture_output=True, text=True).stdout.strip()
+
+    def test_preserves_unrelated_tracked_and_untracked_files(self):
+        (self.checkout / "local.txt").write_text("mine\n", encoding="utf-8")
+        (self.checkout / "private.txt").write_text("private\n", encoding="utf-8")
+        old, target = remote_pycharm.plan_develop_update(self.checkout)
+        remote_pycharm.apply_develop_update(self.checkout, old, target)
+        self.assertEqual(self.run_git(self.checkout, "rev-parse", "HEAD"), target)
+        self.assertEqual((self.checkout / "local.txt").read_text(), "mine\n")
+        self.assertEqual((self.checkout / "private.txt").read_text(), "private\n")
+        self.assertEqual((self.checkout / "runtime.txt").read_text(), "new\n")
+
+    def test_conflicting_local_change_is_not_overwritten(self):
+        (self.checkout / "runtime.txt").write_text("mine\n", encoding="utf-8")
+        old, target = remote_pycharm.plan_develop_update(self.checkout)
+        with self.assertRaisesRegex(remote_pycharm.GitRefusal, "git_merge_failed"):
+            remote_pycharm.apply_develop_update(self.checkout, old, target)
+        self.assertEqual(self.run_git(self.checkout, "rev-parse", "HEAD"), old)
+        self.assertEqual((self.checkout / "runtime.txt").read_text(), "mine\n")
+
+    def test_git_error_is_reported_without_remote_credentials(self):
+        with patch.object(remote_pycharm.subprocess, "run", return_value=SimpleNamespace(
+                returncode=1, stderr="fatal: authentication failed https://user:secret@example.invalid/repo")):
+            with self.assertRaisesRegex(remote_pycharm.GitRefusal, "authentication failed") as error:
+                remote_pycharm.git(self.checkout, "fetch", "origin")
+        self.assertNotIn("secret", str(error.exception))
 
 
 class CustomRunOptionsTests(unittest.TestCase):

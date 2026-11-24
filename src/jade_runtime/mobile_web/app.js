@@ -763,7 +763,11 @@
       deploymentState.textContent = "Jade : " + live + " · " + pycharm +
         " · " + (state.branch || "branche inconnue") + " " +
         (state.sha ? String(state.sha).slice(0, 8) : "(version inconnue)") +
-        " · " + phase + (state.error ? " · Erreur : " + state.error : "");
+        " · " + phase +
+        (state.target_sha ? " · Distant (dernier fetch) : " + String(state.target_sha).slice(0, 8) : "") +
+        ({updated:" · Mise à jour réussie", already_current:" · Déjà à jour",
+          restarted:" · Redémarrage seul réussi", failed:" · Opération échouée"}[state.result] || "") +
+        (state.error ? " · Erreur : " + state.error : "");
       deploymentRestart.disabled = !state.pycharm_run || phase !== "idle";
       deploymentRun.disabled = deploymentRestart.disabled || state.branch !== "develop";
       deploymentRawLogs = typeof result.text === "string" ? result.text : "";

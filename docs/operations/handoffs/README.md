@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [REC-037 : correctif mise à jour Git distante (24/11)](2026-11-24-chatgpt-rec037-git-update.md) · redémarrage confirmé, mise à jour à recetter.
+
 - [DEV-036 : qualification des rappels et notifications, NEW-16 (22/11)](2026-11-22-chatgpt-dev036-rappels-notifications.md) · transfert documentaire uniquement, statut **À qualifier**, aucun développement commencé.
 
 - [DEV-032 : fichiers téléchargeables multi-canaux, travail en cours (22/11)](2026-11-22-chatgpt-dev032-documents.md) · code sur `develop`, validations CI/recette encore requises.

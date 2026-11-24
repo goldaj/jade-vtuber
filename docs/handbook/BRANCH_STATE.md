@@ -1,6 +1,6 @@
-## Sur cette branche expérimentale uniquement : contrôle distant PyCharm (23 novembre 2026)
+## Contrôle distant PyCharm sur develop (24 novembre 2026)
 
-Le contrôleur privé Windows et le superviseur de processus PyCharm Run remplacent le déploiement mobile par changement de branche. Le mode Debug n'est plus pris en charge dans cette configuration, et la branche develop est fixe pour les mises à jour. Log live et page de secours disponibles via Tailscale Serve /control ; tâche à l'ouverture de session et raccourci invisible prévus. **Non fusionné vers develop, recette Windows/Android à faire.** Voir [guide](../operations/reference/REMOTE-PYCHARM-CONTROL-20261123.md).
+Le contrôleur privé Windows et le superviseur de processus PyCharm Run remplacent le déploiement mobile par changement de branche. Le mode Debug n'est plus pris en charge dans cette configuration, et la branche develop est fixe pour les mises à jour. Log live et page de secours disponibles via Tailscale Serve /control ; tâche à l'ouverture de session et raccourci invisible prévus. **Intégré sur develop ; redémarrage simple confirmé, mise à jour à recetter.** Le fast-forward conserve les modifications locales non conflictuelles, refuse les écrasements et expose les erreurs Git, le SHA distant du dernier fetch et le résultat distinct du redémarrage. Voir [guide](../operations/reference/REMOTE-PYCHARM-CONTROL-20261123.md).
 
 # État de develop — fonctionnalités codées
 

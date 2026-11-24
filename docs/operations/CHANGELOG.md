@@ -1,3 +1,9 @@
+## 2026-11-24 — Correction de la mise à jour distante PyCharm
+
+- REC-037 : redémarrage simple confirmé par le propriétaire, mise à jour non effective. Suppression du refus global des modifications locales ; Git fast-forward sans autostash ni écrasement des fichiers ignorés, refus des conflits et des branches divergentes. Fetch explicite de develop, contrôle du SHA réellement lancé, reprise LFS même après un merge antérieur.
+- Superviseur : erreurs Git détaillées et filtrées, commandes non interactives, résultats distincts et logs de contrôle visibles sur Android. Les deux interfaces affichent le SHA distant du dernier fetch. Configuration Run et secrets inchangés.
+- Tests d'intégration Git locaux ajoutés (fichiers locaux conservés, conflit refusé, diagnostic filtré) ; CI et recette Windows/Android à vérifier. Pour charger ce correctif du parent déjà en mémoire, effectuer une mise à jour locale initiale et relancer une fois la session Run PyCharm. Aucun changement de main.
+
 ## 2026-11-24 — Raccordement de la véritable configuration PyCharm « discord & mobile »
 
 - **Diagnostic confirmé par captures du propriétaire :** la configuration effectivement utilisée pointe sur \u0060main.py\u0060 avec les cinq options \u0060--live --discord --discord-voice --voice --mobile\u0060, tandis que le contrôleur ne sait piloter qu'un moteur lancé par le parent persistant. Le symptôme est \u0060pycharm_run_not_available\u0060 (port 8772 absent), même si le contrôleur 8771 est accessible.

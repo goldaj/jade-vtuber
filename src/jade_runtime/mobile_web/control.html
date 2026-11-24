@@ -47,6 +47,9 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:55dvh;overflow:auto;b
       $("status").textContent = state.pycharm_run
         ? "PyCharm : connecté · Jade : " + (state.running ? "active" : "arrêtée")
           + " · État : " + state.phase + " · Commit : " + (state.sha || "inconnu")
+          + (state.target_sha ? " · Distant (dernier fetch) : " + state.target_sha : "")
+          + ({updated:" · Mise à jour réussie", already_current:" · Déjà à jour",
+              restarted:" · Redémarrage seul réussi", failed:" · Opération échouée"}[state.result] || "")
           + (state.error ? " · Erreur : " + state.error : "")
         : "PyCharm Run indisponible. Lance la configuration Run sur ton PC.";
       $("logs").textContent = logs.text || "Pas encore de logs.";

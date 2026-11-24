@@ -14,6 +14,7 @@ import json
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+import re
 from pathlib import Path
 from queue import Empty, Queue
 import subprocess
@@ -37,12 +38,22 @@ class GitRefusal(RuntimeError):
 
 
 def git(root: Path, *args: str, timeout: int = 90) -> str:
-    result = subprocess.run(
-        ["git", "-C", str(root), *args],
-        capture_output=True, text=True, encoding="utf-8", errors="replace",
-        timeout=timeout, check=False)
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="Never")
+    code = "git_" + args[0].replace("-", "_")
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), *args], env=env, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=timeout, check=False)
+    except subprocess.TimeoutExpired:
+        raise GitRefusal(code + "_timeout") from None
+    except OSError:
+        raise GitRefusal(code + "_unavailable") from None
     if result.returncode:
-        raise GitRefusal("git_" + args[0].replace("-", "_") + "_failed")
+        # Never expose credential-bearing remote URLs or raw command arguments.
+        detail = re.sub(r"https?://[^\s'\"<>]+", "[URL distante]", result.stderr or "")
+        detail = redact(detail).strip()[-1800:]
+        raise GitRefusal(code + "_failed" + (": " + detail if detail else ""))
     return result.stdout.strip()
 
 
@@ -50,17 +61,27 @@ def plan_develop_update(root: Path) -> tuple[str, str]:
     """Fetch while Jade is running. Never change branches or discard local data."""
     if git(root, "branch", "--show-current") != "develop":
         raise GitRefusal("wrong_branch_expected_develop")
-    if git(root, "status", "--porcelain"):
-        raise GitRefusal("working_tree_not_clean")
     old = git(root, "rev-parse", "HEAD")
-    git(root, "fetch", "origin", "develop", timeout=180)
-    target = git(root, "rev-parse", "FETCH_HEAD")
+    git(root, "fetch", "origin", "+refs/heads/develop:refs/remotes/origin/develop", timeout=180)
+    target = git(root, "rev-parse", "refs/remotes/origin/develop")
     result = subprocess.run(
         ["git", "-C", str(root), "merge-base", "--is-ancestor", old, target],
         capture_output=True, timeout=20, check=False)
     if result.returncode:
         raise GitRefusal("develop_not_fast_forward")
     return old, target
+
+
+def apply_develop_update(root: Path, before: str, target: str) -> None:
+    """Use Git's own overwrite checks; preserve local edits, never stash/reset."""
+    if (git(root, "branch", "--show-current") != "develop"
+            or git(root, "rev-parse", "HEAD") != before):
+        raise GitRefusal("checkout_changed_before_update")
+    if before != target:
+        git(root, "merge", "--ff-only", "--no-autostash", "--no-overwrite-ignore",
+            target, timeout=180)
+    if git(root, "rev-parse", "HEAD") != target:
+        raise GitRefusal("develop_commit_mismatch")
 
 
 class _WindowsJob:
@@ -144,7 +165,9 @@ class PycharmManager:
         self.commands: Queue[str] = Queue(maxsize=1)
         self.lock = threading.Lock()
         self.state = {"phase": "idle", "error": None, "sha": None,
-                      "branch": "develop", "pid": None}
+                      "branch": "develop", "pid": None, "target_sha": None,
+                      "last_operation": None, "result": None}
+        self.dependencies_pending = False
         self.file_handler = RotatingFileHandler(
             self.log_path, maxBytes=5_000_000, backupCount=2, encoding="utf-8")
         self.file_handler.setFormatter(logging.Formatter("%(message)s"))
@@ -164,9 +187,20 @@ class PycharmManager:
             if self.state["phase"] != "idle" or not self.commands.empty():
                 return False
             # Failed children can be restarted using the same Run configuration.
-            self.state.update(phase="queued", error=None)
+            self.state.update(phase="queued", error=None, result=None,
+                              last_operation=operation)
+            if operation == "update":
+                self.state["target_sha"] = None
             self.commands.put_nowait(operation)
         return True
+
+    def _control_log(self, message: str, *, error: bool = False) -> None:
+        line = "[Jade Control] " + ("ERROR " if error else "") + redact(message)
+        print(line, flush=True)
+        record = logging.LogRecord("jade.pycharm.console", logging.ERROR if error else logging.INFO,
+                                   "", 0, line, (), None)
+        with self.lock:
+            self.file_handler.handle(record)
 
     def _tee(self, process: subprocess.Popen) -> None:
         if process.stdout is None:
@@ -251,29 +285,28 @@ class PycharmManager:
             self.state["error"] = None
         before = target = None
         try:
-            changed_dependencies = False
+            changed_dependencies = self.dependencies_pending
             if operation == "update":
                 before, target = plan_develop_update(self.root)
+                with self.lock:
+                    self.state["target_sha"] = target
+                self._control_log("Git local " + before[:12] + " / distant " + target[:12])
                 if before != target:
-                    changed_dependencies = bool(git(
+                    changed_dependencies = changed_dependencies or bool(git(
                         self.root, "diff", "--name-only", before, target, "--",
                         "pyproject.toml", "poetry.lock"))
             with self.lock:
                 self.state["phase"] = "stopping"
             self._stop_child()
-            if operation == "update" and before != target:
+            if operation == "update":
                 with self.lock:
                     self.state["phase"] = "updating"
-                if (git(self.root, "branch", "--show-current") != "develop"
-                        or git(self.root, "rev-parse", "HEAD") != before
-                        or git(self.root, "status", "--porcelain")):
-                    raise GitRefusal("checkout_changed_before_update")
-                # Merge the vetted commit, never a mutable FETCH_HEAD from another fetch.
-                git(self.root, "merge", "--ff-only", target, timeout=180)
-                # LFS data is fetched only for the checked-out develop commit.
+                apply_develop_update(self.root, before, target)
+                self.dependencies_pending = changed_dependencies
+                # Retry LFS even when a previous update advanced HEAD before failing.
                 git(self.root, "lfs", "pull", timeout=180)
                 if changed_dependencies:
-                    print("[Jade Control] Dépendances modifiées : synchronisation Poetry.", flush=True)
+                    self._control_log("Dépendances modifiées : synchronisation Poetry.")
                     if sys.prefix == sys.base_prefix:
                         raise RuntimeError("pycharm_python_virtualenv_required")
                     # Poetry must update the exact venv used by the PyCharm Run parent.
@@ -286,18 +319,27 @@ class PycharmManager:
                         text=True, encoding="utf-8", errors="replace",
                         timeout=600, check=False)
                     if install.returncode:
-                        print("[Jade Control] Poetry : " +
-                              redact((install.stdout or "")[-3000:]), flush=True)
+                        self._control_log("Poetry : " +
+                                          redact((install.stdout or "")[-1800:]), error=True)
                         raise RuntimeError("poetry_sync_failed")
+                    self.dependencies_pending = False
             with self.lock:
                 self.state["phase"] = "starting"
             self._start_child()
             self._wait_ready()
-            print("[Jade Control] " + ("Mise à jour et redémarrage" if operation == "update"
-                                      else "Redémarrage") + " terminés.", flush=True)
+            if operation == "update" and self.status()["sha"] != target:
+                raise GitRefusal("develop_commit_mismatch")
+            outcome = ("already_current" if before == target else "updated") if operation == "update" else "restarted"
+            with self.lock:
+                self.state["result"] = outcome
+            self._control_log({
+                "updated": "Mise à jour et redémarrage terminés.",
+                "already_current": "Develop était déjà à jour ; redémarrage terminé.",
+                "restarted": "Redémarrage sans mise à jour terminé.",
+            }[outcome])
         except Exception as exc:
             message = str(exc) if isinstance(exc, (GitRefusal, RuntimeError)) else type(exc).__name__
-            print("[Jade Control] Échec : " + message, flush=True)
+            self._control_log("Échec : " + message, error=True)
             # On a preflight/fetch failure, the original runtime was never stopped.
             if self.child is None or self.child.poll() is not None:
                 try:
@@ -306,6 +348,7 @@ class PycharmManager:
                     pass
             with self.lock:
                 self.state["error"] = message
+                self.state["result"] = "failed"
         finally:
             with self.lock:
                 self.state["phase"] = "idle"
