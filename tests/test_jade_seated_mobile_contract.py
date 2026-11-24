@@ -23,6 +23,17 @@ class SeatedMobileContract(unittest.TestCase):
         self.assertIn('container-type:size', css)
         self.assertIn('[data-seated-compositor="true"] .portrait-seated-body{display:none}', css)
 
+    def test_windowed_bedroom_camera_keeps_jade_size(self):
+        css = (WEB / "jade-theme.css").read_text(encoding="utf-8")
+        self.assertIn('transform:translateY(calc(-1 * var(--seated-home-lift))) scale(1.25);', css)
+        self.assertIn('transform-origin:center center;', css)
+        self.assertIn('.portrait-bedroom{', css)
+        self.assertIn('.shell[data-view="home"]:not(.is-room-only)', css)
+        # The portrait background gets the new camera transform, not Jade.
+        self.assertIn('] #avatar-container,', css)
+        self.assertIn('transform:translateY(calc(-1 * var(--seated-home-lift)));', css)
+        self.assertIn('@media(max-width:819px) and (orientation:portrait)', css)
+
     def test_feature_only_activates_with_both_images(self):
         scene = (WEB / "seated-scene.js").read_text(encoding="utf-8")
         guard = (WEB / "login-guard.js").read_text(encoding="utf-8")
