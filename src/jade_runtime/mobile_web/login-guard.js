@@ -69,6 +69,7 @@
         "/assets/duplex-client.js",
         "/assets/room-motion.js",
         "/assets/seated-scene.js",
+        "/assets/portrait-bedroom-motion.js",
         "/assets/head-isolation.js",
         "/vendor/pixi.min.js",
         "/vendor/pixi-unsafe-eval.min.js",

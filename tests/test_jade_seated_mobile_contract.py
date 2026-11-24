@@ -80,10 +80,24 @@ class SeatedMobileContract(unittest.TestCase):
         self.assertNotIn('data-seated-compositor="false"] .avatar-frame::before', css)
         self.assertIn('clip-path:none', css)
 
+    def test_portrait_motion_has_its_own_layer_and_camera(self):
+        html = (WEB / "salon.html").read_text(encoding="utf-8")
+        css = (WEB / "jade-theme.css").read_text(encoding="utf-8")
+        guard = (WEB / "login-guard.js").read_text(encoding="utf-8")
+        self.assertLess(html.index('id="portrait-bedroom"'),
+                        html.index('id="portrait-bedroom-motion"'))
+        self.assertLess(html.index('id="portrait-bedroom-motion"'),
+                        html.index('id="portrait-seated-body"'))
+        self.assertIn('z-index:1;pointer-events:none', css)
+        self.assertIn('.portrait-bedroom-motion[hidden]{display:none!important}', css)
+        self.assertIn('.portrait-bedroom-motion{\\n    transform:translateY(calc(-1 * var(--seated-home-lift))) scale(1.25);', css)
+        self.assertIn('"/assets/portrait-bedroom-motion.js"', guard)
+
     def test_new_media_paths_are_whitelisted(self):
         gateway = (ROOT / "src" / "jade_runtime" / "mobile_gateway.py").read_text(
             encoding="utf-8")
         for path in ("/assets/seated-scene.js",
+                     "/assets/portrait-bedroom-motion.js",
                      "/assets/room-bedroom-portrait.avif",
                      "/assets/jade-seated-body.avif"):
             self.assertIn(path, gateway)

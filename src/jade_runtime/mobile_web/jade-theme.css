@@ -291,7 +291,7 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
  * Historical kitchen rendering and old bedroom fallback remain unchanged. */
 .avatar-frame{position:absolute;inset:0;z-index:2;pointer-events:none}
 .avatar-frame #avatar-container{z-index:3}
-.portrait-bedroom,.portrait-seated-body{display:none}
+.portrait-bedroom,.portrait-bedroom-motion,.portrait-seated-body{display:none}
 .room[data-room="bedroom"][data-seated-ready="true"]{
   container-type:size; /* cqw / cqh must refer to the room, not the viewport */
   background:#aa7b8f url("/assets/room-bedroom-portrait.avif") center / cover no-repeat;
@@ -310,6 +310,12 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .room[data-room="bedroom"][data-seated-ready="true"] .portrait-bedroom{
   display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:fill;
 }
+.room[data-room="bedroom"][data-seated-ready="true"] .portrait-bedroom-motion{
+  display:block;position:absolute;inset:0;width:100%;height:100%;
+  z-index:1;pointer-events:none;
+}
+.portrait-bedroom-motion[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.portrait-bedroom-motion{display:none!important}}
 .room[data-room="bedroom"][data-seated-ready="true"] .portrait-seated-body{
   display:block;position:absolute;
   left:12.7524%;top:var(--seated-body-top,40.6699%);width:71.2009%;height:var(--seated-body-height,56.2201%);
@@ -334,7 +340,8 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
  * Only the bedroom artwork is reframed; do not scale Jade, her seated AVIF,
  * the Live2D head, the kitchen, or immersive fullscreen rendering. */
 @media(max-width:819px) and (orientation:portrait){
-  .shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"][data-seated-ready="true"] .portrait-bedroom{
+  .shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"][data-seated-ready="true"] .portrait-bedroom,
+  .shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"][data-seated-ready="true"] .portrait-bedroom-motion{
     transform:translateY(calc(-1 * var(--seated-home-lift))) scale(1.25);
     transform-origin:center center;
   }
