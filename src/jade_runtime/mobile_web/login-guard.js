@@ -78,7 +78,14 @@
         "/assets/avatar.js",
       ]) {
         try { await loadScript(url); }
-        catch (_) { /* Chat remains usable without the visual/voice enhancement. */ }
+        catch (error) {
+          /* Chat remains usable without the visual/voice enhancement. */
+          if(url==="/assets/portrait-bedroom-motion.js"){
+            const status=document.getElementById("portrait-motion-status");
+            if(status)status.textContent="Module des animations indisponible.";
+            console.warn("Portrait bedroom animation module unavailable:",error);
+          }
+        }
       }
     })();
   }

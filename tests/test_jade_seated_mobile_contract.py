@@ -92,6 +92,8 @@ class SeatedMobileContract(unittest.TestCase):
         self.assertIn('.portrait-bedroom-motion[hidden]{display:none!important}', css)
         self.assertIn('.portrait-bedroom-motion{\n    transform:translateY(calc(-1 * var(--seated-home-lift))) scale(1.25);', css)
         self.assertIn('"/assets/portrait-bedroom-motion.js"', guard)
+        self.assertIn('id="portrait-motion-enabled" checked', html)
+        self.assertNotIn('@media(prefers-reduced-motion:reduce){.portrait-bedroom-motion{display:none!important}}', css)
 
     def test_new_media_paths_are_whitelisted(self):
         gateway = (ROOT / "src" / "jade_runtime" / "mobile_gateway.py").read_text(

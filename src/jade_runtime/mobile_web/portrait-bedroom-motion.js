@@ -6,6 +6,7 @@
 "use strict";
 (() => {
   const W = 864, H = 1536, FRAME_MS = 1000 / 24;
+  const AMPLITUDE = Object.freeze({curtain:18, flutter:5, lightX:21, lightY:12, branchX:10, branchY:5});
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const smooth = (a,b,v) => {const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t);};
   const point = ([x,y]) => [W/2+(x-345.5)*H/1525,y*H/1525];
@@ -13,8 +14,8 @@
   // Each polygon is wholly inside one material/surface. Never span a beam,
   // the curtain rail, a mullion, a window ledge, or the furniture.
   const curtainRegions = [
-    poly([[446,330],[460,324],[495,309],[515,305],[514,383],[504,436],[486,474],[446,456],[432,420]]),
-    poly([[447,739],[489,746],[500,850],[493,876],[470,883],[443,879],[436,853]])
+    poly([[441,339],[460,324],[495,309],[515,305],[516,391],[510,455],[501,489],[468,487],[432,443]]),
+    poly([[440,754],[487,748],[498,819],[500,866],[492,880],[468,884],[439,875],[434,851]])
   ];
   const blossomRegions = [
     poly([[548,370],[563,337],[595,310],[599,348]]),
@@ -56,8 +57,8 @@
   }
   function curtainOffset(y,t,wind=windAt(t)) {
     // Folds flutter more toward the bottom; the attachment stays fixed.
-    const pin=smooth(308,445,y);
-    return pin===0?0:pin*(6.5*wind+2.1*Math.sin(1.48*t-y*.018));
+    const pin=smooth(308,410,y);
+    return pin===0?0:pin*(AMPLITUDE.curtain*wind+AMPLITUDE.flutter*Math.sin(1.32*t-y*.018));
   }
   function lightAlpha(r,g,b) {
     return smooth(144,187,g)*smooth(193,236,r)*smooth(7,24,g-b)*
@@ -72,17 +73,17 @@
   function fabricAlpha(r,g,b) {
     return smooth(94,134,b)*smooth(100,146,g)*(1-smooth(90,120,r-b));
   }
-  function shouldRun(ready,bedroom,visible,hidden,reduced) {
-    return Boolean(ready&&bedroom&&visible&&!hidden&&!reduced);
+  function shouldRun(ready,bedroom,visible,hidden,enabled) {
+    return Boolean(ready&&bedroom&&visible&&!hidden&&enabled);
   }
   function birdProgress(t) {
     // Occasional small flock, not a constant procession across the window.
-    const phase=t%31;
-    return phase>=6&&phase<=11.5?(phase-6)/5.5:-1;
+    const phase=t%19;
+    return phase>=1.5&&phase<=6.5?(phase-1.5)/5:-1;
   }
   if(typeof module!=="undefined"&&module.exports){
     module.exports={W,H,curtainRegions,blossomRegions,lightRegions,birdRegion,
-      inside,maskAlpha,windAt,curtainOffset,lightAlpha,branchAlpha,fabricAlpha,shouldRun,birdProgress};
+      inside,maskAlpha,windAt,curtainOffset,lightAlpha,branchAlpha,fabricAlpha,shouldRun,birdProgress,AMPLITUDE};
     return;
   }
   const room=document.querySelector(".room");
@@ -90,9 +91,26 @@
   const canvas=document.getElementById("portrait-bedroom-motion");
   if(!room||!backdrop||!canvas)return;
   const preference=matchMedia("(prefers-reduced-motion: reduce)");
+  // Owner explicitly enables this decorative scene. OS reduced motion uses
+  // a gentler preset instead of silently disabling all five effects.
+  const toggle=document.getElementById("portrait-motion-enabled");
+  const status=document.getElementById("portrait-motion-status");
+  function report(state,message) {
+    room.dataset.portraitMotion=state;
+    if(status&&status.textContent!==message)status.textContent=message;
+  }
   const output=canvas.getContext("2d");
-  if(!output)return;
-  let prepared=null,failed=false,visible=true,frame=null,elapsed=0,last=null,lastPaint=-Infinity;
+  if(!output){report("unavailable","Animations indisponibles sur ce navigateur.");return;}
+  let prepared=null,visible=true,frame=null,elapsed=0,last=null,lastPaint=-Infinity;
+  const disabledEffects=new Set();
+  function safeEffect(name,fn) {
+    if(disabledEffects.has(name))return;
+    try{fn();}catch(error){
+      disabledEffects.add(name);
+      console.warn("Portrait bedroom effect failed:",name,error);
+      report("partial","Animations actives, effet indisponible : "+name+".");
+    }
+  }
   function surface(w,h) {
     const c=document.createElement("canvas");c.width=w;c.height=h;return c;
   }
@@ -111,7 +129,11 @@
       coverage[n]=a;mi.data[k+3]=Math.round(a*255);
     }
     mc.putImageData(mi,0,0);
-    return {x,y,w,h,data,mask,coverage,work:surface(w,h)};
+    const texture=surface(w,h),tc=texture.getContext("2d");
+    tc.putImageData(data,0,0);
+    tc.globalCompositeOperation="destination-in";tc.drawImage(mask,0,0);
+    tc.globalCompositeOperation="source-over";
+    return {x,y,w,h,data,mask,coverage,texture,work:surface(w,h)};
   }
   // Separate the painted feature from its local background once. Fill only
   // the selected feature pixels using nearest same-pane/ceiling base colors.
@@ -159,17 +181,28 @@
     return {...q,clean,fg};
   }
   function prepare() {
-    if(prepared||failed||!backdrop.complete||!backdrop.naturalWidth)return;
-    if(backdrop.naturalWidth!==W||backdrop.naturalHeight!==H){failed=true;return;}
+    if(prepared||!backdrop.complete||!backdrop.naturalWidth)return;
+    // Particles and birds do not depend on image segmentation. Even if
+    // pixel sampling fails, keep the other effects visibly running.
+    prepared={curtains:[],lights:[],branches:[],pixelFallback:false};
+    if(Math.abs(backdrop.naturalWidth/backdrop.naturalHeight-W/H)>.004){
+      prepared.pixelFallback=true;return;
+    }
     try{
       const source=surface(W,H);
       source.getContext("2d",{willReadFrequently:true}).drawImage(backdrop,0,0,W,H);
-      prepared={source,
-        curtains:curtainRegions.map(p=>region(source,p,10,fabricAlpha)),
-        lights:lightRegions.map(p=>separate(source,p,lightAlpha,12)).filter(Boolean),
-        branches:blossomRegions.map(p=>separate(source,p,branchAlpha,7)).filter(Boolean)};
+      const collect=(list,name,fn)=>list.map((p,i)=>{
+        try{return fn(p);}catch(error){console.warn("Portrait mask unavailable:",name,i,error);return null;}
+      }).filter(Boolean);
+      prepared.curtains=collect(curtainRegions,"rideau",p=>region(source,p,9,fabricAlpha));
+      // Never discard a whole animation when extraction finds too little sky
+      // or wall. A material-only mask supports a safe luminous fallback.
+      prepared.lights=collect(lightRegions,"lumière",p=>separate(source,p,lightAlpha,10)||
+        region(source,p,10,lightAlpha));
+      prepared.branches=collect(blossomRegions,"branches",p=>separate(source,p,branchAlpha,6)||
+        region(source,p,6,branchAlpha));
     }catch(error){
-      failed=true;console.warn("Portrait bedroom motion unavailable:",error);
+      prepared.pixelFallback=true;console.warn("Portrait pixel extraction unavailable:",error);
     }
   }
   function composite(q,draw) {
@@ -182,40 +215,67 @@
   }
   function paintCurtain(q,t,wind) {
     composite(q,c=>{
-      // Small strips sample only the cloth interior; soft mask hides edges.
-      // Never sample or translate the whole backdrop or its silhouette.
-      const pad=10;
+      // Both the source and destination are masked. Translating a strip
+      // cannot pull in pixels of the wall, window frame or furniture.
+      c.drawImage(q.texture,0,0);
       for(let j=0;j<q.h;j+=4){
         const dy=Math.min(4,q.h-j),dx=curtainOffset(q.y+j,t,wind);
-        const sx=clamp(q.x-dx,0,W-q.w);
-        c.drawImage(prepared.source,sx,q.y+j,q.w,dy,0,j,q.w,dy);
+        c.drawImage(q.texture,0,j,q.w,dy,dx,j,q.w,dy);
       }
-      // A faint changing fold highlight is contained by the same fabric mask.
       c.globalCompositeOperation="source-atop";
-      c.fillStyle="rgba(255,231,211,"+(.025+.025*(wind+1)/2)+")";
-      c.fillRect(pad,0,Math.max(0,q.w-2*pad),q.h);
+      const shade=.07+.11*(.5+.5*Math.sin(t*.9+q.y*.01));
+      c.fillStyle="rgba(255,229,205,"+shade+")";
+      c.fillRect(0,0,q.w,q.h);
       c.globalCompositeOperation="source-over";
     });
   }
-  function paintFeature(q,dx,dy,opacity) {
+  function paintFeature(q,dx,dy,opacity,glow) {
     composite(q,c=>{
-      c.drawImage(q.clean,0,0);
-      c.globalAlpha=opacity;c.drawImage(q.fg,dx,dy);c.globalAlpha=1;
+      if(q.clean&&q.fg){
+        c.drawImage(q.clean,0,0);
+        c.globalAlpha=opacity;c.drawImage(q.fg,dx,dy);c.globalAlpha=1;
+      }else{
+        // The fallback only moves isolated texture, never the source plane.
+        c.globalAlpha=.72;c.drawImage(q.texture,dx,dy);c.globalAlpha=1;
+      }
+      if(glow>0){
+        c.globalCompositeOperation="source-atop";
+        c.fillStyle="rgba(255,225,177,"+glow+")";
+        c.fillRect(0,0,q.w,q.h);
+        c.globalCompositeOperation="source-over";
+      }
     });
+  }
+  function paintAmbientLight(t,wind) {
+    // Small, soft pools of light on wall/ceiling only. Independent of pixel
+    // extraction: the visible light pulses even when the motif mask is empty.
+    for(let i=0;i<lightRegions.length;i++){
+      const p=lightRegions[i],center=p.reduce((a,b)=>[a[0]+b[0]/p.length,a[1]+b[1]/p.length],[0,0]);
+      const x=center[0]+26*wind+9*Math.sin(t*.51+i);
+      const y=center[1]+13*wind;
+      output.save();output.beginPath();
+      p.forEach(([px,py],j)=>j?output.lineTo(px,py):output.moveTo(px,py));
+      output.closePath();output.clip();
+      const g=output.createRadialGradient(x,y,0,x,y,65+i*8);
+      const a=.05+.14*(.5+.5*Math.sin(t*.83+i*.9));
+      g.addColorStop(0,"rgba(255,225,154,"+a+")");g.addColorStop(1,"rgba(255,225,154,0)");
+      output.fillStyle=g;output.fillRect(0,0,W,H);output.restore();
+    }
   }
   // Fixed, deterministic particles: no object allocation per frame and no
   // reset/teleport while visible. Interior dust is behind the avatar.
-  const dust=Array.from({length:18},(_,i)=>({
-    x:point([170+(i*97%470),0])[0],
-    y:point([0,290+(i*131%640)])[1],
-    radius:.8+(i*13%17)/10,phase:i*2.39996
+  const dust=Array.from({length:28},(_,i)=>({
+    x:point([25+(i*97%635),0])[0],
+    // Keep many particles in the unoccluded upper part of the scene.
+    y:point([0,i<18?75+(i*131%285):365+(i*131%520)])[1],
+    radius:1.3+(i*13%21)/10,phase:i*2.39996
   }));
   function paintDust(t,wind) {
     for(const d of dust){
-      const x=d.x+18*Math.sin(.19*t+d.phase)+7*wind;
-      const y=d.y+23*Math.sin(.13*t+d.phase*.73);
-      const a=.12+.56*Math.pow(.5+.5*Math.sin(.62*t+d.phase),2);
-      output.beginPath();output.fillStyle="rgba(255,244,202,"+a*.23+")";
+      const x=d.x+34*Math.sin(.27*t+d.phase)+14*wind;
+      const y=d.y+40*Math.sin(.22*t+d.phase*.73);
+      const a=.25+.65*Math.pow(.5+.5*Math.sin(.68*t+d.phase),2);
+      output.beginPath();output.fillStyle="rgba(255,244,202,"+a*.34+")";
       output.arc(x,y,d.radius*2.1,0,Math.PI*2);output.fill();
       output.beginPath();output.fillStyle="rgba(255,249,221,"+a+")";
       output.arc(x,y,d.radius,0,Math.PI*2);output.fill();
@@ -227,12 +287,12 @@
     output.save();output.beginPath();
     birdRegion.forEach(([x,y],i)=>i?output.lineTo(x,y):output.moveTo(x,y));
     output.closePath();output.clip();
-    output.strokeStyle="rgba(48,73,81,.82)";output.lineWidth=1.4;output.lineCap="round";
-    const start=point([545,531]),end=point([670,502]);
+    output.strokeStyle="rgba(48,73,81,.82)";output.lineWidth=2.0;output.lineCap="round";
+    const start=point([542,534]),end=point([690,490]);
     for(let i=0;i<3;i++){
       const x=start[0]+(end[0]-start[0])*p-i*12;
       const y=start[1]+(end[1]-start[1])*p+7*Math.sin(i*2)+3*Math.sin(t*1.5+i);
-      const wing=2.8+2.1*Math.sin(t*11+i*1.5),span=4.5-i*.6;
+      const wing=4.0+3.2*Math.sin(t*10+i*1.5),span=7.2-i*.8;
       output.beginPath();output.moveTo(x-span,y-wing);
       output.quadraticCurveTo(x-span*.5,y-wing*.25,x,y);
       output.quadraticCurveTo(x+span*.5,y-wing*.25,x+span,y-wing);
@@ -242,21 +302,25 @@
   }
   function render(t) {
     output.clearRect(0,0,W,H);
-    const wind=windAt(t);
-    prepared.curtains.forEach(q=>paintCurtain(q,t,wind));
-    prepared.lights.forEach((q,i)=>paintFeature(q,6.5*wind+2*Math.sin(t*.31+i),
-      3.8*wind+1.3*Math.sin(t*.26+i),.91+.09*Math.sin(t*.48+i)));
-    prepared.branches.forEach((q,i)=>paintFeature(q,4.6*wind+1.1*Math.sin(t*.94+i*.23),
-      2.3*wind+1.1*Math.sin(t*.73+i*.29),1));
-    paintBirds(t);paintDust(t,wind);
+    const wind=windAt(t)*(preference.matches?.76:1);
+    safeEffect("rideau",()=>prepared.curtains.forEach(q=>paintCurtain(q,t,wind)));
+    safeEffect("projections",()=>prepared.lights.forEach((q,i)=>paintFeature(q,
+      AMPLITUDE.lightX*wind+5*Math.sin(t*.49+i),
+      AMPLITUDE.lightY*wind+3*Math.sin(t*.38+i),.74+.25*Math.sin(t*.62+i),0)));
+    safeEffect("lumière",()=>paintAmbientLight(t,wind));
+    safeEffect("branches",()=>prepared.branches.forEach((q,i)=>paintFeature(q,
+      AMPLITUDE.branchX*wind+2.5*Math.sin(t*.94+i*.23),
+      AMPLITUDE.branchY*wind+1.8*Math.sin(t*.73+i*.29),1,0)));
+    safeEffect("oiseaux",()=>paintBirds(t));
+    safeEffect("poussières",()=>paintDust(t,wind));
   }
   function tick(now) {
     frame=null;
-    if(last!==null)elapsed+=Math.min(100,Math.max(0,now-last));
+    if(last!==null)elapsed+=Math.min(250,Math.max(0,now-last));
     last=now;
     if(now-lastPaint>=FRAME_MS-.5){
       try{render(elapsed/1000);lastPaint=now;}
-      catch(error){failed=true;stop();console.warn("Portrait motion stopped:",error);return;}
+      catch(error){stop();report("unavailable","Rendu des animations indisponible.");console.warn("Portrait motion stopped:",error);return;}
     }
     frame=requestAnimationFrame(tick);
   }
@@ -265,14 +329,20 @@
     frame=null;last=null;lastPaint=-Infinity;canvas.hidden=true;
   }
   function sync() {
+    const enabled=toggle?toggle.checked:true;
     const running=shouldRun(room.dataset.seatedReady==="true",room.dataset.room==="bedroom",
-      visible,document.hidden,preference.matches);
-    if(!running||failed){stop();return;}
+      visible,document.hidden,enabled);
+    if(!running){stop();report("paused",enabled?"Animations en pause hors chambre ou hors écran.":"Animations désactivées.");return;}
     prepare();
-    if(!prepared){stop();return;}
+    if(!prepared){stop();report("loading","Chargement des animations…");return;}
     canvas.hidden=false;
+    const counts=prepared.curtains.length+prepared.lights.length+prepared.branches.length;
+    const partial=prepared.pixelFallback||disabledEffects.size>0||counts<3;
+    report(partial?"partial":"active",partial?"Animations actives, certains calques indisponibles.":
+      preference.matches?"Animations actives (mouvements adoucis).":"Animations de la chambre actives.");
     if(frame===null)frame=requestAnimationFrame(tick);
   }
+  toggle?.addEventListener("change",sync);
   room.addEventListener("jade-room-changed",sync);
   room.addEventListener("jade-seated-ready",sync);
   backdrop.addEventListener("load",sync);

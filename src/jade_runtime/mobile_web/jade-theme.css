@@ -317,7 +317,11 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
   z-index:1;pointer-events:none;
 }
 .portrait-bedroom-motion[hidden]{display:none!important}
-@media(prefers-reduced-motion:reduce){.portrait-bedroom-motion{display:none!important}}
+/* The explicitly enabled bedroom setting owns its animation lifecycle.
+ * OS reduced motion is handled by the gentler canvas preset. */
+.profile-intro .portrait-motion-choice{display:flex;align-items:center;gap:8px;margin-top:12px;color:#285639}
+.profile-intro .portrait-motion-choice input{accent-color:#2f5d45;width:18px;height:18px}
+#portrait-motion-status{font-size:.78rem;margin:3px 0 0}
 .room[data-room="bedroom"][data-seated-ready="true"] .portrait-seated-body{
   display:block;position:absolute;
   left:12.7524%;top:var(--seated-body-top,40.6699%);width:71.2009%;height:var(--seated-body-height,56.2201%);
