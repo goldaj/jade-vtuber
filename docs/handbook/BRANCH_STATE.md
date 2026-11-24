@@ -19,7 +19,7 @@ Le contrôleur privé Windows et le superviseur de processus PyCharm Run remplac
 ## PWA · Nouvelle DA Jade inspirée de la robe (22/11/2026)
 
 - **Maquette propriétaire retenue :** dernier concept botanique avec Jade visible dans sa chambre, icône florale aux deux fleurs, vert sauge / vert profond / blanc crème / jaune doux. Nouveau thème CSS séparé de la scène Live2D et des animations.
-- **Navigation mobile (révision 22/11) :** quatre onglets : Accueil avec scène et saisie sans rappels, Chat, Rappels (liste visible, formulaire de création replié, radios pour le push Android), Profil (boutons de redémarrage mieux séparés). Activités supprimé. L'icône florale SVG est rétablie dans l'en-tête. Le plein écran montre seulement Jade et sa chambre avec le bouton de sortie, et conserve le modèle Live2D monté ; repli immersif CSS si Fullscreen API indisponible.
+- **Navigation mobile (révision 22/11) :** quatre onglets : Accueil avec scène et saisie sans rappels, Chat, Rappels (liste visible, formulaire de création replié, radios pour le push Android), Profil (boutons de redémarrage mieux séparés). Activités supprimé. L'icône florale SVG est rétablie dans l'en-tête. Le plein écran montre Jade et son décor, le bouton de sortie et le microphone centré en bas (même contrôle vocal, état et préférence audio conservés), et conserve le modèle Live2D monté ; repli immersif CSS si Fullscreen API indisponible.
 - **Portée :** UI de la PWA mobile et icônes installables ; pas de changement des fonctionnalités Discord ou du modèle Live2D ni des images de décor existantes. Validation physique Android et rendu dépendant de la licence SDK restent à recetter.
 
 ## DEV-036 · Rappels persistants et notifications Web Push Android (22/11/2026)
