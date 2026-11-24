@@ -277,9 +277,10 @@
       // These values come from the image crop, not device-specific pixels.
       const sprite = seatedComposition?.body;
       if (sprite) {
-        sprite.position.set(width * .127524, height * .406699);
+        const layout = window.JadeSeatedScene?.layout ?? {top: .406699, height: .562201};
+        sprite.position.set(width * .127524, height * layout.top);
         sprite.width = width * .712009;
-        sprite.height = height * .562201;
+        sprite.height = height * layout.height;
       }
       const headScale = 1.30;
       model.scale.set(Math.max(.05, scale * headScale));

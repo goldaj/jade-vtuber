@@ -312,7 +312,7 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 }
 .room[data-room="bedroom"][data-seated-ready="true"] .portrait-seated-body{
   display:block;position:absolute;
-  left:12.7524%;top:40.6699%;width:71.2009%;height:56.2201%;
+  left:12.7524%;top:var(--seated-body-top,40.6699%);width:71.2009%;height:var(--seated-body-height,56.2201%);
   object-fit:fill;z-index:2;
 }
 /* No hard CSS face polygon. The r20 standing body is hidden using real
