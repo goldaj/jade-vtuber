@@ -1,3 +1,9 @@
+## 2026-11-25 — Reprise visuelle de Jade et candidat natif v36
+
+- Après rejet du v34, reprise des grandes découpes depuis le dessin maître et passage de la recette à l’export Cubism SDK 5.0.
+- Le v36 est observé plein pied dans VTube Studio. Les poses et les sorties de mouvement ont été vérifiées sur le même paquet natif. Les passages fins au col et aux cils restent ouverts.
+- [État de reprise](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
 ## 2026-11-25 — Premier chargement r21 et candidats de finition
 
 - Le premier r21 plein pied a été chargé dans VTube Studio 1.35.10. Le v33 réunit des retouches de l’ourlet, des mains, de la transparence au nez et d’une partie des cheveux arrière.
