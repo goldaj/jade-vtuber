@@ -1,3 +1,8 @@
+## 2026-11-25 — Portrait et clignement de Jade v38
+
+- Le v38 relie le cou au mouvement de tête, rétablit la matière derrière les épaules et corrige les contours qui suivaient les mèches. Le cil masque progressivement l’iris et rejoint le dessin de l’œil fermé. Les avis croisés ont conduit à reprendre le fondu des cils et les sous-peintures avant d’accepter ces éléments sur l’export natif.
+- [État de reprise](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
 ## 2026-11-25 — Centrage de la bouche de Jade v37
 
 - Le v37 corrige le décalage entre le centre du visage et la bouche relevé sur le v36. Comparé au dessin maître sur cinq poses, le centrage du paquet natif présente un écart maximal de 1,79 px. VTube Studio charge le modèle et répond aux commandes de fermeture et d’ouverture.
