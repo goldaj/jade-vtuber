@@ -4,19 +4,59 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from contextlib import asynccontextmanager, closing
 import math
+import os
 from pathlib import Path
+import sqlite3
+import tempfile
+from uuid import uuid4
 
 
 NAMES = ("Smile", "Sad")
-MODEL_NAMES = ("Jade_r21_v39", "Jade_r21_v40", "Jade_r21_v41", "Jade_r21_v42")
+MODEL_NAMES = ("Jade_r21_v39", "Jade_r21_v40", "Jade_r21_v41", "Jade_r21_v42", "Jade_r21_v43")
+_STATE_DIR = Path(r"D:\Codex\tmp") if os.name == "nt" and Path("D:/Codex").is_dir() else Path(tempfile.gettempdir())
+_STATE_DB = _STATE_DIR / "jade-vts-expression-holds.sqlite3"
 
-async def set_emotion(client, state, *, model_id):
-    """Switch through enabled model hotkeys, preserving independent user expressions."""
+
+@asynccontextmanager
+async def _ordered_commands():
+    """Serialize short VTS changes from the speech player and separate CLI processes."""
+    _STATE_DB.parent.mkdir(parents=True, exist_ok=True)
+    with closing(sqlite3.connect(_STATE_DB, isolation_level=None, timeout=0)) as db:
+        deadline = asyncio.get_running_loop().time() + 6
+        while True:
+            try:
+                db.execute("BEGIN IMMEDIATE")
+                break
+            except sqlite3.OperationalError as exc:
+                if exc.sqlite_errorcode != sqlite3.SQLITE_BUSY or asyncio.get_running_loop().time() >= deadline:
+                    raise
+                await asyncio.sleep(0.02)
+        db.execute("CREATE TABLE IF NOT EXISTS holds (model TEXT PRIMARY KEY, owner TEXT NOT NULL)")
+        try:
+            yield db
+        finally:
+            # Once a new command started sending events, a stale timer must
+            # never undo it, even if the acknowledgement was lost.
+            db.commit()
+
+
+async def set_emotion(client, state, *, model_id, owner=None):
+    """Apply a state and return its hold ID. A newer command supersedes its timer."""
     if state not in (*NAMES, "Neutral"):
         raise ValueError(f"Unknown Jade expression {state}")
+    owner = owner or uuid4().hex
+    async with _ordered_commands() as db:
+        db.execute("INSERT OR REPLACE INTO holds (model, owner) VALUES (?, ?)", (model_id, owner))
+        await _switch(client, state, model_id)
+    return owner
+
+
+async def _switch(client, state, model_id):
+    """Use model hotkeys so an expression survives its requesting CLI's disconnection."""
     target = f"{state}.exp3.json" if state != "Neutral" else None
-    result = await client.request("ExpressionStateRequest")
+    result = await client.request("ExpressionStateRequest", {"details": False})
     current = result["data"]
     if not current.get("modelLoaded") or current.get("modelID") != model_id:
         raise RuntimeError("The expected Jade model is not active")
@@ -44,7 +84,7 @@ async def set_emotion(client, state, *, model_id):
     expected = {target} if target else set()
     managed = {f"{name}.exp3.json" for name in NAMES}
     for _ in range(20):
-        current = (await client.request("ExpressionStateRequest"))["data"]
+        current = (await client.request("ExpressionStateRequest", {"details": False}))["data"]
         if current.get("modelID") != model_id:
             raise RuntimeError("The active VTube Studio model changed")
         active = {row["file"] for row in current["expressions"] if row["active"]}
@@ -54,13 +94,19 @@ async def set_emotion(client, state, *, model_id):
     raise RuntimeError(f"VTube Studio did not reach the requested expression {state}")
 
 
-async def release(client, filename, model_id):
-    """End only our timed hold, preserving later choices and model changes."""
-    state = (await client.request("ExpressionStateRequest"))["data"]
-    if not state.get("modelLoaded") or state.get("modelID") != model_id:
-        return
-    if any(row["file"] == filename and row["active"] for row in state["expressions"]):
-        await client.request("ExpressionActivationRequest", {"expressionFile": filename, "active": False})
+async def release(client, filename, model_id, *, owner=None):
+    """End the matching hold even if the same smile was requested again later."""
+    async with _ordered_commands() as db:
+        if owner is not None:
+            current = db.execute("SELECT owner FROM holds WHERE model = ?", (model_id,)).fetchone()
+            if current != (owner,):
+                return
+        state = (await client.request("ExpressionStateRequest", {"details": False}))["data"]
+        if state.get("modelLoaded") and state.get("modelID") == model_id:
+            if any(row["file"] == filename and row["active"] for row in state["expressions"]):
+                await client.request("ExpressionActivationRequest", {"expressionFile": filename, "active": False})
+        if owner is not None:
+            db.execute("DELETE FROM holds WHERE model = ? AND owner = ?", (model_id, owner))
 
 
 async def run(args):
@@ -80,11 +126,12 @@ async def run(args):
         if args.seconds is None:
             await set_emotion(client, args.state, model_id=model_id)
             return
+        owner = uuid4().hex
         try:
-            await set_emotion(client, args.state, model_id=model_id)
+            await set_emotion(client, args.state, model_id=model_id, owner=owner)
             await asyncio.sleep(args.seconds)
         finally:
-            await release(client, f"{args.state}.exp3.json", model_id)
+            await release(client, f"{args.state}.exp3.json", model_id, owner=owner)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,7 @@
+## 2026-11-25 — Bouche et transitions de parole de Jade v43
+
+- Les deux poses signalées par le propriétaire ont été reprises dans le rig et dans la peinture. Le paquet v43 a passé la revue en sourire parlé, pendant un clignement et sur une coupure en pleine syllabe suivie d’une seconde réplique. Le pilote associe chaque niveau de bouche à la réplique en cours et relâche les expressions à la fin. [Avant/après et mesures](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Utiliser le pilote](../../jade-modeling/CONTINUATION.md#piloter-une-réplique-dans-vtube-studio)
+
 ## 2026-11-25 — Amplitude des mouvements de Jade v42
 
 - La comparaison avec Huohuo en fonctionnement a conduit à reprendre le suivi de tête, la dynamique des mèches, des oreilles et des bras et le mouvement autonome au repos. Le profil v42 est chargé au cadrage du propriétaire dans VTube Studio. [État du modèle](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
