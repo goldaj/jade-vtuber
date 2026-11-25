@@ -4,7 +4,7 @@ Le propriétaire a donné le feu vert à la production le 25 novembre et a confi
 
 ## Base à ouvrir
 
-- **v45.1 en service.** Le paquet local `assets/live2d/r21_professional_art/vts_export/v45_1/Jade_r21_v45` utilise le profil `Jade_r21_v45` avec ses quatorze gestes et son idle. Ouvrir `working_v005/Jade_r21_v45_1_iris.cmo3` pour le dessin, y compris la bouche v43 et les deux iris corrigés. Les quatorze clips se reprennent dans `working_v005/Jade_r21_v45_motions.psd2live`.
+- **Livraison v45.1 en service.** Dans le projet modèle, ouvrir `assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md`. Le sous-dossier `Jade_r21_v45` est installable. `Sources` réunit le KRA, le PSD et le manifeste des plaques. `Edition` conserve le CMO3 et l’atelier des gestes. `CALIBRATION.md` donne les réglages et la recette sur le profil opérateur.
 
 - **Candidat de finition v38.** Dans le projet local sur D:, ouvrir `assets/live2d/r21_professional_art/working_v005/Jade_r21_v38_portrait.cmo3`. Le paquet natif SDK 5.0 porte le nom `Jade_r21_v38`. Le clignement, les raccords menton–cou–épaules et le détourage des mèches au col ont passé la revue croisée en portrait. Le v37 conserve le précédent jalon de centrage de la bouche.
 - **Point de départ v32.** `Jade_r21_v32.cmo3`, SHA-256 `C26C686DBF6A9DE08FBAD281088118A6EDF2CFBDBDCEC993058C039F81294D1C`. Il réunit l’atlas recalé sur le dessin v31, deux tuiles de masque d’yeux et les contrôles de pointes d’oreilles `ParamJadeEarTwitchL/R`.
@@ -14,7 +14,7 @@ Le propriétaire a donné le feu vert à la production le 25 novembre et a confi
 
 ## Suite de la finition
 
-Les quatorze motions de l’étape 7 sont livrées. Le prochain chantier du plan porte sur la synchronisation des sources KRA/PSD et le paquet final (ART-010/011), puis la calibration (ART-012).
+Les quatorze motions, les sources réconciliées et le paquet final sont livrés. La calibration en situation sur le modèle est acceptée. Le câblage automatique dans l’application précède la dernière recette intégrée. [Passation de livraison](../docs/operations/handoffs/2026-11-25-codex-livraison-modele-jade.md)
 
 ## Piloter une réplique dans VTube Studio
 

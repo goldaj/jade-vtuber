@@ -14,3 +14,7 @@ Couverture partielle des messages accessibles. Les formulations ci-dessous sont 
 
 - **Utilisateur.** Demande une petite passe de correction et d’amélioration du modèle existant.
 - **Assistant.** Retouche les deux iris et charge la finition v45.1 dans le profil existant. Rejoue le balancement complice et conserve son rythme. [Recette](../../operations/handoffs/2026-11-25-codex-jade-r21-reprise.md#retouche-v451).
+
+- **Assistant.** Propose de terminer la synchronisation des sources, de livrer le paquet autonome puis de calibrer Jade dans VTube Studio.
+- **Utilisateur.** Donne son accord pour réaliser ces étapes.
+- **Assistant.** Livre les sources de peinture et le paquet, vérifie une installation neuve et valide la calibration du modèle en situation. La sélection automatique des gestes dans le bot reste à raccorder. [Passation](../../operations/handoffs/2026-11-25-codex-livraison-modele-jade.md).

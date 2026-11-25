@@ -36,7 +36,7 @@ Une courte reprise a permis d’observer le clignement de la seconde variante jo
 
 **v45.1 · Regard.** Le dessin se reprend dans `Jade_r21_v45_1_iris.cmo3` et les gestes dans l’atelier PSD2Live v45. Les deux iris corrigés ont été revus en regard haut, en diagonale et en clignement. Le profil installé conserve son nom et ses quatorze raccourcis.
 
-**Reprise de la production.** Étape 7 terminée. Préparer les sources et le paquet final pour la calibration. [Répertoire et commandes](CONTINUATION.md#jouer-les-quatorze-gestes)
+**Reprise après livraison.** Les sources éditables et le paquet autonome v45.1 sont livrés. Le modèle a été calibré en situation dans VTube Studio. DEV-001 peut reprendre le raccordement des quatorze gestes au bot et à la PWA. [Passation et limites de la recette](../docs/operations/handoffs/2026-11-25-codex-livraison-modele-jade.md)
 
 ## Informations à relever à chaque jalon
 

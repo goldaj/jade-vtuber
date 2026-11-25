@@ -1,3 +1,7 @@
+## 2026-11-25 — Livraison autonome et calibration de Jade v45.1
+
+Le paquet installé regroupe le modèle, les quatorze gestes et le profil VTube Studio. Les KRA/PSD, le CMO3 et les sources d’animation sont réunis dans la livraison locale. La relecture en situation couvre appuis, parole, clignement, interruption et retour au repos. Les assets sont disponibles pour DEV-001. [Résultats, réglages et limites](handoffs/2026-11-25-codex-livraison-modele-jade.md)
+
 ## 2026-11-25 — Contour des iris de Jade v45.1
 
 Le modèle en service conserve le profil v45 et ses quatorze raccourcis. Les bords des deux iris ont été corrigés en regard haut. Le rythme du balancement complice a été conservé après deux déclenchements isolés dans VTube Studio. [Fichiers de reprise](../../jade-modeling/CONTINUATION.md#base-à-ouvrir)

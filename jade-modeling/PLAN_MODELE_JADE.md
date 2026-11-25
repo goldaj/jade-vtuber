@@ -1,6 +1,6 @@
 # Jade r21 — travail restant
 
-Le modèle utilisé dans VTube Studio est **Jade v45.1**, avec les iris retouchés sur le rig de parole v43. Le tableau conserve les jalons de construction depuis le v32. Le [point de reprise](CONTINUATION.md) donne le paquet, les gestes et l’atelier actuels. Le [plan directeur approuvé](MODEL2D_MASTER_PLAN.md) décrit la préparation du paquet de livraison et sa calibration.
+La livraison **Jade v45.1** est installée et calibrée dans VTube Studio. Le [point de reprise](CONTINUATION.md) situe le paquet portable, les sources de dessin et les quatorze gestes. La recette intégrée suivra le raccordement applicatif DEV-001. [Décisions sur ART-010, ART-011 et ART-012](../docs/operations/handoffs/2026-11-25-codex-livraison-modele-jade.md). Le tableau conserve les jalons de construction depuis le v32.
 
 | État | Étape et composants | Critère de fin |
 |---|---|---|
