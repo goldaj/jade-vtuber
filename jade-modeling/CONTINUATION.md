@@ -4,7 +4,7 @@ Le propriétaire a donné le feu vert à la production le 25 novembre et a confi
 
 ## Base à ouvrir
 
-- **v39 en service.** Ouvrir `assets/live2d/r21_professional_art/working_v005/Jade_r21_v39_expression.cmo3` dans le projet local. `Jade_r21_v39` est chargé dans VTube Studio. Les épaules, le jeu facial en parole et le retour au neutre ont passé la revue croisée. [État et limite visuelle](MODEL2D_CODEX_STATE.md).
+- **v40 en service.** Ouvrir `assets/live2d/r21_professional_art/working_v005/Jade_r21_v40_appuis.cmo3` dans le projet local. Le paquet `Jade_r21_v40` inclut l’idle de 36 s, les neuf physiques de cheveux et la physique d’ourlet réglée en mouvement. Dans le profil VTube Studio, seul le groupe `PhysicsR21SkirtHem` a son multiplicateur de vent à 0. Le v39 reste le jalon du visage. [État et vérification](MODEL2D_CODEX_STATE.md).
 - **Candidat de finition v38.** Dans le projet local sur D:, ouvrir `assets/live2d/r21_professional_art/working_v005/Jade_r21_v38_portrait.cmo3`. Le paquet natif SDK 5.0 porte le nom `Jade_r21_v38`. Le clignement, les raccords menton–cou–épaules et le détourage des mèches au col ont passé la revue croisée en portrait. Le v37 conserve le précédent jalon de centrage de la bouche.
 - **Point de départ v32.** `Jade_r21_v32.cmo3`, SHA-256 `C26C686DBF6A9DE08FBAD281088118A6EDF2CFBDBDCEC993058C039F81294D1C`. Il réunit l’atlas recalé sur le dessin v31, deux tuiles de masque d’yeux et les contrôles de pointes d’oreilles `ParamJadeEarTwitchL/R`.
 - **Référence native v31.** [Checkpoint aux sous-peintures d’épaules](assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_shoulder_underpaint_v31_candidate.cmo3), SHA-256 `39C00ECC82468B70004590E6E8EC549C7C16150A03341A322CB5A223A7CEBA8C`. Le v30 et le candidat r02 restent des points de retour. Les neuf mèches avant et les commandes corporelles sont déjà présentes dans la lignée v31/v32.
@@ -13,7 +13,7 @@ Le propriétaire a donné le feu vert à la production le 25 novembre et a confi
 
 ## Suite de la finition
 
-Poursuivre l’étape 4b en plein pied. Faire porter le poids du buste au bassin, puis vérifier le retard de la jupe, la détente des genoux et la tenue des pieds lors des changements d’appui. Reprendre ensuite les physiques des cheveux, des oreilles et de la tenue. La synchronisation complète des KRA/PSD et les 14 motions restent au plan directeur.
+Passer à l’étape 5. Régler les masses de cheveux arrière, l’ahoge et les pointes d’oreilles en rotation et au retour de la tête. Préserver les attaches, l’ourlet amorti et les oreilles normales en Surprise. La synchronisation complète des KRA/PSD et les 14 motions restent au plan.
 
 Utiliser Cubism PRO 5.3.05 pour l’export natif SDK 5.0 et l’API VTube Studio pour charger et poser le modèle. PSD2Live sert aux essais de découpe, de physique et de courbes sur une copie. [Relais yeux](reports/Jade_r21_relais_Astra_yeux.md)
 

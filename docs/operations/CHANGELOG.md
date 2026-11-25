@@ -1,3 +1,7 @@
+## 2026-11-25 — Appuis et inertie de jupe de Jade v40
+
+- Le v40 associe appuis latéraux, contre-inclinaison du haut du corps et relâchement du genou libre. Après rejet de la première amplitude, une physique d’ourlet amortie accompagne la boucle de 36 s. Le profil VTS préserve le vent sur les cheveux. Le contrôle couvre les pieds et les combinaisons avec le visage en parole. [État de reprise](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
 ## 2026-11-25 — Épaules et expressions en parole de Jade v39
 
 - Le v39 corrige les fragments sur les deux épaules et rend le regard, les sourcils et la bouche indépendants en dialogue. Le panel a demandé une reprise de l’opacité des iris avant d’accepter le paquet natif. Deux phrases françaises ont piloté la bouche dans VTube Studio pendant les bascules Smile, Sad et repos. La commande de modèle gère les bascules temporisées. [Outil](../../jade-modeling/tools/vts_jade_expression.py) · [État et point de finition](../../jade-modeling/MODEL2D_CODEX_STATE.md)

@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 NAMES = ("Smile", "Sad")
-MODEL_NAME = "Jade_r21_v39"
+MODEL_NAMES = ("Jade_r21_v39", "Jade_r21_v40")
 
 async def set_emotion(client, state, *, model_id):
     """Switch through enabled model hotkeys, preserving independent user expressions."""
@@ -74,8 +74,8 @@ async def run(args):
         client = VTSClient(websocket)
         await _authenticate(client, credentials)
         current = (await client.request("CurrentModelRequest"))["data"]
-        if not current.get("modelLoaded") or current.get("modelName") != MODEL_NAME:
-            raise RuntimeError(f"Le modèle actif doit être {MODEL_NAME}.")
+        if not current.get("modelLoaded") or current.get("modelName") not in MODEL_NAMES:
+            raise RuntimeError(f"Le modèle actif doit être {' ou '.join(MODEL_NAMES)}.")
         model_id = current["modelID"]
         if args.seconds is None:
             await set_emotion(client, args.state, model_id=model_id)
