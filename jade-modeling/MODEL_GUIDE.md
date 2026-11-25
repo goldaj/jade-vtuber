@@ -1,6 +1,6 @@
 # Jade — reprendre le modèle et les animations
 
-Le [plan professionnel du 13 novembre](PLAN_QUALITE_PRO_20261113.md) complète ce guide et le plan initial pour les prochaines étapes, y compris l'intégration de l'avatar à Jade.
+Le [plan directeur approuvé](MODEL2D_MASTER_PLAN.md) gouverne la reprise r21 via Turboism et PSD2Live. Le [plan qualité du 13 novembre](PLAN_QUALITE_PRO_20261113.md) conserve le contexte artistique.
 
 ## Sources actuelles
 
@@ -9,7 +9,8 @@ récupèrent avec `git lfs pull` ; `git lfs fsck` vérifie les objets locaux.
 
 | Usage | Fichier ou dossier |
 | --- | --- |
-| Dernier jalon natif r21, v30 | `assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_back_hair_restore_v30.cmo3` |
+| Candidat de reprise v32, stocké sur D: hors du checkout | `assets/live2d/r21_professional_art/working_v005/Jade_r21_v32.cmo3` dans le projet local |
+| Jalon natif r21, v30 | `assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_back_hair_restore_v30.cmo3` |
 | Candidat natif v31, raccords épaules partiels | `assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_shoulder_underpaint_v31_candidate.cmo3` |
 | Candidat cheveux, pas encore validé comme jalon natif | `assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_v30.TEST_hair_leaves_r02.cmo3` |
 | Dernière source Krita conservée du rig artistique | `assets/live2d/r21_professional_art/working_v005/jade_art_v005_r21_rig_art_v2_face_complete_v9.kra` |
@@ -23,11 +24,7 @@ plein pied et cheveux du CMO3 r21. Ne pas réimporter aveuglément le PSD dans l
 dernier CMO3 : cela risquerait de réintroduire des éléments anciens. Les fichiers
 `CONTINUATION.md` et `PLAN_MODELE_JADE.md` décrivent les limites et la suite exacte.
 
-Les CMO3 ont des rôles distincts : v30 est le jalon précédent ; r02 conserve les
-feuilles de cheveux ; v31 est le candidat natif aux épaules partiellement corrigées,
-encore à terminer et à tester en poses combinées.
-Les composants source les plus récents du bas du corps, des épaules, des yeux et
-de la bouche sont également conservés. Les versions intermédiaires restent locales.
+Le v31 fournit la référence native du dessin et du rig. Le v32 local en reprend le corps, avec l’atlas recalé, deux textures de masque dédiées et des contrôles d’oreilles. Le v30 et le r02 restent disponibles comme jalons précédents. Les composants source du bas du corps, des épaules, des yeux et de la bouche sont conservés.
 
 ## Restaurer le package VTube Studio
 
@@ -48,11 +45,7 @@ existante ; il n'est pas présenté comme un export final du CMO3 r21 en cours.
 
 ## Reprendre le rig r21
 
-Ouvrir une **copie de travail** du CMO3 v30 dans la version compatible de Cubism
-utilisée par le projet (5.2.03 PRO selon les notes). Conserver les jalons d'origine.
-Le candidat r02 doit encore passer les observations natives prévues avant de
-devenir v31. Les sources, rapports et outils nécessaires restent réunis dans
-l'arborescence d'origine relative pour faciliter la reprise.
+Ouvrir une **copie de travail** du v32 dans Cubism PRO 5.3.05 et identifier le document actif via Turboism. Ouvrir le fichier avec Cubism si l’ouverture MCP n’est pas disponible pour cette version. PSD2Live sert aux préparations et aux essais isolés. Se reporter au [point de reprise](CONTINUATION.md) pour les annexes, l’état réel du candidat et la prochaine action après feu vert.
 
 `ASSET_MANIFEST.json` fournit les SHA-256 des octets d'origine ; les pointeurs LFS
 doivent référencer les mêmes SHA-256 et tailles. `DEPENDENCY_CHECK.json` détaille

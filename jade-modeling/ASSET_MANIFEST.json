@@ -2,8 +2,8 @@
   {
     "path": "jade-modeling/CONTINUATION.md",
     "source_group": "current-documentation",
-    "bytes": 8848,
-    "sha256": "a2a353b66e7ba1e2965969b0aa7b1009463fdc263d2f921d7a094a1f1add3610",
+    "bytes": 3598,
+    "sha256": "86897733ea48432ef6cc5ae948e03a06137d32506fd6079a8e40c55822911f8c",
     "storage": "git",
     "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
   },
@@ -34,8 +34,8 @@
   {
     "path": "jade-modeling/PLAN_MODELE_JADE.md",
     "source_group": "current-documentation",
-    "bytes": 5532,
-    "sha256": "07eab620d2b95951caacc24d4ba71d120ac3d8ff295d4d63eb04c6cbe45615e7",
+    "bytes": 5764,
+    "sha256": "af5143930ac8ef2a3710c5bd91ad0b33cccf0005dc0f75cdc95d51a611bb9493",
     "storage": "git",
     "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
   },

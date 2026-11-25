@@ -2,6 +2,8 @@
 
 Statut : **plan de travail à exécuter**, pas modèle livré. Référence produit : conserver le style de Jade et viser une présence de qualité professionnelle, à apprécier en conditions réelles ; aucune affirmation sur le rig privé d'Ironmouse ou de Neuro-sama. Ce plan complète [le plan existant](PLAN_MODELE_JADE.md), le [guide modèle](MODEL_GUIDE.md) et la [feuille de route produit](../docs/history/gpt6-jade/ROADMAP-MVP-DISCORD-PRODUIT-MOBILE.md). Les contraintes et choix déjà validés restent applicables.
 
+> **État historique du 13 novembre.** Pour l’ordre de reprise et les outils actuels, suivre le [plan directeur approuvé le 25 novembre](MODEL2D_MASTER_PLAN.md). Les validations seront observées en direct par le propriétaire.
+
 ## Sources et limites
 
 La vidéo de [Mari Yume](https://www.youtube.com/watch?v=6_ENrRlMcVo) présente dans sa description et son chapitrage le rapport entre qualité et prix, l'excès de toggles, la compatibilité illustration/rig, les physiques « jelly », la découpe de la bouche et le réglage IN/OUT de VTube Studio. Le [tutoriel complémentaire cité par l'autrice](https://youtu.be/NielmNhnQpo) concerne le tracking. Description et chapitres examinés ; **transcription complète non disponible**, donc ne pas attribuer à l'autrice des détails non vérifiés ni présenter ses prix comme une grille universelle.

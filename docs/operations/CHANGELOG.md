@@ -1,3 +1,59 @@
+## 2026-11-25 — Les quatorze gestes de Jade v45
+
+- ART-009 est terminé sur le poste de Jade. Les six paires restantes rejoignent la curiosité dans l’atelier PSD2Live et le paquet VTube Studio. Les pilotes locaux de parole et d’expressions prennent en charge ce paquet. [Catalogue des gestes](../../jade-modeling/CONTINUATION.md#jouer-les-quatorze-gestes) · [Recette](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
+## 2026-11-25 — Deux gestes de curiosité pour Jade v44
+
+- Le modèle dispose de deux actions jouables en parole. Jade se penche et tend l’oreille dans la première. Dans la seconde, elle cherche dans deux directions et ponctue sa réaction d’un hochement. Ce dernier mouvement a été repris après la première revue au cadrage de diffusion. Les pilotes de parole et d’expressions reconnaissent le paquet v44. [Fichiers et commandes](../../jade-modeling/CONTINUATION.md#déclencher-la-curiosité-dans-vtube-studio) · [Suivi ART-009](../backlog/04-PRODUCTION-2D.md)
+
+## 2026-11-25 — Bouche et transitions de parole de Jade v43
+
+- Les deux poses signalées par le propriétaire ont été reprises dans le rig et dans la peinture. Le paquet v43 a passé la revue en sourire parlé, pendant un clignement et sur une coupure en pleine syllabe suivie d’une seconde réplique. Le pilote associe chaque niveau de bouche à la réplique en cours et relâche les expressions à la fin. [Avant/après et mesures](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Utiliser le pilote](../../jade-modeling/CONTINUATION.md#piloter-une-réplique-dans-vtube-studio)
+
+## 2026-11-25 — Amplitude des mouvements de Jade v42
+
+- La comparaison avec Huohuo en fonctionnement a conduit à reprendre le suivi de tête, la dynamique des mèches, des oreilles et des bras et le mouvement autonome au repos. Le profil v42 est chargé au cadrage du propriétaire dans VTube Studio. [État du modèle](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
+## 2026-11-25 — Mouvement secondaire de Jade v41
+
+- L’export natif ajoute la flexion des masses arrière et des oreilles et reprend la mèche du sommet. Le réglage sépare inertie et tressautement dans l’idle. Le pilotage des expressions reconnaît le nouveau paquet. Les retournements et arrêts ont été rejoués dans VTube Studio. [État du modèle](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
+## 2026-11-25 — Appuis et inertie de jupe de Jade v40
+
+- Le v40 associe appuis latéraux, contre-inclinaison du haut du corps et relâchement du genou libre. Après rejet de la première amplitude, une physique d’ourlet amortie accompagne la boucle de 36 s. Le profil VTS préserve le vent sur les cheveux. Le contrôle couvre les pieds et les combinaisons avec le visage en parole. [État de reprise](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
+## 2026-11-25 — Épaules et expressions en parole de Jade v39
+
+- Le v39 corrige les fragments sur les deux épaules et rend le regard, les sourcils et la bouche indépendants en dialogue. Le panel a demandé une reprise de l’opacité des iris avant d’accepter le paquet natif. Deux phrases françaises ont piloté la bouche dans VTube Studio pendant les bascules Smile, Sad et repos. La commande de modèle gère les bascules temporisées. [Outil](../../jade-modeling/tools/vts_jade_expression.py) · [État et point de finition](../../jade-modeling/MODEL2D_CODEX_STATE.md)
+
+## 2026-11-25 — Portrait et clignement de Jade v38
+
+- Le v38 relie le cou au mouvement de tête, rétablit la matière derrière les épaules et corrige les contours qui suivaient les mèches. Le cil masque progressivement l’iris et rejoint le dessin de l’œil fermé. Les avis croisés ont conduit à reprendre le fondu des cils et les sous-peintures avant d’accepter ces éléments sur l’export natif.
+- [État de reprise](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
+## 2026-11-25 — Centrage de la bouche de Jade v37
+
+- Le v37 corrige le décalage entre le centre du visage et la bouche relevé sur le v36. Comparé au dessin maître sur cinq poses, le centrage du paquet natif présente un écart maximal de 1,79 px. VTube Studio charge le modèle et répond aux commandes de fermeture et d’ouverture.
+- [État de reprise](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
+## 2026-11-25 — Reprise visuelle de Jade et candidat natif v36
+
+- Après rejet du v34, reprise des grandes découpes depuis le dessin maître et passage de la recette à l’export Cubism SDK 5.0.
+- Le v36 est observé plein pied dans VTube Studio. Les poses et les sorties de mouvement ont été vérifiées sur le même paquet natif. Les passages fins au col et aux cils restent ouverts.
+- [État de reprise](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
+## 2026-11-25 — Premier chargement r21 et candidats de finition
+
+- Le premier r21 plein pied a été chargé dans VTube Studio 1.35.10. Le v33 réunit des retouches de l’ourlet, des mains, de la transparence au nez et d’une partie des cheveux arrière.
+- Les v33 et v34 sont chargés par l’API VTube Studio. Le v34 ajoute des retouches de coudes, taille et commissures et une calibration des entrées yeux/bouche validée par l’API. Son export passe par PSD2Live. Les corrections restent à observer en mouvement. Les fichiers de travail et le rapport de défauts restent sur D:.
+- Base `develop` `c3c17b0`. [État de reprise](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
+## 2026-11-25 — Préparation de Jade r21 avec les deux MCP
+
+- ART-001/002. Plan de production 2D approuvé, reprise sur le candidat v32 local. Turboism accompagne Cubism PRO 5.3.05. PSD2Live sert aux essais de calques, de rig, de physique et de mouvement. La production attend un feu vert distinct.
+- Le plan, les points de reprise et le backlog relatent l’état constaté. L’ourlet du candidat intermédiaire a été observé dans Cubism. L’export et la recette du v32 restent à faire, avec observation en direct par le propriétaire.
+- Base `develop` `c3c17b0`. [Plan directeur](../../jade-modeling/MODEL2D_MASTER_PLAN.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
 ## 2026-11-24 — Microphone en plein écran mobile
 
 - Le mode immersif natif ou CSS conserve le bouton micro en bas, centré et accessible, sans afficher la navigation, le chat ou le sélecteur de décor. Le bouton unique est déplacé dans la scène à l'entrée, puis revient à son emplacement selon l'onglet à la sortie, sans réinitialiser l'enregistrement ni la préférence de synthèse vocale.
