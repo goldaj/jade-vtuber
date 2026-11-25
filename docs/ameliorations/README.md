@@ -1,6 +1,6 @@
 # Catalogue des améliorations prospectives de Jade
 
-**Référence :** `goldaj/jade-vtuber`, branche `develop`, état consolidé au **23 novembre 2026**. Ce catalogue contient uniquement des **propositions encore distinctes** ; elles ne constituent pas un ordre de développement, une recette en attente ni une autorisation de coûts API ou de mise en production. Le [backlog opérationnel](../backlog/README.md) est la source de vérité pour les travaux acceptés, les recettes, les OPS et le modèle 2D r21.
+**Référence :** `goldaj/jade-vtuber`, branche `develop`, état consolidé au **25 novembre 2026**. Ce catalogue contient uniquement des **propositions encore distinctes** ; elles ne constituent pas un ordre de développement, une recette en attente ni une autorisation de coûts API ou de mise en production. Le [backlog opérationnel](../backlog/README.md) est la source de vérité pour les travaux acceptés, les recettes, les OPS et le modèle 2D r21.
 
 ## État après dédoublonnage
 
@@ -13,18 +13,18 @@
 
 | Thème | Document | Propositions actives | Périmètre restant |
 | --- | --- | ---: | --- |
-| Latence, voix | [01-LATENCE-VOIX.md](01-LATENCE-VOIX.md) | 13 | VAD Discord/PC, cache de prompt, qualité TTS, mesures côté lecteur et rapprochement des coûts, moteur vocal alternatif |
+| Latence, voix | [01-LATENCE-VOIX.md](01-LATENCE-VOIX.md) | 12 | VAD Discord/PC, cache de prompt, qualité TTS, mesures côté lecteur et rapprochement des coûts, moteur vocal alternatif |
 | Mémoire et présence | [02-MEMOIRE-PRESENCE.md](02-MEMOIRE-PRESENCE.md) | 7 | Personnes annoncées, présence serveur à arbitrer, mémoire partagée, curation qualitative et contrôles avancés |
 | Canaux, concurrence | [03-CANAUX-ROUTAGE.md](03-CANAUX-ROUTAGE.md) | 10 | Routeur de sortie, tour non bloquant, annulation étendue, livraison, extensions Discord et intentions intercanaux avancées |
 | Avatar, visibilité | [04-AVATAR-VISIBILITE.md](04-AVATAR-VISIBILITE.md) | 8 | Rendu conditionnel à la visibilité, filtrage par audience et économies GPU |
-| Architecture IA | [05-ARCHITECTURE-IA.md](05-ARCHITECTURE-IA.md) | 9 | Moteurs/fournisseurs échangeables, contrats de modules, tests et comparaison de modèles |
+| Architecture IA | [05-ARCHITECTURE-IA.md](05-ARCHITECTURE-IA.md) | 7 | Moteurs/fournisseurs échangeables, contrats de modules, tests et comparaison de modèles |
 | Produit, mobile | [06-PRODUIT-MOBILE.md](06-PRODUIT-MOBILE.md) | 4 | Reconnexion, Authenticator, client alternatif et solde prépayé ; UX-19 désormais dans la backlog |
 | Qualité, exploitation | [07-QUALITE-EXPLOITATION.md](07-QUALITE-EXPLOITATION.md) | 5 | Protection des anciennes archives, robustesse CI, tableau de supervision, rollback, exploitation Windows |
 | Pilotage volontaire du modèle 2D | [08-MODELE-2D.md](08-MODELE-2D.md) | 1 | Commandes choisies par Jade, connaissance du résultat et arbitrage avec les animations automatiques |
 | Perception multimodale | [09-PERCEPTION-MULTIMODALE.md](09-PERCEPTION-MULTIMODALE.md) | 7 | Consentement des images, sources vidéo, temporalité, réactions live et budgets ; PER-01/02/03 désormais en backlog |
 | Données et normalisation | [10-NORMALISATION-DONNEES-MEMOIRE.md](10-NORMALISATION-DONNEES-MEMOIRE.md) | 10 | Contrats d'événements, données structurées, provenance, migrations |
 | Capacités et comportement | [11-CAPACITES-COMPORTEMENT-CONTROLE.md](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | 27 | Sécurité, outils et interactions sociales encore prospectifs ; NEW-29 et NEW-38 sont en backlog |
-| **Total** | | **101** | |
+| **Total** | | **98** | |
 
 **Décision supplémentaire du 22/11/2026 :** NEW-20 est transférée dans [DEV-031](../backlog/01-DEVELOPPEMENT.md) (explications d'indisponibilité), tandis que NEW-25 (proposition multilingue) a été **abandonnée** à la demande du propriétaire. Une recherche sur les 11 thèmes n'a trouvé aucune autre proposition de fonctionnalité multilingue à retirer. Les fonctions et contenus existants ne sont pas modifiés par cette décision.
 
@@ -39,7 +39,7 @@
 - **UX-19 → [DEV-032](../backlog/01-DEVELOPPEMENT.md)** : pièces jointes et documents téléchargeables dans le chat PWA. **PER-01/02/03 → [DEV-033/034/035](../backlog/01-DEVELOPPEMENT.md)** : recevoir, comprendre et commenter des images. Quatre cartes P2 **À qualifier**, rien n'est développé avant cadrage. UX-19 est la première à discuter avec le propriétaire.
 - **Règle du propriétaire :** une idée transférée en backlog ou explicitement écartée est immédiatement retirée des **lignes actives** du catalogue et de ses décomptes. Son identifiant reste traçable dans l'historique Git et les passations, mais **ne doit plus être proposée comme idée en attente**.
 
-**Bilan historique après NEW-16 : 103 idées actives**, dont 21 P1. **État actuel au 23/11 après NEW-29 et NEW-38 : 101 idées actives, dont 21 P1**. Les deux demandes ont été déplacées vers **DEV-037 (P2)** et **DEV-038 (P1)**, toutes deux **À qualifier**, sans développement engagé. [Passation détaillée](../operations/handoffs/2026-11-22-chatgpt-ux19-perceptions-catalogue.md).
+**Bilan historique après NEW-16 : 103 idées actives**, dont 21 P1. **État historique au 23/11 après NEW-29 et NEW-38 : 101 idées actives, dont 21 P1**. Les deux demandes ont été déplacées vers **DEV-037 (P2)** et **DEV-038 (P1)**, toutes deux **À qualifier**, sans développement engagé. [Passation détaillée](../operations/handoffs/2026-11-22-chatgpt-ux19-perceptions-catalogue.md).
 
 ## Évolutions différées acceptées le 22/11/2026
 
@@ -61,6 +61,11 @@ Le [thème 08, modèle 2D](08-MODELE-2D.md) conserve l'archivage des anciennes i
 - **NEW-29 → [DEV-037](../backlog/01-DEVELOPPEMENT.md), P2, À qualifier** : sous-titres des paroles de Jade en direct, synchronisés avec le flux audio de l'application mobile PWA.
 - **NEW-38 → [DEV-038](../backlog/01-DEVELOPPEMENT.md), P1, À qualifier** : connaissance des fonctions exécutables, retour sur les actions réelles et initiative volontaire de Jade.
 - Ces deux entrées sont retirées des tableaux prospectifs actifs ; elles conservent leur identifiant historique. Pas de développement lancé.
+
+## Transferts du 25 novembre 2026
+
+- **LAT-17, ARC-01, ARC-05 → [DEV-040](../backlog/01-DEVELOPPEMENT.md)** (P1, À faire) : dialogue vocal GPT-Live, session économique et bascule vers le mode classique, uniquement PWA Android. Les trois lignes P2 sont retirées du catalogue actif ; le mode écrit et les autres canaux ne sont pas engagés. LAT-11/15/20 ne conservent que leur périmètre résiduel hors mode Live mobile.
+- Le lot inclut DEV-039 (vrai push-to-talk classique) et DEV-041 (voix française propre à Jade). **98 idées actives, dont 21 P1**, après ces trois transferts. Aucun développement ni dépense lancé.
 
 ## Règles pour les prochains agents
 

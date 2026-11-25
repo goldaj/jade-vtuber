@@ -4,11 +4,11 @@
 
 | ID | Priorité / état | Amélioration proposée / condition de réussite |
 | --- | --- | --- |
-| ARC-01 | P2 / P | Implémenter un **RealtimeConversationEngine** vocal/texte léger, avec session, arrivée d'audio et sortie incrémentale, à comparer avant tout remplacement du dialogue actuel. |
-| ARC-05 | P2 / P | **Gestionnaire de sessions** : garder/fermer les connexions vocales selon activité, restaurer persona et contexte condensé sans perdre les messages, mesurer facturation des sessions actives. |
 | ARC-10 | P3 / D | **Luna ultérieurement** : décision de délégation sur besoin prouvé, travaux parallèles, injection de résultat vérifié, gestion d'attente sans mensonge. Ne pas activer ni optimiser ce composant aujourd'hui. |
 | ARC-11 | P3 / D | **Moteur IA local éventuel** : évaluer selon matériel réel, latence, mémoire, qualité française et coûts avant de changer les services OpenAI ; pas de promesse de compatibilité sans benchmark PC. |
 
+
+**Transfert du 25/11/2026 :** ARC-01 et ARC-05 sont reprises dans [DEV-040](../backlog/01-DEVELOPPEMENT.md), P1, À faire, pour le nouveau mode vocal Live de la PWA Android. Le mode classique demeure disponible ; aucune extension aux autres canaux ni moteur écrit Realtime n'est engagée. Les ID historiques ne sont pas réattribués.
 
 ## Extension produit du 18/11/2026 : modularité généralisée
 
