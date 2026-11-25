@@ -6,4 +6,8 @@ Couverture partielle des messages accessibles. Les formulations ci-dessous sont 
 - **Assistant.** Propose le v32 local comme point de départ. Turboism travaille sur le modèle natif dans Cubism PRO 5.3.05. PSD2Live accélère les essais et la production des annexes. Le premier jalon est un r21 en pied chargé dans VTube Studio. La finition comprend les sources, recouvrements, visage, rig, physiques, idle, expressions et 14 motions. Ironmouse Pink Rock, Neuro-sama et Huohuo restent des références d’observation.
 - **Utilisateur.** Approuve le plan et demande de mettre à jour les docs, de retirer les travaux liés au modèle dont l’obsolescence est confirmée et de préparer les modèles et fichiers utiles dans les outils. Demande d’être prévenu pour autoriser le démarrage. Souhaite observer les validations directement et dispense de ScreenToGif ou d’une preuve enregistrée.
 
+- **Utilisateur.** Après le premier couple de curiosité, demande de poursuivre jusqu’à l’achèvement des sept paires. Confie la validation des mouvements à Codex et souhaite des gestes amples et fluides en prenant Huohuo comme référence.
+
+- **Assistant.** Livre les quatorze gestes en v45 dans l’atelier PSD2Live et dans VTube Studio. Les spécialistes vérifient le jeu au cadrage de diffusion, les appuis, la parole et le retour au repos. Le pilotage automatique par le bot reste suivi en DEV-001.
+
 [Plan approuvé](../../../jade-modeling/MODEL2D_MASTER_PLAN.md) · [Passation opérationnelle](../../operations/handoffs/2026-11-25-codex-jade-r21-reprise.md)

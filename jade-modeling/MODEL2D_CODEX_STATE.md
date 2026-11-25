@@ -28,7 +28,13 @@ Le propriétaire a approuvé le [plan directeur Live2D](MODEL2D_MASTER_PLAN.md) 
 
 **v44 · Curiosité.** Le groupe `Curious` contient deux motions originales non bouclées sur le MOC v43. A (4,56 s) donne à voir une écoute prolongée, avec transfert du poids, inclinaison du buste et deux accents d’oreille. B (3,72 s) fait pivoter la tête dans deux directions puis ajoute un acquiescement. Le premier B revenait simplement au centre. La révision anime aussi le tangage, avec un redressement, un bref hochement puis un amorti. Dans VTube Studio, A laisse libres les trois rotations de tête. B conduit les rotations horizontale et verticale pendant le geste. Le roulis, les yeux, la bouche, le souffle et la physique continuent de répondre. [Motions et déclenchement](CONTINUATION.md#déclencher-la-curiosité-dans-vtube-studio)
 
-**Reprise de la production.** Étape 7, 2/14 motions livrées. Développer les six autres paires d’intention sur le rig v43 en conservant les deux gestes validés.
+**v45 · Les sept paires.** Le paquet Jade_r21_v45 conserve le rig et les textures v43. L’atelier PSD2Live contient les sept paires, soit 14 clips, 77 courbes et 804 clés. Les gestes ont été rejoués dans VTube Studio au cadrage du propriétaire avec une enveloppe de parole française, du suivi de tête et des clignements. La direction artistique a relu les portraits et les appuis sur les poses observées. Elle accepte les quatorze gestes après renforcement du retournement de la confidence et de l’accent de sourcil sur la feinte. Les pointes des deux chaussures restent fixes sur le modèle en pied.
+
+La scène principale compte 2 170 poses. Au même grossissement, avec 57 px entre les yeux, le milieu des yeux se déplace de 56 px dans le balancement complice et de 66 px dans le grand mouvement de partage. La curiosité de Huohuo atteint 92 px sur sa propre chorégraphie. L’écoute et les gestes tendres ont des tenues plus longues. Les sept paires se distinguent par la direction du buste, le transfert d’appui et le rythme des accents.
+
+Une courte reprise a permis d’observer le clignement de la seconde variante joueuse et le silence entre les intentions. Lors du passage de Sérieux A avec Sad à Réconfort B avec Smile, l’ouverture de bouche descend à 0,018 en 151 ms et atteint zéro à 320 ms. Elle remonte à 0,64 à la reprise de parole. Au repos, la bouche se referme et la respiration et les appuis continuent. Le cadrage est conservé. La lecture des premières animations de la série présente un délai variable entre la commande et les courbes affichées, jusqu’à environ 0,73 s pour le premier balancement complice. Ce point reste suivi pour la synchronisation future sur un mot précis. Le déclenchement automatique depuis le bot relève de DEV-001.
+
+**Reprise de la production.** Étape 7 terminée. Préparer les sources et le paquet final pour la calibration. [Répertoire et commandes](CONTINUATION.md#jouer-les-quatorze-gestes)
 
 ## Informations à relever à chaque jalon
 

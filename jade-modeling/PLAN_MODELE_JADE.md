@@ -1,6 +1,6 @@
 # Jade r21 — travail restant
 
-Le [plan directeur approuvé](MODEL2D_MASTER_PLAN.md) donne l’ordre des lots. La base de reprise locale est le **v32**, qui inclut le v31 aux épaules reprises, l’atlas recalé, les deux tuiles de masque et deux commandes d’oreilles. Le résultat en mouvement et le paquet r21 restent à valider.
+Le modèle utilisé dans VTube Studio est **Jade v45**, sur le rig de parole v43. Le tableau conserve les jalons de construction depuis le v32. Le [point de reprise](CONTINUATION.md) donne le paquet, les gestes et l’atelier actuels. Le [plan directeur approuvé](MODEL2D_MASTER_PLAN.md) décrit la préparation du paquet de livraison et sa calibration.
 
 | État | Étape et composants | Critère de fin |
 |---|---|---|
@@ -33,6 +33,7 @@ Le [plan directeur approuvé](MODEL2D_MASTER_PLAN.md) donne l’ordre des lots. 
 | Boucle de 36 s préparée localement, à activer et calibrer | Idle vivant : blink, tête, souffle et tressautements d'oreilles espacés | Boucle discrète non mécanique, compatible avec suivi et expressions |
 | Premier export après contrôle du v32 et feu vert | Export `.moc3`, `.model3.json`, textures et physiques | Bundle autonome complet installé dans VTube Studio |
 | À faire | Paramètres et lissages VTube Studio | Commandes et suivi effectifs, calibration stable |
+| Fait en v45 | Deux motions corporelles par intention | Quatorze clips éditables, joués en parole dans VTube Studio. Bascule entre deux intentions, suivi, appuis et reprise de l’idle contrôlés. |
 | À faire | Contrôle final et livraison | Observation en direct dans VTube Studio du visage, du corps, des cheveux, des expressions, de la parole et des 14 motions originales |
 
 Copies de travail sur D: avec les sources préservées. Utiliser Cubism PRO 5.3.05 avec Turboism et PSD2Live sur un projet séparé. Reprise dans [CONTINUATION.md](CONTINUATION.md).

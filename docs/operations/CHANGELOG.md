@@ -1,3 +1,7 @@
+## 2026-11-25 — Les quatorze gestes de Jade v45
+
+- ART-009 est terminé sur le poste de Jade. Les six paires restantes rejoignent la curiosité dans l’atelier PSD2Live et le paquet VTube Studio. Les pilotes locaux de parole et d’expressions prennent en charge ce paquet. [Catalogue des gestes](../../jade-modeling/CONTINUATION.md#jouer-les-quatorze-gestes) · [Recette](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
 ## 2026-11-25 — Deux gestes de curiosité pour Jade v44
 
 - Le modèle dispose de deux actions jouables en parole. Jade se penche et tend l’oreille dans la première. Dans la seconde, elle cherche dans deux directions et ponctue sa réaction d’un hochement. Ce dernier mouvement a été repris après la première revue au cadrage de diffusion. Les pilotes de parole et d’expressions reconnaissent le paquet v44. [Fichiers et commandes](../../jade-modeling/CONTINUATION.md#déclencher-la-curiosité-dans-vtube-studio) · [Suivi ART-009](../backlog/04-PRODUCTION-2D.md)

@@ -4,7 +4,8 @@ Le propriétaire a donné le feu vert à la production le 25 novembre et a confi
 
 ## Base à ouvrir
 
-- **v44 en service.** Le paquet local `assets/live2d/r21_professional_art/vts_export/Jade_r21_v44` ajoute les gestes Curious A et B. Son rig reste celui de `working_v005/Jade_r21_v43_parole.cmo3`, avec l’idle de 36 s, la bouche corrigée et les quinze groupes de physique. Les calques de bouche se trouvent dans `source_sync_v43_bouche/`. [État et recette](MODEL2D_CODEX_STATE.md)
+- **v45 en service.** Le paquet local `assets/live2d/r21_professional_art/vts_export/Jade_r21_v45` contient les quatorze animations corporelles et l’idle du modèle. Le dessin et la bouche proviennent de `working_v005/Jade_r21_v43_parole.cmo3`. Les quatorze clips se reprennent dans `working_v005/Jade_r21_v45_motions.psd2live`.
+
 - **Candidat de finition v38.** Dans le projet local sur D:, ouvrir `assets/live2d/r21_professional_art/working_v005/Jade_r21_v38_portrait.cmo3`. Le paquet natif SDK 5.0 porte le nom `Jade_r21_v38`. Le clignement, les raccords menton–cou–épaules et le détourage des mèches au col ont passé la revue croisée en portrait. Le v37 conserve le précédent jalon de centrage de la bouche.
 - **Point de départ v32.** `Jade_r21_v32.cmo3`, SHA-256 `C26C686DBF6A9DE08FBAD281088118A6EDF2CFBDBDCEC993058C039F81294D1C`. Il réunit l’atlas recalé sur le dessin v31, deux tuiles de masque d’yeux et les contrôles de pointes d’oreilles `ParamJadeEarTwitchL/R`.
 - **Référence native v31.** [Checkpoint aux sous-peintures d’épaules](assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_shoulder_underpaint_v31_candidate.cmo3), SHA-256 `39C00ECC82468B70004590E6E8EC549C7C16150A03341A322CB5A223A7CEBA8C`. Le v30 et le candidat r02 restent des points de retour. Les neuf mèches avant et les commandes corporelles sont déjà présentes dans la lignée v31/v32.
@@ -13,17 +14,27 @@ Le propriétaire a donné le feu vert à la production le 25 novembre et a confi
 
 ## Suite de la finition
 
-L’étape 7 porte sur deux motions de corps par intention. La curiosité a ses deux variantes dans le v44. Restent les paires `neutral`, `playful`, `excited`, `tender`, `reassuring` et `serious`, ainsi que la synchronisation complète des KRA/PSD.
+Les quatorze motions de l’étape 7 sont livrées. Le prochain chantier du plan porte sur la synchronisation des sources KRA/PSD et le paquet final (ART-010/011), puis la calibration (ART-012).
 
 ## Piloter une réplique dans VTube Studio
 
-Charger `Jade_r21_v44` (ou le v43 pour la parole seule) et lancer `python tools/vts_jade_performance.py` depuis le dossier de modélisation. Le lecteur audio envoie un objet JSON par ligne au rythme de la lecture. Par exemple, après `{"type":"start","id":"r1","expression":"Smile"}`, il envoie des niveaux comme `{"type":"mouth","id":"r1","value":0.55}`. À la coupure, envoyer `{"type":"interrupt","id":"r1"}` puis donner à la réplique suivante un nouvel identifiant. Une fin normale utilise `{"type":"end","id":"r1"}`. La commande `{"type":"stop"}` remet le visage au repos et termine le pilote. Le branchement sur la lecture audio du bot est suivi en DEV-001. [Pilote de parole](tools/vts_jade_performance.py)
+Charger `Jade_r21_v45` et lancer `python tools/vts_jade_performance.py` depuis le dossier de modélisation. Le lecteur audio envoie un objet JSON par ligne au rythme de la lecture. Par exemple, après `{"type":"start","id":"r1","expression":"Smile"}`, il envoie des niveaux comme `{"type":"mouth","id":"r1","value":0.55}`. À la coupure, envoyer `{"type":"interrupt","id":"r1"}` puis donner à la réplique suivante un nouvel identifiant. Une fin normale utilise `{"type":"end","id":"r1"}`. La commande `{"type":"stop"}` remet le visage au repos et termine le pilote. Le branchement sur la lecture audio du bot est suivi en DEV-001. [Pilote de parole](tools/vts_jade_performance.py)
 
-## Déclencher la curiosité dans VTube Studio
+## Jouer les quatorze gestes
 
-Sur le modèle v44 installé, les deux actions « Play Animation » lisent chacune une motion une fois. Depuis le dossier de modélisation, utiliser `python tools/vts_model_switch.py --hotkey Jade_curious_A` pour « Tendre l’oreille » ou `python tools/vts_model_switch.py --hotkey Jade_curious_B` pour « Chercher puis comprendre ». Les deux fichiers se trouvent à la racine du paquet VTS et dans le groupe `Curious` du `.model3.json`. Pour recréer ces actions sur un autre poste, associer chaque fichier à une action « Play Animation » et laisser désactivé le maintien de la dernière image. [Motions de Jade](assets/live2d/r21_professional_art/intent_motions/) · [Lecture des animations dans VTube Studio](https://github.com/DenchiSoft/VTubeStudio/wiki/Animations)
+Les 14 mouvements sont accessibles dans le profil VTube Studio `Jade_r21_v45`. L’ordre dans chaque groupe est A puis B. Pour jouer une variante depuis le dossier du projet, lancer par exemple `python tools/vts_model_switch.py --hotkey Jade_playful_A`. Les actions du profil utilisent « Play Animation » et relâchent la pose en fin de lecture. Pour reconstruire les raccourcis sur un autre poste, associer chaque fichier de la racine du paquet à une action « Play Animation », sans maintien de la dernière pose.
 
-Pour retravailler les gestes dans PSD2Live sur le poste de Jade, ouvrir `working_v005/Jade_r21_v44_motions.psd2live` dans le dossier d’art r21 local. Pour les importer sur une autre copie du rig v43, envoyer chacun des deux clips à `motion.put` via le MCP en utilisant la révision courante de l’atelier. Le fichier d’édition conserve les temps des clés et les tangentes des courbes. [Source PSD2Live des deux gestes](assets/live2d/r21_professional_art/intent_motions/Jade_curious.psd2live-motions.json)
+| Intention | Variante A | Variante B |
+| --- | --- | --- |
+| `neutral` | [Reprendre son appui](assets/live2d/r21_professional_art/intent_motions/Jade_neutral_A.motion3.json) (4,12 s) | [Saluer d’un signe](assets/live2d/r21_professional_art/intent_motions/Jade_neutral_B.motion3.json) (3,28 s) |
+| `playful` | [Feinte de côté](assets/live2d/r21_professional_art/intent_motions/Jade_playful_A.motion3.json) (3,46 s) | [Balancement complice](assets/live2d/r21_professional_art/intent_motions/Jade_playful_B.motion3.json) (3,86 s) |
+| `excited` | [Élan vers le haut](assets/live2d/r21_professional_art/intent_motions/Jade_excited_A.motion3.json) (3,28 s) | [Se tourner pour partager](assets/live2d/r21_professional_art/intent_motions/Jade_excited_B.motion3.json) (4,12 s) |
+| `curious` | [Tendre l’oreille](assets/live2d/r21_professional_art/intent_motions/Jade_curious_A.motion3.json) (4,56 s) | [Chercher puis comprendre](assets/live2d/r21_professional_art/intent_motions/Jade_curious_B.motion3.json) (3,72 s) |
+| `tender` | [La joue vers l’épaule](assets/live2d/r21_professional_art/intent_motions/Jade_tender_A.motion3.json) (4,84 s) | [Confidence à mi-voix](assets/live2d/r21_professional_art/intent_motions/Jade_tender_B.motion3.json) (4,12 s) |
+| `reassuring` | [Oui, je suis là](assets/live2d/r21_professional_art/intent_motions/Jade_reassuring_A.motion3.json) (3,90 s) | [Une présence tranquille](assets/live2d/r21_professional_art/intent_motions/Jade_reassuring_B.motion3.json) (5,04 s) |
+| `serious` | [Se redresser](assets/live2d/r21_professional_art/intent_motions/Jade_serious_A.motion3.json) (3,94 s) | [Marquer le propos](assets/live2d/r21_professional_art/intent_motions/Jade_serious_B.motion3.json) (3,57 s) |
+
+Pour l’édition sur une autre copie du rig v43, chaque fichier `Jade_<intention>.psd2live-motions.json` fournit les deux clips à envoyer à `motion.put`. Chaque fichier conserve les temps de clés, les tangentes et les fondus. [Courbes Cubism et PSD2Live](assets/live2d/r21_professional_art/intent_motions/)
 
 Utiliser Cubism PRO 5.3.05 pour l’export natif SDK 5.0 et l’API VTube Studio pour charger et poser le modèle. PSD2Live sert aux essais de découpe, de physique et de courbes sur une copie. [Relais yeux](reports/Jade_r21_relais_Astra_yeux.md)
 
