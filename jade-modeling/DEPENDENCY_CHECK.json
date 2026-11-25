@@ -1,13 +1,19 @@
 {
-  "verified_manifest_files": 202,
-  "model_packages": 1,
-  "references_checked": 23,
+  "verified_manifest_files": 250,
+  "model_packages": 2,
+  "references_checked": 64,
   "missing_references": [],
   "parse_failures": [],
   "packages": [
     {
       "model": "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade.model3.json",
       "references": 12,
+      "missing": 0,
+      "complete": true
+    },
+    {
+      "model": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_r21_v45.model3.json",
+      "references": 23,
       "missing": 0,
       "complete": true
     }

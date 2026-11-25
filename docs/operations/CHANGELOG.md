@@ -1,3 +1,7 @@
+## 2026-11-25 — Sauvegarde Git de Jade v45.1
+
+La [livraison portable](../../jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md) réunit l’export jouable et ses sources éditables. Git LFS conserve les binaires. Le catalogue de la copie publique couvre le profil portable et les sources préparées pour le dépôt.
+
 ## 2026-11-25 — Livraison autonome et calibration de Jade v45.1
 
 Le paquet installé regroupe le modèle, les quatorze gestes et le profil VTube Studio. Les KRA/PSD, le CMO3 et les sources d’animation sont réunis dans la livraison locale. La relecture en situation couvre appuis, parole, clignement, interruption et retour au repos. Les assets sont disponibles pour DEV-001. [Résultats, réglages et limites](handoffs/2026-11-25-codex-livraison-modele-jade.md)

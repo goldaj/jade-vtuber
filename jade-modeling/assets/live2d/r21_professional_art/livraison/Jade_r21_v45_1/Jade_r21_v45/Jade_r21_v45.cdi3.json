@@ -1,0 +1,275 @@
+{
+	"Version": 3,
+	"Parameters": [
+		{
+			"Id": "ParamAngleX",
+			"GroupId": "",
+			"Name": "Angle X"
+		},
+		{
+			"Id": "ParamAngleY",
+			"GroupId": "",
+			"Name": "Angle Y"
+		},
+		{
+			"Id": "ParamAngleZ",
+			"GroupId": "",
+			"Name": "Angle Z"
+		},
+		{
+			"Id": "ParamEyeLOpen",
+			"GroupId": "",
+			"Name": "EyeL Open"
+		},
+		{
+			"Id": "ParamEyeLSmile",
+			"GroupId": "",
+			"Name": "EyeL Smile"
+		},
+		{
+			"Id": "ParamEyeROpen",
+			"GroupId": "",
+			"Name": "EyeR Open"
+		},
+		{
+			"Id": "ParamEyeRSmile",
+			"GroupId": "",
+			"Name": "EyeR Smile"
+		},
+		{
+			"Id": "ParamEyeBallX",
+			"GroupId": "",
+			"Name": "Eyeball X"
+		},
+		{
+			"Id": "ParamEyeBallY",
+			"GroupId": "",
+			"Name": "Eyeball Y"
+		},
+		{
+			"Id": "ParamBrowLY",
+			"GroupId": "",
+			"Name": "BrowL Y"
+		},
+		{
+			"Id": "ParamBrowRY",
+			"GroupId": "",
+			"Name": "BrowR Y"
+		},
+		{
+			"Id": "ParamBrowLX",
+			"GroupId": "",
+			"Name": "BrowL X"
+		},
+		{
+			"Id": "ParamBrowRX",
+			"GroupId": "",
+			"Name": "BrowR X"
+		},
+		{
+			"Id": "ParamBrowLAngle",
+			"GroupId": "",
+			"Name": "BrowL Angle"
+		},
+		{
+			"Id": "ParamBrowRAngle",
+			"GroupId": "",
+			"Name": "BrowR Angle"
+		},
+		{
+			"Id": "ParamBrowLForm",
+			"GroupId": "",
+			"Name": "BrowL Form"
+		},
+		{
+			"Id": "ParamBrowRForm",
+			"GroupId": "",
+			"Name": "BrowR Form"
+		},
+		{
+			"Id": "ParamMouthForm",
+			"GroupId": "",
+			"Name": "Mouth Form"
+		},
+		{
+			"Id": "ParamMouthOpenY",
+			"GroupId": "",
+			"Name": "Mouth Open"
+		},
+		{
+			"Id": "ParamCheek",
+			"GroupId": "",
+			"Name": "Cheek"
+		},
+		{
+			"Id": "ParamBodyAngleX",
+			"GroupId": "",
+			"Name": "Body X"
+		},
+		{
+			"Id": "ParamBodyAngleY",
+			"GroupId": "",
+			"Name": "Body Y"
+		},
+		{
+			"Id": "ParamBodyAngleZ",
+			"GroupId": "",
+			"Name": "Body Z"
+		},
+		{
+			"Id": "ParamBreath",
+			"GroupId": "",
+			"Name": "Breath"
+		},
+		{
+			"Id": "ParamHairFront",
+			"GroupId": "",
+			"Name": "Hair Move Front"
+		},
+		{
+			"Id": "ParamHairSide",
+			"GroupId": "",
+			"Name": "Hair Move Side"
+		},
+		{
+			"Id": "ParamHairBack",
+			"GroupId": "",
+			"Name": "Hair Move Back"
+		},
+		{
+			"Id": "ParamJadeWeightShift",
+			"GroupId": "",
+			"Name": "Jade - Weight Shift"
+		},
+		{
+			"Id": "ParamJadeSkirtSway",
+			"GroupId": "",
+			"Name": "Jade - Skirt Sway"
+		},
+		{
+			"Id": "ParamJadeLegRelaxR",
+			"GroupId": "",
+			"Name": "Jade - Right Leg Relax"
+		},
+		{
+			"Id": "ParamJadeLegRelaxL",
+			"GroupId": "",
+			"Name": "Jade - Left Leg Relax"
+		},
+		{
+			"Id": "ParamJadeHairLockL",
+			"GroupId": "",
+			"Name": "Jade Hair LockL"
+		},
+		{
+			"Id": "ParamJadeHairLockR",
+			"GroupId": "",
+			"Name": "Jade Hair LockR"
+		},
+		{
+			"Id": "ParamJadeHairBangLOuter",
+			"GroupId": "",
+			"Name": "Jade Hair BangLOuter"
+		},
+		{
+			"Id": "ParamJadeHairBangLInner",
+			"GroupId": "",
+			"Name": "Jade Hair BangLInner"
+		},
+		{
+			"Id": "ParamJadeHairBangCenterL",
+			"GroupId": "",
+			"Name": "Jade Hair BangCenterL"
+		},
+		{
+			"Id": "ParamJadeHairBangCenterR",
+			"GroupId": "",
+			"Name": "Jade Hair BangCenterR"
+		},
+		{
+			"Id": "ParamJadeHairBangRInner",
+			"GroupId": "",
+			"Name": "Jade Hair BangRInner"
+		},
+		{
+			"Id": "ParamJadeHairBangROuter",
+			"GroupId": "",
+			"Name": "Jade Hair BangROuter"
+		},
+		{
+			"Id": "ParamJadeHairAhoge",
+			"GroupId": "",
+			"Name": "Jade Hair Ahoge"
+		},
+		{
+			"Id": "ParamJadeEarTwitchL",
+			"GroupId": "",
+			"Name": "Jade ear twitch L"
+		},
+		{
+			"Id": "ParamJadeEarTwitchR",
+			"GroupId": "",
+			"Name": "Jade ear twitch R"
+		},
+		{
+			"Id": "ParamJadeHairBackTips",
+			"GroupId": "",
+			"Name": "Jade - Rear hair ends"
+		},
+		{
+			"Id": "ParamJadeEarFollowL",
+			"GroupId": "",
+			"Name": "Jade - Left ear follow"
+		},
+		{
+			"Id": "ParamJadeEarFollowR",
+			"GroupId": "",
+			"Name": "Jade - Right ear follow"
+		},
+		{
+			"Id": "ParamJadeIdleLean",
+			"GroupId": "",
+			"Name": "Jade - Idle head lean"
+		},
+		{
+			"Id": "ParamJadeArmFollow",
+			"GroupId": "",
+			"Name": "Jade - Arm inertia"
+		}
+	],
+	"ParameterGroups": [],
+	"Parts": [
+		{
+			"Id": "R21_RIG_ART_V1",
+			"Name": "R21_RIG_ART_V1"
+		},
+		{
+			"Id": "Part",
+			"Name": "60_HAIR_FRONT"
+		},
+		{
+			"Id": "Part2",
+			"Name": "50_FACE_FEATURES"
+		},
+		{
+			"Id": "Part3",
+			"Name": "40_EARS"
+		},
+		{
+			"Id": "Part4",
+			"Name": "30_SKIN"
+		},
+		{
+			"Id": "Part5",
+			"Name": "20_DRESS"
+		},
+		{
+			"Id": "Part6",
+			"Name": "10_HAIR_BACK"
+		},
+		{
+			"Id": "Part7",
+			"Name": "00_UNDERLAY"
+		}
+	]
+}

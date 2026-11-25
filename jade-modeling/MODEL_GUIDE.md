@@ -4,6 +4,10 @@ Le [plan directeur approuvé](MODEL2D_MASTER_PLAN.md) gouverne la reprise r21 vi
 
 ## Sources actuelles
 
+La [livraison Jade v45.1](assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md) contient le modèle VTube Studio en pied, ses quatorze gestes, le CMO3 natif, l’atelier PSD2Live et les sources KRA/PSD réconciliées.
+
+## Jalons antérieurs
+
 Tous les chemins ci-dessous sont relatifs à ce dossier. Les fichiers binaires se
 récupèrent avec `git lfs pull` ; `git lfs fsck` vérifie les objets locaux.
 
@@ -19,7 +23,7 @@ récupèrent avec `git lfs pull` ; `git lfs fsck` vérifie les objets locaux.
 | Package animé r20 complet à restaurer | `runtime-installed/Jade_professional_r20_idle_complete/` |
 | Politique retenus/exclus | `INVENTORY.json`, avec justification par fichier dans `ASSET_MANIFEST.json` |
 
-Les sources KRA/PSD ne sont pas encore synchronisées avec les derniers ajouts
+Les sources KRA/PSD de ces anciens jalons ne sont pas synchronisées avec les derniers ajouts
 plein pied et cheveux du CMO3 r21. Ne pas réimporter aveuglément le PSD dans le
 dernier CMO3 : cela risquerait de réintroduire des éléments anciens. Les fichiers
 `CONTINUATION.md` et `PLAN_MODELE_JADE.md` décrivent les limites et la suite exacte.

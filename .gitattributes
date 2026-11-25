@@ -4,6 +4,7 @@ jade-modeling/**/*.cmo3 filter=lfs diff=lfs merge=lfs -text
 jade-modeling/**/*.moc3 filter=lfs diff=lfs merge=lfs -text
 jade-modeling/**/*.kra filter=lfs diff=lfs merge=lfs -text
 jade-modeling/**/*.kra~ filter=lfs diff=lfs merge=lfs -text
+jade-modeling/**/*.psd2live filter=lfs diff=lfs merge=lfs -text
 jade-modeling/**/*.psd filter=lfs diff=lfs merge=lfs -text
 jade-modeling/**/*.psd~ filter=lfs diff=lfs merge=lfs -text
 jade-modeling/**/*.ora filter=lfs diff=lfs merge=lfs -text

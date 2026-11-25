@@ -2,7 +2,7 @@
 
 Ce dossier rassemble les sources artistiques, les modèles Cubism, les animations,
 le dernier package VTube Studio pertinent, les scripts Python/PowerShell/C++/Java,
-les plans et les rapports courants du projet Jade. Le code applicatif du bot reste
+les plans et les rapports courants du projet Jade. La [livraison v45.1 prête à restaurer](assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md) réunit le modèle compilé, le rig et les sources de dessin et d’animation. Le code applicatif du bot reste
 dans le répertoire principal du même dépôt.
 
 Les fichiers sont des copies vérifiées du dossier local `Jade AI Streamer Project`

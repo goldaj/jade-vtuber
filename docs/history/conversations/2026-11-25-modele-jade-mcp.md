@@ -18,3 +18,6 @@ Couverture partielle des messages accessibles. Les formulations ci-dessous sont 
 - **Assistant.** Propose de terminer la synchronisation des sources, de livrer le paquet autonome puis de calibrer Jade dans VTube Studio.
 - **Utilisateur.** Donne son accord pour réaliser ces étapes.
 - **Assistant.** Livre les sources de peinture et le paquet, vérifie une installation neuve et valide la calibration du modèle en situation. La sélection automatique des gestes dans le bot reste à raccorder. [Passation](../../operations/handoffs/2026-11-25-codex-livraison-modele-jade.md).
+
+- **Utilisateur.** Demande de pousser le travail utile sur Git pour en garder l’historique avant de poursuivre le projet.
+- **Assistant.** Publie sur `develop` les seize commits de construction et prépare une copie restaurable du modèle, du rig et des sources KRA, PSD et PSD2Live. [Guide du modèle v45.1](../../../jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md).

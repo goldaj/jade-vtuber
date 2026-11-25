@@ -4,7 +4,7 @@ Le propriétaire a donné le feu vert à la production le 25 novembre et a confi
 
 ## Base à ouvrir
 
-- **Livraison v45.1 en service.** Dans le projet modèle, ouvrir `assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md`. Le sous-dossier `Jade_r21_v45` est installable. `Sources` réunit le KRA, le PSD et le manifeste des plaques. `Edition` conserve le CMO3 et l’atelier des gestes. `CALIBRATION.md` donne les réglages et la recette sur le profil opérateur.
+- **Livraison v45.1 en service.** Ouvrir le [guide de la livraison téléchargeable](assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md). Le sous-dossier `Jade_r21_v45` est installable. `Sources` réunit le KRA, le PSD et le manifeste des plaques. `Edition` conserve le CMO3 et l’atelier des gestes. `CALIBRATION.md` donne les réglages et la recette sur le profil opérateur.
 
 - **Candidat de finition v38.** Dans le projet local sur D:, ouvrir `assets/live2d/r21_professional_art/working_v005/Jade_r21_v38_portrait.cmo3`. Le paquet natif SDK 5.0 porte le nom `Jade_r21_v38`. Le clignement, les raccords menton–cou–épaules et le détourage des mèches au col ont passé la revue croisée en portrait. Le v37 conserve le précédent jalon de centrage de la bouche.
 - **Point de départ v32.** `Jade_r21_v32.cmo3`, SHA-256 `C26C686DBF6A9DE08FBAD281088118A6EDF2CFBDBDCEC993058C039F81294D1C`. Il réunit l’atlas recalé sur le dessin v31, deux tuiles de masque d’yeux et les contrôles de pointes d’oreilles `ParamJadeEarTwitchL/R`.
