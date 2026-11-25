@@ -1,3 +1,7 @@
+## 2026-11-25 — Épaules et expressions en parole de Jade v39
+
+- Le v39 corrige les fragments sur les deux épaules et rend le regard, les sourcils et la bouche indépendants en dialogue. Le panel a demandé une reprise de l’opacité des iris avant d’accepter le paquet natif. Deux phrases françaises ont piloté la bouche dans VTube Studio pendant les bascules Smile, Sad et repos. La commande de modèle gère les bascules temporisées. [Outil](../../jade-modeling/tools/vts_jade_expression.py) · [État et point de finition](../../jade-modeling/MODEL2D_CODEX_STATE.md)
+
 ## 2026-11-25 — Portrait et clignement de Jade v38
 
 - Le v38 relie le cou au mouvement de tête, rétablit la matière derrière les épaules et corrige les contours qui suivaient les mèches. Le cil masque progressivement l’iris et rejoint le dessin de l’œil fermé. Les avis croisés ont conduit à reprendre le fondu des cils et les sous-peintures avant d’accepter ces éléments sur l’export natif.
