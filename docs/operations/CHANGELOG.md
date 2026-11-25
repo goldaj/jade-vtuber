@@ -1,3 +1,7 @@
+## 2026-11-25 — Mouvement secondaire de Jade v41
+
+- L’export natif ajoute la flexion des masses arrière et des oreilles et reprend la mèche du sommet. Le réglage sépare inertie et tressautement dans l’idle. Le pilotage des expressions reconnaît le nouveau paquet. Les retournements et arrêts ont été rejoués dans VTube Studio. [État du modèle](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
 ## 2026-11-25 — Appuis et inertie de jupe de Jade v40
 
 - Le v40 associe appuis latéraux, contre-inclinaison du haut du corps et relâchement du genou libre. Après rejet de la première amplitude, une physique d’ourlet amortie accompagne la boucle de 36 s. Le profil VTS préserve le vent sur les cheveux. Le contrôle couvre les pieds et les combinaisons avec le visage en parole. [État de reprise](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)

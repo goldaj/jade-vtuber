@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 NAMES = ("Smile", "Sad")
-MODEL_NAMES = ("Jade_r21_v39", "Jade_r21_v40")
+MODEL_NAMES = ("Jade_r21_v39", "Jade_r21_v40", "Jade_r21_v41")
 
 async def set_emotion(client, state, *, model_id):
     """Switch through enabled model hotkeys, preserving independent user expressions."""
