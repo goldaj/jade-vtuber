@@ -1,3 +1,7 @@
+## 2026-11-25 — Amplitude des mouvements de Jade v42
+
+- La comparaison avec Huohuo en fonctionnement a conduit à reprendre le suivi de tête, la dynamique des mèches, des oreilles et des bras et le mouvement autonome au repos. Le profil v42 est chargé au cadrage du propriétaire dans VTube Studio. [État du modèle](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
 ## 2026-11-25 — Mouvement secondaire de Jade v41
 
 - L’export natif ajoute la flexion des masses arrière et des oreilles et reprend la mèche du sommet. Le réglage sépare inertie et tressautement dans l’idle. Le pilotage des expressions reconnaît le nouveau paquet. Les retournements et arrêts ont été rejoués dans VTube Studio. [État du modèle](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
