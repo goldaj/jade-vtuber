@@ -8,9 +8,9 @@ Production du modèle complet r21 à partir des sources et checkpoints existants
 
 | ID | Prio | Jalon | Statut | Situation initiale | Tâche | Résultat attendu / vérification | Dépend de |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **ART-001** | P1 | B | **À qualifier** | À réconcilier | Aligner la reprise Codex avec l'avancement artistique v31 | Comparer MODEL2D_CODEX_STATE et CONTINUATION : plan directeur, propriétaire, prochain checkpoint, jalons et preuve ; ne pas réinitialiser les progrès faits après v30. | OPS-002 |
+| **ART-001** | P1 | B | **En cours** | Plan approuvé le 25/11 | Aligner la reprise Codex avec le v32 local et les MCP | Réconcilier le plan, le suivi et l’état du v32 local. Préparer les copies et attendre le feu vert de démarrage du propriétaire. | OPS-002 |
 | **ART-002** | P1 | B | **À faire** | À vérifier sur D: | Identifier et sécuriser les sources r20/r21 | Inventorier v30/v31/r02, maîtres RGBA, CMO3, PSD/KRA et checkpoints ; confirmer intégrité LFS, rôle et versions avant retouche. | OPS-002 |
-| **ART-003** | P1 | B | **À faire** | Blocage export connu | Corriger les UV et construire un atlas plein pied | Repartir d'une copie v31 intacte ; corriger remappage UV des pièces bas du corps, vérifier corps/jambes/chaussures après export ; ne pas promouvoir les anciens atlas 4096 non valides. | ART-002 |
+| **ART-003** | P1 | B | **À faire** | Atlas recalé dans le v32 local, contrôle natif du v32 restant | Obtenir un atlas plein pied fidèle au v31 | Ouvrir une copie du v32 dans Cubism et utiliser Turboism. Vérifier l’ourlet, le corps, les jambes et les chaussures après export. Corriger les défauts observés qui bloquent le premier paquet utilisable. | ART-001, ART-002 |
 | **ART-004** | P1 | B | **À faire** | À terminer | Réparer les raccords cheveux, épaules, cou et vêtements | Contrôler poses neutres, extrêmes et combinées ; éliminer trous, doubles silhouettes, bandes incorrectes et racines de mèches instables. | ART-002 |
 | **ART-005** | P1 | B | **À faire** | À terminer, non bloquant pour premier export candidat | Corriger le clignement et les yeux | Conserver sprites réellement fermés et iris stables ; résoudre cils gris, contours doubles et reliquat d'iris en transition, sans retarder inutilement la première version utilisable. | ART-002 |
 | **ART-006** | P1 | B | **À faire** | À finir | Finaliser tête, regard et rig du corps plein pied | Valider Head X/Y/Z, diagonales, cou/épaules, posture, bras, bassin, jambes et chaussures avec amplitude et volume cohérents. | ART-002, ART-004 |
@@ -35,7 +35,8 @@ Production du modèle complet r21 à partir des sources et checkpoints existants
 ## Sources de référence
 
 - [État de travail artistique](../../jade-modeling/CONTINUATION.md)
-- [Plan qualité r21](../../jade-modeling/PLAN_QUALITE_PRO_20261113.md)
+- [Plan directeur r21 approuvé](../../jade-modeling/MODEL2D_MASTER_PLAN.md)
+- [Plan qualité r21 du 13 novembre](../../jade-modeling/PLAN_QUALITE_PRO_20261113.md)
 - [Reprise Codex 2D](../../jade-modeling/MODEL2D_CODEX_STATE.md)
 - [Passation des animations](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md)
 

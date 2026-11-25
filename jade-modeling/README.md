@@ -17,7 +17,7 @@ Les sources, textures, rigs, expressions, mouvements et exports essentiels sont
 maintenant enregistrés dans ce dépôt, avec Git LFS pour les binaires. Les copies
 d'origine sur le poste sont conservées. `ASSET_MANIFEST.json` recense les tailles
 et empreintes de l'import ; `DEPENDENCY_CHECK.json` vérifie les références des
-packages. Consulter `MODEL_GUIDE.md` pour les points d'entrée et l'état exact.
+packages. Consulter le [guide modèle](MODEL_GUIDE.md) pour les fichiers et le [plan directeur approuvé](MODEL2D_MASTER_PLAN.md) pour la reprise avec Turboism et PSD2Live.
 
 Les distributions des applications, les bibliothèques installées, caches et
 captures vidéo brutes ne font pas partie du code source du modèle. Les outils

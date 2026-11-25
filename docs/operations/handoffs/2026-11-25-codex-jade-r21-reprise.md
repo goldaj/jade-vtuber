@@ -1,0 +1,12 @@
+# Mission — reprise Jade r21 avec Turboism et PSD2Live
+
+- **Agent et périmètre.** Codex, modèle 2D Live2D de Jade. Cartes ART-001/002 pour la préparation, puis ART-003 à ART-012 selon le plan. Le raccordement logiciel relève de DEV-001.
+- **Base Git.** `develop` au commit `c3c17b0`, travail documentaire préparé sur `codex/jade-r21-reprise`. Les assets de travail sont sur D:.
+- **Décision.** Le propriétaire a approuvé le plan le 25 novembre. Il a demandé de préparer les docs et les outils, de retirer uniquement les travaux dont l’inutilité est certaine et de le prévenir avant l’exécution. Il observera les validations en direct.
+- **Constat de départ.** Le v32 local réunit l’atlas recalé, les deux textures de masque dédiées et les deux contrôles des pointes d’oreilles. Le contrôle d’ourlet dans Cubism concernait le candidat intermédiaire. Le premier paquet r21 et sa recette n’ont pas encore été produits. L’idle, Smile et Sad et la physique avant sont disponibles pour l’assemblage.
+- **Préparation locale.** `Jade_r21_travail.cmo3` est disponible. Import du v32 dans un projet PSD2Live distinct, avec 78 maillages et 42 paramètres. Le propriétaire a ouvert la copie native dans Cubism 5.3.05 et Turboism la détecte. Le projet PSD2Live est enregistré avec la physique avant et Smile/Sad. L’idle original reste prêt dans le staging.
+- **Tri.** Les 126 fichiers versionnés du dossier d’actifs et du paquet r20 ont des contenus distincts et des rôles documentés. Aucun retrait Git certain. Quatre fichiers locaux ont été retirés sur D: (205 545 745 octets), trois essais dépassés et un candidat v31 au contenu identique au checkpoint conservé. Le journal de nettoyage local documente la récupération.
+- **Critère de sortie de la préparation.** Plan et état de reprise lisibles, retrait documenté des seuls fichiers confirmés, copies de travail chargées et état annoncé au propriétaire. La validation du plan est distincte de l’acceptation visuelle du modèle et de la clôture des cartes.
+- **Suite après feu vert.** Priorité au premier affichage r21 en pied dans VTube Studio. Poursuivre ensuite par les raccords, le visage, le rig, les physiques, les expressions et les 14 motions. Noter la version et les observations effectives à chaque jalon.
+
+[Plan directeur](../../../jade-modeling/MODEL2D_MASTER_PLAN.md) · [État de reprise](../../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Backlog ART](../../backlog/04-PRODUCTION-2D.md) · [Definition of Done](../../backlog/DEFINITION_OF_DONE.md)

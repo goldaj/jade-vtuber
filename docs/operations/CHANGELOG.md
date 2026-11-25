@@ -1,3 +1,9 @@
+## 2026-11-25 — Préparation de Jade r21 avec les deux MCP
+
+- ART-001/002. Plan de production 2D approuvé, reprise sur le candidat v32 local. Turboism accompagne Cubism PRO 5.3.05. PSD2Live sert aux essais de calques, de rig, de physique et de mouvement. La production attend un feu vert distinct.
+- Le plan, les points de reprise et le backlog relatent l’état constaté. L’ourlet du candidat intermédiaire a été observé dans Cubism. L’export et la recette du v32 restent à faire, avec observation en direct par le propriétaire.
+- Base `develop` `c3c17b0`. [Plan directeur](../../jade-modeling/MODEL2D_MASTER_PLAN.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
 ## 2026-11-24 — Microphone en plein écran mobile
 
 - Le mode immersif natif ou CSS conserve le bouton micro en bas, centré et accessible, sans afficher la navigation, le chat ou le sélecteur de décor. Le bouton unique est déplacé dans la scène à l'entrée, puis revient à son emplacement selon l'onglet à la sortie, sans réinitialiser l'enregistrement ni la préférence de synthèse vocale.
