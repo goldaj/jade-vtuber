@@ -14,7 +14,7 @@ from uuid import uuid4
 
 
 NAMES = ("Smile", "Sad")
-MODEL_NAMES = ("Jade_r21_v39", "Jade_r21_v40", "Jade_r21_v41", "Jade_r21_v42", "Jade_r21_v43")
+MODEL_NAMES = ("Jade_r21_v39", "Jade_r21_v40", "Jade_r21_v41", "Jade_r21_v42", "Jade_r21_v43", "Jade_r21_v44")
 _STATE_DIR = Path(r"D:\Codex\tmp") if os.name == "nt" and Path("D:/Codex").is_dir() else Path(tempfile.gettempdir())
 _STATE_DB = _STATE_DIR / "jade-vts-expression-holds.sqlite3"
 

@@ -1,3 +1,7 @@
+## 2026-11-25 — Deux gestes de curiosité pour Jade v44
+
+- Le modèle dispose de deux actions jouables en parole. Jade se penche et tend l’oreille dans la première. Dans la seconde, elle cherche dans deux directions et ponctue sa réaction d’un hochement. Ce dernier mouvement a été repris après la première revue au cadrage de diffusion. Les pilotes de parole et d’expressions reconnaissent le paquet v44. [Fichiers et commandes](../../jade-modeling/CONTINUATION.md#déclencher-la-curiosité-dans-vtube-studio) · [Suivi ART-009](../backlog/04-PRODUCTION-2D.md)
+
 ## 2026-11-25 — Bouche et transitions de parole de Jade v43
 
 - Les deux poses signalées par le propriétaire ont été reprises dans le rig et dans la peinture. Le paquet v43 a passé la revue en sourire parlé, pendant un clignement et sur une coupure en pleine syllabe suivie d’une seconde réplique. Le pilote associe chaque niveau de bouche à la réplique en cours et relâche les expressions à la fin. [Avant/après et mesures](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Utiliser le pilote](../../jade-modeling/CONTINUATION.md#piloter-une-réplique-dans-vtube-studio)

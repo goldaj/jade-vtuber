@@ -118,8 +118,8 @@ async def perform(events, endpoint=DEFAULT_ENDPOINT, credentials=DEFAULT_CREDENT
             clients.append(client)
         mouth, face = clients
         current = (await mouth.request("CurrentModelRequest"))["data"]
-        if current.get("modelName") != "Jade_r21_v43":
-            raise RuntimeError("Load Jade_r21_v43 in VTube Studio first")
+        if current.get("modelName") not in ("Jade_r21_v43", "Jade_r21_v44"):
+            raise RuntimeError("Load Jade_r21_v43 or Jade_r21_v44 in VTube Studio first")
         model_id = current["modelID"]
         state = Performance()
         async def receive():

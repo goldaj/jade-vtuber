@@ -26,7 +26,9 @@ Le propriétaire a approuvé le [plan directeur Live2D](MODEL2D_MASTER_PLAN.md) 
 
 **Transitions du v43.** Sur 13,6 s de dialogue français, 362 poses ont été lues dans VTube Studio puis revues sur le paquet livré. Après la coupure en pleine syllabe, le trait fermé retrouve 88 % de son opacité en 117 ms. La première mesure de fermeture complète arrive à 267 ms. La bouche se rouvre 101 ms après l’ordre de reprise. La fin tardive de la première réplique laisse la seconde se poursuivre. Le regard, les clignements et le mouvement de tête continuent pendant le dialogue. En fin de scène, les expressions sont relâchées et les lèvres reviennent au repos. Le test utilise les niveaux d’un enregistrement de synthèse français calculés par le module audio de Jade. La diffusion par le bot relève de DEV-001.
 
-**Reprise de la production.** Étape 7. Créer et comparer la première paire de motions d’intention en conservant la parole, le suivi et le retour à l’idle du v43.
+**v44 · Curiosité.** Le groupe `Curious` contient deux motions originales non bouclées sur le MOC v43. A (4,56 s) donne à voir une écoute prolongée, avec transfert du poids, inclinaison du buste et deux accents d’oreille. B (3,72 s) fait pivoter la tête dans deux directions puis ajoute un acquiescement. Le premier B revenait simplement au centre. La révision anime aussi le tangage, avec un redressement, un bref hochement puis un amorti. Dans VTube Studio, A laisse libres les trois rotations de tête. B conduit les rotations horizontale et verticale pendant le geste. Le roulis, les yeux, la bouche, le souffle et la physique continuent de répondre. [Motions et déclenchement](CONTINUATION.md#déclencher-la-curiosité-dans-vtube-studio)
+
+**Reprise de la production.** Étape 7, 2/14 motions livrées. Développer les six autres paires d’intention sur le rig v43 en conservant les deux gestes validés.
 
 ## Informations à relever à chaque jalon
 
