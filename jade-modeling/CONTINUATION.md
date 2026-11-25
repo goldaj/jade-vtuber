@@ -4,7 +4,7 @@ Le propriétaire a donné le feu vert à la production le 25 novembre et a confi
 
 ## Base à ouvrir
 
-- **v45 en service.** Le paquet local `assets/live2d/r21_professional_art/vts_export/Jade_r21_v45` contient les quatorze animations corporelles et l’idle du modèle. Le dessin et la bouche proviennent de `working_v005/Jade_r21_v43_parole.cmo3`. Les quatorze clips se reprennent dans `working_v005/Jade_r21_v45_motions.psd2live`.
+- **v45.1 en service.** Le paquet local `assets/live2d/r21_professional_art/vts_export/v45_1/Jade_r21_v45` utilise le profil `Jade_r21_v45` avec ses quatorze gestes et son idle. Ouvrir `working_v005/Jade_r21_v45_1_iris.cmo3` pour le dessin, y compris la bouche v43 et les deux iris corrigés. Les quatorze clips se reprennent dans `working_v005/Jade_r21_v45_motions.psd2live`.
 
 - **Candidat de finition v38.** Dans le projet local sur D:, ouvrir `assets/live2d/r21_professional_art/working_v005/Jade_r21_v38_portrait.cmo3`. Le paquet natif SDK 5.0 porte le nom `Jade_r21_v38`. Le clignement, les raccords menton–cou–épaules et le détourage des mèches au col ont passé la revue croisée en portrait. Le v37 conserve le précédent jalon de centrage de la bouche.
 - **Point de départ v32.** `Jade_r21_v32.cmo3`, SHA-256 `C26C686DBF6A9DE08FBAD281088118A6EDF2CFBDBDCEC993058C039F81294D1C`. Il réunit l’atlas recalé sur le dessin v31, deux tuiles de masque d’yeux et les contrôles de pointes d’oreilles `ParamJadeEarTwitchL/R`.

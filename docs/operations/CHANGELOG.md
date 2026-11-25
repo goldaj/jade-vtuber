@@ -1,3 +1,7 @@
+## 2026-11-25 — Contour des iris de Jade v45.1
+
+Le modèle en service conserve le profil v45 et ses quatorze raccourcis. Les bords des deux iris ont été corrigés en regard haut. Le rythme du balancement complice a été conservé après deux déclenchements isolés dans VTube Studio. [Fichiers de reprise](../../jade-modeling/CONTINUATION.md#base-à-ouvrir)
+
 ## 2026-11-25 — Les quatorze gestes de Jade v45
 
 - ART-009 est terminé sur le poste de Jade. Les six paires restantes rejoignent la curiosité dans l’atelier PSD2Live et le paquet VTube Studio. Les pilotes locaux de parole et d’expressions prennent en charge ce paquet. [Catalogue des gestes](../../jade-modeling/CONTINUATION.md#jouer-les-quatorze-gestes) · [Recette](handoffs/2026-11-25-codex-jade-r21-reprise.md)

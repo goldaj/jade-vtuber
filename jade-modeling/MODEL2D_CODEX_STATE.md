@@ -34,6 +34,8 @@ La scène principale compte 2 170 poses. Au même grossissement, avec 57 px entr
 
 Une courte reprise a permis d’observer le clignement de la seconde variante joueuse et le silence entre les intentions. Lors du passage de Sérieux A avec Sad à Réconfort B avec Smile, l’ouverture de bouche descend à 0,018 en 151 ms et atteint zéro à 320 ms. Elle remonte à 0,64 à la reprise de parole. Au repos, la bouche se referme et la respiration et les appuis continuent. Le cadrage est conservé. La lecture des premières animations de la série présente un délai variable entre la commande et les courbes affichées, jusqu’à environ 0,73 s pour le premier balancement complice. Ce point reste suivi pour la synchronisation future sur un mot précis. Le déclenchement automatique depuis le bot relève de DEV-001.
 
+**v45.1 · Regard.** Le dessin se reprend dans `Jade_r21_v45_1_iris.cmo3` et les gestes dans l’atelier PSD2Live v45. Les deux iris corrigés ont été revus en regard haut, en diagonale et en clignement. Le profil installé conserve son nom et ses quatorze raccourcis.
+
 **Reprise de la production.** Étape 7 terminée. Préparer les sources et le paquet final pour la calibration. [Répertoire et commandes](CONTINUATION.md#jouer-les-quatorze-gestes)
 
 ## Informations à relever à chaque jalon

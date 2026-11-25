@@ -11,3 +11,6 @@ Couverture partielle des messages accessibles. Les formulations ci-dessous sont 
 - **Assistant.** Livre les quatorze gestes en v45 dans l’atelier PSD2Live et dans VTube Studio. Les spécialistes vérifient le jeu au cadrage de diffusion, les appuis, la parole et le retour au repos. Le pilotage automatique par le bot reste suivi en DEV-001.
 
 [Plan approuvé](../../../jade-modeling/MODEL2D_MASTER_PLAN.md) · [Passation opérationnelle](../../operations/handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
+- **Utilisateur.** Demande une petite passe de correction et d’amélioration du modèle existant.
+- **Assistant.** Retouche les deux iris et charge la finition v45.1 dans le profil existant. Rejoue le balancement complice et conserve son rythme. [Recette](../../operations/handoffs/2026-11-25-codex-jade-r21-reprise.md#retouche-v451).
