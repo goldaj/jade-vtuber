@@ -1,3 +1,8 @@
+## 2026-11-25 — Centrage de la bouche de Jade v37
+
+- Le v37 corrige le décalage entre le centre du visage et la bouche relevé sur le v36. Comparé au dessin maître sur cinq poses, le centrage du paquet natif présente un écart maximal de 1,79 px. VTube Studio charge le modèle et répond aux commandes de fermeture et d’ouverture.
+- [État de reprise](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
 ## 2026-11-25 — Reprise visuelle de Jade et candidat natif v36
 
 - Après rejet du v34, reprise des grandes découpes depuis le dessin maître et passage de la recette à l’export Cubism SDK 5.0.

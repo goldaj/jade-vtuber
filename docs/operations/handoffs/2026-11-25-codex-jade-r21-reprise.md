@@ -11,4 +11,6 @@
 
 - **Reprise après rejet.** Le v34 PSD2Live a été écarté de la recette visuelle. Le v36 a été reconstruit depuis le dessin maître, exporté nativement et contrôlé par Codex. Les nouveaux rasters et le rapport d’inspection restent sur D:. Le v36 sert de base au polissage et à la recette du rig.
 
+- **Centrage de la bouche.** Le propriétaire signale sur le v36 un décalage vers la gauche du visage à l’écran. Codex a corrigé les branches de la bouche au repos et en ouverture sur une copie, vérifié les deux en poses et chargé le v37 avec le cadrage précédent. Reprendre depuis ce candidat.
+
 [Plan directeur](../../../jade-modeling/MODEL2D_MASTER_PLAN.md) · [État de reprise](../../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Backlog ART](../../backlog/04-PRODUCTION-2D.md) · [Definition of Done](../../backlog/DEFINITION_OF_DONE.md)
