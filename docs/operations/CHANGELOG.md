@@ -1,3 +1,9 @@
+## 2026-11-25 — Premier chargement r21 et candidats de finition
+
+- Le premier r21 plein pied a été chargé dans VTube Studio 1.35.10. Le v33 réunit des retouches de l’ourlet, des mains, de la transparence au nez et d’une partie des cheveux arrière.
+- Les v33 et v34 sont chargés par l’API VTube Studio. Le v34 ajoute des retouches de coudes, taille et commissures et une calibration des entrées yeux/bouche validée par l’API. Son export passe par PSD2Live. Les corrections restent à observer en mouvement. Les fichiers de travail et le rapport de défauts restent sur D:.
+- Base `develop` `c3c17b0`. [État de reprise](../../jade-modeling/MODEL2D_CODEX_STATE.md) · [Passation](handoffs/2026-11-25-codex-jade-r21-reprise.md)
+
 ## 2026-11-25 — Préparation de Jade r21 avec les deux MCP
 
 - ART-001/002. Plan de production 2D approuvé, reprise sur le candidat v32 local. Turboism accompagne Cubism PRO 5.3.05. PSD2Live sert aux essais de calques, de rig, de physique et de mouvement. La production attend un feu vert distinct.
