@@ -50,7 +50,7 @@
   // Held poses are independent of the voice envelope and automatic blink.
   const R21_FACES = Object.freeze({
     neutral:     {mouth:0,    browL:0,    browR:0,    caption:"Échange paisible"},
-    playful:     {mouth:.40,  browL:.16,  browR:.08,  caption:"Petite malice"},
+    playful:     {mouth:.40,  mouthAtFullOpen:.26, browL:.16, browR:.08, caption:"Petite malice"},
     excited:     {mouth:.52,  browL:.55,  browR:.55,  caption:"Élan enthousiaste"},
     curious:     {mouth:0,    browL:.48,  browR:.22,  caption:"Attention intriguée"},
     tender:      {mouth:.17,  browL:-.10, browR:-.10, caption:"Douceur"},
@@ -62,6 +62,7 @@
   const R21_ACTING = Object.freeze({
     playful: {
       face: [
+        ["ParamEyeBallX", -.10, .10],
         ["ParamBrowLAngle", -.23],
         ["ParamBrowRAngle", -.13],
         ["ParamBrowLY", 0, .16],
@@ -85,7 +86,7 @@
   const FORCE_MOTION = 3;
   const R21_MOTION_PARAMETERS = [
     "ParamAngleX", "ParamAngleY", "ParamAngleZ", "ParamBodyAngleX", "ParamBodyAngleZ",
-    "ParamBreath", "ParamBrowLY", "ParamBrowRY",
+    "ParamBreath", "ParamEyeBallX", "ParamEyeBallY", "ParamBrowLY", "ParamBrowRY",
     "ParamBrowLAngle", "ParamBrowRAngle", "ParamMouthForm", "ParamJadeEarTwitchL", "ParamJadeEarTwitchR",
     "ParamJadeIdleLean", "ParamJadeLegRelaxL", "ParamJadeLegRelaxR", "ParamJadeWeightShift",
   ];
@@ -217,7 +218,9 @@
       if (r21Reply) {
         const {pose, acting, index} = r21Reply;
         const weight = replyPoseWeight(r21Reply, performance.now());
-        core.setParameterValueById("ParamMouthForm", pose.mouth, weight);
+        const openForm = pose.mouthAtFullOpen ?? pose.mouth;
+        const mouthForm = pose.mouth + (openForm - pose.mouth) * mouth;
+        core.setParameterValueById("ParamMouthForm", mouthForm, weight);
         core.addParameterValueById("ParamBrowLY", pose.browL, weight);
         core.addParameterValueById("ParamBrowRY", pose.browR, weight);
         if (acting) {

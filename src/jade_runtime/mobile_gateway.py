@@ -315,7 +315,11 @@ class MobileGateway:
         """Validate the local r21 and prepare its web manifest without editing the export."""
         built_in = self.second_model_dir is None
         base = self.second_model_dir or R21_MODEL
-        manifest_name = "Jade_r21_v45.model3.json" if built_in else "Jade.model3.json"
+        manifest_name = "Jade.model3.json"
+        if built_in:
+            manifest_name = "Jade_r21_mobile.model3.json"
+            if not (base / manifest_name).exists():
+                manifest_name = "Jade_r21_v45.model3.json"
 
         def local_asset(name: str, directory: Path = base) -> Path:
             if (not isinstance(name, str) or not MODEL_FILE.fullmatch(name)

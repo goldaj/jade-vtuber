@@ -129,6 +129,30 @@ class MobileModelSlotTests(unittest.IsolatedAsyncioTestCase):
             status, _, _ = await self.request(path)
             self.assertEqual(status, 200)
 
+    async def test_mobile_manifest_selects_stage_assets_without_changing_native_bundle(self):
+        native = bundle(self.r21)
+        (self.r21 / "Jade_r21_v45.model3.json").write_text(json.dumps(native), encoding="utf-8")
+        (self.r21 / "mobile").mkdir()
+        (self.r21 / "mobile/Jade.moc3").write_bytes(b"MOC3mobile")
+        (self.r21 / "mobile/stage.motion3.json").write_text("{}", encoding="utf-8")
+        mobile = {"Version": 3, "FileReferences": {
+            **native["FileReferences"],
+            "Moc": "mobile/Jade.moc3",
+            "Motions": {"Playful": [{"File": "mobile/stage.motion3.json"}]},
+        }}
+        (self.r21 / "Jade_r21_mobile.model3.json").write_text(json.dumps(mobile), encoding="utf-8")
+
+        status, data, _ = await self.request("/models/next/Jade.model3.json")
+        self.assertEqual(status, 200)
+        refs = json.loads(data)["FileReferences"]
+        self.assertEqual(refs["Moc"], "mobile/Jade.moc3")
+        self.assertEqual(refs["Motions"], mobile["FileReferences"]["Motions"])
+        status, data, _ = await self.request("/models/next/mobile/Jade.moc3")
+        self.assertEqual((status, data), (200, b"MOC3mobile"))
+        status, _, _ = await self.request("/models/next/Jade.moc3")
+        self.assertEqual(status, 404)
+        self.assertEqual(json.loads((self.r21 / "Jade_r21_v45.model3.json").read_text()), native)
+
     async def test_missing_or_partial_bundle_preserves_classic(self):
         self.gateway.second_model_dir = self.root / "missing"
         await self.assert_only_classic()

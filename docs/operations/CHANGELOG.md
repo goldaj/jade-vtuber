@@ -1,3 +1,9 @@
+## 2026-11-26 — Regard et quatre gestes repris pour le r21 mobile
+
+- Le manifeste mobile charge un MOC3 SDK 5.0 exporté dans Cubism depuis la copie v45.2. La course des iris et des reflets passe à ±26 px horizontalement et ±12 px verticalement. Le contrôle Core confirme les mêmes masques, les mêmes UV et un clignement fermé identique au v45.1.
+- Les variantes Sérieuse et Enjouée placent les appuis et les accents plus tôt dans la réplique. Les quatre clips emploient le regard, la tête et le buste. La PWA adoucit la forme du sourire parlé d’Enjouée et garde sa pose en fin de phrase.
+- Le manifeste mobile réutilise les textures, la physique et les dix autres gestes de la livraison v45.1. Les quatre courbes révisées sont également fournies dans un format éditable par PSD2Live. [Recette et sources](handoffs/2026-11-26-codex-mobile-intentions.md#troisième-étape--regard-rig-et-quatre-gestes)
+
 ## 2026-11-26 — Jeu enjoué et sérieux du r21 sur mobile
 
 - `avatar.js` associe aux quatre clips des attitudes tenues. Enjouée combine sourire léger, sourcil relevé et paupières asymétriques. Sérieuse garde une bouche sobre et des paupières presque symétriques. De petits appuis du buste prolongent l’intention pendant la réplique et suivent le fondu avec le visage.

@@ -336,6 +336,7 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
       actingSamples[group].push({
         brow:r21.addedParameters.get("ParamBrowLAngle").value,
         posture:r21.addedParameters.get(group === "Playful" ? "ParamBodyAngleZ" : "ParamBodyAngleX").value,
+        gaze:r21.addedParameters.get("ParamEyeBallX")?.value ?? 0,
         lids:["ParamEyeLOpen","ParamEyeROpen"].map(id => r21.parameters.get(id).value),
       });
       assert.equal(r21.addedParameters.has("ParamEyeLOpen"),false,"the expression leaves blinking independent");
@@ -345,8 +346,8 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   assert.deepEqual(r21.motions.slice(1), groups.flatMap(group =>
     (group === "Neutral" ? [0,0,1] : [0,1]).map(index => ({group,index,priority:3}))));
   assert.deepEqual(actingSamples, {
-    Playful:[{brow:-.23,posture:-2.4,lids:[.91,.97]},{brow:-.23,posture:2.4,lids:[.97,.91]}],
-    Serious:[{brow:.16,posture:.7,lids:[.98,.98]},{brow:.16,posture:-.7,lids:[.98,.98]}],
+    Playful:[{brow:-.23,posture:-2.4,gaze:-.10,lids:[.91,.97]},{brow:-.23,posture:2.4,gaze:.10,lids:[.97,.91]}],
+    Serious:[{brow:.16,posture:.7,gaze:0,lids:[.98,.98]},{brow:.16,posture:-.7,gaze:0,lids:[.98,.98]}],
   });
 
   const beforeSpeech = r21.motions.length;
@@ -391,6 +392,10 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   nextDefault.advanceTime(200);
   r21.internalModel.emit("beforeModelUpdate");
   assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:.40,weight:1},"an old fade cannot clear a new reply");
+  nextDefault.avatar.setMouth(1);
+  r21.internalModel.emit("beforeModelUpdate");
+  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:.26,weight:1},"open vowels soften the playful mouth");
+  nextDefault.avatar.setMouth(0);
   assert.equal(await nextDefault.avatar.selectModel("classic"),true);
   const classic = nextDefault.models.at(-1);
   const neutralOnClassic = classic.neutral;
