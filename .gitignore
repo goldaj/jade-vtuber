@@ -22,6 +22,7 @@ jade-modeling/reports/*.avi
 jade-modeling/reports/*.mp4
 jade-modeling/tools/third-party/
 !jade-modeling/**/*.json
+!src/jade_runtime/mobile_web/r21-expressions/*.exp3.json
 
 # Future public release: private materials stay outside the public source tree.
 config/private/

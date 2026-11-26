@@ -1,3 +1,10 @@
+## 2026-11-26 — Jade r21 devient le modèle mobile par défaut
+
+- Le catalogue de `mobile_gateway.py` sert le r21 v45.1 de la livraison Git LFS sous un manifeste Web et quatre expressions complémentaires. `avatar-models.js`, `avatar.js` et Profil chargent le r21 debout dans les deux pièces par défaut et proposent le r20 classique avec sa présentation assise en chambre.
+- Le lecteur r21 boucle son repos et raccorde les sept paires de motions aux intentions mobiles. Les paramètres d’yeux et de bouche restent indépendants des gestes. Le cadrage des vues en pied tient compte du sol et le CSS recadre ensemble le décor chambre et ses effets en paysage. Le chargement exclusif conserve le repli r20 en cas d’échec.
+- `app.js` coupe l’enregistrement, le son, le duplex et les requêtes de conversation avant le déchargement. Les fragments tardifs sont ignorés. Le serveur surveille aussi la déconnexion des requêtes mobiles en mode JSON.
+- Les tests couvrent le défaut r21, le repli, le manifeste et les expressions Web, les quatorze gestes et la coupure. La [passation du volet PWA de DEV-001](handoffs/2026-11-26-codex-mobile-r21.md) consigne les résultats et la recette Android restante.
+
 ## 2026-11-26 — Préparation du choix de modèle dans la PWA
 
 - Demande du propriétaire : préparer un emplacement pour un second modèle, sans le raccorder maintenant. Profil propose « Modèle actuel » par défaut et « Nouveau modèle — à venir » désactivé. Le choix est propre à la session ; consulter Profil ne charge aucun modèle supplémentaire.

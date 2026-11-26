@@ -67,22 +67,22 @@ Le modèle r20 est suivi via **Git LFS**. Les paquets graphiques Web propriétai
 
 ### Sélection du modèle mobile (26/11/2026)
 
-Le sélecteur appartient à **Profil**, avec `classic` comme choix initial. `login-guard.js` charge `avatar-models.js` avant la scène assise, puis `avatar-model-loader.js` après les SDK et avant `avatar.js`. L’authentification et le démarrage du chat précèdent ces modules facultatifs. Aucun modèle n’est chargé par la simple consultation du catalogue ou de Profil, et le choix ne persiste pas localement.
+Le sélecteur appartient à **Profil**. Au lancement, `avatar.js` attend le catalogue et charge son choix par défaut une fois. Le choix est propre au salon ouvert. `login-guard.js` charge d’abord l’application de conversation, puis le catalogue, la scène, le SDK et le chargeur d’avatar. L’ouverture de Profil ne provoque aucun chargement supplémentaire.
 
 `GET /assets/avatar-models.json` fournit le catalogue v1 suivant :
 
 | Profil | URL du manifeste | Présentation | Intentions du classique | Mouvement initial | Disponibilité livrée |
 | --- | --- | --- | --- | --- | --- |
 | `classic` | `/model/Jade.model3.json` | `seated` | Oui | `Idle` | Disponible |
-| `next` | `null` ; `/models/next/Jade.model3.json` après configuration valide | `full` | Non | Aucun | Indisponible |
+| `next` | `/models/next/Jade.model3.json` si le paquet est disponible | `full` | Motions r21 | `Idle` déclaré dans le paquet | r21 v45.1 livré par Git LFS |
 
-`JADE_MOBILE_SECOND_MODEL_DIR` est vide dans l’exemple de configuration et dans les valeurs par défaut. Il n’existe aucune détection automatique du r21 ou des livraisons v45.1. Pour un branchement ultérieur explicite, le serveur vérifie le manifeste v3, les fichiers référencés, leurs formats et leur présence réelle dans le dossier configuré ; les pointeurs Git LFS non matérialisés, chemins sortants et liens symboliques sont refusés. Cette validation de paquet ne garantit pas sa compatibilité graphique avec le SDK. Le profil `next` ne reçoit aucun ajout automatique de l’Idle ou des expressions r20.
+`defaultId` vaut `next` quand le paquet est disponible, autrement `classic`. Le serveur lit la livraison v45.1 versionnée et expose son manifeste sous le nom attendu. Il ajoute quatre expressions Web au manifeste virtuel. Le répertoire optionnel `JADE_MOBILE_SECOND_MODEL_DIR` fournit son propre `Jade.model3.json` et ses expressions. Le serveur valide les références locales et refuse les liens symboliques, chemins sortants et pointeurs Git LFS non matérialisés.
 
 Le catalogue côté client est immuable et n’accepte que les deux profils et les URL locales attendus. Une erreur de lecture ou un délai dépassé conserve un catalogue classique sûr. `JadeAvatar.state` expose `status`, `modelId`, `requestedId` et `message` ; `jade-avatar-state` notifie les changements. Le contrôle est désactivé avant disponibilité du renderer et pendant le chargement. `selectModel(id)` ne vaut réussite que lorsque le modèle demandé est réellement prêt ; les refus et replis restent visibles.
 
 Le chargeur détient les ressources d’un seul modèle à la fois, y compris celles acquises avant un échec partiel. Le remplacement retire d’abord le corps DOM via `JadeSeatedScene.deactivate()`, arrête le modèle et libère ses ressources avant toute nouvelle allocation. Si la libération ne peut pas être confirmée, le rendu demande un rechargement au lieu de superposer deux modèles. `usesSeatedBody` réserve la composition hybride au profil classique prêt. Les images de corps en retard sont invalidées par génération ; un retour au classique relance leur préparation. `data-portrait-ready` garde le décor validé indépendant de `data-seated-ready`, et les animations suivent cette disponibilité du décor.
 
-La mission prépare ce contrat et ses tests, sans activer un second paquet. [Résultats et limites de validation](../operations/handoffs/2026-11-26-chatgpt-mobile-model-selection.md).
+Le sélecteur appelle `JadeConversation.stopForModelChange()` avant le remplacement. La PWA arrête la capture et les sources audio, annule la requête ou le duplex, et ignore les événements tardifs. La conversation peut être relancée manuellement quand la bascule se termine. `JadeAvatar.setIntent` choisit une seule variante r21 par réponse. Le paramètre de bouche reste piloté par l’enveloppe audio, avec fermeture à l’arrêt ou à la fin de la lecture. [Résultats et limites de validation](../operations/handoffs/2026-11-26-codex-mobile-r21.md)
 
 **Modèle de sécurité :** aucune ouverture publique du port mobile, aucune CORS générale, aucun Funnel, pas de transit par le VPS trading. Le fait de posséder l'URL privée ne dispense pas du bon compte Tailscale et du token. Un code local sur le PC capable d'usurper l'en-tête sur loopback reste hors du modèle de confiance, ce qui rend l'isolation du PC importante.
 

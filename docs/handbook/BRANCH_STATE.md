@@ -17,12 +17,11 @@ Le contrôleur privé Windows et le superviseur de processus PyCharm Run remplac
 - Le plein écran natif et son repli CSS utilisent le même chemin. Le modèle reste monté et le microphone conserve son état. [Passation, mesures de cadrage et validation](../operations/handoffs/2026-11-26-chatgpt-mobile-scenes.md).
 
 
-## PWA · Choix de modèle préparé, second emplacement inactif (26/11/2026)
+## PWA · Jade r21 et modèle classique (26/11/2026)
 
-- **Profil** contient le sélecteur « Modèle de Jade ». Le modèle actuel est le choix initial ; « Nouveau modèle — à venir » reste désactivé tant qu’aucun second paquet n’a été explicitement configuré. Le choix n’est pas enregistré dans le navigateur et l’ouverture de Profil ne déclenche aucun chargement de modèle.
-- Le changement visuel passe par un cycle exclusif : retrait du corps hybride, arrêt et libération du modèle sortant, puis chargement du modèle demandé. L’état affiché correspond au modèle réellement présent ; un échec est signalé et le repli vers le classique est prévu. Une erreur de libération empêche de démarrer une seconde allocation.
-- La chambre portrait déjà validée et ses animations restent affichables indépendamment du corps assis. Un profil complet ne reçoit pas le corps hybride ni les expressions/Idle propres au classique ; revenir au classique prépare à nouveau son corps, sans réutiliser une image devenue obsolète pendant le changement. La pièce sélectionnée et les quatre onglets restent communs.
-- **Configuration livrée :** `JADE_MOBILE_SECOND_MODEL_DIR=` reste vide. Le serveur expose un catalogue avec `classic` disponible et `next` indisponible ; il ne recherche pas automatiquement de modèle dans les livraisons r21/v45.1. Le branchement réel d’un second paquet, sa compatibilité SDK, son cadrage et sa recette restent un travail distinct. [Contrat technique](TECHNICAL.md#sélection-du-modèle-mobile-26112026) et [passation avec état des vérifications](../operations/handoffs/2026-11-26-chatgpt-mobile-model-selection.md).
+- **Jade actuelle (r21 v45.1)** s’affiche au démarrage, debout dans la chambre et la cuisine. **Profil → Modèle de Jade** permet de retrouver Jade classique (r20), assise en chambre et debout en cuisine, puis de revenir au r21. Chaque nouvelle ouverture démarre sur le r21. Le r20 sert de repli si le r21 est indisponible.
+- Chaque bascule coupe le micro et le son et annule la réponse mobile en cours. Le chargeur libère le modèle sortant, ses textures et, en chambre classique, le corps assis, avant de charger le suivant. Profil affiche le résultat réel. Une libération incertaine bloque le chargement.
+- Le r21 joue son repos et une variante A/B selon chacune des sept intentions. La bouche suit l’audio joué. Le paquet livré via Git LFS sert par défaut. `JADE_MOBILE_SECOND_MODEL_DIR` peut désigner un paquet mobile de remplacement. [Contrat technique](TECHNICAL.md#sélection-du-modèle-mobile-26112026) · [Passation et recette](../operations/handoffs/2026-11-26-codex-mobile-r21.md)
 
 ## Splash de lancement PWA (22/11/2026)
 
@@ -107,7 +106,7 @@ Le contrôleur privé Windows et le superviseur de processus PyCharm Run remplac
 3. **Concurrence :** l'orchestrateur attend la fin du tour et de sa diffusion pour avancer, même si la curation et les connecteurs peuvent travailler à côté.
 4. **Mémoire :** rappels par identité/salon et autres portées liées **uniquement en privé** ; sélection lexicale locale et curation groupée intégrées, mais pas encore de préchargement de présence L1/L2, index FTS approfondi ni de recherche sémantique profonde. La fenêtre SQLite 24 h reste intacte.
 5. **Mobile :** WebSocket duplex réseau intégré (PCM entrant par fragments, STT après fin de l'énoncé et sortie TTS progressive) ; ce n'est **pas** une conversation OpenAI Realtime audio continu, ni un APK natif. Tailscale Serve/Chrome Android et vraie latence restent à recetter.
-6. **Graphique :** l'avatar autonome r20 démarre avec `--all-channels` et ne dépend pas encore de sa visibilité. Les **14 animations corporelles originales** et le rig final r21 ne font pas partie du catalogue de visages existant.
+6. **Graphique :** l'avatar Windows autonome r20 démarre avec `--all-channels`. Le raccordement des 14 motions r21 y reste à réaliser dans DEV-001.
 7. **Modèle IA :** Luna demeure la valeur de configuration par défaut ; un moteur Realtime conversationnel léger sans Luna est prévu ultérieurement, pas intégré.
 8. **Installation :** les ports, SDK, comptes et ressources effectifs sont fournis par le PC et sa configuration privée ; le code n'est pas un inventaire des secrets du poste.
 

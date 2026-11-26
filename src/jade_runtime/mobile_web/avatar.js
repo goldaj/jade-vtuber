@@ -1,7 +1,5 @@
-/* Private Live2D Web renderer. Canonical palette is loaded from Jade's
- * Python-backed /assets/intent-visuals.json; no duplicate hardcoded mapping.
- * Only existing r20 facial expressions are triggered. New motion assets must
- * be validated before their controls are connected.
+/* Private Live2D Web renderer. The server's visual palette supplies the
+ * expression and caption. For r21, the same A/B choice also selects a motion.
  */
 "use strict";
 (() => {
@@ -10,7 +8,7 @@
   const status = document.getElementById("avatar-state");
   const mood = document.getElementById("mood-line");
   const room = document.querySelector?.(".room");
-  const DEFAULT_PROFILE = Object.freeze({id:"classic", label:"Modèle actuel", available:true,
+  const DEFAULT_PROFILE = Object.freeze({id:"classic", label:"Jade classique (r20)", available:true,
     manifestUrl:"/model/Jade.model3.json", presentation:"seated", classicIntents:true, idleMotion:"Idle"});
   let model = null;
   let modelLease = null;
@@ -28,6 +26,8 @@
   let palette = null;
   let pendingIntent = "neutral";
   let activeChoice = null;
+  let reactionVersion = 0;
+  let releaseMotionBindings = null;
   let observer = null;
   let visibilityObserver = null;
   let onScreen = true; // Graceful fallback if IntersectionObserver is unavailable.
@@ -37,24 +37,91 @@
   let visibilityPauseTimer = null;
   const VIEWPORT_PAUSE_DELAY_MS = 6500;
   let resetTimer = null;
+  let blinkTimer = null;
   let speaking = false;
   const counts = Object.create(null);
+  const nextCounts = Object.create(null);
+  const R21_MOTIONS = Object.freeze({
+    neutral:"Neutral", playful:"Playful", excited:"Excited", curious:"Curious",
+    tender:"Tender", reassuring:"Reassuring", serious:"Serious",
+  });
+  const R21_MOTION_PARAMETERS = [
+    "ParamAngleX", "ParamAngleY", "ParamAngleZ", "ParamBodyAngleX", "ParamBodyAngleZ",
+    "ParamBreath", "ParamBrowLY", "ParamJadeEarTwitchL", "ParamJadeEarTwitchR",
+    "ParamJadeIdleLean", "ParamJadeLegRelaxL", "ParamJadeLegRelaxR", "ParamJadeWeightShift",
+  ];
+  const SHORT_EXPRESSIONS = new Set(["Blink", "WinkL", "WinkR"]);
+
+  function playMotion(group, index, priority) {
+    try { model?.motion?.(group, index, priority)?.catch?.(() => {}); }
+    catch (_) { /* The avatar remains usable if an optional motion fails. */ }
+  }
+
+  function bindR21MotionPlayback(internal, idleGroup) {
+    const manager = internal.motionManager;
+    const core = internal.coreModel;
+    const defaultParameters = typeof core.getParameterDefaultValue === "function"
+      ? R21_MOTION_PARAMETERS.map(id => core.getParameterIndex(id))
+        .filter(index => index >= 0 && index < core.getParameterCount())
+        .map(index => [index, core.getParameterDefaultValue(index)])
+      : [];
+    const resetMotionParameters = () => {
+      // The SDK saves the last motion's pose. Start each frame at the rig's
+      // neutral values so an interrupted gesture can fade out even if the
+      // incoming motion has no curve for one of its parameters.
+      for (const [index, value] of defaultParameters) core.setParameterValueByIndex(index, value);
+    };
+    const onMotionLoaded = (group, index, motion) => {
+      if (group === idleGroup && index === 0) {
+        // Pixi's 0.4 adapter builds the clip but ignores Meta.Loop.
+        motion.setIsLoop?.(true);
+        motion.setIsLoopFadeIn?.(false);
+      }
+    };
+
+    // The adapter only ticks its automatic blink on frames without a motion.
+    // r21 leaves the eye curves free, so do it ourselves before expressions
+    // (which can then reliably close either eye).
+    const blink = internal.eyeBlink;
+    let lastBlinkUpdate = null;
+    const updateBlink = () => {
+      const now = performance.now();
+      const delta = lastBlinkUpdate === null ? 0 : Math.min(.1, (now - lastBlinkUpdate) / 1000);
+      lastBlinkUpdate = now;
+      blink?.updateParameters(core, delta);
+    };
+    const updateMouth = () => core.setParameterValueById("ParamMouthOpenY", mouth);
+    internal.eyeBlink = undefined;
+    internal.on?.("beforeMotionUpdate", resetMotionParameters);
+    internal.on?.("afterMotionUpdate", updateBlink);
+    internal.on?.("beforeModelUpdate", updateMouth);
+    manager?.on?.("motionLoaded", onMotionLoaded);
+    return () => {
+      internal.off?.("beforeMotionUpdate", resetMotionParameters);
+      internal.off?.("afterMotionUpdate", updateBlink);
+      internal.off?.("beforeModelUpdate", updateMouth);
+      manager?.off?.("motionLoaded", onMotionLoaded);
+    };
+  }
 
   function applyExpression(expression) {
-    if (!model || !activeProfile?.classicIntents) return;
+    const r21 = activeProfile?.id === "next";
+    if (!model || (!r21 && !activeProfile?.classicIntents)) return;
     try {
       if (expression === "Neutral") {
-        // pixi-live2d-display expression API differs between SDK versions.
-        // Only use a supported reset method; never pass a fictional exp3 ID.
         const manager = model.internalModel?.motionManager?.expressionManager;
-        if (manager && typeof manager.resetExpression === "function") {
-          manager.resetExpression();
+        if (r21 && manager?.defaultExpression) {
+          // Cancel a pending expression download and permit the same wink on
+          // another response. resetExpression alone only updates the queue.
+          manager.reserveExpressionIndex = -1;
+          manager.currentExpression = manager.defaultExpression;
         }
+        manager?.resetExpression?.();
         return;
       }
       if (typeof model.expression === "function") {
         const operation = model.expression(expression);
-        if (operation && typeof operation.catch === "function") operation.catch(() => {});
+        return operation?.catch?.(() => false) ?? operation;
       }
     } catch (_) {
       // A missing expression/SDK is optional: chat and voice must keep working.
@@ -62,8 +129,10 @@
   }
 
   function clearTimer() {
+    reactionVersion++;
     if (resetTimer !== null) clearTimeout(resetTimer);
-    resetTimer = null;
+    if (blinkTimer !== null) clearTimeout(blinkTimer);
+    resetTimer = blinkTimer = null;
   }
 
   function returnToIdle() {
@@ -110,11 +179,7 @@
       // After a real pause, restart only the visual expression from neutral.
       // Keep current speech, lips, dialogue and memory state untouched.
       if (resumeFromPause) {
-        clearTimer();
-        pendingIntent = "neutral";
-        activeChoice = null;
-        mood.textContent = "Jade est attentive.";
-        applyExpression("Neutral");
+        returnToIdle();
         resumeFromPause = false;
       }
       if (typeof model.autoUpdate === "boolean") model.autoUpdate = true;
@@ -243,8 +308,11 @@
       mouth = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
     },
     setSpeaking(value) {
+      const wasSpeaking = speaking;
       speaking = Boolean(value);
-      if (!speaking && pendingIntent !== "neutral") returnToIdle();
+      if (activeProfile?.id === "next") {
+        if (wasSpeaking && !speaking && activeChoice) returnToIdle();
+      } else if (!speaking && pendingIntent !== "neutral") returnToIdle();
     },
     resetIntent() { returnToIdle(); },
     setIntent(label) {
@@ -253,15 +321,38 @@
       const key = Object.hasOwn(palette.intents, label) ? label : "neutral";
       const reactions = palette.intents[key];
       if (!Array.isArray(reactions) || !reactions.length) return;
-      const index = counts[key] || 0;
-      counts[key] = index + 1;
+      const r21 = activeProfile?.id === "next";
+      const variants = r21 ? nextCounts : counts;
+      const index = variants[key] || 0;
+      variants[key] = index + 1;
       const choice = reactions[index % reactions.length];
       if (!choice || typeof choice.text !== "string") return;
+      clearTimer();
+      if (r21 && activeChoice?.expression !== choice.expression && SHORT_EXPRESSIONS.has(activeChoice?.expression)) {
+        applyExpression("Neutral");
+      }
       activeChoice = choice;
       mood.textContent = choice.text;
-      applyExpression(choice.expression);
-      clearTimer();
-      // Text-only replies return to idle. Long audio waits for onended.
+      const expression = applyExpression(choice.expression);
+      if (r21) {
+        // The adapter returns to its Idle group as soon as the gesture ends.
+        const group = R21_MOTIONS[key];
+        if (group) playMotion(group, index % 2, window.PIXI?.live2d?.MotionPriority?.FORCE ?? 3);
+        if (SHORT_EXPRESSIONS.has(choice.expression)) {
+          // The first blink may need to fetch its exp3 file. Count the brief
+          // hold from the actual start rather than from the initial request.
+          const version = reactionVersion;
+          void Promise.resolve(expression).then(() => {
+            if (version !== reactionVersion) return;
+            blinkTimer = setTimeout(() => {
+              blinkTimer = null;
+              applyExpression("Neutral");
+            }, 260);
+          });
+        }
+      }
+      // Text-only replies clear their expression/caption. For longer audio,
+      // the last source ending invokes setSpeaking(false).
       resetTimer = setTimeout(() => { if (!speaking) returnToIdle(); }, 12000);
     },
   };
@@ -315,12 +406,20 @@
     const immersive = shell?.classList.contains("is-room-only");
     const miniScene = shell?.dataset?.view && shell.dataset.view !== "home" && !immersive;
     if (activeProfile?.presentation === "full") {
-      // A future complete model owns its body. Fit the whole figure on Home
-      // and in fullscreen; short menus favour its upper part, with no r20 crop.
       const margin = Math.max(8, height * .04);
-      const availableHeight = miniScene ? height * 1.6 : Math.max(1, height - margin - 96);
-      model.scale.set(Math.max(.001, Math.min(width * .95 / naturalWidth, availableHeight / naturalHeight)));
-      model.position.set(width * .5, margin + model.height * .5);
+      if (miniScene) {
+        model.scale.set(Math.max(.001, Math.min(width * .95 / naturalWidth, height * 1.6 / naturalHeight)));
+        model.position.set(width * .5, margin + model.height * .5);
+        return;
+      }
+      // Place the feet over the photographed floor. On wide screens, use
+      // the space beside the microphone to keep the complete figure legible.
+      const besideMic = width > height * 1.4;
+      const floorRatio = room?.dataset.room === "kitchen" ? .79 : .82;
+      const bottom = besideMic ? height - margin : Math.min(height * floorRatio, height - 88);
+      const availableHeight = Math.max(1, bottom - margin);
+      model.scale.set(Math.max(.001, Math.min(width * 1.08 / naturalWidth, availableHeight / naturalHeight)));
+      model.position.set(width * (besideMic ? .62 : .5), Math.max(margin, bottom - model.height) + model.height * .5);
       return;
     }
     if (miniScene) {
@@ -361,6 +460,11 @@
   function releaseCurrentModel() {
     const errors = [];
     const attempt = fn => { try { fn(); } catch (error) { errors.push(error); } };
+    attempt(returnToIdle);
+    mouth = 0;
+    speaking = false;
+    attempt(() => releaseMotionBindings?.());
+    releaseMotionBindings = null;
     // Hide the old DOM body before any asynchronous replacement begins.
     attempt(() => window.JadeSeatedScene?.deactivate?.());
     if (room) {
@@ -410,7 +514,7 @@
         // DOM fallback still needs to hide the model's original standing body.
         headIsolation?.sync(isSeated());
         const core = model?.internalModel?.coreModel;
-        if (core && typeof core.setParameterValueById === "function")
+        if (activeProfile?.id !== "next" && typeof core?.setParameterValueById === "function")
           core.setParameterValueById("ParamMouthOpenY", mouth);
       } catch (_) {}
     }, undefined, PIXI.UPDATE_PRIORITY?.LOW ?? -50);
@@ -439,15 +543,9 @@
     resize();
     fallback.classList.add("hidden");
     if (typeof Event === "function") room?.dispatchEvent?.(new Event("jade-avatar-ready"));
-    if (profile.idleMotion && typeof model.motion === "function") {
-      try {
-        const animation = model.motion(profile.idleMotion, 0);
-        animation?.catch?.(() => {});
-      } catch (_) {}
-    }
-    // Speech state survives a visual change. Never request r20 expressions
-    // or head isolation on a complete model with a different rig.
-    if (activeChoice && palette?.enabled) applyExpression(activeChoice.expression);
+    if (profile.id === "next") releaseMotionBindings = bindR21MotionPlayback(next.internalModel, profile.idleMotion);
+    if (profile.idleMotion) playMotion(profile.idleMotion, 0,
+      profile.id === "next" ? window.PIXI?.live2d?.MotionPriority?.IDLE ?? 1 : undefined);
     syncRenderVisibility();
   }
 
@@ -465,7 +563,7 @@
       fallback.classList.remove("hidden");
       status.textContent = "Chargement de Jade…";
       publishState("loading", recovering
-        ? "Retour au modèle actuel…" : "Chargement du modèle…");
+        ? "Retour au modèle classique…" : "Chargement du modèle…");
       lease = await window.JadeAvatarModelLoader.load(profile);
       if (version !== selectionVersion) {
         lease.dispose();
@@ -473,7 +571,7 @@
       }
       mountModel(lease, profile);
       publishState("ready", recovering
-        ? "Le nouveau modèle n’a pas pu être chargé. Le modèle actuel est rétabli." : "");
+        ? "Jade r21 n’a pas pu être chargée. Le modèle classique est rétabli." : "");
       return true;
     } catch (error) {
       console.warn("Jade Live2D:", error);
@@ -528,7 +626,7 @@
       }
     } catch (_) { /* Optional palette never prevents loading the default model. */ }
     await window.JadeModelCatalog?.ready;
-    if (!desiredProfile) await selectModel("classic");
+    if (!desiredProfile) await selectModel(window.JadeModelCatalog?.defaultId || "classic");
   }
   void start();
 })();

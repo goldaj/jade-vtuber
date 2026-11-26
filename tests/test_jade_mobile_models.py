@@ -27,7 +27,7 @@ def write_manifest(path: Path, model: dict) -> None:
 
 
 class ModelSlotConfigurationTests(unittest.TestCase):
-    def test_second_model_requires_explicit_configuration(self):
+    def test_second_model_can_be_overridden_explicitly(self):
         self.assertEqual(Settings().mobile_second_model_dir, "")
         with patch("src.jade_runtime.config.environ", side_effect=lambda name, default="": default):
             self.assertEqual(Settings.load().mobile_second_model_dir, "")
@@ -41,6 +41,10 @@ class MobileModelSlotTests(unittest.IsolatedAsyncioTestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        self.r21 = self.root / "r21-native"
+        built_in = patch("src.jade_runtime.mobile_gateway.R21_MODEL", self.r21)
+        built_in.start()
+        self.addCleanup(built_in.stop)
         self.classic = self.root / "classic"
         bundle(self.classic, b"classic")
         self.gateway = MobileGateway(
@@ -87,16 +91,29 @@ class MobileModelSlotTests(unittest.IsolatedAsyncioTestCase):
         status, data, _ = await self.request("/model/Jade.moc3")
         self.assertEqual((status, data), (200, b"MOC3classic"))
 
-    async def test_default_catalogue_never_probes_unconfigured_model(self):
-        with patch.object(self.gateway, "_second_model_files", side_effect=AssertionError("must not scan")):
-            catalogue = await self.catalogue()
-        self.assertEqual(catalogue, {"version": 1, "defaultId": "classic", "models": [
-            {"id": "classic", "label": "Modèle actuel", "available": True,
-             "manifestUrl": "/model/Jade.model3.json", "presentation": "seated",
-             "classicIntents": True, "idleMotion": "Idle"},
-            {"id": "next", "label": "Nouveau modèle", "available": False,
-             "manifestUrl": None, "presentation": "full",
-             "classicIntents": False, "idleMotion": None}]})
+    async def test_built_in_r21_is_default_with_web_manifest_and_expressions(self):
+        await self.assert_only_classic()
+        native = bundle(self.r21)
+        native["FileReferences"]["Motions"] = {"Idle": [{"File": "Idle.motion3.json"}]}
+        (self.r21 / "Idle.motion3.json").write_text("{}", encoding="utf-8")
+        manifest = self.r21 / "Jade_r21_v45.model3.json"
+        manifest.write_text(json.dumps(native), encoding="utf-8")
+        catalogue = await self.catalogue()
+        self.assertEqual(catalogue["defaultId"], "next")
+        next_profile = catalogue["models"][1]
+        self.assertEqual(next_profile["idleMotion"], "Idle")
+        status, model, _ = await self.request(next_profile["manifestUrl"])
+        self.assertEqual(status, 200)
+        expressions = json.loads(model)["FileReferences"]["Expressions"]
+        self.assertEqual([entry["Name"] for entry in expressions],
+                         ["Blink", "WinkL", "WinkR", "Surprised"])
+        for entry in expressions:
+            status, body, _ = await self.request("/models/next/" + entry["File"])
+            self.assertEqual(status, 200)
+            self.assertTrue(json.loads(body)["Parameters"])
+        self.assertEqual(json.loads(manifest.read_text(encoding="utf-8")), native)
+        status, _, _ = await self.request("/models/next/Jade_r21_v45.model3.json")
+        self.assertEqual(status, 404)
 
     async def test_catalogue_and_both_models_keep_existing_owner_boundary(self):
         next_dir = self.root / "next"
@@ -132,6 +149,7 @@ class MobileModelSlotTests(unittest.IsolatedAsyncioTestCase):
         (next_dir / "Jade_idle.motion3.json").write_text("{}", encoding="utf-8")
         (next_dir / "private.txt").write_text("private", encoding="utf-8")
         catalogue = await self.catalogue()
+        self.assertEqual(catalogue["defaultId"], "next")
         second = catalogue["models"][1]
         self.assertTrue(second["available"])
         self.assertEqual(second["manifestUrl"], "/models/next/Jade.model3.json")

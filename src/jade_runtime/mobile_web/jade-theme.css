@@ -327,6 +327,18 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
     transform:translate(-50%,-50%);
   }
 }
+/* The standing r21 needs floor in a wide crop. Shift the bedroom artwork
+ * and its painted effects together so the window and curtain stay registered. */
+@media(orientation:landscape){
+  .room[data-room="bedroom"][data-portrait-ready="true"][data-avatar-model="next"] :is(.portrait-bedroom,.portrait-bedroom-motion){
+    object-position:50% 57%;
+  }
+  @supports(width:1cqh){
+    .room[data-room="bedroom"][data-portrait-ready="true"][data-avatar-model="next"] :is(.portrait-bedroom,.portrait-bedroom-motion){
+      transform:translate(-50%,-57%);
+    }
+  }
+}
 .room[data-room="bedroom"][data-seated-ready="true"] .avatar-frame{
   inset:auto;left:50%;top:50%;height:auto;
   width:100%;aspect-ratio:941 / 1672;

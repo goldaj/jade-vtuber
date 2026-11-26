@@ -7,6 +7,7 @@ const vm = require("node:vm");
 const web = path.join(__dirname, "../src/jade_runtime/mobile_web");
 const source = fs.readFileSync(path.join(web, "avatar.js"), "utf8");
 const seatedSource = fs.readFileSync(path.join(web, "seated-scene.js"), "utf8");
+const visualPalette = JSON.parse(fs.readFileSync(path.join(web, "intent-visuals.json"), "utf8"));
 
 function deferred() {
   let resolve, reject;
@@ -59,7 +60,8 @@ class Container extends DisplayObject {
   destroy(options) { if (options?.children) this.children.slice().forEach(child => child.destroy?.(options)); super.destroy(); }
 }
 
-async function client({hidden = false, initialError = false, delayBodyImage = false, failCompositionMount = false} = {}) {
+async function client({hidden = false, initialError = false, delayBodyImage = false, failCompositionMount = false,
+    defaultId = "classic", reactions = false} = {}) {
   const target = new Element(); target.clientWidth = 390; target.clientHeight = 690;
   const room = new Element(); room.dataset = {room:"bedroom",seatedReady:"false",seatedCompositor:"false"};
   const shell = new Element(); shell.dataset.view = "profile";
@@ -71,13 +73,15 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
     "mood-line":mood,"portrait-seated-body":body,"portrait-bedroom":backdrop})[id] || null;
   const profiles = [
     {id:"classic",label:"Actuel",available:true,manifestUrl:"/model/Jade.model3.json",presentation:"seated",classicIntents:true,idleMotion:"Idle"},
-    {id:"next",label:"Futur activé pour le test",available:true,manifestUrl:"/models/next/Jade.model3.json",presentation:"full",classicIntents:false,idleMotion:null},
+    {id:"next",label:"Nouveau modèle",available:true,manifestUrl:"/models/next/Jade.model3.json",presentation:"full",classicIntents:false,idleMotion:"Idle"},
     {id:"locked",label:"Indisponible",available:false,manifestUrl:null,presentation:"full",classicIntents:false,idleMotion:null}
   ];
   const plans = new Map(), active = new Set(), models = [], events = [], states = [], applications = [], sprites = [], waitingBodyImages = [];
   const compositionLayers = [], isolationSyncs = [];
   let pending = 0, maximum = 0, maximumPending = 0, visibleObserver;
-  if (initialError) plans.set("classic", [Promise.reject(new Error("initial load failed"))]);
+  const timers = new Map();
+  let timerSequence = 0;
+  if (initialError) plans.set(defaultId, [Promise.reject(new Error("initial load failed"))]);
   // A rejected planned load is consumed by the test loader, not an unhandled rejection.
   for (const list of plans.values()) list.forEach(operation => operation.catch(() => {}));
   class Application {
@@ -109,7 +113,7 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
       sprites.push(sprite); return sprite;}},
     live2d:{Live2DModel:{from(){throw new Error("Use the owned model loader");},fromSync(){throw new Error("Use the owned model loader");}}}};
   const window = new Element(); Object.assign(window, {PIXI,Live2DCubismCore:{},devicePixelRatio:1,
-    JadeModelCatalog:{defaultId:"classic",ready:Promise.resolve(profiles),list:()=>profiles,get:id=>profiles.find(profile=>profile.id===id)||null},
+    JadeModelCatalog:{defaultId,ready:Promise.resolve(profiles),list:()=>profiles,get:id=>profiles.find(profile=>profile.id===id)||null},
     JadeHeadIsolation:{forModel(){const calls = []; isolationSyncs.push(calls);
       return {canLayerHair:true,sync(value){calls.push(value);},drawPass(_name,draw){return draw();}};}}
   });
@@ -124,10 +128,25 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
     catch (error) { events.push(`failed:${profile.id}`); throw error; }
     finally { pending--; }
     const model = new DisplayObject(); model.id = profile.id; model.autoUpdate = false;
-    model.internalModel = {coreModel:{getDrawableRenderOrders(){return [0];},setParameterValueById(id,value){model.lastParameter={id,value};}},
-      draw(){},motionManager:{expressionManager:{resetExpression(){model.neutral = (model.neutral || 0) + 1;}}}};
-    model.motion = () => { model.idle = (model.idle || 0) + 1; return Promise.resolve(); };
-    model.expression = () => { model.expressions = (model.expressions || 0) + 1; return Promise.resolve(); };
+    const {EventEmitter} = require("node:events");
+    model.internalModel = Object.assign(new EventEmitter(), {
+      coreModel:{getDrawableRenderOrders(){return [0];},setParameterValueById(id,value){model.lastParameter={id,value};}},
+      draw(){},eyeBlink:{updateParameters(){model.blinked = true;}},
+      motionManager:Object.assign(new EventEmitter(), {
+        expressionManager:{defaultExpression:{}, resetExpression(){model.neutral = (model.neutral || 0) + 1;}},
+      }),
+    });
+    model.motions = [];
+    model.expressions = [];
+    model.motion = (group, index, priority) => {
+      model.motions.push({group,index,priority});
+      if (group === "Idle") model.idle = (model.idle || 0) + 1;
+      model.internalModel.motionManager.emit("motionLoaded", group, index, {
+        setIsLoop(value){model.loops = value;},setIsLoopFadeIn(value){model.loopFade = value;},
+      });
+      return Promise.resolve();
+    };
+    model.expression = expression => { model.expressions.push(expression); return Promise.resolve(); };
     model.destroy = () => {
       if (model.destroyed) return;
       model.destroyed = true; model.autoUpdate = false; model.parent?.removeChild(model);
@@ -143,14 +162,16 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   class Event { constructor(type){this.type = type;} }
   class CustomEvent extends Event { constructor(type,options){super(type);this.detail=options?.detail;} }
   const context = {window,document,Event,CustomEvent,console:{warn(){},log(){},error(){}},
-    fetch:async()=>({ok:true,json:async()=>({version:1,enabled:false,intents:{}})}),
+    fetch:async()=>({ok:true,json:async()=>({...visualPalette,enabled:reactions})}),
     Image:class {set src(value){this._src=value;const bodyImage=value.includes("seated-body");
       this.naturalWidth=bodyImage?670:864;this.naturalHeight=bodyImage?956:1536;
       if(bodyImage && delayBodyImage)waitingBodyImages.push(this);else Promise.resolve().then(()=>this.onload?.());}
       get src(){return this._src;}removeAttribute(name){if(name==="src")this._src="";}},
     ResizeObserver:class {observe(){} disconnect(){}},
     IntersectionObserver:class {constructor(callback){visibleObserver=callback;}observe(){}disconnect(){}},
-    setTimeout(){return 1;},clearTimeout(){}};
+    performance:{now(){return 10;}},
+    setTimeout(callback, delay){const id = ++timerSequence; timers.set(id, {callback,delay}); return id;},
+    clearTimeout(id){timers.delete(id);}};
   vm.createContext(context);
   vm.runInContext(seatedSource,context,{filename:"seated-scene.js"});
   vm.runInContext(source,context,{filename:"avatar.js"});
@@ -161,6 +182,7 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
     hide(value){document.hidden=value;document.dispatchEvent(new Event("visibilitychange"));},
     visible(value){visibleObserver([{isIntersecting:value}]);},
     completeBodyImages(){waitingBodyImages.splice(0).forEach(image=>image.onload?.());},
+    runTimers(delay){for (const [id, timer] of timers) if (timer.delay === delay) { timers.delete(id); timer.callback(); }},
     get maximum(){return maximum;},get maximumPending(){return maximumPending;},get pending(){return pending;}};
 }
 
@@ -192,7 +214,9 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   assert.equal(a.avatar.usesSeatedBody,false);
   assert.equal(a.room.dataset.seatedReady,"false");
   assert.equal(a.avatar.canComposeSeated,false,"full model never accepts the classic static body");
-  assert.equal(a.models.at(-1).idle,undefined,"do not invoke a classic-only motion on the next model");
+  assert.equal(a.models.at(-1).idle,1,"the r21 profile runs its own Idle");
+  assert.equal(a.models.at(-1).loops,true,"the real SDK needs its Idle loop enabled explicitly");
+  assert.equal(a.models.at(-1).loopFade,false);
   assert.equal(a.shell.dataset.view,"profile");
   assert.equal(a.room.dataset.room,"bedroom");
   assert.equal(await a.avatar.selectModel("classic"),true); await flush();
@@ -231,6 +255,60 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   assert.equal(await a.avatar.selectModel("classic"),true); await flush();
   assert.equal(a.avatar.ready,true);
   assert.equal(a.maximum,1); assert.equal(a.maximumPending,1);
+
+  const nextDefault = await client({defaultId:"next", reactions:true});
+  assert.equal(nextDefault.avatar.state.modelId,"next");
+  assert.deepEqual(nextDefault.events,["load:next","created:next"],"only the default model is allocated");
+  const r21 = nextDefault.models[0];
+  nextDefault.shell.dataset.view = "home";
+  const feet = () => r21.position.y + r21.height / 2;
+  nextDefault.avatar.resize();
+  const bedroomFeet = feet();
+  nextDefault.room.dataset.room = "kitchen";
+  nextDefault.avatar.resize();
+  assert(feet() < bedroomFeet && feet() > nextDefault.target.clientHeight * .7,
+    "both portrait rooms place the feet over their floor");
+  assert.equal(r21.position.x, nextDefault.target.clientWidth / 2);
+  nextDefault.target.clientWidth = 845;
+  nextDefault.target.clientHeight = 223;
+  nextDefault.avatar.resize();
+  assert(r21.height > 180 && r21.position.x > 845 / 2 + 64 && feet() < 223,
+    "landscape uses the room beside the microphone for the entire figure");
+  const groups = ["Neutral","Playful","Excited","Curious","Tender","Reassuring","Serious"];
+  for (const group of groups) {
+    nextDefault.avatar.setIntent(group.toLowerCase());
+    nextDefault.avatar.setIntent(group.toLowerCase());
+  }
+  assert.deepEqual(r21.motions.slice(1), groups.flatMap(group =>
+    [0,1].map(index => ({group,index,priority:3}))));
+  nextDefault.avatar.setIntent("neutral");
+  nextDefault.avatar.setSpeaking(false);
+  nextDefault.avatar.setIntent("neutral");
+  assert.equal(r21.expressions.at(-1),"Blink");
+  nextDefault.avatar.setSpeaking(true);
+  nextDefault.avatar.setMouth(.53);
+  r21.internalModel.emit("afterMotionUpdate");
+  r21.internalModel.emit("beforeModelUpdate");
+  assert.equal(r21.blinked,true,"r21 blinks during a motion");
+  assert.deepEqual(r21.lastParameter,{id:"ParamMouthOpenY",value:.53});
+  await flush();
+  const beforeBlinkEnds = r21.neutral;
+  nextDefault.runTimers(260);
+  assert.equal(r21.neutral,beforeBlinkEnds + 1,"a blink releases before the reply ends");
+  nextDefault.avatar.setIntent("playful");
+  assert.equal(await nextDefault.avatar.selectModel("classic"),true);
+  const classic = nextDefault.models.at(-1);
+  const neutralOnClassic = classic.neutral;
+  nextDefault.runTimers(260);
+  nextDefault.runTimers(12000);
+  assert.equal(classic.neutral,neutralOnClassic,"old expression callbacks cannot reach the new model");
+  nextDefault.applications[0].ticker.callback();
+  assert.deepEqual(classic.lastParameter,{id:"ParamMouthOpenY",value:0});
+  assert.equal(await nextDefault.avatar.selectModel("next"),true);
+  const replacement = nextDefault.models.at(-1);
+  replacement.internalModel.emit("beforeModelUpdate");
+  assert.deepEqual(replacement.lastParameter,{id:"ParamMouthOpenY",value:0});
+  assert.equal(replacement.expressions.length,0,"previous-model expressions are cleared on release");
 
   const hidden = await client({hidden:true});
   assert.equal(hidden.models.at(-1).autoUpdate,false);

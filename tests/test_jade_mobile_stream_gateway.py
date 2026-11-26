@@ -39,11 +39,12 @@ class MobileStreamingGatewayTests(unittest.IsolatedAsyncioTestCase):
         if self.mobile.connections:
             await asyncio.wait_for(asyncio.gather(*self.mobile.connections), timeout=3)
 
-    async def request(self, route, body, content_type, extra=""):
+    async def request(self, route, body, content_type, extra="", *, streaming=True):
         reader, writer = await asyncio.open_connection("127.0.0.1", self.port)
+        stream_header = "X-Jade-Stream: 1\r\n" if streaming else ""
         head = (f"POST {route} HTTP/1.1\r\nHost: localhost:{self.port}\r\n"
                 f"Authorization: Bearer {'x' * 40}\r\nContent-Type: {content_type}\r\n"
-                f"Content-Length: {len(body)}\r\nX-Jade-Stream: 1\r\n{extra}\r\n")
+                f"Content-Length: {len(body)}\r\n{stream_header}{extra}\r\n")
         writer.write(head.encode() + body)
         await writer.drain()
         return reader, writer
@@ -121,6 +122,24 @@ class MobileStreamingGatewayTests(unittest.IsolatedAsyncioTestCase):
         self.fake.transcribe_wav = transcribe
         reader, writer = await self.request("/api/voice", microphone_wav(), "audio/wav",
                                            "X-Jade-Session: mobile-1234\r\n")
+        await asyncio.wait_for(started.wait(), 2)
+        writer.close()
+        await writer.wait_closed()
+        await asyncio.wait_for(self.closed.wait(), 2)
+
+    async def test_disconnect_cancels_nonstreaming_chat_before_reply(self):
+        started = asyncio.Event()
+
+        async def conversation(_incoming):
+            started.set()
+            try:
+                await self.release.wait()
+            finally:
+                self.closed.set()
+
+        self.mobile._conversation = conversation
+        body = json.dumps({"text": "Salut", "session": "mobile-1234", "speak": False}).encode()
+        _, writer = await self.request("/api/chat", body, "application/json", streaming=False)
         await asyncio.wait_for(started.wait(), 2)
         writer.close()
         await writer.wait_closed()

@@ -37,22 +37,26 @@ Object.defineProperty(global, "crypto", {value:{randomUUID: () => "01234567-89ab
 global.requestAnimationFrame = () => 1;
 global.cancelAnimationFrame = () => {};
 global.setInterval = () => 1;
-const played = [];
+const played = [], stopped = [];
 class AudioContext {
   constructor() { this.currentTime = 1; this.destination = {}; }
   resume() {return Promise.resolve();}
+  close() {return Promise.resolve();}
+  createMediaStreamSource() {return {connect(){}, disconnect(){}};}
+  createScriptProcessor() {return {connect(){}, disconnect(){}};}
+  createGain() {return {gain:{}, connect(){}, disconnect(){}};}
   createBuffer(channels, length, rate) {
     const samples = new Float32Array(length);
     return {duration:length/rate, getChannelData:() => samples};
   }
   createAnalyser() {return {connect(){}, disconnect(){}, getByteTimeDomainData(a){a.fill(128);}};}
-  createBufferSource() {return {connect(){}, disconnect(){}, stop(){},
+  createBufferSource() {return {connect(){}, disconnect(){}, stop(){stopped.push(this);},
     start() {played.push(Array.from(this.buffer.getChannelData(0)));}};}
 }
 const avatar = {setMouth(){}, setIntent(){}, setSpeaking(){}, resetIntent(){}};
 global.window = {crypto:global.crypto, AudioContext, JadeAvatar:avatar,
   location:{hash:""}, addEventListener(){}, setTimeout, clearTimeout};
-let fetchCount = 0, lastSignal;
+let fetchCount = 0, lastSignal, finishLegacyReply;
 global.fetch = async (_path, options) => {
   // The login handshake is independent of paid chat and streaming turns.
   if (_path === "/api/auth") {
@@ -65,6 +69,9 @@ global.fetch = async (_path, options) => {
   if (fetchCount === 3) {
     assert.equal(options.headers["X-Jade-Stream"], undefined);
     return {status:200, ok:true, json:async () => ({reply:"Ancien navigateur", intent:"neutral"})};
+  }
+  if (fetchCount === 4) {
+    return {status:200, ok:true, json:() => new Promise(resolve => {finishLegacyReply = resolve;})};
   }
   const events = [
     {type:"reply", reply:"Salut, à toi !", intent:"neutral"},
@@ -92,6 +99,13 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
   assert.equal(played[0][0], -1);
   assert.equal(played[0][1], 32767 / 32768);
   assert.equal(element("messages").children[1].children[0].textContent, "Salut, à toi !");
+  let resume = window.JadeConversation.stopForModelChange();
+  assert.equal(stopped.length, 1);
+  assert.equal(element("mic").disabled, true);
+  assert.equal(element("send").disabled, true);
+  resume();
+  assert.equal(element("mic").disabled, false);
+  assert.equal(element("send").disabled, false);
   element("message").value = "Encore";
   const pending = element("composer").handlers.submit({preventDefault(){}});
   await new Promise(resolve => setImmediate(resolve));
@@ -105,5 +119,47 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
   await element("composer").handlers.submit({preventDefault(){}});
   assert.equal(fetchCount, 3);
   assert.equal(element("messages").children.at(-1).children[0].textContent, "Ancien navigateur");
+
+  element("message").value = "Réponse tardive";
+  const late = element("composer").handlers.submit({preventDefault(){}});
+  await new Promise(resolve => setImmediate(resolve));
+  resume = window.JadeConversation.stopForModelChange();
+  assert.equal(lastSignal.aborted, true);
+  finishLegacyReply({reply:"À ignorer"});
+  await late;
+  assert.equal(element("send").disabled, true);
+  assert.equal(element("messages").children.at(-1).children[0].textContent, "Réponse tardive");
+  resume();
+
+  let grantMicrophone, stops = 0;
+  const mediaStream = {getTracks:() => [{stop() {stops++;}}]};
+  navigator.mediaDevices = {getUserMedia:() => new Promise(resolve => {grantMicrophone = resolve;})};
+  element("mic").handlers.click();
+  resume = window.JadeConversation.stopForModelChange();
+  grantMicrophone(mediaStream);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(stops, 1);
+  assert.equal(element("mic").disabled, true);
+  assert.equal(element("mic").classList.contains("recording"), false);
+  resume();
+
+  navigator.mediaDevices.getUserMedia = async () => mediaStream;
+  let cancelled = 0, emitDuplex;
+  window.JadeDuplex = {
+    supported: () => true,
+    create({onEvent}) {emitDuplex = onEvent; return {cancel() {cancelled++;}};}
+  };
+  element("mic").handlers.click();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(element("mic").classList.contains("recording"), true);
+  resume = window.JadeConversation.stopForModelChange();
+  assert.equal(stops, 2);
+  assert.equal(cancelled, 1);
+  assert.equal(element("mic").classList.contains("recording"), false);
+  await emitDuplex({type:"reply", reply:"À ignorer également"});
+  assert.equal(element("messages").children.at(-1).children[0].textContent, "Réponse tardive");
+  resume();
+  assert.equal(element("mic").disabled, false);
+  assert.equal(fetchCount, 4);
   process.stdout.write("Mobile stream client: OK\n");
 })().catch(error => {console.error(error); process.exitCode = 1;});

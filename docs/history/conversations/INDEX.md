@@ -40,6 +40,10 @@ Les journaux conservent les décisions successives, même contradictoires. La sy
 
 Après toute nouvelle intervention, ajouter les échanges effectivement accessibles, avec leur rôle et leur fidélité. Utiliser les heures réelles seulement lorsqu’elles sont attestées ; ne pas dater rétroactivement un propos à partir de l’heure d’une commande.
 
+## Jade r21 par défaut dans la PWA le 26 novembre 2026
+
+Les décisions du propriétaire et les réponses de cadrage accessibles figurent dans la [passation du raccordement mobile](../../operations/handoffs/2026-11-26-codex-mobile-r21.md#échanges-accessibles). Heures individuelles indisponibles. La passation ne reprend ni les données privées ni les sorties d’outils.
+
 ## Préparation du modèle r21 le 25 novembre 2026
 
 [Échanges sur la reprise et les MCP](2026-11-25-modele-jade-mcp.md), résumés avec rôles distincts et heures individuelles indisponibles. La [passation opérationnelle](../../operations/handoffs/2026-11-25-codex-jade-r21-reprise.md) et le [plan approuvé](../../../jade-modeling/MODEL2D_MASTER_PLAN.md) décrivent l’état applicable.

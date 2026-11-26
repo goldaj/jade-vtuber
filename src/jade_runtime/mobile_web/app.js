@@ -20,11 +20,14 @@
   let token = "";
   let busy = false;
   let recording = null;
-  let starting = false;
+  let starting = null;
+  let conversationGeneration = 0;
+  let modelChanging = false;
   let soundEnabled = true;
   let audioContext = null;
   let playing = null;
   let playFrame = null;
+  let playbackGeneration = 0;
   let streamController = null;
   let activeDuplex = null;
   const streamSources = new Set();
@@ -69,11 +72,12 @@
   }
 
   function setStatus(message, working = false) {
+    working = working || modelChanging;
     status.textContent = message;
     send.disabled = working;
     newChat.disabled = working;
     input.disabled = working;
-    mic.disabled = working && !recording && !activeDuplex;
+    mic.disabled = modelChanging || (working && !recording && !activeDuplex);
   }
 
   function authorizeAgain() {
@@ -145,12 +149,13 @@
     avatar().setIntent(intent || "neutral");
   }
 
-  async function makeRequest(path, body, extraHeaders) {
+  async function makeRequest(path, body, extraHeaders, signal) {
     const headers = Object.assign({"Authorization":"Bearer " + token}, extraHeaders);
     const response = await fetch(path, {
       method: "POST", mode: "same-origin", credentials: "omit",
-      cache: "no-store", headers, body
+      cache: "no-store", headers, body, signal
     });
+    if (signal?.aborted) return null;
     if (response.status === 401) {
       authorizeAgain();
       throw new Error("Jeton mobile incorrect : ressaisis-le.");
@@ -159,6 +164,7 @@
       throw new Error("Accès réservé au propriétaire Tailscale : vérifie ton VPN et ton identité.");
     }
     const result = await response.json().catch(() => ({}));
+    if (signal?.aborted) return null;
     if (!response.ok) {
       const messages = {
         429: "Jade est occupée. Réessaie dans quelques instants.",
@@ -181,15 +187,21 @@
   }
 
   function stopPlayback() {
+    playbackGeneration++;
     if (playFrame) cancelAnimationFrame(playFrame);
     playFrame = null;
     if (playing) {
-      try { playing.stop(); } catch (_) {}
+      const {source, analyser} = playing;
       playing = null;
-      avatar().setSpeaking(false);
+      source.onended = null;
+      try { source.stop(); } catch (_) {}
+      source.disconnect();
+      analyser.disconnect();
     }
     for (const source of streamSources) {
+      source.onended = null;
       try { source.stop(); } catch (_) {}
+      source.disconnect();
     }
     streamSources.clear();
     if (streamAnalyser) { streamAnalyser.disconnect(); streamAnalyser = null; }
@@ -198,8 +210,28 @@
     avatar().setMouth(0);
   }
 
-  function abortMobileStream() {
-    if (streamController) streamController.abort();
+  function cancelConversation() {
+    conversationGeneration++;
+    cancelRecordingStart();
+    cancelRecording();
+    streamController?.abort();
+    streamController = null;
+    activeDuplex?.cancel();
+    activeDuplex = null;
+    busy = false;
+    stopPlayback();
+    avatar().resetIntent();
+    setStatus(status.textContent);
+  }
+
+  function stopForModelChange() {
+    modelChanging = true;
+    cancelConversation();
+    setStatus("Chargement du modèle…");
+    return () => {
+      modelChanging = false;
+      setStatus(token ? "Prête." : status.textContent);
+    };
   }
 
   function createMobileAudioTiming(transport) {
@@ -232,7 +264,9 @@
     if (rate !== 24000 || base64Audio.length > 12000) throw new Error("Fragment audio invalide.");
     const binary = atob(base64Audio);
     if (!binary.length || binary.length % 2) throw new Error("Fragment audio incomplet.");
+    const generation = playbackGeneration;
     const context = await ensureAudioContext();
+    if (generation !== playbackGeneration) return null;
     const buffer = context.createBuffer(1, binary.length / 2, rate);
     const samples = buffer.getChannelData(0);
     for (let i = 0; i < samples.length; i++) {
@@ -263,7 +297,7 @@
     streamNextTime = start + buffer.duration;
     avatar().setSpeaking(true);
     source.onended = () => {
-      streamSources.delete(source);
+      if (!streamSources.delete(source)) return;
       source.disconnect();
       if (!streamSources.size) {
         if (streamAnalyser) streamAnalyser.disconnect();
@@ -280,19 +314,22 @@
   }
 
   async function makeStreamingRequest(path, body, extraHeaders) {
+    const generation = conversationGeneration;
+    const isCurrent = () => generation === conversationGeneration;
+    const controller = typeof AbortController === "undefined" ? null : new AbortController();
+    streamController = controller;
     // Choose the legacy format before sending anything: retrying afterward
     // could produce a second billable conversation and voice synthesis.
-    if (typeof ReadableStream === "undefined" || typeof TextDecoder === "undefined" ||
-        typeof AbortController === "undefined") {
-      await present(await makeRequest(path, body, extraHeaders));
-      return;
-    }
-    const controller = new AbortController();
-    streamController = controller;
     try {
+      if (!controller || typeof ReadableStream === "undefined" || typeof TextDecoder === "undefined") {
+        const result = await makeRequest(path, body, extraHeaders, controller?.signal);
+        if (isCurrent()) await present(result, generation);
+        return;
+      }
       const headers = Object.assign({"Authorization":"Bearer " + token, "X-Jade-Stream":"1"}, extraHeaders);
       const response = await fetch(path, {method:"POST", mode:"same-origin", credentials:"omit",
         cache:"no-store", headers, body, signal:controller.signal});
+      if (!isCurrent()) return;
       if (response.status === 401) { authorizeAgain(); throw new Error("Jeton mobile incorrect : ressaisis-le."); }
       if (response.status === 403) throw new Error("Accès réservé au propriétaire Tailscale.");
       if (!response.ok) {
@@ -331,15 +368,18 @@
       }
       while (true) {
         const part = await reader.read();
+        if (!isCurrent()) return;
         pending += decoder.decode(part.value || new Uint8Array(), {stream:!part.done});
         if (pending.length > 10_000_000) throw new Error("Réponse audio trop volumineuse.");
         let newline;
         while ((newline = pending.indexOf("\n")) !== -1) {
           const line = pending.slice(0, newline); pending = pending.slice(newline + 1);
           if (line) await consume(line);
+          if (!isCurrent()) return;
         }
         if (part.done) break;
       }
+      if (!isCurrent()) return;
       if (pending || !done || !receivedReply) throw new Error("Réponse audio interrompue.");
       setStatus(audioFailed && soundEnabled ? audioUnavailableStatus(audioFailureReason) : "Prête.");
     } finally {
@@ -350,24 +390,29 @@
   async function playWav(base64Audio) {
     stopPlayback();
     if (!base64Audio || !soundEnabled || document.hidden) return true;
+    const generation = playbackGeneration;
     try {
       const context = await ensureAudioContext();
+      if (generation !== playbackGeneration) return true;
       // Limit the size of an untrusted API response.
       if (base64Audio.length > 10_000_000) throw new Error("audio too large");
       const binary = atob(base64Audio);
       const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
       const decoded = await context.decodeAudioData(bytes.buffer.slice(0));
+      if (generation !== playbackGeneration) return true;
       const src = context.createBufferSource();
       src.buffer = decoded;
       const analyser = context.createAnalyser();
       analyser.fftSize = 1024;
       src.connect(analyser);
       analyser.connect(context.destination);
-      playing = src;
+      playing = {source:src, analyser};
       avatar().setSpeaking(true);
       src.onended = () => {
-        if (playing === src) {
+        if (playing?.source === src) {
           playing = null;
+          src.disconnect();
+          analyser.disconnect();
           if (playFrame) cancelAnimationFrame(playFrame);
           playFrame = null;
           avatar().setMouth(0);
@@ -376,7 +421,7 @@
       };
       const samples = new Uint8Array(analyser.fftSize);
       function animateMouth() {
-        if (playing !== src) return;
+        if (playing?.source !== src) return;
         analyser.getByteTimeDomainData(samples);
         let sum = 0;
         for (let i = 0; i < samples.length; i++) {
@@ -391,6 +436,7 @@
       animateMouth();
       return true;
     } catch (_) {
+      if (generation !== playbackGeneration) return true;
       avatar().setMouth(0);
       return false;
     }
@@ -404,12 +450,13 @@
     return "Réponse écrite reçue, mais la voix est indisponible.";
   }
 
-  async function present(result) {
+  async function present(result, generation) {
     if (result.transcript) addBubble(result.transcript, "me");
     addJadeReply(String(result.reply || "…"), result.attachments);
     setReplyIntent(result.intent);
     if (result.audio_wav_b64 && soundEnabled) {
       const played = await playWav(result.audio_wav_b64);
+      if (generation !== conversationGeneration) return;
       if (!played) {
         setStatus("Réponse écrite reçue, mais la lecture audio a échoué.");
         return;
@@ -423,10 +470,11 @@
 
   async function submitText(event) {
     event.preventDefault();
-    if (busy || recording || starting) return;
+    if (modelChanging || busy || recording || starting) return;
     if (!token) { authorizeAgain(); return; }
     const text = input.value.trim();
     if (!text) return;
+    const generation = conversationGeneration;
     showView("chat");
     busy = true;
     stopPlayback();
@@ -440,14 +488,13 @@
         JSON.stringify({text, session:thread, speak:soundEnabled}),
         {"Content-Type":"application/json"});
     } catch (error) {
-      setStatus(error.message || "Impossible de joindre Jade.");
+      if (generation === conversationGeneration) setStatus(error.message || "Impossible de joindre Jade.");
     } finally {
-      busy = false;
-      send.disabled = false;
-      newChat.disabled = false;
-      input.disabled = false;
-      mic.disabled = false;
-      input.focus();
+      if (generation === conversationGeneration) {
+        busy = false;
+        setStatus(status.textContent);
+        input.focus();
+      }
     }
   }
 
@@ -486,7 +533,7 @@
 
   async function startRecording() {
     if (!token) { authorizeAgain(); return; }
-    if (busy || recording || starting) return;
+    if (modelChanging || busy || recording || starting) return;
     if (!navigator.mediaDevices?.getUserMedia) {
       setStatus("Microphone indisponible : ouvrir l'application en HTTPS via Tailscale.");
       return;
@@ -496,18 +543,25 @@
     // Android may auto-stop after 20 seconds (no further user gesture).
     // Unlock the output context on the initial microphone tap too.
     if (soundEnabled) ensureAudioContext().catch(() => {});
-    starting = true;
-    mic.disabled = true;
+    const attempt = {}, generation = conversationGeneration;
+    starting = attempt;
     setStatus("Autorisation du microphone…");
-    let stream, context;
+    mic.disabled = true;
+    let duplex = null;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {echoCancellation:true, noiseSuppression:true, autoGainControl:true},
         video: false
       });
+      if (starting !== attempt) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+      attempt.stream = stream;
       const Ctx = window.AudioContext || window.webkitAudioContext;
-      context = new Ctx();
+      const context = attempt.context = new Ctx();
       await context.resume();
+      if (starting !== attempt) return;
       if (document.hidden) throw new Error("la page est en arrière-plan");
       const source = context.createMediaStreamSource(stream);
       const processor = context.createScriptProcessor(4096, 1, 1);
@@ -515,12 +569,12 @@
       silent.gain.value = 0;
       const chunks = [];
       let frames = 0;
-      let duplex = null;
       const duplexTiming = createMobileAudioTiming("websocket");
       if (window.JadeDuplex?.supported()) {
         duplex = window.JadeDuplex.create({
           token, session:thread, speak:soundEnabled,
           onEvent:async event => {
+            if (generation !== conversationGeneration) return;
             if (event.type === "reply") {
               if (event.transcript) addBubble(event.transcript, "me");
               addJadeReply(String(event.reply || "…"), event.attachments);
@@ -586,13 +640,17 @@
       // Avoid leaving the microphone open after 20 seconds.
       recording.timer = setTimeout(stopRecording, 20000);
     } catch (_) {
-      if (activeDuplex) { activeDuplex.cancel(); activeDuplex = null; }
-      if (stream) stream.getTracks().forEach(track => track.stop());
-      if (context) await context.close().catch(() => {});
-      setStatus("Accès au micro refusé ou indisponible.");
+      if (starting === attempt) {
+        duplex?.cancel();
+        if (activeDuplex === duplex) activeDuplex = null;
+        closeMicrophone(attempt);
+        setStatus("Accès au micro refusé ou indisponible.");
+      }
     } finally {
-      starting = false;
-      mic.disabled = false;
+      if (starting === attempt) {
+        starting = null;
+        mic.disabled = false;
+      }
     }
   }
 
@@ -602,14 +660,24 @@
     mic.setAttribute("aria-label", "Démarrer l'enregistrement vocal");
   }
 
+  function closeMicrophone({stream, context}) {
+    stream?.getTracks().forEach(track => track.stop());
+    return context?.close().catch(() => {});
+  }
+
+  function cancelRecordingStart() {
+    const attempt = starting;
+    starting = null;
+    if (attempt) closeMicrophone(attempt);
+  }
+
   async function releaseRecording(current) {
     clearTimeout(current.timer);
     current.processor.onaudioprocess = null;
     for (const node of [current.source, current.processor, current.silent]) {
       try { node.disconnect(); } catch (_) {}
     }
-    current.stream.getTracks().forEach(track => track.stop());
-    await current.context.close().catch(() => {});
+    await closeMicrophone(current);
   }
 
   function cancelRecording() {
@@ -618,7 +686,7 @@
     recording = null;
     resetMicButton();
     // Backgrounding the app must discard, never send, microphone data.
-    if (current.duplex) current.duplex.cancel();
+    current.duplex?.cancel();
     if (activeDuplex === current.duplex) activeDuplex = null;
     releaseRecording(current).catch(() => {});
     setStatus("Enregistrement interrompu, aucun audio envoyé.");
@@ -627,6 +695,7 @@
   async function stopRecording() {
     const current = recording;
     if (!current || busy) return;
+    const generation = conversationGeneration;
     recording = null;
     busy = true;  // Prevent a second tap/turn while audio tracks are closing.
     // Unlock playback inside the stop-button gesture, before network awaits.
@@ -636,6 +705,7 @@
     const rate = current.context.sampleRate, frames = current.frames;
     try {
       await releaseRecording(current);
+      if (generation !== conversationGeneration) return;
       if (Date.now() - current.started < 250 || frames < 4000) {
         if (current.duplex) current.duplex.cancel();
         setStatus("Enregistrement trop court.");
@@ -646,6 +716,7 @@
         try {
           await current.duplex.finish();
         } catch (error) {
+          if (generation !== conversationGeneration) return;
           // Before the authenticated WebSocket was ready, STT never started.
           // Once ready, NEVER retry: that could charge for a second response.
           if (current.duplex.ready) throw error;
@@ -665,14 +736,13 @@
         });
       }
     } catch (error) {
-      setStatus(error.message || "Message vocal non transmis.");
+      if (generation === conversationGeneration) setStatus(error.message || "Message vocal non transmis.");
     } finally {
-      if (activeDuplex === current.duplex) activeDuplex = null;
-      busy = false;
-      send.disabled = false;
-      newChat.disabled = false;
-      input.disabled = false;
-      mic.disabled = false;
+      if (generation === conversationGeneration) {
+        if (activeDuplex === current.duplex) activeDuplex = null;
+        busy = false;
+        setStatus(status.textContent);
+      }
     }
   }
 
@@ -1123,29 +1193,23 @@
     }
   });
   mic.addEventListener("click", () => {
+    if (modelChanging) return;
     if (recording) stopRecording();
     else if (activeDuplex && busy) {
-      activeDuplex.cancel();
-      activeDuplex = null;
-      stopPlayback();
+      cancelConversation();
       setStatus("Réponse vocale interrompue.");
     } else if (!starting && !busy) startRecording();
   });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
-      cancelRecording();
-      abortMobileStream();
-      if (activeDuplex) { activeDuplex.cancel(); activeDuplex = null; }
-      stopPlayback();
+      const interrupted = Boolean(starting || busy || recording);
+      cancelConversation();
+      if (interrupted && !modelChanging) setStatus("Conversation interrompue.");
     } else if (token && shell.dataset.view === "reminders") {
       loadReminders();
     }
   });
-  window.addEventListener("pagehide", () => {
-    cancelRecording();
-    abortMobileStream();
-    stopPlayback();
-  });
+  window.addEventListener("pagehide", cancelConversation);
   soundToggle.addEventListener("click", () => {
     soundEnabled = !soundEnabled;
     soundToggle.textContent = soundEnabled ? "Voix activée" : "Voix coupée";
@@ -1153,7 +1217,7 @@
     if (!soundEnabled) stopPlayback();
   });
   newChat.addEventListener("click", () => {
-    if (busy || recording || starting) return;
+    if (modelChanging || busy || recording || starting) return;
     thread = newThread();
     stopPlayback();
     avatar().resetIntent();
@@ -1277,6 +1341,7 @@
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   }
   // Chat is initialized independently of the optional Live2D renderer.
+  window.JadeConversation = {stopForModelChange};
   window.JadeMobileApp = {
     login(value) {
       token = value;

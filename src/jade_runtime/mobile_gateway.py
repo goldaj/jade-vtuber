@@ -29,6 +29,9 @@ HERE = Path(__file__).resolve().parent
 WEB_ROOT = HERE / "mobile_web"
 ROOT = HERE.parents[1]
 DEFAULT_MODEL = ROOT / "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete"
+R21_MODEL = (ROOT / "jade-modeling/assets/live2d/r21_professional_art/livraison"
+             / "Jade_r21_v45_1/Jade_r21_v45")
+R21_EXPRESSIONS = ("Blink", "WinkL", "WinkR", "Surprised")
 SESSION = re.compile(r"[A-Za-z0-9_-]{8,64}\Z")
 MODEL_FILE = re.compile(r"[A-Za-z0-9_./-]{1,140}\Z")
 MAX_WAV = 1_000_000  # 20s of 16kHz mono PCM16, plus a small header.
@@ -306,27 +309,24 @@ class MobileGateway:
                    and not name.startswith("/")}
         return allowed, json.dumps(model, separators=(",", ":")).encode("utf-8")
 
-    def _second_model_files(self) -> tuple[set[str], bytes]:
-        """Accept only a complete, explicitly configured portable model bundle.
+    def _second_model_files(self) -> tuple[dict[str, tuple[Path, Path]], dict]:
+        """Validate the local r21 and prepare its web manifest without editing the export."""
+        built_in = self.second_model_dir is None
+        base = self.second_model_dir or R21_MODEL
+        manifest_name = "Jade_r21_v45.model3.json" if built_in else "Jade.model3.json"
 
-        This validates local files and references, not GPU/SDK compatibility.
-        No legacy r20 Idle motion or expressions are injected into this slot.
-        """
-        base = self.second_model_dir
-        if base is None or base.is_symlink() or not base.is_dir():
-            raise ValueError("second model not configured")
-        root = base.resolve(strict=True)
-
-        def local_asset(name: str) -> Path:
+        def local_asset(name: str, directory: Path = base) -> Path:
             if (not isinstance(name, str) or not MODEL_FILE.fullmatch(name)
                     or any(part in ("", ".", "..") for part in name.split("/"))):
                 raise ValueError("invalid model asset reference")
-            path = base
+            if directory.is_symlink() or not directory.is_dir():
+                raise ValueError("model bundle unavailable")
+            path = directory
             for part in PurePosixPath(name).parts:
                 path = path / part
                 if path.is_symlink():
                     raise ValueError("symlink in model bundle")
-            if (not path.resolve(strict=True).is_relative_to(root)
+            if (not path.resolve(strict=True).is_relative_to(directory.resolve())
                     or not path.is_file() or not 0 < path.stat().st_size <= 40_000_000):
                 raise ValueError("invalid model asset")
             with path.open("rb") as asset:
@@ -338,7 +338,7 @@ class MobileGateway:
                 raise ValueError("invalid model binary asset")
             return path
 
-        manifest = local_asset("Jade.model3.json")
+        manifest = local_asset(manifest_name)
         if manifest.stat().st_size > 1_000_000:
             raise ValueError("oversized model manifest")
         model = json.loads(manifest.read_text(encoding="utf-8"))
@@ -347,17 +347,17 @@ class MobileGateway:
         refs = model.get("FileReferences")
         if not isinstance(refs, dict):
             raise ValueError("invalid model references")
-        allowed = {"Jade.model3.json"}
+        allowed = {"Jade.model3.json": (manifest, base)}
 
-        def include(name, suffixes):
+        def include(name, suffixes, directory=base):
             if not isinstance(name, str) or PurePosixPath(name).suffix.lower() not in suffixes:
                 raise ValueError("invalid model asset type")
-            path = local_asset(name)
+            path = local_asset(name, directory)
             if path.suffix.lower() == ".json":
                 if path.stat().st_size > 8_000_000 or not isinstance(
                         json.loads(path.read_text(encoding="utf-8")), dict):
                     raise ValueError("invalid model JSON asset")
-            allowed.add(name)
+            allowed[name] = (path, directory)
             if len(allowed) > 256:
                 raise ValueError("too many model assets")
 
@@ -384,24 +384,28 @@ class MobileGateway:
                 include(entry.get("File"), {".json"})
                 if "Sound" in entry:
                     include(entry["Sound"], {".wav", ".mp3", ".ogg"})
-        return allowed, json.dumps(model, separators=(",", ":")).encode("utf-8")
+        if built_in:
+            for name in R21_EXPRESSIONS:
+                filename = f"r21-expressions/{name}.exp3.json"
+                include(filename, {".json"}, self.web_root)
+                expressions.append({"Name": name, "File": filename})
+            refs["Expressions"] = expressions
+        return allowed, model
 
     def _avatar_models(self) -> dict:
-        available = False
-        if self.second_model_dir is not None:
-            try:
-                self._second_model_files()
-                available = True
-            except (OSError, ValueError, TypeError, KeyError, RuntimeError):
-                # A missing/partial future bundle must never break classic Jade.
-                pass
-        return {"version": 1, "defaultId": "classic", "models": [
-            {"id": "classic", "label": "Modèle actuel", "available": True,
+        try:
+            _, model = self._second_model_files()
+            available = True
+            idle = "Idle" if model["FileReferences"].get("Motions", {}).get("Idle") else None
+        except (OSError, ValueError, TypeError, KeyError, RuntimeError):
+            available, idle = False, None
+        return {"version": 1, "defaultId": "next" if available else "classic", "models": [
+            {"id": "classic", "label": "Jade classique (r20)", "available": True,
              "manifestUrl": "/model/Jade.model3.json", "presentation": "seated",
              "classicIntents": True, "idleMotion": "Idle"},
-            {"id": "next", "label": "Nouveau modèle", "available": available,
+            {"id": "next", "label": "Jade actuelle (r21)", "available": available,
              "manifestUrl": "/models/next/Jade.model3.json" if available else None,
-             "presentation": "full", "classicIntents": False, "idleMotion": None},
+             "presentation": "full", "classicIntents": False, "idleMotion": idle},
         ]}
 
     async def _static(self, writer, route: str):
@@ -441,8 +445,11 @@ class MobileGateway:
                 await self._json(writer, 404, {"error": "asset not found"})
                 return
             try:
-                loader = self._second_model_files if second else self._model_files
-                allowed, virtual_model = await asyncio.to_thread(loader)
+                if second:
+                    allowed, model = await asyncio.to_thread(self._second_model_files)
+                    virtual_model = json.dumps(model, separators=(",", ":")).encode("utf-8")
+                else:
+                    allowed, virtual_model = await asyncio.to_thread(self._model_files)
             except (OSError, ValueError, KeyError, TypeError, RuntimeError):
                 await self._json(writer, 503, {"error": "Live2D model unavailable"})
                 return
@@ -452,8 +459,11 @@ class MobileGateway:
             if filename == "Jade.model3.json":
                 await self._send(writer, 200, virtual_model, "application/json; charset=utf-8")
                 return
-            base = self.second_model_dir if second else self.model_dir
-            path = base.joinpath(*PurePosixPath(filename).parts)
+            if second:
+                path, base = allowed[filename]
+            else:
+                base = self.model_dir
+                path = base.joinpath(*PurePosixPath(filename).parts)
             mime = {
                 ".moc3": "application/octet-stream",
                 ".png": "image/png",
@@ -874,12 +884,12 @@ class MobileGateway:
                 return
             body = await asyncio.wait_for(reader.readexactly(size), timeout=10)
             streaming = headers.get("x-jade-stream") == "1" and route in ("/api/chat", "/api/voice")
-            if not streaming:
+            if route not in ("/api/chat", "/api/voice"):
                 await self._post(writer, route, headers, body)
             else:
                 # Notice a disconnected phone even while STT/LLM is still
                 # running, before a response can be written to the socket.
-                work = asyncio.create_task(self._post(writer, route, headers, body, streaming=True))
+                work = asyncio.create_task(self._post(writer, route, headers, body, streaming=streaming))
                 disconnected = asyncio.create_task(reader.read(1))
                 try:
                     done, _ = await asyncio.wait((work, disconnected), return_when=asyncio.FIRST_COMPLETED)

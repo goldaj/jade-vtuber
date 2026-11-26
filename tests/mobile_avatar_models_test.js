@@ -8,12 +8,12 @@ const web = path.join(__dirname, "../src/jade_runtime/mobile_web");
 const source = fs.readFileSync(path.join(web, "avatar-models.js"), "utf8");
 
 function catalogue(nextAvailable = false) {
-  return {version:1, defaultId:"classic", models:[
-    {id:"classic", label:"Modèle actuel", available:true, manifestUrl:"/model/Jade.model3.json",
+  return {version:1, defaultId:nextAvailable ? "next" : "classic", models:[
+    {id:"classic", label:"Jade classique (r20)", available:true, manifestUrl:"/model/Jade.model3.json",
       presentation:"seated", classicIntents:true, idleMotion:"Idle"},
-    {id:"next", label:"Nouveau modèle", available:nextAvailable,
+    {id:"next", label:"Jade actuelle (r21)", available:nextAvailable,
       manifestUrl:nextAvailable ? "/models/next/Jade.model3.json" : null,
-      presentation:"full", classicIntents:false, idleMotion:null}
+      presentation:"full", classicIntents:false, idleMotion:nextAvailable ? "Idle" : null}
   ]};
 }
 
@@ -30,9 +30,13 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
     getElementById(id) { return withUi ? {"avatar-model-selector":selector, "avatar-model-status":status}[id] : null; },
     querySelector() { return room; }, createElement() { return new Element(); }
   };
-  const timers = new Map(), requests = [], selections = [];
+  const timers = new Map(), requests = [], selections = [], lifecycle = [];
   let nextTimer = 0, resolveFetch;
   const window = {
+    JadeConversation:{stopForModelChange() {
+      lifecycle.push("stop");
+      return () => lifecycle.push("resume");
+    }},
     setTimeout(callback) { const id = ++nextTimer; timers.set(id, callback); return id; },
     clearTimeout(id) { timers.delete(id); }
   };
@@ -55,13 +59,14 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
     let currentState = state;
     const avatar = {get state(){return currentState;}, async selectModel(id){
       selections.push(id);
+      lifecycle.push("select");
       return select ? select(id, update) : false;
     }};
     function update(next) { currentState = next; return room.emit("jade-avatar-state"); }
     window.JadeAvatar = avatar;
     return {avatar, update};
   }
-  return {window, selector, status, room, timers, requests, selections, renderer,
+  return {window, selector, status, room, timers, requests, selections, lifecycle, renderer,
     ready:window.JadeModelCatalog.ready,
     completeFetch(){resolveFetch();},
     async change(id){selector.value = id; await selector.emit("change");}
@@ -78,8 +83,8 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
   waiting.completeFetch(); await waiting.ready;
   assert.equal(waiting.selector.disabled, false);
   assert.equal(waiting.selector.value, "classic");
-  assert.equal(waiting.selector.children[1].textContent, "Nouveau modèle — à venir");
-  assert.match(waiting.status.textContent, /quand il sera prêt/);
+  assert.equal(waiting.selector.children[1].textContent, "Jade actuelle (r21) — indisponible");
+  assert.match(waiting.status.textContent, /classique est utilisé/);
   await waiting.change("next");
   assert.equal(waiting.selections.length, 0, "unavailable model never reaches the renderer");
   assert.equal(waiting.selector.value, "classic");
@@ -95,6 +100,7 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
   assert.equal(waiting.selections.length, 0, "a forced change during loading is ignored");
 
   const available = client({data:catalogue(true)}); await available.ready;
+  assert.equal(available.window.JadeModelCatalog.defaultId, "next");
   assert.equal(available.selector.disabled, true, "an available catalogue does not create a renderer");
   let finishSelection;
   available.renderer(undefined, async (id, update) => {
@@ -112,10 +118,12 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
   assert.equal(available.selector.value, "classic", "the selector keeps the model actually displayed during loading");
   await available.change("next");
   assert.deepEqual(available.selections, ["next"], "a pending selection cannot trigger another load");
+  assert.deepEqual(available.lifecycle, ["stop", "select"]);
   finishSelection(); await change;
   assert.equal(available.selector.disabled, false);
   assert.equal(available.selector.value, "next");
   assert.equal(available.status.textContent, "Nouveau modèle affiché.");
+  assert.deepEqual(available.lifecycle, ["stop", "select", "resume"]);
 
   const rollback = client({data:catalogue(true)}); await rollback.ready;
   rollback.renderer(undefined, async (id, update) => {
@@ -127,6 +135,7 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
   assert.equal(rollback.selector.value, "classic", "failed selection reflects the rolled back model");
   assert.equal(rollback.selector.disabled, false, "failure leaves the control available for another attempt");
   assert.equal(rollback.status.textContent, "Chargement impossible. Le modèle actuel reste affiché.");
+  assert.deepEqual(rollback.lifecycle, ["stop", "select", "resume"]);
 
   const thrown = client({data:catalogue(true)}); await thrown.ready;
   thrown.renderer({status:"ready", modelId:"classic", requestedId:"classic", message:"Modèle actuel affiché."},
@@ -154,12 +163,12 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
 
   const invalid = [
     data => {data.version = 2;},
-    data => {data.defaultId = "next";},
+    data => {data.defaultId = "classic";},
     data => {data.models[1].manifestUrl = "https://remote.invalid/Jade.model3.json";},
     data => {data.models[1].manifestUrl = "/models/next/../../private/Jade.model3.json";},
     data => {data.models[1].presentation = "seated";},
     data => {data.models[1].classicIntents = true;},
-    data => {data.models[1].idleMotion = "Idle";},
+    data => {data.models[1].idleMotion = "Unknown";},
     data => {data.models[1].available = "true";},
     data => {data.models[1].id = "classic";},
     data => {data.models.pop();}
