@@ -88,8 +88,8 @@ def prepare_voice_review(name: str = "Jade candidate 1", prompt: str = JADE_VOIC
     """
     if not isinstance(name, str) or not 1 <= len(name.strip()) <= 64:
         raise ValueError("voice review name must contain between 1 and 64 characters")
-    if not isinstance(prompt, str) or not 1 <= len(prompt.strip()) <= 4000:
-        raise ValueError("voice review prompt must contain between 1 and 4000 characters")
+    if not isinstance(prompt, str) or not 1 <= len(prompt.strip()) <= 2000:
+        raise ValueError("voice review prompt must contain between 1 and 2000 characters")
     return {
         "status": "prepared_only",
         "voice_created": False,

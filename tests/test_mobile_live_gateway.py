@@ -9,7 +9,6 @@ import asyncio
 import base64
 from contextlib import asynccontextmanager
 from dataclasses import replace
-from decimal import Decimal
 import json
 from pathlib import Path
 import struct
@@ -18,7 +17,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from src.jade_runtime.live_budget import LiveBudgetLedger
+from src.jade_runtime.live_usage import LiveUsageLedger
 from src.jade_runtime.live_config import LiveConfig
 from src.jade_runtime.live_provider import MAX_SDP_BYTES
 from src.jade_runtime.live_sessions import LiveSessionManager
@@ -99,11 +98,11 @@ class MobileLiveGatewayTests(unittest.IsolatedAsyncioTestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         root = Path(self.temp.name)
-        self.config = replace(LiveConfig(), enabled=True, daily_usd=Decimal(2), monthly_usd=Decimal(10),
-                              budget_db_path=str(root / "budget.sqlite3"), session_db_path=str(root / "sessions.sqlite3"))
+        self.config = replace(LiveConfig(), usage_db_path=str(root / "usage.sqlite3"),
+                              session_db_path=str(root / "sessions.sqlite3"))
         self.provider = FakeProvider()
-        self.budget = LiveBudgetLedger(root / "budget.sqlite3", "2", "10")
-        self.manager = LiveSessionManager(self.config, self.provider, self.budget, api_key_present=True)
+        self.usage = LiveUsageLedger(root / "usage.sqlite3")
+        self.manager = LiveSessionManager(self.config, self.provider, self.usage, api_key_present=True)
         self.mobile = MobileGateway(SimpleNamespace(), SimpleNamespace(), token=TOKEN,
                                     owner_login="owner@example.test", public_origin=ORIGIN,
                                     live_manager=self.manager)
@@ -235,7 +234,13 @@ class MobileLiveGatewayTests(unittest.IsolatedAsyncioTestCase):
                 self.assertNotIn("api_key", value)
         self.assertEqual(self.provider.created, [])
         self.assertEqual(self.manager.snapshot("Goldaj")["lease_state"], "closed")
-        self.assertEqual(self.budget.snapshot()["open_reservations"], 0)
+        self.assertEqual(self.usage.snapshot()["open_records"], 0)
+        status, caps, _ = await self.request("GET", "/api/live/capabilities")
+        self.assertEqual(status, 200)
+        self.assertTrue(caps["available"])
+        self.assertNotIn("budget", caps)
+        status, prefs, _ = await self.request("GET", "/api/voice/preferences")
+        self.assertEqual((status, prefs["mode"]), (200, "live"))
 
     async def test_profile_pref_is_revisioned_without_capture_and_conflict_returns_current(self):
         status, value, _ = await self.request("POST", "/api/voice/preferences", {"mode": "live", "revision": 0})
@@ -316,7 +321,7 @@ class MobileLiveGatewayTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status, 409)
         self.assertEqual(value["code"], "live_control_required")
         self.assertEqual(self.provider.created, [])
-        self.assertEqual(self.budget.snapshot()["open_reservations"], 0)
+        self.assertEqual(self.usage.snapshot()["open_records"], 0)
 
     async def test_websocket_upgrade_validates_origin_owner_protocol_key_and_query(self):
         cases = (

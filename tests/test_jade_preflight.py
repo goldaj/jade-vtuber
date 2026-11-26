@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from src.jade_runtime.config import Settings
 from src.jade_runtime.diagnostics import inspect_environment
+from src.jade_runtime.live_config import LiveConfig
 
 
 class DiagnosticsTests(unittest.TestCase):
@@ -61,6 +62,21 @@ class DiagnosticsTests(unittest.TestCase):
                                 capture_output=True, check=False, timeout=15)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Aucun appel OpenAI", result.stdout)
+
+    def test_mobile_live_preflight_needs_no_spending_configuration(self):
+        # Old private amounts must not keep an upgraded mobile instance disabled.
+        config = LiveConfig.from_env({
+            "JADE_LIVE_DAILY_USD": "0",
+            "JADE_LIVE_MONTHLY_USD": "0",
+            "JADE_LIVE_BACKEND_RESERVATION_USD": "invalid-old-value",
+            "JADE_DISCORD_LIVE_ENABLED": "true",
+        }.get)
+        with patch("src.jade_runtime.diagnostics._installed", return_value=True):
+            checks = inspect_environment(
+                Settings(api_key="test-only", live=config), live=True, mobile=True)
+        live_check = next(item for item in checks if item.name == "Live mobile")
+        self.assertTrue(live_check.ok, live_check)
+        self.assertNotIn("budget", " ".join(item.name.lower() for item in checks))
 
 
 if __name__ == "__main__":

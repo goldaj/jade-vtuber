@@ -9,7 +9,6 @@ from __future__ import annotations
 import asyncio
 from collections import deque
 from dataclasses import dataclass, field
-from decimal import Decimal
 import hashlib
 import inspect
 import logging
@@ -33,7 +32,7 @@ TECHNICAL_REASONS = frozenset((
     "mode_off", "user_stop", "text", "classic_voice", "background", "heartbeat_expired",
     "control_disconnected", "control_backpressure", "sideband_lost", "server_shutdown",
     "server_restart", "live_disabled", "live_state_unavailable", "live_supervisor_failed",
-    "live_duration_limit", "live_budget_exhausted", "live_start_rate_limit", "live_provider_error",
+    "live_duration_limit", "live_start_rate_limit", "live_provider_error",
     "opening_timeout", "opening_abandoned", "live_open_failed", "creation_unconfirmed",
     "creation_rejected", "close_unconfirmed", "provider_closed",
 ))
@@ -86,7 +85,7 @@ class LiveRegistry:
         with self._lock:
             row = self._db.execute(
                 "SELECT mode,revision FROM live_preferences WHERE owner=?", (owner,)).fetchone()
-            return dict(row) if row else {"mode": "classic", "revision": 0}
+            return dict(row) if row else {"mode": "live", "revision": 0}
 
     def set_mode(self, owner, mode, revision):
         with self._lock, self._db:
@@ -165,6 +164,7 @@ class ProviderSession:
     seen_events: set = field(default_factory=set)
     event_order: deque = field(default_factory=deque)
     pending_delegations: set = field(default_factory=set)
+    admitted_delegations: set = field(default_factory=set)
     total_delegations: int = 0
     usage_seconds: float = 0.0
     last_estimate: float = 0.0
@@ -174,14 +174,14 @@ class ProviderSession:
 
 
 class LiveSessionManager:
-    def __init__(self, config: LiveConfig, provider, budget, *, registry_path=None,
+    def __init__(self, config: LiveConfig, provider, usage=None, *, registry_path=None,
                  bridge=None, api_key_present=True, clock=time.monotonic, metrics=None):
         config.validate()
-        self.config, self.provider, self.budget = config, provider, budget
+        self.config, self.provider, self.usage = config, provider, usage
         self.bridge, self.api_key_present, self.clock = bridge, bool(api_key_present), clock
         self.metrics = metrics if metrics is not None else TurnMetrics(clock=clock)
         self.registry = LiveRegistry(registry_path or config.session_db_path or
-                                     Path(config.budget_db_path).with_name("jade-live-sessions.sqlite3"))
+                                     Path(config.usage_db_path).with_name("jade-live-sessions.sqlite3"))
         self._leases: dict[str, ClientLease] = {}
         self._sessions: dict[str, ProviderSession] = {}
         self._preferences = {}
@@ -193,6 +193,7 @@ class LiveSessionManager:
         self._tasks = set()
         self._running, self._stopped = False, False
         self._storage_failed = False
+        self._usage_warning = False
 
     def _trace(self, session, stage, **numeric):
         """Technical observations only, never SDP, identities or transcripts."""
@@ -273,9 +274,28 @@ class LiveSessionManager:
         return any(s.owner == owner and s.phase in ("close_unconfirmed", "opening_unknown")
                    for s in self._sessions.values())
 
+    async def _observe_usage(self, method, *args, **kwargs):
+        """Best-effort telemetry; it never grants or refuses Live work."""
+        if self.usage is None:
+            return None
+        try:
+            # Slow optional accounting must not hold the control/provider path.
+            async with asyncio.timeout(1):
+                return await asyncio.to_thread(getattr(self.usage, method), *args, **kwargs)
+        except Exception:
+            if not self._usage_warning:
+                LOG.warning("Live usage tracking unavailable; mobile Live remains available")
+                self._usage_warning = True
+            return None
+
+    async def usage_snapshot(self):
+        result = await self._observe_usage("snapshot")
+        if not isinstance(result, dict):
+            return {"available": False, "reason": "usage_unavailable"}
+        return {"available": True, **result}
+
     async def capabilities(self, owner):
         result = dict(self.config.preflight(api_key_present=self.api_key_present))
-        budget = await asyncio.to_thread(self.budget.snapshot)
         reasons = list(result.get("reasons", []))
         if self._stopped:
             reasons.append("server_stopping")
@@ -283,10 +303,9 @@ class LiveSessionManager:
             reasons.append("live_state_unavailable")
         if self._unresolved(owner):
             reasons.append("close_unconfirmed")
-        if not budget.get("available", False):
-            reasons.append("live_budget_unavailable")
         result.update(enabled=self.config.enabled, available=not reasons,
-                      reason=reasons[0] if reasons else "ready", reasons=reasons, budget=budget,
+                      reason=reasons[0] if reasons else "ready", reasons=reasons,
+                      usage=await self.usage_snapshot(),
                       heartbeat_seconds=self.config.heartbeat_seconds,
                       lease_seconds=self.config.lease_seconds,
                       opening_timeout_seconds=self.config.opening_timeout_seconds,
@@ -305,9 +324,6 @@ class LiveSessionManager:
             caps = await self.capabilities(owner)
             if not caps["available"]:
                 raise LiveSessionError(caps["reason"], 503)
-            from .live_budget import quote_session
-            if Decimal(caps["budget"].get("remaining_usd", "0")) < quote_session(self.config):
-                raise LiveSessionError("live_budget_insufficient", 429)
             current = self._leases.get(owner)
             if current and current.state != "closed":
                 if current.client_id == client_id and current.thread_id == thread_id:
@@ -343,7 +359,7 @@ class LiveSessionManager:
                   "reason": session.reason if session else (lease.reason if lease else "ready"),
                   "heartbeat_seconds": self.config.heartbeat_seconds,
                   "lease_seconds": self.config.lease_seconds,
-                  **self._preferences.get(owner, {"mode": "classic", "revision": 0})}
+                  **self._preferences.get(owner, {"mode": "live", "revision": 0})}
         return result
 
     def _broadcast(self, owner, event):
@@ -429,12 +445,9 @@ class LiveSessionManager:
                 if len(starts) >= self.config.max_starts_per_minute:
                     self._invalidate(owner, "live_start_rate_limit")
                     raise LiveSessionError("live_start_rate_limit", 429)
-                from .live_budget import quote_session
                 handle = secrets.token_urlsafe(24)
                 reservation = "voice:" + handle
-                if not await asyncio.to_thread(self.budget.reserve, reservation,
-                                               quote_session(self.config), "voice"):
-                    raise LiveSessionError("live_budget_insufficient", 429)
+                await self._observe_usage("reserve", reservation, 0, "voice")
                 starts.append(self.clock())
                 session = ProviderSession(handle, owner, client_id, thread_id, lease_id,
                                           secrets.token_urlsafe(18), reservation, self.clock(), self.clock(),
@@ -519,19 +532,24 @@ class LiveSessionManager:
             self._state(session.owner)
             if isinstance(exc, asyncio.CancelledError):
                 raise
-            raise LiveSessionError("creation_unconfirmed" if session.phase == "opening_unknown"
-                                   else "live_open_failed", 503) from None
+            code = "creation_unconfirmed" if session.phase == "opening_unknown" else "live_open_failed"
+            if isinstance(exc, LiveProviderError):
+                public_codes = {"live_auth_failed", "live_access_denied", "live_model_unavailable",
+                                "live_quota_exceeded", "live_rate_limited", "live_connection_failed"}
+                if exc.code in public_codes:
+                    code = exc.code
+                elif exc.status_code in (401, 403, 404, 429):
+                    code = {401: "live_auth_failed", 403: "live_access_denied",
+                            404: "live_model_unavailable", 429: "live_rate_limited"}[exc.status_code]
+                elif exc.code in ("session_creation_transport_failed", "sideband_connection_failed"):
+                    code = "live_connection_failed"
+            raise LiveSessionError(code, 503) from None
 
     async def _closed_without_create(self, session):
         session.phase, session.reason = "closed", "creation_rejected"
         session.closed.set()
-        # A definitive rejection, or abandonment before any HTTP request, also
-        # resolves a reservation conservatively marked unknown during timeout.
-        try:
-            await asyncio.to_thread(self.budget.reconcile, session.reservation_id,
-                                    Decimal("0"), confirmed=True)
-        except Exception:
-            self._storage_failed = True
+        # A definitive rejection or abandonment before HTTP has no usage.
+        await self._observe_usage("reconcile", session.reservation_id, 0, confirmed=True)
         await self._persist(session)
         lease = self._leases.get(session.owner)
         if lease and lease.session == session.handle:
@@ -600,21 +618,17 @@ class LiveSessionManager:
                 session.phase = "closed"
                 session.closed.set()
             usage = event.get("usage")
-            try:
-                if (isinstance(usage, dict) and type(usage.get("seconds")) in (int, float)
-                        and math.isfinite(usage["seconds"]) and usage["seconds"] >= 0):
-                    session.usage_seconds = max(session.usage_seconds, float(usage["seconds"]))
-                    active, paused = usage.get("active_seconds"), usage.get("paused_seconds")
-                    if active is None or paused is None:
-                        active = paused = None
-                    await asyncio.to_thread(self.budget.update_usage, session.reservation_id,
-                                            session.usage_seconds, active_seconds=active,
-                                            paused_seconds=paused, final=kind == "session.closed")
-                elif kind == "session.closed":
-                    await asyncio.to_thread(self.budget.mark_unknown, session.reservation_id)
-            except Exception:
-                self._storage_failed = True
-                LOG.error("Live usage reconciliation failed; new admission disabled")
+            if (isinstance(usage, dict) and type(usage.get("seconds")) in (int, float)
+                    and math.isfinite(usage["seconds"]) and usage["seconds"] >= 0):
+                session.usage_seconds = max(session.usage_seconds, float(usage["seconds"]))
+                active, paused = usage.get("active_seconds"), usage.get("paused_seconds")
+                if active is None or paused is None:
+                    active = paused = None
+                await self._observe_usage("update_usage", session.reservation_id,
+                                         session.usage_seconds, active_seconds=active,
+                                         paused_seconds=paused, final=kind == "session.closed")
+            elif kind == "session.closed":
+                await self._unknown_cost(session.reservation_id)
         if kind == "session.closed":
             session.phase = "closed"
             session.reason = session.reason if session.abandoned else str(event.get("reason", "provider_closed"))[:80]
@@ -660,17 +674,13 @@ class LiveSessionManager:
         await asyncio.wait_for(session.channel.send(event), self.config.close_timeout_seconds)
 
     async def _unknown_cost(self, reservation_id):
-        try:
-            await asyncio.to_thread(self.budget.mark_unknown, reservation_id)
-        except Exception:
-            self._storage_failed = True
-            LOG.error("Live cost state unavailable; new admission disabled")
+        await self._observe_usage("mark_unknown", reservation_id)
 
     async def reserve_delegation(self, context, delegation_id):
-        """One conservative reservation per bounded backend operation.
+        """Admit one bounded backend operation without a financial gate.
 
-        It covers tools and curation as well as the dialogue model. Token counts
-        alone do not establish the price of this multi-provider operation.
+        The callback's historical reservation name is kept for the bridge.
+        Identity, liveness and deduplication do not depend on optional usage I/O.
         """
         session = self._sessions.get(context.get("handle"))
         if (not session or session.generation != context.get("generation")
@@ -678,25 +688,19 @@ class LiveSessionManager:
                 or not delegation_id.strip()):
             return False
         async with self._lock:
-            if (not self._valid(session) or self.config.backend_reservation_usd <= 0
+            if (not self._valid(session)
                     or session.total_delegations >= self.config.max_delegations_per_session
-                    or delegation_id in session.pending_delegations):
+                    or delegation_id in session.admitted_delegations):
                 return False
             reservation = "backend:" + hashlib.sha256(
                 (session.handle + ":" + delegation_id).encode()).hexdigest()
-            try:
-                allowed = await asyncio.to_thread(self.budget.reserve, reservation,
-                                                  self.config.backend_reservation_usd, "backend")
-            except Exception:
-                self._storage_failed = True
-                return False
-            if not allowed:
-                return False
+            await self._observe_usage("reserve", reservation, 0, "backend")
             # An OFF/lease expiry during SQLite I/O still prevents dispatch.
             if not self._valid(session):
-                await asyncio.to_thread(self.budget.release, reservation)
+                await self._observe_usage("release", reservation)
                 return False
             session.pending_delegations.add(delegation_id)
+            session.admitted_delegations.add(delegation_id)
             session.total_delegations += 1
             session.last_activity = self.clock()
             self._trace(session, "live_backend_admitted", delegations=session.total_delegations)
@@ -708,20 +712,11 @@ class LiveSessionManager:
             return
         expected = "backend:" + hashlib.sha256(
             (session.handle + ":" + delegation_id).encode()).hexdigest()
-        if reservation != expected:
+        if reservation != expected or delegation_id not in session.admitted_delegations:
             return
         try:
-            if status == "completed":
-                # Keep the complete admitted estimate as spent, not an invented
-                # token-derived actual cost. A later invoice can reconcile it.
-                admitted = await asyncio.to_thread(self.budget.reservation, reservation)
-                await asyncio.to_thread(self.budget.reconcile, reservation,
-                                        admitted["quote_usd"], confirmed=False)
-            else:
-                await self._unknown_cost(reservation)
-        except Exception:
-            self._storage_failed = True
-            LOG.error("Live backend cost reconciliation failed; admission disabled")
+            # Tokens describe known work, not the full cost of its tools.
+            await self._observe_usage("record_backend_usage", reservation, usage, status)
         finally:
             session.pending_delegations.discard(delegation_id)
             session.last_activity = self.clock()
@@ -838,7 +833,7 @@ class LiveSessionManager:
             await asyncio.shield(session.close_task)
 
     async def _close_provider(self, session):
-        # Closing is never gated by flags, admission, client auth or budget.
+        # Closing is never gated by flags, admission or client authentication.
         deadline = asyncio.get_running_loop().time() + self.config.close_timeout_seconds
 
         async def bounded(awaitable):
@@ -903,16 +898,9 @@ class LiveSessionManager:
             if session and session.phase in ("active", "standby"):
                 if now - session.last_estimate >= 1:
                     session.last_estimate = now
-                    # Maximum active-rate elapsed estimate is conservative; final
-                    # provider usage replaces it in the ledger, never adds to it.
-                    estimator = getattr(self.budget, "estimate_usage", None)
-                    if estimator:
-                        await asyncio.to_thread(estimator, session.reservation_id, now - session.created)
-                budget = await asyncio.to_thread(self.budget.snapshot)
-                if budget.get("over_budget", False):
-                    self._invalidate(owner, "live_budget_exhausted")
-                    self._spawn(self.stop_owner(owner, "live_budget_exhausted"), "live-budget-stop")
-                elif (lease.state == "armed" and not lease.playback_active and not lease.speech_active
+                    # Passive estimate only; no dollar amount can stop mobile.
+                    await self._observe_usage("estimate_usage", session.reservation_id, now - session.created)
+                if (lease.state == "armed" and not lease.playback_active and not lease.speech_active
                       and not session.pending_delegations
                       and now - session.last_activity >= self.config.idle_close_seconds):
                     self._spawn(self._request_close(session, "idle", keep_arm=True), "live-idle-close")

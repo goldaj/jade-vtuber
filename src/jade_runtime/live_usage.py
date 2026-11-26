@@ -1,11 +1,11 @@
-"""Private, durable, atomic Live reservations and cumulative usage accounting.
+"""Private, passive Live usage observations with no spending policy.
 
-Zero budgets disable admission. Voice and backend share the envelope but retain
-their own totals. Provider seconds, estimated dollar costs and invoice amounts
-are distinguishable; this is not a claim of a hard provider-side spending cap.
-Open reservations survive restarts and count in the current Paris day/month,
-including reservations made before a rollover. Observed cost increments crossing
-midnight are prorated over their observation interval, explicitly an estimate.
+Provider seconds, estimates and invoice amounts remain distinguishable. Recording
+an operation never depends on its cost or earlier consumption. Monthly summaries
+use Paris civil time. Internal daily rows only preserve the historical SQLite
+format and split observations across calendar boundaries; they implement no
+public daily view or limit. Callers handle storage failures best-effort, without
+using this tracking to decide whether mobile Live can operate.
 """
 from __future__ import annotations
 
@@ -27,13 +27,13 @@ STANDBY_USD_PER_MINUTE = Decimal("0.02")
 RATE_DATE = "2026-11-26"
 
 
-def _amount(value: object, *, upper: Decimal = Decimal("1000000")) -> Decimal:
+def _amount(value: object, *, upper: Decimal | None = None) -> Decimal:
     try:
         result = Decimal(str(value))
     except (ValueError, TypeError, InvalidOperation) as exc:
         raise ValueError("invalid Live numeric amount") from exc
-    if not result.is_finite() or not ZERO <= result <= upper:
-        raise ValueError("Live numeric amounts must be finite, nonnegative and bounded")
+    if not result.is_finite() or result < ZERO or (upper is not None and result > upper):
+        raise ValueError("Live numeric amounts must be finite and nonnegative")
     return result
 
 
@@ -47,15 +47,6 @@ def quote_voice(seconds: object, *, active_rate: object = ACTIVE_USD_PER_MINUTE)
     rate = _amount(active_rate)
     return (duration * rate / Decimal(60)).quantize(USD_QUANTUM, rounding=ROUND_UP)
 
-
-def quote_session(config) -> Decimal:
-    # The documented default startup charge is credited against elapsed duration.
-    # Speech-wake billing remains a pilot measurement; reserve at least 15 seconds
-    # conservatively, but never add 15 seconds to an already longer session.
-    seconds = (Decimal(str(config.max_session_seconds))
-               + Decimal(str(config.opening_timeout_seconds))
-               + Decimal(str(config.close_timeout_seconds)))
-    return quote_voice(max(Decimal(15), seconds))
 
 
 def _aware(value: datetime) -> datetime:
@@ -94,8 +85,8 @@ def _period_slices(start: datetime, end: datetime) -> list[tuple[str, Decimal]]:
     return result
 
 
-class LiveBudgetLedger:
-    def __init__(self, path: str | Path, daily_usd: object, monthly_usd: object,
+class LiveUsageLedger:
+    def __init__(self, path: str | Path,
                  *, now: Callable[[], datetime] | None = None,
                  active_rate: object = ACTIVE_USD_PER_MINUTE,
                  standby_rate: object = STANDBY_USD_PER_MINUTE):
@@ -104,10 +95,6 @@ class LiveBudgetLedger:
         if (not self.path.is_absolute() or self.path.suffix != ".sqlite3"
                 or self.path.resolve().is_relative_to(repo_root) or self.path.is_symlink()):
             raise ValueError("Live ledger requires an absolute private SQLite path outside Git")
-        self.daily_usd = _amount(daily_usd, upper=Decimal(10000))
-        self.monthly_usd = _amount(monthly_usd, upper=Decimal(10000))
-        if self.daily_usd > self.monthly_usd:
-            raise ValueError("Live daily budget cannot exceed monthly budget")
         self.active_rate = _amount(active_rate)
         self.standby_rate = _amount(standby_rate)
         if not self.active_rate or self.standby_rate > self.active_rate:
@@ -139,12 +126,16 @@ class LiveBudgetLedger:
                 CREATE INDEX IF NOT EXISTS jade_live_budget_period
                     ON jade_live_budget_charges(day,month);
             """)
-            # Additive migration for private ledgers created by the first prototype.
+            # Retain legacy table names and observations; migrations are additive.
             db.execute("BEGIN IMMEDIATE")
             columns = {row[1] for row in db.execute("PRAGMA table_info(jade_live_budget_reservations)")}
             if "estimate_seconds" not in columns:
                 db.execute("""ALTER TABLE jade_live_budget_reservations
                     ADD COLUMN estimate_seconds TEXT NOT NULL DEFAULT '0'""")
+            db.execute("""CREATE TABLE IF NOT EXISTS jade_live_usage_backend(
+                reservation_id TEXT PRIMARY KEY REFERENCES jade_live_budget_reservations(id),
+                input_tokens TEXT, output_tokens TEXT, cached_input_tokens TEXT,
+                status TEXT NOT NULL, observed_at TEXT NOT NULL)""")
             db.commit()
 
     @contextmanager
@@ -171,7 +162,7 @@ class LiveBudgetLedger:
 
     @staticmethod
     def _id(value: object) -> str:
-        if (not isinstance(value, str) or not 1 <= len(value) <= 256
+        if (not isinstance(value, str) or not 1 <= len(value) <= 256 or not value.strip()
                 or any(ord(char) < 32 for char in value)):
             raise ValueError("invalid Live reservation ID")
         return value
@@ -185,122 +176,105 @@ class LiveBudgetLedger:
         return row
 
     def _snapshot(self, db, now: datetime) -> dict:
-        day = paris_date(now).isoformat()
-        month = day[:7]
-        buckets = {period: {"spent": ZERO, "voice": ZERO, "backend": ZERO,
-                            "estimated": ZERO, "confirmed": ZERO, "invoiced": ZERO}
-                   for period in ("daily", "monthly")}
-        rows = db.execute("""SELECT c.day,c.month,c.usd,r.kind,r.quality
+        month = paris_date(now).isoformat()[:7]
+        totals = {key: ZERO for key in (
+            "recorded", "voice", "backend", "estimated", "provider_usage", "confirmed", "invoiced")}
+        rows = db.execute("""SELECT c.usd,r.kind,r.quality
             FROM jade_live_budget_charges c JOIN jade_live_budget_reservations r
-            ON c.reservation_id=r.id WHERE c.day=? OR c.month=?""", (day, month))
+            ON c.reservation_id=r.id WHERE c.month=?""", (month,))
+        evidence = {"estimated": "estimated", "provider_usage": "provider_usage",
+                    "confirmed_cost": "confirmed", "invoice": "invoiced"}
         for row in rows:
             amount = Decimal(row["usd"])
-            for period, matches in (("daily", row["day"] == day),
-                                    ("monthly", row["month"] == month)):
-                if not matches:
-                    continue
-                bucket = buckets[period]
-                bucket["spent"] += amount
-                bucket[row["kind"]] += amount
-                if row["quality"] == "estimated":
-                    bucket["estimated"] += amount
-                else:
-                    bucket["confirmed"] += amount
-                if row["quality"] == "invoice":
-                    bucket["invoiced"] += amount
-        pending = db.execute("""SELECT quote_usd,spent_usd,state
-            FROM jade_live_budget_reservations WHERE state IN ('reserved','active','unknown')""").fetchall()
-        reserved = sum((max(ZERO, Decimal(row["quote_usd"]) - Decimal(row["spent_usd"]))
-                        for row in pending), ZERO)
-        snapshot = {
-            "timezone": "Europe/Paris", "date": day, "month": month,
-            "rate_date": RATE_DATE,
+            totals["recorded"] += amount
+            totals[row["kind"]] += amount
+            if row["quality"] in evidence:
+                totals[evidence[row["quality"]]] += amount
+        records = db.execute("""SELECT state,quality,created_at,observed_at
+            FROM jade_live_budget_reservations""").fetchall()
+        open_records = unknown_records = unpriced = 0
+        for row in records:
+            ongoing = row["state"] in ("reserved", "active", "unknown")
+            open_records += ongoing
+            unknown_records += row["state"] == "unknown"
+            start_month = paris_date(datetime.fromisoformat(row["created_at"])).isoformat()[:7]
+            end_month = paris_date(datetime.fromisoformat(row["observed_at"])).isoformat()[:7]
+            if row["quality"] == "unpriced" and start_month <= month and (ongoing or month <= end_month):
+                unpriced += 1
+        return {
+            "mode": "passive", "scope": "live_only", "currency": "USD",
+            "timezone": "Europe/Paris", "month": month, "rate_date": RATE_DATE,
             "period_allocation": "observation_interval_estimate",
-            "open_reservations": len(pending),
-            "unknown_reservations": sum(row["state"] == "unknown" for row in pending),
-            "reserved_usd": _usd(reserved),
+            "open_records": open_records, "unknown_records": unknown_records,
+            "monthly": {**{key + "_usd": _usd(value) for key, value in totals.items()},
+                        "unpriced_records": unpriced},
         }
-        available = []
-        for period, limit in (("daily", self.daily_usd), ("monthly", self.monthly_usd)):
-            bucket = buckets[period]
-            exposure = bucket["spent"] + reserved
-            remaining = max(ZERO, limit - exposure)
-            available.append(remaining)
-            snapshot[period] = {
-                "limit_usd": _usd(limit), "spent_usd": _usd(bucket["spent"]),
-                "reserved_usd": _usd(reserved), "exposure_usd": _usd(exposure),
-                "available_usd": _usd(remaining), "over_limit": exposure > limit,
-                "voice_usd": _usd(bucket["voice"]), "backend_usd": _usd(bucket["backend"]),
-                "estimated_usd": _usd(bucket["estimated"]),
-                "confirmed_usd": _usd(bucket["confirmed"]),
-                "invoiced_usd": _usd(bucket["invoiced"]),
-            }
-        snapshot["available_usd"] = _usd(min(available))
-        snapshot["admission"] = bool(self.daily_usd and self.monthly_usd and min(available) > 0)
-        snapshot["remaining_usd"] = snapshot["available_usd"]
-        snapshot["available"] = snapshot["admission"]
-        snapshot["over_budget"] = any(snapshot[period]["over_limit"] for period in ("daily", "monthly"))
-        return snapshot
 
     def snapshot(self, *, now: datetime | None = None) -> dict:
         point = self._now(now)
         with self._connect() as db:
-            # One consistent read snapshot across reservation and charge tables.
             db.execute("BEGIN")
             return self._snapshot(db, point)
 
-    def admission(self, quote: object, *, now: datetime | None = None) -> bool:
-        """Read-only indication; only reserve() can grant atomic admission."""
-        amount = _amount(quote)
-        result = self.snapshot(now=now)
-        return bool(amount and result["admission"] and amount <= Decimal(result["available_usd"]))
-
-    def reserve(self, reservation_id: str, quote: object, kind: str = "voice",
+    def reserve(self, reservation_id: str, quote_usd: object = 0, kind: str = "voice",
                 *, now: datetime | None = None) -> bool:
+        """Idempotently register an observation; never grant or deny spending.
+
+        The retained method and quote names support existing call sites. A quote
+        is optional historical metadata, never reserved money or a usage limit.
+        """
         identifier = self._id(reservation_id)
-        amount = _amount(quote)
+        amount = _amount(quote_usd)
         point = self._now(now)
         if kind not in ("voice", "backend"):
             raise ValueError("invalid Live cost category")
-        if not amount or not self.daily_usd or not self.monthly_usd:
-            return False
         with self._connect(transaction=True) as db:
             previous = db.execute("SELECT * FROM jade_live_budget_reservations WHERE id=?",
                                   (identifier,)).fetchone()
             if previous is not None:
                 if previous["kind"] != kind or Decimal(previous["quote_usd"]) != amount:
-                    raise ValueError("Live reservation ID reused with different terms")
-                return previous["state"] in ("reserved", "active")
-            current = self._snapshot(db, point)
-            if amount > Decimal(current["available_usd"]):
-                return False
+                    raise ValueError("Live observation ID reused with different metadata")
+                return True
             stamp = point.isoformat()
             db.execute("""INSERT INTO jade_live_budget_reservations
-                (id,kind,quote_usd,created_at,observed_at) VALUES(?,?,?,?,?)""",
+                (id,kind,quote_usd,quality,created_at,observed_at) VALUES(?,?,?,'unpriced',?,?)""",
                        (identifier, kind, _usd(amount), stamp, stamp))
         return True
 
-    def _allocate(self, db, row, new_total: Decimal, now: datetime) -> None:
+    def _allocate(self, db, row, new_total: Decimal, now: datetime, *, restate: bool = False) -> None:
         """Replace a cumulative total, keeping exact Decimal sums across buckets."""
         old_total = Decimal(row["spent_usd"])
         delta = new_total - old_total
         if delta == 0:
             return
-        if delta < 0:
-            # More precise split/rate or an invoice can replace a high estimate.
+        if delta < 0 or restate:
+            # Refining a finished observation restates its original periods;
+            # receipt of a later invoice is not new usage in the receipt month.
             charges = db.execute("""SELECT day,usd FROM jade_live_budget_charges
                 WHERE reservation_id=? ORDER BY day""", (row["id"],)).fetchall()
+            weights = [Decimal(charge["usd"]) for charge in charges]
+            if charges and not sum(weights, ZERO):
+                # A previously zeroed invoice retains its original period rows.
+                # Their relative amounts are unknown, so keep an explicit equal
+                # allocation estimate rather than moving usage to receipt time.
+                weights = [Decimal(1)] * len(charges)
+            weight_total = sum(weights, ZERO)
             remaining = new_total
             for index, charge in enumerate(charges):
                 value = (remaining if index == len(charges) - 1 else
-                         (Decimal(charge["usd"]) * new_total / old_total).quantize(
+                         (weights[index] * new_total / weight_total).quantize(
                              USD_QUANTUM, rounding=ROUND_HALF_EVEN))
                 value = min(remaining, max(ZERO, value))
                 remaining -= value
                 db.execute("""UPDATE jade_live_budget_charges SET usd=?
                     WHERE reservation_id=? AND day=?""", (_usd(value), row["id"], charge["day"]))
-            return
-        start = _aware(datetime.fromisoformat(row["observed_at"]))
+            if charges:
+                return
+        # First pricing of a finished, previously unpriced backend operation
+        # uses its recorded execution interval, not the later invoice date.
+        start = _aware(datetime.fromisoformat(row["created_at"] if restate else row["observed_at"]))
+        if restate:
+            now = _aware(datetime.fromisoformat(row["observed_at"]))
         slices = _period_slices(start, now)
         weight_sum = sum((weight for _, weight in slices), ZERO)
         remaining = delta
@@ -321,9 +295,7 @@ class LiveBudgetLedger:
         return {
             "reservation_id": row["id"], "kind": row["kind"], "state": row["state"],
             "quote_usd": row["quote_usd"], "spent_usd": row["spent_usd"],
-            "remaining_reserved_usd": _usd(max(ZERO, Decimal(row["quote_usd"])
-                                                   - Decimal(row["spent_usd"])))
-            if row["state"] in ("reserved", "active", "unknown") else "0",
+            "cost_usd": None if row["quality"] == "unpriced" else row["spent_usd"],
             "quality": row["quality"], "seconds": row["seconds"],
             "estimated_seconds": row["estimate_seconds"],
             "active_seconds": row["active_seconds"], "paused_seconds": row["paused_seconds"],
@@ -331,7 +303,73 @@ class LiveBudgetLedger:
 
     def reservation(self, reservation_id: str) -> dict:
         with self._connect() as db:
-            return self._reservation(self._row(db, self._id(reservation_id)))
+            identifier = self._id(reservation_id)
+            result = self._reservation(self._row(db, identifier))
+            if result["kind"] == "backend":
+                result["backend_usage"] = self._backend_usage(db, identifier)
+            return result
+
+    @staticmethod
+    def _backend_usage(db, identifier: str) -> dict:
+        row = db.execute("SELECT * FROM jade_live_usage_backend WHERE reservation_id=?",
+                         (identifier,)).fetchone()
+        counters = {
+            key: int(row[key]) if row is not None and row[key] is not None else None
+            for key in ("input_tokens", "output_tokens", "cached_input_tokens")
+        }
+        # These counters do not cover every model, tool, cache rate or invoice.
+        return {**counters, "status": row["status"] if row is not None else "unobserved",
+                "quality": "partial", "cost_usd": None}
+
+    def record_backend_usage(self, reservation_id: str, usage: dict | None, status: str,
+                             *, now: datetime | None = None) -> dict:
+        """Store cumulative backend counters without inventing a dollar amount.
+
+        A completed operation can still have unpriced tool/model usage. Unknown
+        fields, including an unverified cost_usd, are deliberately not persisted.
+        Replayed counters replace earlier snapshots instead of being added.
+        """
+        identifier = self._id(reservation_id)
+        point = self._now(now)
+        if status not in ("completed", "cancelled", "unknown"):
+            raise ValueError("invalid backend observation status")
+        if usage is not None and not isinstance(usage, dict):
+            raise ValueError("backend usage must contain counters")
+        incoming = {}
+        for key in ("input_tokens", "output_tokens", "cached_input_tokens"):
+            value = (usage or {}).get(key)
+            if value is not None:
+                if type(value) is not int or value < 0:
+                    raise ValueError("backend token counts must be nonnegative integers")
+                incoming[key] = value
+        with self._connect(transaction=True) as db:
+            row = self._row(db, identifier)
+            if row["kind"] != "backend":
+                raise ValueError("backend counters belong only to backend observations")
+            previous = self._backend_usage(db, identifier)
+            counters = {key: (max(value, incoming[key]) if value is not None and key in incoming
+                              else incoming.get(key, value))
+                        for key, value in previous.items()
+                        if key in ("input_tokens", "output_tokens", "cached_input_tokens")}
+            if previous["status"] == "completed":
+                status = "completed"
+            stamp = max(point, datetime.fromisoformat(row["observed_at"])).isoformat()
+            values = [str(counters[key]) if counters[key] is not None else None
+                      for key in ("input_tokens", "output_tokens", "cached_input_tokens")]
+            db.execute("""INSERT INTO jade_live_usage_backend
+                (reservation_id,input_tokens,output_tokens,cached_input_tokens,status,observed_at)
+                VALUES(?,?,?,?,?,?) ON CONFLICT(reservation_id) DO UPDATE SET
+                input_tokens=excluded.input_tokens,output_tokens=excluded.output_tokens,
+                cached_input_tokens=excluded.cached_input_tokens,status=excluded.status,
+                observed_at=excluded.observed_at""", (identifier, *values, status, stamp))
+            state = row["state"]
+            if state not in ("closed", "released"):
+                state = "closed" if status == "completed" else "unknown"
+            db.execute("""UPDATE jade_live_budget_reservations
+                SET state=?,observed_at=? WHERE id=?""", (state, stamp, identifier))
+            result = self._reservation(self._row(db, identifier))
+            result["backend_usage"] = self._backend_usage(db, identifier)
+            return result
 
     def estimate_usage(self, reservation_id: str, seconds: object,
                        *, now: datetime | None = None) -> dict:
@@ -410,17 +448,18 @@ class LiveBudgetLedger:
         quality = "invoice" if invoiced else ("confirmed_cost" if confirmed else "estimated")
         with self._connect(transaction=True) as db:
             row = self._row(db, identifier)
-            evidence_order = {"estimated": 0, "provider_usage": 1, "confirmed_cost": 2, "invoice": 3}
+            evidence_order = {"unpriced": -1, "estimated": 0, "provider_usage": 1,
+                              "confirmed_cost": 2, "invoice": 3}
             if evidence_order[row["quality"]] > evidence_order[quality]:
                 return self._reservation(row)
-            self._allocate(db, row, amount, point)
+            self._allocate(db, row, amount, point, restate=row["state"] in ("closed", "released"))
             db.execute("""UPDATE jade_live_budget_reservations SET spent_usd=?,quality=?,
                 state='closed',observed_at=? WHERE id=?""",
                        (_usd(amount), quality, point.isoformat(), identifier))
             return self._reservation(self._row(db, identifier))
 
     def release(self, reservation_id: str, *, now: datetime | None = None) -> bool:
-        """Release unused exposure after a known refusal/cancellation, retaining usage."""
+        """Finish a known unused operation, retaining all observed usage."""
         identifier = self._id(reservation_id)
         self._now(now)
         with self._connect(transaction=True) as db:
@@ -428,12 +467,14 @@ class LiveBudgetLedger:
             if row["state"] in ("closed", "released"):
                 return False
             if row["state"] == "unknown":
-                raise ValueError("unknown Live cost must be reconciled before releasing its reserve")
-            db.execute("UPDATE jade_live_budget_reservations SET state='released' WHERE id=?", (identifier,))
+                raise ValueError("unknown Live usage cannot be declared unused")
+            db.execute("""UPDATE jade_live_budget_reservations SET state='released',
+                quality=CASE WHEN quality='unpriced' THEN 'confirmed_cost' ELSE quality END
+                WHERE id=?""", (identifier,))
         return True
 
     def mark_unknown(self, reservation_id: str, *, now: datetime | None = None) -> dict:
-        """Persist ambiguous creation/closure/backend work, without freeing its reserve."""
+        """Preserve uncertainty for observation only; it never blocks other records."""
         identifier = self._id(reservation_id)
         self._now(now)
         with self._connect(transaction=True) as db:

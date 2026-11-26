@@ -639,8 +639,8 @@ class MobileGateway:
                 "scope": "server_observed_only",
                 "first_audible": "unavailable_without_client_ack",
                 "billing": "unavailable_per_turn",
-                "live_budget": (await asyncio.to_thread(self.live_manager.budget.snapshot)
-                                if self.live_manager is not None else None),
+                "live_usage": (await self.live_manager.usage_snapshot()
+                               if self.live_manager is not None else None),
             })
             return
         if route == "/api/billing":

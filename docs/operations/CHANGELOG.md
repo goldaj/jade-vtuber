@@ -1,3 +1,11 @@
+## 2026-11-26 — DEV-054 : Live mobile par défaut, sans plafond financier
+
+- **Correction produit demandée :** Live activé et sélectionné par défaut sur mobile ; choix classique explicite conservé dans Profil. Suppression des plafonds quotidien/mensuel et de la réserve backend introduits au premier lot. Les anciennes variables de montant sont ignorées, sans devoir renseigner de budget privé.
+- **Code :** configuration, gestionnaire et raccord Live ; `live_usage.py` remplace le ledger budgétaire par une observation passive, avec reprise des données existantes. Une panne du suivi ne bloque ni conversation ni outils. Les baux, arrêts, fermetures et déduplications métier restent indépendants et conservés.
+- **Interface :** préférence chargée avant tout geste vocal, module Live indépendant des assets visuels, indisponibilité expliquée, échec de chargement visible et reprise. Les refus OpenAI sont classés sans publier leurs contenus privés. Aucun microphone ni session distante n'est déclenché par le seul défaut ON.
+- **Discord :** diagnostic isolé ; le futur DEV-052 conserve exclusivement 50 EUR/mois ou 40 EUR si suivi incomplet, toutes API confondues, sans effet sur le mobile. Adaptateur et automatisme Discord non activés dans ce correctif.
+- **Vérifications et limites :** tests hors ligne de migration, absence de plafond, panne du suivi, délégations, fermeture, fournisseur et frontend ; commandes navigateur et compilation. Preuves consolidées et contre-revues dans la [passation DEV-054](handoffs/2026-11-26-chatgpt-live-mobile-default-no-budget.md). Les recettes OpenAI/Redmi restent REC-044 à REC-050 ; aucune observation matérielle présumée. Le préparateur de voix respecte désormais la limite de prompt de 2 000 caractères.
+
 ## 2026-11-26 — Conservation des sources locales du visage r21
 
 - Ajout de la planche de référence, de la source Cubism v45.5, de trois dossiers d’exports intermédiaires et de la sonde Node de rotation. Le manifeste mobile continue de charger la v49.1 validée. Les anciennes textures communes sont dédupliquées par Git LFS. [Sources et rôle de la sonde](handoffs/2026-11-26-codex-volume-visage-r21.md)

@@ -85,7 +85,9 @@ function client(mode = "css") {
   document.hidden = false; document.fullscreenElement = null;
   window.location = {hash:""}; window.crypto = webcrypto;
   let resizeCount = 0, requestCount = 0, exitCount = 0, finishRequest;
-  window.JadeAvatar = {resize(){resizeCount++;}};
+  window.JadeAvatar = {
+    resize(){resizeCount++;}, setMouth(){}, setSpeaking(){}, resetIntent(){}
+  };
   const documentEvent = type => (document.listeners[type] || []).forEach(({listener}) => listener({type}));
   if (mode !== "css") shell.requestFullscreen = async () => {
     requestCount++;

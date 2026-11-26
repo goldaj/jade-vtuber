@@ -134,6 +134,25 @@ class LiveProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(raised.exception.ambiguous)
         self.assertEqual(raised.exception.session_id, "live_known")
 
+    async def test_quota_category_is_allowlisted_without_exposing_provider_details(self):
+        for category, expected in (
+                ("insufficient_quota", "live_quota_exceeded"),
+                ("billing_hard_limit_reached", "live_quota_exceeded"),
+                ("rate_limit_exceeded", "session_creation_rejected"),
+                ("private-project-identifier", "session_creation_rejected"),
+                ({"unexpected": "private"}, "session_creation_rejected")):
+            def respond(request):
+                return httpx2.Response(429, json={"error": {
+                    "code": category, "message": "private provider account details"}})
+
+            async with httpx2.AsyncClient(transport=httpx2.MockTransport(respond)) as http:
+                provider = OpenAILiveProvider("unit-test-key", http_client=http)
+                with self.subTest(category=category), self.assertRaises(LiveProviderError) as raised:
+                    await provider.create_session(SDP, LiveConfig().session_config())
+                self.assertEqual(raised.exception.code, expected)
+                self.assertFalse(raised.exception.ambiguous)
+                self.assertNotIn("private", repr(raised.exception))
+
     async def test_sideband_exact_url_no_start_replay_preserved_and_audio_discarded(self):
         event = {"type": "session.usage.updated", "event_id": "same", "usage": {"seconds": 12}}
         socket = FakeSocket([event, event, {"type": "future.event", "event_id": "new"},

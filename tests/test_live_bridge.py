@@ -338,13 +338,14 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
                            for entry in history if entry["role"] == "user")
         self.assertEqual(retained, "question " * 600)
 
-    async def test_budget_refuses_backend_without_classic_fallback(self):
+    async def test_unavailable_delegation_does_not_fall_back_or_claim_budget_refusal(self):
         self.allowed = False
         await self.transcript("user", "Peux-tu chercher cette information ?")
         await self.delegation()
         self.assertEqual(self.model.requests, [])
         self.assertEqual(self.classic, [])
-        self.assertIn("budget", self.sent[-1]["content"])
+        self.assertIn("cette session Live", self.sent[-1]["content"])
+        self.assertNotIn("budget", self.sent[-1]["content"])
 
     async def test_explicit_owner_l2_stays_deferred_and_core_stays_voluntary(self):
         await self.transcript("user", "Jade, retiens que nous avons finalisé le prototype.")
@@ -431,7 +432,7 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
             message_id="old-session", user_content="ancien", assistant_content="ancien",
             expected_person_id=old_person))
 
-    async def test_curation_is_durable_unique_budgeted_and_only_on_active_session(self):
+    async def test_curation_is_durable_unique_and_only_on_active_session(self):
         self.memory.curator_enabled = True
         curator = Model()
         curator.answer = '{"kind":"ordinary","summary":"Le projet de roman avance.","significance":"Projet choisi."}'

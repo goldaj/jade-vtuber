@@ -3,6 +3,32 @@
  * commands. Bearer and pre-roll exist only in memory. */
 "use strict";
 (() => {
+  const publicReasons = {
+    live_disabled:"Le mode Live est désactivé dans la configuration de Jade.",
+    mobile_live_disabled:"Le Live mobile est désactivé dans la configuration de Jade.",
+    api_key_missing:"La connexion OpenAI n’est pas configurée sur Jade.",
+    live_unavailable:"Le service Live de Jade n’est pas disponible. Vérifie que Jade est à jour et relancée.",
+    live_state_unavailable:"Jade ne peut pas vérifier l’état de la conversation Live. Réessaie dans quelques instants.",
+    server_stopping:"Jade est en cours d’arrêt. Réessaie après son redémarrage.",
+    browser_insecure:"Le Live nécessite une connexion sécurisée. Ouvre l’adresse HTTPS privée de Jade.",
+    browser_unsupported:"Ce navigateur ne permet pas le mode Live. Utilise un navigateur compatible avec WebRTC et AudioWorklet.",
+    microphone_owned_by_other_client:"Le micro Live est déjà ouvert sur un autre appareil.",
+    previous_session_not_closed:"La conversation Live précédente se ferme encore. Réessaie dans quelques instants.",
+    close_unconfirmed:"Jade vérifie encore la fermeture distante. Actualise son état avant de reprendre.",
+    creation_unconfirmed:"Jade vérifie encore la connexion distante. Actualise son état avant de reprendre.",
+    live_mode_off:"Le mode Live a été désactivé. Vérifie le choix dans Profil.",
+    preference_conflict:"Le choix vocal a changé sur un autre appareil. Vérifie Profil.",
+    invalid_or_expired_live_lease:"L’autorisation du micro a expiré. Touche-le pour reprendre.",
+    live_auth_failed:"OpenAI refuse l’authentification de Jade. Vérifie sa connexion OpenAI côté serveur.",
+    live_access_denied:"Le compte OpenAI de Jade n’a pas accès au Live.",
+    live_model_unavailable:"Le modèle Live configuré n’est pas disponible pour le compte OpenAI de Jade.",
+    live_quota_exceeded:"Le quota du compte OpenAI est épuisé. Vérifie le compte utilisé par Jade.",
+    live_rate_limited:"OpenAI reçoit trop de demandes Live. Réessaie dans quelques instants.",
+    live_connection_failed:"Jade ne parvient pas à joindre OpenAI. Réessaie dans quelques instants.",
+    live_open_failed:"OpenAI n’a pas pu ouvrir la conversation Live. Réessaie dans quelques instants.",
+    live_start_rate_limit:"Plusieurs connexions Live ont été ouvertes récemment. Patiente un instant avant de reprendre.",
+  };
+  const publicReason = code => publicReasons[code] || "Le mode Live est momentanément indisponible. Réessaie dans quelques instants.";
   function create(options = {}) {
     const env = options.environment || window;
     const doc = env.document || document;
@@ -11,12 +37,24 @@
     const later = (fn, ms) => env.setTimeout(fn, ms);
     const cancelLater = id => { if (id !== null) env.clearTimeout(id); };
     const callbacks = (name, ...args) => { try { options[name]?.(...args); } catch (_) {} };
-    const clientId = "live-" + (env.crypto || crypto).randomUUID();
+    function identifier() {
+      const random = env.crypto;
+      if (typeof random?.randomUUID === "function") return random.randomUUID();
+      if (typeof random?.getRandomValues === "function") {
+        return Array.from(random.getRandomValues(new Uint8Array(16)), value => value.toString(16).padStart(2, "0")).join("");
+      }
+      // These identifiers correlate requests; identity and authorization always
+      // come from the authenticated Jade connection, never this fallback.
+      return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    }
+    const clientId = "live-" + identifier();
     const AudioConstructor = env.AudioContext || env.webkitAudioContext;
     const availableBrowser = Boolean(AudioConstructor && env.AudioWorkletNode &&
       env.RTCPeerConnection && env.WebSocket && nav.mediaDevices?.getUserMedia && env.isSecureContext !== false);
-    const state = {mode:"classic", revision:-1, loaded:false, supported:availableBrowser,
-      available:false, capabilities:null, capture:"closed", lease_state:"closed",
+    const browserReason = env.isSecureContext === false ? "browser_insecure" : "browser_unsupported";
+    const state = {mode:"live", revision:-1, loaded:false, supported:availableBrowser,
+      available:false, availability_message:availableBrowser ? "" : publicReason(browserReason),
+      capabilities:null, capture:"closed", lease_state:"closed",
       session_state:"absent", session_id:null, reason:"", message:"", changing:false};
     let epoch = 0, preferenceRequest = 0, requestedMode = null;
     let leaseId = null, leaseThread = null, socket = null, controlReady = false;
@@ -28,6 +66,7 @@
     let pendingResponse = false, sentSpeech = false, closePromise = null, heldSession = null;
     let pendingWake = false, wakeStarted = null;
     let modeForcedOff = false;
+    let refreshPromise = null;
     const snapshot = () => ({...state, active:Boolean(leaseId || state.capture !== "closed"),
       media_state:peer ? (opening ? "connecting" : "connected") : "absent",
       playback_active:playbackActive, speech_active:speechActive});
@@ -50,24 +89,24 @@
           ...(body === undefined ? {} : {body:JSON.stringify(body)})});
         const result = await response.json().catch(() => ({}));
         if (!response.ok) {
-          const reasons = {
-            microphone_owned_by_other_client:"Le micro Live est déjà ouvert sur un autre appareil.",
-            previous_session_not_closed:"La conversation Live précédente se ferme encore. Réessaie dans quelques instants.",
-            close_unconfirmed:"Jade vérifie encore la fermeture distante. Vérifie son état depuis Profil.",
-            creation_unconfirmed:"Jade vérifie encore la connexion distante. Vérifie son état depuis Profil.",
-            live_budget_insufficient:"Le budget Live disponible ne permet pas une nouvelle conversation.",
-            live_budget_unavailable:"Le budget Live n’est pas disponible pour le moment.",
-            live_budget_exhausted:"Le budget Live est atteint. Le mode classique reste disponible.",
-            live_mode_off:"Le mode Live a été désactivé. Vérifie le choix dans Profil.",
-            invalid_or_expired_live_lease:"L’autorisation du micro a expiré. Touche-le pour reprendre.",
-          };
-          const error = new Error(result.message || reasons[result.code || result.error] || "Live momentanément indisponible.");
+          const code = result.code || result.error;
+          const error = new Error(publicReason(code));
+          error.code = code;
           error.status = response.status;
           error.result = result;
-          if (response.status === 401 || response.status === 403) callbacks("onAuthFailure");
+          // Provider authentication is distinct from the owner's mobile login.
+          if ((response.status === 401 || response.status === 403) &&
+              !["live_auth_failed", "live_access_denied", "live_model_unavailable"].includes(code)) callbacks("onAuthFailure");
           throw error;
         }
         return result;
+      } catch (error) {
+        if (error.result) throw error;
+        const failure = new Error(error.name === "AbortError" ?
+          "Jade ne répond pas. Vérifie la connexion, puis réessaie." :
+          "Connexion à Jade impossible. Vérifie Tailscale et la connexion, puis réessaie.");
+        failure.code = "live_gateway_unreachable";
+        throw failure;
       } finally { cancelLater(timer); }
     }
     function preference(value) {
@@ -81,13 +120,19 @@
       if (off && (leaseId || state.capture !== "closed")) void stop("preference_off");
       publish();
     }
-    async function refresh() {
+    async function refreshState() {
       const results = await Promise.allSettled([
         request("/api/live/capabilities"), request("/api/voice/preferences")]);
       if (results[0].status === "fulfilled") {
         state.capabilities = results[0].value;
         state.available = Boolean(availableBrowser && state.capabilities.enabled && state.capabilities.available);
-        if (!state.available) state.reason = state.capabilities.reason || "unavailable";
+        if (!state.available) {
+          state.reason = !availableBrowser ? browserReason : (state.capabilities.reason || "live_unavailable");
+          const reasons = Array.isArray(state.capabilities.reasons) && state.capabilities.reasons.length
+            ? state.capabilities.reasons : [state.reason];
+          state.availability_message = !availableBrowser ? publicReason(browserReason) :
+            [...new Set(reasons.map(publicReason))].join(" ");
+        } else state.availability_message = "";
         // Read-only reconciliation after an uncertain close. A snapshot from
         // another client never transfers its lease or authorizes capture here.
         const observed = state.capabilities.state;
@@ -96,11 +141,22 @@
           state.session_id = null;
           if (state.available) state.reason = state.message = "";
         }
+      } else {
+        state.available = false;
+        state.availability_message = !availableBrowser ? publicReason(browserReason) : results[0].reason.message;
       }
-      if (results[1].status === "fulfilled") preference(results[1].value);
+      if (results[1].status === "fulfilled") {
+        const value = results[1].value;
+        preference(value);
+        if (!state.loaded) state.message = "Le choix vocal n’a pas pu être vérifié. Réessaie.";
+      }
       else state.message = "Le choix vocal n’a pas pu être vérifié. Réessaie depuis Profil.";
       publish();
       return snapshot();
+    }
+    function refresh() {
+      if (!refreshPromise) refreshPromise = refreshState().finally(() => { refreshPromise = null; });
+      return refreshPromise;
     }
     async function setMode(mode) {
       if (!["classic", "live"].includes(mode)) return false;
@@ -331,7 +387,7 @@
             acceptSnapshot(event.state || event, generation);
           } else if (event.type === "preference") preference(event);
           else if (event.type === "incident") {
-            state.message = event.message || "La conversation Live a été interrompue.";
+            state.message = publicReasons[event.code] || event.message || "La conversation Live a été interrompue.";
             state.reason = event.code || "incident";
             publish();
             if (event.fatal !== false) void stop(state.reason, {message:state.message});
@@ -434,7 +490,7 @@
         await connection.setLocalDescription(offer);
         assertCurrent(generation);
         const result = await request("/api/live/sessions", {client_id:clientId, thread_id:leaseThread,
-          lease_id:leaseId, request_id:(env.crypto || crypto).randomUUID(), sdp:connection.localDescription?.sdp || offer.sdp}, 8000);
+          lease_id:leaseId, request_id:identifier(), sdp:connection.localDescription?.sdp || offer.sdp}, 8000);
         assertCurrent(generation);
         if (peer !== connection || !result.session_id || !result.sdp) throw new Error("Réponse Live incomplète.");
         heldSession = state.session_id = result.session_id;
@@ -442,8 +498,9 @@
         assertCurrent(generation);
         connectionChanged();
       } catch (error) {
-        if (generation === epoch) void stop("opening_failed",
-          {message:error.message === "live_cancelled" ? "Live interrompu." : "Connexion Live impossible. Touche le micro et répète ta phrase."});
+        if (generation === epoch) void stop(error.code || "opening_failed",
+          {message:error.code ? error.message : (error.message === "live_cancelled" ? "Live interrompu." :
+            "Connexion Live impossible. Touche le micro et répète ta phrase.")});
       }
     }
     async function arm() {

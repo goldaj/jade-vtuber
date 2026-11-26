@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const elements = new Map(), windows = {}, documents = {}, requests = [], stops = [], avatarEvents = [];
-let serial = 0, liveOptions, toggles = 0, refreshes = 0, pendingClose = null;
+let serial = 0, liveOptions, toggles = 0, refreshes = 0, pendingClose = null, holdPreference = true;
 function node(id) {
   const classes = new Set();
   return {id, value:"", textContent:"", disabled:false, hidden:false, children:[], handlers:{}, attrs:{}, dataset:{},
@@ -31,13 +31,14 @@ const document = {hidden:false, documentElement:{}, body:element("body"),
   getElementById:element, querySelectorAll:selector => selector === ".app-nav-item" ? navigation : [],
   querySelector:selector => ({".shell":shell, ".room-bottom":element("room-bottom"), ".room-plane":element("room-plane")})[selector] || null,
   createElement:tag => node(tag), addEventListener(name, fn) { documents[name] = fn; }};
-const state = {mode:"live", revision:1, loaded:true, supported:true, available:true, capture:"closed",
+const state = {mode:"live", revision:0, loaded:false, supported:true, available:true, capture:"closed",
   lease_state:"closed", session_state:"absent", session_id:null, active:false, changing:false, message:"",
   capabilities:{voice:{notice:"Voix de test explicite"}}};
 function emitState(change = {}) { Object.assign(state, change); liveOptions.onState({...state}); }
 const live = {
+  get state() { return {...state}; },
   get mode() { return state.mode; }, get active() { return state.active; },
-  async refresh() { refreshes++; emitState(); },
+  async refresh() { refreshes++; if (!holdPreference) emitState(); },
   async setMode(mode) { emitState({mode, revision:state.revision + 1}); },
   async toggleMicrophone() {
     toggles++; emitState({active:!state.active, capture:state.active ? "closed" : "armed",
@@ -50,7 +51,6 @@ const live = {
 };
 const window = {document, location:{hash:""}, crypto:{randomUUID:() => "thread-" + (++serial)},
   setTimeout, clearTimeout, addEventListener(name, fn) { (windows[name] ||= []).push(fn); },
-  JadeLive:{create(options) { liveOptions = options; return live; }},
   JadeAvatar:{setMouth:value => avatarEvents.push(["mouth", value]), setSpeaking:value => avatarEvents.push(["speaking", value]),
     setIntent:(value, config) => avatarEvents.push(["intent", value, config]), resetIntent:() => avatarEvents.push(["reset"]),
     startReplyMotion:value => avatarEvents.push(["motion", value]), resize() {}},
@@ -70,6 +70,23 @@ const press = () => element("mic").handlers.pointerdown({button:0, isPrimary:tru
 
 (async () => {
   window.JadeMobileApp.login("in-memory-token"); await tick();
+  assert.equal(element("mic").disabled, true, "no classic capture while the default Live module is loading");
+  await press(); assert.equal(toggles, 0);
+  assert.equal(element("message").disabled, false, "voice initialization never blocks written chat");
+  window.JadeMobileApp.liveModuleFailed();
+  assert.match(element("live-mode-status").textContent, /n’a pas pu charger/);
+  assert.equal(element("live-mode-retry").hidden, false);
+  window.JadeLogin = {async retryLive() {
+    window.JadeLive = {create(options) { liveOptions = options; return live; }};
+    window.JadeMobileApp.liveModuleReady();
+    return true;
+  }};
+  await element("live-mode-retry").handlers.click();
+  assert.equal(element("mic").disabled, true, "loading the module is not yet a verified preference");
+  await press(); assert.equal(toggles, 0);
+  holdPreference = false; state.loaded = true; await live.refresh();
+  assert.equal(shell.dataset.view, "home", "the default Live choice is ready without visiting Profile");
+  assert.equal(element("live-mode-retry").hidden, true);
   assert.equal(toggles, 0, "persisted Live preference after login never arms the microphone");
   assert.equal(element("live-mode-toggle").attrs["aria-pressed"], "true");
   assert.equal(element("live-voice-notice").textContent, "Voix de test explicite");
@@ -151,5 +168,82 @@ const press = () => element("mic").handlers.pointerdown({button:0, isPrimary:tru
   await live.refresh();
   assert.equal(avatarEvents.filter(event => event[0] === "reset").length, resets,
     "a read-only Profile refresh must not reset the classic avatar's current reply");
+  emitState({mode:"classic", supported:false, available:false,
+    availability_message:"Ce navigateur ne permet pas le mode Live : AudioWorklet manque."});
+  assert.match(element("live-mode-status").textContent, /navigateur.*AudioWorklet/,
+    "an incompatible browser is explained before enabling Live");
+  assert.equal(element("live-mode-toggle").disabled, true);
+  assert.equal(element("mic").disabled, false, "the explicit classic choice remains usable");
+  emitState({supported:true, availability_message:"La connexion OpenAI n’est pas configurée sur Jade."});
+  assert.match(element("live-mode-status").textContent, /connexion OpenAI.*pas configurée/);
+  assert.equal(element("live-mode-retry").hidden, false);
+  const beforeRetry = refreshes;
+  await element("live-mode-retry").handlers.click();
+  assert.equal(refreshes, beforeRetry + 1);
+  assert.equal(state.mode, "classic", "retry never overwrites the stored OFF choice");
+  assert.equal(toggles, 4, "diagnostic refresh never captures or reconnects audio");
+
+  // Exercise reauthentication with the real Live client. The old instance has
+  // a verified classic choice and a second GET in flight; the new login must
+  // ignore both its late preference and its expired-token callback.
+  const oldCallbacks = liveOptions;
+  const reads = [];
+  let audioContexts = 0, captureRequests = 0;
+  window.AudioContext = class { constructor() { audioContexts++; } };
+  window.AudioWorkletNode = class {};
+  window.RTCPeerConnection = class {};
+  window.WebSocket = class {};
+  window.isSecureContext = true;
+  window.navigator = {mediaDevices:{getUserMedia() { captureRequests++; throw new Error("unexpected capture"); }}};
+  window.fetch = (url, options) => {
+    assert.equal(options.method, "GET", "reauthentication never writes preferences or creates sessions");
+    assert(["/api/live/capabilities", "/api/voice/preferences"].includes(url));
+    return new Promise(resolve => reads.push({url, bearer:options.headers.Authorization, resolve}));
+  };
+  const answer = (bearer, url, index, body, status = 200) => {
+    const read = reads.filter(value => value.bearer === "Bearer " + bearer && value.url === url)[index];
+    assert(read, "the expected authenticated read exists");
+    read.resolve({status, ok:status < 400, json:async () => body});
+  };
+  const capabilities = {enabled:true, available:true, state:{session_state:"absent"}};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mobile_web/live-client.js"), "utf8"), sandbox);
+  window.JadeMobileApp.login("previous-auth-token"); await tick();
+  answer("previous-auth-token", "/api/live/capabilities", 0, capabilities);
+  answer("previous-auth-token", "/api/voice/preferences", 0, {mode:"classic", revision:4});
+  await tick();
+  assert.equal(element("mic").disabled, false);
+  assert.equal(element("mic").attrs["aria-label"], "Maintenir pour parler");
+  navigation.find(value => value.dataset.viewTarget === "profile").handlers.click();
+  await tick();
+  assert.equal(reads.length, 4, "an old authenticated refresh is now in flight");
+  window.JadeMobileApp.login("replacement-auth-token"); await tick();
+  assert.equal(element("mic").disabled, true, "old classic choice cannot authorize capture after another login");
+  assert.equal(element("live-mode-toggle").disabled, true);
+  await press();
+  assert.equal(captureRequests, 0);
+  assert.equal(reads.length, 6, "the new authentication has independent fresh reads");
+  assert.equal(oldCallbacks.getToken(), "in-memory-token", "an old client never inherits the replacement bearer");
+  const avatarCount = avatarEvents.length;
+  oldCallbacks.onPlayback(.8, true);
+  oldCallbacks.onIntent("tender");
+  oldCallbacks.onAuthFailure();
+  assert.equal(avatarEvents.length, avatarCount, "old playback, intent and login errors have no UI effects");
+  answer("previous-auth-token", "/api/voice/preferences", 1, {mode:"classic", revision:999});
+  answer("previous-auth-token", "/api/live/capabilities", 1, {error:"authentication_required"}, 401);
+  await tick();
+  assert.equal(element("mic").disabled, true, "a late old preference cannot verify the new login");
+  assert.equal(element("auth-modal").classList.contains("hidden"), true,
+    "an old 401 cannot disconnect the replacement authentication");
+  navigation.find(value => value.dataset.viewTarget === "profile").handlers.click();
+  await tick();
+  assert.equal(reads.length, 6, "old refresh cleanup cannot clear the new client's in-flight refresh");
+  answer("replacement-auth-token", "/api/live/capabilities", 0, capabilities);
+  answer("replacement-auth-token", "/api/voice/preferences", 0, {mode:"live", revision:5});
+  await tick();
+  assert.equal(element("live-mode-toggle").attrs["aria-pressed"], "true");
+  assert.equal(element("mic").disabled, false);
+  assert.match(element("mic").attrs["aria-label"], /Commencer une conversation Live/);
+  assert.equal(audioContexts, 0); assert.equal(captureRequests, 0);
+  assert.equal(reads.length, 6);
   console.log("Mobile Live app: profile, navigation, exclusive text/audio, transcripts and lifecycle PASS (inert client)");
 })().catch(error => { console.error(error); process.exitCode = 1; });

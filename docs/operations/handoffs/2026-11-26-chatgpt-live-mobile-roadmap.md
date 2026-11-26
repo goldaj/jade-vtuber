@@ -1,5 +1,7 @@
 # Mission : préparer la migration GPT-Live mobile
 
+> **Correction propriétaire ultérieure du 26/11 :** les plafonds quotidiens/mensuels mobiles, la réserve backend et le défaut OFF décrits dans cette passation historique sont abrogés. Live mobile est désormais activé par défaut et sans plafond financier ; 50/40 EUR est exclusivement une règle mensuelle future pour Discord, toutes API confondues. Voir [la passation corrective](2026-11-26-chatgpt-live-mobile-default-no-budget.md) et les critères courants de REC-044 à REC-050.
+
 - **Agent / rôle :** ChatGPT, coordination produit et revue du dépôt ; trois sous-agents experts : `/root/live_api_costs` (API OpenAI et coûts), `/root/live_architecture` (runtime, mémoire, outils et concurrence), `/root/live_mobile_qa` (PWA, audio Android et recette).
 - **Demande propriétaire :** lire et corriger la backlog sur `develop`, challenger les implications, préparer une feuille de route exécutable. Activation initiale uniquement dans le Profil mobile ; prévoir un paramètre Discord désactivé. Aucun développement du moteur vocal demandé pour cette mission.
 - **Branche / base :** branche de travail isolée `docs/live-mobile-roadmap-20261126`, issue de `develop` au SHA `990dfbe043f16619359d86405f5c128b435d0bb8`. Lot initial publié dans `bb09690d21a276eb80bc5ed187dd655abb31d7a1`. Complément sur l'accord propriétaire et Aube préparé depuis ce commit et intégré sur `develop` avec contrôle du SHA parent. Aucun changement de `main`.

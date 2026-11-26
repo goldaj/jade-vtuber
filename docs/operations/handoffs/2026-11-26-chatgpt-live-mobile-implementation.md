@@ -1,5 +1,7 @@
 # Mission : implémenter Live mobile sur branche dédiée
 
+> **Correction propriétaire ultérieure du 26/11 :** les plafonds quotidiens/mensuels mobiles, la réserve backend et le défaut OFF décrits dans cette passation historique sont abrogés. Live mobile est désormais activé par défaut et sans plafond financier ; 50/40 EUR est exclusivement une règle mensuelle future pour Discord, toutes API confondues. Voir [la passation corrective](2026-11-26-chatgpt-live-mobile-default-no-budget.md) et les critères courants de REC-044 à REC-050.
+
 - **Date :** 26 novembre 2026, Europe/Paris.
 - **Responsable :** ChatGPT/Codex, avec contre-revues fournisseur/coûts, architecture/mémoire et mobile/QA.
 - **Branche :** `feat/live-mobile-20261126`. Départ `f84bb876125c298e54194121065eb59d7fda0929` ; develop repris en fast-forward au `6dc8d1b7a2a2c9b0e7496a1fae268ddf43b62522`, sans conflit et sans perdre le travail en cours.

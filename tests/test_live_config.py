@@ -1,5 +1,4 @@
 from dataclasses import replace
-from decimal import Decimal
 from pathlib import Path
 import tempfile
 import unittest
@@ -9,7 +8,7 @@ from src.jade_runtime.live_voice import LiveVoice, JADE_VOICE_PROMPT, VOICE_REVI
 
 
 class LiveConfigTests(unittest.TestCase):
-    def test_defaults_never_enable_paid_live_or_discord(self):
+    def test_defaults_enable_mobile_live_without_enabling_discord_or_reading_keys(self):
         keys = []
 
         def get(key, default):
@@ -17,35 +16,60 @@ class LiveConfigTests(unittest.TestCase):
             return default
 
         config = LiveConfig.from_env(get)
-        self.assertFalse(config.enabled)
+        self.assertTrue(config.enabled)
         self.assertTrue(config.mobile_enabled)
         self.assertFalse(config.discord_enabled)
-        self.assertEqual(config.daily_usd, Decimal(0))
-        self.assertFalse(config.preflight(api_key_present=True)["available"])
+        self.assertTrue(config.preflight(api_key_present=True)["available"])
+        self.assertFalse(hasattr(config, "daily_usd"))
+        self.assertFalse(hasattr(config, "monthly_usd"))
+        self.assertFalse(hasattr(config, "backend_reservation_usd"))
         self.assertNotIn("OPENAI_API_KEY", keys)
 
-    def test_explicit_budget_and_key_are_needed_for_admission(self):
-        values = {"JADE_LIVE_ENABLED": "true", "JADE_LIVE_DAILY_USD": "1.25",
-                  "JADE_LIVE_MONTHLY_USD": "10.5"}
-        config = LiveConfig.from_env(values.get)
-        self.assertEqual(config.daily_usd, Decimal("1.25"))
+    def test_old_financial_settings_are_ignored_even_when_zero_or_invalid(self):
+        obsolete = {"JADE_LIVE_DAILY_USD", "JADE_LIVE_MONTHLY_USD",
+                    "JADE_LIVE_BACKEND_RESERVATION_USD"}
+        for value in ("0", "-1", "NaN", "invalid", "999999999"):
+            with self.subTest(value=value):
+                requested = []
+
+                def get(key, default):
+                    requested.append(key)
+                    return value if key in obsolete else default
+
+                config = LiveConfig.from_env(get)
+                self.assertTrue(config.preflight(api_key_present=True)["available"])
+                self.assertTrue(obsolete.isdisjoint(requested))
+
+    def test_key_and_explicit_off_are_still_respected(self):
+        config = LiveConfig.from_env({}.get)
         self.assertTrue(config.preflight(api_key_present=True)["available"])
         self.assertFalse(config.preflight(api_key_present=False)["available"])
+        config = LiveConfig.from_env({"JADE_LIVE_ENABLED": "0"}.get)
+        self.assertEqual(config.preflight(api_key_present=True)["reasons"], ["live_disabled"])
 
-    def test_empty_example_budget_path_uses_private_default(self):
+    def test_empty_usage_path_uses_private_default_and_old_path_is_migration_alias(self):
         defaults = LiveConfig.from_env({}.get)
         for empty in ("", "   "):
             with self.subTest(value=empty):
-                config = LiveConfig.from_env({"JADE_LIVE_BUDGET_DB_PATH": empty}.get)
-                self.assertEqual(config.budget_db_path, defaults.budget_db_path)
-                self.assertTrue(Path(config.budget_db_path).is_absolute())
+                config = LiveConfig.from_env({"JADE_LIVE_USAGE_DB_PATH": empty,
+                                              "JADE_LIVE_BUDGET_DB_PATH": empty}.get)
+                self.assertEqual(config.usage_db_path, defaults.usage_db_path)
+                self.assertTrue(Path(config.usage_db_path).is_absolute())
+        with tempfile.TemporaryDirectory() as directory:
+            old = str(Path(directory) / "old.sqlite3")
+            new = str(Path(directory) / "usage.sqlite3")
+            self.assertEqual(LiveConfig.from_env({"JADE_LIVE_BUDGET_DB_PATH": old}.get).usage_db_path, old)
+            config = LiveConfig.from_env({"JADE_LIVE_USAGE_DB_PATH": new,
+                                          "JADE_LIVE_BUDGET_DB_PATH": old}.get)
+            self.assertEqual(config.usage_db_path, new)
 
     def test_discord_flag_does_not_claim_missing_adapter_exists(self):
-        config = replace(LiveConfig(), enabled=True, daily_usd=Decimal(1),
-                         monthly_usd=Decimal(1), discord_enabled=True)
+        config = replace(LiveConfig(), discord_enabled=True)
         result = config.preflight(api_key_present=True)
-        self.assertIn("discord_adapter_unavailable", result["reasons"])
-        self.assertFalse(result["available"])
+        self.assertEqual(result["reasons"], [])
+        self.assertTrue(result["available"])
+        self.assertFalse(result["discord"]["available"])
+        self.assertEqual(result["discord"]["reason"], "discord_adapter_unavailable")
 
     def test_invalid_config_is_fail_closed(self):
         bad = (
@@ -54,10 +78,8 @@ class LiveConfigTests(unittest.TestCase):
             {"idle_standby_seconds": 4}, {"idle_close_seconds": 8},
             {"max_starts_per_minute": 0}, {"max_delegations_per_session": True},
             {"opening_timeout_seconds": float("inf")},
-            {"daily_usd": Decimal("NaN")}, {"monthly_usd": Decimal(-1)},
-            {"daily_usd": Decimal(2), "monthly_usd": Decimal(1)},
             {"model": "gpt-realtime-2.1-mini"}, {"voice": "aube"},
-            {"budget_db_path": "state.sqlite3"},
+            {"usage_db_path": "state.sqlite3"},
         )
         for changes in bad:
             with self.subTest(changes=changes), self.assertRaises(ValueError):
@@ -66,13 +88,13 @@ class LiveConfigTests(unittest.TestCase):
     def test_config_cannot_put_private_ledger_in_git(self):
         path = Path(__file__).resolve().parents[1] / "unsafe.sqlite3"
         with self.assertRaises(ValueError):
-            replace(LiveConfig(), budget_db_path=str(path)).validate()
+            replace(LiveConfig(), usage_db_path=str(path)).validate()
         self.assertFalse(path.exists())
 
     def test_config_accepts_external_private_paths_without_creating_them(self):
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "new" / "budget.sqlite3"
-            config = replace(LiveConfig(), budget_db_path=str(path))
+            path = Path(directory) / "new" / "usage.sqlite3"
+            config = replace(LiveConfig(), usage_db_path=str(path))
             config.validate()
             self.assertFalse(path.parent.exists())
 

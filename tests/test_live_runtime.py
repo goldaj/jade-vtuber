@@ -1,7 +1,6 @@
-"""Offline end-to-end Live wiring with real Runtime, budgets and local tools."""
+"""Offline end-to-end Live wiring with real Runtime, usage records and tools."""
 import asyncio
 from contextlib import asynccontextmanager
-from decimal import Decimal
 import json
 from pathlib import Path
 import tempfile
@@ -122,14 +121,13 @@ class LiveRuntimeIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.runtime = Runtime(Dialogue(self.model, "Tu es Jade."), on_reply,
                                memory_service=self.memory, document_service=self.documents)
         await self.runtime.start()
-        config = LiveConfig(enabled=True, max_session_seconds=30,
-            budget_db_path=str(root / "budget.sqlite3"), session_db_path=str(root / "sessions.sqlite3"),
-            daily_usd=Decimal("10"), monthly_usd=Decimal("100"),
-            backend_reservation_usd=Decimal(".10"), close_timeout_seconds=1)
+        config = LiveConfig(max_session_seconds=30,
+            usage_db_path=str(root / "usage.sqlite3"), session_db_path=str(root / "sessions.sqlite3"),
+            close_timeout_seconds=1)
         self.provider = FakeProvider()
         self.manager = await create_mobile_live(self.runtime,
             SimpleNamespace(live=config, api_key="offline-test-key"), provider=self.provider)
-        self.ledger = self.manager.budget
+        self.ledger = self.manager.usage
         self.bridge = self.manager.bridge
         self.bridge.fragment_wait_seconds = 0
         await self.manager.set_mode("Goldaj", "live", 0)
@@ -175,8 +173,9 @@ class LiveRuntimeIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(any(e["type"] == "transcript" for e in projected))
         self.assertNotIn("provider_session_1", str(projected))
         snapshot = self.ledger.snapshot()
-        self.assertEqual(Decimal(snapshot["daily"]["backend_usd"]), Decimal(".10"))
-        self.assertGreaterEqual(Decimal(snapshot["daily"]["estimated_usd"]), Decimal(".10"))
+        self.assertGreaterEqual(snapshot["monthly"]["unpriced_records"], 1)
+        self.assertNotIn("daily", snapshot)
+        self.assertNotIn("remaining_usd", snapshot)
 
         await self.manager.close("Goldaj", self.client, self.lease, reason="text_selected")
         await eventually(lambda: self.manager._sessions[self.handle].closed.is_set())
@@ -224,19 +223,35 @@ class LiveRuntimeFallbackTests(unittest.IsolatedAsyncioTestCase):
             runtime = Runtime(Dialogue(model, "Tu es Jade."), on_reply)
             await runtime.start()
             try:
-                for index, component in enumerate(("LiveBudgetLedger", "LiveSessionManager", "LiveConversationBridge")):
-                    with self.subTest(component=component):
-                        config = LiveConfig(enabled=True, budget_db_path=str(root / str(index) / "budget.sqlite3"),
-                            session_db_path=str(root / str(index) / "sessions.sqlite3"),
-                            daily_usd=Decimal("10"), monthly_usd=Decimal("100"))
+                failures = (("LiveUsageLedger", sqlite3.OperationalError),
+                            ("LiveUsageLedger", ValueError),
+                            ("LiveSessionManager", sqlite3.OperationalError),
+                            ("LiveConversationBridge", sqlite3.OperationalError))
+                for index, (component, error_type) in enumerate(failures):
+                    with self.subTest(component=component, failure=error_type.__name__):
+                        config = LiveConfig(usage_db_path=str(root / str(index) / "usage.sqlite3"),
+                            session_db_path=str(root / str(index) / "sessions.sqlite3"))
                         provider = FakeProvider()
                         with patch("src.jade_runtime.live_runtime." + component,
-                                   side_effect=sqlite3.OperationalError("simulated unavailable storage")):
+                                   side_effect=error_type("simulated unavailable or refused storage")):
                             manager = await create_mobile_live(runtime,
                                 SimpleNamespace(live=config, api_key="offline-test-key"), provider=provider)
                         try:
                             if manager is not None:
-                                self.assertFalse((await manager.capabilities("Goldaj"))["available"])
+                                caps = await manager.capabilities("Goldaj")
+                                if component == "LiveUsageLedger":
+                                    self.assertTrue(caps["available"])
+                                    self.assertFalse(caps["usage"]["available"])
+                                    self.assertFalse(manager._storage_failed)
+                                    lease = await manager.arm("Goldaj", "client_no_usage", "thread_no_usage")
+                                    await manager.subscribe("Goldaj", "client_no_usage", lease["lease_id"])
+                                    opened = await manager.create_session("Goldaj", "client_no_usage", "thread_no_usage",
+                                        lease["lease_id"], "request_no_usage", SDP)
+                                    self.assertIn(opened["session_id"], manager._sessions)
+                                    await manager.close("Goldaj", "client_no_usage", lease["lease_id"])
+                                    self.assertTrue(manager._sessions[opened["session_id"]].closed.is_set())
+                                else:
+                                    self.assertFalse(caps["available"])
                             result = asyncio.get_running_loop().create_future()
                             await runtime.submit(Incoming("mobile", "Goldaj", "Toujours disponible ?",
                                 channel="classic-fallback", message_id="fallback-" + str(index), force_reply=True),
@@ -244,7 +259,7 @@ class LiveRuntimeFallbackTests(unittest.IsolatedAsyncioTestCase):
                             await result
                             await runtime.idle()
                             self.assertEqual(len(delivered), index + 1)
-                            self.assertEqual(provider.created, [])
+                            self.assertEqual(len(provider.created), 1 if component == "LiveUsageLedger" else 0)
                         finally:
                             if manager is not None:
                                 await manager.stop()

@@ -10,7 +10,7 @@
 flowchart TD
     P["Profil et micro mobile"] --> G["Gateway privé Jade"]
     P <-->|"WebRTC : audio"| O["OpenAI Live"]
-    G --> S["Bail, sessions et budget"]
+    G --> S["Bail, sessions et usage"]
     S <-->|"Sideband de contrôle"| O
     S --> B["Pont de contexte et délégations"]
     B --> R["Worker et outils de Jade"]
@@ -25,7 +25,7 @@ flowchart TD
 | `live_config.py`, `live_voice.py` | Configuration distincte du TTS classique, bornes, voix explicite et préflight sans réseau |
 | `live_provider.py` | Création HTTP WebRTC, identifiant fournisseur, sideband et commandes autorisées ; erreurs sans corps privé |
 | `live_sessions.py` | Préférence propriétaire, bail exclusif, génération fournisseur, admission, watchdog indépendant et clôture |
-| `live_budget.py` | Réservations atomiques SQLite, usage cumulatif, estimations et rapprochement |
+| `live_usage.py` | Usage cumulatif SQLite et estimations passives, sans plafond ni admission financière |
 | `mobile_live.py`, `mobile_gateway.py` | Routes mêmes origine/identité/Bearer, contrôle WebSocket et limites de taille |
 | `live_bridge.py` | Persona, contexte, segments, journal, actions idempotentes, mémoire et délégations |
 | `live-client.js`, `live-audio-worklet.js` | Permission, VAD locale, tampon, WebRTC, lecture, supervision réciproque et nettoyage |
@@ -35,7 +35,7 @@ Le modèle est `gpt-live-1.1`. L'adaptateur utilise `httpx2`, déjà dépendance
 
 ## Trois états indépendants
 
-1. **Préférence** `classic/live` persistée avec révision monotone. ON seul ne capture rien. OFF depuis un autre client révoque le propriétaire actif ; un ancien ON ne rétablit pas un choix plus récent.
+1. **Préférence** `classic/live` persistée avec révision monotone ; défaut `live`, choix `classic` explicite conservé. ON seul ne capture rien. OFF depuis un autre client révoque le propriétaire actif ; un ancien ON ne rétablit pas un choix plus récent.
 2. **Bail local** exclusif, acquis avant `getUserMedia`, états `armed/draining/closed`. Il reste sous contrôle même pendant la permission Android ou une veille sans fournisseur.
 3. **Session fournisseur** liée au bail, au fil et à une génération. `opening`, `active`, `standby`, `closing`, `closed`, `opening_unknown` et `close_unconfirmed` décrivent ce qui est réellement connu. L'identifiant fournisseur reste sur le serveur ; la PWA manipule un handle applicatif.
 
@@ -51,7 +51,7 @@ La permission n'est demandée qu'après admission et contrôle connecté. Le hea
 
 Le fournisseur reçoit `wake_policy.type=speech`, `idle_timeout_s=8`, `store=false`, délégation `client` et `allowed_client_events=[]`. Les premiers échantillons ne dépendent pas de `session.resumed`. Aucun `session.start`, `response.create`, `response.cancel` ou PCM sideband n'est inventé. Le backend attend `session.started`, ou un événement prouvant que la session a déjà démarré, avant les commandes ordinaires.
 
-La fermeture envoie `session.close` avec récepteur installé. Seul `session.closed` confirme le terminal. La borne nominale de **5 s** inclut attachement et envoi ; un transport lent à nettoyer n'empêche pas de signaler l'incertitude. Le close reste autorisé après retrait de flag/budget et en cas d'erreur de stockage. Une création HTTP tardive est fermée dès que son identifiant devient connu. Une création sans identifiant ou un terminal manquant conserve sa réservation et bloque une nouvelle session ; fermer le socket ne suffit pas.
+La fermeture envoie `session.close` avec récepteur installé. Seul `session.closed` confirme le terminal. La borne nominale de **5 s** inclut attachement et envoi ; un transport lent à nettoyer n'empêche pas de signaler l'incertitude. Le close reste autorisé après retrait de flag et en cas d'erreur de stockage. Une création HTTP tardive est fermée dès que son identifiant devient connu. Une création sans identifiant ou un terminal manquant conserve son état technique incertain et bloque une nouvelle session ; fermer le socket ne suffit pas.
 
 Les valeurs sont des garde-fous applicatifs, pas une garantie d'arrêt instantané de facturation en cas de panne simultanée du serveur et du fournisseur. La recette réelle doit mesurer le résidu et les délais.
 
@@ -65,23 +65,25 @@ Les segments conservent leurs IDs, intervalles, corrections et états de diffusi
 
 Les outils mémoire, web, fichiers et rappels conservent leurs contrôles et leur politique : lecture/divulgation globale L1/L2/L3 avec provenance, demande explicite L2 réservée à Goldaj, Core choisies par Jade. Les actions sont suivies `started/committed/unknown` avec empreinte métier. Après une interruption entre effet et acquittement, aucune répétition automatique d'un effet incertain n'est faite.
 
-La clôture ne lance pas de nouvelle curation facturée : elle termine la persistance locale et garde les candidats dans le journal. Leur traitement borné est proposé à la prochaine session active, avec sa propre admission budgétaire et les filtres du `MemoryService` existant. Il reste différé, sans accusé SQLite imposé à la parole. Le journal Live est une base séparée, à rétention de 7 jours ; aucune migration destructive de la mémoire principale n'est introduite.
+La clôture ne lance pas de nouvelle curation facturée : elle termine la persistance locale et garde les candidats dans le journal. Leur traitement borné est proposé à la prochaine session active, avec contrôle du bail, de l’idempotence et les filtres du `MemoryService` existant. Il reste différé, sans accusé SQLite imposé à la parole. Le journal Live est une base séparée, à rétention de 7 jours ; aucune migration destructive de la mémoire principale n'est introduite.
 
-## Coûts et mesures
+## Usage et mesures sans plafond mobile
 
-Le budget Live est **distinct du futur seuil global Discord en EUR**. Ses plafonds quotidiens et mensuels sont en USD et utilisent les frontières civiles Europe/Paris. Zéro interdit les nouvelles sessions. Une réservation voix couvre conservativement durée maximale, ouverture et clôture, avec prise en compte des 15 s initiales sans addition en double.
+**Décision propriétaire du 26/11 : aucun budget financier mobile.** Les plafonds quotidiens/mensuels et la réserve backend ajoutés au premier lot ont été retirés. Le Live global et mobile sont activés par défaut. Les anciennes variables de montant sont ignorées : un zéro ou une ancienne valeur invalide ne bloque ni ouverture, ni délégation, ni curation, et aucune dépense n'arrête une session.
 
-L'usage fournisseur est cumulatif : `12 → 15 → 15` reste 15 s. Les composantes actif/standby sont prises en compte lorsqu'elles sont présentes ; le manque est estimé au tarif actif. Une estimation temporelle ne s'ajoute pas au compteur fournisseur. Les consommations confirmées remplacent les estimations et libèrent seulement le solde justifié ; les réservations non soldées traversent les changements de période.
+`LiveUsageLedger` conserve une observation privée et passive. Le schéma et le fichier historiques sont réutilisés pour éviter de perdre les données ; leurs anciens noms internes ne définissent plus une politique de budget. L'agrégat public est mensuel, en Europe/Paris. Une panne de cette mesure reste informative : elle n'interdit pas l'usage mobile et ne déclare pas la session fermée.
 
-Chaque délégation, y compris la curation, réserve le montant configuré avant travail. **Le coût backend reste une estimation de l'opération complète**, distincte de la voix : le nombre de tokens ne décrit pas tous les frais d'outils. Un résultat terminé conserve la totalité du montant initial admis comme consommation estimée ; une annulation/issue inconnue conserve la réservation. Le rapprochement facture peut ensuite corriger l'estimation. Ce montant doit être calibré sur les modèles et les outils autorisés ; il ne constitue pas un relevé exhaustif des API de Jade ni une garantie absolue de plafond fournisseur.
+L'usage fournisseur est cumulatif : `12 → 15 → 15` reste 15 s. Les composantes actif/standby sont prises en compte lorsqu'elles sont présentes ; les estimations restent identifiées et ne s'ajoutent pas au compteur fournisseur. Les événements techniques inconnus et les coûts non rapprochés restent distingués des montants facturés. Les tokens backend connus sont conservés avec une couverture incomplète ; aucun forfait fictif n'est transformé en coût réel.
 
-`TurnMetrics` et les événements techniques enregistrent ouverture, SDP prêt, actif/standby, délégations, lecture signalée, demande de fermeture et terminal, sans audio, SDP ou texte privé. `/api/metrics` conserve ses métriques classiques et ajoute `live_budget`. La lecture signalée par le client est un point d'observation logiciel, jamais le premier son utile réellement entendu. Le benchmark A/B et ses p50/p95 physiques restent à mesurer selon REC-046 ; aucun gain chiffré n'est annoncé.
+`TurnMetrics` et les événements techniques enregistrent ouverture, SDP prêt, actif/standby, délégations, lecture signalée, demande de fermeture et terminal, sans audio, SDP ou texte privé. `/api/metrics` conserve ses métriques classiques et ajoute `live_usage`. La lecture signalée par le client est un point d'observation logiciel, jamais le premier son utile réellement entendu. Le benchmark A/B et ses p50/p95 physiques restent à mesurer selon REC-046 ; aucun gain chiffré n'est annoncé.
+
+Le registre de sessions et le journal des opérations restent nécessaires à la fermeture et à l'idempotence. Leurs erreurs ne sont pas des dépassements de budget. Les arrêts de présence/inactivité, les deadlines et les limites anti-boucle restent distincts des montants consommés.
 
 ## Voix et suite Discord
 
 **Aube** reste la préférence du propriétaire pour le prototype. Sa présence dans ChatGPT ne prouve pas un ID d'API utilisable ; aucune équivalence avec **Brise** n'est affirmée. La configuration initiale explicite `brise`, affiche cette limite dans Profil et accepte un ID de voix personnalisée. `scripts/live_voice_preview.py` prépare le prompt original et sept cas français sans créer de voix ni payer une préécoute. Création, écoute et choix sont encore DEV-041.
 
-`JADE_DISCORD_LIVE_ENABLED=0` reste réservé. L'activer sans adaptateur produit un diagnostic, sans remplacer la chaîne Discord classique. **DEV-052** est une étape future : toutes API confondues, Live Discord sous 50 EUR/mois, ou 40 EUR si couverture/fréquence insuffisante, puis bascule vers le classique. Les préférences, sessions et budgets propres du mobile ne sont pas pilotés par cette règle. La consommation du mobile contribue seulement au total utilisé pour la décision Discord.
+`JADE_DISCORD_LIVE_ENABLED=0` reste réservé. L'activer sans adaptateur produit un diagnostic Discord isolé, sans rendre le mobile indisponible ni remplacer la chaîne Discord classique. **DEV-052** est une étape future : toutes API confondues, Live Discord sous 50 EUR/mois, ou 40 EUR si couverture/fréquence insuffisante, puis bascule vers le classique. Le mobile n'a aucun budget propre ; ses préférences et sessions ne sont jamais pilotées par cette règle. La consommation du mobile contribue seulement au total utilisé pour la décision Discord.
 
 ## Contrats officiels vérifiés pour l'implémentation
 

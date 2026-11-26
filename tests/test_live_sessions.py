@@ -18,7 +18,7 @@ import threading
 import unittest
 from unittest.mock import Mock, patch
 
-from src.jade_runtime.live_budget import LiveBudgetLedger, quote_voice
+from src.jade_runtime.live_usage import LiveUsageLedger, quote_voice
 from src.jade_runtime.live_config import LiveConfig
 from src.jade_runtime.live_provider import LiveProviderError
 from src.jade_runtime.live_sessions import LiveSessionError, LiveSessionManager, ProviderSession
@@ -137,15 +137,14 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         self.clock = FakeClock()
         self.provider = FakeLiveProvider()
         self.config = replace(
-            LiveConfig(), enabled=True, daily_usd=Decimal("1"), monthly_usd=Decimal("10"),
-            budget_db_path=str(Path(self.temp.name) / "budget.sqlite3"),
+            LiveConfig(), usage_db_path=str(Path(self.temp.name) / "usage.sqlite3"),
             session_db_path=str(Path(self.temp.name) / "sessions.sqlite3"),
             heartbeat_seconds=0.5, lease_seconds=2.0,
             opening_timeout_seconds=1.0, close_timeout_seconds=1.0,
             idle_standby_seconds=5, idle_close_seconds=6.0,
             muted_drain_seconds=3.0, max_session_seconds=15.0,
         )
-        self.ledger = LiveBudgetLedger(self.config.budget_db_path, "1", "10", now=self.clock.utc)
+        self.ledger = LiveUsageLedger(self.config.usage_db_path, now=self.clock.utc)
         self.manager = LiveSessionManager(self.config, self.provider, self.ledger, clock=self.clock)
         self.managers = [self.manager]
         self.original_save = self.manager.registry.save
@@ -193,14 +192,17 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         self.seq += 1
         return await self.manager.heartbeat(OWNER, CLIENT, self.lease_id, event)
 
-    async def test_profile_preference_alone_opens_no_session_or_reservation(self):
+    async def test_default_live_and_profile_preference_open_no_session_or_microphone(self):
+        self.assertEqual(await self.manager.preferences(OWNER), {"mode": "live", "revision": 0})
+        await self.manager.start()
         result = await self.enable()
         self.assertEqual(result, {"mode": "live", "revision": 1})
         self.assertEqual(self.provider.creations, [])
-        self.assertEqual(self.ledger.snapshot()["open_reservations"], 0)
+        self.assertEqual(self.ledger.snapshot()["open_records"], 0)
         self.assertEqual(self.manager.snapshot(OWNER)["lease_state"], "closed")
 
-    async def test_admission_checks_preference_flags_key_and_budget_before_arming(self):
+    async def test_admission_checks_explicit_off_flags_and_key_before_arming(self):
+        await self.manager.set_mode(OWNER, "classic", 0)
         with self.assertRaises(LiveSessionError) as raised:
             await self.manager.arm(OWNER, CLIENT, THREAD)
         self.assertEqual(raised.exception.code, "live_mode_off")
@@ -213,11 +215,20 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(LiveSessionError):
             await self.manager.arm(OWNER, CLIENT, THREAD)
         self.manager.api_key_present = True
-        self.ledger.daily_usd = Decimal(0)
-        with self.assertRaises(LiveSessionError):
-            await self.manager.arm(OWNER, CLIENT, THREAD)
         self.assertEqual(self.provider.creations, [])
         self.assertEqual(self.manager.snapshot(OWNER)["lease_state"], "closed")
+
+    async def test_saved_classic_preference_survives_restart_despite_live_default(self):
+        await self.manager.set_mode(OWNER, "classic", 0)
+        await self.manager.stop()
+        restarted = LiveSessionManager(self.config, self.provider, self.ledger, clock=self.clock)
+        self.managers.append(restarted)
+        await restarted.start()
+        self.assertEqual(await restarted.preferences(OWNER), {"mode": "classic", "revision": 1})
+        with self.assertRaises(LiveSessionError) as raised:
+            await restarted.arm(OWNER, CLIENT, THREAD)
+        self.assertEqual(raised.exception.code, "live_mode_off")
+        self.assertEqual(self.provider.creations, [])
 
     async def test_exclusive_arming_and_foreign_lease_refusal(self):
         await self.enable()
@@ -257,7 +268,7 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
             await self.manager.create_session(OWNER, CLIENT, THREAD, self.lease_id,
                                               "request_invalid", "not sdp")
         self.assertEqual(raised.exception.code, "invalid_sdp")
-        self.assertEqual(self.ledger.snapshot()["open_reservations"], 0)
+        self.assertEqual(self.ledger.snapshot()["open_records"], 0)
         self.assertEqual(self.provider.creations, [])
 
     async def test_concurrent_duplicate_create_shares_one_billable_call(self):
@@ -271,7 +282,7 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         results = await asyncio.gather(first, second)
         self.assertEqual(results[0], results[1])
         self.assertEqual(len(self.provider.creations), 1)
-        self.assertEqual(self.ledger.snapshot()["open_reservations"], 1)
+        self.assertEqual(self.ledger.snapshot()["open_records"], 1)
         self.assertNotEqual(results[0]["session_id"], self.session.provider_id)
         with self.assertRaises(LiveSessionError):
             await self.manager.create_session(OWNER, CLIENT, THREAD, self.lease_id,
@@ -320,7 +331,7 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(LiveSessionError):
             await opening
         self.assertEqual(self.provider.creations, [])
-        self.assertEqual(Decimal(self.ledger.snapshot()["reserved_usd"]), 0)
+        self.assertEqual(self.ledger.snapshot()["open_records"], 0)
 
     async def test_usage_replay_and_finalization_keep_cumulative_total(self):
         await self.arm()
@@ -335,7 +346,7 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         row = self.ledger.reservation(self.session.reservation_id)
         self.assertEqual(Decimal(row["seconds"]), 15)
         self.assertEqual(Decimal(row["spent_usd"]), quote_voice(15))
-        self.assertEqual(Decimal(self.ledger.snapshot()["reserved_usd"]), 0)
+        self.assertEqual(self.ledger.snapshot()["open_records"], 0)
 
     async def test_background_heartbeat_stops_capture_and_provider(self):
         await self.arm()
@@ -345,11 +356,11 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.provider.close_requested.is_set())
         self.assertTrue(self.session.closed.is_set())
 
-    async def test_closure_works_after_flags_and_budget_are_disabled(self):
+    async def test_closure_works_after_flags_are_disabled_and_usage_is_unavailable(self):
         await self.arm()
         await self.create()
         self.manager.config = replace(self.config, enabled=False, mobile_enabled=False)
-        self.ledger.daily_usd = self.ledger.monthly_usd = Decimal(0)
+        self.manager.usage = None
         await self.manager.close(OWNER, CLIENT, self.lease_id)
         self.assertTrue(self.provider.close_requested.is_set())
         self.assertTrue(self.session.closed.is_set())
@@ -425,7 +436,7 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.manager.snapshot(OWNER)["lease_state"], "closed")
         self.assertFalse((await self.manager.capabilities(OWNER))["available"])
 
-    async def test_missing_terminal_blocks_reopening_and_preserves_reserve(self):
+    async def test_missing_terminal_blocks_reopening_for_session_safety_not_cost(self):
         self.provider.close_ack = False
         await self.arm()
         await self.create()
@@ -433,7 +444,7 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.session.phase, "close_unconfirmed")
         self.assertFalse(self.session.closed.is_set())
         self.assertEqual(self.ledger.reservation(self.session.reservation_id)["state"], "unknown")
-        self.assertGreater(Decimal(self.ledger.snapshot()["reserved_usd"]), 0)
+        self.assertEqual(self.ledger.snapshot()["unknown_records"], 1)
         with self.assertRaises(LiveSessionError):
             await self.manager.arm(OWNER, CLIENT, THREAD)
         self.assertEqual(len(self.provider.creations), 1)
@@ -446,7 +457,11 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         await self.until(lambda: self.ledger.reservation(self.session.reservation_id)["state"] == "unknown")
         self.assertTrue(self.session.closed.is_set())
         self.assertEqual(self.session.phase, "closed")
-        self.assertGreater(Decimal(self.ledger.snapshot()["reserved_usd"]), 0)
+        self.assertEqual(self.ledger.snapshot()["unknown_records"], 1)
+        self.assertTrue((await self.manager.capabilities(OWNER))["available"])
+        await self.arm()
+        await self.create("request_without_known_cost")
+        self.assertEqual(len(self.provider.creations), 2)
 
     async def test_unknown_creation_survives_restart_without_automatic_retry(self):
         self.provider.create_error = LiveProviderError("offline_timeout", ambiguous=True)
@@ -462,7 +477,7 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(LiveSessionError):
             await restarted.arm(OWNER, CLIENT, THREAD)
         self.assertEqual(len(self.provider.creations), 1)
-        self.assertEqual(self.ledger.snapshot()["unknown_reservations"], 1)
+        self.assertEqual(self.ledger.snapshot()["unknown_records"], 1)
 
     async def test_concurrent_start_waits_for_persistent_reconciliation(self):
         await self.enable()
@@ -545,7 +560,7 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(raised.exception.code, "live_start_rate_limit")
         self.assertEqual(len(self.provider.creations), 3)
         self.assertEqual(self.manager.snapshot(OWNER)["lease_state"], "closed")
-        self.assertEqual(self.ledger.snapshot()["open_reservations"], 0)
+        self.assertEqual(self.ledger.snapshot()["open_records"], 0)
 
     async def test_control_disconnect_closes_without_waiting_for_heartbeat_expiry(self):
         await self.arm()
@@ -568,23 +583,19 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         finally:
             self.provider.cleanup_gate.set()
 
-    async def test_backend_budget_is_separate_from_voice_admission(self):
+    async def test_backend_operations_are_allowed_without_any_financial_configuration(self):
         await self.arm()
         await self.create()
         context = self.manager._context(self.session)
-        self.assertEqual(self.manager.config.backend_reservation_usd, 0)
-        self.assertFalse(await self.manager.reserve_delegation(context, "delegation_no_budget"))
         self.assertTrue(self.manager._valid(self.session))
-        self.assertEqual(self.ledger.snapshot()["open_reservations"], 1)
-        self.manager.config = replace(self.config, backend_reservation_usd=Decimal(".1"))
+        self.assertEqual(self.ledger.snapshot()["open_records"], 1)
         reservation = await self.manager.reserve_delegation(context, "delegation_allowed")
         self.assertIsInstance(reservation, str)
         self.assertEqual(self.ledger.reservation(reservation)["kind"], "backend")
         self.assertEqual(self.ledger.reservation(self.session.reservation_id)["kind"], "voice")
-        self.assertEqual(self.ledger.snapshot()["open_reservations"], 2)
+        self.assertEqual(self.ledger.snapshot()["open_records"], 2)
 
-    async def test_completed_delegation_keeps_full_estimate_and_does_not_invent_actual_price(self):
-        self.manager.config = replace(self.config, backend_reservation_usd=Decimal(".2"))
+    async def test_completed_delegation_retains_tokens_without_inventing_a_full_price(self):
         await self.arm()
         await self.create()
         context = self.manager._context(self.session)
@@ -594,25 +605,98 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         await self.manager.settle_delegation(context, "delegation_completed", reservation, usage, "completed")
         row = self.ledger.reservation(reservation)
         self.assertEqual(row["state"], "closed")
-        self.assertEqual(row["quality"], "estimated")
-        self.assertEqual(Decimal(row["spent_usd"]), Decimal(".2"))
-        self.assertEqual(Decimal(self.ledger.snapshot()["daily"]["backend_usd"]), Decimal(".2"))
-        self.assertEqual(Decimal(self.ledger.snapshot()["daily"]["confirmed_usd"]), 0)
+        self.assertEqual(row["quality"], "unpriced")
+        self.assertIsNone(row["cost_usd"])
+        self.assertEqual(row["backend_usage"]["input_tokens"], 100)
+        self.assertEqual(row["backend_usage"]["output_tokens"], 20)
+        self.assertEqual(row["backend_usage"]["quality"], "partial")
+        # Voice is also unpriced until its first duration observation arrives.
+        self.assertGreaterEqual(self.ledger.snapshot()["monthly"]["unpriced_records"], 1)
         self.assertNotIn("delegation_completed", self.session.pending_delegations)
 
-    async def test_settlement_keeps_original_admitted_amount_if_configuration_changes(self):
-        self.manager.config = replace(self.config, backend_reservation_usd=Decimal(".2"))
+    async def test_high_recorded_usage_never_blocks_mobile_or_stops_its_session(self):
+        self.ledger.reserve("historical-usage", 0, "backend")
+        self.ledger.reconcile("historical-usage", "1000", confirmed=True)
+        self.assertTrue((await self.manager.capabilities(OWNER))["available"])
         await self.arm()
         await self.create()
+        await self.until(lambda: self.session.started.is_set())
         context = self.manager._context(self.session)
-        reservation = await self.manager.reserve_delegation(context, "delegation_original_quote")
-        self.manager.config = replace(self.manager.config, backend_reservation_usd=Decimal(".01"))
-        await self.manager.settle_delegation(context, "delegation_original_quote", reservation, {}, "completed")
-        self.assertEqual(Decimal(self.ledger.reservation(reservation)["spent_usd"]), Decimal(".2"))
-        self.assertEqual(self.ledger.reservation(reservation)["quality"], "estimated")
+        reservation = await self.manager.reserve_delegation(context, "delegation_after_high_usage")
+        self.assertTrue(reservation)
+        await self.manager.settle_delegation(context, "delegation_after_high_usage", reservation, {}, "completed")
+        self.clock.advance(1)
+        await self.heartbeat()
+        await self.manager.tick()
+        self.assertFalse(self.session.closed.is_set())
+        self.assertFalse(self.provider.close_requested.is_set())
+        self.assertTrue((await self.manager.capabilities(OWNER))["available"])
+        self.assertGreaterEqual(Decimal(self.ledger.snapshot()["monthly"]["recorded_usd"]), 1000)
 
-    async def test_cancelled_and_unknown_delegations_keep_their_reserved_exposure(self):
-        self.manager.config = replace(self.config, backend_reservation_usd=Decimal(".2"))
+    async def test_every_usage_failure_is_informational_and_never_disables_live(self):
+        unavailable = Mock()
+        for name in ("snapshot", "reserve", "estimate_usage", "update_usage", "reconcile",
+                     "mark_unknown", "record_backend_usage"):
+            getattr(unavailable, name).side_effect = sqlite3.OperationalError("usage unavailable")
+        self.manager.usage = unavailable
+        caps = await self.manager.capabilities(OWNER)
+        self.assertTrue(caps["available"])
+        self.assertEqual(caps["usage"], {"available": False, "reason": "usage_unavailable"})
+        await self.arm()
+        await self.create()
+        await self.until(lambda: self.session.started.is_set())
+        self.clock.advance(1)
+        await self.heartbeat()
+        await self.manager.tick()
+        self.assertFalse(self.provider.close_requested.is_set())
+        await self.provider.emit(self.session.provider_id, {
+            "type": "session.usage.updated", "event_id": "unrecordable_usage", "usage": {"seconds": 1}})
+        await self.until(lambda: self.session.usage_seconds == 1)
+        context = self.manager._context(self.session)
+        reservation = await self.manager.reserve_delegation(context, "delegation_without_usage")
+        self.assertTrue(reservation)
+        await self.manager.settle_delegation(context, "delegation_without_usage", reservation,
+                                             {"input_tokens": 100, "output_tokens": 20}, "completed")
+        self.assertFalse(await self.manager.reserve_delegation(context, "delegation_without_usage"))
+        self.assertEqual(self.session.pending_delegations, set())
+        await self.manager.close(OWNER, CLIENT, self.lease_id)
+        self.assertTrue(self.session.closed.is_set())
+        self.assertFalse(self.manager._storage_failed)
+        self.assertTrue((await self.manager.capabilities(OWNER))["available"])
+        await self.arm()
+        await self.create("second_without_usage")
+        self.assertEqual(len(self.provider.creations), 2)
+        for name in ("reserve", "estimate_usage", "update_usage", "record_backend_usage"):
+            self.assertTrue(getattr(unavailable, name).called, name)
+
+    async def test_provider_refusals_have_public_codes_without_response_contents(self):
+        self.manager.config = replace(self.config, max_starts_per_minute=10)
+        cases = ((401, "session_creation_rejected", "live_auth_failed"),
+                 (403, "session_creation_rejected", "live_access_denied"),
+                 (404, "session_creation_rejected", "live_model_unavailable"),
+                 (429, "session_creation_rejected", "live_rate_limited"),
+                 (429, "live_quota_exceeded", "live_quota_exceeded"))
+        for status, provider_code, expected in cases:
+            with self.subTest(status=status, code=provider_code):
+                self.provider.create_error = LiveProviderError(provider_code, status_code=status)
+                await self.arm()
+                with self.assertRaises(LiveSessionError) as raised:
+                    await self.create()
+                self.assertEqual(raised.exception.code, expected)
+                self.assertEqual(self.manager.snapshot(OWNER)["session_state"], "absent")
+
+    async def test_network_failure_keeps_unknown_creation_safety_with_readable_error(self):
+        self.provider.create_error = LiveProviderError("session_creation_transport_failed", ambiguous=True)
+        await self.arm()
+        with self.assertRaises(LiveSessionError) as raised:
+            await self.create()
+        self.assertEqual(raised.exception.code, "live_connection_failed")
+        self.assertEqual(self.manager.snapshot(OWNER)["session_state"], "opening_unknown")
+        with self.assertRaises(LiveSessionError):
+            await self.manager.arm(OWNER, CLIENT, THREAD)
+        self.assertEqual(len(self.provider.creations), 1)
+
+    async def test_cancelled_and_unknown_delegations_keep_uncertainty_without_a_price(self):
         await self.arm()
         await self.create()
         context = self.manager._context(self.session)
@@ -624,14 +708,15 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
                                                      {"input_tokens": 0, "output_tokens": 0}, status)
                 row = self.ledger.reservation(reservation)
                 self.assertEqual(row["state"], "unknown")
-                self.assertEqual(Decimal(row["remaining_reserved_usd"]), Decimal(".2"))
+                self.assertIsNone(row["cost_usd"])
+                self.assertEqual(row["backend_usage"]["status"], status)
                 self.assertNotIn(delegation_id, self.session.pending_delegations)
-        self.assertEqual(self.ledger.snapshot()["unknown_reservations"], 2)
-        self.assertGreaterEqual(Decimal(self.ledger.snapshot()["reserved_usd"]), Decimal(".4"))
+        self.assertEqual(self.ledger.snapshot()["unknown_records"], 2)
+        self.assertTrue((await self.manager.capabilities(OWNER))["available"])
 
     async def test_delegation_quota_and_duplicate_ids_are_enforced_after_completed_work(self):
-        self.manager.config = replace(self.config, backend_reservation_usd=Decimal(".1"),
-                                      max_delegations_per_session=2)
+        self.manager.config = replace(self.config, max_delegations_per_session=2)
+        self.manager.usage = None  # Business deduplication cannot rely on telemetry.
         await self.arm()
         await self.create()
         context = self.manager._context(self.session)
@@ -645,8 +730,7 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(await self.manager.reserve_delegation(context, "delegation_third"))
         self.assertEqual(self.session.total_delegations, 2)
 
-    async def test_stale_generation_invalid_ids_and_budget_ceiling_refuse_delegations(self):
-        self.manager.config = replace(self.config, backend_reservation_usd=Decimal(".1"))
+    async def test_stale_generation_and_invalid_ids_refuse_delegations(self):
         await self.arm()
         await self.create()
         context = self.manager._context(self.session)
@@ -655,14 +739,11 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         for invalid in (None, "", " " * 3, "x" * 257):
             with self.subTest(delegation_id=invalid):
                 self.assertFalse(await self.manager.reserve_delegation(context, invalid))
-        self.manager.config = replace(self.manager.config, backend_reservation_usd=Decimal("2"))
-        self.assertFalse(await self.manager.reserve_delegation(context, "delegation_over_budget"))
         self.assertEqual(self.session.total_delegations, 0)
-        self.assertEqual(self.ledger.snapshot()["open_reservations"], 1)
+        self.assertEqual(self.ledger.snapshot()["open_records"], 1)
         self.assertTrue(self.manager._valid(self.session))
 
     async def test_stale_generation_and_wrong_reservation_cannot_settle_another_job(self):
-        self.manager.config = replace(self.config, backend_reservation_usd=Decimal(".1"))
         await self.arm()
         await self.create()
         context = self.manager._context(self.session)
@@ -675,8 +756,7 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.ledger.reservation(reservation)["state"], "reserved")
         self.assertIn("delegation_current", self.session.pending_delegations)
 
-    async def test_lease_expiry_during_backend_reservation_prevents_dispatch_and_releases_quote(self):
-        self.manager.config = replace(self.config, backend_reservation_usd=Decimal(".1"))
+    async def test_lease_expiry_during_backend_tracking_still_prevents_dispatch(self):
         await self.arm()
         await self.create()
         context = self.manager._context(self.session)
@@ -689,7 +769,7 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
                 reservations.append(identifier)
                 entered.set()
                 if not release.wait(2):
-                    raise TimeoutError("test budget gate")
+                    raise TimeoutError("test observation barrier")
             return original_reserve(identifier, quote, kind, **kwargs)
 
         self.ledger.reserve = delayed_reserve
@@ -707,7 +787,6 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.session.pending_delegations, set())
 
     async def test_idle_does_not_close_while_delegation_is_pending_then_restarts_idle_clock(self):
-        self.manager.config = replace(self.config, backend_reservation_usd=Decimal(".1"))
         await self.arm()
         await self.create()
         await self.until(lambda: self.session.started.is_set())

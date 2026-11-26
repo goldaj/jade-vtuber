@@ -4,7 +4,7 @@ Official contracts checked 2026-11-26:
 https://developers.openai.com/api/docs/guides/voice-webrtc
 https://developers.openai.com/api/docs/guides/voice-server-controls
 
-No network or credential lookup on import/construction. The caller owns budget,
+No network or credential lookup on import/construction. The caller owns lifecycle,
 authorization, event replay deduplication and observing session.closed. Closing
 the transport below is deliberately NOT described as closing the paid session.
 """
@@ -94,7 +94,7 @@ def _session_config(value: object) -> dict:
     if not isinstance(result.get("delegation"), dict) or result["delegation"].get("type") != "client":
         raise LiveProviderError("live_requires_client_delegation")
     if result.get("triggers"):
-        raise LiveProviderError("unbudgeted_live_triggers_disabled")
+        raise LiveProviderError("automatic_live_triggers_disabled")
     history = result.get("input", [])
     if not isinstance(history, list) or len(history) > 128:
         raise LiveProviderError("invalid_live_history")
@@ -228,7 +228,21 @@ class OpenAILiveProvider:
                 # Deterministic validation/auth/quota refusal is safe to distinguish.
                 # Server errors and redirects provide no trustworthy creation outcome.
                 refused = status in (400, 401, 403, 404, 405, 413, 415, 422, 429)
-                raise LiveProviderError("session_creation_rejected",
+                code = "session_creation_rejected"
+                if status == 429:
+                    # Retain only a known error category, never the provider's
+                    # message, response body, request or account identifiers.
+                    try:
+                        payload = response.json()
+                        error = payload.get("error") if isinstance(payload, dict) else None
+                        category = error.get("code") if isinstance(error, dict) else None
+                        if isinstance(category, str) and category in (
+                                "insufficient_quota", "billing_hard_limit_reached",
+                                "quota_exceeded"):
+                            code = "live_quota_exceeded"
+                    except (ValueError, TypeError):
+                        pass
+                raise LiveProviderError(code,
                                         ambiguous=not refused, status_code=status)
             session_id = None
             try:

@@ -170,7 +170,4 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
         checks.append(Check("Transport Live", _installed("httpx2") and _installed("websockets"),
                             "HTTP et sideband installés ; aucun appel ni capture",
                             required=live_config.enabled))
-        checks.append(Check("Budget backend Live", live_status["backend_budget_configured"],
-                            "Réserve par délégation et curation ; 0 interdit ces appels",
-                            required=False))
     return checks

@@ -12,7 +12,8 @@ function element(id) {
     elements.set(id, {
     id, value:"", textContent:"", disabled:false, open:false, children:[], handlers:{},
     classList:{add(name){classes.add(name);}, remove(name){classes.delete(name);},
-      contains(name){return classes.has(name);}},
+      contains(name){return classes.has(name);},
+      toggle(name, active){if(active)classes.add(name);else classes.delete(name);}},
     addEventListener(name, handler) {this.handlers[name] = handler;},
     append(...children) {this.children.push(...children);},
     appendChild(child) {this.children.push(child);},
@@ -66,6 +67,12 @@ const avatar = {
   resetIntent() {performanceEvents.push(["reset"]);},
 };
 global.window = {crypto:global.crypto, AudioContext, JadeAvatar:avatar,
+  // This suite exercises a deliberately selected classic preference. The
+  // app now waits for that choice instead of falling through during startup.
+  JadeLive:{create({onState}) { return {mode:"classic", active:false,
+    refresh() { onState({mode:"classic", loaded:true, supported:true, available:true,
+      capture:"closed", lease_state:"closed", session_state:"absent", active:false}); return Promise.resolve(); },
+    stop() { return Promise.resolve(); }}; }},
   location:{hash:""}, addEventListener(name, handler) {(windowHandlers[name] ||= []).push(handler);},
   setTimeout, clearTimeout};
 const mic = element("mic");

@@ -1,6 +1,6 @@
 # Schémas de référence de l'architecture de Jade
 
-**Extension du 26/11, intégrée sur `develop` depuis `90ec0c7` :** [Live mobile raccordé](LIVE_MOBILE.md) décrit WebRTC/sideband, baux, budgets, délégations et journal commun. Les paroles natives Live sont concurrentes ; leurs opérations backend passent par le worker/arbitre classique. Cette extension datée complète les instantanés historiques sans prétendre qu’elle était présente dans leur SHA ; sa recette réelle reste ouverte.
+**Extension du 26/11, intégrée sur `develop` depuis `90ec0c7` puis corrigée selon la décision propriétaire :** [Live mobile raccordé](LIVE_MOBILE.md) décrit WebRTC/sideband, baux, suivi d'usage passif, délégations et journal commun. Live est activé par défaut sur mobile, sans plafond financier ; la future politique mensuelle 50/40 EUR concerne seulement Discord. Les paroles natives Live sont concurrentes ; leurs opérations backend passent par le worker/arbitre classique. Cette extension datée complète les instantanés historiques sans prétendre qu’elle était présente dans leur SHA ; sa recette réelle reste ouverte.
 
 ## Nouvelle référence fonctionnelle : atlas du 16 novembre 2026
 

@@ -1,8 +1,7 @@
-"""Fail-closed Live settings, independent of the classic STT/TTS configuration."""
+"""Mobile Live defaults and transport limits, independent of classic STT/TTS."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from decimal import Decimal, InvalidOperation
 import math
 import os
 from pathlib import Path
@@ -12,6 +11,8 @@ from .live_voice import LiveVoice
 
 
 def _default_db_path() -> str:
+    # Keep the deployed filename so previous usage records remain readable.
+    # Its historical name no longer denotes a financial admission policy.
     if os.name == "nt" and Path("D:/").is_dir():
         return "D:/Jade/private/jade-live-budget.sqlite3"
     return str(Path.home() / ".jade" / "jade-live-budget.sqlite3")
@@ -26,19 +27,9 @@ def _bool(value: object) -> bool:
     raise ValueError("Live boolean settings must be true/false or 1/0")
 
 
-def _money(value: object) -> Decimal:
-    try:
-        amount = Decimal(str(value))
-    except (InvalidOperation, ValueError, TypeError) as exc:
-        raise ValueError("invalid Live dollar amount") from exc
-    if not amount.is_finite() or not Decimal(0) <= amount <= Decimal(10000):
-        raise ValueError("Live dollar amounts must be finite and between 0 and 10000")
-    return amount
-
-
 @dataclass(frozen=True)
 class LiveConfig:
-    enabled: bool = False
+    enabled: bool = True
     mobile_enabled: bool = True
     discord_enabled: bool = False
     model: str = "gpt-live-1.1"
@@ -54,11 +45,7 @@ class LiveConfig:
     max_session_seconds: float = 600.0
     max_starts_per_minute: int = 3
     max_delegations_per_session: int = 12
-    # No positive private budget is selected on the owner's behalf.
-    daily_usd: Decimal = Decimal("0")
-    monthly_usd: Decimal = Decimal("0")
-    backend_reservation_usd: Decimal = Decimal("0")
-    budget_db_path: str = field(default_factory=_default_db_path)
+    usage_db_path: str = field(default_factory=_default_db_path)
     session_db_path: str = ""
 
     @classmethod
@@ -67,7 +54,7 @@ class LiveConfig:
             return str(getter(name, str(default))).strip()
 
         cfg = cls(
-            enabled=_bool(get("JADE_LIVE_ENABLED", "false")),
+            enabled=_bool(get("JADE_LIVE_ENABLED", "true")),
             mobile_enabled=_bool(get("JADE_MOBILE_LIVE_ENABLED", "true")),
             discord_enabled=_bool(get("JADE_DISCORD_LIVE_ENABLED", "false")),
             model=get("JADE_LIVE_MODEL", "gpt-live-1.1"),
@@ -83,10 +70,10 @@ class LiveConfig:
             max_session_seconds=float(get("JADE_LIVE_MAX_SESSION_SECONDS", 600)),
             max_starts_per_minute=int(get("JADE_LIVE_MAX_STARTS_PER_MINUTE", 3)),
             max_delegations_per_session=int(get("JADE_LIVE_MAX_DELEGATIONS_PER_SESSION", 12)),
-            daily_usd=_money(get("JADE_LIVE_DAILY_USD", 0)),
-            monthly_usd=_money(get("JADE_LIVE_MONTHLY_USD", 0)),
-            backend_reservation_usd=_money(get("JADE_LIVE_BACKEND_RESERVATION_USD", 0)),
-            budget_db_path=(get("JADE_LIVE_BUDGET_DB_PATH", "") or _default_db_path()),
+            # Only the old path is retained as a migration alias. Former daily,
+            # monthly and backend amounts are intentionally never read.
+            usage_db_path=(get("JADE_LIVE_USAGE_DB_PATH", "")
+                           or get("JADE_LIVE_BUDGET_DB_PATH", "") or _default_db_path()),
             session_db_path=get("JADE_LIVE_SESSION_DB_PATH", ""),
         )
         cfg.validate()
@@ -122,15 +109,11 @@ class LiveConfig:
             value = getattr(self, name)
             if type(value) is not int or not 1 <= value <= maximum:
                 raise ValueError(f"invalid Live {name}")
-        for value in (self.daily_usd, self.monthly_usd, self.backend_reservation_usd):
-            _money(value)
-        if _money(self.daily_usd) > _money(self.monthly_usd):
-            raise ValueError("Live daily budget cannot exceed the monthly budget")
         repo_root = Path(__file__).resolve().parents[2]
-        for value in (self.budget_db_path, self.session_db_path):
+        for value in (self.usage_db_path, self.session_db_path):
             if not value:
-                if value == self.budget_db_path:
-                    raise ValueError("Live budget requires a private SQLite path")
+                if value == self.usage_db_path:
+                    raise ValueError("Live usage requires a private SQLite path")
                 continue
             path = Path(value).expanduser()
             if (not path.is_absolute() or path.suffix != ".sqlite3"
@@ -146,15 +129,16 @@ class LiveConfig:
             reasons.append("live_disabled")
         if not self.mobile_enabled:
             reasons.append("mobile_live_disabled")
-        if self.discord_enabled and not discord_adapter_available:
-            reasons.append("discord_adapter_unavailable")
         if not api_key_present:
             reasons.append("api_key_missing")
-        if not _money(self.daily_usd) or not _money(self.monthly_usd):
-            reasons.append("live_budget_missing")
+        discord_reason = ("discord_live_disabled" if not self.discord_enabled else
+                          "discord_adapter_unavailable" if not discord_adapter_available else
+                          "live_disabled" if not self.enabled else
+                          "api_key_missing" if not api_key_present else "ready")
         return {"available": not reasons, "reasons": reasons, "model": self.model,
                 "voice": LiveVoice(self.voice, self.voice_id).public_status(),
-                "backend_budget_configured": _money(self.backend_reservation_usd) > 0}
+                "discord": {"enabled": self.discord_enabled,
+                            "available": discord_reason == "ready", "reason": discord_reason}}
 
     def session_config(self, *, instructions: str = "", input: list | None = None) -> dict:
         """Trusted server configuration; the mobile never chooses these settings."""

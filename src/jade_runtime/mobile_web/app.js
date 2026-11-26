@@ -15,8 +15,10 @@
   const connection = $("connection-status"), soundToggle = $("sound-toggle");
   const newChat = $("new-chat");
   const liveModeToggle = $("live-mode-toggle"), liveModeStatus = $("live-mode-status");
-  const liveVoiceNotice = $("live-voice-notice");
+  const liveVoiceNotice = $("live-voice-notice"), liveModeRetry = $("live-mode-retry");
   let liveClient = null, liveState = null, liveMotionPending = false, liveSpeaking = false;
+  let liveLoadMessage = "", liveRetrying = false;
+  let liveAuthentication = 0;
   const liveTranscripts = new Map();
   const linkForm = $("identity-link-form"), linkResult = $("identity-result");
   const linkCopy = $("identity-copy");
@@ -103,8 +105,19 @@
     }
   }
 
+  function resetLiveAuthentication(reason) {
+    // Stop the previous media owner before discarding its reference. Each
+    // authentication gets a fresh preference read and its own pending reads.
+    cancelConversation(reason);
+    liveAuthentication++;
+    liveClient = liveState = null;
+    liveLoadMessage = "";
+    liveRetrying = false;
+    if (liveModeToggle) liveModeToggle.disabled = true;
+  }
+
   function authorizeAgain() {
-    liveClient?.stop("auth_lost");
+    resetLiveAuthentication("auth_lost");
     token = "";
     linkCommand = "";
     linkResult.textContent = "";
@@ -178,8 +191,15 @@
   }
 
   function liveDescription() {
+    if (liveLoadMessage) return liveLoadMessage;
     if (!liveState) return "Vérification du mode vocal…";
+    if (!liveState.supported) return (liveState.availability_message ||
+      "Ce navigateur ne permet pas le mode Live.") + " Le mode classique reste disponible.";
     if (liveState.message) return liveState.message;
+    if (!liveState.loaded) return "Vérification du mode vocal…";
+    if (!liveState.available && !liveState.active) return (liveState.availability_message ||
+      "Le mode Live est momentanément indisponible.") +
+      (liveState.mode === "live" ? " Tu peux choisir le mode classique dans Profil." : " Le mode classique reste disponible.");
     if (liveState.mode !== "live") return liveState.available ?
       "Mode classique : maintiens le micro pour parler, puis relâche pour envoyer." :
       "Mode classique disponible. Le mode Live n’est pas disponible pour le moment.";
@@ -192,19 +212,32 @@
       return "Live en cours · Touche le micro pour le couper.";
     }
     if (!soundEnabled) return "Voix coupée. Réactive-la, puis touche le micro pour parler en Live.";
-    if (!liveState.supported) return "Ce navigateur ne permet pas le mode Live. Le mode classique reste disponible.";
-    if (!liveState.available) return "Live indisponible pour le moment. Tu peux choisir le mode classique.";
     return "Mode Live activé. Touche le micro pour commencer ; un second toucher le coupe.";
   }
 
   function renderLiveMic() {
-    if (!liveState) return;
+    if (!liveState?.loaded) {
+      // Until the owner's persisted choice is known, a tap cannot fall through
+      // to classic capture while the default Live module is still loading.
+      if (token) {
+        mic.disabled = true;
+        mic.setAttribute("aria-label", "Vérification du mode vocal");
+        if (micFeedback && !busy && !modelChanging) {
+          micFeedback.textContent = liveDescription();
+          micFeedback.hidden = false;
+        }
+      }
+      return;
+    }
     const enabled = liveState.mode === "live";
     const capturing = enabled && liveState.capture !== "closed";
     const draining = enabled && liveState.lease_state === "draining";
     mic.classList.toggle("live-armed", capturing);
     mic.classList.toggle("live-connecting", capturing && (liveState.session_state === "opening" || liveState.media_state === "connecting"));
-    if (!enabled) return;
+    if (!enabled) {
+      mic.disabled = modelChanging || (busy && !micPress && !voicePending);
+      return;
+    }
     mic.classList.remove("recording");
     mic.disabled = modelChanging || busy || liveState.changing ||
       (liveState.capture === "closed" && liveState.session_state === "closing") ||
@@ -220,20 +253,38 @@
     }
   }
 
+  function renderLiveAvailability() {
+    if (liveModeStatus) liveModeStatus.textContent = liveDescription();
+    if (liveModeRetry) {
+      liveModeRetry.hidden = !(liveLoadMessage || (!liveState?.loaded && liveState?.message) ||
+        (liveState?.loaded && !liveState.available && liveState.supported));
+      liveModeRetry.disabled = liveRetrying;
+      liveModeRetry.textContent = liveRetrying ? "Vérification…" : "Réessayer";
+    }
+    renderLiveMic();
+  }
+
+  function liveModuleFailed() {
+    liveLoadMessage = "Le mode Live n’a pas pu charger. Réessaie depuis Profil ; tu peux toujours écrire à Jade.";
+    if (liveModeToggle) liveModeToggle.disabled = true;
+    renderLiveAvailability();
+  }
+
   function renderLiveState(value) {
     const wasLive = liveState?.mode === "live";
     const wasActive = liveState?.active;
     const hadSession = liveState?.session_id;
     liveState = value;
+    liveLoadMessage = "";
     if (liveModeToggle) {
-      liveModeToggle.textContent = value.mode === "live" ? "Désactiver le mode Live" : "Activer le mode Live";
-      liveModeToggle.setAttribute("aria-pressed", String(value.mode === "live"));
-      // Turning OFF remains possible after a kill switch, budget exhaustion
+      liveModeToggle.textContent = !value.loaded ? "Vérification du mode Live…" :
+        value.mode === "live" ? "Désactiver le mode Live" : "Activer le mode Live";
+      liveModeToggle.setAttribute("aria-pressed", String(value.loaded && value.mode === "live"));
+      // Turning OFF remains possible after a kill switch, provider refusal
       // or loss of browser capability. Admission restrictions only gate ON.
       liveModeToggle.disabled = value.changing || !value.loaded ||
         (value.mode !== "live" && !value.available);
     }
-    if (liveModeStatus && liveModeStatus.textContent !== liveDescription()) liveModeStatus.textContent = liveDescription();
     if (liveVoiceNotice) {
       liveVoiceNotice.textContent = value.capabilities?.voice_notice || value.capabilities?.voice?.notice || "";
       liveVoiceNotice.hidden = !liveVoiceNotice.textContent;
@@ -242,7 +293,7 @@
       resetMicButton();
       mic.disabled = modelChanging || (busy && !micPress && !voicePending);
     }
-    renderLiveMic();
+    renderLiveAvailability();
     if (((wasActive && !value.active) || (hadSession && !value.session_id)) && !busy && !voicePending) {
       liveMotionPending = liveSpeaking = false;
       avatar().setMouth(0);
@@ -317,9 +368,12 @@
   }
 
   function initializeLive() {
-    if (!window.JadeLive) return;
-    if (!liveClient) liveClient = window.JadeLive.create({
-      getToken:() => token, getThread:() => thread, getSoundEnabled:() => soundEnabled,
+    if (!window.JadeLive || !token) return;
+    try {
+      if (!liveClient) {
+      const generation = liveAuthentication, authenticatedToken = token;
+      const options = {
+      getToken:() => authenticatedToken, getThread:() => thread, getSoundEnabled:() => soundEnabled,
       beforeArm:() => cancelConversation("live_arm", {keepLive:true}),
       onState:renderLiveState,
       onTranscript:receiveLiveTranscript,
@@ -349,12 +403,39 @@
         liveSpeaking = speaking;
       },
       onAuthFailure:() => { if (token) authorizeAgain(); },
-    });
-    if (token) void liveClient.refresh();
+      };
+      for (const name of ["beforeArm", "onState", "onTranscript", "onInterruption", "onAttachments", "onIntent", "onPlayback", "onAuthFailure"]) {
+        const callback = options[name];
+        options[name] = (...args) => {
+          if (generation === liveAuthentication) return callback(...args);
+        };
+      }
+      liveClient = window.JadeLive.create(options);
+      }
+      if (liveClient.state) renderLiveState(liveClient.state);
+      if (token) void liveClient.refresh();
+    } catch (_) { liveModuleFailed(); }
   }
   window.addEventListener("jade-live-ready", initializeLive);
+  liveModeRetry?.addEventListener("click", async () => {
+    if (liveRetrying || !token) return;
+    const generation = liveAuthentication;
+    liveRetrying = true;
+    liveLoadMessage = "";
+    renderLiveAvailability();
+    try {
+      if (liveClient) await liveClient.refresh();
+      else {
+        const ready = await window.JadeLogin?.retryLive?.();
+        if (generation === liveAuthentication && !ready) liveModuleFailed();
+      }
+    } catch (_) { if (generation === liveAuthentication) liveModuleFailed(); }
+    finally {
+      if (generation === liveAuthentication) { liveRetrying = false; renderLiveAvailability(); }
+    }
+  });
   liveModeToggle?.addEventListener("click", () => {
-    if (!liveClient || liveState?.changing) return;
+    if (!liveClient || !liveState?.loaded || liveState.changing) return;
     const mode = liveClient.mode === "live" ? "classic" : "live";
     cancelConversation("mode_change");
     void liveClient.setMode(mode);
@@ -1472,7 +1553,7 @@
     }
   });
   mic.addEventListener("pointerdown", event => {
-    if (event.button !== 0 || event.isPrimary === false) return;
+    if (mic.disabled || event.button !== 0 || event.isPrimary === false) return;
     event.preventDefault();
     if (liveClient?.mode === "live") {
       if (!modelChanging && !busy) return liveClient.toggleMicrophone();
@@ -1483,7 +1564,7 @@
   mic.addEventListener("click", event => {
     // Assistive technology can activate a button without pointer/key events.
     // Pointer taps are handled above; keyboard defaults are prevented below.
-    if (event.detail === 0 && liveClient?.mode === "live" && !modelChanging && !busy)
+    if (!mic.disabled && event.detail === 0 && liveClient?.mode === "live" && !modelChanging && !busy)
       return liveClient.toggleMicrophone();
   });
   window.addEventListener("pointerup", event => {
@@ -1506,6 +1587,7 @@
     }
     if (event.key !== " " && event.key !== "Enter") return;
     event.preventDefault();
+    if (mic.disabled) return;
     if (!event.repeat) {
       if (liveClient?.mode === "live") {
         if (!modelChanging && !busy) return liveClient.toggleMicrophone();
@@ -1684,7 +1766,11 @@
   // Chat is initialized independently of the optional Live2D renderer.
   window.JadeConversation = {stopForModelChange};
   window.JadeMobileApp = {
+    liveModuleReady:initializeLive,
+    liveModuleFailed,
+    liveModuleLoading() { liveLoadMessage = ""; renderLiveAvailability(); },
     login(value) {
+      resetLiveAuthentication("auth_changed");
       token = value;
       authInput.value = "";
       authFeedback.textContent = "";
@@ -1692,6 +1778,7 @@
       connection.textContent = "Connectée à Jade";
       connection.classList.add("online");
       setStatus("Connexion vérifiée. Tu peux parler ou écrire à Jade.");
+      renderLiveAvailability();
       initializeLive();
       // Do not display the Android keyboard on the room-first landing page.
       openReminderFromHash();

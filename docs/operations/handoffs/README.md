@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [DEV-054 · Live mobile par défaut, sans plafond financier](2026-11-26-chatgpt-live-mobile-default-no-budget.md) · Correction propriétaire du 26/11, diagnostics visibles, usage passif et politique Discord strictement séparée.
+
 - [DEV-053 / ART-014 · Intentions Triste et Colère](2026-11-26-chatgpt-intentions-triste-colere.md) · Ajout P1, neuf intentions et dix-huit variantes avec parité voix/animations ; cadrage uniquement.
 
 - [Implémentation Live mobile · REC-044 à REC-050, DEV-041/052](2026-11-26-chatgpt-live-mobile-implementation.md) · Code `90ec0c7` et tests intégrés sur develop le 26/11 sur autorisation du propriétaire ; recette fournisseur/Redmi et voix originale restantes. [Cadrage initial](2026-11-26-chatgpt-live-mobile-roadmap.md) conservé comme référence.

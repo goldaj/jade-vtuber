@@ -806,8 +806,8 @@ class LiveConversationBridge:
                         "Cette demande est déjà en cours ou son résultat reste incertain. "
                         "Je ne relance pas l'action automatiquement.")
                 return
-            # No default unlimited paid backend path: the manager must admit
-            # each delegation through its persistent budget ledger.
+            # The manager verifies the live lease, generation and operation
+            # limits. Mobile delegations have no financial admission gate.
             if self.reserve_delegation is None:
                 allowed = False
             else:
@@ -815,10 +815,11 @@ class LiveConversationBridge:
                 allowed = reservation is not None and reservation is not False
             if not allowed:
                 await self._send(state, send, "session.commentary.append", did,
-                                 "Cette action n'est pas disponible dans le budget Live actuel.")
+                                 "Cette action ne peut pas démarrer dans cette session Live. "
+                                 "Tu peux arrêter le micro puis relancer la conversation.")
                 status = "refused"
-                await asyncio.to_thread(self.journal.finish, opkey, status, {"status": "budget_refused"})
-                await asyncio.to_thread(self.journal.finish, request_key, status, {"status": "budget_refused"})
+                await asyncio.to_thread(self.journal.finish, opkey, status, {"status": "delegation_unavailable"})
+                await asyncio.to_thread(self.journal.finish, request_key, status, {"status": "delegation_unavailable"})
                 return
             incoming = _source(state.context, question, "live-d-" + _digest(opkey)[:32])
             future = asyncio.get_running_loop().create_future()
