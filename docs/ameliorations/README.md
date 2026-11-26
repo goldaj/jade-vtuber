@@ -64,8 +64,8 @@ Le [thème 08, modèle 2D](08-MODELE-2D.md) conserve l'archivage des anciennes i
 
 ## Transferts du 25 novembre 2026
 
-- **LAT-17, ARC-01, ARC-05 → [DEV-040](../backlog/01-DEVELOPPEMENT.md)** (P1, À faire) : dialogue vocal GPT-Live, session économique et bascule vers le mode classique, uniquement PWA Android. Les trois lignes P2 sont retirées du catalogue actif ; le mode écrit et les autres canaux ne sont pas engagés. LAT-11/15/20 ne conservent que leur périmètre résiduel hors mode Live mobile.
-- Le lot inclut DEV-039 (vrai push-to-talk classique) et DEV-041 (voix française propre à Jade). **98 idées actives, dont 21 P1**, après ces trois transferts. Aucun développement ni dépense lancé.
+- **LAT-17, ARC-01, ARC-05 → lot Live mobile** : repris initialement dans DEV-040, puis répartis le 26/11 entre **DEV-040/041 et DEV-046 à DEV-051**. [Plan et correspondances](../backlog/PLAN-LIVE-MOBILE.md). Les trois anciennes idées ne sont plus actives ; LAT-11/15/20 gardent leur périmètre hors Live mobile. Discord a seulement un paramètre réservé OFF, pas un adaptateur engagé.
+- **Historique du 25/11 :** 98 idées actives après les trois transferts ci-dessus. **Au 26/11, DEV-039 est livrée et suivie uniquement en REC-042** ; le plan Live précise les US sans encore développer Live ni créer/écouter une voix. Les compteurs courants du catalogue figurent en tête de cet index.
 
 ## Règles pour les prochains agents
 

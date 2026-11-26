@@ -8,7 +8,7 @@
 | ARC-11 | P3 / D | **Moteur IA local éventuel** : évaluer selon matériel réel, latence, mémoire, qualité française et coûts avant de changer les services OpenAI ; pas de promesse de compatibilité sans benchmark PC. |
 
 
-**Transfert du 25/11/2026 :** ARC-01 et ARC-05 sont reprises dans [DEV-040](../backlog/01-DEVELOPPEMENT.md), P1, À faire, pour le nouveau mode vocal Live de la PWA Android. Le mode classique demeure disponible ; aucune extension aux autres canaux ni moteur écrit Realtime n'est engagée. Les ID historiques ne sont pas réattribués.
+**Transfert du 25/11, précisé le 26/11 :** ARC-01 et ARC-05 sont reprises dans le [plan Live mobile](../backlog/PLAN-LIVE-MOBILE.md), avec DEV-040 pour la bascule et DEV-046..051 pour le socle, le pont Jade et les contrôles. Le classique est conservé ; aucun moteur écrit Live ni adaptateur Discord n’est engagé. Un paramètre Discord OFF prépare son futur raccordement. Les ID historiques ne sont pas réattribués.
 
 ## Extension produit du 18/11/2026 : modularité généralisée
 
