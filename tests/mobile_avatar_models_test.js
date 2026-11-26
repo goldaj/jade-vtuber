@@ -193,7 +193,19 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
   assert.equal(immutable.requests[0].options.credentials, "omit");
 
   const html = fs.readFileSync(path.join(web, "salon.html"), "utf8");
-  const profile = html.split('<section class="profile-intro"')[1].split("</section>")[0];
+  const profileStart = html.indexOf('<section class="profile-intro"');
+  assert(profileStart >= 0, "Profile section exists");
+  // Profile contains nested sections, including the Live settings. Stop at its
+  // matching closing tag, not at the end of the first nested section.
+  let profile = "", depth = 0;
+  for (const tag of html.slice(profileStart).matchAll(/<\/?section\b[^>]*>/g)) {
+    depth += tag[0].startsWith("</") ? -1 : 1;
+    if (depth === 0) {
+      profile = html.slice(profileStart, profileStart + tag.index + tag[0].length);
+      break;
+    }
+  }
+  assert(profile, "Profile section has a matching closing tag");
   assert(profile.includes('id="avatar-model-selector"'), "model control belongs to Profile");
   assert.equal((html.match(/id="avatar-model-selector"/g) || []).length, 1);
   console.log("Avatar catalogue/UI: safe fallback, immutable profiles, no eager load, availability, selection and rollback PASS");

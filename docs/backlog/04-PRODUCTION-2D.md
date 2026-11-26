@@ -1,6 +1,6 @@
 # Production artistique Live2D r21 — backlog opérationnel
 
-**Branche :** develop · **Révision :** 18 novembre 2026 · **Type :** ART.
+**Branche :** develop · **Révision :** 26 novembre 2026 · **Type :** ART.
 
 Production du modèle complet r21 à partir des sources et checkpoints existants, sans réintroduire les anciennes démos. Le runtime r20 reste utilisable pour la première recette (jalon A), indépendamment du r21 (jalon B).
 
@@ -21,6 +21,21 @@ Production du modèle complet r21 à partir des sources et checkpoints existants
 | **ART-011** | P1 | B | **Done** | Paquet autonome v45.1 chargé en VTube Studio après installation dans un dossier neuf, avec quatorze gestes, deux expressions, sources, CMO3 et atelier. [Livraison](../operations/handoffs/2026-11-25-codex-livraison-modele-jade.md) | Créer le bundle r21 versionné et réutilisable | Exporter moc3, model3.json, textures/atlas, physique, expressions, motions, manifestes et documentation de provenance ; valider intégrité du corps entier. | ART-003, ART-007, ART-008, ART-009, ART-010 |
 | **ART-012** | P1 | B | **En cours** | Modèle installé et calibration VTube Studio acceptée. Clignement, appuis, parole, coupure, reprise et cadrage revus. Reste la recette intégrée après DEV-001. [Livraison](../operations/handoffs/2026-11-25-codex-livraison-modele-jade.md) | Importer, calibrer et recetter r21 dans VTube Studio | Ouvrir le bundle final dans VTube Studio, calibrer entrées/sens/inertie, contrôler toutes poses et motions, lip-sync, performance et récupération du neutre ; consigner défauts réels. | ART-011, DEV-001 |
 | **ART-013** | P0 | B | **Done** | Priorité du propriétaire après validation de Sérieuse et Enjouée. Respiration et sept intentions vérifiées sur le r21 par Codex en vue mobile. [Passation et mesures](../operations/handoffs/2026-11-26-codex-mobile-oreilles-r21.md) | Animer les oreilles au souffle et selon les sept intentions | Voir les pointes accompagner la respiration au repos et distinguer les accents des sept intentions. Contrôler les attaches et la continuité du jeu pendant la parole et les pauses, avec Huohuo comme repère visuel. | ART-011 |
+| **ART-014** | P1 | B | **À faire** | Demande propriétaire du 26/11/2026 : deux nouvelles intentions Triste et Colère à traiter comme les sept existantes ; leurs quatre variantes complètes restent à produire. | Produire les expressions et animations Triste et Colère | Deux variantes A/B par intention, visage/corps/oreilles cohérents, transitions et sources éditables, exports versionnés ; dix-huit motions au total. [Critères](#art-014--expressions-et-animations-triste-et-colère-p1). DEV-053 assure le contrat, la voix et le raccordement. | ART-009, ART-011, ART-013 |
+
+## ART-014 · Expressions et animations Triste et Colère (P1)
+
+**Besoin :** fournir le delta artistique de [DEV-053](01-DEVELOPPEMENT.md#dev-053--intentions-triste-et-colère-avec-parité-complète-p1) pour **Triste (`sad`)** et **Colère (`angry`)**, avec la même richesse et la même finition que les sept intentions existantes.
+
+**Critères d'acceptation :**
+
+- Produire **deux variantes A/B réellement différentes pour chacune**, soit **quatre nouvelles motions** ajoutées aux quatorze existantes. Leur posture, geste et rythme rendent immédiatement lisibles la tristesse ou la colère, tout en conservant le caractère et l'identité graphique de Jade. Les variantes ne se réduisent pas à renommer une motion ou à changer sa vitesse.
+- Préparer les expressions et poses de visage associées, le regard, les sourcils et la forme de bouche ; prévoir le jeu du corps, de la tête et des oreilles, les appuis et la continuité des physiques selon le rig. Garder clignement et articulation indépendants. Les ressources Sad/Angry existantes peuvent servir de base si adaptées, sans être considérées à elles seules comme les deux nouvelles intentions.
+- Assurer la prise de pose, les phases de parole et de pause, les transitions entre les neuf intentions et le retour au repos, sans saut, trou, déformation indésirable ou pose collante. Préserver les sept intentions et les quatorze motions antérieures.
+- Partir d'une copie versionnée des sources et du dernier modèle validé. Avant la première retouche 2D, étudier le tutoriel pertinent conformément à AGENTS.md. Livrer les sources natives éditables, expressions/motions, exports compatibles, manifestes et correspondances d'identifiants ; garder les ressources et références LFS cohérentes pour le bundle et les rendus qui les utilisent.
+- Vérifier visuellement les quatre nouvelles variantes et la non-régression des quatorze existantes : neutre, rotations et diagonales, clignement, parole/pauses, oreilles, physique, interruption et transitions. Consigner version d'asset, captures ou vidéo de recette et limites selon la DoD. Le raccordement des fichiers aux réponses de Jade et la recette de la voix restent dans DEV-053.
+
+**Suivi distinct :** ART-009, ART-011 et ART-013 conservent leurs livraisons et statuts existants. Cette carte couvre uniquement les nouveaux assets et leurs exports ; elle ne duplique ni l'intégration de DEV-053 ni le raccordement général de DEV-001. [Passation](../operations/handoffs/2026-11-26-chatgpt-intentions-triste-colere.md). **Production non démarrée.**
 
 ## Usage pour les agents
 

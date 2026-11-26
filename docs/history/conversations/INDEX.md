@@ -48,6 +48,11 @@ Les demandes suivantes de zoom et déplacement tactile, service indépendant sur
 
 L’autorisation de développer le push-to-talk en maintien et les secousses est consignée dans la [passation mobile du 26 novembre](../../operations/handoffs/2026-11-26-codex-mobile-ptt-shake.md#échanges-accessibles).
 
+## Synchronisation du clone de développement le 26 novembre 2026
+
+- **Propriétaire** (extrait de la conversation) « Je veux que tu push le local, mais attention il va y avoir du merge à faire ».
+- **Assistant** (synthèse) Conservation des sources du visage r21 et intégration des changements Live mobile sur `develop`. L’index réunit les deux passations. [Travail local sur le visage](../../operations/handoffs/2026-11-26-codex-volume-visage-r21.md) · [Live mobile](../../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md)
+
 ## Chambre portrait dans la PWA le 26 novembre 2026
 
 Le signalement du propriétaire et la réponse technique sont résumés dans la [passation de la chambre portrait](../../operations/handoffs/2026-11-26-codex-chambre-portrait.md). Aucune heure individuelle n’est attestée.

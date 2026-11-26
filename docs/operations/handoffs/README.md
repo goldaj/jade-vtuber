@@ -6,7 +6,9 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
-- [Lot Live mobile · DEV-040/041 et DEV-046 à DEV-051](2026-11-26-chatgpt-live-mobile-roadmap.md) · Architecture, Profil ON/OFF, fermeture au kill, mémoire/outils et coûts ; huit US À faire, cadrage documentaire prêt pour DEV-046.
+- [DEV-053 / ART-014 · Intentions Triste et Colère](2026-11-26-chatgpt-intentions-triste-colere.md) · Ajout P1, neuf intentions et dix-huit variantes avec parité voix/animations ; cadrage uniquement.
+
+- [Implémentation Live mobile · REC-044 à REC-050, DEV-041/052](2026-11-26-chatgpt-live-mobile-implementation.md) · Code `90ec0c7` et tests intégrés sur develop le 26/11 sur autorisation du propriétaire ; recette fournisseur/Redmi et voix originale restantes. [Cadrage initial](2026-11-26-chatgpt-live-mobile-roadmap.md) conservé comme référence.
 - [ART-006 · Trois-quarts du visage sur mobile](2026-11-26-codex-volume-visage-r21.md) · Contour joue–menton, recouvrement des mèches et clignement sur les deux rotations.
 - [ART-013 · Oreilles du r21](2026-11-26-codex-mobile-oreilles-r21.md) · Respiration et jeu des sept intentions sur mobile.
 - [DEV-001 · Jeu des intentions sur mobile](2026-11-26-codex-mobile-intentions.md) · Première étape de synchronisation entre la pose, le geste et la lecture.

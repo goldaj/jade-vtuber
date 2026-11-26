@@ -1,5 +1,7 @@
 # Volume du visage de Jade sur mobile
 
+La PWA utilise désormais la v49.1 validée sur téléphone. Cette fiche conserve la planche, la source Cubism v45.5 et les essais de rotation antérieurs pour reprendre le travail de dessin. Les exports intermédiaires v47.2 et v48 gardent leurs chemins historiques. [Version mobile validée](../CHANGELOG.md#2026-11-26--jade-mobile-v491-validée-sur-téléphone)
+
 ## Références et diagnostic
 
 Le propriétaire a fourni quatre captures de l’application et validé deux portraits dessinés de Jade enjouée, tournée à gauche et à droite. Ces portraits guident la perspective. La Jade de `develop` fixe les proportions du personnage, notamment la petite taille de son nez. Huohuo sert de repère pour la façon dont le mouvement se lit à la taille d’un téléphone.

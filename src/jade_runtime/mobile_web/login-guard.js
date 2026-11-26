@@ -67,6 +67,7 @@
     void (async () => {
       for (const url of [
         "/assets/duplex-client.js",
+        "/assets/live-client.js",
         "/assets/room-motion.js",
         "/assets/avatar-models.js",
         "/assets/seated-scene.js",
