@@ -1,5 +1,7 @@
 # Jade : atlas de la boucle fonctionnelle intégrale
 
+**Extension postérieure :** [Live mobile du 26/11](../LIVE_MOBILE.md), sur branche dédiée, ajoute une conversation orale native concurrente et des délégations dans l'arbitre existant. L'atlas ci-dessous conserve sa date et son SHA ; il ne décrit pas ce nouveau transport ni sa recette.
+
 Référence : `goldaj/jade-vtuber` • branche `develop` • commit GitHub `a841628b37d9d7449c8aeb5c6ca45bc679746655` (15/11/2026) • analyse du 16/11/2026.
 
 **Lecture** : les SVG sont les schémas vectoriels de référence. Les PNG sont des rendus d’aperçu. L'exécution réelle dépend de la configuration privée du PC et n’a pas été vérifiée sur le matériel.

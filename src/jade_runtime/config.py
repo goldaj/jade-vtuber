@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from src.utility.private_config import environ
+from .live_config import LiveConfig
 
 
 def _default_memory_db_path() -> str:
@@ -132,11 +133,13 @@ class Settings:
         Path(_default_memory_db_path()).with_name("jade-documents")))
     document_access_mode: str = "all"
     document_allowed_discord_ids: tuple[int, ...] = field(default=(), repr=False)
+    live: LiveConfig = field(default_factory=LiveConfig)
 
     @classmethod
     def load(cls) -> "Settings":
         """The project-private dotenv is preferred over a tracked file."""
         cfg = cls(
+            live=LiveConfig.from_env(environ),
             model=str(environ("JADE_LLM_MODEL", "gpt-6-luna")),
             reasoning_effort=str(environ("JADE_LLM_REASONING_EFFORT", "low")).lower(),
             max_completion_tokens=int(environ("JADE_MAX_COMPLETION_TOKENS", "2048")),
@@ -222,6 +225,7 @@ class Settings:
         return cfg
 
     def validate(self):
+        self.live.validate()
         if (self.reasoning_effort not in ("none", "low", "medium", "high", "xhigh", "max")
                 or not 128 <= self.max_completion_tokens <= 8192):
             raise ValueError("invalid LLM effort or completion budget")

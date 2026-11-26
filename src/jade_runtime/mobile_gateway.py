@@ -23,6 +23,7 @@ import time
 from .messages import Incoming
 from .incidents import incident_for_client
 from .intent_visuals import public_visual_contract
+from .mobile_live import LIVE_GET_ROUTES, LIVE_POST_ROUTES, LIVE_SDP_BODY_LIMIT
 
 LOG = logging.getLogger("jade.mobile")
 HERE = Path(__file__).resolve().parent
@@ -62,6 +63,8 @@ WEB_FILES = {
     "/assets/room-kitchen.webp": ("room-kitchen.webp", "image/webp"),
     "/assets/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/assets/duplex-client.js": ("duplex-client.js", "text/javascript; charset=utf-8"),
+    "/assets/live-client.js": ("live-client.js", "text/javascript; charset=utf-8"),
+    "/assets/live-audio-worklet.js": ("live-audio-worklet.js", "text/javascript; charset=utf-8"),
     "/manifest.webmanifest": ("manifest.webmanifest", "application/manifest+json"),
     "/sw.js": ("sw.js", "text/javascript; charset=utf-8"),
     "/icon.svg": ("icon.svg", "image/svg+xml"),
@@ -107,7 +110,7 @@ class MobileGateway:
                  public_origin: str | None = None,
                  avatar_intent_enabled: bool = True, billing_admin_key: str = "",
                  deploy_supervisor_token: str = "", deploy_supervisor_port: int = 8770,
-                 reminder_service=None):
+                 reminder_service=None, live_manager=None):
         if not isinstance(token, str) or len(token) < 32 or len(token) > 256:
             raise ValueError("JADE_MOBILE_TOKEN must contain 32-256 characters")
         if type(port) is not int or not 1024 <= port <= 65535:
@@ -115,6 +118,7 @@ class MobileGateway:
         self.runtime, self.services = runtime, services
         self.document_store = getattr(getattr(runtime, "document_service", None), "store", None)
         self.reminders = reminder_service
+        self.live_manager = live_manager
         if owner_login is not None and (not isinstance(owner_login, str)
                                          or not 3 <= len(owner_login.strip()) <= 256
                                          or not owner_login.isascii()):
@@ -531,6 +535,10 @@ class MobileGateway:
             self.pending.pop(incoming.message_id, None)
 
     async def _post(self, writer, route: str, headers: dict, body: bytes, *, streaming=False):
+        if route in LIVE_POST_ROUTES:
+            from .mobile_live import live_http
+            await live_http(self, writer, "POST", route, headers, body)
+            return
         if route in ("/api/push", "/api/reminders"):
             if headers.get("content-type", "").split(";")[0].strip() != "application/json":
                 await self._json(writer, 400, {"error": "expected JSON"})
@@ -631,6 +639,8 @@ class MobileGateway:
                 "scope": "server_observed_only",
                 "first_audible": "unavailable_without_client_ack",
                 "billing": "unavailable_per_turn",
+                "live_budget": (await asyncio.to_thread(self.live_manager.budget.snapshot)
+                                if self.live_manager is not None else None),
             })
             return
         if route == "/api/billing":
@@ -722,6 +732,8 @@ class MobileGateway:
         if not isinstance(session, str) or not SESSION.fullmatch(session):
             await self._json(writer, 400, {"error": "invalid session"})
             return
+        if self.live_manager is not None:
+            await self.live_manager.stop_owner("Goldaj", "text" if modality == "text" else "classic_voice")
         if self.semaphore.locked():
             await self._json(writer, 429, {"error": "Jade est occupée",
                                           **incident_for_client(asyncio.QueueFull())})
@@ -839,6 +851,19 @@ class MobileGateway:
                 await self._json(writer, 403, {"error": "private owner required"})
                 return
             if method == "GET":
+                if route in LIVE_GET_ROUTES or route == "/api/live/control":
+                    if not self._origin_allowed(headers) or not headers.get("host"):
+                        await self._json(writer, 403, {"error": "invalid_origin"})
+                        return
+                    if route == "/api/live/control":
+                        from .mobile_live import live_control
+                        await live_control(self, reader, writer, headers)
+                    elif not hmac.compare_digest(headers.get("authorization", ""), "Bearer " + self.token):
+                        await self._json(writer, 401, {"error": "authentication_required"})
+                    else:
+                        from .mobile_live import live_http
+                        await live_http(self, writer, "GET", route, headers)
+                    return
                 if route == "/assets/salon.html":
                     # Only deliver the salon document after token validation.
                     if not hmac.compare_digest(
@@ -865,7 +890,7 @@ class MobileGateway:
                 await self._static(writer, route)
                 return
             if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing", "/api/metrics",
-                              "/api/push", "/api/reminders", "/api/auth"):
+                              "/api/push", "/api/reminders", "/api/auth") and route not in LIVE_POST_ROUTES:
                 await self._json(writer, 404, {"error": "unknown route"})
                 return
             if (headers.get("transfer-encoding") or not self._origin_allowed(headers)
@@ -882,6 +907,8 @@ class MobileGateway:
                 return
             size = int(size_str)
             max_size = MAX_WAV if route == "/api/voice" else (12288 if route == "/api/push" else 4096)
+            if route == "/api/live/sessions":
+                max_size = LIVE_SDP_BODY_LIMIT
             if not 1 <= size <= max_size:
                 await self._json(writer, 413, {"error": "request too large"})
                 return

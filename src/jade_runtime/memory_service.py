@@ -14,7 +14,7 @@ from .memory_store import MemoryStore, identity_of
 from .session_logging import event
 from .explicit_memory_intent import parse_explicit_memory_intent
 from .messages import Reply
-from .memory_batch import MemoryBatcher
+from .memory_batch import MemoryBatcher, candidate_is_meaningful
 from .personality_evolution import personality_cues
 from .presence_memory import PresenceMemoryCache
 from .memory_relevance import rank_memories
@@ -546,13 +546,49 @@ class MemoryService:
             except Exception:
                 LOG.exception("Memory curator failed; conversation contents withheld")
 
-    async def _curate(self, key, incoming, reply):
+    def external_curation_eligible(self, incoming):
+        """Use the existing single/batch policy for a durably queued Live turn."""
+        return (not self._closed and self.curator_enabled
+                and identity_of(incoming) is not None
+                and not COMMAND.fullmatch(incoming.text.strip())
+                and (self.batch is None or candidate_is_meaningful(incoming.text)))
+
+    async def curate_external_turns(self, pairs, *, expected_person_id):
+        """Run one already admitted curator request, without a second task/timer.
+
+        The caller owns durable deduplication, budget reservation and Runtime
+        admission. L2/L3 decisions and transactional consent checks stay here.
+        Classic schedule()/batch workers are unchanged.
+        """
+        limit = self.batch.batch_size if self.batch is not None else 1
+        if not isinstance(pairs, (list, tuple)) or not 1 <= len(pairs) <= limit:
+            raise ValueError("invalid external curation batch")
+        eligible = [(incoming, reply) for incoming, reply in pairs
+                    if self.external_curation_eligible(incoming)]
+        if not eligible:
+            return
+        first = eligible[0][0]
+        key, scope = identity_of(first), _scope(first)
+        if any(identity_of(incoming) != key or _scope(incoming) != scope
+               for incoming, _reply in eligible):
+            raise ValueError("mixed external curation identities")
+        person = await asyncio.to_thread(self.store.account, key)
+        if person != expected_person_id:
+            return
+        if self.batch is not None:
+            await self.batch._curate(key, scope, eligible, expected_person_id)
+        else:
+            await self._curate(key, first, eligible[0][1],
+                               expected_person_id=expected_person_id)
+
+    async def _curate(self, key, incoming, reply, *, expected_person_id=None):
         try:
             # Pin this selection to the original opted-in profile. If the
             # person forgets and re-enables memory while the LLM is thinking,
             # the old event must never reappear in their new profile.
             person_id = await asyncio.to_thread(self.store.account, key)
-            if not person_id:
+            if not person_id or (expected_person_id is not None
+                                 and person_id != expected_person_id):
                 return
             # Background call is optional and billed when the backend is live.
             # The identity/consent is rechecked transactionally before writing.

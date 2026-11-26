@@ -1,5 +1,7 @@
 # JADE · Contrat fonctionnel des parcours et décisions
 
+**Complément du 26/11 :** [contrat Live mobile](../LIVE_MOBILE.md), implémenté sur `feat/live-mobile-20261126`. Le dialogue oral natif ne traverse pas STT → dialogue → TTS à chaque phrase. Les délégations métier réutilisent le worker, les droits et la mémoire ; le contexte classique est révisé après persistance Live. Les règles de sérialité de l'instantané ci-dessous restent celles de son SHA, pas une promesse de sérialité absolue des paroles avec Live.
+
 **Version étudiée :** `goldaj/jade-vtuber`, branche `develop`, commit `a841628b37d9d7449c8aeb5c6ca45bc679746655` (15 novembre 2026). Analyse du 16 novembre 2026.
 
 Ce document et les cinq SVG forment un **atlas**, pas une assertion selon laquelle chaque matériel, canal et option est réellement opérationnel sur le PC. Aucun réglage privé ou test end-to-end en conditions réelles n'a été inspecté. Les schémas sont volontairement **fonctionnels**, sans noms de méthodes ni de classes.

@@ -1,3 +1,17 @@
+## Extension Live mobile sur branche dédiée (26 novembre 2026)
+
+**Présent dans `feat/live-mobile-20261126`, qui inclut develop `6dc8d1b`.** Le propriétaire demande de conserver cette branche séparée ; les fonctions ci-dessous ne sont pas annoncées comme fusionnées dans develop. [Architecture](../architecture/LIVE_MOBILE.md) · [passation et preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md).
+
+- Profil permet de choisir Live/classique avec préférence serveur révisionnée. Le mode seul ne capture rien ; le micro Live utilise un toucher pour armer/mute, le classique garde son appui maintenu.
+- Audio Live WebRTC avec pré-roll local, bail exclusif, contrôle heartbeat et watchdog ; arrêt fort au changement de fil/modèle, texte, son OFF, arrière-plan, perte de contrôle, plafond ou durée. Idle ferme seulement la génération fournisseur ; aucune reprise de capture après un arrêt fort.
+- Fermeture fournisseur suivie jusqu'au terminal ou à l'état inconnu, registre privé et réconciliation au redémarrage. Une erreur SQLite ne bloque pas la demande de clôture ; un module Live indisponible préserve le parcours classique.
+- Même persona, histoire, mémoire et outils Jade ; délégations dans le worker/arbitre existant, effets idempotents, curation différée et budgétée. Le dialogue oral natif Live peut se dérouler pendant un tour d'un autre canal.
+- Chat par segments, pièces jointes privées, états de lecture explicites et avatar piloté par le son distant, sans modification des assets r20/r21.
+- Budgets Live privés en USD, réservations voix/backend, usages cumulés et métriques. Les frais backend restent estimés tant qu'ils ne sont pas rapprochés. Flags/budgets de démarrage fermés ; Discord classique conservé.
+- Aube est souhaitée mais non confirmée dans l'API ; Brise est le recours explicite. Support d'un ID personnalisé et kit de comparaison hors ligne prêts ; voix originale encore à créer/choisir.
+
+**Suivis :** sept développements transférés en REC-044 à REC-050, À valider, avec tests automatisés et recette OpenAI/Redmi restante. DEV-041 conserve la voix originale. DEV-052 décrit seulement la future bascule Discord à 50/40 EUR mensuels, sans pilotage du mobile.
+
 ## Contrôle distant PyCharm sur develop (24 novembre 2026)
 
 Le contrôleur privé Windows et le superviseur de processus PyCharm Run remplacent le déploiement mobile par changement de branche. Le mode Debug n'est plus pris en charge dans cette configuration, et la branche develop est fixe pour les mises à jour. Log live et page de secours disponibles via Tailscale Serve /control ; tâche à l'ouverture de session et raccourci invisible prévus. **Intégré sur develop ; redémarrage simple confirmé, mise à jour à recetter.** Le fast-forward conserve les modifications locales non conflictuelles, refuse les écrasements et expose les erreurs Git, le SHA distant du dernier fetch et le résultat distinct du redémarrage. Voir [guide](../operations/reference/REMOTE-PYCHARM-CONTROL-20261123.md).

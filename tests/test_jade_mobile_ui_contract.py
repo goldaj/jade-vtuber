@@ -46,7 +46,11 @@ class MobileUiLayoutContract(unittest.TestCase):
         self.assertIn("immersive ? 1.9 : 1.5", AVATAR)
         self.assertIn('window.JadeAvatar?.resize?.()', JS)
         self.assertIn('.shell:not([data-view="home"]),.shell[data-view="chat"]', CSS)
-        self.assertIn('.room-art[data-room="kitchen"]::before', CSS)
+        # The portrait bedroom now owns its separate camera and hides room-art;
+        # the remaining room-art background is the kitchen (develop v49.1).
+        self.assertIn('.room-art::before{', CSS)
+        self.assertIn('background:url("/assets/room-kitchen.webp") center/cover no-repeat;', CSS)
+        self.assertIn('.room[data-room="bedroom"] .room-art,.bedroom-frame,.portrait-seated-body{display:none}', CSS)
 
 
 if __name__ == "__main__":

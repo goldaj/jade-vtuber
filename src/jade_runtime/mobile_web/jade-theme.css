@@ -108,6 +108,17 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .profile-intro{display:none;padding:16px;line-height:1.6}
 .profile-intro h2,.reminders-heading h2{font-family:Georgia,serif;font-size:1.2rem;color:#254f39;margin:0}
 .profile-intro p,.reminders-heading p{color:#53765e}
+.live-mode-choice{padding:16px;margin:0 0 22px;border:1px solid #c2d6bf;border-radius:16px;background:#f1f6ed}
+.live-mode-choice p{margin:8px 0;font-size:.88rem;line-height:1.5}
+.live-mode-toggle{min-height:44px;margin:6px 0;padding:10px 18px;border:1px solid #487152;border-radius:24px;background:#2f5d45;color:#fff;font:inherit;font-weight:600;cursor:pointer}
+.live-mode-toggle[aria-pressed="true"]{background:#fff;color:#285639}
+.live-mode-toggle:disabled{opacity:.55;cursor:default}
+.live-mode-choice .live-mode-hint,.live-mode-choice .live-voice-notice{font-size:.78rem;color:#60725f}
+.live-mode-choice #live-mode-status{font-weight:600;color:#285639}
+.mic.live-armed{background:#376b50;box-shadow:0 0 0 4px #a6ca9f}
+.mic.live-connecting{box-shadow:0 0 0 4px #d4bb78}
+.live-transcript-status{display:block;font-style:italic;font-size:.7rem;opacity:.8}
+.live-attachments{display:flex;flex-wrap:wrap;gap:8px}
 .profile-intro .avatar-model-choice{display:grid;gap:6px;margin:16px 0;min-width:0}
 .avatar-model-choice label{color:#285639;font-weight:700}
 #avatar-model-selector{width:100%;min-height:44px;box-sizing:border-box;padding:9px 12px;

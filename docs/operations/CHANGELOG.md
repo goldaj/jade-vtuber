@@ -1,3 +1,11 @@
+## 2026-11-26 — Live mobile raccordé sur branche dédiée
+
+- **Périmètre :** `feat/live-mobile-20261126`, develop repris au `6dc8d1b`, aucune fusion develop/main. Sept US logicielles transférées en REC-044 à REC-050 ; voix originale DEV-041 partiellement préparée, future politique Discord 50/40 EUR ajoutée en DEV-052.
+- **Fonction :** Profil ON/OFF, bail exclusif avant capture, VAD/pré-roll et WebRTC, watchdog/fermeture confirmée, budgets privés, pont persona/mémoire/outils, chat et avatar sur la sortie réellement jouée. Classique et transport Discord conservés, capture jamais restaurée automatiquement.
+- **Code :** modules `live_*`/`mobile_live.py`, raccord `main.py` et gateway/duplex, configuration/préflight, façade Runtime/Dialogue/mémoire, scripts frontend et kit vocal hors ligne. Export de prévisualisation mis à jour pour les deux scripts Live. Aucun changement des modèles ou assets 2D.
+- **Contrôles :** fournisseur simulé, ledger concurrent, courses et pannes de sessions, vrais HTTP/WS loopback, vrai Runtime/SQLite/outils avec modèle simulé, suites JS et non-régressions. Les preuves chiffrées finales sont dans la [passation](handoffs/2026-11-26-chatgpt-live-mobile-implementation.md). Assertion de décor devenue obsolète reproduite sur develop puis actualisée sans changer le décor.
+- **Limites :** pas d'appel payé ni d'essai Redmi/OpenAI. Les fermetures inconnues et coûts non réconciliés restent conservateurs ; les coûts backend sont estimés. Aube API non confirmée, Brise explicite ; création/écoute et choix de voix restent ouverts. Flags et budgets par défaut fermés. [Architecture](../architecture/LIVE_MOBILE.md).
+
 ## 2026-11-26 — Jade mobile v49.1 validée sur téléphone
 
 - Le propriétaire a validé la rotation continue du visage du modèle debout dans la PWA. Le manifeste mobile référence l’export Cubism SDK 5.0 et ses trois textures. La [source Cubism v49.1](../../jade-modeling/assets/live2d/r21_professional_art/working_v005/Jade_r21_v49_1_visage_continu.cmo3) permet de reprendre la version publiée.

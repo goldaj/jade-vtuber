@@ -800,7 +800,8 @@ class MemoryStore:
     def append_conversation_turn(self, key: tuple[str, str], scope: str, *,
                                  source_platform: str, message_id: str,
                                  user_content: str, assistant_content: str,
-                                 source_author_name: str = "") -> bool:
+                                 source_author_name: str = "",
+                                 expected_person_id: str | None = None) -> bool:
         """Persist a complete delivered turn only for an opted-in verified person.
 
         A blank transport message ID is stored as NULL so consecutive local turns
@@ -817,7 +818,8 @@ class MemoryStore:
             row = db.execute(
                 "SELECT person_id FROM identities WHERE platform=? AND account_id=?", key
             ).fetchone()
-            if row is None:
+            if row is None or (expected_person_id is not None
+                               and row["person_id"] != expected_person_id):
                 return False
             changed = db.execute("""
                 INSERT OR IGNORE INTO conversation_turns

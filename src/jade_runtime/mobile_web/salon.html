@@ -80,6 +80,14 @@
 
     <section class="conversation" aria-label="Discussion">
       <section class="profile-intro" id="profile-intro" aria-label="Mon espace privé">
+        <section class="live-mode-choice" aria-labelledby="live-mode-heading">
+          <h2 id="live-mode-heading">Conversation Live</h2>
+          <p>Parle librement avec Jade, avec un toucher pour ouvrir le micro et un second pour le couper.</p>
+          <button type="button" id="live-mode-toggle" class="live-mode-toggle" aria-pressed="false" aria-describedby="live-mode-status" disabled>Activer le mode Live</button>
+          <p id="live-mode-status" role="status">Vérification du mode vocal…</p>
+          <p id="live-voice-notice" class="live-voice-notice" hidden></p>
+          <p class="live-mode-hint">Ce choix ne démarre pas le micro. Après une fermeture ou un retour dans l’appli, touche le micro pour reprendre.</p>
+        </section>
         <h2>Mon espace privé</h2>
         <p>Paramètres, compte lié et informations techniques.</p>
         <div class="avatar-model-choice">

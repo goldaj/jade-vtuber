@@ -22,6 +22,11 @@ PUBLIC_FILES = frozenset({
     ".editorconfig", ".flake8", "mypy.ini",
 })
 PUBLIC_PREFIXES = ("src/", "tests/", "config/profiles/")
+PUBLIC_TEST_FIXTURES = frozenset({
+    "tests/mobile_live_audio_worklet_test.js",
+    "tests/mobile_live_client_test.js",
+    "tests/mobile_live_app_test.js",
+})
 # Only these reviewed mobile UI files enter the PRIVATE preview.
 # Never include SDK vendor binaries, LFS model art or private configuration.
 MOBILE_WEB_PUBLIC = frozenset({
@@ -53,6 +58,8 @@ MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/r21-expressions/Surprised.exp3.json",
     "src/jade_runtime/mobile_web/app.js",
     "src/jade_runtime/mobile_web/duplex-client.js",
+    "src/jade_runtime/mobile_web/live-client.js",
+    "src/jade_runtime/mobile_web/live-audio-worklet.js",
     "src/jade_runtime/mobile_web/manifest.webmanifest",
     "src/jade_runtime/mobile_web/sw.js",
     "src/jade_runtime/mobile_web/icon.svg",
@@ -63,6 +70,7 @@ SPLASH_SOURCE = "src/jade_runtime/mobile_web/splash-jade.png"
 ICON_SOURCE = "src/jade_runtime/mobile_web/icon-source-96.png"
 ICON_SOURCE_SHA256 = "6898ee1d8853948fb014f3f4e301916484960fc361963cfcf81df93e412a71ef"
 PUBLIC_TOOLS = frozenset({
+    "scripts/live_voice_preview.py",
     "tools/jade_publication_audit.py",
     "tools/jade_publication_export.py",
     "tools/jade_ci_preflight.py",
@@ -92,6 +100,7 @@ def selected_paths(paths: list[str]) -> list[str]:
     """Explicit allowlist; the optional portrait is handled separately."""
     return sorted(p for p in paths if p in PUBLIC_FILES or p in PUBLIC_TOOLS
                   or p in PUBLIC_TEMPLATES or p in MOBILE_WEB_PUBLIC or p in PUBLIC_RUN_CONFIGS
+                  or p in PUBLIC_TEST_FIXTURES
                   or (p.startswith(PUBLIC_PREFIXES) and p.endswith(".py"))
                   or (p.startswith("config/profiles/") and p.endswith(".toml")))
 
