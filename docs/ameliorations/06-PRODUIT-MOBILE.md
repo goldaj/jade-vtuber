@@ -3,10 +3,13 @@
 | ID | Priorité / état | Amélioration proposée / condition de réussite |
 | --- | --- | --- |
 | UX-10 | P2 / P | Panne réseau/mobile : affichage d'indisponibilité, reconnexion sans double génération payante, reprise du contexte autorisé, annulation lorsque client quitte l'écran. |
-| UX-14 | P3 / D | Étudier un client mobile plus riche ou natif seulement après validation PWA, dépendances SDK Live2D et comparaison latence/batterie ; ne pas créer un APK par principe. |
 | UX-17 | P1 / P | **Connexion mobile autonome par application Authenticator** : remplacer, dans l'interface propriétaire PWA, la nécessité de récupérer/coller manuellement le jeton privé depuis le PC par un parcours d'authentification compatible Google/Microsoft Authenticator (TOTP standard ou alternative équivalente étudiée), avec enrôlement initial sécurisé, code de secours/récupération, protection anti-bruteforce et révocation. Après connexion, conserver une session mobile sécurisée renouvelable pour ne pas ressaisir un code à chaque lancement ; ne jamais stocker ni afficher de secret longue durée en clair dans le client, les logs ou le dépôt. Préserver l'accès privé Tailscale Serve et l'authentification des API non interactives si nécessaires. Recetter reconnexion, expiration, perte du téléphone, nouveau navigateur et usage en réseau mobile. |
 | UX-18 | P1 / P | **Compléter le suivi de crédit API OpenAI de la PWA :** l'affichage des dépenses organisationnelles et de leur actualisation existe déjà ; la **valeur exacte du crédit prépayé** reste indisponible tant qu'aucune source officielle autorisée ne la fournit. Prévoir si possible un indicateur exact clairement identifié, une alerte seuil de crédit bas configurable et une distinction solde/budget/dépenses ; si impossible, afficher explicitement « solde indisponible » sans inventer un solde ni scraper la console. Accès uniquement via le backend privé/authentifié, cache raisonnable et aucune nouvelle dépense API superflue. |
 
+
+| UX-20 | P3 / D | **Faire réagir Jade aux secousses du téléphone.** Lorsque le r21 est affiché, reproduire sur le mobile l’effet du déplacement secoué à la souris dans VTube Studio. [Critères](#ux-20--réaction-aux-secousses-p3) |
+
+**UX-14 est suivie en [DEV-044](../backlog/01-DEVELOPPEMENT.md#dev-044--application-android-installable) au niveau P2** depuis la décision du propriétaire du 26/11/2026.
 
 **UX-19 a été transférée dans la backlog en [DEV-032](../backlog/01-DEVELOPPEMENT.md) au statut « À qualifier ».** La génération et la transmission de fichiers téléchargeables depuis la PWA restent entièrement à cadrer avec le propriétaire ; aucun développement autorisé pour le moment.
 
@@ -15,3 +18,7 @@
 ### UX-18 — solde prépayé indisponible
 
 Les coûts d'usage existants sont suivis dans le backend ; seule l'obtention autorisée d'un **solde prépayé exact** et l'alerte de seuil restent prospectives. Aucun montant estimé ne doit être présenté comme un solde réel.
+
+### UX-20 · Réaction aux secousses (P3)
+
+Après DEV-042, mesurer l’effet d’une secousse franche sur un téléphone réel. Filtrer les mouvements ordinaires et appliquer une impulsion amortie au rendu et à la physique de Jade r21 sur le téléphone. Le déplacement et le zoom choisis restent son point de repos. Prévoir un réglage pour couper l’effet. Recetter les répétitions, le passage en arrière-plan, un capteur indisponible et la compatibilité avec le pincement, l’appui long et la conversation.
