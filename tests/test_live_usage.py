@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import inspect
@@ -296,7 +297,8 @@ class LiveUsageTests(unittest.TestCase):
     def test_legacy_sqlite_migration_preserves_data_and_is_repeatable(self):
         path = Path(self.temp.name) / "jade-live-budget.sqlite3"
         stamp = self.now.isoformat()
-        with sqlite3.connect(path) as db:
+        # The SQLite context commits/rolls back; closing also releases its file handle.
+        with closing(sqlite3.connect(path)) as db, db:
             db.executescript("""
                 CREATE TABLE jade_live_budget_reservations(
                     id TEXT PRIMARY KEY, kind TEXT NOT NULL, quote_usd TEXT NOT NULL,

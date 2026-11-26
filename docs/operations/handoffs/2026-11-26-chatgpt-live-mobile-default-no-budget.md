@@ -25,6 +25,12 @@
 - **Passe distincte de validation Codex du 26/11 : positive pour DEV-054.** `/root/live_api_costs` valide l’isolement comptable du backend ; `/root/live_architecture` valide le frontend après reproduction puis correction de la course de réauthentification ; `/root/live_mobile_qa` contrôle les critères produit documentaires. Les deux phrases résiduelles sur une admission dépendant du ledger ont été corrigées et revérifiées par root.
 - Les appels fournisseur et la capture physique ne sont pas exécutés par cette mission ; les tests utilisent des doubles et des sockets locales. REC-044 à REC-050 restent À valider pour ces observations. La CI Linux/Windows du commit publié doit être suivie séparément ; aucune réussite distante n’est supposée par les résultats locaux.
 
+## Publication et correction de la CI Windows
+
+Le lot a été publié sur `develop` par le commit [`893182c`](https://github.com/goldaj/jade-vtuber/commit/893182cb2aa66d82a1dc85f75f41702a567210cc). L'arbre distant est identique à l'index testé (`98ad040252b27623a3059caab27a780e85f6cb81`). La [CI initiale](https://github.com/goldaj/jade-vtuber/actions/runs/45900608688) valide Linux (884 tests, 3 skips) et les commandes navigateur Linux/Windows ; Responses et le scan de secrets sont verts.
+
+Windows révèle un défaut de nettoyage dans le nouveau test de migration : le contexte natif SQLite termine la transaction mais ne ferme pas la connexion. Le handle de fixture reste ouvert et Windows refuse de supprimer le fichier temporaire, dans la suite principale comme dans l'export autonome. `contextlib.closing` ferme maintenant la connexion en conservant le contexte transactionnel et toutes les assertions. Le runtime ferme déjà les siennes dans un `finally` ; aucune modification produit supplémentaire. Les tests usage sont relancés et la CI du correctif doit confirmer le nettoyage sous Windows. Ce suivi ne transforme aucune recette matérielle en réussite.
+
 ## Mise en service sur le poste
 
 Après mise à jour develop, redémarrer Jade puis recharger la PWA. Aucun montant mobile à renseigner. Si la configuration privée contient explicitement un ancien `JADE_LIVE_ENABLED=0` ou `JADE_MOBILE_LIVE_ENABLED=0`, le passer à `1` ou retirer la surcharge ; les valeurs du processus/PyCharm restent prioritaires. Si un choix classique avait été enregistré dans Profil, choisir Live une fois. Le diagnostic hors réseau est `poetry run python main.py --preflight --live --mobile`, avec la configuration du lancement habituel.
