@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [DEV-053 / ART-014 · Intentions Triste et Colère](2026-11-26-chatgpt-intentions-triste-colere.md) · Ajout P1, neuf intentions et dix-huit variantes avec parité voix/animations ; cadrage uniquement.
+
 - [Lot Live mobile · DEV-040/041 et DEV-046 à DEV-051](2026-11-26-chatgpt-live-mobile-roadmap.md) · Architecture, Profil ON/OFF, fermeture au kill, mémoire/outils et coûts ; huit US À faire, cadrage documentaire prêt pour DEV-046.
 - [ART-013 · Oreilles du r21](2026-11-26-codex-mobile-oreilles-r21.md) · Respiration et jeu des sept intentions sur mobile.
 - [DEV-001 · Jeu des intentions sur mobile](2026-11-26-codex-mobile-intentions.md) · Première étape de synchronisation entre la pose, le geste et la lecture.
