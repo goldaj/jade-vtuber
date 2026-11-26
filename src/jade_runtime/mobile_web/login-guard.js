@@ -68,6 +68,7 @@
       for (const url of [
         "/assets/duplex-client.js",
         "/assets/room-motion.js",
+        "/assets/avatar-models.js",
         "/assets/seated-scene.js",
         "/assets/portrait-bedroom-motion.js",
         "/assets/head-isolation.js",
@@ -75,6 +76,7 @@
         "/vendor/pixi-unsafe-eval.min.js",
         "/vendor/live2dcubismcore.min.js",
         "/vendor/cubism4.min.js",
+        "/assets/avatar-model-loader.js",
         "/assets/avatar.js",
       ]) {
         try { await loadScript(url); }

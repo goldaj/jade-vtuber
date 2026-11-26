@@ -36,7 +36,7 @@ for(let n=0;n<32;n++){
 }
 // Exercise the actual browser lifecycle, with a deliberately unsupported
 // image and a supported canvas mock. No GPU/DOM dependency in CI.
-function boot(width=864, pixelFailure=false) {
+function boot(width=864, pixelFailure=false, legacy=false) {
   const events={},frames=new Map();let id=0,intersection,draws=0,clears=0;
   function ctx(){return {
     drawImage(){draws++;},clearRect(){clears++;},fillRect(){},
@@ -54,6 +54,7 @@ function boot(width=864, pixelFailure=false) {
   function canvas(){const c=ctx();return {hidden:true,getContext(){return c;}};}
   const output=canvas(),room={dataset:{room:"bedroom",seatedReady:"true"},
     addEventListener(n,fn){events[n]=fn;}};
+  if(!legacy)room.dataset.portraitReady="true";
   const backdrop={complete:true,naturalWidth:width,naturalHeight:1536,
     addEventListener(n,fn){events[n]=fn;}};
   const toggle={checked:true,addEventListener(n,fn){events.toggle=fn;}};
@@ -89,7 +90,14 @@ assert.match(b.status.textContent,/adoucis/);
 b.media.matches=false;b.events.media();assert.equal(b.frames.size,1);
 b.toggle.checked=false;b.events.toggle();assert.equal(b.frames.size,0);assert.equal(b.output.hidden,true);
 b.toggle.checked=true;b.events.toggle();assert.equal(b.frames.size,1);
-b.room.dataset.seatedReady="false";b.events["jade-seated-ready"]();assert.equal(b.frames.size,0);
+b.room.dataset.seatedReady="false";b.events["jade-seated-ready"]();
+assert.equal(b.frames.size,1,"portrait animation survives removal of the classic body");
+assert.equal(b.output.hidden,false);
+b.room.dataset.portraitReady="false";b.events["jade-portrait-ready"]();assert.equal(b.frames.size,0);
+b.room.dataset.portraitReady="true";b.events["jade-portrait-ready"]();assert.equal(b.frames.size,1);
+const legacy=boot(864,false,true);
+legacy.room.dataset.seatedReady="false";legacy.events["jade-seated-ready"]();
+assert.equal(legacy.frames.size,0,"older callers without portraitReady remain compatible");
 const scaled=boot(865);assert.equal(scaled.frames.size,1,"same aspect ratio is accepted");
 const unsupported=boot(1200);assert.equal(unsupported.frames.size,1);assert.equal(unsupported.room.dataset.portraitMotion,"partial");
 const failed=boot(864,true);assert.equal(failed.frames.size,1);assert.equal(failed.room.dataset.portraitMotion,"partial");

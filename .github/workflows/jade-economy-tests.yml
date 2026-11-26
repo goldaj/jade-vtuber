@@ -30,6 +30,11 @@ jobs:
           node --check src/jade_runtime/mobile_web/app.js
           node --check src/jade_runtime/mobile_web/duplex-client.js
           node tests/mobile_stream_client_test.js
+          node --check src/jade_runtime/mobile_web/avatar-models.js
+          node --check src/jade_runtime/mobile_web/avatar-model-loader.js
+          node tests/mobile_avatar_models_test.js
+          node tests/mobile_avatar_model_loader_test.js
+          node tests/mobile_avatar_lifecycle_test.js
           node --check src/jade_runtime/mobile_web/avatar.js
           node tests/mobile_avatar_visibility_test.js
           node tests/mobile_scene_framing_test.js

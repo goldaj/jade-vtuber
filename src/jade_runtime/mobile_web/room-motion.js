@@ -79,9 +79,10 @@
 
   function sync() {
     const reduced = preference.matches;
+    const portraitReady = (room?.dataset.portraitReady ?? room?.dataset.seatedReady) === "true";
     // Bedroom retains the rAF renderer. Kitchen owns independent CSS-only accents.
     const bedroomLayers = activeRoom === "bedroom" &&
-      room?.dataset.seatedReady !== "true" && supportsRoomLayers && ready && !reduced;
+      !portraitReady && supportsRoomLayers && ready && !reduced;
     const kitchenLayers = activeRoom === "kitchen" && supportsRoomLayers && !reduced;
     const source = activeRoom === "kitchen"
       ? ROOM_IMAGES.kitchen
@@ -143,6 +144,7 @@
   }
   roomSelect.addEventListener("change", () => { void changeRoom(roomSelect.value); });
   room?.addEventListener("jade-seated-ready", sync);
+  room?.addEventListener("jade-portrait-ready", sync);
 
   if (supportsRoomLayers) {
     Promise.all([

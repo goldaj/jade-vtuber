@@ -61,9 +61,28 @@ Le modèle r20 est suivi via **Git LFS**. Les paquets graphiques Web propriétai
 - **Discord** : `discord_text.py` et `discord_voice.py` reçoivent/émittent sur les destinations associées, contrôle des IDs, permissions, sessions vocales et reconnexions ; `discord_dave.py` et `discord_pcm.py` gèrent la pile audio/codec.
 - **Twitch** : `twitch_irc.py` lit les messages IRC via TLS, gère PING/PONG et limitation d'envoi ; `twitch_rotation.py` et `twitch_token.py` valident/renouvellent les secrets si configurés.
 - **HTTP PC** : `local_http.py` écoute seulement `127.0.0.1:8765` par défaut, Bearer indépendant et `POST /message` ; `phone_ui.py` est une petite interface Web locale texte, pas la PWA moderne.
-- **Android** : `mobile_gateway.py` écoute seulement `127.0.0.1:8766`, sert `GET /`, `/assets/*`, `/vendor/*`, `/model/*` avec chemins autorisés ; les appels `POST /api/chat` et `/api/voice` nécessitent un token Bearer distinct. Toutes les routes vérifient `Tailscale-User-Login` fourni par le proxy Serve, et les POST un contrôle d'origine HTTPS. Les WAV sont traités en RAM. L'API renvoie texte/intention et éventuellement WAV encodé.
+- **Android** : `mobile_gateway.py` écoute seulement `127.0.0.1:8766`, sert `GET /`, `/assets/*`, `/vendor/*`, `/model/*` et, uniquement si configuré, `/models/next/*` avec chemins autorisés ; les appels `POST /api/chat` et `/api/voice` nécessitent un token Bearer distinct. Toutes les routes vérifient `Tailscale-User-Login` fourni par le proxy Serve, et les POST un contrôle d'origine HTTPS. Les WAV sont traités en RAM. L'API renvoie texte/intention et éventuellement WAV encodé.
 - **Client Web** : `mobile_web/index.html`, `app.js`, `avatar.js`, `styles.css`, `manifest.webmanifest` et `sw.js`. Le jeton n'est stocké ni en cookie, ni en localStorage ; le service worker ne met pas en cache des conversations privées. Micro appuyer-pour-parler max 20 s ; capture abandonnée lors de passage en arrière-plan ; TTS joué localement dans le navigateur ; animation de bouche basée sur amplitude audio approximative.
 - **Scène partagée entre onglets** : `jade-theme.css` réserve le choix Chambre/Cuisine à l’Accueil et recadre les mini-scènes sur la tête. Le corps assis et le rendu Live2D gardent un repère commun ; le fond et son canvas d’animation s’étendent ensemble sur les scènes courtes. `avatar.js` recadre aussi la cuisine et le repli debout. `app.js` relie le bouton plein écran, le double clic et le double appui à une bascule unique, avec exclusion des contrôles et gestes de défilement/pincement. Les tests Node `mobile_scene_framing_test.js` et `mobile_scene_gestures_test.js` sont exécutés en CI.
+
+### Sélection du modèle mobile (26/11/2026)
+
+Le sélecteur appartient à **Profil**, avec `classic` comme choix initial. `login-guard.js` charge `avatar-models.js` avant la scène assise, puis `avatar-model-loader.js` après les SDK et avant `avatar.js`. L’authentification et le démarrage du chat précèdent ces modules facultatifs. Aucun modèle n’est chargé par la simple consultation du catalogue ou de Profil, et le choix ne persiste pas localement.
+
+`GET /assets/avatar-models.json` fournit le catalogue v1 suivant :
+
+| Profil | URL du manifeste | Présentation | Intentions du classique | Mouvement initial | Disponibilité livrée |
+| --- | --- | --- | --- | --- | --- |
+| `classic` | `/model/Jade.model3.json` | `seated` | Oui | `Idle` | Disponible |
+| `next` | `null` ; `/models/next/Jade.model3.json` après configuration valide | `full` | Non | Aucun | Indisponible |
+
+`JADE_MOBILE_SECOND_MODEL_DIR` est vide dans l’exemple de configuration et dans les valeurs par défaut. Il n’existe aucune détection automatique du r21 ou des livraisons v45.1. Pour un branchement ultérieur explicite, le serveur vérifie le manifeste v3, les fichiers référencés, leurs formats et leur présence réelle dans le dossier configuré ; les pointeurs Git LFS non matérialisés, chemins sortants et liens symboliques sont refusés. Cette validation de paquet ne garantit pas sa compatibilité graphique avec le SDK. Le profil `next` ne reçoit aucun ajout automatique de l’Idle ou des expressions r20.
+
+Le catalogue côté client est immuable et n’accepte que les deux profils et les URL locales attendus. Une erreur de lecture ou un délai dépassé conserve un catalogue classique sûr. `JadeAvatar.state` expose `status`, `modelId`, `requestedId` et `message` ; `jade-avatar-state` notifie les changements. Le contrôle est désactivé avant disponibilité du renderer et pendant le chargement. `selectModel(id)` ne vaut réussite que lorsque le modèle demandé est réellement prêt ; les refus et replis restent visibles.
+
+Le chargeur détient les ressources d’un seul modèle à la fois, y compris celles acquises avant un échec partiel. Le remplacement retire d’abord le corps DOM via `JadeSeatedScene.deactivate()`, arrête le modèle et libère ses ressources avant toute nouvelle allocation. Si la libération ne peut pas être confirmée, le rendu demande un rechargement au lieu de superposer deux modèles. `usesSeatedBody` réserve la composition hybride au profil classique prêt. Les images de corps en retard sont invalidées par génération ; un retour au classique relance leur préparation. `data-portrait-ready` garde le décor validé indépendant de `data-seated-ready`, et les animations suivent cette disponibilité du décor.
+
+La mission prépare ce contrat et ses tests, sans activer un second paquet. [Résultats et limites de validation](../operations/handoffs/2026-11-26-chatgpt-mobile-model-selection.md).
 
 **Modèle de sécurité :** aucune ouverture publique du port mobile, aucune CORS générale, aucun Funnel, pas de transit par le VPS trading. Le fait de posséder l'URL privée ne dispense pas du bon compte Tailscale et du token. Un code local sur le PC capable d'usurper l'en-tête sur loopback reste hors du modèle de confiance, ce qui rend l'isolation du PC importante.
 

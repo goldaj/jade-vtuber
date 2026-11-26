@@ -9,7 +9,18 @@
   const fallback = document.getElementById("avatar-fallback");
   const status = document.getElementById("avatar-state");
   const mood = document.getElementById("mood-line");
+  const room = document.querySelector?.(".room");
+  const DEFAULT_PROFILE = Object.freeze({id:"classic", label:"Modèle actuel", available:true,
+    manifestUrl:"/model/Jade.model3.json", presentation:"seated", classicIntents:true, idleMotion:"Idle"});
   let model = null;
+  let modelLease = null;
+  let activeProfile = null;
+  let desiredProfile = null;
+  let selectionVersion = 0;
+  let selectionQueue = Promise.resolve();
+  let pendingSelection = null;
+  let cleanupBlocked = false;
+  let rendererState = Object.freeze({status:"idle", modelId:null, requestedId:"classic", message:""});
   let headIsolation = null;
   let seatedComposition = null;
   let pixi = null;
@@ -30,7 +41,7 @@
   const counts = Object.create(null);
 
   function applyExpression(expression) {
-    if (!model) return;
+    if (!model || !activeProfile?.classicIntents) return;
     try {
       if (expression === "Neutral") {
         // pixi-live2d-display expression API differs between SDK versions.
@@ -139,10 +150,13 @@
 
   const avatar = {
     resize: () => resize(),
+    selectModel,
+    get state() { return rendererState; },
     get ready() { return Boolean(model); },
+    get usesSeatedBody() { return Boolean(model && activeProfile?.presentation === "seated"); },
     get canIsolateHead() { return Boolean(headIsolation); },
     get canComposeSeated() {
-      return Boolean(model && pixi && headIsolation?.canLayerHair &&
+      return Boolean(this.usesSeatedBody && pixi && headIsolation?.canLayerHair &&
         window.PIXI?.Sprite?.from && window.PIXI?.Container);
     },
     prepareSeatedComposition(image) {
@@ -157,7 +171,7 @@
         // An already loaded HTML image can have a temporarily unuploaded Pixi
         // texture. Let Pixi upload it on the next frame rather than aborting.
         seatedBody = PIXI.Sprite.from(image);
-        if (!seatedBody.texture) return false;
+        if (!seatedBody.texture) throw new Error("Seated body texture unavailable");
         back = new PIXI.Container();
         previousRender = model._render;
         previousDraw = model.internalModel.draw;
@@ -205,14 +219,22 @@
         seatedBody.visible = false;
         pixi.stage.addChildAt(back, 0);
         pixi.stage.addChildAt(seatedBody, 1);
-        seatedComposition = {back, body: seatedBody};
+        const composedModel = model;
+        seatedComposition = {back, body: seatedBody, restore() {
+          composedModel._render = previousRender;
+          composedModel.internalModel.draw = previousDraw;
+        }};
         return true;
       } catch (error) {
-        if (previousRender) model._render = previousRender;
-        if (previousDraw) model.internalModel.draw = previousDraw;
-        if (back?.parent) back.parent.removeChild(back);
-        if (seatedBody?.parent) seatedBody.parent.removeChild(seatedBody);
-        if (seatedBody) seatedBody.destroy();
+        let cleanupFailed = false;
+        const clean = action => { try { action(); } catch (_) { cleanupFailed = true; } };
+        clean(() => { if (previousRender) model._render = previousRender; });
+        clean(() => { if (previousDraw) model.internalModel.draw = previousDraw; });
+        clean(() => back?.parent?.removeChild(back));
+        clean(() => seatedBody?.parent?.removeChild(seatedBody));
+        clean(() => back?.destroy?.({children:true}));
+        clean(() => seatedBody?.destroy?.({texture:true, baseTexture:true}));
+        if (cleanupFailed) blockAfterCleanupFailure();
         console.warn("Seated Jade compositor:", error);
         return false;
       }
@@ -247,7 +269,7 @@
 
   function isSeated() {
     const room = document.querySelector?.(".room");
-    return room?.dataset.room === "bedroom" &&
+    return activeProfile?.presentation === "seated" && room?.dataset.room === "bedroom" &&
       room?.dataset.seatedReady === "true";
   }
 
@@ -292,6 +314,15 @@
     }
     const immersive = shell?.classList.contains("is-room-only");
     const miniScene = shell?.dataset?.view && shell.dataset.view !== "home" && !immersive;
+    if (activeProfile?.presentation === "full") {
+      // A future complete model owns its body. Fit the whole figure on Home
+      // and in fullscreen; short menus favour its upper part, with no r20 crop.
+      const margin = Math.max(8, height * .04);
+      const availableHeight = miniScene ? height * 1.6 : Math.max(1, height - margin - 96);
+      model.scale.set(Math.max(.001, Math.min(width * .95 / naturalWidth, availableHeight / naturalHeight)));
+      model.position.set(width * .5, margin + model.height * .5);
+      return;
+    }
     if (miniScene) {
       // Short menu scenes give the head the top edge. Scale the whole model,
       // keeping its proportions while allowing the lower body to be cropped.
@@ -305,94 +336,199 @@
     model.position.set(width * (immersive ? .55 : .58), height * (immersive ? .82 : .79));
   }
 
-  async function load() {
+  function publishState(nextStatus, message = "") {
+    rendererState = Object.freeze({status:nextStatus, modelId:activeProfile?.id || null,
+      requestedId:desiredProfile?.id || "classic", message});
+    if (typeof Event === "function") room?.dispatchEvent?.(new Event("jade-avatar-state"));
+  }
+
+  function profileFor(id) {
+    return window.JadeModelCatalog ? window.JadeModelCatalog.get(id)
+      : id === "classic" ? DEFAULT_PROFILE : null;
+  }
+
+  function setPresentation(profile) {
+    if (room) room.dataset.avatarPresentation = profile.presentation;
+  }
+
+  function blockAfterCleanupFailure() {
+    cleanupBlocked = true;
+    status.textContent = "L’affichage doit être relancé. Recharge le salon pour réessayer.";
+    fallback.classList.remove("hidden");
+    publishState("error", status.textContent);
+  }
+
+  function releaseCurrentModel() {
+    const errors = [];
+    const attempt = fn => { try { fn(); } catch (error) { errors.push(error); } };
+    // Hide the old DOM body before any asynchronous replacement begins.
+    attempt(() => window.JadeSeatedScene?.deactivate?.());
+    if (room) {
+      room.dataset.seatedReady = "false";
+      room.dataset.seatedCompositor = "false";
+      delete room.dataset.avatarModel;
+    }
+    attempt(stopRendering);
+    cancelPendingVisibilityPause();
+    if (seatedComposition) {
+      const composition = seatedComposition;
+      seatedComposition = null;
+      attempt(() => composition.restore?.());
+      attempt(() => composition.back.parent?.removeChild(composition.back));
+      attempt(() => composition.body.parent?.removeChild(composition.body));
+      attempt(() => composition.back.destroy?.({children:true}));
+      attempt(() => composition.body.destroy?.({texture:true, baseTexture:true}));
+    }
+    if (modelLease) attempt(() => modelLease.dispose());
+    modelLease = null;
+    model = null;
+    activeProfile = null;
+    headIsolation = null;
+    renderRunning = false;
+    hasStartedRendering = false;
+    resumeFromPause = false;
+    if (errors.length) {
+      const error = new Error("Previous model could not be released");
+      error.cleanupFailed = true;
+      throw error;
+    }
+  }
+
+  function ensureRenderer() {
+    if (pixi) return;
+    const PIXI = window.PIXI;
+    if (!PIXI?.Application || !window.Live2DCubismCore || !window.JadeAvatarModelLoader)
+      throw new Error("Live2D renderer unavailable");
+    pixi = new PIXI.Application({resizeTo:target, autoDensity:true,
+      resolution:Math.min(window.devicePixelRatio || 1, 2),
+      antialias:true, backgroundAlpha:0, transparent:true});
+    target.appendChild(pixi.view);
+    pixi.ticker.stop();
+    // One canvas, observer and ticker for the whole session, never one per choice.
+    pixi.ticker.add(() => {
+      try {
+        // DOM fallback still needs to hide the model's original standing body.
+        headIsolation?.sync(isSeated());
+        const core = model?.internalModel?.coreModel;
+        if (core && typeof core.setParameterValueById === "function")
+          core.setParameterValueById("ParamMouthOpenY", mouth);
+      } catch (_) {}
+    }, undefined, PIXI.UPDATE_PRIORITY?.LOW ?? -50);
+    observer = new ResizeObserver(resize);
+    observer.observe(target);
+  }
+
+  function mountModel(lease, profile) {
+    const next = lease.model;
+    const cubism = next.internalModel.coreModel;
+    if (!cubism.getDrawableRenderOrders()) {
+      const core = cubism.getModel();
+      if (core.getRenderOrders?.()?.length !== cubism.getDrawableCount())
+        throw new Error("Cubism render order is incompatible with this model");
+      cubism.getDrawableRenderOrders = () => core.getRenderOrders();
+    }
+    modelLease = lease;
+    model = next;
+    activeProfile = profile;
+    setPresentation(profile);
+    if (room) room.dataset.avatarModel = profile.id;
+    headIsolation = profile.presentation === "seated"
+      ? window.JadeHeadIsolation?.forModel?.(cubism) ?? null : null;
+    model.anchor.set(.5, .5);
+    pixi.stage.addChild(model);
+    resize();
+    fallback.classList.add("hidden");
+    if (typeof Event === "function") room?.dispatchEvent?.(new Event("jade-avatar-ready"));
+    if (profile.idleMotion && typeof model.motion === "function") {
+      try {
+        const animation = model.motion(profile.idleMotion, 0);
+        animation?.catch?.(() => {});
+      } catch (_) {}
+    }
+    // Speech state survives a visual change. Never request r20 expressions
+    // or head isolation on a complete model with a different rig.
+    if (activeChoice && palette?.enabled) applyExpression(activeChoice.expression);
+    syncRenderVisibility();
+  }
+
+  async function switchTo(profile, version, recovering = false) {
+    if (cleanupBlocked || version !== selectionVersion) return false;
+    if (model && activeProfile?.id === profile.id) {
+      publishState("ready");
+      return true;
+    }
+    let lease = null;
+    try {
+      ensureRenderer();
+      releaseCurrentModel();
+      setPresentation(profile);
+      fallback.classList.remove("hidden");
+      status.textContent = "Chargement de Jade…";
+      publishState("loading", recovering
+        ? "Retour au modèle actuel…" : "Chargement du modèle…");
+      lease = await window.JadeAvatarModelLoader.load(profile);
+      if (version !== selectionVersion) {
+        lease.dispose();
+        return false;
+      }
+      mountModel(lease, profile);
+      publishState("ready", recovering
+        ? "Le nouveau modèle n’a pas pu être chargé. Le modèle actuel est rétabli." : "");
+      return true;
+    } catch (error) {
+      console.warn("Jade Live2D:", error);
+      try {
+        if (modelLease === lease && lease) releaseCurrentModel();
+        else if (lease) lease.dispose();
+      } catch (cleanupError) { error = cleanupError; }
+      if (error?.cleanupFailed) {
+        blockAfterCleanupFailure();
+        return false;
+      }
+      if (version !== selectionVersion) return false;
+      if (profile.id !== "classic" && !recovering) {
+        await switchTo(profileFor("classic") || DEFAULT_PROFILE, version, true);
+        return false;
+      }
+      status.textContent = "Impossible de charger Jade. Recharge le salon pour réessayer.";
+      fallback.classList.remove("hidden");
+      publishState("error", status.textContent);
+      return false;
+    }
+  }
+
+  function selectModel(id) {
+    if (cleanupBlocked) return Promise.resolve(false);
+    const profile = profileFor(id);
+    if (!profile?.available || !profile.manifestUrl) {
+      publishState(rendererState.status, "Ce modèle n’est pas encore disponible.");
+      return Promise.resolve(false);
+    }
+    if (pendingSelection?.id === id) return pendingSelection.promise;
+    desiredProfile = profile;
+    const version = ++selectionVersion;
+    // A later request never starts while an older SDK setup is unsettled.
+    // Obsolete loads are disposed without mounting before this queue advances.
+    const promise = selectionQueue.then(() => switchTo(profile, version)).finally(() => {
+      if (pendingSelection?.version === version) pendingSelection = null;
+    });
+    selectionQueue = promise.catch(() => {});
+    pendingSelection = {id, version, promise};
+    return promise;
+  }
+
+  async function start() {
     try {
       const response = await fetch("/assets/intent-visuals.json", {
-        mode: "same-origin", credentials: "omit", cache: "no-store"
+        mode:"same-origin", credentials:"omit", cache:"no-store"
       });
       if (response.ok) {
         const data = await response.json();
-        if (data.version === 1 && data.intents && typeof data.enabled === "boolean") {
-          palette = data;
-        }
+        if (data.version === 1 && data.intents && typeof data.enabled === "boolean") palette = data;
       }
-    } catch (_) {
-      // Optional palette; a failed request must never break the conversation.
-    }
-    const PIXI = window.PIXI;
-    if (!PIXI || !PIXI.live2d || !PIXI.live2d.Live2DModel ||
-        !window.Live2DCubismCore) {
-      status.textContent = "Le décor est prêt. Le moteur Live2D doit encore être installé sur le PC (voir documentation).";
-      return;
-    }
-    try {
-      pixi = new PIXI.Application({
-        resizeTo: target, autoDensity: true,
-        resolution: Math.min(window.devicePixelRatio || 1, 2),
-        antialias: true, backgroundAlpha: 0, transparent: true
-      });
-      target.appendChild(pixi.view);
-      // The SDK can load asynchronously while the tab is invisible.
-      // Prevent any rendering until the model is ready and visible.
-      pixi.ticker.stop();
-      renderRunning = false;
-      model = await PIXI.live2d.Live2DModel.from("/model/Jade.model3.json", {
-        autoInteract: false
-      });
-      // Core 6 moved render orders off drawables; the legacy renderer still
-      // reads them through the adapter. r20 draws only drawable meshes.
-      const cubism = model.internalModel.coreModel;
-      if (!cubism.getDrawableRenderOrders()) {
-        const core = cubism.getModel();
-        if (core.getRenderOrders?.()?.length !== cubism.getDrawableCount()) {
-          throw new Error("Cubism render order is incompatible with this model");
-        }
-        cubism.getDrawableRenderOrders = () => core.getRenderOrders();
-      }
-      headIsolation = window.JadeHeadIsolation?.forModel?.(cubism) ?? null;
-      model.anchor.set(.5, .5);
-      pixi.stage.addChild(model);
-      resize();
-      observer = new ResizeObserver(resize);
-      observer.observe(target);
-      fallback.classList.add("hidden");
-      // Hybrid body activation needs a real head renderer, never a fallback.
-      if (typeof Event === "function")
-        document.querySelector?.(".room")?.dispatchEvent?.(new Event("jade-avatar-ready"));
-      pixi.ticker.add(() => {
-        try {
-          const activeRoom = document.querySelector?.(".room");
-          headIsolation?.sync(activeRoom?.dataset.room === "bedroom" &&
-            activeRoom?.dataset.seatedReady === "true" && Boolean(seatedComposition));
-          const core = model?.internalModel?.coreModel;
-          if (core && typeof core.setParameterValueById === "function") {
-            core.setParameterValueById("ParamMouthOpenY", mouth);
-          }
-        } catch (_) {}
-      }, undefined, PIXI.UPDATE_PRIORITY?.LOW ?? -50);
-      if (typeof model.motion === "function") {
-        try {
-          const animation = model.motion("Idle", 0);
-          if (animation && animation.catch) animation.catch(() => {});
-        } catch (_) {}
-      }
-      // Reapply the SAME chosen reaction after slow SDK loading, not the
-      // next variant. One reply must never count as two emotional turns.
-      if (activeChoice && palette?.enabled) applyExpression(activeChoice.expression);
-      syncRenderVisibility();
-    } catch (error) {
-      console.warn("Jade Live2D:", error);
-      cancelPendingVisibilityPause();
-      if (observer) observer.disconnect();
-      if (visibilityObserver) visibilityObserver.disconnect();
-      if (pixi) { try { pixi.destroy(true, {children: true}); } catch (_) {} }
-      pixi = null;
-      model = null;
-      headIsolation = null;
-      seatedComposition = null;
-      status.textContent = "Impossible de charger le modèle r20 : vérifier Git LFS, WebGL et les composants Cubism.";
-      fallback.classList.remove("hidden");
-    }
+    } catch (_) { /* Optional palette never prevents loading the default model. */ }
+    await window.JadeModelCatalog?.ready;
+    if (!desiredProfile) await selectModel("classic");
   }
-  load();
+  void start();
 })();

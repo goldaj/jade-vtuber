@@ -75,7 +75,15 @@ async function run({intersection = true, hiddenAtStart = false} = {}) {
     live2d:{Live2DModel:{async from(){metrics.loaded++; return model;}}},
   };
   class ResizeObserver {observe(){} disconnect(){}}
-  const window = {PIXI,Live2DCubismCore:{},devicePixelRatio:1};
+  const profile = {id:"classic", available:true, manifestUrl:"/model/Jade.model3.json",
+    presentation:"seated", classicIntents:true, idleMotion:"Idle"};
+  const window = {PIXI,Live2DCubismCore:{},devicePixelRatio:1,
+    JadeModelCatalog:{defaultId:"classic", ready:Promise.resolve([profile]),
+      get(id){return id === profile.id ? profile : null;}, list(){return [profile];}},
+    JadeAvatarModelLoader:{async load(selected){
+      assert.equal(selected.id, "classic"); metrics.loaded++;
+      return {model, dispose(){model.autoUpdate = false;}};
+    }}};
   const context = {
     document,window,ResizeObserver,
     IntersectionObserver:intersection?class {

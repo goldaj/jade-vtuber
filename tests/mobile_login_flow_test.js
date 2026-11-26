@@ -90,5 +90,11 @@ async function submit(value){
   assert.equal(button.disabled,false);
   await new Promise(resolve=>setImmediate(resolve));
   assert(assets.indexOf("/vendor/pixi.min.js") > assets.indexOf("/assets/app.js"));
+  const catalogue = assets.indexOf("/assets/avatar-models.js");
+  const loader = assets.indexOf("/assets/avatar-model-loader.js");
+  assert(catalogue > assets.indexOf("/assets/app.js"), "catalogue loads only after private login");
+  assert(catalogue < assets.indexOf("/assets/seated-scene.js"), "seated scene sees the catalogue");
+  assert(loader > assets.indexOf("/vendor/cubism4.min.js"), "model loader receives the complete SDK");
+  assert(loader < assets.indexOf("/assets/avatar.js"), "renderer receives its selection loader");
   console.log("Mobile login OK: invalid/refused token loads zero app assets; authorized salon and deferred SDK");
 })().catch(e=>{console.error(e);process.exitCode=1});

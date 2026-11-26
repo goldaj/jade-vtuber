@@ -107,6 +107,13 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .profile-intro{display:none;padding:16px;line-height:1.6}
 .profile-intro h2,.reminders-heading h2{font-family:Georgia,serif;font-size:1.2rem;color:#254f39;margin:0}
 .profile-intro p,.reminders-heading p{color:#53765e}
+.profile-intro .avatar-model-choice{display:grid;gap:6px;margin:16px 0;min-width:0}
+.avatar-model-choice label{color:#285639;font-weight:700}
+#avatar-model-selector{width:100%;min-height:44px;box-sizing:border-box;padding:9px 12px;
+  border:1px solid #b8d0b8;border-radius:10px;background:#fffdf7;color:#254d37;font:inherit}
+#avatar-model-selector:focus-visible{outline:3px solid #e9b943;outline-offset:2px}
+#avatar-model-selector:disabled{opacity:.65;cursor:wait}
+.profile-intro #avatar-model-status{font-size:.78rem;line-height:1.4;margin:0;overflow-wrap:anywhere}
 .mark-icon{display:block;flex:none;min-width:40px;min-height:40px}
 .reminders-panel{max-height:none;overflow:visible;padding:16px}
 .reminders-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
@@ -298,11 +305,28 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .avatar-frame{position:absolute;inset:0;z-index:2;pointer-events:none}
 .avatar-frame #avatar-container{z-index:3}
 .portrait-bedroom,.portrait-bedroom-motion,.portrait-seated-body{display:none}
-.room[data-room="bedroom"][data-seated-ready="true"]{
+.room[data-room="bedroom"][data-portrait-ready="true"]{
   container-type:size; /* cqw / cqh must refer to the room, not the viewport */
   background:#aa7b8f url("/assets/room-bedroom-portrait.avif") center / cover no-repeat;
 }
-.room[data-room="bedroom"][data-seated-ready="true"] .room-art{display:none}
+.room[data-room="bedroom"][data-portrait-ready="true"] .room-art{display:none}
+/* A complete avatar keeps the validated bedroom, independently of the old
+ * seated body. Both room layers share one cover transform during replacement
+ * and after loading; the avatar itself uses the entire scene viewport. */
+.room[data-room="bedroom"][data-portrait-ready="true"]:not([data-seated-ready="true"]) .portrait-bedroom,
+.room[data-room="bedroom"][data-portrait-ready="true"]:not([data-seated-ready="true"]) .portrait-bedroom-motion{
+  display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+}
+.room[data-room="bedroom"][data-portrait-ready="true"]:not([data-seated-ready="true"]) .portrait-bedroom-motion{
+  z-index:1;pointer-events:none;
+}
+@supports(width:1cqh){
+  .room[data-room="bedroom"][data-portrait-ready="true"]:not([data-seated-ready="true"]) .portrait-bedroom,
+  .room[data-room="bedroom"][data-portrait-ready="true"]:not([data-seated-ready="true"]) .portrait-bedroom-motion{
+    inset:auto;left:50%;top:50%;width:max(100cqw,56.28cqh);height:max(177.6833cqw,100cqh);
+    transform:translate(-50%,-50%);
+  }
+}
 .room[data-room="bedroom"][data-seated-ready="true"] .avatar-frame{
   inset:auto;left:50%;top:50%;height:auto;
   width:100%;aspect-ratio:941 / 1672;

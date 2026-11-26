@@ -38,9 +38,9 @@ class SeatedMobileContract(unittest.TestCase):
         scene = (WEB / "seated-scene.js").read_text(encoding="utf-8")
         guard = (WEB / "login-guard.js").read_text(encoding="utf-8")
         room = (WEB / "room-motion.js").read_text(encoding="utf-8")
-        self.assertIn('Promise.all([preload(ASSETS.room), preload(ASSETS.body)])', scene)
+        self.assertIn('Promise.all([portrait, pending.promise])', scene)
         self.assertIn('room.dataset.seatedReady = "true"', scene)
-        self.assertIn('window.JadeAvatar?.canIsolateHead', scene)
+        self.assertIn('avatar.canIsolateHead', scene)
         self.assertIn('room.dataset.seatedCompositor = layered ? "true" : "false"', scene)
         self.assertIn('prepareSeatedComposition(bodyImage)', scene)
         self.assertIn('[940, 956].includes(bodyImage.naturalHeight)', scene)
@@ -48,7 +48,7 @@ class SeatedMobileContract(unittest.TestCase):
         self.assertIn('body.style.setProperty("--seated-body-height"', scene)
         self.assertIn('room.dataset.seatedReady = "false"', scene)
         self.assertIn('"/assets/seated-scene.js"', guard)
-        self.assertIn('room?.dataset.seatedReady !== "true"', room)
+        self.assertIn('room?.dataset.portraitReady ?? room?.dataset.seatedReady', room)
         self.assertIn('if (room) room.dataset.room = next', room)
 
     def test_animated_head_not_scaled_independently_by_phone(self):

@@ -123,6 +123,14 @@
       <section class="profile-intro" id="profile-intro" aria-label="Mon espace privé">
         <h2>Mon espace privé</h2>
         <p>Paramètres, compte lié et informations techniques.</p>
+        <div class="avatar-model-choice">
+          <label for="avatar-model-selector">Modèle de Jade</label>
+          <select id="avatar-model-selector" aria-describedby="avatar-model-status" disabled>
+            <option value="classic" selected>Modèle actuel</option>
+            <option value="next" disabled>Nouveau modèle — à venir</option>
+          </select>
+          <p id="avatar-model-status" role="status" aria-live="polite">Chargement de Jade…</p>
+        </div>
         <label class="portrait-motion-choice"><input type="checkbox" id="portrait-motion-enabled" checked> Animations de la chambre</label>
         <p id="portrait-motion-status" role="status">Chargement des animations…</p>
       </section>

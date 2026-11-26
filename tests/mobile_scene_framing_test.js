@@ -78,7 +78,14 @@ async function client() {
     }},
     live2d:{Live2DModel:{async from(){return model;}}}
   };
+  const profile = {id:"classic", available:true, manifestUrl:"/model/Jade.model3.json",
+    presentation:"seated", classicIntents:true, idleMotion:"Idle"};
   const window = {PIXI, Live2DCubismCore:{}, devicePixelRatio:1,
+    JadeModelCatalog:{defaultId:"classic", ready:Promise.resolve([profile]),
+      get(id){return id === profile.id ? profile : null;}, list(){return [profile];}},
+    JadeAvatarModelLoader:{async load(selected){
+      assert.equal(selected.id, "classic"); return {model, dispose(){model.autoUpdate = false;}};
+    }},
     JadeHeadIsolation:{forModel(){return {canLayerHair:true,
       sync(active){isolationStates.push(active);}, drawPass(_name, draw){return draw();}};}}};
   vm.runInNewContext(source, {window, document, console,
@@ -86,7 +93,7 @@ async function client() {
     ResizeObserver:class {observe(){}},
     setTimeout, clearTimeout
   }, {filename:"avatar.js"});
-  for (let turn = 0; turn < 12; turn++) await Promise.resolve();
+  for (let turn = 0; turn < 60; turn++) await Promise.resolve();
   assert.equal(window.JadeAvatar.ready, true, status.textContent);
   function resize(width, height, view = shell.dataset.view, immersive = false) {
     target.clientWidth = width; target.clientHeight = height;

@@ -17,6 +17,13 @@ Le contrôleur privé Windows et le superviseur de processus PyCharm Run remplac
 - Le plein écran natif et son repli CSS utilisent le même chemin. Le modèle reste monté et le microphone conserve son état. [Passation, mesures de cadrage et validation](../operations/handoffs/2026-11-26-chatgpt-mobile-scenes.md).
 
 
+## PWA · Choix de modèle préparé, second emplacement inactif (26/11/2026)
+
+- **Profil** contient le sélecteur « Modèle de Jade ». Le modèle actuel est le choix initial ; « Nouveau modèle — à venir » reste désactivé tant qu’aucun second paquet n’a été explicitement configuré. Le choix n’est pas enregistré dans le navigateur et l’ouverture de Profil ne déclenche aucun chargement de modèle.
+- Le changement visuel passe par un cycle exclusif : retrait du corps hybride, arrêt et libération du modèle sortant, puis chargement du modèle demandé. L’état affiché correspond au modèle réellement présent ; un échec est signalé et le repli vers le classique est prévu. Une erreur de libération empêche de démarrer une seconde allocation.
+- La chambre portrait déjà validée et ses animations restent affichables indépendamment du corps assis. Un profil complet ne reçoit pas le corps hybride ni les expressions/Idle propres au classique ; revenir au classique prépare à nouveau son corps, sans réutiliser une image devenue obsolète pendant le changement. La pièce sélectionnée et les quatre onglets restent communs.
+- **Configuration livrée :** `JADE_MOBILE_SECOND_MODEL_DIR=` reste vide. Le serveur expose un catalogue avec `classic` disponible et `next` indisponible ; il ne recherche pas automatiquement de modèle dans les livraisons r21/v45.1. Le branchement réel d’un second paquet, sa compatibilité SDK, son cadrage et sa recette restent un travail distinct. [Contrat technique](TECHNICAL.md#sélection-du-modèle-mobile-26112026) et [passation avec état des vérifications](../operations/handoffs/2026-11-26-chatgpt-mobile-model-selection.md).
+
 ## Splash de lancement PWA (22/11/2026)
 
 - Image propriétaire `splash-jade.png` servie et affichée plein écran au lancement de l'interface HTML, puis retirée automatiquement. Sur la **connexion par jeton**, la même image reste nette en fond jusqu'à l'entrée dans le salon ; une carte compacte légèrement sous le centre affiche seulement l'icône, « Espace privé de Jade », « Jeton d'accès », le champ et « Entrer dans le salon ». Le formulaire et l'authentification ne changent pas. Android contrôle toujours **la phase native préalable**, constituée de l'icône, du nom et du fond du manifeste. L'icône SVG est ajoutée comme ressource vectorielle alternative ; les PNG restent des fallbacks à source raster 96 px.

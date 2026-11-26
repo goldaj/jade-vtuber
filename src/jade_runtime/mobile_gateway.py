@@ -46,6 +46,8 @@ WEB_FILES = {
     "/assets/login-guard.js": ("login-guard.js", "text/javascript; charset=utf-8"),
     "/assets/splash-jade.png": ("splash-jade.png", "image/png"),
     "/assets/avatar.js": ("avatar.js", "text/javascript; charset=utf-8"),
+    "/assets/avatar-models.js": ("avatar-models.js", "text/javascript; charset=utf-8"),
+    "/assets/avatar-model-loader.js": ("avatar-model-loader.js", "text/javascript; charset=utf-8"),
     "/assets/room-motion.js": ("room-motion.js", "text/javascript; charset=utf-8"),
     "/assets/seated-scene.js": ("seated-scene.js", "text/javascript; charset=utf-8"),
     "/assets/portrait-bedroom-motion.js": ("portrait-bedroom-motion.js", "text/javascript; charset=utf-8"),
@@ -98,6 +100,7 @@ class MobileGateway:
 
     def __init__(self, runtime, services, *, token: str, port=8766,
                  web_root: Path | None = None, model_dir: Path | None = None,
+                 second_model_dir: Path | None = None,
                  vendor_dir: Path | None = None, owner_login: str | None = None,
                  public_origin: str | None = None,
                  avatar_intent_enabled: bool = True, billing_admin_key: str = "",
@@ -128,6 +131,8 @@ class MobileGateway:
         self.public_origin = public_origin
         self.web_root = Path(web_root or WEB_ROOT)
         self.model_dir = Path(model_dir or DEFAULT_MODEL)
+        # This slot is opt-in. Never search the repository for newer artwork.
+        self.second_model_dir = Path(second_model_dir) if second_model_dir else None
         self.vendor_dir = Path(vendor_dir) if vendor_dir else None
         self.pending: dict[str, asyncio.Future] = {}
         self.connections: set[asyncio.Task] = set()
@@ -301,7 +306,108 @@ class MobileGateway:
                    and not name.startswith("/")}
         return allowed, json.dumps(model, separators=(",", ":")).encode("utf-8")
 
+    def _second_model_files(self) -> tuple[set[str], bytes]:
+        """Accept only a complete, explicitly configured portable model bundle.
+
+        This validates local files and references, not GPU/SDK compatibility.
+        No legacy r20 Idle motion or expressions are injected into this slot.
+        """
+        base = self.second_model_dir
+        if base is None or base.is_symlink() or not base.is_dir():
+            raise ValueError("second model not configured")
+        root = base.resolve(strict=True)
+
+        def local_asset(name: str) -> Path:
+            if (not isinstance(name, str) or not MODEL_FILE.fullmatch(name)
+                    or any(part in ("", ".", "..") for part in name.split("/"))):
+                raise ValueError("invalid model asset reference")
+            path = base
+            for part in PurePosixPath(name).parts:
+                path = path / part
+                if path.is_symlink():
+                    raise ValueError("symlink in model bundle")
+            if (not path.resolve(strict=True).is_relative_to(root)
+                    or not path.is_file() or not 0 < path.stat().st_size <= 40_000_000):
+                raise ValueError("invalid model asset")
+            with path.open("rb") as asset:
+                prefix = asset.read(128)
+            if prefix.startswith(b"version https://git-lfs.github.com/spec/v1"):
+                raise ValueError("model asset not materialized")
+            if ((path.suffix.lower() == ".moc3" and not prefix.startswith(b"MOC3"))
+                    or (path.suffix.lower() == ".png" and not prefix.startswith(b"\x89PNG\r\n\x1a\n"))):
+                raise ValueError("invalid model binary asset")
+            return path
+
+        manifest = local_asset("Jade.model3.json")
+        if manifest.stat().st_size > 1_000_000:
+            raise ValueError("oversized model manifest")
+        model = json.loads(manifest.read_text(encoding="utf-8"))
+        if not isinstance(model, dict) or model.get("Version") != 3:
+            raise ValueError("invalid model manifest")
+        refs = model.get("FileReferences")
+        if not isinstance(refs, dict):
+            raise ValueError("invalid model references")
+        allowed = {"Jade.model3.json"}
+
+        def include(name, suffixes):
+            if not isinstance(name, str) or PurePosixPath(name).suffix.lower() not in suffixes:
+                raise ValueError("invalid model asset type")
+            path = local_asset(name)
+            if path.suffix.lower() == ".json":
+                if path.stat().st_size > 8_000_000 or not isinstance(
+                        json.loads(path.read_text(encoding="utf-8")), dict):
+                    raise ValueError("invalid model JSON asset")
+            allowed.add(name)
+            if len(allowed) > 256:
+                raise ValueError("too many model assets")
+
+        include(refs.get("Moc"), {".moc3"})
+        textures = refs.get("Textures")
+        if not isinstance(textures, list) or not 1 <= len(textures) <= 64:
+            raise ValueError("model requires 1-64 textures")
+        for name in textures:
+            include(name, {".png"})
+        for key in ("DisplayInfo", "Physics", "Pose", "UserData"):
+            if key in refs:
+                include(refs[key], {".json"})
+        expressions = refs.get("Expressions", [])
+        motions = refs.get("Motions", {})
+        if not isinstance(expressions, list) or not isinstance(motions, dict):
+            raise ValueError("invalid model animations")
+        groups = [expressions, *motions.values()]
+        for group in groups:
+            if not isinstance(group, list):
+                raise ValueError("invalid model animation group")
+            for entry in group:
+                if not isinstance(entry, dict):
+                    raise ValueError("invalid model animation")
+                include(entry.get("File"), {".json"})
+                if "Sound" in entry:
+                    include(entry["Sound"], {".wav", ".mp3", ".ogg"})
+        return allowed, json.dumps(model, separators=(",", ":")).encode("utf-8")
+
+    def _avatar_models(self) -> dict:
+        available = False
+        if self.second_model_dir is not None:
+            try:
+                self._second_model_files()
+                available = True
+            except (OSError, ValueError, TypeError, KeyError, RuntimeError):
+                # A missing/partial future bundle must never break classic Jade.
+                pass
+        return {"version": 1, "defaultId": "classic", "models": [
+            {"id": "classic", "label": "Modèle actuel", "available": True,
+             "manifestUrl": "/model/Jade.model3.json", "presentation": "seated",
+             "classicIntents": True, "idleMotion": "Idle"},
+            {"id": "next", "label": "Nouveau modèle", "available": available,
+             "manifestUrl": "/models/next/Jade.model3.json" if available else None,
+             "presentation": "full", "classicIntents": False, "idleMotion": None},
+        ]}
+
     async def _static(self, writer, route: str):
+        if route == "/assets/avatar-models.json":
+            await self._json(writer, 200, await asyncio.to_thread(self._avatar_models))
+            return
         if route == "/assets/intent-visuals.json":
             try:
                 await self._json(writer, 200, public_visual_contract(self.avatar_intent_enabled))
@@ -317,22 +423,27 @@ class MobileGateway:
         if route in WEB_FILES:
             filename, mime = WEB_FILES[route]
             path = self.web_root / filename
+            base = self.web_root
         elif route.startswith("/vendor/"):
             filename = route[len("/vendor/"):]
             if filename not in VENDOR_NAMES or self.vendor_dir is None:
                 await self._json(writer, 404, {"error": "vendor runtime not configured"})
                 return
             path, mime = self.vendor_dir / filename, "text/javascript; charset=utf-8"
-        elif route.startswith("/model/"):
-            filename = route[len("/model/"):]
+            base = self.vendor_dir
+        elif route.startswith(("/model/", "/models/next/")):
+            second = route.startswith("/models/next/")
+            prefix = "/models/next/" if second else "/model/"
+            filename = route[len(prefix):]
             if (not MODEL_FILE.fullmatch(filename) or
                     ".." in PurePosixPath(filename).parts or
                     filename.startswith("/")):
                 await self._json(writer, 404, {"error": "asset not found"})
                 return
             try:
-                allowed, virtual_model = await asyncio.to_thread(self._model_files)
-            except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+                loader = self._second_model_files if second else self._model_files
+                allowed, virtual_model = await asyncio.to_thread(loader)
+            except (OSError, ValueError, KeyError, TypeError, RuntimeError):
                 await self._json(writer, 503, {"error": "Live2D model unavailable"})
                 return
             if filename not in allowed:
@@ -341,19 +452,21 @@ class MobileGateway:
             if filename == "Jade.model3.json":
                 await self._send(writer, 200, virtual_model, "application/json; charset=utf-8")
                 return
-            path = self.model_dir.joinpath(*PurePosixPath(filename).parts)
+            base = self.second_model_dir if second else self.model_dir
+            path = base.joinpath(*PurePosixPath(filename).parts)
             mime = {
                 ".moc3": "application/octet-stream",
                 ".png": "image/png",
                 ".json": "application/json; charset=utf-8",
+                ".wav": "audio/wav",
+                ".mp3": "audio/mpeg",
+                ".ogg": "audio/ogg",
             }.get(path.suffix, "application/octet-stream")
         else:
             await self._json(writer, 404, {"error": "unknown route"})
             return
         try:
             # No redirects or symlinks to a private file outside approved roots.
-            base = (self.web_root if route in WEB_FILES else
-                    self.vendor_dir if route.startswith("/vendor/") else self.model_dir)
             if (base is None or not path.resolve().is_relative_to(base.resolve())
                     or path.is_symlink() or not path.is_file()
                     or path.stat().st_size > 40_000_000):

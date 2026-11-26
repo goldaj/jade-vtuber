@@ -326,6 +326,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 public_origin=config.mobile_public_origin,
                 vendor_dir=Path(config.mobile_vendor_dir) if config.mobile_vendor_dir else None,
                 model_dir=Path(config.mobile_model_dir) if config.mobile_model_dir else None,
+                second_model_dir=Path(config.mobile_second_model_dir) if config.mobile_second_model_dir else None,
                 avatar_intent_enabled=config.avatar_intent_enabled,
                 reminder_service=reminders)
         social_policy = None

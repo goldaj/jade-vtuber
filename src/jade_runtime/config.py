@@ -124,6 +124,7 @@ class Settings:
     mobile_port: int = 8766
     mobile_vendor_dir: str = ""
     mobile_model_dir: str = ""
+    mobile_second_model_dir: str = ""
     push_vapid_public: str = ""
     push_vapid_private: str = field(default="", repr=False)
     push_vapid_subject: str = ""
@@ -206,6 +207,7 @@ class Settings:
             mobile_port=int(environ("JADE_MOBILE_PORT", "8766")),
             mobile_vendor_dir=str(environ("JADE_MOBILE_VENDOR_DIR", "")),
             mobile_model_dir=str(environ("JADE_MOBILE_MODEL_DIR", "")),
+            mobile_second_model_dir=str(environ("JADE_MOBILE_SECOND_MODEL_DIR", "")).strip(),
             push_vapid_public=str(environ("JADE_PUSH_VAPID_PUBLIC_KEY", "")).strip(),
             push_vapid_private=str(environ("JADE_PUSH_VAPID_PRIVATE_KEY", "")).strip(),
             push_vapid_subject=str(environ("JADE_PUSH_VAPID_SUBJECT", "")).strip(),
