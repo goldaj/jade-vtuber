@@ -145,6 +145,9 @@ class ExportTests(unittest.TestCase):
             create_preview(root, dest, tracked_paths(root))
             self.assertTrue((dest / "poetry.lock").is_file())
             self.assertTrue((dest / "tools/jade_ci_preflight.py").is_file())
+            from src.jade_runtime.mobile_gateway import WEB_FILES
+            for route, (filename, _) in WEB_FILES.items():
+                self.assertTrue((dest / "src/jade_runtime/mobile_web" / filename).is_file(), route)
             env = {k: v for k, v in os.environ.items()
                    if not k.startswith(("JADE_", "OPENAI_", "TWITCH_", "DISCORD_", "ELEVENLABS_"))
                    and k != "BOT_NAME"}

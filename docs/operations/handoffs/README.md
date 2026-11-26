@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [PWA · Mini-scènes et double appui (26/11)](2026-11-26-chatgpt-mobile-scenes.md) · Demande directe du propriétaire : choix du décor à l’Accueil, cadrage prioritaire sur la tête, plein écran au double geste.
+
 - [ART-010/011/012 · Livraison Jade v45.1](2026-11-25-codex-livraison-modele-jade.md) · Sources et paquet livrés, modèle calibré. Recette intégrée après DEV-001.
 
 - [ART-001/002 : préparation Jade r21 avec Turboism et PSD2Live (25/11)](2026-11-25-codex-jade-r21-reprise.md) · plan approuvé et exécuté, historique de la construction du r21.

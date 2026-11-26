@@ -37,6 +37,7 @@ MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/avatar.js",
     "src/jade_runtime/mobile_web/room-motion.js",
     "src/jade_runtime/mobile_web/seated-scene.js",
+    "src/jade_runtime/mobile_web/portrait-bedroom-motion.js",
     "src/jade_runtime/mobile_web/head-isolation.js",
     "src/jade_runtime/mobile_web/room-bedroom-portrait.avif",
     "src/jade_runtime/mobile_web/jade-seated-body.avif",

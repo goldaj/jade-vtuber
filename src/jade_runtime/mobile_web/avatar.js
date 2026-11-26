@@ -290,8 +290,17 @@
       model.position.set(width * .555, height * .584);
       return;
     }
-    // Kitchen and missing-art fallback remain compatible with the existing r20 pose.
     const immersive = shell?.classList.contains("is-room-only");
+    const miniScene = shell?.dataset?.view && shell.dataset.view !== "home" && !immersive;
+    if (miniScene) {
+      // Short menu scenes give the head the top edge. Scale the whole model,
+      // keeping its proportions while allowing the lower body to be cropped.
+      const miniScale = Math.min((width * .95) / naturalWidth, (height * 1.6) / naturalHeight);
+      model.scale.set(Math.max(.05, miniScale));
+      model.position.set(width * .5, Math.max(8, height * .04) + model.height * .5);
+      return;
+    }
+    // Home and immersive kitchen keep their existing framing.
     model.scale.set(Math.max(.05, scale * (immersive ? 1.9 : 1.5)));
     model.position.set(width * (immersive ? .55 : .58), height * (immersive ? .82 : .79));
   }

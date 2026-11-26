@@ -6,9 +6,15 @@ Le contrôleur privé Windows et le superviseur de processus PyCharm Run remplac
 
 ## PWA · Décors interchangeables Chambre/Cuisine (22/11/2026)
 
-- Le bouton « Décor » placé sur la vue de Jade permet de choisir **Chambre** ou **Cuisine**, sans modifier ni remonter le modèle Live2D. Le choix persiste dans l’URL locale via `?room=kitchen` ; l’absence du paramètre conserve la chambre par défaut. Le sélecteur disparaît en mode plein écran immersif pour conserver le rendu uniquement Jade + décor.
+- Le bouton « Décor », disponible **uniquement dans l’Accueil fenêtré**, permet de choisir **Chambre** ou **Cuisine**, sans remonter le modèle Live2D. Le choix reste commun à tous les onglets et persiste dans l’URL locale via `?room=kitchen` ; l’absence du paramètre conserve la chambre par défaut. Le sélecteur est absent des mini-scènes Chat/Rappels/Profil et de tout plein écran immersif.
 - Chambre : le décor et les calques animés existants restent inchangés (rideau, ombres, reflets, vapeur). Cuisine : le fond `room-kitchen.webp` reste statique avec trois types de détails animés **propres à la cuisine** : vapeur discrète de la bouilloire, fins rameaux végétaux sur trois retombées et lumière solaire lente au sol. Ce sont des calques SVG/CSS transparents ajoutés au premier plan ; les plantes peintes, armoires, fenêtre et parquet de la photo ne sont jamais déplacés ni déformés.
 - Le passage en cuisine suspend la boucle JavaScript de la chambre ; les effets cuisine sont pilotés exclusivement en CSS et désactivés dans la chambre. L'arrêt hors écran/onglet, `prefers-reduced-motion` et le fallback statique sur navigateurs sans unités de conteneur sont conservés. À vérifier sur Android : alignement des trois rameaux et de la vapeur, qualité de l'effet solaire, portrait/paysage et non-régression chambre.
+
+### Mini-scènes et double appui (26/11/2026)
+
+- Chat, Rappels et Profil donnent la priorité au sommet de la tête et au visage ; le bas du personnage peut être coupé. La chambre conserve le repère commun du corps assis et de la tête animée, avec une limite de taille sur les cadres courts. Le fond et ses animations couvrent ensemble toute la miniature. La cuisine et le repli debout ancrent le modèle entier sous le bord supérieur.
+- Un **double clic souris ou double appui tactile/stylet sur la scène** ouvre le plein écran depuis les quatre onglets ; le même geste le ferme et restitue l’onglet de départ. Le bouton dédié reste disponible. Les contrôles, le défilement, les glissements et les gestes à plusieurs doigts sont exclus ; un événement souris synthétique après le tactile ne provoque pas de seconde bascule.
+- Le plein écran natif et son repli CSS utilisent le même chemin. Le modèle reste monté et le microphone conserve son état. [Passation, mesures de cadrage et validation](../operations/handoffs/2026-11-26-chatgpt-mobile-scenes.md).
 
 
 ## Splash de lancement PWA (22/11/2026)

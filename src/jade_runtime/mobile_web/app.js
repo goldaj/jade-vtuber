@@ -46,6 +46,7 @@
     if (!["home", "chat", "reminders", "profile"].includes(view)) return;
     shell.dataset.view = view;
     syncMicPlacement();
+    window.JadeAvatar?.resize?.();
     navItems.forEach(button => {
       const active = button.dataset.viewTarget === view;
       button.classList.toggle("is-active", active);
@@ -1161,8 +1162,19 @@
   });
   const fullscreenButton = $("fullscreen");
   const roomPlane = document.querySelector(".room-plane");
+  const scene = document.querySelector(".room");
   let nativeRoomFullscreen = false;
+  let fullscreenPending = false;
+  let scenePointer = null, previousSceneTap = null;
+  let lastTouchTime = -Infinity;
+  const sceneControls = "button,a,input,select,textarea,label,summary,[role='button'],[contenteditable],.room-picker";
+  const isSceneControl = target => Boolean(target?.closest?.(sceneControls));
+  function resetSceneGesture() {
+    scenePointer = null;
+    previousSceneTap = null;
+  }
   function setRoomFullscreen(active) {
+    resetSceneGesture();
     // Freeze the 4:3 background width before its enclosing viewport expands.
     if (active && roomPlane) {
       const width = roomPlane.getBoundingClientRect().width;
@@ -1178,19 +1190,82 @@
     fullscreenButton.setAttribute("aria-pressed", String(active));
     window.JadeAvatar?.resize?.();
   }
-  fullscreenButton.addEventListener("click", async () => {
-    if (shell.classList.contains("is-room-only")) {
-      setRoomFullscreen(false);
-      if (document.fullscreenElement) {
-        try { await document.exitFullscreen?.(); } catch (_) { /* CSS view already closed */ }
-      }
+  async function toggleRoomFullscreen() {
+    // A native fullscreen transition may outlive a click. Keep repeated input
+    // from starting a competing request/exit while the browser is settling.
+    if (fullscreenPending) {
+      resetSceneGesture();
       return;
     }
-    setRoomFullscreen(true);
-    if (shell.requestFullscreen) {
-      try { await shell.requestFullscreen(); } catch (_) { /* CSS fullscreen stays available */ }
+    fullscreenPending = true;
+    try {
+      if (shell.classList.contains("is-room-only")) {
+        setRoomFullscreen(false);
+        if (document.fullscreenElement === shell) {
+          try { await document.exitFullscreen?.(); } catch (_) { /* CSS view already closed */ }
+        }
+        return;
+      }
+      setRoomFullscreen(true);
+      if (shell.requestFullscreen) {
+        try { await shell.requestFullscreen(); } catch (_) { /* CSS fullscreen stays available */ }
+      }
+    } finally {
+      fullscreenPending = false;
+    }
+  }
+  fullscreenButton.addEventListener("click", toggleRoomFullscreen);
+  scene?.addEventListener("dblclick", event => {
+    // Touch browsers can also emit a compatibility dblclick after pointerup.
+    if (event.defaultPrevented || event.button !== 0 || isSceneControl(event.target) ||
+        event.sourceCapabilities?.firesTouchEvents || event.timeStamp - lastTouchTime < 800) return;
+    event.preventDefault();
+    void toggleRoomFullscreen();
+  });
+  scene?.addEventListener("pointerdown", event => {
+    if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
+    lastTouchTime = event.timeStamp;
+    if (event.defaultPrevented || event.isPrimary === false || scenePointer || isSceneControl(event.target)) {
+      resetSceneGesture();
+      return;
+    }
+    scenePointer = {id:event.pointerId, x:event.clientX, y:event.clientY, time:event.timeStamp,
+      view:shell.dataset.view, immersive:shell.classList.contains("is-room-only")};
+  });
+  scene?.addEventListener("pointermove", event => {
+    if (scenePointer?.id === event.pointerId &&
+        Math.hypot(event.clientX - scenePointer.x, event.clientY - scenePointer.y) > 12)
+      resetSceneGesture();
+  });
+  scene?.addEventListener("pointerup", event => {
+    if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
+    lastTouchTime = event.timeStamp;
+    const pointer = scenePointer;
+    scenePointer = null;
+    if (!pointer || pointer.id !== event.pointerId || event.defaultPrevented ||
+        isSceneControl(event.target) || event.timeStamp - pointer.time > 300 ||
+        Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y) > 12 ||
+        pointer.view !== shell.dataset.view || pointer.immersive !== shell.classList.contains("is-room-only")) {
+      previousSceneTap = null;
+      return;
+    }
+    const previous = previousSceneTap;
+    previousSceneTap = {x:event.clientX, y:event.clientY, time:event.timeStamp,
+      view:pointer.view, immersive:pointer.immersive};
+    if (previous && event.timeStamp - previous.time <= 350 &&
+        Math.hypot(event.clientX - previous.x, event.clientY - previous.y) <= 32 &&
+        previous.view === pointer.view && previous.immersive === pointer.immersive) {
+      event.preventDefault();
+      void toggleRoomFullscreen();
     }
   });
+  scene?.addEventListener("pointercancel", resetSceneGesture);
+  // A second finger outside the scene must also cancel a possible double tap.
+  document.addEventListener("pointerdown", event => {
+    if (event.isPrimary === false || !scene?.contains(event.target)) resetSceneGesture();
+  }, true);
+  document.addEventListener("scroll", resetSceneGesture, true);
+  window.addEventListener("blur", resetSceneGesture);
   document.addEventListener("fullscreenchange", () => {
     if (document.fullscreenElement === shell) nativeRoomFullscreen = true;
     else if (nativeRoomFullscreen) {

@@ -26,7 +26,8 @@ class MobileUiLayoutContract(unittest.TestCase):
         self.assertEqual(HTML.count('id="mic"'), 1)
         room_bottom = HTML.split('<div class="room-bottom">', 1)[1].split("</div>", 1)[0]
         self.assertIn('id="mic"', room_bottom)
-        self.assertIn('document.querySelector?.(".room-bottom")?.appendChild?.(mic)', JS)
+        self.assertIn('const dock = document.querySelector?.(".room-bottom");', JS)
+        self.assertIn("dock.appendChild?.(mic)", JS)
         self.assertIn("form.insertBefore(mic, input)", JS)
         self.assertIn('.shell[data-view="home"] .conversation{display:none}', CSS)
         self.assertNotIn("      input.focus();\n      openReminderFromHash();", JS)

@@ -7,15 +7,19 @@ const path = require("node:path");
 
 const elements = new Map();
 function element(id) {
-  if (!elements.has(id)) elements.set(id, {
+  if (!elements.has(id)) {
+    const classes = new Set();
+    elements.set(id, {
     id, value:"", textContent:"", disabled:false, open:false, children:[], handlers:{},
-    classList:{add(){}, remove(){}},
+    classList:{add(name){classes.add(name);}, remove(name){classes.delete(name);},
+      contains(name){return classes.has(name);}},
     addEventListener(name, handler) {this.handlers[name] = handler;},
     append(...children) {this.children.push(...children);},
     appendChild(child) {this.children.push(child);},
     replaceChildren() {this.children = [];},
     setAttribute(){}, focus(){}, querySelector(){return element("fake-submit");}
-  });
+    });
+  }
   return elements.get(id);
 }
 const documentHandlers = {};
