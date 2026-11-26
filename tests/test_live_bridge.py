@@ -64,6 +64,8 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         self.settlements = []
         self.allowed = True
         self.valid = True
+        self.release_events = []
+        self.deferred_writers = []
 
         async def on_reply(reply):
             self.classic.append(reply)
@@ -92,8 +94,16 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         self.sequence = 0
 
     async def asyncTearDown(self):
+        # Failed assertions must not leave a fake backend or writer holding
+        # a SQLite file while TemporaryDirectory removes it on Windows.
+        for event in self.release_events:
+            event.set()
         await self.bridge.close()
         await self.runtime.stop(graceful=False, timeout=1)
+        await self.finish_tasks()
+        await self.finish_flushes()
+        for writer in self.deferred_writers:
+            await writer.close()
         await self.memory.close()
         self.temp.cleanup()
 
@@ -126,6 +136,19 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
             await asyncio.wait_for(asyncio.gather(*tasks, return_exceptions=True), 3)
         self.fail("Live tasks did not finish")
 
+    async def finish_flushes(self):
+        # close_session deliberately bounds its wait, not the lifetime of
+        # offline persistence. Join the actual work before inspecting storage.
+        tasks = {state.flush_task for state in self.bridge.sessions.values()
+                 if state.flush_task is not None}
+        tasks.update(self.bridge._flush_tasks)
+        if tasks:
+            await asyncio.wait_for(asyncio.gather(*tasks), 10)
+
+    async def close_and_flush(self, reason):
+        await self.bridge.close_session(self.ctx, reason)
+        await self.finish_flushes()
+
     def journal_rows(self, table):
         with closing(sqlite3.connect(self.root / "live.sqlite3")) as db:
             db.row_factory = sqlite3.Row
@@ -150,7 +173,7 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         await self.bridge.handle_event(user_event, self.ctx, self.send)
         await self.transcript("assistant", "Elle découvre une forêt.", 1200, 1800)
         self.assertEqual(self.model.requests, [])
-        await self.bridge.close_session(self.ctx, "off")
+        await self.close_and_flush("off")
         await self.bridge.close_session(self.ctx, "off")
         history = self.store.recent_conversation_turns(OWNER, "person")
         self.assertEqual(len(history), 2)
@@ -174,18 +197,18 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         prepared = await self.runtime.prepare_turn(incoming)
         await self.transcript("user", "Le nom du royaume est Tsuki.")
         await self.transcript("assistant", "Je garde ce nom en tête.", 1100, 1500)
-        await self.bridge.close_session(self.ctx, "idle")
+        await self.close_and_flush("idle")
         await self.runtime.dialogue.respond(incoming, **prepared.dialogue_arguments())
         self.assertIn("Tsuki", str(self.model.requests[-1]))
 
     async def test_no_persistent_transcript_without_memory(self):
-        await self.bridge.close_session(self.ctx, "off")
+        await self.close_and_flush("off")
         self.runtime.memory_service = None
         self.ctx = dict(self.ctx, session_id="no_memory", generation=2)
         await self.bridge.open_session(self.ctx)
         await self.transcript("user", "Une phrase volatile confidentielle.")
         await self.transcript("assistant", "Un retour volatile.", 1100, 1500)
-        await self.bridge.close_session(self.ctx, "off")
+        await self.close_and_flush("off")
         self.assertFalse(any(row["delta"] for row in self.journal_rows("live_events")))
         self.assertEqual(self.store.recent_conversation_turns(OWNER, "person"), [])
         volatile = self.runtime.dialogue.history[("mobile", self.ctx["thread_id"])]
@@ -195,7 +218,7 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         event = await self.transcript("user", "Une seule demande.", eid="same")
         with self.assertRaises(LiveJournalConflict):
             await self.bridge.handle_event(dict(event, delta="Autre contenu."), self.ctx, self.send)
-        await self.bridge.close_session(self.ctx, "off")
+        await self.close_and_flush("off")
         candidates = [dict(self.ctx, session_id="new_" + str(i), generation=i + 2) for i in range(2)]
         results = await asyncio.gather(*(self.bridge.open_session(ctx) for ctx in candidates), return_exceptions=True)
         self.assertEqual(sum(isinstance(result, LiveJournalConflict) for result in results), 1)
@@ -277,11 +300,28 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("première demande", str(self.model.requests[-1][:-1]))
 
     async def test_fragment_catchup_and_no_previous_request_substitution(self):
-        self.bridge.fragment_wait_seconds = .04
-        await self.delegation(offset=1500, wait=False)
-        await self.transcript("user", "Prépare ", 1000, 1250)
-        await self.transcript("user", "un document.", 1250, 1500)
-        await self.finish_tasks()
+        entered, fragments_ready = asyncio.Event(), asyncio.Event()
+        self.release_events.append(fragments_ready)
+        original_request_at = self.bridge._request_at
+
+        async def after_fragments(state, offset):
+            entered.set()
+            await fragments_ready.wait()
+            return await original_request_at(state, offset)
+
+        # The delegation arrives first; both real transcript transactions
+        # complete before reconstruction, regardless of the filesystem speed.
+        self.bridge._request_at = after_fragments
+        try:
+            await self.delegation(offset=1500, wait=False)
+            await asyncio.wait_for(entered.wait(), 3)
+            await self.transcript("user", "Prépare ", 1000, 1250)
+            await self.transcript("user", "un document.", 1250, 1500)
+            fragments_ready.set()
+            await self.finish_tasks()
+        finally:
+            fragments_ready.set()
+            self.bridge._request_at = original_request_at
         self.assertIn("Prépare un document.", str(self.model.requests[-1]))
         await self.delegation("missing", offset=20000)
         self.assertEqual(len(self.model.requests), 1)
@@ -292,7 +332,7 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         await self.delegation(offset=1200)
         self.assertEqual(self.model.requests, [])
         self.assertEqual(self.reservations, [])
-        await self.bridge.close_session(self.ctx, "off")
+        await self.close_and_flush("off")
         history = self.store.recent_conversation_turns(OWNER, "person")
         retained = "".join(entry["content"].removeprefix("Goldaj (mobile): ")
                            for entry in history if entry["role"] == "user")
@@ -321,6 +361,7 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_close_does_not_wait_for_cancel_ignoring_backend_or_emit_late_reply(self):
         entered, release = asyncio.Event(), asyncio.Event()
+        self.release_events.append(release)
 
         class Slow(Model):
             async def complete(self, messages):
@@ -338,8 +379,7 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.wait_for(self.bridge.close_session(self.ctx, "kill"), .6)
         release.set()
         await self.runtime.idle()
-        if self.bridge._flush_tasks:
-            await asyncio.gather(*self.bridge._flush_tasks)
+        await self.finish_flushes()
         self.assertFalse(any("trop tardif" in event.get("content", "") for event in self.sent))
         self.assertEqual(self.classic, [])
         self.assertIn("Une action longue", str(self.store.recent_conversation_turns(OWNER, "person")))
@@ -384,7 +424,7 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
             db.execute("DELETE FROM identities WHERE platform=? AND account_id=?", OWNER)
         self.store.enable(OWNER)
         self.assertNotEqual(self.store.account(OWNER), old_person)
-        await self.bridge.close_session(self.ctx, "off")
+        await self.close_and_flush("off")
         self.assertEqual(self.store.recent_conversation_turns(OWNER, "person"), [])
         self.assertFalse(any(row["delta"] for row in self.journal_rows("live_events")))
         self.assertFalse(self.store.append_conversation_turn(OWNER, "person", source_platform="mobile",
@@ -398,7 +438,7 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         self.memory.backend = curator
         await self.transcript("user", "Nous avons avancé sur le roman et son univers.")
         await self.transcript("assistant", "Nous avons choisi une nouvelle direction.", 1100, 1600)
-        await self.bridge.close_session(self.ctx, "kill")
+        await self.close_and_flush("kill")
         self.assertEqual(curator.requests, [])
         self.assertEqual(self.journal_rows("live_curations")[0]["state"], "pending")
         self.ctx = dict(self.ctx, session_id="next_session", generation=2)
@@ -409,7 +449,7 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.reservations[-1].startswith("curation-"))
         self.assertEqual(self.settlements[-1][3], "completed")
         self.assertEqual(len(self.store.list_for_account(OWNER)), 1)
-        await self.bridge.close_session(self.ctx, "off")
+        await self.close_and_flush("off")
         self.ctx = dict(self.ctx, session_id="third_session", generation=3)
         await self.bridge.open_session(self.ctx)
         await self.finish_tasks()
@@ -417,6 +457,7 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_deferred_memory_write_is_not_a_voice_confirmation_barrier(self):
         release, entered = asyncio.Event(), asyncio.Event()
+        self.release_events.append(release)
         original = self.memory._execute_memory_action
 
         async def delayed(*args, **kwargs):
@@ -428,6 +469,7 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         writer = object.__new__(ResponsesChat)
         writer._closing = False
         writer._pending_writes = set()
+        self.deferred_writers.append(writer)
 
         async def script(action):
             accepted = writer._queue_memory_write(action, json.dumps({
@@ -446,11 +488,13 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         release.set()
         if writer._pending_writes:
             await asyncio.gather(*writer._pending_writes)
+        await self.finish_flushes()
         self.assertEqual(len(self.store.list_for_account(OWNER)), 1)
         self.assertEqual(self.journal_rows("live_curations"), [])
 
     async def test_classic_discord_and_live_delegations_share_worker_without_holding_session(self):
         entered, release = asyncio.Event(), asyncio.Event()
+        self.release_events.append(release)
         active = 0
         maximum = 0
 
