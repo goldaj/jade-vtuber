@@ -12,6 +12,8 @@ Le propriétaire demande : « Ok tu peux mettre tout ça sur develop, je vais fa
 
 Le code intégré reste identique au lot validé par les 864 tests (12 skips Discord optionnels). Les contrôles de documentation/backlog et l’absence de changement de code sont vérifiés à nouveau. Les flags et budgets privés ne sont pas modifiés sur le poste du propriétaire. `main` ne fait pas partie de cette intégration.
 
+**Vérification CI après fusion `2b80c31` :** l'étape navigateur, distincte de la suite Python, échoue dans `mobile_avatar_models_test.js` sur l'extraction HTML du Profil. Le test s'arrêtait au premier `</section>`, qui ferme maintenant le bloc Live imbriqué ; une lecture structurée confirme que le sélecteur demeure dans le même parent Profil, exactement une fois, comme sur la base `6dc8d1b`. Le correctif compte les sections jusqu'à la fermeture correspondante et garde les assertions d'appartenance et d'unicité. Les 25 commandes navigateur du workflow sont revérifiées après correction ; aucun fichier de runtime, HTML ou asset n'est modifié par ce suivi. Le scan des secrets et le contrôle de migration ont réussi sur la fusion ; la CI complète est relancée avec le correctif du test.
+
 ## Résultat par US
 
 | Ancienne US | Code livré | Suivi unique actuel | Preuve et limite |
