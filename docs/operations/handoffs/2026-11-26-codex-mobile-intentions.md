@@ -65,3 +65,13 @@ Le propriétaire signale une déformation dans les sourires de profil sur l’ex
 La copie native v45.3 retouche uniquement la plaque des dents supérieures, avec un ivoire plus court et une ombre sous la lèvre. L’atlas du manifeste mobile change de 362 pixels dans cette tuile. Le MOC3, les maillages, les masques et les clips restent utilisables avec le même rig. Dans la PWA, l’ouverture maximale de ce sourire en trois-quarts passe progressivement à environ .87 sur le même signal. La correction dépend de l’angle et reste continue et symétrique. De face, la parole garde toute sa course.
 
 La recette Chromium à 393 × 873 rejoue 16 poses fixes, dont le cas signalé et son miroir, puis teste les ouvertures commandées par la PWA et une réplique française d’Enthousiaste B. Le trait supérieur et la cavité se rejoignent visuellement dans les deux trois-quarts. À ±22,79°, une ouverture de .35 devient .344, une ouverture de .65 devient .614 et l’ouverture maximale du sourire devient .870. De face et sur Sérieuse, l’ouverture maximale reste à 1. La bouche revient à zéro après la parole.
+
+## Rotation du visage de trois-quarts
+
+Les deux captures mobiles signalent un désaccord entre les traits et le contour, visible aussi à bouche fermée. Dans la rotation horizontale seule, le nez et la bouche se déplaçaient d’environ 77 px dans le dessin à 23°, contre environ 42 px pour le menton. L’œil proche gagnait environ 10 % de largeur. Deux anciens traits de cils étaient encore peints dans le fond des tempes et devenaient visibles quand les mèches s’écartaient.
+
+Le v45.4 recale six poses du déformeur commun du visage. La joue éloignée se resserre, le menton accompagne les traits et le nez prend de l’avance sur la bouche. La retouche locale du dessin couvre 3 347 pixels RVB à l’emplacement des cils parasites et conserve l’alpha. La retouche v45.3 de la bouche reste dans le paquet mobile. Le CMO3 éditable et la plaque de peau sont conservés dans l’atelier Jade sur D:.
+
+Dans les deux poses signalées, l’écart horizontal du centre de la bouche à l’axe nez–menton passe de −12,6 et +21,1 px à +1,5 et +6,3 px dans le dessin. Les poses sans rotation horizontale gardent les mêmes sommets. Les vrais sprites de fermeture restent visibles aux deux extrêmes et le MOC3 SDK 5.0 garde les masques et les coordonnées d’atlas.
+
+Le manifeste par défaut de la PWA charge cet export dans Chromium en 393 × 873. Le contrôle rejoue les deux vues, une pose de face et une réplique Enthousiaste B en PCM. Le clignement SDK ferme les deux paupières pendant l’articulation à 19,6° et la bouche se referme à la fin de la voix. La recette s’est déroulée en émulation mobile Chromium.

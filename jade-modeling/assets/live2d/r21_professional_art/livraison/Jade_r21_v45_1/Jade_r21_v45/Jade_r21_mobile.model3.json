@@ -5,7 +5,7 @@
     "Textures": [
       "mobile/profile-smile/texture_00.png",
       "Jade_r21_v45.4096/texture_01.png",
-      "Jade_r21_v45.4096/texture_02.png"
+      "mobile/face-turn/texture_02.png"
     ],
     "DisplayInfo": "Jade_r21_v45.cdi3.json",
     "Physics": "Jade_r21_v45.physics3.json",

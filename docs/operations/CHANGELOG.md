@@ -1,3 +1,8 @@
+## 2026-11-26 — Rotation du visage du r21 de trois-quarts
+
+- Le rig reprend les poses latérales du visage dans Cubism. La mâchoire suit les traits, la joue éloignée recule et les yeux suivent la perspective du visage. L’atlas mobile retire les anciens cils qui réapparaissaient près des tempes quand la tête tournait.
+- Le contrôle compare les deux rotations, les poses de parole signalées et le clignement. [Diagnostic et recette du v45.4](handoffs/2026-11-26-codex-mobile-intentions.md#rotation-du-visage-de-trois-quarts)
+
 ## 2026-11-26 — Sourires de trois-quarts du r21
 
 - La nouvelle page d’atlas mobile retouche la rangée de dents supérieure commune aux sourires. La bande ivoire est plus courte et rejoint l’ombre sous la lèvre, ce qui rétablit un contour continu dans les deux trois-quarts.
