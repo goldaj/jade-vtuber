@@ -13,7 +13,7 @@ from tools.jade_publication_export import create_preview, selected_paths, tracke
 
 class ExportTests(unittest.TestCase):
     def test_mobile_room_export_copies_reviewed_image_and_script(self):
-        image = b"RIFF" + b"\x08\x00\x00\x00" + b"WEBP" + b"synthetic"
+        image = b"\x00\x00\x00 ftypavif" + b"synthetic bedroom portrait"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "source"
             dest = Path(directory) / "preview"
@@ -26,7 +26,7 @@ class ExportTests(unittest.TestCase):
             (root / exporter.TEMPLATE_README).write_text("# Jade", encoding="utf-8")
             (root / exporter.TEMPLATE_PROMPT).write_text("generic", encoding="utf-8")
             (room / "room-motion.js").write_text("// animation", encoding="utf-8")
-            (room / "room-spring.webp").write_bytes(image)
+            (root / exporter.ROOM_BACKGROUND).write_bytes(image)
             paths = ["main.py", "pyproject.toml", exporter.ROOM_BACKGROUND,
                      "src/jade_runtime/mobile_web/room-motion.js"]
             with patch.object(exporter, "ROOM_BACKGROUND_SHA256", hashlib.sha256(image).hexdigest()):

@@ -3,19 +3,15 @@
 "use strict";
 (() => {
   const room = document.querySelector(".room");
-  const backdrop = document.getElementById("portrait-bedroom");
   const body = document.getElementById("portrait-seated-body");
-  if (!room || !backdrop || !body) return;
+  if (!room || !body) return;
 
-  const ASSETS = Object.freeze({
-    room:"/assets/room-bedroom-portrait.avif",
-    body:"/assets/jade-seated-body.avif"
-  });
+  const ASSETS = Object.freeze({body:"/assets/jade-seated-body.avif"});
   const BASE_LAYOUT = Object.freeze({top:.406699, height:.562201});
   let layout = BASE_LAYOUT;
   let ready = false;
   let generation = 0;
-  let portraitImage = null, portraitLoad = null, bodyLoad = null;
+  let bodyLoad = null;
 
   function preload(url) {
     const image = new Image();
@@ -46,26 +42,6 @@
     }};
   }
 
-  function loadPortrait() {
-    if (portraitImage) return Promise.resolve(portraitImage);
-    if (!portraitLoad) {
-      portraitLoad = preload(ASSETS.room).promise.then(image => {
-        const ratio = image.naturalWidth / image.naturalHeight;
-        if (Math.abs(ratio - 941 / 1672) >= .004) throw new Error("unsupported portrait ratio");
-        portraitImage = image;
-        return image;
-      }).finally(() => { portraitLoad = null; });
-    }
-    return portraitLoad;
-  }
-
-  function showPortrait(image) {
-    if (room.dataset.portraitReady === "true") return;
-    backdrop.src = image.src;
-    room.dataset.portraitReady = "true";
-    room.dispatchEvent?.(new Event("jade-portrait-ready"));
-  }
-
   function deactivate() {
     generation++;
     ready = false;
@@ -77,7 +53,6 @@
     layout = BASE_LAYOUT;
     bodyLoad?.cancel();
     bodyLoad = null;
-    // A validated room stays visible and animated during the avatar change.
     room.dispatchEvent?.(new Event("jade-seated-ready"));
   }
 
@@ -90,11 +65,10 @@
 
   async function prepareSeated(avatar) {
     const revision = generation;
-    const portrait = loadPortrait();
     const pending = preload(ASSETS.body);
     bodyLoad = pending;
     try {
-      const [roomImage, bodyImage] = await Promise.all([portrait, pending.promise]);
+      const bodyImage = await pending.promise;
       if (revision !== generation || !avatar.ready || !avatar.usesSeatedBody || !avatar.canIsolateHead) return;
       // Preserve the original 941x1672 registration. The revised crop only
       // extends the neck by 16 pixels; unrelated body crops stay rejected.
@@ -112,9 +86,6 @@
       if (revision !== generation || !avatar.ready || !avatar.usesSeatedBody) return;
       body.style.setProperty("--seated-body-top", `${layout.top * 100}%`);
       body.style.setProperty("--seated-body-height", `${layout.height * 100}%`);
-      // First activation remains atomic: an invalid body cannot replace the
-      // legacy room. Once validated, the room is independent of later bodies.
-      showPortrait(roomImage);
       body.src = bodyImage.src;
       ready = true;
       room.dataset.seatedReady = "true";
@@ -142,13 +113,6 @@
       return;
     }
     deactivate();
-    const revision = generation;
-    // A full model keeps the room, but never requests or composes the old body.
-    void loadPortrait().then(image => {
-      if (revision !== generation || !avatar.ready || avatar.usesSeatedBody) return;
-      showPortrait(image);
-      avatar.resize();
-    }).catch(() => { /* Keep the legacy room when the portrait is unavailable. */ });
   }
   room.addEventListener?.("jade-avatar-ready", activateForAvatar);
   activateForAvatar();

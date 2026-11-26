@@ -1,3 +1,9 @@
+## 2026-11-26 — Chambre portrait de la PWA
+
+- Le portrait vertical se charge dès l’ouverture du salon. Les transitions de modèle, le repli r20 et les erreurs Live2D ne sélectionnent plus de décor secondaire. Le plan de décor garde ses animations et le cadrage des vues courtes ou immersives.
+- L’ancienne chambre 4:3, ses trois WebP, ses calques et son générateur quittent le dépôt courant. Les routes de la PWA et l’export de prévisualisation utilisent le portrait vertical. La cuisine garde son fond et ses effets.
+- Tests de sélection Chambre/Cuisine, animation portrait, cadrage, exclusivité des modèles et contrôle des routes. [Diagnostic et recette](handoffs/2026-11-26-codex-chambre-portrait.md)
+
 ## 2026-11-26 — Rotation du visage du r21 de trois-quarts
 
 - Le rig reprend les poses latérales du visage dans Cubism. La mâchoire suit les traits, la joue éloignée recule et les yeux suivent la perspective du visage. L’atlas mobile retire les anciens cils qui réapparaissaient près des tempes quand la tête tournait.

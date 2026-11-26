@@ -48,6 +48,10 @@ Les demandes suivantes de zoom et déplacement tactile, service indépendant sur
 
 L’autorisation de développer le push-to-talk en maintien et les secousses est consignée dans la [passation mobile du 26 novembre](../../operations/handoffs/2026-11-26-codex-mobile-ptt-shake.md#échanges-accessibles).
 
+## Chambre portrait dans la PWA le 26 novembre 2026
+
+Le signalement du propriétaire et la réponse technique sont résumés dans la [passation de la chambre portrait](../../operations/handoffs/2026-11-26-codex-chambre-portrait.md). Aucune heure individuelle n’est attestée.
+
 ## Préparation du modèle r21 le 25 novembre 2026
 
 [Échanges sur la reprise et les MCP](2026-11-25-modele-jade-mcp.md), résumés avec rôles distincts et heures individuelles indisponibles. La [passation opérationnelle](../../operations/handoffs/2026-11-25-codex-jade-r21-reprise.md) et le [plan approuvé](../../../jade-modeling/MODEL2D_MASTER_PLAN.md) décrivent l’état applicable.

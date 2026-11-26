@@ -6,7 +6,7 @@
         <button type="button" class="icon-button" id="fullscreen" aria-label="Plein écran" title="Plein écran">⛶</button>
       </div>
     </header>
-    <section class="room" aria-label="Jade et son décor animé">
+    <section class="room" data-room="bedroom" aria-label="Jade et son décor animé">
       <div class="room-picker">
         <label for="room-selector">Décor</label>
         <select id="room-selector" aria-label="Choisir la pièce de Jade">
@@ -16,51 +16,7 @@
       </div>
       <div class="room-art" data-paused aria-hidden="true">
         <div class="room-plane">
-          <img src="/assets/room-spring.webp" width="1448" height="1086" alt="">
-          <div class="room-shadow room-shadow-left" hidden>
-            <svg viewBox="0 0 388 491" aria-hidden="true" focusable="false">
-              <g class="shadow-leaves">
-                <path d="M-20 118 Q69 148 127 211 T290 275 M79 177 Q103 123 182 99 M173 231 Q216 176 300 178 M112 204 Q129 265 215 316" class="shadow-branch"/>
-                <ellipse cx="45" cy="137" rx="29" ry="13" transform="rotate(26 45 137)"/>
-                <ellipse cx="83" cy="151" rx="31" ry="16" transform="rotate(-20 83 151)"/>
-                <ellipse cx="101" cy="187" rx="30" ry="14" transform="rotate(31 101 187)"/>
-                <ellipse cx="147" cy="196" rx="34" ry="16" transform="rotate(-32 147 196)"/>
-                <ellipse cx="167" cy="103" rx="25" ry="13" transform="rotate(42 167 103)"/>
-                <ellipse cx="200" cy="114" rx="31" ry="15" transform="rotate(-18 200 114)"/>
-                <ellipse cx="245" cy="186" rx="33" ry="17" transform="rotate(38 245 186)"/>
-                <ellipse cx="267" cy="228" rx="25" ry="13" transform="rotate(-22 267 228)"/>
-                <ellipse cx="208" cy="300" rx="38" ry="15" transform="rotate(22 208 300)"/>
-                <ellipse cx="246" cy="322" rx="25" ry="12" transform="rotate(-40 246 322)"/>
-                <ellipse cx="306" cy="265" rx="29" ry="16" transform="rotate(18 306 265)"/>
-              </g>
-            </svg>
-          </div>
-          <div class="room-shadow room-shadow-right" hidden>
-            <svg viewBox="0 0 267 464" aria-hidden="true" focusable="false">
-              <g class="shadow-leaves">
-                <path d="M270 88 Q196 127 162 184 T40 358 M189 142 Q133 121 90 99 M148 216 Q200 229 221 274" class="shadow-branch"/>
-                <ellipse cx="221" cy="117" rx="24" ry="11" transform="rotate(-30 221 117)"/>
-                <ellipse cx="172" cy="167" rx="27" ry="12" transform="rotate(38 172 167)"/>
-                <ellipse cx="136" cy="191" rx="30" ry="15" transform="rotate(-32 136 191)"/>
-                <ellipse cx="100" cy="232" rx="35" ry="15" transform="rotate(24 100 232)"/>
-                <ellipse cx="83" cy="288" rx="27" ry="13" transform="rotate(-30 83 288)"/>
-                <ellipse cx="49" cy="335" rx="32" ry="13" transform="rotate(38 49 335)"/>
-                <ellipse cx="90" cy="108" rx="25" ry="12" transform="rotate(42 90 108)"/>
-                <ellipse cx="208" cy="279" rx="30" ry="14" transform="rotate(-16 208 279)"/>
-                <ellipse cx="157" cy="247" rx="31" ry="15" transform="rotate(19 157 247)"/>
-              </g>
-            </svg>
-          </div>
-          <img class="room-curtain" src="" width="262" height="296" hidden alt="">
-          <div class="room-reflection" hidden></div>
-          <div class="room-steam" hidden>
-            <svg viewBox="0 0 116 205" aria-hidden="true" focusable="false">
-              <path class="wisp wisp-one" d="M51 199 C34 169 72 147 48 118 C29 92 59 62 37 34 C29 22 40 12 45 2"/>
-              <path class="wisp wisp-two" d="M68 205 C88 179 51 160 78 128 C102 98 55 80 80 54 C95 36 67 25 73 4"/>
-              <path class="wisp wisp-three" d="M59 196 C82 173 39 153 59 124 C82 93 45 80 62 45 C68 34 57 20 65 9"/>
-              <path class="wisp wisp-four" d="M40 198 C23 180 46 163 35 140 C19 111 54 97 39 64 C28 41 47 28 48 12"/>
-            </svg>
-          </div>
+          <img width="1448" height="1086" alt="">
           <!-- Cuisine: separate, translucent details over an untouched photograph. -->
           <div class="kitchen-effects" hidden aria-hidden="true">
             <div class="kitchen-sunlight"></div>
@@ -100,11 +56,11 @@
           </div>
         </div>
       </div>
-      <!-- Bedroom only: fixed portrait coordinate space holds backdrop, seated body,
-           and masked animated head. Kitchen retains the historical renderer. -->
+      <div class="bedroom-frame" aria-hidden="true">
+        <img id="portrait-bedroom" class="portrait-bedroom" src="/assets/room-bedroom-portrait.avif" width="864" height="1536" alt="">
+        <canvas id="portrait-bedroom-motion" class="portrait-bedroom-motion" width="864" height="1536" hidden></canvas>
+      </div>
       <div class="avatar-frame" id="avatar-frame">
-        <img id="portrait-bedroom" class="portrait-bedroom" alt="" aria-hidden="true" decoding="async">
-        <canvas id="portrait-bedroom-motion" class="portrait-bedroom-motion" width="864" height="1536" aria-hidden="true" hidden></canvas>
         <img id="portrait-seated-body" class="portrait-seated-body" alt="" aria-hidden="true" decoding="async">
         <div id="avatar-container" aria-label="Avatar Live2D de Jade">
           <div id="avatar-fallback" class="avatar-fallback" role="status">

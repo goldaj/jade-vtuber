@@ -36,7 +36,7 @@ for(let n=0;n<32;n++){
 }
 // Exercise the actual browser lifecycle, with a deliberately unsupported
 // image and a supported canvas mock. No GPU/DOM dependency in CI.
-function boot(width=864, pixelFailure=false, legacy=false) {
+function boot(width=864, pixelFailure=false, complete=true) {
   const events={},frames=new Map();let id=0,intersection,draws=0,clears=0;
   function ctx(){return {
     drawImage(){draws++;},clearRect(){clears++;},fillRect(){},
@@ -52,10 +52,9 @@ function boot(width=864, pixelFailure=false, legacy=false) {
     lineTo(){},moveTo(){},closePath(){},clip(){},quadraticCurveTo(){},stroke(){}
   };}
   function canvas(){const c=ctx();return {hidden:true,getContext(){return c;}};}
-  const output=canvas(),room={dataset:{room:"bedroom",seatedReady:"true"},
+  const output=canvas(),room={dataset:{room:"bedroom"},
     addEventListener(n,fn){events[n]=fn;}};
-  if(!legacy)room.dataset.portraitReady="true";
-  const backdrop={complete:true,naturalWidth:width,naturalHeight:1536,
+  const backdrop={complete,naturalWidth:width,naturalHeight:1536,
     addEventListener(n,fn){events[n]=fn;}};
   const toggle={checked:true,addEventListener(n,fn){events.toggle=fn;}};
   const status={textContent:""};
@@ -65,7 +64,7 @@ function boot(width=864, pixelFailure=false, legacy=false) {
     addEventListener(n,fn){events[n]=fn;}};
   const media={matches:false,addEventListener(n,fn){events.media=fn;}};
   vm.runInNewContext(fs.readFileSync(script,"utf8"),{
-    document:doc,matchMedia:()=>media,console,
+    document:doc,matchMedia:()=>media,console:{warn(){}},
     requestAnimationFrame(fn){frames.set(++id,fn);return id;},
     cancelAnimationFrame(n){frames.delete(n);},
     IntersectionObserver:class{constructor(fn){intersection=fn;}observe(target){assert.equal(target,room);}}
@@ -90,14 +89,15 @@ assert.match(b.status.textContent,/adoucis/);
 b.media.matches=false;b.events.media();assert.equal(b.frames.size,1);
 b.toggle.checked=false;b.events.toggle();assert.equal(b.frames.size,0);assert.equal(b.output.hidden,true);
 b.toggle.checked=true;b.events.toggle();assert.equal(b.frames.size,1);
-b.room.dataset.seatedReady="false";b.events["jade-seated-ready"]();
-assert.equal(b.frames.size,1,"portrait animation survives removal of the classic body");
-assert.equal(b.output.hidden,false);
-b.room.dataset.portraitReady="false";b.events["jade-portrait-ready"]();assert.equal(b.frames.size,0);
-b.room.dataset.portraitReady="true";b.events["jade-portrait-ready"]();assert.equal(b.frames.size,1);
-const legacy=boot(864,false,true);
-legacy.room.dataset.seatedReady="false";legacy.events["jade-seated-ready"]();
-assert.equal(legacy.frames.size,0,"older callers without portraitReady remain compatible");
+assert.equal(b.events["jade-seated-ready"],undefined,"bedroom does not listen to avatar readiness");
+const pending=boot(0,false,false);
+assert.equal(pending.frames.size,0);
+assert.equal(pending.room.dataset.portraitMotion,"loading");
+pending.backdrop.complete=true;pending.backdrop.naturalWidth=864;pending.events.load();
+assert.equal(pending.frames.size,1,"portrait starts as soon as its own image loads");
+const unavailable=boot(0);
+assert.equal(unavailable.frames.size,0);
+assert.equal(unavailable.room.dataset.portraitMotion,"unavailable");
 const scaled=boot(865);assert.equal(scaled.frames.size,1,"same aspect ratio is accepted");
 const unsupported=boot(1200);assert.equal(unsupported.frames.size,1);assert.equal(unsupported.room.dataset.portraitMotion,"partial");
 const failed=boot(864,true);assert.equal(failed.frames.size,1);assert.equal(failed.room.dataset.portraitMotion,"partial");

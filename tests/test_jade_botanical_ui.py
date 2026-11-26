@@ -13,7 +13,7 @@ class BotanicalUIContract(unittest.TestCase):
     def test_navigation_and_immersive_room_keep_the_live_room(self):
         login = (ROOT / "index.html").read_text(encoding="utf-8")
         html = (ROOT / "salon.html").read_text(encoding="utf-8")
-        for fragment in ('id="avatar-container"', 'class="room"', 'room-spring.webp',
+        for fragment in ('id="avatar-container"', 'class="room"', 'room-bedroom-portrait.avif',
                          'id="reminders-panel"', 'id="reminders-list"',
                          'id="messages"', 'id="composer"', 'id="mic"'):
             self.assertIn(fragment, html)

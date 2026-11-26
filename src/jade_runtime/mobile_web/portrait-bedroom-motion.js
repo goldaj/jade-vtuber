@@ -330,9 +330,14 @@
   }
   function sync() {
     const enabled=toggle?toggle.checked:true;
-    const portraitReady=(room.dataset.portraitReady??room.dataset.seatedReady)==="true";
-    const running=shouldRun(portraitReady,room.dataset.room==="bedroom",
-      visible,document.hidden,enabled);
+    const inBedroom=room.dataset.room==="bedroom";
+    if(inBedroom&&enabled&&visible&&!document.hidden&&!backdrop.naturalWidth){
+      stop();
+      if(backdrop.complete)report("unavailable","Décor de la chambre indisponible.");
+      else report("loading","Chargement des animations…");
+      return;
+    }
+    const running=shouldRun(Boolean(backdrop.naturalWidth),inBedroom,visible,document.hidden,enabled);
     if(!running){stop();report("paused",enabled?"Animations en pause hors chambre ou hors écran.":"Animations désactivées.");return;}
     prepare();
     if(!prepared){stop();report("loading","Chargement des animations…");return;}
@@ -345,9 +350,8 @@
   }
   toggle?.addEventListener("change",sync);
   room.addEventListener("jade-room-changed",sync);
-  room.addEventListener("jade-seated-ready",sync);
-  room.addEventListener("jade-portrait-ready",sync);
   backdrop.addEventListener("load",sync);
+  backdrop.addEventListener("error",sync);
   document.addEventListener("visibilitychange",sync);
   if(preference.addEventListener)preference.addEventListener("change",sync);
   else preference.addListener(sync);

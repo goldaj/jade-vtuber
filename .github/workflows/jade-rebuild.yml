@@ -86,7 +86,6 @@ jobs:
           node tests/portrait_bedroom_motion_test.js
           node --check src/jade_runtime/mobile_web/head-isolation.js
           node tests/mobile_head_isolation_test.js
-          node tests/room_motion_test.js
       - name: Run offline unit tests
         run: poetry run python -m unittest discover -s tests -v
       - name: Documentation contract
