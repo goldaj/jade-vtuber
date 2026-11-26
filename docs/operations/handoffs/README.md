@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Lot mobile · Gestes, service sur VPS et application Android](2026-11-26-codex-backlog-mobile.md) · Arbitrage du 26/11 dans DEV-042 à DEV-044 et UX-20.
+
 - [PWA · Second emplacement de modèle préparé (26/11)](2026-11-26-chatgpt-mobile-model-selection.md) · Sélecteur Profil, modèle actuel par défaut, second modèle désactivé ; catalogue et cycle exclusif préparés, branchement réel distinct.
 
 - [PWA · Mini-scènes et double appui (26/11)](2026-11-26-chatgpt-mobile-scenes.md) · Demande directe du propriétaire : choix du décor à l’Accueil, cadrage prioritaire sur la tête, plein écran au double geste.

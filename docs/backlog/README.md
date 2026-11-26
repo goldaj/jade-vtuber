@@ -27,6 +27,8 @@
 
 **Transferts du 23/11 : DEV-037 (NEW-29, sous-titres mobiles, P2) et DEV-038 (NEW-38, autonomie fonctionnelle, P1) sont À qualifier, sans développement lancé. Les deux anciennes idées ont été retirées du catalogue actif.**
 
+**Lot mobile du 26/11 :** [DEV-042](01-DEVELOPPEMENT.md#dev-042--zoom-et-déplacement-tactile-du-r21) (P1) couvre le zoom et le déplacement du r21. [DEV-043](01-DEVELOPPEMENT.md#dev-043--service-jade-indépendant-du-pc) et [DEV-044](01-DEVELOPPEMENT.md#dev-044--application-android-installable) (P2) couvrent la continuité sur VPS et le client Android. L’idée [UX-20](../ameliorations/06-PRODUIT-MOBILE.md#ux-20--réaction-aux-secousses-p3) (P3) couvre la secousse du téléphone. [Décisions et ordre proposé](../operations/handoffs/2026-11-26-codex-backlog-mobile.md)
+
 **Quick wins engagés le 22/11 : DEV-027 (VIS-04) et DEV-028 (RTE-12) sont en développement sur `develop`.** **Élargissement validé le même jour : DEV-029 (VIS-07) en développement, DEV-030 (LAT-10) À faire.** Les idées prospectives correspondantes sont retirées de la liste active, sans duplication. La CI mémoire en cours de remise au vert est suivie séparément.
 
 **Microphone physique du PC, Twitch et OBS restent suspendus** dans leurs cartes concernées. [Décision et limites](../operations/handoffs/2026-11-22-validation-rec031-rec033-rec034.md).

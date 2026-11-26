@@ -44,6 +44,8 @@ Après toute nouvelle intervention, ajouter les échanges effectivement accessib
 
 Les décisions du propriétaire et les réponses de cadrage accessibles figurent dans la [passation du raccordement mobile](../../operations/handoffs/2026-11-26-codex-mobile-r21.md#échanges-accessibles). Heures individuelles indisponibles. La passation ne reprend ni les données privées ni les sorties d’outils.
 
+Les demandes suivantes de zoom et déplacement tactile, service indépendant sur VPS, application Android dédiée et réaction aux secousses figurent dans la [passation du lot mobile](../../operations/handoffs/2026-11-26-codex-backlog-mobile.md#échanges-accessibles), avec rôles distincts, extraits et synthèses.
+
 ## Préparation du modèle r21 le 25 novembre 2026
 
 [Échanges sur la reprise et les MCP](2026-11-25-modele-jade-mcp.md), résumés avec rôles distincts et heures individuelles indisponibles. La [passation opérationnelle](../../operations/handoffs/2026-11-25-codex-jade-r21-reprise.md) et le [plan approuvé](../../../jade-modeling/MODEL2D_MASTER_PLAN.md) décrivent l’état applicable.
