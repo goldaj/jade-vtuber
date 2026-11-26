@@ -1,3 +1,8 @@
+## 2026-11-26 — Oreilles du r21 sur la respiration et les intentions
+
+- `avatar.js` associe le mouvement des oreilles à la respiration réellement affichée sur le torse et applique un retard légèrement différent de chaque côté. Les accents suivent les sept intentions du dialogue et gardent l’attitude pendant les pauses.
+- La PWA superpose ces mouvements à l’inertie existante et conserve les accents des clips. Les tests vérifient la respiration, les sept profils et le retour à la respiration après interruption. [Recette ART-013](handoffs/2026-11-26-codex-mobile-oreilles-r21.md)
+
 ## 2026-11-26 — Regard et quatre gestes repris pour le r21 mobile
 
 - Le manifeste mobile charge un MOC3 SDK 5.0 exporté dans Cubism depuis la copie v45.2. La course des iris et des reflets passe à ±26 px horizontalement et ±12 px verticalement. Le contrôle Core confirme les mêmes masques, les mêmes UV et un clignement fermé identique au v45.1.

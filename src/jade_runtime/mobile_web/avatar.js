@@ -79,6 +79,28 @@
       aperture: [[.98, .98], [.98, .98]],
     },
   });
+  // Signed lifts of the left and right ears, in seconds from the first expression.
+  // Each gesture settles into a held pose until the reply fades.
+  const R21_EAR_GESTURES = Object.freeze({
+    neutral: {keys:[[.36,.13,.10], [.92,.03,.03]]},
+    playful: {mirror:true, keys:[
+      [.24,.40,-.10], [.50,.52,.20], [.85,-.13,.34], [1.24,.12,.02], [1.72,.05,-.06],
+    ]},
+    excited: {keys:[
+      [.31,.53,.48], [.62,.19,.22], [.94,.59,.55], [1.40,.22,.25], [1.88,.13,.14],
+    ]},
+    curious: {mirror:true, keys:[
+      [.29,.45,-.11], [.61,.48,-.23], [1.08,.27,-.17], [1.56,.19,-.12],
+    ]},
+    tender: {keys:[[.59,-.16,-.19], [1.20,-.26,-.23], [1.91,-.16,-.14]]},
+    reassuring: {keys:[[.31,-.07,-.08], [.95,.24,.22], [1.52,.15,.14], [2.10,.07,.07]]},
+    serious: {keys:[[.30,-.22,-.24], [.63,-.37,-.34], [1.01,-.17,-.17], [1.53,-.13,-.13]]},
+  });
+  const R21_EAR_BREATH = [
+    {id:"ParamJadeEarFollowL", side:0, delayMs:130, gain:.34},
+    {id:"ParamJadeEarFollowR", side:1, delayMs:185, gain:.30},
+  ];
+  const EAR_BREATH_REST = .43;
   const FACE_FADE_IN_MS = 140;
   const FACE_FADE_OUT_MS = 220;
   const FACE_AFTER_AUDIO_MS = 600;
@@ -164,11 +186,29 @@
     core.addParameterValueById?.("ParamBodyAngleZ", -12 * x);
   }
 
+  function easePose(progress) {
+    return progress * progress * (3 - 2 * progress);
+  }
+
   function replyPoseWeight(reply, now) {
     const progress = reply.fadeAt === null
       ? clamp((now - reply.preparedAt) / FACE_FADE_IN_MS, 0, 1)
       : clamp((reply.fadeAt + FACE_FADE_OUT_MS - now) / FACE_FADE_OUT_MS, 0, 1);
-    return progress * progress * (3 - 2 * progress);
+    return easePose(progress);
+  }
+
+  function earGestureAt(gesture, age, variant) {
+    const keys = gesture.keys;
+    const next = keys.findIndex(([time]) => time > age);
+    const [fromTime, fromLeft, fromRight] = next === 0 ? [0,0,0] : keys.at(next < 0 ? -1 : next - 1);
+    let left = fromLeft, right = fromRight;
+    if (next >= 0) {
+      const [toTime, toLeft, toRight] = keys[next];
+      const weight = easePose(clamp((age - fromTime) / (toTime - fromTime), 0, 1));
+      left += (toLeft - fromLeft) * weight;
+      right += (toRight - fromRight) * weight;
+    }
+    return gesture.mirror && variant === 1 ? [right,left] : [left,right];
   }
 
   function applyActingOffsets(core, parameters, variant, weight) {
@@ -203,6 +243,12 @@
     // r21 leaves the eye curves free, so advance it during gestures as well.
     const blink = internal.eyeBlink;
     let lastBlinkUpdate = null;
+    const hasParameter = id => !core.getParameterCount || core.getParameterIndex(id) < core.getParameterCount();
+    const earResponses = typeof core.getParameterValueById === "function"
+      ? R21_EAR_BREATH.filter(({id}) => hasParameter(id)).map(ear => ({...ear, breath:null}))
+      : [];
+    const hasBreath = earResponses.length > 0 && hasParameter("ParamBreath");
+    let lastEarUpdate = null;
     const updateMotionEffects = () => {
       const now = performance.now();
       const delta = lastBlinkUpdate === null ? 0 : Math.min(.1, (now - lastBlinkUpdate) / 1000);
@@ -215,9 +261,28 @@
       applyShake(core, now);
     };
     const updateFace = () => {
+      const now = performance.now();
+      const weight = r21Reply ? replyPoseWeight(r21Reply, now) : 0;
+      if (earResponses.length) {
+        // Read the same breath as the chest, after the SDK and physics. The
+        // SDK restores parameters after drawing, so these offsets never stack.
+        const breath = hasBreath ? core.getParameterValueById("ParamBreath") : EAR_BREATH_REST;
+        const elapsed = lastEarUpdate === null ? 0 : clamp(now - lastEarUpdate, 0, 100);
+        lastEarUpdate = now;
+        const gesture = r21Reply
+          ? earGestureAt(r21Reply.ears, (now - r21Reply.preparedAt) / 1000, r21Reply.index)
+          : null;
+        for (const ear of earResponses) {
+          ear.breath ??= breath;
+          ear.breath += (breath - ear.breath) * -Math.expm1(-elapsed / ear.delayMs);
+          const physicalFollow = core.getParameterValueById(ear.id);
+          const lift = (ear.breath - EAR_BREATH_REST) * ear.gain + (gesture?.[ear.side] ?? 0) * weight;
+          // Reserve room for the head follow, even at the peak of an accent.
+          core.addParameterValueById(ear.id, lift * (1 - Math.abs(physicalFollow)));
+        }
+      }
       if (r21Reply) {
         const {pose, acting, index} = r21Reply;
-        const weight = replyPoseWeight(r21Reply, performance.now());
         const openForm = pose.mouthAtFullOpen ?? pose.mouth;
         const mouthForm = pose.mouth + (openForm - pose.mouth) * mouth;
         core.setParameterValueById("ParamMouthForm", mouthForm, weight);
@@ -505,7 +570,7 @@
       clearReplyTimers();
       if (r21) {
         const pose = R21_FACES[key], group = R21_MOTIONS[key];
-        r21Reply = {pose, group, index, acting:R21_ACTING[key],
+        r21Reply = {pose, group, index, acting:R21_ACTING[key], ears:R21_EAR_GESTURES[key],
           preparedAt:performance.now(), fadeAt:null, motionStarted:false,
           motionReady:loadMotion(group, index)};
         mood.textContent = pose.caption;

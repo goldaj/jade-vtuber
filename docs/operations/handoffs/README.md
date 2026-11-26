@@ -6,6 +6,7 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [ART-013 · Oreilles du r21](2026-11-26-codex-mobile-oreilles-r21.md) · Respiration et jeu des sept intentions sur mobile.
 - [DEV-001 · Jeu des intentions sur mobile](2026-11-26-codex-mobile-intentions.md) · Première étape de synchronisation entre la pose, le geste et la lecture.
 - [DEV-045 · Coiffures interchangeables r21](2026-11-26-chatgpt-coiffures-r21.md) · US P2, référence graphique à déposer, développement non commencé.
 - [DEV-039 et UX-20 · Push-to-talk et secousses](2026-11-26-codex-mobile-ptt-shake.md) · Micro en maintien et réaction physique du r21.

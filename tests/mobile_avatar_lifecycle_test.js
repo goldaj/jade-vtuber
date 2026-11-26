@@ -134,6 +134,7 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
     model.internalModel = Object.assign(new EventEmitter(), {
       coreModel:{
         getDrawableRenderOrders(){return [0];},
+        getParameterValueById(id){return model.parameters.get(id)?.value ?? (id === "ParamBreath" ? .43 : 0);},
         setParameterValueById(id,value,weight = 1){
           model.lastParameter={id,value};
           model.parameters.set(id, {value,weight});
@@ -349,6 +350,48 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
     Playful:[{brow:-.23,posture:-2.4,gaze:-.10,lids:[.91,.97]},{brow:-.23,posture:2.4,gaze:.10,lids:[.97,.91]}],
     Serious:[{brow:.16,posture:.7,gaze:0,lids:[.98,.98]},{brow:.16,posture:-.7,gaze:0,lids:[.98,.98]}],
   });
+
+  let earVariant = .24;
+  const earClient = await client({defaultId:"next",reactions:true,random:() => earVariant});
+  const ears = earClient.models[0];
+  const earIds = ["ParamJadeEarFollowL","ParamJadeEarFollowR"];
+  function renderEars(ms) {
+    earClient.advanceTime(ms);
+    ears.internalModel.emit("afterMotionUpdate");
+    ears.internalModel.emit("beforeModelUpdate");
+    return earIds.map(id => ears.addedParameters.get(id).value);
+  }
+  assert.deepEqual(renderEars(0), [0,0]);
+  ears.internalModel.coreModel.setParameterValueById("ParamBreath", .83);
+  const inhaling = renderEars(25);
+  assert(inhaling[0] > inhaling[1] && inhaling[1] > 0 && inhaling[0] < .04,
+    "a real breath lifts both ears with distinct, gradual delays");
+  for (let i = 0; i < 8; i++) renderEars(100);
+  assert(renderEars(25).every(lift => lift > .11), "a sustained inhalation reaches the tips");
+  ears.internalModel.coreModel.setParameterValueById("ParamBreath", .43);
+  for (let i = 0; i < 16; i++) renderEars(100);
+  function earBeat(intent, age) {
+    earClient.avatar.setIntent(intent,{deferMotion:true});
+    return renderEars(age);
+  }
+  const neutralEars = earBeat("neutral",360);
+  const playfulA = earBeat("playful",240);
+  earVariant = .76;
+  const playfulB = earBeat("playful",240);
+  const excitedEars = earBeat("excited",310);
+  const curiousEars = earBeat("curious",610);
+  const tenderEars = earBeat("tender",1200);
+  const reassuringEars = earBeat("reassuring",950);
+  const seriousEars = earBeat("serious",630);
+  assert(neutralEars.every(lift => lift > .08 && lift < .15));
+  assert(playfulA[0] > .38 && playfulA[1] < -.08 && playfulB[0] < -.08 && playfulB[1] > .38);
+  assert(excitedEars.every(lift => lift > .46));
+  assert(curiousEars[0] < -.20 && curiousEars[1] > .46);
+  assert(tenderEars.every(lift => lift < -.20));
+  assert(reassuringEars.every(lift => lift > .20 && lift < .26));
+  assert(seriousEars.every(lift => lift < -.32));
+  earClient.avatar.resetIntent();
+  assert(renderEars(200).every(lift => Math.abs(lift) < .001), "interruption releases both ears to breathing");
 
   const beforeSpeech = r21.motions.length;
   assert.equal(nextDefault.avatar.setIntent("serious",{deferMotion:true}),true);
