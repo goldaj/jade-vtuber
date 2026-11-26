@@ -93,7 +93,8 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
         return addChildAt.call(this, child, index);
       };
       this.renderer = {resize(){}};
-      this.ticker = {running:false,start(){this.running = true;},stop(){this.running = false;},add(callback){this.callback = callback;},remove(){}};
+      this.ticker = {running:false, callbacks:[], start(){this.running = true;}, stop(){this.running = false;},
+        add(callback){this.callbacks.push(callback);}, remove(){}, callback(){this.callbacks.forEach(run => run());}};
       applications.push(this);
     }
     destroy(removeView) { this.ticker.stop(); if (removeView) this.view.remove(); this.destroyed = true; }
@@ -393,30 +394,67 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   assert(touch.avatar.zoomView(1.2, ...eye()));
   assert(touch.avatar.moveView(13, 9));
   const shakePose = pose();
+  const shakeLayer = standing.parent;
   const shakeMotionCount = standing.motions.length;
   touch.avatar.setMouth(.35);
   assert(touch.avatar.nudgeFromShake(1, .5));
   touch.advanceTime(70);
+  touch.applications[0].ticker.callback();
   standing.internalModel.emit("afterMotionUpdate");
   standing.internalModel.emit("beforeModelUpdate");
-  assert(Math.abs(standing.shakeParameters.get("ParamAngleX")) > 4, "shake drives the rig's physics inputs");
+  assert(shakeLayer.position.x > 55, "a strong shake displaces the whole avatar visibly");
+  assert(shakeLayer.position.y > 20, "the motion follows the direction of the shake");
+  assert(standing.shakeParameters.get("ParamAngleX") > 20, "shake noticeably drives the rig's physics inputs");
+  assert(touch.avatar.isModelAt(eye()[0] + shakeLayer.position.x, eye()[1] + shakeLayer.position.y),
+    "the shifted character is still hittable");
   assert.equal(standing.motions.length, shakeMotionCount, "shake leaves the active motion playing");
   assert.deepEqual(standing.lastParameter, {id:"ParamMouthOpenY", value:.35}, "shake leaves lip sync active");
   assert.deepEqual(pose(), shakePose, "shake keeps the custom placement and zoom");
+  touch.advanceTime(100);
+  touch.applications[0].ticker.callback();
+  assert(shakeLayer.position.x < -40, "the avatar visibly swings back before settling");
   standing.shakeParameters.clear();
-  touch.advanceTime(800);
+  touch.advanceTime(1000);
+  touch.applications[0].ticker.callback();
   standing.internalModel.emit("afterMotionUpdate");
   assert.equal(standing.shakeParameters.size, 0, "the impulse expires");
+  assert.equal(shakeLayer.position.x, 0, "the avatar returns to exactly the chosen framing");
+  assert.equal(shakeLayer.position.y, 0);
+  assert(touch.avatar.nudgeFromShake(1, .5));
+  touch.advanceTime(70);
+  touch.applications[0].ticker.callback();
+  const shown = [standing.position.x + shakeLayer.position.x, standing.position.y + shakeLayer.position.y];
+  assert(touch.avatar.moveView(5, -7));
+  assert.deepEqual(pose(), [shown[0] + 5, shown[1] - 7, shakePose[2]],
+    "a manual drag takes over the shown pose without snapping back");
+  assert.equal(shakeLayer.position.x, 0);
+  assert(touch.avatar.moveView(-1e4, -1e4));
+  const edgePose = pose();
+  assert(touch.avatar.nudgeFromShake(-1, -1));
+  touch.advanceTime(70);
+  touch.applications[0].ticker.callback();
+  assert([ [.50,.15], [.50,.30], [.50,.48], [.447,.73], [.543,.73] ].some(([x,y]) =>
+    touch.avatar.isModelAt(12 + standing.position.x + shakeLayer.position.x + (x - .5) * 3840 * standing.scale.x,
+      42 + standing.position.y + shakeLayer.position.y + (y - .5) * 5000 * standing.scale.y)),
+    "an outward shake still leaves a solid part reachable at the edge");
+  touch.avatar.stopShake();
+  assert.deepEqual(pose(), edgePose, "even a clamped shake returns exactly to the chosen edge placement");
+  touch.avatar.resetView();
   touch.shell.dataset.view = "profile";
   assert(!touch.avatar.nudgeFromShake(1, 1), "a mini-scene cannot receive a shake");
   touch.shell.classList.add("is-room-only");
   assert(touch.avatar.nudgeFromShake(1, 1), "the fullscreen scene can receive a shake");
+  touch.advanceTime(70);
+  touch.applications[0].ticker.callback();
+  assert(shakeLayer.position.x > 55);
   touch.hide(true);
+  assert.equal(shakeLayer.position.x, 0, "backgrounding immediately clears the transient displacement");
   assert(!touch.avatar.nudgeFromShake(1, 1), "the backgrounded page cannot receive a shake");
   touch.hide(false);
   standing.internalModel.emit("afterMotionUpdate");
   assert.equal(standing.shakeParameters.size, 0, "an old impulse cannot resume from the background");
   assert.equal(await touch.avatar.selectModel("classic"), true);
+  assert(shakeLayer.destroyed, "switching models releases the parent's transient transform");
   assert.equal(touch.avatar.getTouchFrame(), null, "classic is outside the touch feature");
   assert(!touch.avatar.nudgeFromShake(1, 1), "classic cannot receive a shake");
 
@@ -459,7 +497,8 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   assert.equal(domFallback.room.dataset.seatedReady,"false");
   assert.equal(domFallback.body.src,"");
   assert.equal(domFallback.models[0].destroyed,true);
-  assert.deepEqual(domFallback.applications[0].stage.children,[domFallback.models.at(-1)]);
+  assert.deepEqual(domFallback.applications[0].stage.children,[domFallback.models.at(-1).parent]);
+  assert.deepEqual(domFallback.models.at(-1).parent.children,[domFallback.models.at(-1)]);
   assert.equal(domFallback.maximum,1);
 
   const early = await client({initialError:true});

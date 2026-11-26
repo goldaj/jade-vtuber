@@ -1,3 +1,8 @@
+## 2026-11-26 — Réaction du r21 nettement visible lors d’une secousse
+
+- Le propriétaire a signalé une réaction imperceptible sur téléphone. La détection accepte une inversion moins forte et des données Android partiellement renseignées. Le réglage indique si la PWA reçoit des données et si une secousse a été détectée.
+- Une secousse importante déplace brièvement la silhouette à l’écran et sollicite davantage les angles du rig Live2D. Le modèle s’amortit autour du cadrage choisi. [Recette et limites](handoffs/2026-11-26-codex-mobile-ptt-shake.md)
+
 ## 2026-11-26 — Micro à maintenir et réaction aux secousses sur mobile
 
 - Dans la PWA, `app.js` associe la capture vocale à l’appui maintenu sur le micro et la fin d’énoncé au relâchement. `duplex-client.js` envoie les trames PCM pendant l’appui, limite le tampon de démarrage et ferme la connexion sur échec. Le secours WAV intervient seulement avant une connexion vocale confirmée.

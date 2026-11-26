@@ -21,6 +21,7 @@
   let standingCamera = null;
   let framing = {x:0, y:0, zoom:1};
   let shakeImpulse = null;
+  let shakeLayer = null;
   let rendererState = Object.freeze({status:"idle", modelId:null, requestedId:"classic", message:""});
   let headIsolation = null;
   let seatedComposition = null;
@@ -54,6 +55,7 @@
     "ParamJadeIdleLean", "ParamJadeLegRelaxL", "ParamJadeLegRelaxR", "ParamJadeWeightShift",
   ];
   const SHORT_EXPRESSIONS = new Set(["Blink", "WinkL", "WinkR"]);
+  const SHAKE_DURATION = 1.05;
 
   function playMotion(group, index, priority) {
     try { model?.motion?.(group, index, priority)?.catch?.(() => {}); }
@@ -65,30 +67,62 @@
       renderRunning && onScreen && !document.hidden && permitsFraming();
   }
 
-  function stopShake() { shakeImpulse = null; }
+  function setShakeOffset(x, y) {
+    const position = shakeLayer?.position;
+    if (!position || (position.x === x && position.y === y)) return;
+    position.set(x, y);
+    notifyFraming();
+  }
+
+  function stopShake() {
+    shakeImpulse = null;
+    setShakeOffset(0, 0);
+  }
 
   function nudgeFromShake(x, y) {
-    if (!canShake() || !Number.isFinite(x) || !Number.isFinite(y)) return false;
-    shakeImpulse = {x:clamp(x, -1, 1), y:clamp(y, -1, 1), started:performance.now()};
+    if (!canShake() || !shakeLayer || !Number.isFinite(x) || !Number.isFinite(y) || (!x && !y)) return false;
+    const layout = framingLayout();
+    if (!layout) return false;
+    const travel = Math.min(82, Math.min(layout.width * layout.cssX, layout.height * layout.cssY) * .19);
+    shakeImpulse = {
+      x:clamp(x, -1, 1), y:clamp(y, -1, 1), started:performance.now(),
+      layout, travelX:travel / layout.cssX, travelY:.8 * travel / layout.cssY,
+    };
     return true;
+  }
+
+  function shakeSpring(now) {
+    const age = (now - shakeImpulse.started) / 1000;
+    if (age >= SHAKE_DURATION || !canShake()) {
+      stopShake();
+      return 0;
+    }
+    return (1 - age / SHAKE_DURATION) ** 2 * Math.sin(27 * age);
+  }
+
+  function updateShakeLayer() {
+    if (!shakeImpulse) return;
+    const spring = shakeSpring(performance.now());
+    if (!shakeImpulse) return;
+    const {x, y, travelX, travelY, layout} = shakeImpulse;
+    const shiftX = x * spring * travelX;
+    const shiftY = y * spring * travelY;
+    const correction = keepReachable(model.position.x + shiftX, model.position.y + shiftY, model.scale.x, layout);
+    setShakeOffset(shiftX + correction.x, shiftY + correction.y);
   }
 
   function applyShake(core, now) {
     if (!shakeImpulse) return;
-    const age = (now - shakeImpulse.started) / 1000;
-    if (age >= .72 || !canShake()) {
-      stopShake();
-      return;
-    }
-    // The renderer keeps its own centre. The rig's angles feed the existing hair and clothes physics.
-    const spring = Math.exp(-7 * age) * Math.sin(23 * age);
+    const spring = shakeSpring(now);
+    if (!shakeImpulse) return;
+    // These angles drive hair and clothing in addition to the whole-avatar sway.
     const x = shakeImpulse.x * spring;
     const y = shakeImpulse.y * spring;
-    core.addParameterValueById?.("ParamAngleX", 8 * x);
-    core.addParameterValueById?.("ParamAngleY", 7 * y);
-    core.addParameterValueById?.("ParamAngleZ", -6 * x);
-    core.addParameterValueById?.("ParamBodyAngleX", 4 * x);
-    core.addParameterValueById?.("ParamBodyAngleZ", -3 * x);
+    core.addParameterValueById?.("ParamAngleX", 30 * x);
+    core.addParameterValueById?.("ParamAngleY", 26 * y);
+    core.addParameterValueById?.("ParamAngleZ", -22 * x);
+    core.addParameterValueById?.("ParamBodyAngleX", 15 * x);
+    core.addParameterValueById?.("ParamBodyAngleZ", -12 * x);
   }
 
   function bindR21MotionPlayback(internal, idleGroup) {
@@ -454,6 +488,27 @@
     if (typeof Event === "function") room?.dispatchEvent?.(new Event("jade-avatar-framing"));
   }
 
+  function keepReachable(x, y, scale, layout) {
+    // A bounding box could leave only an empty corner on screen. Keep a solid part within reach.
+    const insetX = Math.min(30, layout.width / 2);
+    const insetY = Math.min(30, layout.height / 2);
+    const correction = {x:0, y:0};
+    let nearest = Infinity;
+    for (const [anchorX, anchorY] of R21_GRAB_AREAS) {
+      const px = x + (anchorX - .5) * standingCamera.width * scale;
+      const py = y + (anchorY - .5) * standingCamera.height * scale;
+      const dx = clamp(px, layout.left + insetX, layout.right - insetX) - px;
+      const dy = clamp(py, layout.top + insetY, layout.bottom - insetY) - py;
+      const distance = Math.hypot(dx, dy);
+      if (distance < nearest) {
+        nearest = distance;
+        correction.x = dx;
+        correction.y = dy;
+      }
+    }
+    return correction;
+  }
+
   function applyFraming(layout, commit = false) {
     const base = standingCamera;
     let {x, y, scale} = base;
@@ -461,26 +516,9 @@
       x += framing.x * layout.width;
       y += framing.y * layout.height;
       scale *= framing.zoom;
-
-      // Keep the nearest solid part in reach. A bounding box alone would let the
-      // empty corner around Jade's shoulders or feet be the only part left onscreen.
-      const insetX = Math.min(30, layout.width / 2);
-      const insetY = Math.min(30, layout.height / 2);
-      let correctionX = 0, correctionY = 0, nearest = Infinity;
-      for (const [anchorX, anchorY] of R21_GRAB_AREAS) {
-        const px = x + (anchorX - .5) * base.width * scale;
-        const py = y + (anchorY - .5) * base.height * scale;
-        const dx = clamp(px, layout.left + insetX, layout.right - insetX) - px;
-        const dy = clamp(py, layout.top + insetY, layout.bottom - insetY) - py;
-        const distance = Math.hypot(dx, dy);
-        if (distance < nearest) {
-          nearest = distance;
-          correctionX = dx;
-          correctionY = dy;
-        }
-      }
-      x += correctionX;
-      y += correctionY;
+      const correction = keepReachable(x, y, scale, layout);
+      x += correction.x;
+      y += correction.y;
       if (commit) {
         framing.x = (x - base.x) / layout.width;
         framing.y = (y - base.y) / layout.height;
@@ -496,7 +534,8 @@
     const {canvas, cssX, cssY} = layout;
     const {width, height} = standingCamera;
     const scale = model.scale.x;
-    const x = model.position.x, y = model.position.y;
+    const x = model.position.x + (shakeLayer?.position.x ?? 0);
+    const y = model.position.y + (shakeLayer?.position.y ?? 0);
     // The interaction surface covers the painted character, including the hair's
     // movement margin. The actual contact is checked against visible triangles.
     const left = Math.max(layout.left, x - .22 * width * scale);
@@ -529,8 +568,10 @@
     if (!frame || !Number.isFinite(clientX) || !Number.isFinite(clientY) ||
         clientX < frame.left || clientX > frame.right || clientY < frame.top || clientY > frame.bottom) return false;
     const scale = model.scale.x;
-    const x = ((clientX - layout.canvas.left) / layout.cssX - model.position.x) / (standingCamera.width * scale);
-    const y = ((clientY - layout.canvas.top) / layout.cssY - model.position.y) / (standingCamera.height * scale);
+    const x = ((clientX - layout.canvas.left) / layout.cssX - model.position.x - (shakeLayer?.position.x ?? 0))
+      / (standingCamera.width * scale);
+    const y = ((clientY - layout.canvas.top) / layout.cssY - model.position.y - (shakeLayer?.position.y ?? 0))
+      / (standingCamera.height * scale);
     const cubism = model.internalModel?.coreModel?.getModel?.();
     const {canvasinfo, drawables} = cubism || {};
     if (canvasinfo?.PixelsPerUnit && drawables?.ids && drawables.indices && drawables.vertexPositions && drawables.opacities) {
@@ -555,8 +596,11 @@
   function moveView(dx, dy) {
     const layout = activeFramingLayout();
     if (!layout || !Number.isFinite(dx) || !Number.isFinite(dy)) return false;
-    framing.x = (model.position.x - standingCamera.x + dx / layout.cssX) / layout.width;
-    framing.y = (model.position.y - standingCamera.y + dy / layout.cssY) / layout.height;
+    const shownX = model.position.x + (shakeLayer?.position.x ?? 0);
+    const shownY = model.position.y + (shakeLayer?.position.y ?? 0);
+    stopShake();
+    framing.x = (shownX - standingCamera.x + dx / layout.cssX) / layout.width;
+    framing.y = (shownY - standingCamera.y + dy / layout.cssY) / layout.height;
     applyFraming(layout, true);
     return true;
   }
@@ -568,10 +612,13 @@
     const zoom = clamp(framing.zoom * factor, .45, 2.5);
     const ratio = zoom / framing.zoom;
     if (ratio === 1) return true;
+    const shownX = model.position.x + (shakeLayer?.position.x ?? 0);
+    const shownY = model.position.y + (shakeLayer?.position.y ?? 0);
+    stopShake();
     const x = (clientX - layout.canvas.left) / layout.cssX;
     const y = (clientY - layout.canvas.top) / layout.cssY;
-    framing.x = (x + (model.position.x - x) * ratio - standingCamera.x) / layout.width;
-    framing.y = (y + (model.position.y - y) * ratio - standingCamera.y) / layout.height;
+    framing.x = (x + (shownX - x) * ratio - standingCamera.x) / layout.width;
+    framing.y = (y + (shownY - y) * ratio - standingCamera.y) / layout.height;
     framing.zoom = zoom;
     applyFraming(layout, true);
     return true;
@@ -579,6 +626,7 @@
 
   function resetView() {
     if (!activeFramingLayout()) return false;
+    stopShake();
     framing = {x:0, y:0, zoom:1};
     applyFraming(null);
     return true;
@@ -601,6 +649,7 @@
 
   function resize() {
     if (!pixi || !model) return;
+    stopShake();
     const width = Math.max(1, target.clientWidth);
     const height = Math.max(1, target.clientHeight);
     pixi.renderer.resize(width, height);
@@ -701,6 +750,10 @@
       attempt(() => composition.body.destroy?.({texture:true, baseTexture:true}));
     }
     if (modelLease) attempt(() => modelLease.dispose());
+    if (shakeLayer) {
+      attempt(() => shakeLayer.destroy());
+      shakeLayer = null;
+    }
     modelLease = null;
     model = null;
     activeProfile = null;
@@ -727,6 +780,8 @@
       antialias:true, backgroundAlpha:0, transparent:true});
     target.appendChild(pixi.view);
     pixi.ticker.stop();
+    // Update the transient transform before Pixi derives world transforms for drawing.
+    pixi.ticker.add(updateShakeLayer, undefined, PIXI.UPDATE_PRIORITY?.NORMAL ?? 0);
     // One canvas, observer and ticker for the whole session, never one per choice.
     pixi.ticker.add(() => {
       try {
@@ -758,7 +813,13 @@
     headIsolation = profile.presentation === "seated"
       ? window.JadeHeadIsolation?.forModel?.(cubism) ?? null : null;
     model.anchor.set(.5, .5);
-    pixi.stage.addChild(model);
+    if (profile.id === "next") {
+      shakeLayer = new window.PIXI.Container();
+      shakeLayer.addChild(model);
+      pixi.stage.addChild(shakeLayer);
+    } else {
+      pixi.stage.addChild(model);
+    }
     resize();
     fallback.classList.add("hidden");
     if (typeof Event === "function") room?.dispatchEvent?.(new Event("jade-avatar-ready"));

@@ -69,6 +69,9 @@ function createClient({motion = {}, secure = true, reduced = false} = {}) {
         timeStamp:time, [raw ? "accelerationIncludingGravity" : "acceleration"]:axis,
       });
     },
+    sample(time, acceleration, accelerationIncludingGravity) {
+      return window.dispatch("devicemotion", {timeStamp:time, acceleration, accelerationIncludingGravity});
+    },
     runTimers() { for (const timer of [...timers]) { timers.delete(timer); timer(); } },
     reduce(on) { media.matches = on; return media.dispatch("change"); },
     avatarChanged() { return room.dispatch("jade-avatar-state"); },
@@ -78,23 +81,27 @@ function createClient({motion = {}, secure = true, reduced = false} = {}) {
 (async () => {
   const session = createClient();
   assert(!session.control.checked, "motion is opt-in");
+  assert.match(session.status.textContent, /Active le réglage/, "instructions replace the HTML loading status");
   await session.toggle(true);
   assert.equal(session.window.count("devicemotion"), 0, "the Profile does not subscribe");
   await session.view("home");
   assert.equal(session.window.count("devicemotion"), 1);
+  assert.match(session.status.textContent, /En attente des données/);
   session.runTimers();
-  assert.match(session.status.textContent, /Aucune donnée/);
+  assert.match(session.status.textContent, /Aucune donnée.+Capteurs de mouvement/);
   await session.motion(0, 1, 0, 0);
-  assert.match(session.status.textContent, /activée/, "the first real sample clears sensor timeout");
+  assert.match(session.status.textContent, /Capteur de mouvement actif/, "a late sample clears the warning");
   for (let pulse = 0; pulse < 4; pulse++)
     await session.motion(80 + pulse * 220, pulse % 2 ? 6 : -6, 2, 0);
   assert.equal(session.impulses.length, 0, "routine motion cannot shake Jade");
   await session.motion(1000, 14, 0, 0);
-  await session.motion(1025, -15, 0, 0);
+  await session.motion(1015, -15, 0, 0);
   assert.equal(session.impulses.length, 0, "ignore a near-instant spike");
-  await session.motion(1080, -16, 0, 0);
-  assert.equal(session.impulses.length, 1, "a deliberate reversal triggers one impulse");
-  assert(session.impulses[0][0] <= -.8 && Math.abs(session.impulses[0][1]) < 1e-6);
+  await session.motion(1025, -16, 0, 0);
+  assert.equal(session.impulses.length, 1, "a fast deliberate reversal triggers one impulse");
+  assert.deepEqual(session.impulses[0], [-1, 0], "a strong peak commands the full amplitude");
+  await session.motion(1050, 0, 0, 0);
+  assert.equal(session.status.textContent, "Secousse détectée.", "following sensor samples preserve the result");
   await session.motion(1270, 17, 0, 0);
   await session.motion(1345, -18, 0, 0);
   assert.equal(session.impulses.length, 1, "cooldown stops a second trigger in the same shake");
@@ -102,6 +109,9 @@ function createClient({motion = {}, secure = true, reduced = false} = {}) {
   await session.motion(2100, 0, 0, -17);
   assert.equal(session.impulses.length, 2, "forward/backward shakes produce a pitch impulse");
   assert(Math.abs(session.impulses[1][1]) > .5);
+  await session.view("profile");
+  assert.equal(session.status.textContent, "Secousse détectée.", "the result remains visible in Profile");
+  await session.view("home");
   const beforeHide = session.stopCount;
   await session.visible(false);
   assert.equal(session.window.count("devicemotion"), 0, "pause the sensor while hidden");
@@ -138,6 +148,20 @@ function createClient({motion = {}, secure = true, reduced = false} = {}) {
   await raw.toggle(false);
   assert.equal(raw.window.count("devicemotion"), 0);
   assert.match(raw.status.textContent, /désactivée/);
+
+  const sparse = createClient();
+  await sparse.toggle(true);
+  await sparse.view("home");
+  await sparse.motion(0, 0, null, 9.81, true);
+  await sparse.sample(100, {x:null, y:0, z:null}, {x:9, y:null, z:9.81});
+  await sparse.sample(460, {x:null, y:0, z:null}, {x:-9, y:null, z:9.81});
+  assert.equal(sparse.impulses.length, 1, "partly missing axes and a sparse reversal use the gravity-corrected data");
+  assert(sparse.impulses[0][0] < -.6, "the weaker detected shake still has clear strength");
+  await sparse.sample(1500, {x:0, y:0, z:0}, {x:1, y:null, z:9.81});
+  await sparse.sample(1600, {x:0, y:0, z:0}, {x:15, y:null, z:9.81});
+  assert.equal(sparse.impulses.length, 1, "a strong single jolt is ignored");
+  await sparse.sample(1700, {x:.1, y:0, z:0}, {x:-15, y:null, z:9.81});
+  assert.deepEqual(sparse.impulses[1], [-1, 0], "raw peaks recover an Android-style frozen linear channel");
 
   let grant;
   const permission = createClient({motion:{requestPermission:() => new Promise(resolve => { grant = resolve; })}});

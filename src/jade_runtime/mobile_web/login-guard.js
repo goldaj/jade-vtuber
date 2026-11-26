@@ -89,6 +89,10 @@
             if(status)status.textContent="Module des animations indisponible.";
             console.warn("Portrait bedroom animation module unavailable:",error);
           }
+          if (url === "/assets/avatar-shake.js") {
+            const status = document.getElementById("avatar-shake-status");
+            if (status) status.textContent = "Le réglage des secousses n’a pas chargé. Rouvre l’application.";
+          }
         }
       }
     })();

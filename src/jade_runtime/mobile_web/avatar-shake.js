@@ -10,17 +10,20 @@
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
   const motionAPI = window.DeviceMotionEvent;
   const supported = Boolean(motionAPI) && window.isSecureContext;
-  const PEAK_THRESHOLD = 11;
-  const MIN_REVERSAL_MS = 45;
-  const MAX_REVERSAL_MS = 300;
+  const AXES = ["x", "y", "z"];
+  const PEAK_THRESHOLD = 7.5;
+  const MIN_REVERSAL_MS = 20;
+  const MAX_REVERSAL_MS = 400;
   const COOLDOWN_MS = 850;
   let enabled = false;
   let listening = false;
   let permissionAttempt = 0;
-  let gravity = null;
+  let gravity = [null, null, null];
+  let lastRawTime = null;
   let peak = null;
   let nextShakeAt = 0;
   let sampleTimer = null;
+  let receivedMotion = false;
 
   function report(message) {
     if (status && status.textContent !== message) status.textContent = message;
@@ -32,7 +35,8 @@
   }
 
   function resetMovement() {
-    gravity = null;
+    gravity = [null, null, null];
+    lastRawTime = null;
     peak = null;
     nextShakeAt = 0;
     window.JadeAvatar?.stopShake?.();
@@ -48,10 +52,12 @@
     if (shouldListen === listening) return;
     listening = shouldListen;
     if (listening) {
+      receivedMotion = false;
+      report("En attente des données du capteur de mouvement…");
       window.addEventListener("devicemotion", readMotion, {passive:true});
       sampleTimer = window.setTimeout(() => {
         sampleTimer = null;
-        report("Aucune donnée de mouvement reçue.");
+        report("Aucune donnée de mouvement reçue. Vérifie « Capteurs de mouvement » dans les autorisations du site.");
       }, 2500);
     } else {
       window.removeEventListener("devicemotion", readMotion);
@@ -61,18 +67,31 @@
   }
 
   function vector(sample) {
-    if (!sample || ![sample.x, sample.y, sample.z].every(Number.isFinite)) return null;
-    return [sample.x, sample.y, sample.z];
+    return AXES.map(axis => Number.isFinite(sample?.[axis]) ? sample[axis] : null);
   }
 
-  function linearAcceleration(event) {
+  function linearAcceleration(event, now) {
     const linear = vector(event.acceleration);
-    if (linear) return linear;
     const raw = vector(event.accelerationIncludingGravity);
-    if (!raw) return null;
-    // Fall back to a low-pass estimate of gravity on devices with no linear signal.
-    gravity = gravity ? gravity.map((axis, index) => .8 * axis + .2 * raw[index]) : raw;
-    return raw.map((axis, index) => axis - gravity[index]);
+    const elapsed = lastRawTime === null ? 0 : Math.max(0, Math.min(250, now - lastRawTime));
+    const smoothing = Math.min(.18, elapsed / (550 + elapsed));
+    const corrected = raw.map((axis, index) => {
+      if (axis === null) return null;
+      const previous = gravity[index] ?? axis;
+      // Smooth gravity slowly even when sensor events arrive at irregular intervals.
+      gravity[index] = previous + (axis - previous) * smoothing;
+      return axis - gravity[index];
+    });
+    if (raw.some(axis => axis !== null)) lastRawTime = now;
+    const combined = linear.map((axis, index) => axis ?? corrected[index]);
+    if (combined.every(axis => axis === null)) return null;
+    const motion = combined.map(axis => axis ?? 0);
+    // Prefer a raw peak when the linear channel stays near zero.
+    if (Math.hypot(...motion) < 2) {
+      const fallback = corrected.map(axis => axis ?? 0);
+      if (Math.hypot(...fallback) >= PEAK_THRESHOLD) return fallback;
+    }
+    return motion;
   }
 
   function readMotion(event) {
@@ -80,11 +99,15 @@
       sync();
       return;
     }
-    const acceleration = linearAcceleration(event);
-    if (!acceleration) return;
-    clearSampleTimer();
-    report("Réaction aux secousses activée.");
     const now = event.timeStamp;
+    if (!Number.isFinite(now)) return;
+    const acceleration = linearAcceleration(event, now);
+    if (!acceleration) return;
+    if (!receivedMotion) {
+      receivedMotion = true;
+      clearSampleTimer();
+      report("Capteur de mouvement actif. Secoue le téléphone sur l’Accueil ou en plein écran.");
+    }
     if (now < nextShakeAt) return;
     const [x, y, z] = acceleration;
     const magnitude = Math.hypot(x, y, z);
@@ -98,18 +121,23 @@
     }
     const alignment = (x * peak.x + y * peak.y + z * peak.z) / (magnitude * peak.magnitude);
     if (elapsed < MIN_REVERSAL_MS || alignment > -.35) return;
+    const intensity = Math.min(1, Math.max(magnitude, peak.magnitude) / 12);
     peak = null;
 
     const angle = (window.screen?.orientation?.angle ?? window.orientation ?? 0) * Math.PI / 180;
     const horizontal = x * Math.cos(angle) - y * Math.sin(angle);
     const vertical = Math.hypot(x, y) > magnitude * .35
       ? x * Math.sin(angle) + y * Math.cos(angle) : z * .65;
-    if (window.JadeAvatar?.nudgeFromShake?.(horizontal / 18, vertical / 18)) nextShakeAt = now + COOLDOWN_MS;
+    if (window.JadeAvatar?.nudgeFromShake?.(horizontal * intensity / magnitude, vertical * intensity / magnitude)) {
+      nextShakeAt = now + COOLDOWN_MS;
+      report("Secousse détectée.");
+    }
   }
 
   control.checked = false;
   control.disabled = !supported;
-  if (!supported) report("Capteur de mouvement indisponible.");
+  report(supported ? "Active le réglage, puis retourne à l’Accueil ou passe en plein écran."
+    : "Capteur de mouvement indisponible.");
   control.addEventListener("change", async () => {
     const attempt = ++permissionAttempt;
     enabled = false;

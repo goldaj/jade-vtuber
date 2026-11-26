@@ -13,6 +13,10 @@
 - Avec le vrai SDK WebGL et des événements capteur simulés, le r21 a reçu une impulsion dynamique. Sa contribution aux paramètres est revenue à zéro après amortissement, tandis que l’échelle et la position du modèle sont restées identiques. Le plein écran, le refus de permission, les mini-scènes, le réglage désactivé et le r20 ont été vérifiés. Aucun appareil autorisé n’était visible via ADB.
 - Sept suites Node ciblées et 26 tests Python des transports, du micro et du backlog ont réussi. Les essais ont utilisé une source audio et un fournisseur de recette locaux.
 
+Après le signalement du propriétaire, une nouvelle recette Chromium a mesuré le déplacement du vrai r21 à 393 × 873. Une forte secousse simulée a déplacé la silhouette de 54 px dans un sens puis de 46 px dans l’autre, avec une impulsion de 23° dans le rig. Le déplacement atteint 64 px en plein écran. Le zoom et le placement au repos sont restitués exactement. Le scénario couvre aussi des données brutes avec gravité, un axe manquant, une secousse modérée, la marche, un choc isolé et les vues qui écartent l’effet. Le test physique sur le Redmi reste nécessaire.
+
+Pour distinguer accès au capteur et amplitude, cocher **Réagir aux secousses** dans Profil, revenir à l’Accueil avec le r21, secouer puis consulter le statut dans Profil. Si aucune donnée n’est reçue, vérifier l’autorisation de capteurs du site dans Chrome sur Android. [Aide Chrome](https://support.google.com/chrome/answer/114662?co=GENIE.Platform%3DAndroid&hl=fr)
+
 ## Recette Redmi
 
 - Maintenir le micro sur l’Accueil, dans Chat et en plein écran. Parler avec un silence intermédiaire. Relâcher hors du bouton. Vérifier une seule réponse, puis la libération immédiate du micro. Essayer un appui trop bref, un passage en arrière-plan, un verrouillage, une rotation, une coupure réseau et un refus de permission.
@@ -25,5 +29,6 @@ Les deux scénarios sont suivis dans [REC-042 et REC-043](../../backlog/02-RECET
 - **Utilisateur, extrait** « une amélioration sur le push to talk, pour que ça soit vraiment en push & relache pour parler ».
 - **Utilisateur, extrait** « quand je secoue le téléphone ça fasse les petits mouvements, la P3 ».
 - **Assistant, synthèse** Le micro capture pendant l’appui et termine la prise au relâchement. La secousse anime le r21 autour du placement choisi.
+- **Utilisateur, résumé** Le push-to-talk lui convient. La secousse ne produit aucun effet perceptible sur son téléphone. Il demande comment l’activer et souhaite un mouvement flagrant, exagéré pour les grosses secousses.
 
 Extraits et synthèse du chat actif du 26 novembre 2026. Heures individuelles indisponibles.
