@@ -127,7 +127,8 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
     try { if (plan) await plan; }
     catch (error) { events.push(`failed:${profile.id}`); throw error; }
     finally { pending--; }
-    const model = new DisplayObject(); model.id = profile.id; model.autoUpdate = false;
+    const model = new DisplayObject(3840, profile.id === "next" ? 5000 : 4160);
+    model.id = profile.id; model.autoUpdate = false;
     const {EventEmitter} = require("node:events");
     model.internalModel = Object.assign(new EventEmitter(), {
       coreModel:{getDrawableRenderOrders(){return [0];},setParameterValueById(id,value){model.lastParameter={id,value};}},
@@ -260,20 +261,31 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   assert.equal(nextDefault.avatar.state.modelId,"next");
   assert.deepEqual(nextDefault.events,["load:next","created:next"],"only the default model is allocated");
   const r21 = nextDefault.models[0];
-  nextDefault.shell.dataset.view = "home";
-  const feet = () => r21.position.y + r21.height / 2;
-  nextDefault.avatar.resize();
-  const bedroomFeet = feet();
-  nextDefault.room.dataset.room = "kitchen";
-  nextDefault.avatar.resize();
-  assert(feet() < bedroomFeet && feet() > nextDefault.target.clientHeight * .7,
-    "both portrait rooms place the feet over their floor");
-  assert.equal(r21.position.x, nextDefault.target.clientWidth / 2);
-  nextDefault.target.clientWidth = 845;
-  nextDefault.target.clientHeight = 223;
-  nextDefault.avatar.resize();
-  assert(r21.height > 180 && r21.position.x > 845 / 2 + 64 && feet() < 223,
-    "landscape uses the room beside the microphone for the entire figure");
+  const cameraClassic = a.models.at(-1);
+  nextDefault.room.dataset.portraitReady = "true";
+  for (const room of ["bedroom", "kitchen"]) {
+    for (const [view, width, height] of [["home", 413, 735], ["profile", 400, 220], ["home", 845, 223]]) {
+      for (const client of [a, nextDefault]) {
+        client.room.dataset.room = room;
+        client.shell.dataset.view = view;
+        client.target.clientWidth = width;
+        client.target.clientHeight = height;
+        client.avatar.resize();
+      }
+      const expected = [
+        cameraClassic.position.x + (1745 - 1920) * cameraClassic.scale.x,
+        cameraClassic.position.y + (871 - 2080) * cameraClassic.scale.y,
+        365 * cameraClassic.scale.x,
+      ];
+      const actual = [
+        r21.position.x,
+        r21.position.y + (761 - 2500) * r21.scale.y,
+        289 * r21.scale.x,
+      ];
+      actual.forEach((value, i) => assert(Math.abs(value - expected[i]) < .01,
+        `${room} ${view} ${width}x${height}: r21 eyes use the classic camera (${i})`));
+    }
+  }
   const groups = ["Neutral","Playful","Excited","Curious","Tender","Reassuring","Serious"];
   for (const group of groups) {
     nextDefault.avatar.setIntent(group.toLowerCase());

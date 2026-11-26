@@ -369,6 +369,23 @@
     return isSeated() && room?.dataset.seatedCompositor === "true";
   }
 
+  // Neutral eye centres and eye spacing measured in the two shipped moc3 exports.
+  const CLASSIC_CAMERA = {width:3840, height:4160, eyeX:1745, eyeY:871, eyeSpacing:365};
+  const R21_EYES = {y:761 / 5000, spacing:289 / 3840};
+
+  function placeModel(scale, x, y, width, height) {
+    if (activeProfile?.id === "next") {
+      const nextScale = scale * CLASSIC_CAMERA.eyeSpacing / (width * R21_EYES.spacing);
+      // Align the eyes on the old camera's plane while keeping the standing rig's proportions.
+      x += scale * (CLASSIC_CAMERA.eyeX - CLASSIC_CAMERA.width / 2);
+      y += scale * (CLASSIC_CAMERA.eyeY - CLASSIC_CAMERA.height / 2)
+        - nextScale * height * (R21_EYES.y - .5);
+      scale = nextScale;
+    }
+    model.scale.set(scale);
+    model.position.set(x, y);
+  }
+
   function resize() {
     if (!pixi || !model) return;
     const width = Math.max(1, target.clientWidth);
@@ -376,7 +393,10 @@
     pixi.renderer.resize(width, height);
     const naturalWidth = Math.max(model.width / (model.scale.x || 1), 1);
     const naturalHeight = Math.max(model.height / (model.scale.y || 1), 1);
-    const scale = Math.min((width * .95) / naturalWidth, (height * 1.32) / naturalHeight);
+    const r21 = activeProfile?.id === "next";
+    const cameraWidth = r21 ? CLASSIC_CAMERA.width : naturalWidth;
+    const cameraHeight = r21 ? CLASSIC_CAMERA.height : naturalHeight;
+    const scale = Math.min((width * .95) / cameraWidth, (height * 1.32) / cameraHeight);
     const shell = document.querySelector?.(".shell");
     const room = document.querySelector?.(".room");
     const seated = isSeated();
@@ -395,44 +415,25 @@
         sprite.width = width * .712009;
         sprite.height = height * layout.height;
       }
+    }
+    if (seated || (r21 && room?.dataset.room === "bedroom" && room.dataset.portraitReady === "true")) {
       const headScale = 1.30;
-      model.scale.set(Math.max(.05, scale * headScale));
-      // Keep the face above the illustrated neckline: the AVIF already
-      // carries a full neck. Raise only the animated head and hair,
-      // leaving the seated body and the kitchen camera unchanged.
-      model.position.set(width * .555, height * .584);
+      placeModel(Math.max(.05, scale * headScale), width * .555, height * .584, naturalWidth, naturalHeight);
       return;
     }
     const immersive = shell?.classList.contains("is-room-only");
     const miniScene = shell?.dataset?.view && shell.dataset.view !== "home" && !immersive;
-    if (activeProfile?.presentation === "full") {
-      const margin = Math.max(8, height * .04);
-      if (miniScene) {
-        model.scale.set(Math.max(.001, Math.min(width * .95 / naturalWidth, height * 1.6 / naturalHeight)));
-        model.position.set(width * .5, margin + model.height * .5);
-        return;
-      }
-      // Place the feet over the photographed floor. On wide screens, use
-      // the space beside the microphone to keep the complete figure legible.
-      const besideMic = width > height * 1.4;
-      const floorRatio = room?.dataset.room === "kitchen" ? .79 : .82;
-      const bottom = besideMic ? height - margin : Math.min(height * floorRatio, height - 88);
-      const availableHeight = Math.max(1, bottom - margin);
-      model.scale.set(Math.max(.001, Math.min(width * 1.08 / naturalWidth, availableHeight / naturalHeight)));
-      model.position.set(width * (besideMic ? .62 : .5), Math.max(margin, bottom - model.height) + model.height * .5);
-      return;
-    }
     if (miniScene) {
       // Short menu scenes give the head the top edge. Scale the whole model,
       // keeping its proportions while allowing the lower body to be cropped.
-      const miniScale = Math.min((width * .95) / naturalWidth, (height * 1.6) / naturalHeight);
-      model.scale.set(Math.max(.05, miniScale));
-      model.position.set(width * .5, Math.max(8, height * .04) + model.height * .5);
+      const miniScale = Math.max(.05, Math.min((width * .95) / cameraWidth, (height * 1.6) / cameraHeight));
+      placeModel(miniScale, width * .5, Math.max(8, height * .04) + cameraHeight * miniScale * .5,
+        naturalWidth, naturalHeight);
       return;
     }
-    // Home and immersive kitchen keep their existing framing.
-    model.scale.set(Math.max(.05, scale * (immersive ? 1.9 : 1.5)));
-    model.position.set(width * (immersive ? .55 : .58), height * (immersive ? .82 : .79));
+    placeModel(Math.max(.05, scale * (immersive ? 1.9 : 1.5)),
+      width * (immersive ? .55 : .58), height * (immersive ? .82 : .79),
+      naturalWidth, naturalHeight);
   }
 
   function publishState(nextStatus, message = "") {

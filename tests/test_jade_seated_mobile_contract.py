@@ -55,7 +55,7 @@ class SeatedMobileContract(unittest.TestCase):
         avatar = (WEB / "avatar.js").read_text(encoding="utf-8")
         self.assertIn('const headScale = 1.30', avatar)
         # Owner-adjusted seated head alignment, 2026-11-24.
-        self.assertIn('model.position.set(width * .555, height * .584)', avatar)
+        self.assertIn('placeModel(Math.max(.05, scale * headScale), width * .555, height * .584', avatar)
         self.assertIn('renderPass(renderer, "rear")', avatar)
         self.assertIn('renderPass(renderer, "front")', avatar)
         self.assertIn('PIXI.Sprite.from(image)', avatar)

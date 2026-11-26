@@ -1,3 +1,8 @@
+## 2026-11-26 — Cadrage mobile du r21 calé sur celui du classique
+
+- `avatar.js` applique les mêmes cadrages de scène aux deux modèles. Le r21 adapte sa taille et sa position aux repères du visage du r20, puis le corps debout suit à la même échelle.
+- `jade-theme.css` donne aux deux modèles la même composition de chambre. En chambre très large, le r21 reprend le cadrage des mini-scènes pour garder la tête visible. Les tests de cadrage comparent l’emplacement et l’échelle du visage lors de la bascule.
+
 ## 2026-11-26 — Jade r21 devient le modèle mobile par défaut
 
 - Le catalogue de `mobile_gateway.py` sert le r21 v45.1 de la livraison Git LFS sous un manifeste Web et quatre expressions complémentaires. `avatar-models.js`, `avatar.js` et Profil chargent le r21 debout dans les deux pièces par défaut et proposent le r20 classique avec sa présentation assise en chambre.
