@@ -37,10 +37,13 @@ Object.defineProperty(global, "crypto", {value:{randomUUID: () => "01234567-89ab
 global.requestAnimationFrame = () => 1;
 global.cancelAnimationFrame = () => {};
 global.setInterval = () => 1;
-const played = [], stopped = [];
+const played = [], stopped = [], performanceEvents = [];
+let clockMs = 1000;
+Object.defineProperty(global, "performance", {value:{now:() => clockMs}, configurable:true});
 let microphoneProcessor;
 class AudioContext {
-  constructor() { this.currentTime = 1; this.destination = {}; this.sampleRate = 48000; }
+  constructor() { this.destination = {}; this.sampleRate = 48000; }
+  get currentTime() {return clockMs / 1000;}
   resume() {return Promise.resolve();}
   close() {return Promise.resolve();}
   createMediaStreamSource() {return {connect(){}, disconnect(){}};}
@@ -51,10 +54,17 @@ class AudioContext {
     return {duration:length/rate, getChannelData:() => samples};
   }
   createAnalyser() {return {connect(){}, disconnect(){}, getByteTimeDomainData(a){a.fill(128);}};}
+  decodeAudioData() {return Promise.resolve(this.createBuffer(1, 2, 24000));}
   createBufferSource() {return {connect(){}, disconnect(){}, stop(){stopped.push(this);},
-    start() {played.push(Array.from(this.buffer.getChannelData(0)));}};}
+    start(when) {this.when = when; played.push(this); performanceEvents.push(["audio"]);}};}
 }
-const avatar = {setMouth(){}, setIntent(){}, setSpeaking(){}, resetIntent(){}};
+const avatar = {
+  setMouth(){}, setSpeaking(){},
+  setIntent(intent, {deferMotion} = {}) {performanceEvents.push(["pose", intent, deferMotion]); return true;},
+  startReplyMotion(delayMs) {performanceEvents.push(["gesture", delayMs]);},
+  finishReply() {performanceEvents.push(["finish"]);},
+  resetIntent() {performanceEvents.push(["reset"]);},
+};
 global.window = {crypto:global.crypto, AudioContext, JadeAvatar:avatar,
   location:{hash:""}, addEventListener(name, handler) {(windowHandlers[name] ||= []).push(handler);},
   setTimeout, clearTimeout};
@@ -69,7 +79,8 @@ function sample(value = 0) {
   microphoneProcessor.onaudioprocess({inputBuffer:{getChannelData:() => new Float32Array(4096).fill(value)}});
 }
 const tick = () => new Promise(resolve => setImmediate(resolve));
-let fetchCount = 0, lastSignal, finishLegacyReply, wavRequest;
+const pcmEvent = {type:"pcm", sample_rate:24000, pcm_b64:Buffer.from([0,128,255,127]).toString("base64")};
+let fetchCount = 0, lastSignal, finishLegacyReply, wavRequest, releaseTail;
 global.fetch = async (_path, options) => {
   // The login handshake is independent of paid chat and streaming turns.
   if (_path === "/api/auth") {
@@ -81,29 +92,28 @@ global.fetch = async (_path, options) => {
   fetchCount++;
   if (_path === "/api/voice") {
     wavRequest = options;
-    return {status:200, ok:true, json:async () => ({reply:"Voix de secours", intent:"neutral"})};
+    return {status:200, ok:true, json:async () => ({reply:"Voix de secours", intent:"tender", audio_wav_b64:"AA=="})};
   }
   if (fetchCount === 3) {
     assert.equal(options.headers["X-Jade-Stream"], undefined);
-    return {status:200, ok:true, json:async () => ({reply:"Ancien navigateur", intent:"neutral"})};
+    return {status:200, ok:true, json:async () => ({reply:"Ancien navigateur", intent:"curious", audio_wav_b64:"AA=="})};
   }
   if (fetchCount === 4) {
     return {status:200, ok:true, json:() => new Promise(resolve => {finishLegacyReply = resolve;})};
   }
-  const events = [
-    {type:"reply", reply:"Salut, à toi !", intent:"neutral"},
-    {type:"pcm", sample_rate:24000, pcm_b64:Buffer.from([0,128,255,127]).toString("base64")},
-    {type:"done"}
-  ];
-  const bytes = Buffer.from(events.map(event => JSON.stringify(event) + "\n").join(""));
+  const serialize = events => Buffer.from(events.map(event => JSON.stringify(event) + "\n").join(""));
+  const initial = serialize([{type:"reply", reply:"Salut, à toi !", intent:"serious"}, pcmEvent]);
+  const bytes = Buffer.concat([initial, serialize([pcmEvent, {type:"done"}])]);
   let offset = 0;
-  return {status:200, ok:true, body:{getReader(){return {read() {
+  return {status:200, ok:true, body:{getReader(){return {async read() {
     if (fetchCount === 2) return new Promise((resolve, reject) => {
       options.signal.addEventListener("abort", () => reject(new Error("aborted")), {once:true});
     });
-    if (offset >= bytes.length) return Promise.resolve({done:true});
-    const part = bytes.subarray(offset, offset + 3); offset += 3;
-    return Promise.resolve({done:false, value:part});
+    if (offset >= bytes.length) return {done:true};
+    if (offset === initial.length) await new Promise(resolve => {releaseTail = resolve;});
+    const boundary = offset < initial.length ? initial.length : bytes.length;
+    const part = bytes.subarray(offset, Math.min(offset + 3, boundary)); offset += part.length;
+    return {done:false, value:part};
   }};}}};
 };
 vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mobile_web/app.js"), "utf8"));
@@ -111,13 +121,32 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
 (async () => {
   window.JadeMobileApp.login("x".repeat(40));
   element("message").value = "Bonjour";
-  await element("composer").handlers.submit({preventDefault(){}});
+  const streaming = element("composer").handlers.submit({preventDefault(){}});
+  await tick();
   assert.equal(played.length, 1);
-  assert.equal(played[0][0], -1);
-  assert.equal(played[0][1], 32767 / 32768);
+  assert.deepEqual(Array.from(played[0].buffer.getChannelData(0)), [-1, 32767 / 32768]);
   assert.equal(element("messages").children[1].children[0].textContent, "Salut, à toi !");
+  const firstPose = performanceEvents.findIndex(([event]) => event === "pose");
+  assert.deepEqual(performanceEvents[firstPose], ["pose", "serious", true]);
+  assert(firstPose < performanceEvents.findIndex(([event]) => event === "audio"));
+  assert(played[0].when >= 1.199, "the first PCM chunk gives the facial pose time to show");
+  played[0].onended();
+  clockMs += 400;
+  assert.equal(performanceEvents.some(([event]) => event === "finish"), false,
+    "an empty PCM queue between packets must not end the expression");
+  releaseTail();
+  await streaming;
+  assert.equal(played.length, 2);
+  assert.equal(played[1].when, clockMs / 1000,"a late packet resumes without an added pause");
+  assert.equal(performanceEvents.filter(([event]) => event === "gesture").length, 1,
+    "the same gesture follows the whole reply, even after a network gap");
+  assert.equal(performanceEvents.some(([event]) => event === "finish"), false,
+    "server done must wait for the last scheduled sound");
+  played.at(-1).onended();
+  assert.deepEqual(performanceEvents.at(-1), ["finish"]);
+  assert.equal(performanceEvents.filter(([event]) => event === "finish").length, 1);
   let resume = window.JadeConversation.stopForModelChange();
-  assert.equal(stopped.length, 1);
+  assert.equal(stopped.length, 0);
   assert.equal(element("mic").disabled, true);
   assert.equal(element("send").disabled, true);
   resume();
@@ -136,6 +165,16 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
   await element("composer").handlers.submit({preventDefault(){}});
   assert.equal(fetchCount, 3);
   assert.equal(element("messages").children.at(-1).children[0].textContent, "Ancien navigateur");
+  const interruptedWav = played.at(-1), staleWavEnd = interruptedWav.onended;
+  assert.equal(typeof staleWavEnd, "function");
+  const finishesBeforeSwitch = performanceEvents.filter(([event]) => event === "finish").length;
+  resume = window.JadeConversation.stopForModelChange();
+  assert.equal(stopped.at(-1), interruptedWav);
+  assert.deepEqual(performanceEvents.at(-1), ["reset"]);
+  resume();
+  staleWavEnd();
+  assert.equal(performanceEvents.filter(([event]) => event === "finish").length, finishesBeforeSwitch,
+    "a queued callback from the previous model must not close a later pose");
 
   element("message").value = "Réponse tardive";
   const late = element("composer").handlers.submit({preventDefault(){}});
@@ -223,7 +262,12 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
   mic.handlers.click?.({preventDefault(){}});
   assert.equal(finished, 1, "one release ends the utterance once even if it produces a click");
   assert.equal(stops, 4, "release closes the microphone immediately");
+  await emitDuplex({type:"reply", reply:"Je t’écoute", intent:"reassuring"});
+  await emitDuplex(pcmEvent);
   await emitDuplex({type:"done"});
+  assert.notDeepEqual(performanceEvents.at(-1), ["finish"], "duplex done also waits for playback");
+  played.at(-1).onended();
+  assert.deepEqual(performanceEvents.at(-1), ["finish"]);
   finishVoice();
   await tick();
   assert.equal(element("mic-feedback").hidden, true, "ready clears the visible voice feedback");
@@ -278,5 +322,8 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
   assert.equal(fetchCount, 5);
   assert.equal(wavRequest.body.type, "audio/wav");
   assert.equal(element("messages").children.at(-1).children[0].textContent, "Voix de secours");
+  assert.notDeepEqual(performanceEvents.at(-1), ["finish"], "the fallback waits for its WAV source");
+  played.at(-1).onended();
+  assert.deepEqual(performanceEvents.at(-1), ["finish"]);
   process.stdout.write("Mobile stream client: OK\n");
 })().catch(error => {console.error(error); process.exitCode = 1;});

@@ -1,5 +1,5 @@
-/* Private Live2D Web renderer. The server's visual palette supplies the
- * expression and caption. For r21, the same A/B choice also selects a motion.
+/* Private Live2D Web renderer. The server's palette supplies the caption and
+ * classic expressions. r21 holds a face pose around a single A/B motion.
  */
 "use strict";
 (() => {
@@ -29,8 +29,7 @@
   let mouth = 0;
   let palette = null;
   let pendingIntent = "neutral";
-  let activeChoice = null;
-  let reactionVersion = 0;
+  let r21Reply = null;
   let releaseMotionBindings = null;
   let observer = null;
   let visibilityObserver = null;
@@ -41,20 +40,33 @@
   let visibilityPauseTimer = null;
   const VIEWPORT_PAUSE_DELAY_MS = 6500;
   let resetTimer = null;
-  let blinkTimer = null;
+  let motionTimer = null;
   let speaking = false;
   const counts = Object.create(null);
-  const nextCounts = Object.create(null);
   const R21_MOTIONS = Object.freeze({
     neutral:"Neutral", playful:"Playful", excited:"Excited", curious:"Curious",
     tender:"Tender", reassuring:"Reassuring", serious:"Serious",
   });
+  // Initial held poses, independent of the voice envelope and automatic blink.
+  const R21_FACES = Object.freeze({
+    neutral:     {mouth:0,    browL:0,    browR:0,    caption:"Échange paisible"},
+    playful:     {mouth:.35,  browL:.32,  browR:.04,  caption:"Petite malice"},
+    excited:     {mouth:.52,  browL:.55,  browR:.55,  caption:"Élan enthousiaste"},
+    curious:     {mouth:0,    browL:.48,  browR:.22,  caption:"Attention intriguée"},
+    tender:      {mouth:.17,  browL:-.10, browR:-.10, caption:"Douceur"},
+    reassuring:  {mouth:.20,  browL:.04,  browR:.04,  caption:"Présence apaisante"},
+    serious:     {mouth:-.28, browL:-.12, browR:-.12, caption:"Concentration tranquille"},
+  });
+  const FACE_FADE_IN_MS = 140;
+  const FACE_FADE_OUT_MS = 220;
+  const FACE_AFTER_AUDIO_MS = 600;
+  const FACE_TEXT_MS = 1500;
+  const FORCE_MOTION = 3;
   const R21_MOTION_PARAMETERS = [
     "ParamAngleX", "ParamAngleY", "ParamAngleZ", "ParamBodyAngleX", "ParamBodyAngleZ",
-    "ParamBreath", "ParamBrowLY", "ParamJadeEarTwitchL", "ParamJadeEarTwitchR",
+    "ParamBreath", "ParamBrowLY", "ParamBrowRY", "ParamMouthForm", "ParamJadeEarTwitchL", "ParamJadeEarTwitchR",
     "ParamJadeIdleLean", "ParamJadeLegRelaxL", "ParamJadeLegRelaxR", "ParamJadeWeightShift",
   ];
-  const SHORT_EXPRESSIONS = new Set(["Blink", "WinkL", "WinkR"]);
   const SHAKE_DURATION = 1.05;
 
   function playMotion(group, index, priority) {
@@ -159,33 +171,37 @@
       blink?.updateParameters(core, delta);
       applyShake(core, now);
     };
-    const updateMouth = () => core.setParameterValueById("ParamMouthOpenY", mouth);
+    const updateFace = () => {
+      if (r21Reply) {
+        const {pose, preparedAt, fadeAt} = r21Reply;
+        const now = performance.now();
+        const weight = fadeAt === null
+          ? clamp((now - preparedAt) / FACE_FADE_IN_MS, 0, 1)
+          : clamp((fadeAt + FACE_FADE_OUT_MS - now) / FACE_FADE_OUT_MS, 0, 1);
+        core.setParameterValueById("ParamMouthForm", pose.mouth, weight);
+        core.addParameterValueById("ParamBrowLY", pose.browL, weight);
+        core.addParameterValueById("ParamBrowRY", pose.browR, weight);
+      }
+      core.setParameterValueById("ParamMouthOpenY", mouth);
+    };
     internal.eyeBlink = undefined;
     internal.on?.("beforeMotionUpdate", resetMotionParameters);
     internal.on?.("afterMotionUpdate", updateBlink);
-    internal.on?.("beforeModelUpdate", updateMouth);
+    internal.on?.("beforeModelUpdate", updateFace);
     manager?.on?.("motionLoaded", onMotionLoaded);
     return () => {
       internal.off?.("beforeMotionUpdate", resetMotionParameters);
       internal.off?.("afterMotionUpdate", updateBlink);
-      internal.off?.("beforeModelUpdate", updateMouth);
+      internal.off?.("beforeModelUpdate", updateFace);
       manager?.off?.("motionLoaded", onMotionLoaded);
     };
   }
 
   function applyExpression(expression) {
-    const r21 = activeProfile?.id === "next";
-    if (!model || (!r21 && !activeProfile?.classicIntents)) return;
+    if (!model || activeProfile?.id === "next" || !activeProfile?.classicIntents) return;
     try {
       if (expression === "Neutral") {
-        const manager = model.internalModel?.motionManager?.expressionManager;
-        if (r21 && manager?.defaultExpression) {
-          // Cancel a pending expression download and permit the same wink on
-          // another response. resetExpression alone only updates the queue.
-          manager.reserveExpressionIndex = -1;
-          manager.currentExpression = manager.defaultExpression;
-        }
-        manager?.resetExpression?.();
+        model.internalModel?.motionManager?.expressionManager?.resetExpression?.();
         return;
       }
       if (typeof model.expression === "function") {
@@ -197,21 +213,52 @@
     }
   }
 
-  function clearTimer() {
-    reactionVersion++;
+  function clearReplyTimers() {
     if (resetTimer !== null) clearTimeout(resetTimer);
-    if (blinkTimer !== null) clearTimeout(blinkTimer);
-    resetTimer = blinkTimer = null;
+    if (motionTimer !== null) clearTimeout(motionTimer);
+    resetTimer = motionTimer = null;
   }
 
   function returnToIdle() {
-    clearTimer();
+    clearReplyTimers();
     pendingIntent = "neutral";
-    activeChoice = null;
+    r21Reply = null;
     mood.textContent = "Jade est attentive.";
     applyExpression("Neutral");
   }
 
+  function stopReplyMotion() {
+    const state = model?.internalModel?.motionManager?.state;
+    if (r21Reply && state?.isActive?.(r21Reply.group, r21Reply.index)) {
+      playMotion(activeProfile.idleMotion, 0, FORCE_MOTION);
+    }
+  }
+
+  function startReplyMotion(delayMs = 0) {
+    const reply = r21Reply;
+    if (!reply || reply.motionStarted || motionTimer !== null) return;
+    const start = () => {
+      motionTimer = null;
+      if (r21Reply !== reply) return;
+      reply.motionStarted = true;
+      playMotion(reply.group, reply.index, FORCE_MOTION);
+    };
+    if (delayMs > 0) motionTimer = setTimeout(start, delayMs);
+    else start();
+  }
+
+  function finishReply(hadAudio) {
+    const reply = r21Reply;
+    if (!reply || resetTimer !== null) return;
+    startReplyMotion();
+    const hold = hadAudio ? FACE_AFTER_AUDIO_MS : FACE_TEXT_MS;
+    resetTimer = setTimeout(() => {
+      if (r21Reply !== reply) return;
+      reply.fadeAt = performance.now();
+      stopReplyMotion();
+      resetTimer = setTimeout(returnToIdle, FACE_FADE_OUT_MS);
+    }, hold);
+  }
 
   function isMounted() {
     return target.isConnected !== false &&
@@ -246,10 +293,8 @@
     if (visible) {
       cancelPendingVisibilityPause();
       if (renderRunning) return;
-      // After a real pause, restart only the visual expression from neutral.
-      // Keep current speech, lips, dialogue and memory state untouched.
       if (resumeFromPause) {
-        returnToIdle();
+        if (!r21Reply) returnToIdle();
         resumeFromPause = false;
       }
       if (typeof model.autoUpdate === "boolean") model.autoUpdate = true;
@@ -380,52 +425,41 @@
       mouth = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
     },
     setSpeaking(value) {
-      const wasSpeaking = speaking;
       speaking = Boolean(value);
-      if (activeProfile?.id === "next") {
-        if (wasSpeaking && !speaking && activeChoice) returnToIdle();
-      } else if (!speaking && pendingIntent !== "neutral") returnToIdle();
+      if (activeProfile?.id !== "next" && !speaking && pendingIntent !== "neutral") returnToIdle();
     },
-    resetIntent() { returnToIdle(); },
-    setIntent(label) {
+    startReplyMotion, finishReply,
+    resetIntent() {
+      stopReplyMotion();
+      returnToIdle();
+    },
+    setIntent(label, {deferMotion = false} = {}) {
       pendingIntent = label;
       if (!palette?.enabled) return;
       const key = Object.hasOwn(palette.intents, label) ? label : "neutral";
       const reactions = palette.intents[key];
       if (!Array.isArray(reactions) || !reactions.length) return;
       const r21 = activeProfile?.id === "next";
-      const variants = r21 ? nextCounts : counts;
-      const index = variants[key] || 0;
-      variants[key] = index + 1;
+      const index = r21 ? Math.floor(Math.random() * 2) : (counts[key] || 0);
+      if (!r21) counts[key] = index + 1;
       const choice = reactions[index % reactions.length];
       if (!choice || typeof choice.text !== "string") return;
-      clearTimer();
-      if (r21 && activeChoice?.expression !== choice.expression && SHORT_EXPRESSIONS.has(activeChoice?.expression)) {
-        applyExpression("Neutral");
-      }
-      activeChoice = choice;
-      mood.textContent = choice.text;
-      const expression = applyExpression(choice.expression);
+      clearReplyTimers();
       if (r21) {
-        // The adapter returns to its Idle group as soon as the gesture ends.
-        const group = R21_MOTIONS[key];
-        if (group) playMotion(group, index % 2, window.PIXI?.live2d?.MotionPriority?.FORCE ?? 3);
-        if (SHORT_EXPRESSIONS.has(choice.expression)) {
-          // The first blink may need to fetch its exp3 file. Count the brief
-          // hold from the actual start rather than from the initial request.
-          const version = reactionVersion;
-          void Promise.resolve(expression).then(() => {
-            if (version !== reactionVersion) return;
-            blinkTimer = setTimeout(() => {
-              blinkTimer = null;
-              applyExpression("Neutral");
-            }, 260);
-          });
-        }
+        const pose = R21_FACES[key], group = R21_MOTIONS[key];
+        r21Reply = {pose, group, index,
+          preparedAt:performance.now(), fadeAt:null, motionStarted:false};
+        mood.textContent = pose.caption;
+        if (deferMotion) {
+          // Fetch only the selected clip while the face is preparing.
+          model.internalModel?.motionManager?.loadMotion?.(group, index)?.catch?.(() => {});
+        } else startReplyMotion();
+        return true;
       }
-      // Text-only replies clear their expression/caption. For longer audio,
-      // the last source ending invokes setSpeaking(false).
+      mood.textContent = choice.text;
+      applyExpression(choice.expression);
       resetTimer = setTimeout(() => { if (!speaking) returnToIdle(); }, 12000);
+      return false;
     },
   };
   window.JadeAvatar = avatar;

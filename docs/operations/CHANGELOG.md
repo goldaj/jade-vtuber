@@ -1,3 +1,9 @@
+## 2026-11-26 — Chronologie des intentions du r21 sur mobile
+
+- `app.js` coordonne PCM HTTP, WebSocket et WAV avec la fin de lecture. Il donne à la pose environ 200 ms d’avance sur le premier son en utilisant le délai de synthèse. Un tampon vide ferme la bouche et conserve l’expression. Une reprise PCM joue dès que le fragment est prêt et le journal technique mesure les creux de lecture.
+- `avatar.js` tire une seule motion A ou B, tient une pose initiale jusqu’à 600 ms après la lecture et la relâche en 220 ms. La forme de bouche et l’ouverture audio sont indépendantes. La coupure, la mise en arrière-plan et la bascule de modèle annulent le tour.
+- Les suites mobiles couvrent les quatorze choix, la pose avant la voix, le trou PCM, la fin effective et les événements tardifs. La [passation DEV-001](handoffs/2026-11-26-codex-mobile-intentions.md) décrit la vérification Chromium et les limites de la comparaison vocale.
+
 ## 2026-11-26 — Réaction du r21 nettement visible lors d’une secousse
 
 - Le propriétaire a signalé une réaction imperceptible sur téléphone. La détection accepte une inversion moins forte et des données Android partiellement renseignées. Le réglage indique si la PWA reçoit des données et si une secousse a été détectée.

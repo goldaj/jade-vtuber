@@ -28,14 +28,15 @@
   let modelChanging = false;
   let soundEnabled = true;
   let audioContext = null;
-  let playing = null;
   let playFrame = null;
   let playbackGeneration = 0;
+  let replyPlayback = null;
+  const REPLY_FACE_LEAD_MS = 200;
   let streamController = null;
   let activeDuplex = null;
-  const streamSources = new Set();
-  let streamAnalyser = null;
-  let streamNextTime = 0;
+  const audioSources = new Set();
+  let playbackAnalyser = null;
+  let nextAudioTime = 0;
   let thread = newThread();
   const shell = document.querySelector(".shell");
   const navItems = Array.from(document.querySelectorAll(".app-nav-item"));
@@ -159,7 +160,11 @@
   }
 
   function setReplyIntent(intent) {
-    avatar().setIntent(intent || "neutral");
+    const prepared = avatar().setIntent(intent || "neutral", {deferMotion:soundEnabled});
+    replyPlayback = {
+      faceReadyAt:prepared && soundEnabled ? performance.now() + REPLY_FACE_LEAD_MS : 0,
+      started:false, sealed:false,
+    };
   }
 
   async function makeRequest(path, body, extraHeaders, signal) {
@@ -205,28 +210,42 @@
     catch (_) { /* A failed output device must not block the user's message. */ }
   }
 
-  function stopPlayback() {
-    playbackGeneration++;
+  function stopMouthPlayback() {
     if (playFrame) cancelAnimationFrame(playFrame);
     playFrame = null;
-    if (playing) {
-      const {source, analyser} = playing;
-      playing = null;
-      source.onended = null;
-      try { source.stop(); } catch (_) {}
-      source.disconnect();
-      analyser.disconnect();
-    }
-    for (const source of streamSources) {
-      source.onended = null;
-      try { source.stop(); } catch (_) {}
-      source.disconnect();
-    }
-    streamSources.clear();
-    if (streamAnalyser) { streamAnalyser.disconnect(); streamAnalyser = null; }
-    streamNextTime = 0;
-    avatar().setSpeaking(false);
+    playbackAnalyser?.disconnect();
+    playbackAnalyser = null;
     avatar().setMouth(0);
+  }
+
+  function stopPlayback() {
+    playbackGeneration++;
+    replyPlayback = null;
+    for (const source of audioSources) {
+      source.onended = null;
+      try { source.stop(); } catch (_) {}
+      source.disconnect();
+    }
+    audioSources.clear();
+    nextAudioTime = 0;
+    stopMouthPlayback();
+    avatar().setSpeaking(false);
+    avatar().resetIntent();
+  }
+
+  function finishDrainedReply() {
+    if (!replyPlayback?.sealed || audioSources.size) return;
+    const hadAudio = replyPlayback.started;
+    replyPlayback = null;
+    nextAudioTime = 0;
+    if (hadAudio) avatar().setSpeaking(false);
+    avatar().finishReply?.(hadAudio);
+  }
+
+  function sealReplyAudio() {
+    if (!replyPlayback) return;
+    replyPlayback.sealed = true;
+    finishDrainedReply();
   }
 
   function cancelConversation() {
@@ -242,7 +261,6 @@
     voicePending = false;
     resetMicButton();
     stopPlayback();
-    avatar().resetIntent();
     setStatus(status.textContent);
   }
 
@@ -259,12 +277,18 @@
   function createMobileAudioTiming(transport) {
     const startedAt = performance.now();
     let firstReceivedAt = null, firstScheduledAt = null;
+    let gapCount = 0, gapMs = 0;
     return {
       received() {
         if (firstReceivedAt === null) firstReceivedAt = performance.now();
       },
-      scheduled(when) {
-        if (firstScheduledAt === null && typeof when === "number") firstScheduledAt = when;
+      scheduled(result) {
+        if (!result) return;
+        if (firstScheduledAt === null) firstScheduledAt = result.scheduledAt;
+        if (result.gapMs >= 1) {
+          gapCount++;
+          gapMs += result.gapMs;
+        }
       },
       done() {
         const endedAt = performance.now();
@@ -274,6 +298,8 @@
           first_pcm_received_ms: ms(firstReceivedAt),
           first_play_scheduled_ms: ms(firstScheduledAt),
           stream_finished_ms: ms(endedAt),
+          playback_gaps: gapCount,
+          playback_gap_ms: Math.round(gapMs),
           play_scheduled_before_stream_finished:
             firstScheduledAt === null ? null : firstScheduledAt < endedAt
         }));
@@ -288,7 +314,7 @@
     if (!binary.length || binary.length % 2) throw new Error("Fragment audio incomplet.");
     const generation = playbackGeneration;
     const context = await ensureAudioContext();
-    if (generation !== playbackGeneration) return null;
+    if (generation !== playbackGeneration || !replyPlayback) return null;
     const buffer = context.createBuffer(1, binary.length / 2, rate);
     const samples = buffer.getChannelData(0);
     for (let i = 0; i < samples.length; i++) {
@@ -296,13 +322,52 @@
       if (value >= 32768) value -= 65536;
       samples[i] = value / 32768;
     }
-    if (!streamAnalyser) {
-      streamAnalyser = context.createAnalyser();
-      streamAnalyser.fftSize = 1024;
-      streamAnalyser.connect(context.destination);
-      const analyser = streamAnalyser, data = new Uint8Array(analyser.fftSize);
+    return scheduleAudio(context, buffer);
+  }
+
+  function scheduleAudio(context, buffer) {
+    const reply = replyPlayback;
+    if (!reply || reply.sealed) return null;
+    const now = performance.now(), audioNow = context.currentTime;
+    const gapMs = reply.started ? Math.max(0, audioNow - nextAudioTime) * 1000 : 0;
+    // Keep adjacent fragments contiguous. A depleted queue can resume
+    // immediately if audio already ran, without adding another 50 ms gap.
+    const start = reply.started ? Math.max(audioNow, nextAudioTime)
+      : audioNow + Math.max(.05, (reply.faceReadyAt - now) / 1000);
+    const newAnalyser = !playbackAnalyser;
+    if (newAnalyser) {
+      playbackAnalyser = context.createAnalyser();
+      playbackAnalyser.fftSize = 1024;
+      playbackAnalyser.connect(context.destination);
+    }
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(playbackAnalyser);
+    source.onended = () => {
+      if (!audioSources.delete(source)) return;
+      source.disconnect();
+      if (!audioSources.size) stopMouthPlayback();
+      finishDrainedReply();
+    };
+    try {
+      source.start(start);
+    } catch (error) {
+      source.disconnect();
+      if (newAnalyser) stopMouthPlayback();
+      throw error;
+    }
+    audioSources.add(source);
+    nextAudioTime = start + buffer.duration;
+    const delayMs = (start - audioNow) * 1000;
+    if (!reply.started) {
+      reply.started = true;
+      avatar().setSpeaking(true);
+      avatar().startReplyMotion?.(delayMs);
+    }
+    if (newAnalyser) {
+      const analyser = playbackAnalyser, data = new Uint8Array(analyser.fftSize);
       const animate = () => {
-        if (streamAnalyser !== analyser) return;
+        if (playbackAnalyser !== analyser) return;
         analyser.getByteTimeDomainData(data);
         let sum = 0;
         for (const value of data) sum += ((value - 128) / 128) ** 2;
@@ -311,28 +376,7 @@
       };
       animate();
     }
-    const source = context.createBufferSource();
-    source.buffer = buffer;
-    source.connect(streamAnalyser);
-    streamSources.add(source);
-    const start = Math.max(context.currentTime + 0.05, streamNextTime);
-    streamNextTime = start + buffer.duration;
-    avatar().setSpeaking(true);
-    source.onended = () => {
-      if (!streamSources.delete(source)) return;
-      source.disconnect();
-      if (!streamSources.size) {
-        if (streamAnalyser) streamAnalyser.disconnect();
-        streamAnalyser = null;
-        if (playFrame) cancelAnimationFrame(playFrame);
-        playFrame = null;
-        avatar().setMouth(0);
-        avatar().setSpeaking(false);
-      }
-    };
-    const scheduledAt = performance.now() + Math.max(0, start - context.currentTime) * 1000;
-    source.start(start);
-    return scheduledAt;
+    return {scheduledAt:now + delayMs, gapMs};
   }
 
   async function makeStreamingRequest(path, body, extraHeaders) {
@@ -385,7 +429,7 @@
           audioFailed = true;
           audioFailureReason = event.incident_code || null;
         }
-        else if (event.type === "done") { done = true; audioTiming.done(); }
+        else if (event.type === "done") { done = true; audioTiming.done(); sealReplyAudio(); }
         else throw new Error("Réponse audio inattendue.");
       }
       while (true) {
@@ -405,57 +449,26 @@
       if (pending || !done || !receivedReply) throw new Error("Réponse audio interrompue.");
       setStatus(audioFailed && soundEnabled ? audioUnavailableStatus(audioFailureReason) : "Prête.");
     } finally {
-      if (streamController === controller) streamController = null;
+      if (isCurrent()) {
+        streamController = null;
+        sealReplyAudio();
+      }
     }
   }
 
   async function playWav(base64Audio) {
-    stopPlayback();
     if (!base64Audio || !soundEnabled || document.hidden) return true;
     const generation = playbackGeneration;
     try {
       const context = await ensureAudioContext();
-      if (generation !== playbackGeneration) return true;
+      if (generation !== playbackGeneration || !replyPlayback) return true;
       // Limit the size of an untrusted API response.
       if (base64Audio.length > 10_000_000) throw new Error("audio too large");
       const binary = atob(base64Audio);
       const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
       const decoded = await context.decodeAudioData(bytes.buffer.slice(0));
       if (generation !== playbackGeneration) return true;
-      const src = context.createBufferSource();
-      src.buffer = decoded;
-      const analyser = context.createAnalyser();
-      analyser.fftSize = 1024;
-      src.connect(analyser);
-      analyser.connect(context.destination);
-      playing = {source:src, analyser};
-      avatar().setSpeaking(true);
-      src.onended = () => {
-        if (playing?.source === src) {
-          playing = null;
-          src.disconnect();
-          analyser.disconnect();
-          if (playFrame) cancelAnimationFrame(playFrame);
-          playFrame = null;
-          avatar().setMouth(0);
-          avatar().setSpeaking(false);
-        }
-      };
-      const samples = new Uint8Array(analyser.fftSize);
-      function animateMouth() {
-        if (playing?.source !== src) return;
-        analyser.getByteTimeDomainData(samples);
-        let sum = 0;
-        for (let i = 0; i < samples.length; i++) {
-          const value = (samples[i] - 128) / 128;
-          sum += value * value;
-        }
-        const volume = Math.sqrt(sum / samples.length);
-        avatar().setMouth(Math.min(1, Math.max(0, volume * 7)));
-        playFrame = requestAnimationFrame(animateMouth);
-      }
-      src.start(0);
-      animateMouth();
+      scheduleAudio(context, decoded);
       return true;
     } catch (_) {
       if (generation !== playbackGeneration) return true;
@@ -648,6 +661,7 @@
               setMicStatus("Réponse écrite reçue, mais la voix est indisponible.");
             } else if (event.type === "done") {
               duplexTiming.done();
+              sealReplyAudio();
               setStatus("Prête.");
             }
           }
@@ -792,6 +806,7 @@
     } finally {
       if (generation === conversationGeneration) {
         if (activeDuplex === current.duplex) activeDuplex = null;
+        sealReplyAudio();
         busy = voicePending = false;
         resetMicButton();
         setStatus(status.textContent);
@@ -1308,7 +1323,6 @@
     if (modelChanging || busy || recording || starting) return;
     thread = newThread();
     stopPlayback();
-    avatar().resetIntent();
     log.replaceChildren();
     setStatus("Nouveau fil.");
   });

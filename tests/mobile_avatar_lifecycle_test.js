@@ -61,7 +61,7 @@ class Container extends DisplayObject {
 }
 
 async function client({hidden = false, initialError = false, delayBodyImage = false, failCompositionMount = false,
-    defaultId = "classic", reactions = false} = {}) {
+    defaultId = "classic", reactions = false, random = Math.random} = {}) {
   const target = new Element(); target.clientWidth = 390; target.clientHeight = 690;
   const room = new Element(); room.dataset = {room:"bedroom",seatedReady:"false",seatedCompositor:"false"};
   const shell = new Element(); shell.dataset.view = "profile";
@@ -134,7 +134,10 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
     model.internalModel = Object.assign(new EventEmitter(), {
       coreModel:{
         getDrawableRenderOrders(){return [0];},
-        setParameterValueById(id,value){model.lastParameter={id,value};},
+        setParameterValueById(id,value,weight = 1){
+          model.lastParameter={id,value};
+          model.parameters.set(id, {value,weight});
+        },
         addParameterValueById(id, value){model.shakeParameters.set(id, value);},
       },
       draw(){},eyeBlink:{updateParameters(){model.blinked = true;}},
@@ -143,6 +146,7 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
       }),
     });
     model.shakeParameters = new Map();
+    model.parameters = new Map();
     model.motions = [];
     model.expressions = [];
     model.motion = (group, index, priority) => {
@@ -177,6 +181,7 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
     ResizeObserver:class {observe(){} disconnect(){}},
     IntersectionObserver:class {constructor(callback){visibleObserver=callback;}observe(){}disconnect(){}},
     performance:{now(){return now;}},
+    Math:Object.assign(Object.create(Math), {random}),
     setTimeout(callback, delay){const id = ++timerSequence; timers.set(id, {callback,delay}); return id;},
     clearTimeout(id){timers.delete(id);}};
   vm.createContext(context);
@@ -264,7 +269,13 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   assert.equal(a.avatar.ready,true);
   assert.equal(a.maximum,1); assert.equal(a.maximumPending,1);
 
-  const nextDefault = await client({defaultId:"next", reactions:true});
+  const draws = [.12, .2, .84];
+  for (let i = 0; i < 6; i++) draws.push(.15, .85);
+  let drawCount = 0;
+  const nextDefault = await client({defaultId:"next", reactions:true, random:() => {
+    drawCount++;
+    return draws.shift() ?? .3;
+  }});
   assert.equal(nextDefault.avatar.state.modelId,"next");
   assert.deepEqual(nextDefault.events,["load:next","created:next"],"only the default model is allocated");
   const r21 = nextDefault.models[0];
@@ -304,28 +315,54 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   for (const group of groups) {
     nextDefault.avatar.setIntent(group.toLowerCase());
     nextDefault.avatar.setIntent(group.toLowerCase());
+    if (group === "Neutral") nextDefault.avatar.setIntent("neutral");
   }
   assert.deepEqual(r21.motions.slice(1), groups.flatMap(group =>
-    [0,1].map(index => ({group,index,priority:3}))));
-  nextDefault.avatar.setIntent("neutral");
-  nextDefault.avatar.setSpeaking(false);
-  nextDefault.avatar.setIntent("neutral");
-  assert.equal(r21.expressions.at(-1),"Blink");
+    (group === "Neutral" ? [0,0,1] : [0,1]).map(index => ({group,index,priority:3}))));
+
+  const beforeSpeech = r21.motions.length;
+  assert.equal(nextDefault.avatar.setIntent("serious",{deferMotion:true}),true);
+  nextDefault.avatar.startReplyMotion(200);
+  nextDefault.advanceTime(150);
+  r21.internalModel.emit("beforeModelUpdate");
+  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:-.28,weight:1});
+  assert.equal(r21.motions.length,beforeSpeech,"the face precedes the motion and voice");
+  nextDefault.advanceTime(50);
+  nextDefault.runTimers(200);
+  assert.deepEqual(r21.motions.at(-1),{group:"Serious",index:0,priority:3});
+  nextDefault.avatar.startReplyMotion(200);
+  nextDefault.runTimers(200);
+  assert.equal(r21.motions.length,beforeSpeech + 1,"one gesture per reply");
+  assert.equal(drawCount,16,"one random draw per reply");
   nextDefault.avatar.setSpeaking(true);
   nextDefault.avatar.setMouth(.53);
   r21.internalModel.emit("afterMotionUpdate");
   r21.internalModel.emit("beforeModelUpdate");
   assert.equal(r21.blinked,true,"r21 blinks during a motion");
   assert.deepEqual(r21.lastParameter,{id:"ParamMouthOpenY",value:.53});
-  await flush();
-  const beforeBlinkEnds = r21.neutral;
-  nextDefault.runTimers(260);
-  assert.equal(r21.neutral,beforeBlinkEnds + 1,"a blink releases before the reply ends");
-  nextDefault.avatar.setIntent("playful");
+  nextDefault.avatar.setSpeaking(false);
+  nextDefault.avatar.setMouth(0);
+  nextDefault.avatar.finishReply(true);
+  nextDefault.advanceTime(600);
+  r21.internalModel.emit("beforeModelUpdate");
+  assert.deepEqual(r21.lastParameter,{id:"ParamMouthOpenY",value:0});
+  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:-.28,weight:1},"the closed mouth stays serious");
+  nextDefault.runTimers(600);
+  nextDefault.advanceTime(110);
+  r21.internalModel.emit("beforeModelUpdate");
+  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:-.28,weight:.5});
+  nextDefault.avatar.setIntent("playful",{deferMotion:true});
+  nextDefault.avatar.startReplyMotion(200);
+  nextDefault.runTimers(220);
+  nextDefault.advanceTime(200);
+  r21.internalModel.emit("beforeModelUpdate");
+  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:.35,weight:1},"an old fade cannot clear a new reply");
   assert.equal(await nextDefault.avatar.selectModel("classic"),true);
   const classic = nextDefault.models.at(-1);
   const neutralOnClassic = classic.neutral;
-  nextDefault.runTimers(260);
+  nextDefault.runTimers(200);
+  nextDefault.runTimers(600);
+  nextDefault.runTimers(220);
   nextDefault.runTimers(12000);
   assert.equal(classic.neutral,neutralOnClassic,"old expression callbacks cannot reach the new model");
   nextDefault.applications[0].ticker.callback();
