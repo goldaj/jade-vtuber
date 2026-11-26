@@ -16,12 +16,14 @@ import struct
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from src.jade_runtime.live_budget import LiveBudgetLedger
 from src.jade_runtime.live_config import LiveConfig
 from src.jade_runtime.live_provider import MAX_SDP_BYTES
 from src.jade_runtime.live_sessions import LiveSessionManager
 from src.jade_runtime.mobile_gateway import MobileGateway
+from src.jade_runtime.mobile_duplex import WebSocketPeer
 from src.jade_runtime.mobile_live import LIVE_SDP_BODY_LIMIT
 
 
@@ -110,19 +112,32 @@ class MobileLiveGatewayTests(unittest.IsolatedAsyncioTestCase):
         self.writers = []
 
     async def asyncTearDown(self):
+        self.server.close()
         for writer in self.writers:
             writer.close()
-        for writer in self.writers:
-            try:
-                await writer.wait_closed()
-            except ConnectionError:
-                pass
-        self.server.close()
-        await self.server.wait_closed()
-        for task in tuple(self.mobile.connections):
+        handlers = tuple(self.mobile.connections)
+        for task in handlers:
             task.cancel()
-        await asyncio.gather(*tuple(self.mobile.connections), return_exceptions=True)
-        await self.manager.stop()
+        waiters = [*handlers, *(asyncio.create_task(writer.wait_closed()) for writer in self.writers)]
+        pending = set()
+        try:
+            if waiters:
+                done, pending = await asyncio.wait(waiters, timeout=3)
+                for task in done:
+                    if not task.cancelled():
+                        task.exception()  # Expected peer resets must still be collected.
+        finally:
+            for task in pending:
+                task.cancel()
+            # Do not let an OS close handshake block the remaining fixture
+            # cleanup, or await server closure before stopping its handlers.
+            for writer in self.writers:
+                writer.transport.abort()
+            async with asyncio.timeout(3):
+                await self.server.wait_closed()
+            async with asyncio.timeout(3):
+                await self.manager.stop()
+        self.assertFalse(pending, "Live gateway fixture left unfinished socket/handler cleanup")
 
     def headers(self, authenticated=True):
         value = {"Host": f"127.0.0.1:{self.port}", "Origin": ORIGIN,
@@ -368,6 +383,62 @@ class MobileLiveGatewayTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(value["session_state"], ("closed", "absent"), "a provider terminal may precede async handle cleanup")
         self.assertIn({"type": "session.close"}, self.provider.channels["provider-fixture-1"].sent)
         self.assertEqual(len(self.provider.created), 1)
+
+    async def test_disconnect_closes_provider_when_sender_swallows_one_cancellation(self):
+        """Reproduce the Python 3.11 wait_for cancellation race deterministically.
+
+        The old finally waited forever in gather(send), before unsubscribe:
+        one swallowed cancellation returned the sender to queue.get while the
+        owner lease and provider remained active. No wall-clock retry is used.
+        """
+        lease = await self.arm()
+        reader, writer, event = await self.authenticate(lease)
+        self.assertEqual(event["type"], "ready")
+        original_frame = WebSocketPeer._frame
+        entered, swallowed = asyncio.Event(), asyncio.Event()
+        sender = None
+
+        async def frame(peer, opcode, data=b""):
+            nonlocal sender
+            if opcode == 1 and json.loads(data).get("type") == "state" and not entered.is_set():
+                sender = asyncio.current_task()
+                entered.set()
+                try:
+                    await asyncio.Future()
+                except asyncio.CancelledError:
+                    swallowed.set()
+                    return  # Simulate wait_for returning a concurrently completed drain.
+            await original_frame(peer, opcode, data)
+
+        with patch.object(WebSocketPeer, "_frame", frame):
+            status, result, _ = await self.request("POST", "/api/live/sessions", {
+                "client_id": CLIENT, "thread_id": THREAD, "lease_id": lease,
+                "request_id": "request-cancel-race", "sdp": SDP})
+            self.assertEqual(status, 200, result)
+            async with asyncio.timeout(1):
+                await entered.wait()
+            # Close the WS protocol while keeping TCP available to observe the
+            # server's close frame. The peer cannot accidentally hide the race
+            # by making the next server write fail with a connection reset.
+            writer.write(masked(b"", opcode=8))
+            await writer.drain()
+            async with asyncio.timeout(1):
+                await swallowed.wait()
+            self.assertEqual(self.manager.snapshot("Goldaj")["lease_state"], "closed",
+                             "lease invalidation must precede child-task cleanup")
+            session = self.manager._sessions[result["session_id"]]
+            async with asyncio.timeout(2):
+                await session.closed.wait()
+            self.assertIn({"type": "session.close"}, self.provider.channels["provider-fixture-1"].sent)
+            async with asyncio.timeout(3):
+                while True:
+                    opcode, _ = await read_frame(reader)
+                    if opcode == 8:
+                        break
+            self.assertIsNotNone(sender)
+            done, _ = await asyncio.wait([sender], timeout=1)
+            self.assertIn(sender, done, "sender must not survive in queue.get after connection closure")
+            self.assertEqual(len(self.provider.created), 1)
 
     async def test_forbidden_provider_command_closes_control_without_creation(self):
         lease = await self.arm()

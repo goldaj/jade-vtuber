@@ -17,6 +17,13 @@ LIVE_GET_ROUTES = frozenset(("/api/live/capabilities", "/api/voice/preferences")
 LIVE_POST_ROUTES = frozenset(("/api/voice/preferences", "/api/live/arm",
                               "/api/live/sessions", "/api/live/sessions/close"))
 LIVE_SDP_BODY_LIMIT = 128 * 1024  # JSON envelope; decoded SDP is separately limited to 64 KiB.
+_CONTROL_CLEANUP_SECONDS = 1.0
+
+
+def _control_task_done(task):
+    # Consume failures without logging private control frames or payloads.
+    if not task.cancelled():
+        task.exception()
 
 
 async def live_http(gateway, writer, method, route, headers, body=b""):
@@ -103,12 +110,15 @@ async def live_control(gateway, reader, writer, headers):
     writer.write(("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\n"
                   "Connection: Upgrade\r\nSec-WebSocket-Protocol: jade-live-v1\r\n"
                   "Cache-Control: no-store\r\nSec-WebSocket-Accept: " + accept + "\r\n\r\n").encode("ascii"))
-    await asyncio.wait_for(writer.drain(), 5)
+    async with asyncio.timeout(5):
+        await writer.drain()
     peer = WebSocketPeer(reader, writer)
     manager, subscription = gateway.live_manager, None
     tasks = []
+    closing = False
     try:
-        auth = await asyncio.wait_for(peer.receive(), 8)
+        async with asyncio.timeout(8):
+            auth = await peer.receive()
         if (not isinstance(auth, dict) or auth.get("type") != "auth"
                 or set(auth) != {"type", "token", "client_id", "thread_id", "lease_id"}
                 or not isinstance(auth.get("token"), str)
@@ -124,9 +134,10 @@ async def live_control(gateway, reader, writer, headers):
 
         async def receive():
             timestamps = deque()
-            while True:
-                frame = await asyncio.wait_for(peer.receive(), manager.config.lease_seconds + 1)
-                if frame is None:
+            while not closing:
+                async with asyncio.timeout(manager.config.lease_seconds + 1):
+                    frame = await peer.receive()
+                if closing or frame is None:
                     return
                 now = time.monotonic()
                 while timestamps and now - timestamps[0] >= 1:
@@ -145,8 +156,11 @@ async def live_control(gateway, reader, writer, headers):
                     raise LiveSessionError("unsupported_live_control", 400)
 
         async def send():
-            while True:
-                await peer.send(await queue.get())
+            while not closing:
+                event = await queue.get()
+                if closing:
+                    return
+                await peer.send(event)
 
         tasks = [asyncio.create_task(receive()), asyncio.create_task(send())]
         done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
@@ -163,13 +177,21 @@ async def live_control(gateway, reader, writer, headers):
     except (ConnectionError, OSError, asyncio.TimeoutError, asyncio.IncompleteReadError, ValueError):
         pass
     finally:
+        closing = True
         for task in tasks:
             task.cancel()
-        if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
-        if subscription:
-            await manager.unsubscribe(OWNER, subscription)
+            task.add_done_callback(_control_task_done)
         try:
-            await peer._frame(8)
-        except Exception:
-            pass
+            # Release the lease and request provider closure before waiting for
+            # socket cleanup: a task swallowing cancel must not keep Live armed.
+            if subscription:
+                await manager.unsubscribe(OWNER, subscription)
+        finally:
+            if tasks:
+                _, pending = await asyncio.wait(tasks, timeout=_CONTROL_CLEANUP_SECONDS)
+                for task in pending:
+                    task.cancel()
+            try:
+                await peer._frame(8)
+            except Exception:
+                pass
