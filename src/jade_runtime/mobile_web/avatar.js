@@ -20,6 +20,7 @@
   let cleanupBlocked = false;
   let standingCamera = null;
   let framing = {x:0, y:0, zoom:1};
+  let shakeImpulse = null;
   let rendererState = Object.freeze({status:"idle", modelId:null, requestedId:"classic", message:""});
   let headIsolation = null;
   let seatedComposition = null;
@@ -59,6 +60,37 @@
     catch (_) { /* The avatar remains usable if an optional motion fails. */ }
   }
 
+  function canShake() {
+    return activeProfile?.id === "next" && rendererState.status === "ready" &&
+      renderRunning && onScreen && !document.hidden && permitsFraming();
+  }
+
+  function stopShake() { shakeImpulse = null; }
+
+  function nudgeFromShake(x, y) {
+    if (!canShake() || !Number.isFinite(x) || !Number.isFinite(y)) return false;
+    shakeImpulse = {x:clamp(x, -1, 1), y:clamp(y, -1, 1), started:performance.now()};
+    return true;
+  }
+
+  function applyShake(core, now) {
+    if (!shakeImpulse) return;
+    const age = (now - shakeImpulse.started) / 1000;
+    if (age >= .72 || !canShake()) {
+      stopShake();
+      return;
+    }
+    // The renderer keeps its own centre. The rig's angles feed the existing hair and clothes physics.
+    const spring = Math.exp(-7 * age) * Math.sin(23 * age);
+    const x = shakeImpulse.x * spring;
+    const y = shakeImpulse.y * spring;
+    core.addParameterValueById?.("ParamAngleX", 8 * x);
+    core.addParameterValueById?.("ParamAngleY", 7 * y);
+    core.addParameterValueById?.("ParamAngleZ", -6 * x);
+    core.addParameterValueById?.("ParamBodyAngleX", 4 * x);
+    core.addParameterValueById?.("ParamBodyAngleZ", -3 * x);
+  }
+
   function bindR21MotionPlayback(internal, idleGroup) {
     const manager = internal.motionManager;
     const core = internal.coreModel;
@@ -91,6 +123,7 @@
       const delta = lastBlinkUpdate === null ? 0 : Math.min(.1, (now - lastBlinkUpdate) / 1000);
       lastBlinkUpdate = now;
       blink?.updateParameters(core, delta);
+      applyShake(core, now);
     };
     const updateMouth = () => core.setParameterValueById("ParamMouthOpenY", mouth);
     internal.eyeBlink = undefined;
@@ -159,6 +192,7 @@
   }
 
   function stopRendering() {
+    stopShake();
     cancelPendingVisibilityPause();
     if (!pixi || !pixi.ticker) return;
     if (renderRunning) {
@@ -219,6 +253,7 @@
     resize: () => resize(),
     selectModel,
     getTouchFrame, isModelAt, moveView, zoomView, resetView,
+    nudgeFromShake, stopShake,
     get state() { return rendererState; },
     get ready() { return Boolean(model); },
     get usesSeatedBody() { return Boolean(model && activeProfile?.presentation === "seated"); },

@@ -22,7 +22,7 @@ function element(id) {
   }
   return elements.get(id);
 }
-const documentHandlers = {};
+const documentHandlers = {}, windowHandlers = {};
 global.document = {
   hidden:false, getElementById:element,
   querySelector: selector => selector === ".shell" ? Object.assign(element("test-shell"), {dataset:{view:"chat"}}) : null,
@@ -38,12 +38,13 @@ global.requestAnimationFrame = () => 1;
 global.cancelAnimationFrame = () => {};
 global.setInterval = () => 1;
 const played = [], stopped = [];
+let microphoneProcessor;
 class AudioContext {
-  constructor() { this.currentTime = 1; this.destination = {}; }
+  constructor() { this.currentTime = 1; this.destination = {}; this.sampleRate = 48000; }
   resume() {return Promise.resolve();}
   close() {return Promise.resolve();}
   createMediaStreamSource() {return {connect(){}, disconnect(){}};}
-  createScriptProcessor() {return {connect(){}, disconnect(){}};}
+  createScriptProcessor() {return microphoneProcessor = {connect(){}, disconnect(){}};}
   createGain() {return {gain:{}, connect(){}, disconnect(){}};}
   createBuffer(channels, length, rate) {
     const samples = new Float32Array(length);
@@ -55,8 +56,20 @@ class AudioContext {
 }
 const avatar = {setMouth(){}, setIntent(){}, setSpeaking(){}, resetIntent(){}};
 global.window = {crypto:global.crypto, AudioContext, JadeAvatar:avatar,
-  location:{hash:""}, addEventListener(){}, setTimeout, clearTimeout};
-let fetchCount = 0, lastSignal, finishLegacyReply;
+  location:{hash:""}, addEventListener(name, handler) {(windowHandlers[name] ||= []).push(handler);},
+  setTimeout, clearTimeout};
+const mic = element("mic");
+function press(pointerId = 1) {
+  return mic.handlers.pointerdown({button:0, isPrimary:true, pointerId, preventDefault(){}});
+}
+function mouseEnds(type = "pointerup", pointerId = 1) {
+  for (const handler of windowHandlers[type]) handler({pointerId});
+}
+function sample(value = 0) {
+  microphoneProcessor.onaudioprocess({inputBuffer:{getChannelData:() => new Float32Array(4096).fill(value)}});
+}
+const tick = () => new Promise(resolve => setImmediate(resolve));
+let fetchCount = 0, lastSignal, finishLegacyReply, wavRequest;
 global.fetch = async (_path, options) => {
   // The login handshake is independent of paid chat and streaming turns.
   if (_path === "/api/auth") {
@@ -66,6 +79,10 @@ global.fetch = async (_path, options) => {
   }
   lastSignal = options.signal;
   fetchCount++;
+  if (_path === "/api/voice") {
+    wavRequest = options;
+    return {status:200, ok:true, json:async () => ({reply:"Voix de secours", intent:"neutral"})};
+  }
   if (fetchCount === 3) {
     assert.equal(options.headers["X-Jade-Stream"], undefined);
     return {status:200, ok:true, json:async () => ({reply:"Ancien navigateur", intent:"neutral"})};
@@ -134,7 +151,7 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
   let grantMicrophone, stops = 0;
   const mediaStream = {getTracks:() => [{stop() {stops++;}}]};
   navigator.mediaDevices = {getUserMedia:() => new Promise(resolve => {grantMicrophone = resolve;})};
-  element("mic").handlers.click();
+  press();
   resume = window.JadeConversation.stopForModelChange();
   grantMicrophone(mediaStream);
   await new Promise(resolve => setImmediate(resolve));
@@ -143,17 +160,25 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
   assert.equal(element("mic").classList.contains("recording"), false);
   resume();
 
+  press();
+  mouseEnds();
+  grantMicrophone(mediaStream);
+  await tick();
+  assert.equal(stops, 2, "a late permission grant after release must close its tracks");
+  assert.match(element("status").textContent, /relâché avant le début/);
+  assert.equal(fetchCount, 4, "releasing during permission must never start a turn");
+
   navigator.mediaDevices.getUserMedia = async () => mediaStream;
   let cancelled = 0, emitDuplex;
   window.JadeDuplex = {
     supported: () => true,
     create({onEvent}) {emitDuplex = onEvent; return {cancel() {cancelled++;}};}
   };
-  element("mic").handlers.click();
+  await press();
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(element("mic").classList.contains("recording"), true);
   resume = window.JadeConversation.stopForModelChange();
-  assert.equal(stops, 2);
+  assert.equal(stops, 3);
   assert.equal(cancelled, 1);
   assert.equal(element("mic").classList.contains("recording"), false);
   await emitDuplex({type:"reply", reply:"À ignorer également"});
@@ -161,5 +186,97 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
   resume();
   assert.equal(element("mic").disabled, false);
   assert.equal(fetchCount, 4);
+
+  let finished = 0, frames = 0, finishVoice, disconnectVoice;
+  window.JadeDuplex = {
+    supported: () => true,
+    create({onEvent, onDisconnect}) {
+      emitDuplex = onEvent;
+      disconnectVoice = onDisconnect;
+      return {ready:true,
+        push(part) {frames += part.length;},
+        finish() {finished++; return new Promise(resolve => {finishVoice = resolve;});},
+        cancel() {cancelled++;}
+      };
+    }
+  };
+  await press();
+  const realNow = Date.now;
+  try {
+    let time = realNow();
+    Date.now = () => time;
+    sample(.3);
+    time += 1600;
+    sample(0);
+    time += 1600;
+    sample(.2);
+  } finally { Date.now = realNow; }
+  assert.equal(frames, 12288, "all chunks, including silence, stream during the push");
+  assert.equal(finished, 0, "silence must not finish the utterance while held");
+  assert.equal(mic.classList.contains("recording"), true);
+  assert.equal(element("mic-feedback").hidden, false);
+  assert.match(element("mic-feedback").textContent, /Relâche pour envoyer/);
+  mouseEnds("pointerup", 2);
+  assert.equal(finished, 0, "another pointer must not stop the capture");
+  mouseEnds();
+  mouseEnds();
+  mic.handlers.click?.({preventDefault(){}});
+  assert.equal(finished, 1, "one release ends the utterance once even if it produces a click");
+  assert.equal(stops, 4, "release closes the microphone immediately");
+  await emitDuplex({type:"done"});
+  finishVoice();
+  await tick();
+  assert.equal(element("mic-feedback").hidden, true, "ready clears the visible voice feedback");
+
+  await press();
+  sample(.15);
+  mouseEnds("pointercancel");
+  assert.equal(cancelled, 2);
+  assert.equal(finished, 1, "an interrupted hold must discard capture");
+  assert.equal(stops, 5);
+
+  await press();
+  sample(.15);
+  disconnectVoice(new Error("Connexion vocale indisponible."));
+  assert.equal(stops, 6, "loss of the ready socket stops the live microphone");
+  assert.match(element("status").textContent, /Connexion vocale indisponible/);
+  assert.equal(fetchCount, 4, "no WAV retry after the socket accepted this turn");
+
+  const key = (name, repeat = false) => ({key:name, repeat, preventDefault(){}});
+  await mic.handlers.keydown(key(" "));
+  await mic.handlers.keydown(key(" ", true));
+  sample(.2); sample(.2); sample(.2);
+  mic.handlers.keyup(key(" "));
+  assert.equal(finished, 2, "Space uses the same press and release lifecycle");
+  finishVoice();
+  await tick();
+
+  await press();
+  const beforeLimit = frames;
+  const beforeLimitClosed = stops;
+  for (let i = 0; i < Math.ceil(960000 / 4096); i++) sample(.1);
+  assert.equal(frames - beforeLimit, 960000, "bounded capture: exactly 20 seconds of PCM");
+  assert.equal(stops, beforeLimitClosed + 1);
+  assert.equal(finished, 2, "the limit closes the microphone and waits for release");
+  assert.match(element("mic-feedback").textContent, /Limite de 20 s/);
+  mouseEnds();
+  assert.equal(finished, 3);
+  assert.equal(stops, beforeLimitClosed + 1, "release after the limit does not stop the tracks twice");
+  finishVoice();
+  await tick();
+
+  window.JadeDuplex.create = () => ({
+    ready:false, push(){},
+    async finish(){throw new Error("Le socket n’a pas été authentifié.");},
+    cancel(){}
+  });
+  await press();
+  sample(.2); sample(.2); sample(.2);
+  assert.equal(fetchCount, 4, "the safe fallback waits for release");
+  mouseEnds();
+  await tick();
+  assert.equal(fetchCount, 5);
+  assert.equal(wavRequest.body.type, "audio/wav");
+  assert.equal(element("messages").children.at(-1).children[0].textContent, "Voix de secours");
   process.stdout.write("Mobile stream client: OK\n");
 })().catch(error => {console.error(error); process.exitCode = 1;});

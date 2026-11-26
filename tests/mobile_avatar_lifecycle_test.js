@@ -80,7 +80,7 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   const compositionLayers = [], isolationSyncs = [];
   let pending = 0, maximum = 0, maximumPending = 0, visibleObserver;
   const timers = new Map();
-  let timerSequence = 0;
+  let timerSequence = 0, now = 10;
   if (initialError) plans.set(defaultId, [Promise.reject(new Error("initial load failed"))]);
   // A rejected planned load is consumed by the test loader, not an unhandled rejection.
   for (const list of plans.values()) list.forEach(operation => operation.catch(() => {}));
@@ -131,12 +131,17 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
     model.id = profile.id; model.autoUpdate = false;
     const {EventEmitter} = require("node:events");
     model.internalModel = Object.assign(new EventEmitter(), {
-      coreModel:{getDrawableRenderOrders(){return [0];},setParameterValueById(id,value){model.lastParameter={id,value};}},
+      coreModel:{
+        getDrawableRenderOrders(){return [0];},
+        setParameterValueById(id,value){model.lastParameter={id,value};},
+        addParameterValueById(id, value){model.shakeParameters.set(id, value);},
+      },
       draw(){},eyeBlink:{updateParameters(){model.blinked = true;}},
       motionManager:Object.assign(new EventEmitter(), {
         expressionManager:{defaultExpression:{}, resetExpression(){model.neutral = (model.neutral || 0) + 1;}},
       }),
     });
+    model.shakeParameters = new Map();
     model.motions = [];
     model.expressions = [];
     model.motion = (group, index, priority) => {
@@ -170,7 +175,7 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
       get src(){return this._src;}removeAttribute(name){if(name==="src")this._src="";}},
     ResizeObserver:class {observe(){} disconnect(){}},
     IntersectionObserver:class {constructor(callback){visibleObserver=callback;}observe(){}disconnect(){}},
-    performance:{now(){return 10;}},
+    performance:{now(){return now;}},
     setTimeout(callback, delay){const id = ++timerSequence; timers.set(id, {callback,delay}); return id;},
     clearTimeout(id){timers.delete(id);}};
   vm.createContext(context);
@@ -178,6 +183,7 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   vm.runInContext(source,context,{filename:"avatar.js"});
   await flush();
   return {avatar:window.JadeAvatar,window,room,shell,document,target,fallback,body,models,active,events,states,applications,sprites,compositionLayers,isolationSyncs,
+    advanceTime(ms){now += ms;},
     hold(id){const gate=deferred();(plans.get(id)||plans.set(id,[]).get(id)).push(gate.promise);return gate;},
     failNext(id){const gate=this.hold(id);gate.promise.catch(()=>{});gate.reject(new Error(`failed ${id}`));},
     hide(value){document.hidden=value;document.dispatchEvent(new Event("visibilitychange"));},
@@ -384,8 +390,35 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
     "the custom framing comes back on Accueil"));
   assert(touch.avatar.resetView());
   assert.deepEqual(pose(), initial, "Recentrer restores the exact original transform");
+  assert(touch.avatar.zoomView(1.2, ...eye()));
+  assert(touch.avatar.moveView(13, 9));
+  const shakePose = pose();
+  const shakeMotionCount = standing.motions.length;
+  touch.avatar.setMouth(.35);
+  assert(touch.avatar.nudgeFromShake(1, .5));
+  touch.advanceTime(70);
+  standing.internalModel.emit("afterMotionUpdate");
+  standing.internalModel.emit("beforeModelUpdate");
+  assert(Math.abs(standing.shakeParameters.get("ParamAngleX")) > 4, "shake drives the rig's physics inputs");
+  assert.equal(standing.motions.length, shakeMotionCount, "shake leaves the active motion playing");
+  assert.deepEqual(standing.lastParameter, {id:"ParamMouthOpenY", value:.35}, "shake leaves lip sync active");
+  assert.deepEqual(pose(), shakePose, "shake keeps the custom placement and zoom");
+  standing.shakeParameters.clear();
+  touch.advanceTime(800);
+  standing.internalModel.emit("afterMotionUpdate");
+  assert.equal(standing.shakeParameters.size, 0, "the impulse expires");
+  touch.shell.dataset.view = "profile";
+  assert(!touch.avatar.nudgeFromShake(1, 1), "a mini-scene cannot receive a shake");
+  touch.shell.classList.add("is-room-only");
+  assert(touch.avatar.nudgeFromShake(1, 1), "the fullscreen scene can receive a shake");
+  touch.hide(true);
+  assert(!touch.avatar.nudgeFromShake(1, 1), "the backgrounded page cannot receive a shake");
+  touch.hide(false);
+  standing.internalModel.emit("afterMotionUpdate");
+  assert.equal(standing.shakeParameters.size, 0, "an old impulse cannot resume from the background");
   assert.equal(await touch.avatar.selectModel("classic"), true);
   assert.equal(touch.avatar.getTouchFrame(), null, "classic is outside the touch feature");
+  assert(!touch.avatar.nudgeFromShake(1, 1), "classic cannot receive a shake");
 
   const hidden = await client({hidden:true});
   assert.equal(hidden.models.at(-1).autoUpdate,false);

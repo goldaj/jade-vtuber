@@ -18,13 +18,13 @@
 | Canaux, concurrence | [03-CANAUX-ROUTAGE.md](03-CANAUX-ROUTAGE.md) | 10 | Routeur de sortie, tour non bloquant, annulation étendue, livraison, extensions Discord et intentions intercanaux avancées |
 | Avatar, visibilité | [04-AVATAR-VISIBILITE.md](04-AVATAR-VISIBILITE.md) | 8 | Rendu conditionnel à la visibilité, filtrage par audience et économies GPU |
 | Architecture IA | [05-ARCHITECTURE-IA.md](05-ARCHITECTURE-IA.md) | 7 | Moteurs/fournisseurs échangeables, contrats de modules, tests et comparaison de modèles |
-| Produit, mobile | [06-PRODUIT-MOBILE.md](06-PRODUIT-MOBILE.md) | 4 | Reconnexion, Authenticator, solde prépayé et réaction aux secousses. UX-14 est suivie en DEV-044. |
+| Produit, mobile | [06-PRODUIT-MOBILE.md](06-PRODUIT-MOBILE.md) | 3 | Reconnexion, Authenticator et solde prépayé. UX-14 est suivie en DEV-044 et UX-20 en REC-043. |
 | Qualité, exploitation | [07-QUALITE-EXPLOITATION.md](07-QUALITE-EXPLOITATION.md) | 5 | Protection des anciennes archives, robustesse CI, tableau de supervision, rollback, exploitation Windows |
 | Pilotage volontaire du modèle 2D | [08-MODELE-2D.md](08-MODELE-2D.md) | 1 | Commandes choisies par Jade, connaissance du résultat et arbitrage avec les animations automatiques |
 | Perception multimodale | [09-PERCEPTION-MULTIMODALE.md](09-PERCEPTION-MULTIMODALE.md) | 7 | Consentement des images, sources vidéo, temporalité, réactions live et budgets ; PER-01/02/03 désormais en backlog |
 | Données et normalisation | [10-NORMALISATION-DONNEES-MEMOIRE.md](10-NORMALISATION-DONNEES-MEMOIRE.md) | 10 | Contrats d'événements, données structurées, provenance, migrations |
 | Capacités et comportement | [11-CAPACITES-COMPORTEMENT-CONTROLE.md](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | 27 | Sécurité, outils et interactions sociales encore prospectifs ; NEW-29 et NEW-38 sont en backlog |
-| **Total** | | **98** | |
+| **Total** | | **97** | |
 
 **Décision supplémentaire du 22/11/2026 :** NEW-20 est transférée dans [DEV-031](../backlog/01-DEVELOPPEMENT.md) (explications d'indisponibilité), tandis que NEW-25 (proposition multilingue) a été **abandonnée** à la demande du propriétaire. Une recherche sur les 11 thèmes n'a trouvé aucune autre proposition de fonctionnalité multilingue à retirer. Les fonctions et contenus existants ne sont pas modifiés par cette décision.
 

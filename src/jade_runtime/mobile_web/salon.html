@@ -116,7 +116,8 @@
       <div id="avatar-touch-zone" aria-hidden="true" hidden></div>
       <button type="button" id="avatar-recenter" aria-label="Recentrer Jade" hidden>Recentrer</button>
       <div class="room-bottom">
-        <button type="button" id="mic" class="mic" aria-label="Démarrer l'enregistrement vocal" aria-pressed="false" title="Parler à Jade">🎙</button>
+        <button type="button" id="mic" class="mic" aria-label="Maintenir pour parler" aria-pressed="false" title="Maintenir pour parler, relâcher pour envoyer">🎙</button>
+        <span id="mic-feedback" role="status"></span>
         <span id="mood-line" hidden aria-hidden="true"></span>
       </div>
     </section>
@@ -135,6 +136,8 @@
         </div>
         <label class="portrait-motion-choice"><input type="checkbox" id="portrait-motion-enabled" checked> Animations de la chambre</label>
         <p id="portrait-motion-status" role="status">Chargement des animations…</p>
+        <label class="avatar-shake-choice"><input type="checkbox" id="avatar-shake-enabled"> Réagir aux secousses</label>
+        <p id="avatar-shake-status" role="status"></p>
       </section>
         <fieldset class="notification-choice">
           <legend>Recevoir les rappels sur ce téléphone</legend>

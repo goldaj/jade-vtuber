@@ -50,6 +50,7 @@ WEB_FILES = {
     "/assets/splash-jade.png": ("splash-jade.png", "image/png"),
     "/assets/avatar.js": ("avatar.js", "text/javascript; charset=utf-8"),
     "/assets/avatar-gestures.js": ("avatar-gestures.js", "text/javascript; charset=utf-8"),
+    "/assets/avatar-shake.js": ("avatar-shake.js", "text/javascript; charset=utf-8"),
     "/assets/avatar-models.js": ("avatar-models.js", "text/javascript; charset=utf-8"),
     "/assets/avatar-model-loader.js": ("avatar-model-loader.js", "text/javascript; charset=utf-8"),
     "/assets/room-motion.js": ("room-motion.js", "text/javascript; charset=utf-8"),

@@ -36,6 +36,7 @@ MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/icon-source-96.png",
     "src/jade_runtime/mobile_web/avatar.js",
     "src/jade_runtime/mobile_web/avatar-gestures.js",
+    "src/jade_runtime/mobile_web/avatar-shake.js",
     "src/jade_runtime/mobile_web/avatar-models.js",
     "src/jade_runtime/mobile_web/avatar-model-loader.js",
     "src/jade_runtime/mobile_web/room-motion.js",

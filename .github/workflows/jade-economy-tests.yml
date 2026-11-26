@@ -32,6 +32,7 @@ jobs:
           node tests/mobile_stream_client_test.js
           node --check src/jade_runtime/mobile_web/avatar-models.js
           node --check src/jade_runtime/mobile_web/avatar-gestures.js
+          node --check src/jade_runtime/mobile_web/avatar-shake.js
           node --check src/jade_runtime/mobile_web/avatar-model-loader.js
           node tests/mobile_avatar_models_test.js
           node tests/mobile_avatar_model_loader_test.js
@@ -41,6 +42,8 @@ jobs:
           node tests/mobile_scene_framing_test.js
           node tests/mobile_scene_gestures_test.js
           node tests/mobile_avatar_gestures_test.js
+          node tests/mobile_avatar_shake_test.js
+          node tests/mobile_duplex_client_test.js
           node --check src/jade_runtime/mobile_web/room-motion.js
           node tests/mobile_room_selection_test.js
           node --check src/jade_runtime/mobile_web/seated-scene.js

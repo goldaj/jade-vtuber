@@ -23,11 +23,11 @@
 
 **DEV-032 (UX-19) → REC-039 (P2, Done le 22/11/2026)** : génération de fichiers mobile et Discord, en texte et vocal, intégrée sur `develop`. **Le propriétaire confirme explicitement après recette réelle que l'ensemble de l'US fonctionne**. Les deux parcours mobiles avaient été vérifiés avant le correctif ; les trois parcours Discord ont été acceptés globalement après activation du mode `all` par défaut. [Statut canonique REC-039](02-RECETTE.md). Aucun DEV-032 actif en parallèle. DEV-033/034/035 (PER-01/02/03, images) restent « À qualifier ». **NEW-16 (P2) est prise en charge dans [DEV-036](01-DEVELOPPEMENT.md), statut « En cours »** : rappels persistants, push Android en arrière-plan et ouverture ciblée codés ; recette réelle Android et configuration Web Push restent ouvertes ; l'idée n'est plus active dans le catalogue prospectif et les autres idées supprimées ne sont pas réintroduites.
 
-**Lot vocal mobile du 25/11 : DEV-039 (vrai push-to-talk classique), DEV-040 (GPT-Live duplex, bascule, micro parler/mute et maîtrise des coûts), DEV-041 (voix française personnalisée) sont P1, À faire, à traiter prochainement. Mobile uniquement ; aucun développement ni appel payant lancé. [Critères détaillés](01-DEVELOPPEMENT.md#lot-p1-mobile--dialogue-vocal-naturel-et-économique-25-novembre-2026). LAT-17, ARC-01 et ARC-05 sont transférées, sans doublon actif.**
+**Lot vocal mobile :** [REC-042](02-RECETTE.md) (P1, ancienne DEV-039) couvre la recette Android du push-to-talk en maintien. DEV-040 (mode GPT-Live) et DEV-041 (voix personnalisée) restent les suites P1. [Critères détaillés](01-DEVELOPPEMENT.md#lot-p1-mobile--dialogue-vocal-naturel-et-économique-25-novembre-2026)
 
 **Transferts du 23/11 : DEV-037 (NEW-29, sous-titres mobiles, P2) et DEV-038 (NEW-38, autonomie fonctionnelle, P1) sont À qualifier, sans développement lancé. Les deux anciennes idées ont été retirées du catalogue actif.**
 
-**Lot mobile du 26/11 :** [REC-041](02-RECETTE.md) (P1, ancienne DEV-042) couvre la recette Android du zoom et du déplacement du r21. [DEV-043](01-DEVELOPPEMENT.md#dev-043--service-jade-indépendant-du-pc) et [DEV-044](01-DEVELOPPEMENT.md#dev-044--application-android-installable) (P2) couvrent la continuité sur VPS et le client Android. L’idée [UX-20](../ameliorations/06-PRODUIT-MOBILE.md#ux-20--réaction-aux-secousses-p3) (P3) couvre la secousse du téléphone. [Décisions et ordre proposé](../operations/handoffs/2026-11-26-codex-backlog-mobile.md)
+**Lot mobile du 26/11 :** [REC-041](02-RECETTE.md) (P1, ancienne DEV-042) couvre la recette Android du zoom et du déplacement du r21. [DEV-043](01-DEVELOPPEMENT.md#dev-043--service-jade-indépendant-du-pc) et [DEV-044](01-DEVELOPPEMENT.md#dev-044--application-android-installable) (P2) couvrent la continuité sur VPS et le client Android. [REC-043](02-RECETTE.md) (P3, ancienne UX-20) couvre la recette de la secousse du r21. [Décisions et ordre proposé](../operations/handoffs/2026-11-26-codex-backlog-mobile.md)
 
 **Quick wins engagés le 22/11 : DEV-027 (VIS-04) et DEV-028 (RTE-12) sont en développement sur `develop`.** **Élargissement validé le même jour : DEV-029 (VIS-07) en développement, DEV-030 (LAT-10) À faire.** Les idées prospectives correspondantes sont retirées de la liste active, sans duplication. La CI mémoire en cours de remise au vert est suivie séparément.
 
@@ -42,7 +42,7 @@
 ---
 
 **Référence :** `goldaj/jade-vtuber` · branche `develop` · créé le 18 novembre 2026.
-**Périmètre :** tâches identifiées pour livrer, installer, recetter et maintenir **la Jade déjà en chantier**. **Ne pas confondre** avec les [98 idées prospectives restantes](../ameliorations/README.md), qui restent un catalogue distinct, ni avec les archives historiques.
+**Périmètre :** tâches identifiées pour livrer, installer, recetter et maintenir **la Jade déjà en chantier**. **Ne pas confondre** avec les [97 idées prospectives restantes](../ameliorations/README.md), qui restent un catalogue distinct, ni avec les archives historiques.
 **Photographie GitHub initiale :** aucune issue ni PR ouverte au relevé du 18 novembre ; les modules existants demeurent **codés** même sans recette physique. Les dernières CI hors ligne et le scan des secrets ont réussi au SHA `01c7551f8b4f4aae22e7e42a5a090fc05fbaac99`. Le PC, les clés et les comptes n'ont pas été inspectés par cet audit.
 
 ## Organisation retenue par le propriétaire
@@ -51,11 +51,11 @@
 
 | Type | Vue | Objet | Nombre actuel |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 30 |
-| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, dont les anciennes cartes DEV déplacées | 41 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 29 |
+| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, dont les anciennes cartes DEV déplacées | 43 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 16 |
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 12 |
-| **Total** | | **Cartes uniques dans la vue priorisée ; OPS-012 est classée sans suite, hors vue** | **99** |
+| **Total** | | **Cartes uniques dans la vue priorisée ; OPS-012 est classée sans suite, hors vue** | **100** |
 
 **Definition of Done officielle :** [lire les règles de clôture](DEFINITION_OF_DONE.md). Toute carte n'est **Done** que si les cinq exigences sont satisfaites, dont validation explicite par **Codex (tous ses modèles et sous-agents) OU le propriétaire**, **au moins un des deux**. L'intervention humaine n'est plus obligatoire si Codex a validé. La présence du code ou d'une CI verte ne clôture pas à elle seule une recette physique.
 
@@ -113,7 +113,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 24 | DEV-039 | A | Vrai push-to-talk classique mobile, transmission pendant appui | [DEV](01-DEVELOPPEMENT.md) |
+| 24 | REC-042 | A | Valider le push-to-talk classique mobile pendant l’appui (ancienne DEV-039) | [REC](02-RECETTE.md) |
 | 25 | DEV-040 | A | Mode GPT-Live mobile, bascule, mute et gestion des sessions/coûts | [DEV](01-DEVELOPPEMENT.md) |
 | 26 | DEV-041 | A | Voix française originale de Jade par prompt | [DEV](01-DEVELOPPEMENT.md) |
 | 27 | REC-031 | Transverse | Conscience unique Jade et actions intercanaux autorisées | [REC](02-RECETTE.md) |
@@ -197,6 +197,12 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 97 | DEV-037 | A | Sous-titres synchronisés de Jade dans l'application mobile (NEW-29, P2) | [DEV](01-DEVELOPPEMENT.md) |
 | 98 | DEV-043 | Transverse | Faire fonctionner Jade sur VPS avec le PC éteint et le mobile sans avatar | [DEV](01-DEVELOPPEMENT.md#dev-043--service-jade-indépendant-du-pc) |
 | 99 | DEV-044 | A | Livrer l’application Android installable (UX-14) | [DEV](01-DEVELOPPEMENT.md#dev-044--application-android-installable) |
+
+### P3 · 1 tâche
+
+| Rang | ID | Jalon | Tâche | Vue |
+| ---: | --- | --- | --- | --- |
+| 100 | REC-043 | B | Valider la réaction du r21 aux secousses du téléphone (ancienne UX-20) | [REC](02-RECETTE.md) |
 
 ### Décision classée sans suite (hors liste de priorisation)
 

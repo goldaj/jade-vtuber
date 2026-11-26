@@ -98,5 +98,7 @@ async function submit(value){
   assert(loader < assets.indexOf("/assets/avatar.js"), "renderer receives its selection loader");
   assert(assets.indexOf("/assets/avatar-gestures.js") > assets.indexOf("/assets/avatar.js"),
     "touch gestures load after the renderer");
+  assert(assets.indexOf("/assets/avatar-shake.js") > assets.indexOf("/assets/avatar-gestures.js"),
+    "device motion loads after touch gestures and the renderer");
   console.log("Mobile login OK: invalid/refused token loads zero app assets; authorized salon and deferred SDK");
 })().catch(e=>{console.error(e);process.exitCode=1});

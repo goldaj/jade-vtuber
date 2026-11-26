@@ -1,3 +1,9 @@
+## 2026-11-26 — Micro à maintenir et réaction aux secousses sur mobile
+
+- Dans la PWA, `app.js` associe la capture vocale à l’appui maintenu sur le micro et la fin d’énoncé au relâchement. `duplex-client.js` envoie les trames PCM pendant l’appui, limite le tampon de démarrage et ferme la connexion sur échec. Le secours WAV intervient seulement avant une connexion vocale confirmée.
+- Le réglage Profil **Réagir aux secousses** active le capteur de mouvement pour le salon ouvert. `avatar-shake.js` reconnaît une secousse volontaire et `avatar.js` applique une impulsion amortie à la physique du r21 sur l’Accueil et en plein écran, autour du cadrage choisi. Le rendu respecte la préférence de mouvement réduit.
+- Les suites ciblées couvrent le maintien, le relâchement, l’annulation, le délai de connexion, l’impulsion et les limites de la scène. Le contrôle documentaire accepte le titre au singulier pour la première recette P3. [Preuves et recette Redmi](handoffs/2026-11-26-codex-mobile-ptt-shake.md)
+
 ## 2026-11-26 — Zoom et déplacement tactile de Jade r21
 
 - `avatar-gestures.js`, `app.js` et le salon gèrent le pincement à deux doigts, la saisie tactile après appui maintenu et le bouton Recentrer. La zone est réservée à l’Accueil et au plein écran avec le r21 actif. Les gestes consommés sont exclus du double appui.

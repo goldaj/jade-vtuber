@@ -55,6 +55,7 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
   background:linear-gradient(145deg,#356f50,#28543e);border:0;font-size:1.12rem}
 .mic{background:#e5f0e4;color:#315e42;border:1px solid #ceddcb}
 .mic.recording{background:#a95057;color:#fff;box-shadow:0 0 0 3px #f4d3d0}
+#mic{touch-action:none;user-select:none;-webkit-touch-callout:none}
 .footer-status{font-size:.66rem;color:#597967;min-height:20px;padding:5px 17px}
 .identity-panel,.billing-panel{color:#425e4b;border-bottom:1px solid #dfe8dc;font-size:.81rem}
 .identity-panel summary,.billing-panel summary{color:var(--forest);padding:3px 0;font-weight:700}
@@ -276,6 +277,13 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
   background:#a95057;color:#fff;border-color:#a95057;
 }
 .room-bottom #mood-line{display:none}
+#mic-feedback{
+  position:absolute;bottom:calc(96px + env(safe-area-inset-bottom,0px));left:50%;
+  transform:translateX(-50%);max-width:calc(100% - 28px);width:max-content;
+  padding:5px 10px;border:1px solid #c9dfc8;border-radius:10px;
+  background:#fffdf7ed;color:#28523b;font-size:.8rem;text-align:center
+}
+#mic-feedback:empty{display:none}
 /* Operational updates are kept for screen readers without a permanent status banner. */
 .footer-status{
   position:absolute;width:1px;height:1px;padding:0;margin:-1px;
@@ -386,9 +394,10 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 }
 /* The explicitly enabled bedroom setting owns its animation lifecycle.
  * OS reduced motion is handled by the gentler canvas preset. */
-.profile-intro .portrait-motion-choice{display:flex;align-items:center;gap:8px;margin-top:12px;color:#285639}
-.profile-intro .portrait-motion-choice input{accent-color:#2f5d45;width:18px;height:18px}
-#portrait-motion-status{font-size:.78rem;margin:3px 0 0}
+.profile-intro :is(.portrait-motion-choice,.avatar-shake-choice){display:flex;align-items:center;gap:8px;margin-top:12px;color:#285639}
+.profile-intro :is(.portrait-motion-choice,.avatar-shake-choice) input{accent-color:#2f5d45;width:18px;height:18px}
+:is(#portrait-motion-status,#avatar-shake-status){font-size:.78rem;margin:3px 0 0}
+#avatar-shake-status:empty{display:none}
 .room[data-room="bedroom"][data-seated-ready="true"] .portrait-seated-body{
   display:block;position:absolute;
   left:12.7524%;top:var(--seated-body-top,40.6699%);width:71.2009%;height:var(--seated-body-height,56.2201%);

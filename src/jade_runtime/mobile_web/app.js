@@ -7,6 +7,7 @@
   const $ = (id) => document.getElementById(id);
   const form = $("composer"), input = $("message"), log = $("messages");
   const mic = $("mic"), send = $("send"), status = $("status");
+  const micFeedback = $("mic-feedback");
   const modal = $("auth-modal"), authForm = $("auth-form"), authInput = $("auth-token");
   const authFeedback = $("auth-feedback"), authSubmit = authForm.querySelector('button[type="submit"]');
   let authPending = false;
@@ -21,6 +22,8 @@
   let busy = false;
   let recording = null;
   let starting = null;
+  let micPress = null;
+  let voicePending = false;
   let conversationGeneration = 0;
   let modelChanging = false;
   let soundEnabled = true;
@@ -47,6 +50,7 @@
   }
   function showView(view) {
     if (!["home", "chat", "reminders", "profile"].includes(view)) return;
+    if (view !== shell.dataset.view) finishMicPress(false);
     shell.dataset.view = view;
     syncMicPlacement();
     window.JadeAvatar?.resize?.();
@@ -73,11 +77,20 @@
 
   function setStatus(message, working = false) {
     working = working || modelChanging;
+    if (micFeedback && (message !== status.textContent || message === "Prête.")) micFeedback.hidden = true;
     status.textContent = message;
     send.disabled = working;
     newChat.disabled = working;
     input.disabled = working;
-    mic.disabled = modelChanging || (working && !recording && !activeDuplex);
+    mic.disabled = modelChanging || (working && !micPress && !voicePending);
+  }
+
+  function setMicStatus(message, working = false) {
+    setStatus(message, working);
+    if (micFeedback) {
+      micFeedback.textContent = message;
+      micFeedback.hidden = false;
+    }
   }
 
   function authorizeAgain() {
@@ -186,6 +199,12 @@
     return audioContext.resume().then(() => audioContext);
   }
 
+  function primeVoicePlayback() {
+    if (!soundEnabled) return;
+    try { ensureAudioContext().catch(() => {}); }
+    catch (_) { /* A failed output device must not block the user's message. */ }
+  }
+
   function stopPlayback() {
     playbackGeneration++;
     if (playFrame) cancelAnimationFrame(playFrame);
@@ -212,6 +231,7 @@
 
   function cancelConversation() {
     conversationGeneration++;
+    clearMicPress();
     cancelRecordingStart();
     cancelRecording();
     streamController?.abort();
@@ -219,6 +239,8 @@
     activeDuplex?.cancel();
     activeDuplex = null;
     busy = false;
+    voicePending = false;
+    resetMicButton();
     stopPlayback();
     avatar().resetIntent();
     setStatus(status.textContent);
@@ -531,24 +553,56 @@
     return new Blob([out], {type:"audio/wav"});
   }
 
-  async function startRecording() {
+  function clearMicPress() {
+    const pointerId = micPress?.pointerId;
+    micPress = null;
+    try {
+      if (pointerId !== undefined && mic.hasPointerCapture?.(pointerId))
+        mic.releasePointerCapture(pointerId);
+    } catch (_) { /* The browser may already have dropped the pointer. */ }
+  }
+
+  function finishMicPress(sendUtterance) {
+    const press = micPress;
+    if (!press) return;
+    clearMicPress();
+    if (press.interrupt) {
+      if (sendUtterance && voicePending) {
+        cancelConversation();
+        setMicStatus("Réponse vocale interrompue.");
+      }
+    } else if (starting) {
+      cancelRecordingStart();
+      resetMicButton();
+      setMicStatus(sendUtterance ? "Micro relâché avant le début de la prise." : "Prise vocale annulée.");
+    } else if (sendUtterance) {
+      void stopRecording();
+    } else {
+      cancelRecording();
+    }
+  }
+
+  async function startRecording(press) {
+    if (modelChanging || document.hidden || micPress || recording || starting || (busy && !voicePending)) return;
     if (!token) { authorizeAgain(); return; }
-    if (modelChanging || busy || recording || starting) return;
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setStatus("Microphone indisponible : ouvrir l'application en HTTPS via Tailscale.");
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!voicePending && (!navigator.mediaDevices?.getUserMedia || !Ctx)) {
+      setMicStatus("Microphone indisponible : ouvrir l'application en HTTPS via Tailscale.");
       return;
     }
+    micPress = {...press, interrupt:voicePending};
+    if (press.pointerId !== undefined) {
+      try { mic.setPointerCapture?.(press.pointerId); }
+      catch (_) { /* The window still observes release and cancellation. */ }
+    }
+    if (voicePending) return;
     stopPlayback();
-    if (activeDuplex) { activeDuplex.cancel(); activeDuplex = null; }
-    // Android may auto-stop after 20 seconds (no further user gesture).
-    // Unlock the output context on the initial microphone tap too.
-    if (soundEnabled) ensureAudioContext().catch(() => {});
     const attempt = {}, generation = conversationGeneration;
     starting = attempt;
-    setStatus("Autorisation du microphone…");
-    mic.disabled = true;
+    setMicStatus("Ouverture du micro… Garde ton appui.", true);
     let duplex = null;
     try {
+      primeVoicePlayback();
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {echoCancellation:true, noiseSuppression:true, autoGainControl:true},
         video: false
@@ -558,7 +612,6 @@
         return;
       }
       attempt.stream = stream;
-      const Ctx = window.AudioContext || window.webkitAudioContext;
       const context = attempt.context = new Ctx();
       await context.resume();
       if (starting !== attempt) return;
@@ -569,12 +622,19 @@
       silent.gain.value = 0;
       const chunks = [];
       let frames = 0;
+      const frameLimit = Math.floor(context.sampleRate * 20);
       const duplexTiming = createMobileAudioTiming("websocket");
+      function recordingInterrupted(error) {
+        if (generation !== conversationGeneration || recording?.context !== context) return;
+        finishMicPress(false);
+        setMicStatus(error?.message || "Connexion vocale interrompue.");
+      }
       if (window.JadeDuplex?.supported()) {
-        duplex = window.JadeDuplex.create({
+        const options = {
           token, session:thread, speak:soundEnabled,
+          onDisconnect:recordingInterrupted,
           onEvent:async event => {
-            if (generation !== conversationGeneration) return;
+            if (generation !== conversationGeneration || activeDuplex !== duplex) return;
             if (event.type === "reply") {
               if (event.transcript) addBubble(event.transcript, "me");
               addJadeReply(String(event.reply || "…"), event.attachments);
@@ -585,71 +645,59 @@
             } else if (event.type === "wav") {
               if (soundEnabled) await playWav(event.audio_wav_b64);
             } else if (event.type === "audio_error") {
-              setStatus("Réponse écrite reçue, mais la voix est indisponible.");
+              setMicStatus("Réponse écrite reçue, mais la voix est indisponible.");
             } else if (event.type === "done") {
               duplexTiming.done();
               setStatus("Prête.");
             }
           }
-        });
+        };
+        try { duplex = window.JadeDuplex.create(options); }
+        catch (_) { /* The constructor failed before sending. Keep the WAV fallback. */ }
         activeDuplex = duplex;
       }
       processor.onaudioprocess = event => {
         if (!recording || recording.context !== context) return;
         const sample = event.inputBuffer.getChannelData(0);
-        if (frames >= context.sampleRate * 20) {
-          stopRecording();
-          return;
-        }
-        const part = new Float32Array(sample);
-        chunks.push(part);
+        const part = sample.slice(0, frameLimit - frames);
+        // Only keep a WAV copy while retrying is safe. Once the socket is
+        // ready, it owns this utterance and a second transport must not send it.
+        if (duplex?.ready) chunks.length = 0;
+        else chunks.push(part);
         frames += part.length;
-        // Lightweight local end-of-utterance detection: after meaningful
-        // speech, 1.2s of silence finalizes the utterance. Manual stop stays.
-        let energy = 0;
-        for (let n = 0; n < sample.length; n++) energy += sample[n] * sample[n];
-        const loudness = Math.sqrt(energy / Math.max(1, sample.length));
-        const now = Date.now();
-        if (loudness > 0.024) {
-          recording.voiceDetected = true;
-          recording.lastVoiceAt = now;
-        } else if (recording.voiceDetected && now - recording.lastVoiceAt > 1200
-                   && now - recording.started > 800) {
-          stopRecording();
-          return;
-        }
         if (duplex) {
           try { duplex.push(part, context.sampleRate); }
           catch (error) {
-            if (recording) recording.duplexFailed = error;
+            if (duplex.ready) return recordingInterrupted(error);
             duplex.cancel();
-            stopRecording();
           }
         }
+        if (frames >= frameLimit) limitRecording();
       };
       source.connect(processor);
       processor.connect(silent);
       silent.connect(context.destination);
       recording = {stream, context, source, processor, silent, chunks, duplex,
-                   voiceDetected:false, lastVoiceAt:0,
-                   get frames() {return frames;}, started:Date.now()};
+                   get frames() {return frames;}};
+      starting = null;
+      stream.getTracks().forEach(track => track.addEventListener?.("ended", () => {
+        if (!recording?.captureClosed) recordingInterrupted(new Error("Le microphone s’est arrêté."));
+      }, {once:true}));
       mic.classList.add("recording");
       mic.setAttribute("aria-pressed", "true");
-      mic.setAttribute("aria-label", "Arrêter et envoyer le message vocal");
-      setStatus("J'enregistre ta voix… Touche le micro pour envoyer.");
+      mic.setAttribute("aria-label", "Relâcher pour envoyer");
+      mic.setAttribute("title", "Relâcher pour envoyer");
+      setMicStatus("J’enregistre ta voix… Relâche pour envoyer.", true);
       // Avoid leaving the microphone open after 20 seconds.
-      recording.timer = setTimeout(stopRecording, 20000);
+      recording.timer = setTimeout(limitRecording, 20000);
     } catch (_) {
       if (starting === attempt) {
         duplex?.cancel();
         if (activeDuplex === duplex) activeDuplex = null;
-        closeMicrophone(attempt);
-        setStatus("Accès au micro refusé ou indisponible.");
-      }
-    } finally {
-      if (starting === attempt) {
-        starting = null;
-        mic.disabled = false;
+        clearMicPress();
+        cancelRecordingStart();
+        resetMicButton();
+        setMicStatus("Accès au micro refusé ou indisponible.");
       }
     }
   }
@@ -657,7 +705,8 @@
   function resetMicButton() {
     mic.classList.remove("recording");
     mic.setAttribute("aria-pressed", "false");
-    mic.setAttribute("aria-label", "Démarrer l'enregistrement vocal");
+    mic.setAttribute("aria-label", "Maintenir pour parler");
+    mic.setAttribute("title", "Maintenir pour parler, relâcher pour envoyer");
   }
 
   function closeMicrophone({stream, context}) {
@@ -671,13 +720,22 @@
     if (attempt) closeMicrophone(attempt);
   }
 
-  async function releaseRecording(current) {
+  function releaseRecording(current) {
+    if (current.captureClosed) return;
+    current.captureClosed = true;
     clearTimeout(current.timer);
     current.processor.onaudioprocess = null;
     for (const node of [current.source, current.processor, current.silent]) {
       try { node.disconnect(); } catch (_) {}
     }
-    await closeMicrophone(current);
+    closeMicrophone(current);
+  }
+
+  function limitRecording() {
+    if (!recording || recording.captureClosed) return;
+    releaseRecording(recording);
+    mic.classList.remove("recording");
+    setMicStatus("Limite de 20 s atteinte. Relâche pour envoyer.", true);
   }
 
   function cancelRecording() {
@@ -686,10 +744,10 @@
     recording = null;
     resetMicButton();
     // Backgrounding the app must discard, never send, microphone data.
-    current.duplex?.cancel();
     if (activeDuplex === current.duplex) activeDuplex = null;
-    releaseRecording(current).catch(() => {});
-    setStatus("Enregistrement interrompu, aucun audio envoyé.");
+    current.duplex?.cancel();
+    releaseRecording(current);
+    setMicStatus("Prise vocale annulée.");
   }
 
   async function stopRecording() {
@@ -697,50 +755,45 @@
     if (!current || busy) return;
     const generation = conversationGeneration;
     recording = null;
-    busy = true;  // Prevent a second tap/turn while audio tracks are closing.
-    // Unlock playback inside the stop-button gesture, before network awaits.
-    if (soundEnabled) ensureAudioContext().catch(() => {});
+    busy = voicePending = true;
+    // Unlock playback inside the release gesture, before network awaits.
+    primeVoicePlayback();
     resetMicButton();
-    setStatus("Je transmets ta voix à Jade…", true);
+    mic.setAttribute("aria-label", "Interrompre la réponse vocale");
+    mic.setAttribute("title", "Interrompre la réponse vocale");
+    setMicStatus("Je transmets ta voix à Jade…", true);
     const rate = current.context.sampleRate, frames = current.frames;
     try {
-      await releaseRecording(current);
-      if (generation !== conversationGeneration) return;
-      if (Date.now() - current.started < 250 || frames < 4000) {
+      releaseRecording(current);
+      if (frames < rate / 4) {
         if (current.duplex) current.duplex.cancel();
-        setStatus("Enregistrement trop court.");
+        setMicStatus("Enregistrement trop court.");
         return;
       }
-      if (current.duplexFailed) throw current.duplexFailed;
       if (current.duplex) {
         try {
           await current.duplex.finish();
+          return;
         } catch (error) {
           if (generation !== conversationGeneration) return;
           // Before the authenticated WebSocket was ready, STT never started.
           // Once ready, NEVER retry: that could charge for a second response.
           if (current.duplex.ready) throw error;
-          const wav = buildWav(current.chunks, rate, frames);
-          await makeStreamingRequest("/api/voice", wav, {
-            "Content-Type":"audio/wav",
-            "X-Jade-Session":thread,
-            "X-Jade-Speak":soundEnabled ? "1" : "0"
-          });
         }
-      } else {
-        const wav = buildWav(current.chunks, rate, frames);
-        await makeStreamingRequest("/api/voice", wav, {
-          "Content-Type":"audio/wav",
-          "X-Jade-Session": thread,
-          "X-Jade-Speak": soundEnabled ? "1" : "0"
-        });
       }
+      const wav = buildWav(current.chunks, rate, frames);
+      await makeStreamingRequest("/api/voice", wav, {
+        "Content-Type":"audio/wav",
+        "X-Jade-Session":thread,
+        "X-Jade-Speak":soundEnabled ? "1" : "0"
+      });
     } catch (error) {
-      if (generation === conversationGeneration) setStatus(error.message || "Message vocal non transmis.");
+      if (generation === conversationGeneration) setMicStatus(error.message || "Message vocal non transmis.");
     } finally {
       if (generation === conversationGeneration) {
         if (activeDuplex === current.duplex) activeDuplex = null;
-        busy = false;
+        busy = voicePending = false;
+        resetMicButton();
         setStatus(status.textContent);
       }
     }
@@ -1192,13 +1245,48 @@
       form.requestSubmit();
     }
   });
-  mic.addEventListener("click", () => {
-    if (modelChanging) return;
-    if (recording) stopRecording();
-    else if (activeDuplex && busy) {
-      cancelConversation();
-      setStatus("Réponse vocale interrompue.");
-    } else if (!starting && !busy) startRecording();
+  mic.addEventListener("pointerdown", event => {
+    if (event.button !== 0 || event.isPrimary === false) return;
+    event.preventDefault();
+    return startRecording({pointerId:event.pointerId});
+  });
+  window.addEventListener("pointerup", event => {
+    if (micPress?.pointerId === event.pointerId) finishMicPress(true);
+  }, true);
+  window.addEventListener("pointercancel", event => {
+    if (micPress?.pointerId === event.pointerId) finishMicPress(false);
+  }, true);
+  mic.addEventListener("lostpointercapture", event => {
+    if (micPress?.pointerId === event.pointerId) finishMicPress(false);
+  });
+  mic.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      if (voicePending) {
+        cancelConversation();
+        setMicStatus("Réponse vocale interrompue.");
+      } else finishMicPress(false);
+      return;
+    }
+    if (event.key !== " " && event.key !== "Enter") return;
+    event.preventDefault();
+    if (!event.repeat) return startRecording({key:event.key});
+  });
+  mic.addEventListener("keyup", event => {
+    if (micPress?.key !== event.key) return;
+    event.preventDefault();
+    finishMicPress(true);
+  });
+  mic.addEventListener("blur", () => {
+    if (micPress?.key !== undefined) finishMicPress(false);
+  });
+  mic.addEventListener("contextmenu", event => {
+    if (micPress) event.preventDefault();
+  });
+  window.addEventListener("blur", () => finishMicPress(false));
+  window.addEventListener("offline", () => {
+    if (!micPress && !voicePending) return;
+    cancelConversation();
+    setMicStatus("Connexion interrompue pendant le tour vocal.");
   });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {

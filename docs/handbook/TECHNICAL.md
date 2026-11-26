@@ -86,6 +86,8 @@ Le sélecteur appelle `JadeConversation.stopForModelChange()` avant le remplacem
 
 Sur l’Accueil et en plein écran, `avatar-gestures.js` écoute les pointeurs tactiles dans la zone du r21 et distingue les gestes consommés des appuis courts du plein écran. Le rendu applique le zoom et le déplacement par-dessus le cadrage de scène. Une limite conserve une partie saisissable dans la zone visible. Les gestes sont annulés au départ du modèle ou de la vue et le bouton **Recentrer** rétablit le cadrage de référence.
 
+Le push-to-talk classique transmet le PCM au WebSocket authentifié pendant l’appui. Le relâchement ferme la capture et termine le tour. Le mode classique peut transmettre le WAV au relâchement en secours si le WebSocket a échoué avant son état prêt. `avatar-shake.js` demande l’accès aux capteurs au besoin à l’activation du réglage en Profil. Le r21 traduit la secousse en angles amortis dans la boucle Live2D qui calcule la physique. Le zoom et le déplacement restent les coordonnées du cadrage.
+
 **Modèle de sécurité :** aucune ouverture publique du port mobile, aucune CORS générale, aucun Funnel, pas de transit par le VPS trading. Le fait de posséder l'URL privée ne dispense pas du bon compte Tailscale et du token. Un code local sur le PC capable d'usurper l'en-tête sur loopback reste hors du modèle de confiance, ce qui rend l'isolation du PC importante.
 
 ## 7. Infra, opérations, limites et tests

@@ -79,6 +79,7 @@
         "/assets/avatar-model-loader.js",
         "/assets/avatar.js",
         "/assets/avatar-gestures.js",
+        "/assets/avatar-shake.js",
       ]) {
         try { await loadScript(url); }
         catch (error) {

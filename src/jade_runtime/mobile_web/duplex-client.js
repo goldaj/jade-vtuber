@@ -4,6 +4,9 @@
  */
 "use strict";
 window.JadeDuplex = (() => {
+  const HANDSHAKE_MS = 2500;
+  const MAX_PENDING_PCM = 80000; // 2.5 seconds at 16 kHz PCM16.
+
   function supported() {
     return typeof WebSocket !== "undefined" && location.protocol === "https:";
   }
@@ -26,7 +29,7 @@ window.JadeDuplex = (() => {
     return bytes;
   }
 
-  function create({token, session, speak, onEvent}) {
+  function create({token, session, speak, onEvent, onDisconnect}) {
     if (!supported()) return null;
     const ws = new WebSocket("wss://" + location.host + "/api/duplex", "jade-v1");
     ws.binaryType = "arraybuffer";
@@ -36,12 +39,22 @@ window.JadeDuplex = (() => {
     let succeed, fail;
     const done = new Promise((resolve, reject) => { succeed = resolve; fail = reject; });
     done.catch(() => {}); // A failed handshake can precede the microphone stop.
+    const handshake = setTimeout(() => connectionFailed(new Error("Connexion vocale trop lente.")), HANDSHAKE_MS);
 
     function settle(error) {
-      if (settled) return;
+      if (settled) return false;
       settled = true;
+      clearTimeout(handshake);
+      pending.length = 0;
+      queuedBytes = 0;
       if (error) fail(error);
       else succeed();
+      return true;
+    }
+    function connectionFailed(error) {
+      if (!settle(error)) return;
+      if (ws.readyState < WebSocket.CLOSING) ws.close();
+      if (ready && !ending) onDisconnect?.(error);
     }
     function send(value) {
       if (ws.readyState !== WebSocket.OPEN)
@@ -51,17 +64,20 @@ window.JadeDuplex = (() => {
       ws.send(value);
     }
     ws.onopen = () => {
+      if (settled) return;
       try { send(JSON.stringify({type:"auth", token, session})); }
-      catch (error) { settle(error); ws.close(); }
+      catch (error) { connectionFailed(error); }
     };
     ws.onmessage = ({data}) => {
       sequence = sequence.then(async () => {
+        if (settled) return;
         if (typeof data !== "string" || data.length > 10000000)
           throw new Error("Réponse vocale invalide.");
         const event = JSON.parse(data);
         if (event.type === "ready") {
-          if (ready || settled) return;
+          if (ready) return;
           ready = true;
+          clearTimeout(handshake);
           send(JSON.stringify({type:"start", speak: Boolean(speak)}));
           for (const bytes of pending) send(bytes);
           pending.length = 0;
@@ -79,29 +95,30 @@ window.JadeDuplex = (() => {
         } else {
           await onEvent(event);
         }
-      }).catch(error => {
-        settle(error);
-        ws.close();
-      });
+      }).catch(connectionFailed);
     };
-    ws.onerror = () => settle(new Error("Connexion vocale indisponible."));
-    ws.onclose = () => {
-      if (!settled) settle(new Error("La connexion vocale s'est terminée."));
-    };
+    ws.onerror = () => connectionFailed(new Error("Connexion vocale indisponible."));
+    ws.onclose = () => connectionFailed(new Error("La connexion vocale s’est terminée."));
     return {
       push(samples, rate) {
         if (ending || settled) return;
         const bytes = toPcm(samples, rate);
         if (!bytes.length) return;
-        if (bytes.length > 32768 || queuedBytes + bytes.length > 640000)
-          throw new Error("Audio trop long.");
+        if (bytes.length > 32768) throw new Error("Fragment vocal trop long.");
+        if (!ready && queuedBytes + bytes.length > MAX_PENDING_PCM) {
+          connectionFailed(new Error("Connexion vocale trop lente."));
+          return;
+        }
         if (ready) send(bytes);
         else { pending.push(bytes); queuedBytes += bytes.length; }
       },
       async finish() {
         if (!ending) {
           ending = true;
-          if (ready) send(JSON.stringify({type:"end"}));
+          if (ready && !settled) {
+            try { send(JSON.stringify({type:"end"})); }
+            catch (error) { connectionFailed(error); }
+          }
         }
         return done;
       },
