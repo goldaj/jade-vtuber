@@ -388,6 +388,10 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"][data-seated-ready="true"] .portrait-seated-body{
   transform:translateY(calc(-1 * var(--seated-home-lift)));
 }
+/* Keep the standing model's render surface down to the room edge after the lift. */
+.shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"][data-portrait-ready="true"][data-avatar-model="next"] #avatar-container{
+  bottom:calc(-1 * var(--seated-home-lift));
+}
 /* The portrait home view uses the same magnified bedroom artwork for both
  * models. The character and the decor retain their own scales. */
 @media(max-width:819px) and (orientation:portrait){
@@ -406,7 +410,7 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
     top:12px;width:min(100cqw,calc(234.5cqh - 56.28px));transform:translate(-50%,-21%);
   }
   .shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"][data-portrait-ready="true"][data-avatar-model="next"] #avatar-container{
-    transform:none;
+    bottom:0;transform:none;
   }
   .shell:is([data-view="home"],.is-room-only) .room[data-room="bedroom"][data-portrait-ready="true"][data-avatar-model="next"] :is(.portrait-bedroom,.portrait-bedroom-motion){
     inset:auto;left:50%;top:21%;width:100cqw;height:177.6833cqw;transform:translate(-50%,-21%);

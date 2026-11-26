@@ -1,3 +1,8 @@
+## 2026-11-26 — Jambes du r21 continues jusqu’au bord de la chambre
+
+- Sur l’Accueil en chambre, le décalage au-dessus du micro remontait aussi le bord inférieur du canvas WebGL. `jade-theme.css` prolonge la surface du r21 vers le bas de la valeur du décalage. `avatar.js` calcule toujours le zoom et la position de la tête à partir de la toile de cadrage. Le bord de la scène détermine ainsi le recadrage.
+- Le test de cycle compare les positions et la taille de la tête avec une surface de rendu agrandie.
+
 ## 2026-11-26 — Cadrage mobile du r21 calé sur celui du classique
 
 - `avatar.js` applique les mêmes cadrages de scène aux deux modèles. Le r21 adapte sa taille et sa position aux repères du visage du r20, puis le corps debout suit à la même échelle.

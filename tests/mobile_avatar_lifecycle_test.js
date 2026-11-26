@@ -272,6 +272,13 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
         client.target.clientHeight = height;
         client.avatar.resize();
       }
+      if (room === "bedroom" && view === "home" && width < height) {
+        // The canvas extends below the lifted portrait frame, while the camera still uses the frame.
+        nextDefault.target.parentElement = {clientHeight:height};
+        nextDefault.target.clientHeight = height + 88;
+        nextDefault.avatar.resize();
+        nextDefault.target.parentElement = null;
+      }
       const expected = [
         cameraClassic.position.x + (1745 - 1920) * cameraClassic.scale.x,
         cameraClassic.position.y + (871 - 2080) * cameraClassic.scale.y,

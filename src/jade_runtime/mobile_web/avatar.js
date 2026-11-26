@@ -394,11 +394,13 @@
     const naturalWidth = Math.max(model.width / (model.scale.x || 1), 1);
     const naturalHeight = Math.max(model.height / (model.scale.y || 1), 1);
     const r21 = activeProfile?.id === "next";
+    const standingBedroom = r21 && room?.dataset.room === "bedroom" && room.dataset.portraitReady === "true";
+    // The lifted standing avatar can render beyond its camera frame down to the room edge.
+    const cameraViewportHeight = standingBedroom ? target.parentElement?.clientHeight || height : height;
     const cameraWidth = r21 ? CLASSIC_CAMERA.width : naturalWidth;
     const cameraHeight = r21 ? CLASSIC_CAMERA.height : naturalHeight;
-    const scale = Math.min((width * .95) / cameraWidth, (height * 1.32) / cameraHeight);
+    const scale = Math.min((width * .95) / cameraWidth, (cameraViewportHeight * 1.32) / cameraHeight);
     const shell = document.querySelector?.(".shell");
-    const room = document.querySelector?.(".room");
     const seated = isSeated();
     headIsolation?.sync(seated);
     if (seatedComposition) {
@@ -416,9 +418,10 @@
         sprite.height = height * layout.height;
       }
     }
-    if (seated || (r21 && room?.dataset.room === "bedroom" && room.dataset.portraitReady === "true")) {
+    if (seated || standingBedroom) {
       const headScale = 1.30;
-      placeModel(Math.max(.05, scale * headScale), width * .555, height * .584, naturalWidth, naturalHeight);
+      placeModel(Math.max(.05, scale * headScale), width * .555, cameraViewportHeight * .584,
+        naturalWidth, naturalHeight);
       return;
     }
     const immersive = shell?.classList.contains("is-room-only");
