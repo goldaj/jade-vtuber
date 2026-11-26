@@ -1,5 +1,57 @@
 # Guide technique : architecture, infrastructure et algorithmes de Jade sur develop
 
+## Live mobile — intégration develop du 26 novembre 2026
+
+**Code présent sur `develop`, lot `90ec0c7` intégré le 26/11 à la demande du propriétaire ; base `6dc8d1b` conservée.** [Architecture et états](../architecture/LIVE_MOBILE.md) · [preuves et reprise](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md) · [REC-044 à REC-050](../backlog/02-RECETTE.md).
+
+Le gateway mobile raccorde `create_mobile_live` au Runtime existant. Le Profil choisit un mode persistant, puis le bouton micro arme un bail exclusif. Les pistes et la session ne sont jamais restaurées automatiquement. La signalisation et le contrôle restent sur l'origine privée Jade ; l'audio négocié utilise WebRTC vers OpenAI. Aucun secret fournisseur n'est envoyé au navigateur.
+
+### Configuration privée Live
+
+Les valeurs sont lues par `Settings.live` depuis la configuration privée habituelle. L'ancien argument CLI `--live` conserve son sens de runtime connecté ; il ne sélectionne pas le nouveau moteur vocal.
+
+| Variable | Défaut | Effet |
+| --- | --- | --- |
+| `JADE_LIVE_ENABLED` | `0` | Verrou global des nouvelles admissions |
+| `JADE_MOBILE_LIVE_ENABLED` | `1` | Canal mobile autorisé lorsque les autres conditions sont remplies |
+| `JADE_DISCORD_LIVE_ENABLED` | `0` | Paramètre réservé ; sans adaptateur, diagnostic explicite et Discord classique conservé |
+| `JADE_LIVE_MODEL` | `gpt-live-1.1` | Modèle distinct du dialogue et du TTS classique |
+| `JADE_LIVE_VOICE` | `brise` | Voix API explicite ; Aube non confirmée, aucune équivalence supposée |
+| `JADE_LIVE_VOICE_ID` | vide | ID autorisé d'une voix personnalisée, prioritaire sur le nom |
+| `JADE_LIVE_DAILY_USD` / `JADE_LIVE_MONTHLY_USD` | `0` / `0` | Plafonds Live, zéro bloque ; périodes Europe/Paris |
+| `JADE_LIVE_BACKEND_RESERVATION_USD` | `0` | Réservation par délégation/curation ; zéro bloque ces opérations backend |
+| `JADE_LIVE_HEARTBEAT_SECONDS` / `JADE_LIVE_LEASE_SECONDS` | `2` / `5` | Cadence de contrôle et expiration du bail |
+| `JADE_LIVE_IDLE_STANDBY_SECONDS` / `JADE_LIVE_IDLE_CLOSE_SECONDS` | `8` / `30` | Veille fournisseur puis fermeture idle avec bail conservé |
+| `JADE_LIVE_OPENING_TIMEOUT_SECONDS` / `JADE_LIVE_CLOSE_TIMEOUT_SECONDS` | `8` / `5` | Deadlines de création et de demande de clôture |
+| `JADE_LIVE_MUTED_DRAIN_SECONDS` | `15` | Fin maximale d'une réponse après mute, non renouvelable |
+| `JADE_LIVE_MAX_SESSION_SECONDS` | `600` | Durée maximale avant arrêt nécessitant un geste |
+| `JADE_LIVE_MAX_STARTS_PER_MINUTE` | `3` | Protection contre les faux réveils et les boucles de création |
+| `JADE_LIVE_MAX_DELEGATIONS_PER_SESSION` | `12` | Borne du nombre de travaux backend, curation comprise |
+| `JADE_LIVE_BUDGET_DB_PATH` | chemin privé par plateforme | Base budget hors dépôt ; vide conserve le défaut |
+| `JADE_LIVE_SESSION_DB_PATH` | voisin du budget | Registre de préférence, sessions et fermetures à réconcilier |
+
+Le budget utilise `D:/Jade/private/jade-live-budget.sqlite3` sous Windows si D: existe, sinon `~/.jade/jade-live-budget.sqlite3`. Le registre `jade-live-sessions.sqlite3` et le journal `jade-live-journal.sqlite3` sont voisins, sauf surcharge explicite du registre. Audio brut, SDP et clés ne sont pas conservés dans ces bases. Le journal de texte est privé, lié au consentement et purgé après 7 jours ; le registre conserve seulement des métadonnées techniques. Ne pas versionner ces fichiers ni les supprimer pour faire disparaître une fermeture inconnue.
+
+Les diagnostics Live sont ajoutés à `--preflight --live --mobile`, sans réseau ni capture. Un stockage Live indisponible désactive le module optionnel sans empêcher le classique de démarrer ; les identifiants de sessions connues et lisibles restent proposés à la fermeture. Une configuration syntaxiquement invalide reste signalée par le validateur habituel.
+
+### Routes et cycle de vie
+
+| Méthode/route | Contrat |
+| --- | --- |
+| `GET /api/live/capabilities` | Disponibilité, raisons, voix, budget et snapshot ; aucune admission |
+| `GET/POST /api/voice/preferences` | Mode serveur et révision ; ON ne crée rien, OFF révoque |
+| `POST /api/live/arm` | Bail exclusif lié au client et au fil, avant permission micro |
+| `GET /api/live/control` | WebSocket `jade-live-v1`, Bearer dans première trame ; uniquement heartbeat/playback |
+| `POST /api/live/sessions` | Offre SDP, bail et requête idempotente ; modèle/voix/permissions imposés serveur |
+| `POST /api/live/sessions/close` | Arrêt ou mute borné ; reste disponible après retrait de flag/budget |
+| `POST /api/metrics` | Métriques classiques, jalons Live et snapshot `live_budget` |
+
+Les routes conservent identité Tailscale, origine privée et Bearer. L'enveloppe JSON de signalisation est bornée à 128 Kio et le SDP décodé à 64 Kio ; les petits POST restent à 4 Kio. Le sideband est le seul canal métier fiable ; le data channel fournisseur interdit les commandes de la PWA. Le contrôle n'accepte pas d'audio.
+
+La clôture fournisseur confirme `session.closed`, pas une déconnexion. `opening_unknown` et `close_unconfirmed` restent visibles et bloquent une nouvelle session. Le serveur invalide les travaux avant les attentes, tente les fermetures bornées et reprend la réconciliation au démarrage. Un heartbeat ne prolonge ni le délai de mute ni l'activité conversationnelle. La curation en attente ne démarre qu'à la prochaine session active avec réservation.
+
+Les compteurs USD Live n'implémentent pas DEV-052 : le futur total global en EUR gouvernera seulement Discord. Les coûts backend actuels sont des estimations conservatrices à calibrer et rapprocher, pas la facture de toutes les API. Le script `python scripts/live_voice_preview.py` prépare uniquement les variantes et le corpus ; aucune création/écoute ni sélection acoustique n'est incluse.
+
 **Références fonctionnelles prioritaires :** [atlas du 16 novembre 2026](../architecture/atlas-fonctionnel-2026-11-16/README.md) (cinq vues compactes) et [contrat exhaustif des parcours](../architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md), couvrant règles propres à Twitch/Discord/micro/Android/HTTP, arbitrage, appels IA distincts, parallélisme, mémoire et incidents. Les [deux anciens schémas](../architecture/README.md) sont conservés pour l'infrastructure. L'atlas est basé sur `develop` au SHA `a841628b`, non sur une recette PC en conditions réelles ; le code et les réglages de la branche ont priorité.
 
 ## 1. Portée et architecture globale

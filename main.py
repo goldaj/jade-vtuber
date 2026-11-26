@@ -92,6 +92,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     discord_voice_bridge = None
     local_api = None
     mobile_gateway = None
+    live_manager = None
     reminders = None
     shutdown_deadline = None
 
@@ -317,6 +318,12 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                                   port=config.http_port)
         if mobile:
             from src.jade_runtime.mobile_gateway import MobileGateway
+            from src.jade_runtime.live_runtime import create_mobile_live
+            live_manager = await create_mobile_live(runtime, config)
+            if live_manager is not None:
+                if live_manager.bridge is not None:
+                    scopes.push_async_callback(live_manager.bridge.close)
+                scopes.push_async_callback(live_manager.stop)
             mobile_gateway = MobileGateway(
                 runtime, chat, token=config.mobile_token, port=config.mobile_port,
                 billing_admin_key=config.billing_admin_key,
@@ -328,7 +335,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 model_dir=Path(config.mobile_model_dir) if config.mobile_model_dir else None,
                 second_model_dir=Path(config.mobile_second_model_dir) if config.mobile_second_model_dir else None,
                 avatar_intent_enabled=config.avatar_intent_enabled,
-                reminder_service=reminders)
+                reminder_service=reminders, live_manager=live_manager)
         social_policy = None
         initiatives = None
         if discord and live and config.memory_enabled:
@@ -459,6 +466,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         except (EOFError, KeyboardInterrupt):
             pass
         finally:
+            if live_manager is not None:
+                await live_manager.stop()
             await stop_runtime()
 
 

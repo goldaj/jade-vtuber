@@ -146,6 +146,8 @@ async def duplex_session(gateway, reader, writer, headers):
                 work = None
                 await peer.send({"type": "cancelled"})
             elif cmd == "start":
+                if getattr(gateway, "live_manager", None) is not None:
+                    await gateway.live_manager.stop_owner("Goldaj", "classic_voice")
                 if frame.get("speak") not in (True, False):
                     raise ValueError("invalid speech flag")
                 if work is not None and not work.done():

@@ -1,6 +1,8 @@
 # GPT-Live mobile — plan d'architecture et feuille de route
 
-**Cadrage du 26 novembre 2026**, demandé par Goldaj. Code audité : `develop`, `990dfbe043f16619359d86405f5c128b435d0bb8`. Ce document décrit le **travail à réaliser**, pas une fonctionnalité déjà disponible. Les statuts et critères de chaque US restent canoniques dans [la vue DEV](01-DEVELOPPEMENT.md) ; ce plan n'ajoute aucun suivi concurrent. La présente livraison est documentaire, sans activation du micro, création de voix ni appel API facturé.
+**Cadrage du 26 novembre 2026**, demandé par Goldaj. Code audité : `develop`, `990dfbe043f16619359d86405f5c128b435d0bb8`. Ce document conserve les décisions du cadrage initial. La note de mise en œuvre ci-dessous renvoie au code actuel ; les statuts restent canoniques dans [DEV](01-DEVELOPPEMENT.md) et [REC](02-RECETTE.md). Aucun micro, création de voix ni appel API facturé n’a été activé pendant cette mission.
+
+**Mise en œuvre du 26/11 :** ce cadrage initial est conservé comme référence datée. Le code de `feat/live-mobile-20261126` (`90ec0c7`) est désormais intégré sur `develop`, après reprise de `6dc8d1b` et autorisation du propriétaire pour son test ; voir [architecture actuelle](../architecture/LIVE_MOBILE.md) et [preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md). Sept suivis sont transférés en REC-044 à REC-050, sans recette OpenAI/Android présumée. DEV-041 garde les voix à créer/choisir. DEV-052 ajoute la politique Discord 50/40 EUR future, sans changement de préférence mobile ni adaptateur Discord livré dans ce lot.
 
 **Accord propriétaire du 26/11 après revue :** Goldaj valide le reste du cadrage, avec ajustements possibles des US au fil du développement, et demande **Aube comme voix de prototype souhaitée** en attendant la voix originale. La disponibilité d'Aube dans l'API reste à confirmer selon la section 3.4 ; cet accord produit ne clôt aucune US de développement.
 

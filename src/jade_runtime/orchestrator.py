@@ -24,10 +24,31 @@ class Work:
     queued_at: float = field(default_factory=time.monotonic)
     finished: asyncio.Future | None = field(default=None, repr=False)
     delivery_started: bool = False
+    # Trusted in-process operation, never supplied by a transport payload.
+    # Live delegations share this worker without producing a second chat/TTS reply.
+    operation: Callable | None = field(default=None, repr=False)
 
     def valid(self):
         return not self.cancelled and (self.deadline is None or
             asyncio.get_running_loop().time() < self.deadline)
+
+
+@dataclass
+class PreparedTurn:
+    """Shared policy/context preparation for classic turns and Live delegations."""
+    command_reply: Reply | None = None
+    memory_context: str = ""
+    history_messages: list | None = None
+    history_loader: Callable | None = field(default=None, repr=False)
+    memory_action: object = None
+    web_action: object = None
+    document_action: object = None
+    reminder_action: object = None
+
+    def dialogue_arguments(self):
+        return {name: getattr(self, name) for name in (
+            "memory_context", "history_messages", "history_loader", "memory_action", "web_action",
+            "document_action", "reminder_action")}
 
 
 class Runtime:
@@ -66,12 +87,14 @@ class Runtime:
         self._abort = False
         self.worker = asyncio.create_task(self._process(), name="jade-consumer")
 
-    async def submit(self, message: Incoming, *, deadline=None, result=None):
+    async def submit(self, message: Incoming, *, deadline=None, result=None,
+                     operation=None):
         if self.state != "RUNNING" or self.worker is None or self.worker.done():
             raise RuntimeError("runtime is not running")
         self._turn_sequence += 1
         item = Work(message, deadline, result, turn=self._turn_sequence,
-                    finished=asyncio.get_running_loop().create_future())
+                    finished=asyncio.get_running_loop().create_future(),
+                    operation=operation)
         self.queue.put_nowait(item)
         self.metrics.begin(item.turn, message.platform,
                            "voice" if message.platform in ("discord_voice", "microphone")
@@ -79,6 +102,83 @@ class Runtime:
         if message.preprocess_ms is not None:
             self.metrics.duration(item.turn, "stt_duration", message.preprocess_ms)
         return item
+
+    async def submit_operation(self, message, operation, *, deadline=None, result=None):
+        """Admit a backend operation with the normal fairness/cancellation rules.
+
+        Its result is private to its caller. No on_reply, local TTS, avatar,
+        chat delivery or automatic conversation persistence is run here.
+        """
+        if not callable(operation):
+            raise ValueError("operation must be callable")
+        return await self.submit(message, deadline=deadline, result=result,
+                                 operation=operation)
+
+    async def prepare_turn(self, incoming, *, turn_id=0, commands=True,
+                           on_timing=None):
+        """Resolve the current verified identity, policies and capabilities once.
+
+        Native Live session seeding uses commands=False: an opening event is
+        not a human request and must never write a memory or invoke an action.
+        """
+        prepared = PreparedTurn()
+        if commands and self.cross_channel is not None:
+            prepared.command_reply = await self.cross_channel.command(incoming)
+        if self.memory_service is not None:
+            event("turn_stage", stage="memory_start")
+            if on_timing:
+                on_timing("memory_start")
+            auto_enroll = getattr(self.memory_service, "ensure_auto_enrolled", None)
+            if callable(auto_enroll):
+                await auto_enroll(incoming)
+            if commands and prepared.command_reply is None:
+                prepared.command_reply = await self.memory_service.command(incoming)
+            if prepared.command_reply is None:
+                prepared.memory_context = await self.memory_service.context_for(incoming)
+                prepare = getattr(self.memory_service, "prepare_memory_action", None)
+                if callable(prepare):
+                    prepared.memory_action = await prepare(incoming)
+                if isinstance(self.dialogue, Dialogue):
+                    async def load_history():
+                        return await self.memory_service.history_for(incoming)
+                    prepared.history_loader = load_history
+            event("turn_stage", stage="memory_end",
+                  memory_tool_available=prepared.memory_action is not None)
+            if on_timing:
+                on_timing("memory_end")
+        if prepared.command_reply is None and self.cross_channel is not None:
+            resumed = await self.cross_channel.context_for(incoming)
+            if resumed:
+                prepared.memory_context = (prepared.memory_context + "\n" + resumed).strip()
+        if prepared.command_reply is None and self.web_service is not None:
+            prepared.web_action = self.web_service.for_turn(incoming, turn_id)
+        if prepared.command_reply is None and self.document_service is not None:
+            prepared.document_action = await self.document_service.for_turn(incoming)
+        if prepared.command_reply is None and self.reminder_service is not None:
+            prepared.reminder_action = await self.reminder_service.for_turn(incoming)
+        return prepared
+
+    async def _execute_operation(self, item):
+        context_token = bind_turn(item.turn, item.message)
+        metrics_token = bind_metrics(self.metrics, item.turn)
+        self.mark_timing("queue_start")
+        try:
+            if not item.valid():
+                raise TimeoutError("message expired")
+            result = await item.operation(item)
+            if not item.valid():
+                raise TimeoutError("message expired")
+            if item.result is not None and not item.result.done():
+                item.result.set_result(result)
+            self.mark_timing("turn_complete")
+            event("external_operation_complete")
+        except BaseException as exc:
+            self.mark_timing("turn_cancelled" if isinstance(
+                exc, asyncio.CancelledError) else "turn_failed")
+            raise
+        finally:
+            reset_metrics(metrics_token)
+            reset_turn(context_token)
 
     def cancel_work(self, item):
         if item.cancelled:
@@ -182,6 +282,8 @@ class Runtime:
     async def _execute(self, item):
         if not item.valid():
             raise TimeoutError("message expired")
+        if item.operation is not None:
+            return await self._execute_operation(item)
         context_token = bind_turn(item.turn, item.message)
         metrics_token = bind_metrics(self.metrics, item.turn)
         self.mark_timing("queue_start")
@@ -197,36 +299,15 @@ class Runtime:
         reminder_action = None
         destinations = ()
         try:
-            if self.cross_channel is not None:
-                command_reply = await self.cross_channel.command(item.message)
-            if self.memory_service is not None:
-                event("turn_stage", stage="memory_start")
-                self.mark_timing("memory_start")
-                auto_enroll = getattr(self.memory_service, "ensure_auto_enrolled", None)
-                if callable(auto_enroll):
-                    await auto_enroll(item.message)
-                if command_reply is None:
-                    command_reply = await self.memory_service.command(item.message)
-                if command_reply is None:
-                    memory_context = await self.memory_service.context_for(item.message)
-                    prepare = getattr(self.memory_service, "prepare_memory_action", None)
-                    if callable(prepare):
-                        memory_action = await prepare(item.message)
-                    if (isinstance(self.dialogue, Dialogue)
-                            and item.message.history_key not in self.dialogue.history):
-                        history_messages = await self.memory_service.history_for(item.message)
-                event("turn_stage", stage="memory_end", memory_tool_available=memory_action is not None)
-                self.mark_timing("memory_end")
-            if command_reply is None and self.cross_channel is not None:
-                resumed = await self.cross_channel.context_for(item.message)
-                if resumed:
-                    memory_context = (memory_context + "\n" + resumed).strip()
-            if command_reply is None and self.web_service is not None:
-                web_action = self.web_service.for_turn(item.message, item.turn)
-            if command_reply is None and self.document_service is not None:
-                document_action = await self.document_service.for_turn(item.message)
-            if command_reply is None and self.reminder_service is not None:
-                reminder_action = await self.reminder_service.for_turn(item.message)
+            prepared = await self.prepare_turn(
+                item.message, turn_id=item.turn, on_timing=self.mark_timing)
+            command_reply = prepared.command_reply
+            memory_context = prepared.memory_context
+            history_messages = prepared.history_messages
+            memory_action = prepared.memory_action
+            web_action = prepared.web_action
+            document_action = prepared.document_action
+            reminder_action = prepared.reminder_action
             if (command_reply is None and self.on_stream_start is not None
                     and item.message.platform == "discord_voice"
                     and callable(getattr(self.dialogue.backend, "complete_stream", None))):
@@ -239,6 +320,7 @@ class Runtime:
                                                         on_timing=self.mark_timing,
                                                         memory_context=memory_context,
                                                         history_messages=history_messages,
+                                                        history_loader=prepared.history_loader,
                                                         memory_action=memory_action,
                                                         web_action=web_action,
                                                         document_action=document_action,
@@ -252,6 +334,7 @@ class Runtime:
                     on_intent=getattr(turn, "set_intent", None),
                     memory_context=memory_context,
                     history_messages=history_messages, memory_action=memory_action,
+                    history_loader=prepared.history_loader,
                     web_action=web_action, document_action=document_action,
                                                         reminder_action=reminder_action)
             if not item.valid():
@@ -351,7 +434,7 @@ class Runtime:
                 # NEW-20: describe ONLY failed direct requests before a reply
                 # was handed off. Never send a second message after a delivery
                 # attempt, during cancellation, or for unsolicited group chat.
-                if (self.on_incident is not None and self.state == "RUNNING"
+                if (item.operation is None and self.on_incident is not None and self.state == "RUNNING"
                         and item.message.direct_request and item.message.force_reply
                         and not item.delivery_started and item.valid()):
                     try:

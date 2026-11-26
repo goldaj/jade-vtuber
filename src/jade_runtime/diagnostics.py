@@ -161,4 +161,16 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
         checks.append(Check("Tailscale Serve", which("tailscale") is not None,
                             "HTTPS privé à configurer et tester manuellement",
                             required=all_channels))
+        live_config = settings.live
+        live_status = live_config.preflight(api_key_present=bool(
+            settings.api_key.strip() and settings.api_key.strip() != "example"))
+        checks.append(Check("Live mobile", live_status["available"],
+                            "Prêt localement ; accès et voix non testés" if live_status["available"]
+                            else ", ".join(live_status["reasons"]), required=live_config.enabled))
+        checks.append(Check("Transport Live", _installed("httpx2") and _installed("websockets"),
+                            "HTTP et sideband installés ; aucun appel ni capture",
+                            required=live_config.enabled))
+        checks.append(Check("Budget backend Live", live_status["backend_budget_configured"],
+                            "Réserve par délégation et curation ; 0 interdit ces appels",
+                            required=False))
     return checks
