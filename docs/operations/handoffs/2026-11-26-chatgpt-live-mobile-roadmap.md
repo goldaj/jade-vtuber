@@ -2,7 +2,7 @@
 
 - **Agent / rôle :** ChatGPT, coordination produit et revue du dépôt ; trois sous-agents experts : `/root/live_api_costs` (API OpenAI et coûts), `/root/live_architecture` (runtime, mémoire, outils et concurrence), `/root/live_mobile_qa` (PWA, audio Android et recette).
 - **Demande propriétaire :** lire et corriger la backlog sur `develop`, challenger les implications, préparer une feuille de route exécutable. Activation initiale uniquement dans le Profil mobile ; prévoir un paramètre Discord désactivé. Aucun développement du moteur vocal demandé pour cette mission.
-- **Branche / base :** branche de travail isolée `docs/live-mobile-roadmap-20261126`, issue de `develop` au SHA `990dfbe043f16619359d86405f5c128b435d0bb8`. L'arrivée est le commit documentaire qui porte cette passation, intégré sur `develop` avec contrôle du SHA parent. Aucun changement de `main`.
+- **Branche / base :** branche de travail isolée `docs/live-mobile-roadmap-20261126`, issue de `develop` au SHA `990dfbe043f16619359d86405f5c128b435d0bb8`. Lot initial publié dans `bb09690d21a276eb80bc5ed187dd655abb31d7a1`. Complément sur l'accord propriétaire et Aube préparé depuis ce commit et intégré sur `develop` avec contrôle du SHA parent. Aucun changement de `main`.
 - **PR / ticket :** demande directe du propriétaire ; références canoniques ci-dessous. Pas de nouvelle carte de développement pour le seul travail de cadrage.
 
 ## Cartes et résultat du cadrage
@@ -10,7 +10,7 @@
 | Carte | Vue / statut conservé | Modification et résultat documentaire |
 | --- | --- | --- |
 | DEV-040 | DEV / À faire | Recentrée sur le choix Profil, la préférence persistante et l'intégration classique/Live ; mécanismes techniques répartis une seule fois dans les nouvelles US. |
-| DEV-041 | DEV / À faire | Voix originale française, prompt de départ, protocole d'écoute et choix utilisateur ; Brise limitée au prototype, aucune voix créée. |
+| DEV-041 | DEV / À faire | Voix originale française, prompt de départ, protocole d'écoute et choix utilisateur ; Aube souhaitée pour le prototype si accessible par API, Brise comme recours technique explicite, aucune voix créée. |
 | DEV-046 | DEV / À faire | Nouvelle US : adaptateur Live, contrats, configuration par canal, signalisation, contrôle serveur et tests sur doubles. |
 | DEV-047 | DEV / À faire | Nouvelle US : capture/lecture, parole naturelle, pré-roll, permissions, interruption et preuve Redmi. |
 | DEV-048 | DEV / À faire | Nouvelle US : baux, générations fournisseur, arrêt confirmé, kill, inactivité et réconciliation. |
@@ -33,7 +33,7 @@
 
 Le [plan détaillé](../../backlog/PLAN-LIVE-MOBILE.md) contient les fichiers à toucher, routes, états, valeurs initiales modifiables, événements fournisseur, sources officielles et matrice de recette. Les valeurs de 2/5 s de bail, 8/30 s d'inactivité, 15 s de fin après mute et 600 s de connexion sont des propositions d'ingénierie à mesurer, pas des résultats ni garanties fournisseur.
 
-## Changements contenus dans ce commit
+## Changements du lot initial (`bb09690`)
 
 - `docs/backlog/PLAN-LIVE-MOBILE.md` : nouveau plan d'architecture et feuille de route.
 - `docs/backlog/01-DEVELOPPEMENT.md` : deux US révisées, six créées, liens de responsabilité et critères détaillés.
@@ -42,6 +42,14 @@ Le [plan détaillé](../../backlog/PLAN-LIVE-MOBILE.md) contient les fichiers à
 - Cette passation et `docs/operations/handoffs/README.md` : relais de mission.
 
 Aucun fichier de runtime, configuration livrée, dépendance ou secret modifié. Aucun changement technique ne justifie une entrée `CHANGELOG.md` pour ce lot documentaire seul.
+
+## Accord propriétaire et préférence Aube, 26 novembre 2026
+
+Après présentation, Goldaj confirme que le reste du cadrage lui convient et que les US pourront évoluer au fil du développement. Il demande Aube comme voix de prototype jusqu'à la création de la voix originale. Cet accord valide la direction produit et la publication ; aucune fonctionnalité non codée n'est déclarée acceptée ou Done.
+
+Vérification officielle complémentaire : [ChatGPT Voice](https://help.openai.com/fr-fr/articles/20001274-chatgpt-voice) cite Aube ; [le catalogue API Live](https://developers.openai.com/api/docs/guides/live-conversations) et [la référence de création](https://developers.openai.com/api/reference/resources/live/methods/create) citent `brise`, sans `aube` ni correspondance officielle trouvée. Aube est donc prioritaire **si son accès API est confirmé** ; aucune promesse de disponibilité, aucun alias ni équivalence inventés. Brise reste le recours technique explicite pour les essais si Aube n'est pas exposée.
+
+Complément limité à trois fichiers : vue DEV (DEV-041 et contrôle dans DEV-046), plan Live (préférence, paramètre, source) et cette passation. La vérification indépendante du sous-agent API/coûts confirme cette distinction et l'absence de correspondance officielle trouvée ; l'absence dans la liste publique ne constitue pas une preuve d'indisponibilité absolue pour tous les comptes. Aucun appel vocal ni coût engagé ; statut des huit US inchangé.
 
 ## Vérifications et passe distincte de validation
 

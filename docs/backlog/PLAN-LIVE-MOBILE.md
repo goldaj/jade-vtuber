@@ -2,6 +2,8 @@
 
 **Cadrage du 26 novembre 2026**, demandé par Goldaj. Code audité : `develop`, `990dfbe043f16619359d86405f5c128b435d0bb8`. Ce document décrit le **travail à réaliser**, pas une fonctionnalité déjà disponible. Les statuts et critères de chaque US restent canoniques dans [la vue DEV](01-DEVELOPPEMENT.md) ; ce plan n'ajoute aucun suivi concurrent. La présente livraison est documentaire, sans activation du micro, création de voix ni appel API facturé.
 
+**Accord propriétaire du 26/11 après revue :** Goldaj valide le reste du cadrage, avec ajustements possibles des US au fil du développement, et demande **Aube comme voix de prototype souhaitée** en attendant la voix originale. La disponibilité d'Aube dans l'API reste à confirmer selon la section 3.4 ; cet accord produit ne clôt aucune US de développement.
+
 ## 1. Résultat produit à construire
 
 Depuis **Profil**, Goldaj pourra activer ou désactiver **Mode Live**. Activé, ce choix sélectionne le moteur vocal du mobile ; il ne déclenche ni microphone ni session OpenAI. Le micro reste une action distincte : un toucher pour parler librement, un second pour le couper. Le mode classique conserve son appui maintenu. Le choix du moteur survit à une réouverture ; l'autorisation de capturer et une session distante n'y survivent jamais.
@@ -64,7 +66,9 @@ Le contenu de personnalité approuvé reste commun. **Adapter seulement le contr
 
 Le flux distant pilote la bouche sur le **son effectivement lu**. Une intention fournie par une délégation peut déclencher les animations existantes ; en son absence, utiliser le comportement neutre de parole. Pas d'appel LLM ajouté à chaque phrase pour classifier une animation, pas de prétention à une intention structurée que Live n'émet pas. La prosodie Live reste orientée par les instructions vocales. Le sous-titrage synchronisé complet reste `DEV-037`.
 
-`DEV-041` conserve la création d'une voix par description, féminine de jeune adulte, française, vive et espiègle. **Brise (`brise`) sert de voix native de prototype**, sans devenir le choix final de Goldaj ; `Aube` n'a pas été retrouvée dans la liste officielle consultée. Un changement de voix nécessite une nouvelle session. Les voix issues d'un prompt sont compatibles Live, leur création et leur consommation ont des règles de coût différentes. [S5, S6]
+`DEV-041` conserve la création d'une voix par description, féminine de jeune adulte, française, vive et espiègle. **Aube est la préférence de prototype de Goldaj**, en attendant la voix originale. Aube est bien documentée dans ChatGPT ; au 26/11, le catalogue API Live et la référence de création consultés listent `brise`, mais pas `aube`, et aucune correspondance officielle Aube → Brise n'a été trouvée. La disponibilité d'Aube pour Jade n'est donc pas confirmée. [S5, S11, S12]
+
+Dans DEV-046, vérifier la disponibilité API et l'identifiant exact avant le premier essai vocal : retenir Aube si son accès est confirmé, sans inventer d'alias. À défaut, **Brise (`brise`) reste le recours technique documenté pour les essais**, annoncé comme tel et jamais présenté comme Aube ; cela ne change pas la préférence du propriétaire. Le choix reste configurable sans refonte. Un changement de voix nécessite une nouvelle session. Les voix issues d'un prompt sont compatibles Live, leur création et leur consommation ont des règles de coût différentes. [S5, S6]
 
 ## 4. Parcours et machine d'états
 
@@ -116,7 +120,7 @@ Ces paramètres sont **à coder**, ils n'existent pas encore dans la configurati
 | `JADE_MOBILE_LIVE_ENABLED` | `true` | Autorise seulement le canal mobile lorsque le verrou global est ouvert et les contrôles passent. |
 | `JADE_DISCORD_LIVE_ENABLED` | `false` | Réservé au futur adaptateur ; actuellement `true` doit produire « adaptateur non disponible » au préflight, jamais activer un autre chemin. |
 | `JADE_LIVE_MODEL` | `gpt-live-1.1` | Indépendant de `JADE_TTS_MODEL` et des modèles backend. |
-| `JADE_LIVE_VOICE` | `brise` pour prototype | Identifiant de voix choisi ; remplacé par celui de DEV-041 lorsqu'il est validé. |
+| `JADE_LIVE_VOICE` | Identifiant API validé ; `brise` comme recours technique documenté | Aube est prioritaire si son accès API est confirmé ; aucun identifiant `aube` ni équivalence avec Brise supposés. Remplacer ensuite par la voix originale validée dans DEV-041. |
 | Préférence `voice_mode` | `classic` | Persistante côté serveur ; la capture ne l'est jamais. |
 | `JADE_LIVE_HEARTBEAT_SECONDS` / `JADE_LIVE_LEASE_SECONDS` | `2` / `5` | Temps monotone serveur ; contraintes de validation et tests de races. |
 | `JADE_LIVE_IDLE_STANDBY_SECONDS` / `JADE_LIVE_IDLE_CLOSE_SECONDS` | `8` / `30` | Cibles à comparer ; l'activité audio/lecture/tâches conditionne la fermeture d'inactivité. |
@@ -213,7 +217,7 @@ Les noms de modules nouveaux sont des recommandations d'implantation, pas des fi
 | 2 — Contrôle avant exposition | **DEV-048 + DEV-051** | Baux, stop, fermeture incertaine, reprise serveur, budgets persistants et aucune création sans admission. Travaux parallèles possibles sur interfaces convenues. |
 | 3 — Conversation et audio | **DEV-049 + DEV-047** | Pont mémoire/outils/arbitrage et capture WebRTC/pré-roll. Prototypes sur doubles possibles dès étape 1 ; activation réelle seulement après étape 2. |
 | 4 — Restitution et interface | **DEV-050 + DEV-040** | Chat, bouche, annulations, Profil ON/OFF et bascule classique/Live intégrés. Maquette logique du Profil possible plus tôt, fonctionnalité réelle verrouillée jusqu'aux dépendances. |
-| Voix en parallèle | **DEV-041** | Prompt préparé dès le début ; échantillons et choix lorsque le chemin audio est sûr. Brise permet les essais techniques, la voix finale reste à sélectionner. |
+| Voix en parallèle | **DEV-041** | Prompt préparé dès le début ; échantillons et choix lorsque le chemin audio est sûr. Aube est souhaitée pour le prototype si accessible par API ; sinon Brise permet les essais techniques explicites. La voix originale reste à sélectionner. |
 | 5 — Pilote et livraison | Critères des huit US, **REC-042** pour le classique | Preuves hors ligne puis Redmi/fournisseur ; passage DEV → REC de chaque fonction livrée encore à accepter, sans doublon actif. |
 
 **Dépendances et acceptation :** une dépendance doit fournir une interface utilisable et les mécanismes testés nécessaires à l’intégration, sans exiger prématurément son statut Done. Par exemple, DEV-051 fournit son ledger et ses tests hors ligne à DEV-047 ; son benchmark final dépend ensuite du client et de la restitution intégrés. Ce retour de validation ne crée ni cycle d’exécution ni faux Done. Les cartes demeurent ouvertes jusqu’à leurs preuves finales.
@@ -276,5 +280,6 @@ Sources officielles consultées le **26/11/2026** ; revérifier schémas, tarifs
 - **S9** — [Référence Live et événements du WebSocket primaire](https://developers.openai.com/api/reference/resources/live/primary-websocket) ; [raccrochage décrit pour SIP](https://developers.openai.com/api/reference/resources/live/subresources/sessions/methods/hangup).
 - **S10** — [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API), [piste de sortie MediaStream](https://developer.mozilla.org/en-US/docs/Web/API/MediaStreamAudioDestinationNode), [cycle de vie mobile Chrome](https://developer.chrome.com/docs/web-platform/page-lifecycle-api).
 - **S11** — [Création de session et permissions frontend](https://developers.openai.com/api/reference/resources/live/methods/create).
+- **S12** — [Voix de ChatGPT, dont Aube et Rivage](https://help.openai.com/fr-fr/articles/20001274-chatgpt-voice) ; catalogue produit distinct du catalogue API, aucune équivalence supposée.
 
 **Prochaine action de développement : DEV-046**, avec interfaces convenues pour DEV-048/051. Aucune question produit bloquante n'est laissée ouverte pour commencer le code ; disponibilité du compte, budgets privés du pilote, faisabilité acoustique et choix de voix final restent des contrôles d'exécution explicitement assignés.
