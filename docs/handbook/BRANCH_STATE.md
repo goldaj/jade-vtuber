@@ -24,6 +24,7 @@ Le contrôleur privé Windows et le superviseur de processus PyCharm Run remplac
 - **Jade actuelle (r21 v45.1)** s’affiche au démarrage, debout dans la chambre et la cuisine. **Profil → Modèle de Jade** permet de retrouver Jade classique (r20), assise en chambre et debout en cuisine, puis de revenir au r21. Chaque nouvelle ouverture démarre sur le r21. Le r20 sert de repli si le r21 est indisponible.
 - Chaque bascule coupe le micro et le son et annule la réponse mobile en cours. Le chargeur libère le modèle sortant, ses textures et, en chambre classique, le corps assis, avant de charger le suivant. Profil affiche le résultat réel. Une libération incertaine bloque le chargement.
 - Le r21 tire un geste A ou B une fois par réponse. Il prend une expression avant la voix, la garde durant les pauses et la tient environ 600 ms après la lecture. L’audio pilote l’ouverture de la bouche, l’intention pilote sa forme. Le paquet livré via Git LFS sert par défaut et `JADE_MOBILE_SECOND_MODEL_DIR` peut désigner un paquet de remplacement. [Contrat technique](TECHNICAL.md#sélection-du-modèle-mobile-26112026) · [Recette des intentions](../operations/handoffs/2026-11-26-codex-mobile-intentions.md)
+- Sérieuse et Enjouée ont un jeu des paupières, des sourcils et du buste adapté à leurs deux gestes. Le clignement complet et l’ouverture de bouche liée à la voix restent indépendants. [Recette des deux intentions](../operations/handoffs/2026-11-26-codex-mobile-intentions.md#deuxième-étape--sérieuse-et-enjouée)
 
 ## Splash de lancement PWA (22/11/2026)
 

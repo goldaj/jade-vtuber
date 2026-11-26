@@ -138,15 +138,27 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
           model.lastParameter={id,value};
           model.parameters.set(id, {value,weight});
         },
-        addParameterValueById(id, value){model.shakeParameters.set(id, value);},
+        addParameterValueById(id,value,weight = 1){
+          model.shakeParameters.set(id, value);
+          model.addedParameters.set(id, {value,weight});
+        },
+        multiplyParameterValueById(id,factor,weight = 1){
+          const original = model.parameters.get(id).value;
+          model.parameters.set(id, {value:original * (1 + (factor - 1) * weight),weight});
+        },
       },
-      draw(){},eyeBlink:{updateParameters(){model.blinked = true;}},
+      draw(){},eyeBlink:{updateParameters(core){
+        model.blinked = true;
+        core.setParameterValueById("ParamEyeLOpen", model.blinkOpening ?? 1);
+        core.setParameterValueById("ParamEyeROpen", model.blinkOpening ?? 1);
+      }},
       motionManager:Object.assign(new EventEmitter(), {
         expressionManager:{defaultExpression:{}, resetExpression(){model.neutral = (model.neutral || 0) + 1;}},
       }),
     });
     model.shakeParameters = new Map();
     model.parameters = new Map();
+    model.addedParameters = new Map();
     model.motions = [];
     model.expressions = [];
     model.motion = (group, index, priority) => {
@@ -312,20 +324,37 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
     }
   }
   const groups = ["Neutral","Playful","Excited","Curious","Tender","Reassuring","Serious"];
+  const actingSamples = {Playful:[],Serious:[]};
   for (const group of groups) {
-    nextDefault.avatar.setIntent(group.toLowerCase());
-    nextDefault.avatar.setIntent(group.toLowerCase());
+    for (let variant = 0; variant < 2; variant++) {
+      nextDefault.avatar.setIntent(group.toLowerCase());
+      if (!Object.hasOwn(actingSamples, group)) continue;
+      nextDefault.advanceTime(150);
+      r21.addedParameters.clear();
+      r21.internalModel.emit("afterMotionUpdate");
+      r21.internalModel.emit("beforeModelUpdate");
+      actingSamples[group].push({
+        brow:r21.addedParameters.get("ParamBrowLAngle").value,
+        posture:r21.addedParameters.get(group === "Playful" ? "ParamBodyAngleZ" : "ParamBodyAngleX").value,
+        lids:["ParamEyeLOpen","ParamEyeROpen"].map(id => r21.parameters.get(id).value),
+      });
+      assert.equal(r21.addedParameters.has("ParamEyeLOpen"),false,"the expression leaves blinking independent");
+    }
     if (group === "Neutral") nextDefault.avatar.setIntent("neutral");
   }
   assert.deepEqual(r21.motions.slice(1), groups.flatMap(group =>
     (group === "Neutral" ? [0,0,1] : [0,1]).map(index => ({group,index,priority:3}))));
+  assert.deepEqual(actingSamples, {
+    Playful:[{brow:-.23,posture:-2.4,lids:[.91,.97]},{brow:-.23,posture:2.4,lids:[.97,.91]}],
+    Serious:[{brow:.16,posture:.7,lids:[.98,.98]},{brow:.16,posture:-.7,lids:[.98,.98]}],
+  });
 
   const beforeSpeech = r21.motions.length;
   assert.equal(nextDefault.avatar.setIntent("serious",{deferMotion:true}),true);
   nextDefault.avatar.startReplyMotion(200);
   nextDefault.advanceTime(150);
   r21.internalModel.emit("beforeModelUpdate");
-  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:-.28,weight:1});
+  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:-.74,weight:1});
   assert.equal(r21.motions.length,beforeSpeech,"the face precedes the motion and voice");
   nextDefault.advanceTime(50);
   nextDefault.runTimers(200);
@@ -336,9 +365,13 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   assert.equal(drawCount,16,"one random draw per reply");
   nextDefault.avatar.setSpeaking(true);
   nextDefault.avatar.setMouth(.53);
+  r21.blinkOpening = 0;
   r21.internalModel.emit("afterMotionUpdate");
   r21.internalModel.emit("beforeModelUpdate");
   assert.equal(r21.blinked,true,"r21 blinks during a motion");
+  assert.equal(r21.parameters.get("ParamEyeLOpen").value,0,"the held pose preserves a fully closed blink");
+  assert.equal(r21.parameters.get("ParamEyeROpen").value,0);
+  delete r21.blinkOpening;
   assert.deepEqual(r21.lastParameter,{id:"ParamMouthOpenY",value:.53});
   nextDefault.avatar.setSpeaking(false);
   nextDefault.avatar.setMouth(0);
@@ -346,17 +379,18 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   nextDefault.advanceTime(600);
   r21.internalModel.emit("beforeModelUpdate");
   assert.deepEqual(r21.lastParameter,{id:"ParamMouthOpenY",value:0});
-  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:-.28,weight:1},"the closed mouth stays serious");
+  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:-.74,weight:1},"the closed mouth stays serious");
   nextDefault.runTimers(600);
   nextDefault.advanceTime(110);
   r21.internalModel.emit("beforeModelUpdate");
-  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:-.28,weight:.5});
+  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:-.74,weight:.5});
+  assert.deepEqual(r21.addedParameters.get("ParamBrowLAngle"),{value:.16,weight:.5});
   nextDefault.avatar.setIntent("playful",{deferMotion:true});
   nextDefault.avatar.startReplyMotion(200);
   nextDefault.runTimers(220);
   nextDefault.advanceTime(200);
   r21.internalModel.emit("beforeModelUpdate");
-  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:.35,weight:1},"an old fade cannot clear a new reply");
+  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:.40,weight:1},"an old fade cannot clear a new reply");
   assert.equal(await nextDefault.avatar.selectModel("classic"),true);
   const classic = nextDefault.models.at(-1);
   const neutralOnClassic = classic.neutral;
@@ -370,6 +404,22 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   assert.equal(await nextDefault.avatar.selectModel("next"),true);
   const replacement = nextDefault.models.at(-1);
   replacement.internalModel.emit("beforeModelUpdate");
+  const firstMotion = deferred(), nextMotion = deferred();
+  replacement.internalModel.motionManager.loadMotion = group =>
+    group === "Serious" ? firstMotion.promise : nextMotion.promise;
+  nextDefault.avatar.setIntent("serious",{deferMotion:true});
+  nextDefault.avatar.startReplyMotion();
+  nextDefault.avatar.resetIntent();
+  nextDefault.avatar.setIntent("playful",{deferMotion:true});
+  nextDefault.avatar.startReplyMotion();
+  firstMotion.resolve({});
+  await flush();
+  assert.deepEqual(replacement.motions.map(({group}) => group),["Idle"],
+    "a late clip is never reserved after its reply has been cancelled");
+  nextMotion.resolve({});
+  await flush();
+  assert.deepEqual(replacement.motions.map(({group}) => group),["Idle","Playful"]);
+  nextDefault.avatar.resetIntent();
   assert.deepEqual(replacement.lastParameter,{id:"ParamMouthOpenY",value:0});
   assert.equal(replacement.expressions.length,0,"previous-model expressions are cleared on release");
 

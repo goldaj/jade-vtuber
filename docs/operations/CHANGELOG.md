@@ -1,3 +1,8 @@
+## 2026-11-26 — Jeu enjoué et sérieux du r21 sur mobile
+
+- `avatar.js` associe aux quatre clips des attitudes tenues. Enjouée combine sourire léger, sourcil relevé et paupières asymétriques. Sérieuse garde une bouche sobre et des paupières presque symétriques. De petits appuis du buste prolongent l’intention pendant la réplique et suivent le fondu avec le visage.
+- Les quatre clips se préparent au chargement du r21. Un téléchargement tardif ne déclenche son geste que si la réplique correspondante est encore active. Les tests vérifient le clignement entièrement fermé et le rejet d’un ancien clip au début d’une nouvelle réponse. [Recette mobile](handoffs/2026-11-26-codex-mobile-intentions.md#deuxième-étape--sérieuse-et-enjouée)
+
 ## 2026-11-26 — Chronologie des intentions du r21 sur mobile
 
 - `app.js` coordonne PCM HTTP, WebSocket et WAV avec la fin de lecture. Il donne à la pose environ 200 ms d’avance sur le premier son en utilisant le délai de synthèse. Un tampon vide ferme la bouche et conserve l’expression. Une reprise PCM joue dès que le fragment est prêt et le journal technique mesure les creux de lecture.

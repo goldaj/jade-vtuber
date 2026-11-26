@@ -47,15 +47,36 @@
     neutral:"Neutral", playful:"Playful", excited:"Excited", curious:"Curious",
     tender:"Tender", reassuring:"Reassuring", serious:"Serious",
   });
-  // Initial held poses, independent of the voice envelope and automatic blink.
+  // Held poses are independent of the voice envelope and automatic blink.
   const R21_FACES = Object.freeze({
     neutral:     {mouth:0,    browL:0,    browR:0,    caption:"Échange paisible"},
-    playful:     {mouth:.35,  browL:.32,  browR:.04,  caption:"Petite malice"},
+    playful:     {mouth:.40,  browL:.16,  browR:.08,  caption:"Petite malice"},
     excited:     {mouth:.52,  browL:.55,  browR:.55,  caption:"Élan enthousiaste"},
     curious:     {mouth:0,    browL:.48,  browR:.22,  caption:"Attention intriguée"},
     tender:      {mouth:.17,  browL:-.10, browR:-.10, caption:"Douceur"},
     reassuring:  {mouth:.20,  browL:.04,  browR:.04,  caption:"Présence apaisante"},
-    serious:     {mouth:-.28, browL:-.12, browR:-.12, caption:"Concentration tranquille"},
+    serious:     {mouth:-.74, browL:-.12, browR:-.12, caption:"Concentration tranquille"},
+  });
+  // Each row contains a parameter and its A/B offsets. A single offset is shared.
+  // The brow accent in Playful A is already in its motion.
+  const R21_ACTING = Object.freeze({
+    playful: {
+      face: [
+        ["ParamBrowLAngle", -.23],
+        ["ParamBrowRAngle", -.13],
+        ["ParamBrowLY", 0, .16],
+      ],
+      posture: [["ParamBodyAngleZ", -2.4, 2.4]],
+      aperture: [[.91, .97], [.97, .91]],
+    },
+    serious: {
+      face: [
+        ["ParamBrowLAngle", .16],
+        ["ParamBrowRAngle", .14],
+      ],
+      posture: [["ParamBodyAngleX", .7, -.7]],
+      aperture: [[.98, .98], [.98, .98]],
+    },
   });
   const FACE_FADE_IN_MS = 140;
   const FACE_FADE_OUT_MS = 220;
@@ -64,7 +85,8 @@
   const FORCE_MOTION = 3;
   const R21_MOTION_PARAMETERS = [
     "ParamAngleX", "ParamAngleY", "ParamAngleZ", "ParamBodyAngleX", "ParamBodyAngleZ",
-    "ParamBreath", "ParamBrowLY", "ParamBrowRY", "ParamMouthForm", "ParamJadeEarTwitchL", "ParamJadeEarTwitchR",
+    "ParamBreath", "ParamBrowLY", "ParamBrowRY",
+    "ParamBrowLAngle", "ParamBrowRAngle", "ParamMouthForm", "ParamJadeEarTwitchL", "ParamJadeEarTwitchR",
     "ParamJadeIdleLean", "ParamJadeLegRelaxL", "ParamJadeLegRelaxR", "ParamJadeWeightShift",
   ];
   const SHAKE_DURATION = 1.05;
@@ -72,6 +94,10 @@
   function playMotion(group, index, priority) {
     try { model?.motion?.(group, index, priority)?.catch?.(() => {}); }
     catch (_) { /* The avatar remains usable if an optional motion fails. */ }
+  }
+
+  function loadMotion(group, index) {
+    return model?.internalModel?.motionManager?.loadMotion?.(group, index)?.catch?.(() => null);
   }
 
   function canShake() {
@@ -137,6 +163,19 @@
     core.addParameterValueById?.("ParamBodyAngleZ", -12 * x);
   }
 
+  function replyPoseWeight(reply, now) {
+    const progress = reply.fadeAt === null
+      ? clamp((now - reply.preparedAt) / FACE_FADE_IN_MS, 0, 1)
+      : clamp((reply.fadeAt + FACE_FADE_OUT_MS - now) / FACE_FADE_OUT_MS, 0, 1);
+    return progress * progress * (3 - 2 * progress);
+  }
+
+  function applyActingOffsets(core, parameters, variant, weight) {
+    for (const [id, a, b = a] of parameters) {
+      core.addParameterValueById(id, variant === 0 ? a : b, weight);
+    }
+  }
+
   function bindR21MotionPlayback(internal, idleGroup) {
     const manager = internal.motionManager;
     const core = internal.coreModel;
@@ -160,38 +199,45 @@
     };
 
     // The adapter only ticks its automatic blink on frames without a motion.
-    // r21 leaves the eye curves free, so do it ourselves before expressions
-    // (which can then reliably close either eye).
+    // r21 leaves the eye curves free, so advance it during gestures as well.
     const blink = internal.eyeBlink;
     let lastBlinkUpdate = null;
-    const updateBlink = () => {
+    const updateMotionEffects = () => {
       const now = performance.now();
       const delta = lastBlinkUpdate === null ? 0 : Math.min(.1, (now - lastBlinkUpdate) / 1000);
       lastBlinkUpdate = now;
       blink?.updateParameters(core, delta);
+      if (r21Reply?.acting) {
+        // Apply the posture before physics so hair, clothes and arms follow it.
+        applyActingOffsets(core, r21Reply.acting.posture, r21Reply.index, replyPoseWeight(r21Reply, now));
+      }
       applyShake(core, now);
     };
     const updateFace = () => {
       if (r21Reply) {
-        const {pose, preparedAt, fadeAt} = r21Reply;
-        const now = performance.now();
-        const weight = fadeAt === null
-          ? clamp((now - preparedAt) / FACE_FADE_IN_MS, 0, 1)
-          : clamp((fadeAt + FACE_FADE_OUT_MS - now) / FACE_FADE_OUT_MS, 0, 1);
+        const {pose, acting, index} = r21Reply;
+        const weight = replyPoseWeight(r21Reply, performance.now());
         core.setParameterValueById("ParamMouthForm", pose.mouth, weight);
         core.addParameterValueById("ParamBrowLY", pose.browL, weight);
         core.addParameterValueById("ParamBrowRY", pose.browR, weight);
+        if (acting) {
+          applyActingOffsets(core, acting.face, index, weight);
+          const [left, right] = acting.aperture[index];
+          // Scale the aperture after blinking. A fully closed lid stays closed.
+          core.multiplyParameterValueById("ParamEyeLOpen", left, weight);
+          core.multiplyParameterValueById("ParamEyeROpen", right, weight);
+        }
       }
       core.setParameterValueById("ParamMouthOpenY", mouth);
     };
     internal.eyeBlink = undefined;
     internal.on?.("beforeMotionUpdate", resetMotionParameters);
-    internal.on?.("afterMotionUpdate", updateBlink);
+    internal.on?.("afterMotionUpdate", updateMotionEffects);
     internal.on?.("beforeModelUpdate", updateFace);
     manager?.on?.("motionLoaded", onMotionLoaded);
     return () => {
       internal.off?.("beforeMotionUpdate", resetMotionParameters);
-      internal.off?.("afterMotionUpdate", updateBlink);
+      internal.off?.("afterMotionUpdate", updateMotionEffects);
       internal.off?.("beforeModelUpdate", updateFace);
       manager?.off?.("motionLoaded", onMotionLoaded);
     };
@@ -241,7 +287,16 @@
       motionTimer = null;
       if (r21Reply !== reply) return;
       reply.motionStarted = true;
-      playMotion(reply.group, reply.index, FORCE_MOTION);
+      if (reply.motionReady) {
+        // Reserving a motion in the SDK before its download ends can leave
+        // a delayed gesture queued behind an Idle that is already playing.
+        void reply.motionReady.then(motion => {
+          if (motion && r21Reply === reply && reply.fadeAt === null)
+            playMotion(reply.group, reply.index, FORCE_MOTION);
+        });
+      } else {
+        playMotion(reply.group, reply.index, FORCE_MOTION);
+      }
     };
     if (delayMs > 0) motionTimer = setTimeout(start, delayMs);
     else start();
@@ -447,13 +502,11 @@
       clearReplyTimers();
       if (r21) {
         const pose = R21_FACES[key], group = R21_MOTIONS[key];
-        r21Reply = {pose, group, index,
-          preparedAt:performance.now(), fadeAt:null, motionStarted:false};
+        r21Reply = {pose, group, index, acting:R21_ACTING[key],
+          preparedAt:performance.now(), fadeAt:null, motionStarted:false,
+          motionReady:loadMotion(group, index)};
         mood.textContent = pose.caption;
-        if (deferMotion) {
-          // Fetch only the selected clip while the face is preparing.
-          model.internalModel?.motionManager?.loadMotion?.(group, index)?.catch?.(() => {});
-        } else startReplyMotion();
+        if (!deferMotion) startReplyMotion();
         return true;
       }
       mood.textContent = choice.text;
@@ -860,6 +913,13 @@
     if (profile.id === "next") releaseMotionBindings = bindR21MotionPlayback(next.internalModel, profile.idleMotion);
     if (profile.idleMotion) playMotion(profile.idleMotion, 0,
       profile.id === "next" ? window.PIXI?.live2d?.MotionPriority?.IDLE ?? 1 : undefined);
+    if (profile.id === "next") {
+      // Warm the four acting clips without holding up model display or audio.
+      for (const intent of Object.keys(R21_ACTING)) {
+        loadMotion(R21_MOTIONS[intent], 0);
+        loadMotion(R21_MOTIONS[intent], 1);
+      }
+    }
     syncRenderVisibility();
   }
 
