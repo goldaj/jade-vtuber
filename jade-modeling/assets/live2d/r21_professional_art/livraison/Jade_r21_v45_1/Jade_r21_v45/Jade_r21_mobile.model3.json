@@ -1,11 +1,11 @@
 {
   "Version": 3,
   "FileReferences": {
-    "Moc": "mobile/Jade_r21_mobile.moc3",
+    "Moc": "mobile/visage-continu-v49-033196b5b3/Jade_r21_mobile.moc3",
     "Textures": [
-      "mobile/profile-smile/texture_00.png",
+      "mobile/visage-continu-v49-033196b5b3/texture_00.png",
       "Jade_r21_v45.4096/texture_01.png",
-      "mobile/face-turn/texture_02.png"
+      "mobile/visage-continu-v49-033196b5b3/texture_02.png"
     ],
     "DisplayInfo": "Jade_r21_v45.cdi3.json",
     "Physics": "Jade_r21_v45.physics3.json",

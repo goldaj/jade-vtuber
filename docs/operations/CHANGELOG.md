@@ -1,3 +1,7 @@
+## 2026-11-26 — Jade mobile v49.1 validée sur téléphone
+
+- Le propriétaire a validé la rotation continue du visage du modèle debout dans la PWA. Le manifeste mobile référence l’export Cubism SDK 5.0 et ses trois textures. La [source Cubism v49.1](../../jade-modeling/assets/live2d/r21_professional_art/working_v005/Jade_r21_v49_1_visage_continu.cmo3) permet de reprendre la version publiée.
+
 ## 2026-11-26 — Chambre portrait de la PWA
 
 - Le portrait vertical se charge dès l’ouverture du salon. Les transitions de modèle, le repli r20 et les erreurs Live2D ne sélectionnent plus de décor secondaire. Le plan de décor garde ses animations et le cadrage des vues courtes ou immersives.

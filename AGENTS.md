@@ -1,5 +1,9 @@
 # Instructions du projet Jade — develop
 
+## Avant toute modification du modèle 2D de Jade
+
+Pour chaque demande de modification du modèle 2D, quel que soit le travail prévu (dessin, découpage, texture, rig, animation ou physique), étudier avant la première retouche un tutoriel qui montre la technique concernée. Si le propriétaire a fourni un tutoriel pertinent, commencer par celui-ci. S’il ne demande pas de tutoriel, lui rappeler cette consigne et en chercher et étudier un de sa propre initiative. Indiquer brièvement le lien et le geste à appliquer à Jade, puis poursuivre le travail.
+
 ## Point d'entrée et gouvernance documentaire
 
 **Toute intervention d'agent, Codex (ses modèles Terra/Astra/Sol et ses sous-agents) ou ChatGPT en mode chat, commence par ce fichier**, puis lit [le centre opérationnel](docs/operations/README.md) et [les règles de collaboration](docs/operations/AGENT_COORDINATION.md). Le [journal des modifications](docs/operations/CHANGELOG.md) consigne chaque changement technique. Les échanges entre agents sont écrits dans `docs/operations/handoffs/`, avec une fiche **par mission**, puis référencés dans la PR ; jamais dans un rapport historique pris pour un ordre courant.
