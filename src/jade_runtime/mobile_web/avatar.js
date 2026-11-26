@@ -49,17 +49,25 @@
   });
   // Held poses are independent of the voice envelope and automatic blink.
   const R21_FACES = Object.freeze({
-    neutral:     {mouth:0,    browL:0,    browR:0,    caption:"Échange paisible"},
+    neutral:     {mouth:.06,  mouthAtFullOpen:0,   browL:.04,  browR:.02,  caption:"Échange paisible"},
     playful:     {mouth:.40,  mouthAtFullOpen:.26, browL:.16, browR:.08, caption:"Petite malice"},
-    excited:     {mouth:.52,  browL:.55,  browR:.55,  caption:"Élan enthousiaste"},
-    curious:     {mouth:0,    browL:.48,  browR:.22,  caption:"Attention intriguée"},
-    tender:      {mouth:.17,  browL:-.10, browR:-.10, caption:"Douceur"},
-    reassuring:  {mouth:.20,  browL:.04,  browR:.04,  caption:"Présence apaisante"},
+    excited:     {mouth:.56,  mouthAtFullOpen:.29, browL:.40,  browR:.36,  caption:"Élan enthousiaste"},
+    curious:     {mouth:-.28, mouthAtFullOpen:0,   browL:.13,  browR:.13,  caption:"Attention intriguée"},
+    tender:      {mouth:.23,  mouthAtFullOpen:.06, browL:-.06, browR:-.10, caption:"Douceur"},
+    reassuring:  {mouth:.34,  mouthAtFullOpen:.16, browL:.09,  browR:.07,  caption:"Présence apaisante"},
     serious:     {mouth:-.74, browL:-.12, browR:-.12, caption:"Concentration tranquille"},
   });
   // Each row contains a parameter and its A/B offsets. A single offset is shared.
   // The brow accent in Playful A is already in its motion.
   const R21_ACTING = Object.freeze({
+    neutral: {
+      face: [
+        ["ParamBrowLAngle", -.03],
+        ["ParamBrowRAngle", -.02],
+      ],
+      posture: [["ParamBodyAngleX", .45, -.45]],
+      aperture: [[.99, .99], [.98, .99]],
+    },
     playful: {
       face: [
         ["ParamEyeBallX", -.10, .10],
@@ -69,6 +77,48 @@
       ],
       posture: [["ParamBodyAngleZ", -2.4, 2.4]],
       aperture: [[.91, .97], [.97, .91]],
+    },
+    excited: {
+      face: [
+        ["ParamEyeBallY", .05],
+        ["ParamBrowLAngle", -.19, -.14],
+        ["ParamBrowRAngle", -.15, -.20],
+      ],
+      posture: [
+        ["ParamBodyAngleZ", .65, -.65],
+        ["ParamJadeIdleLean", .09, .06],
+      ],
+      aperture: [[1, 1], [1, 1]],
+    },
+    curious: {
+      face: [
+        ["ParamEyeBallX", .10, -.10],
+        ["ParamBrowLY", .30, .04],
+        ["ParamBrowRY", .04, .30],
+        ["ParamBrowLAngle", -.19, .08],
+        ["ParamBrowRAngle", .08, -.19],
+      ],
+      posture: [["ParamBodyAngleZ", -1.3, 1.3]],
+      aperture: [[.99, .91], [.91, .99]],
+    },
+    tender: {
+      face: [
+        ["ParamEyeBallX", -.05, .05],
+        ["ParamEyeBallY", -.10, -.06],
+        ["ParamBrowLAngle", .11, .08],
+        ["ParamBrowRAngle", .09, .11],
+      ],
+      posture: [["ParamBodyAngleZ", -.65, .75]],
+      aperture: [[.87, .93], [.93, .89]],
+    },
+    reassuring: {
+      face: [
+        ["ParamEyeBallY", .02],
+        ["ParamBrowLAngle", -.12, -.09],
+        ["ParamBrowRAngle", -.09, -.12],
+      ],
+      posture: [["ParamBodyAngleX", .60, -.75]],
+      aperture: [[.95, .96], [.96, .95]],
     },
     serious: {
       face: [
@@ -982,10 +1032,10 @@
     if (profile.idleMotion) playMotion(profile.idleMotion, 0,
       profile.id === "next" ? window.PIXI?.live2d?.MotionPriority?.IDLE ?? 1 : undefined);
     if (profile.id === "next") {
-      // Warm the four acting clips without holding up model display or audio.
-      for (const intent of Object.keys(R21_ACTING)) {
-        loadMotion(R21_MOTIONS[intent], 0);
-        loadMotion(R21_MOTIONS[intent], 1);
+      // Warm the reply clips without holding up model display or audio.
+      for (const group of Object.values(R21_MOTIONS)) {
+        loadMotion(group, 0);
+        loadMotion(group, 1);
       }
     }
     syncRenderVisibility();

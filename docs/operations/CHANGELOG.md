@@ -1,3 +1,8 @@
+## 2026-11-26 — Dix variantes complètent le jeu du r21 mobile
+
+- Les deux gestes de chaque intention sont livrés dans le manifeste mobile, avec les courbes éditables PSD2Live. Neutre, Curieuse, Enthousiaste, Tendre et Rassurante disposent de nouveaux appuis, de mouvements de tête et de trajectoires de regard propres à chaque paire.
+- La PWA donne à chaque intention une pose tenue de la bouche, des sourcils, des paupières et du buste. Les quatorze clips se préchargent en arrière-plan au montage. [Passation des dix variantes](handoffs/2026-11-26-codex-mobile-intentions.md#quatrième-étape--dix-variantes-restantes)
+
 ## 2026-11-26 — Oreilles du r21 sur la respiration et les intentions
 
 - `avatar.js` associe le mouvement des oreilles à la respiration réellement affichée sur le torse et applique un retard légèrement différent de chaque côté. Les accents suivent les sept intentions du dialogue et gardent l’attitude pendant les pauses.

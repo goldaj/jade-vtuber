@@ -325,22 +325,34 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
     }
   }
   const groups = ["Neutral","Playful","Excited","Curious","Tender","Reassuring","Serious"];
+  const mouthForms = {
+    Neutral:[.06,0], Playful:[.40,.26], Excited:[.56,.29], Curious:[-.28,0],
+    Tender:[.23,.06], Reassuring:[.34,.16], Serious:[-.74,-.74],
+  };
   const actingSamples = {Playful:[],Serious:[]};
   for (const group of groups) {
     for (let variant = 0; variant < 2; variant++) {
       nextDefault.avatar.setIntent(group.toLowerCase());
-      if (!Object.hasOwn(actingSamples, group)) continue;
       nextDefault.advanceTime(150);
       r21.addedParameters.clear();
       r21.internalModel.emit("afterMotionUpdate");
       r21.internalModel.emit("beforeModelUpdate");
-      actingSamples[group].push({
-        brow:r21.addedParameters.get("ParamBrowLAngle").value,
-        posture:r21.addedParameters.get(group === "Playful" ? "ParamBodyAngleZ" : "ParamBodyAngleX").value,
-        gaze:r21.addedParameters.get("ParamEyeBallX")?.value ?? 0,
-        lids:["ParamEyeLOpen","ParamEyeROpen"].map(id => r21.parameters.get(id).value),
-      });
+      const [closed, open] = mouthForms[group];
+      assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:closed,weight:1});
+      if (Object.hasOwn(actingSamples, group)) {
+        actingSamples[group].push({
+          brow:r21.addedParameters.get("ParamBrowLAngle").value,
+          posture:r21.addedParameters.get(group === "Playful" ? "ParamBodyAngleZ" : "ParamBodyAngleX").value,
+          gaze:r21.addedParameters.get("ParamEyeBallX")?.value ?? 0,
+          lids:["ParamEyeLOpen","ParamEyeROpen"].map(id => r21.parameters.get(id).value),
+        });
+      }
       assert.equal(r21.addedParameters.has("ParamEyeLOpen"),false,"the expression leaves blinking independent");
+      nextDefault.avatar.setMouth(1);
+      r21.internalModel.emit("beforeModelUpdate");
+      assert(Math.abs(r21.parameters.get("ParamMouthForm").value - open) < 1e-8,
+        group + " retains its intended shape during open vowels");
+      nextDefault.avatar.setMouth(0);
     }
     if (group === "Neutral") nextDefault.avatar.setIntent("neutral");
   }

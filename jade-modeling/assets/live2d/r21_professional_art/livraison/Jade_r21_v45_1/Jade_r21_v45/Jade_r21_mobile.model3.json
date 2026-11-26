@@ -17,18 +17,18 @@
       ],
       "Curious": [
         {
-          "File": "Jade_curious_A.motion3.json"
+          "File": "mobile/Jade_curious_A.motion3.json"
         },
         {
-          "File": "Jade_curious_B.motion3.json"
+          "File": "mobile/Jade_curious_B.motion3.json"
         }
       ],
       "Neutral": [
         {
-          "File": "Jade_neutral_A.motion3.json"
+          "File": "mobile/Jade_neutral_A.motion3.json"
         },
         {
-          "File": "Jade_neutral_B.motion3.json"
+          "File": "mobile/Jade_neutral_B.motion3.json"
         }
       ],
       "Playful": [
@@ -41,26 +41,26 @@
       ],
       "Excited": [
         {
-          "File": "Jade_excited_A.motion3.json"
+          "File": "mobile/Jade_excited_A.motion3.json"
         },
         {
-          "File": "Jade_excited_B.motion3.json"
+          "File": "mobile/Jade_excited_B.motion3.json"
         }
       ],
       "Tender": [
         {
-          "File": "Jade_tender_A.motion3.json"
+          "File": "mobile/Jade_tender_A.motion3.json"
         },
         {
-          "File": "Jade_tender_B.motion3.json"
+          "File": "mobile/Jade_tender_B.motion3.json"
         }
       ],
       "Reassuring": [
         {
-          "File": "Jade_reassuring_A.motion3.json"
+          "File": "mobile/Jade_reassuring_A.motion3.json"
         },
         {
-          "File": "Jade_reassuring_B.motion3.json"
+          "File": "mobile/Jade_reassuring_B.motion3.json"
         }
       ],
       "Serious": [

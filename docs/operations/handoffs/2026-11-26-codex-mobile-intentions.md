@@ -39,3 +39,21 @@ Le propriétaire autorise de revenir au dessin, au rig ou à l’animation lorsq
 - Enjouée A engage l’œil avant la feinte. Enjouée B répartit deux accents latéraux avec des appuis et des retards d’oreilles distincts. Sérieuse A prend appui puis se redresse. Sérieuse B marque un hochement bref. Le premier accent arrive dans la phrase. Le repère Huohuo a guidé la continuité, les retards et la lisibilité à l’échelle du visage. La bouche reprend le dessin natif v43, avec un sourire adouci à l’ouverture pour Enjouée.
 - L’export SDK 5.0 a été réalisé dans la session Cubism existante. Le manifeste mobile sélectionne le [nouvel export et les quatre motions](../../../jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/). Les [courbes sources éditables](../../../jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/mobile-intentions/) suivent le format PSD2Live. La livraison v45.1 reste la référence native et fournit les textures, la physique et les dix autres gestes.
 - La passe Chromium à 393 × 873 associe WebGL, le MOC3 mobile et Web Audio. Les quatre clips se jouent sur la même phrase française de 4,31 s, synthétisée hors ligne. Pour Enjouée B, une pause PCM d’environ 0,9 s ferme la bouche et conserve la pose. Sérieuse B marque son hochement sur une phrase de 1,65 s. La bascule vers le r20 coupe les sources audio et invalide les événements tardifs. La validation physique sur Redmi reste ouverte.
+
+## Quatrième étape — Dix variantes restantes
+
+Le propriétaire a demandé le niveau de soin du lot Sérieuse et Enjouée pour les cinq intentions restantes. La direction de jeu utilise la séquence regard, tête et transfert d’appui pour rendre le premier accent lisible sur un écran de téléphone. Les silhouettes et la souplesse des retours s’appuient sur le repère Huohuo et le dessin maître de Jade.
+
+| Intention | Variante A | Variante B |
+| --- | --- | --- |
+| Neutre | Accueille le propos avec un léger transfert du poids et se tourne vers l’interlocuteur. | Écoute de l’autre côté du corps, puis acquiesce d’un petit mouvement du menton. |
+| Curieuse | Cherche du regard avant d’incliner la tête vers ce qui l’intéresse. | Explore une première direction, se ravise et relève la tête au déclic. |
+| Enthousiaste | Prend appui et s’élance vers le haut, avec un rebond plus léger. | Ouvre le buste de côté puis relève la tête dans un deuxième temps. |
+| Tendre | Penche la tête vers l’épaule et baisse brièvement les yeux avant de retrouver le regard. | Avance légèrement pour confier quelque chose et ramène le regard vers l’interlocuteur. |
+| Rassurante | Marque un acquiescement posé et stabilise ses appuis. | Ouvre le buste en oblique et revient lentement au centre avec un regard présent. |
+
+Les [quatorze exports mobiles](../../../jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/) et leurs [courbes éditables](../../../jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/mobile-intentions/) composent désormais un seul lot. Le schéma `motion_put` du MCP PSD2Live a servi à contrôler les fichiers éditables. Le même MOC3 v45.2 permet d’obtenir les poses et les appuis recherchés.
+
+**Recette Codex du 26 novembre 2026.** Le contrôle Core des dix clips préserve les appuis des chaussures et permet de comparer les poses intermédiaires à la tête, au visage et aux raccords du dessin maître. Une deuxième passe a redonné du déplacement à la confidence de Tendre B et recentré l’acquiescement de Rassurante A. La relecture de Rassurante a conservé un regard presque frontal pour les deux variantes.
+
+Les dix variantes finales ont été jouées séparément dans la PWA avec Chromium et WebGL en portrait 393 × 873, sur la même phrase française de 4,31 s synthétisée hors ligne. Chaque variante déclenche une seule motion avec la pose visible avant la voix. La bouche articule puis tient sa forme fermée jusqu’au fondu. Les tests représentatifs passent aussi sur Curieuse B en réponse courte de 1,64 s, Tendre B avec une pause PCM d’environ 0,91 s et l’interruption par une bascule de modèle. Les yeux peuvent se fermer complètement et le regard reste mobile derrière les masques. La recette matérielle Redmi est distincte de cette passe Chromium.
