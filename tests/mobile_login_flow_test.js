@@ -96,5 +96,7 @@ async function submit(value){
   assert(catalogue < assets.indexOf("/assets/seated-scene.js"), "seated scene sees the catalogue");
   assert(loader > assets.indexOf("/vendor/cubism4.min.js"), "model loader receives the complete SDK");
   assert(loader < assets.indexOf("/assets/avatar.js"), "renderer receives its selection loader");
+  assert(assets.indexOf("/assets/avatar-gestures.js") > assets.indexOf("/assets/avatar.js"),
+    "touch gestures load after the renderer");
   console.log("Mobile login OK: invalid/refused token loads zero app assets; authorized salon and deferred SDK");
 })().catch(e=>{console.error(e);process.exitCode=1});

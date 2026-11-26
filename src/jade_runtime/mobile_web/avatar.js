@@ -18,6 +18,8 @@
   let selectionQueue = Promise.resolve();
   let pendingSelection = null;
   let cleanupBlocked = false;
+  let standingCamera = null;
+  let framing = {x:0, y:0, zoom:1};
   let rendererState = Object.freeze({status:"idle", modelId:null, requestedId:"classic", message:""});
   let headIsolation = null;
   let seatedComposition = null;
@@ -216,6 +218,7 @@
   const avatar = {
     resize: () => resize(),
     selectModel,
+    getTouchFrame, isModelAt, moveView, zoomView, resetView,
     get state() { return rendererState; },
     get ready() { return Boolean(model); },
     get usesSeatedBody() { return Boolean(model && activeProfile?.presentation === "seated"); },
@@ -372,6 +375,179 @@
   // Neutral eye centres and eye spacing measured in the two shipped moc3 exports.
   const CLASSIC_CAMERA = {width:3840, height:4160, eyeX:1745, eyeY:871, eyeSpacing:365};
   const R21_EYES = {y:761 / 5000, spacing:289 / 3840};
+  // Solid areas of the published r21 canvas, in fractions of its width and height.
+  const R21_GRAB_AREAS = [
+    [.50, .15, .125, .12], [.50, .30, .110, .09], [.50, .48, .15, .11],
+    [.447, .73, .039, .19], [.543, .73, .039, .19],
+  ];
+  const R21_GRAB_DRAWABLES = new Set([
+    "JAD_R21_HAIR_AHOGE", "JAD_R21_RESTORED_HAIR_CAP", "JAD_R21_RESTORED_HAIR_BACK",
+    "JAD_R21_RESTORED_HAIR_LOCK_R", "JAD_R21_RESTORED_HAIR_LOCK_L",
+    "JAD_R21_RESTORED_EAR_R", "JAD_R21_RESTORED_EAR_L", "JAD_R21_RESTORED_FACE",
+    "JAD_R21_RESTORED_NECK", "JAD_R21_RESTORED_TORSO", "JAD_R21_ARM_L_WHOLE", "JAD_R21_ARM_R_WHOLE",
+    "JAD_R21_RESTORED_SKIRT", "JAD_R21_LEG_FOOT_L_CONTINUOUS", "JAD_R21_LEG_FOOT_R_CONTINUOUS",
+  ]);
+  const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
+
+  function permitsFraming() {
+    const shell = document.querySelector?.(".shell");
+    return shell?.dataset.view === "home" || shell?.classList.contains("is-room-only");
+  }
+
+  function framingLayout() {
+    const canvas = target.getBoundingClientRect?.();
+    const scene = room?.getBoundingClientRect?.();
+    if (!canvas?.width || !canvas.height || !scene?.width || !scene.height ||
+        !target.clientWidth || !target.clientHeight) return null;
+    const cssX = canvas.width / target.clientWidth;
+    const cssY = canvas.height / target.clientHeight;
+    const left = (Math.max(0, scene.left, canvas.left) - canvas.left) / cssX;
+    const top = (Math.max(0, scene.top, canvas.top) - canvas.top) / cssY;
+    const right = (Math.min(window.innerWidth || Infinity, scene.right, canvas.right) - canvas.left) / cssX;
+    const bottom = (Math.min(window.innerHeight || Infinity, scene.bottom, canvas.bottom) - canvas.top) / cssY;
+    if (right <= left || bottom <= top) return null;
+    return {canvas, cssX, cssY, left, top, right, bottom, width: right - left, height: bottom - top};
+  }
+
+  function activeFramingLayout() {
+    if (!standingCamera || rendererState.status !== "ready" || activeProfile?.id !== "next" ||
+        !permitsFraming() || document.hidden) return null;
+    return framingLayout();
+  }
+
+  function notifyFraming() {
+    if (typeof Event === "function") room?.dispatchEvent?.(new Event("jade-avatar-framing"));
+  }
+
+  function applyFraming(layout, commit = false) {
+    const base = standingCamera;
+    let {x, y, scale} = base;
+    if (layout && (framing.x || framing.y || framing.zoom !== 1)) {
+      x += framing.x * layout.width;
+      y += framing.y * layout.height;
+      scale *= framing.zoom;
+
+      // Keep the nearest solid part in reach. A bounding box alone would let the
+      // empty corner around Jade's shoulders or feet be the only part left onscreen.
+      const insetX = Math.min(30, layout.width / 2);
+      const insetY = Math.min(30, layout.height / 2);
+      let correctionX = 0, correctionY = 0, nearest = Infinity;
+      for (const [anchorX, anchorY] of R21_GRAB_AREAS) {
+        const px = x + (anchorX - .5) * base.width * scale;
+        const py = y + (anchorY - .5) * base.height * scale;
+        const dx = clamp(px, layout.left + insetX, layout.right - insetX) - px;
+        const dy = clamp(py, layout.top + insetY, layout.bottom - insetY) - py;
+        const distance = Math.hypot(dx, dy);
+        if (distance < nearest) {
+          nearest = distance;
+          correctionX = dx;
+          correctionY = dy;
+        }
+      }
+      x += correctionX;
+      y += correctionY;
+      if (commit) {
+        framing.x = (x - base.x) / layout.width;
+        framing.y = (y - base.y) / layout.height;
+      }
+    }
+    model.scale.set(scale);
+    model.position.set(x, y);
+    notifyFraming();
+  }
+
+  function getTouchFrame(layout = activeFramingLayout()) {
+    if (!layout) return null;
+    const {canvas, cssX, cssY} = layout;
+    const {width, height} = standingCamera;
+    const scale = model.scale.x;
+    const x = model.position.x, y = model.position.y;
+    // The interaction surface covers the painted character, including the hair's
+    // movement margin. The actual contact is checked against visible triangles.
+    const left = Math.max(layout.left, x - .22 * width * scale);
+    const top = Math.max(layout.top, y - .50 * height * scale);
+    const right = Math.min(layout.right, x + .22 * width * scale);
+    const bottom = Math.min(layout.bottom, y + .46 * height * scale);
+    if (right <= left || bottom <= top) return null;
+    return {left: canvas.left + left * cssX, top: canvas.top + top * cssY,
+      right: canvas.left + right * cssX, bottom: canvas.top + bottom * cssY};
+  }
+
+  function pointInMesh(x, y, vertices, indices) {
+    for (let i = 0; i + 2 < indices.length; i += 3) {
+      const a = indices[i] * 2, b = indices[i + 1] * 2, c = indices[i + 2] * 2;
+      const ax = vertices[a], ay = vertices[a + 1];
+      const abx = vertices[b] - ax, aby = vertices[b + 1] - ay;
+      const acx = vertices[c] - ax, acy = vertices[c + 1] - ay;
+      const area = abx * acy - aby * acx;
+      if (!area) continue;
+      const u = ((x - ax) * acy - (y - ay) * acx) / area;
+      const v = (abx * (y - ay) - aby * (x - ax)) / area;
+      if (u >= 0 && v >= 0 && u + v <= 1) return true;
+    }
+    return false;
+  }
+
+  function isModelAt(clientX, clientY) {
+    const layout = activeFramingLayout();
+    const frame = getTouchFrame(layout);
+    if (!frame || !Number.isFinite(clientX) || !Number.isFinite(clientY) ||
+        clientX < frame.left || clientX > frame.right || clientY < frame.top || clientY > frame.bottom) return false;
+    const scale = model.scale.x;
+    const x = ((clientX - layout.canvas.left) / layout.cssX - model.position.x) / (standingCamera.width * scale);
+    const y = ((clientY - layout.canvas.top) / layout.cssY - model.position.y) / (standingCamera.height * scale);
+    const cubism = model.internalModel?.coreModel?.getModel?.();
+    const {canvasinfo, drawables} = cubism || {};
+    if (canvasinfo?.PixelsPerUnit && drawables?.ids && drawables.indices && drawables.vertexPositions && drawables.opacities) {
+      const meshX = x * canvasinfo.CanvasWidth / canvasinfo.PixelsPerUnit;
+      const meshY = -y * canvasinfo.CanvasHeight / canvasinfo.PixelsPerUnit;
+      let knownModel = false;
+      for (let i = 0; i < drawables.ids.length; i++) {
+        if (!R21_GRAB_DRAWABLES.has(drawables.ids[i])) continue;
+        knownModel = true;
+        const vertices = drawables.vertexPositions[i], indices = drawables.indices[i];
+        if (drawables.opacities[i] > .08 && vertices?.length && indices?.length &&
+            pointInMesh(meshX, meshY, vertices, indices))
+          return true;
+      }
+      if (knownModel) return false;
+    }
+    // Portable r21 bundles may use other drawable names. Use the calibrated
+    // solid areas for those bundles rather than accepting the blank canvas.
+    return R21_GRAB_AREAS.some(([cx, cy, rx, ry]) => ((x + .5 - cx) / rx) ** 2 + ((y + .5 - cy) / ry) ** 2 <= 1);
+  }
+
+  function moveView(dx, dy) {
+    const layout = activeFramingLayout();
+    if (!layout || !Number.isFinite(dx) || !Number.isFinite(dy)) return false;
+    framing.x = (model.position.x - standingCamera.x + dx / layout.cssX) / layout.width;
+    framing.y = (model.position.y - standingCamera.y + dy / layout.cssY) / layout.height;
+    applyFraming(layout, true);
+    return true;
+  }
+
+  function zoomView(factor, clientX, clientY) {
+    const layout = activeFramingLayout();
+    if (!layout || !Number.isFinite(factor) || factor <= 0 ||
+        !Number.isFinite(clientX) || !Number.isFinite(clientY)) return false;
+    const zoom = clamp(framing.zoom * factor, .45, 2.5);
+    const ratio = zoom / framing.zoom;
+    if (ratio === 1) return true;
+    const x = (clientX - layout.canvas.left) / layout.cssX;
+    const y = (clientY - layout.canvas.top) / layout.cssY;
+    framing.x = (x + (model.position.x - x) * ratio - standingCamera.x) / layout.width;
+    framing.y = (y + (model.position.y - y) * ratio - standingCamera.y) / layout.height;
+    framing.zoom = zoom;
+    applyFraming(layout, true);
+    return true;
+  }
+
+  function resetView() {
+    if (!activeFramingLayout()) return false;
+    framing = {x:0, y:0, zoom:1};
+    applyFraming(null);
+    return true;
+  }
 
   function placeModel(scale, x, y, width, height) {
     if (activeProfile?.id === "next") {
@@ -380,7 +556,9 @@
       x += scale * (CLASSIC_CAMERA.eyeX - CLASSIC_CAMERA.width / 2);
       y += scale * (CLASSIC_CAMERA.eyeY - CLASSIC_CAMERA.height / 2)
         - nextScale * height * (R21_EYES.y - .5);
-      scale = nextScale;
+      standingCamera = {x, y, scale:nextScale, width, height};
+      applyFraming(permitsFraming() ? framingLayout() : null);
+      return;
     }
     model.scale.set(scale);
     model.position.set(x, y);
@@ -491,6 +669,8 @@
     modelLease = null;
     model = null;
     activeProfile = null;
+    standingCamera = null;
+    framing = {x:0, y:0, zoom:1};
     headIsolation = null;
     renderRunning = false;
     hasStartedRendering = false;

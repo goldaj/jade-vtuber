@@ -329,6 +329,64 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   assert.deepEqual(replacement.lastParameter,{id:"ParamMouthOpenY",value:0});
   assert.equal(replacement.expressions.length,0,"previous-model expressions are cleared on release");
 
+  const touch = await client({defaultId:"next"});
+  const standing = touch.models[0];
+  touch.shell.dataset.view = "home";
+  touch.room.dataset.room = "kitchen";
+  touch.target.getBoundingClientRect = () => ({left:12, top:42, right:402, bottom:732, width:390, height:690});
+  touch.room.getBoundingClientRect = touch.target.getBoundingClientRect;
+  const pose = () => [standing.position.x, standing.position.y, standing.scale.x];
+  touch.avatar.resize();
+  const initial = pose();
+  const eye = () => [12 + standing.position.x, 42 + standing.position.y - .35 * 5000 * standing.scale.y];
+  assert(touch.avatar.isModelAt(...eye()),"a contact on Jade's head can start a gesture");
+  const frame = touch.avatar.getTouchFrame();
+  assert(!touch.avatar.isModelAt(frame.left + 1, frame.top + 1),"blank corners cannot start a grab");
+  const visibleFaceMesh = {
+    ids:["JAD_R21_RESTORED_FACE"], opacities:[1], indices:[[0,1,2]],
+    vertexPositions:[[-.1,.4,.1,.4,0,.55]],
+  };
+  standing.internalModel.coreModel.getModel = () => ({canvasinfo:{CanvasWidth:3840,CanvasHeight:5000,PixelsPerUnit:3840},
+    drawables:visibleFaceMesh});
+  assert(touch.avatar.isModelAt(...eye()),"the hit test uses the visible Cubism triangle");
+  visibleFaceMesh.opacities[0] = 0;
+  assert(!touch.avatar.isModelAt(...eye()),"an invisible model mesh cannot start a grab");
+  delete standing.internalModel.coreModel.getModel;
+  const startPinch = eye();
+  assert(touch.avatar.zoomView(1.5, ...startPinch));
+  assert(Math.abs(standing.scale.x - initial[2] * 1.5) < 1e-9);
+  eye().forEach((coordinate, i) => assert(Math.abs(coordinate - startPinch[i]) < 1e-9,
+    "zoom keeps the character point under the centre of the fingers"));
+  assert(touch.avatar.moveView(11, 7));
+  eye().forEach((coordinate, i) => assert(Math.abs(coordinate - startPinch[i] - [11, 7][i]) < 1e-9,
+    "translation follows the finger"));
+  assert(touch.avatar.moveView(-1e4, -1e4));
+  const clipped = touch.avatar.getTouchFrame();
+  assert(clipped && clipped.left >= 12 && clipped.right <= 402 && clipped.top >= 42 && clipped.bottom <= 732,
+    "offscreen drag leaves a usable clipped frame");
+  assert([ [.50,.15], [.50,.30], [.50,.48], [.447,.73], [.543,.73] ].some(([x,y]) =>
+    touch.avatar.isModelAt(12 + standing.position.x + (x - .5) * 3840 * standing.scale.x,
+      42 + standing.position.y + (y - .5) * 5000 * standing.scale.y)),
+    "a solid part remains reachable when panning diagonally past the edges");
+  const adjusted = pose();
+  touch.shell.dataset.view = "chat";
+  touch.avatar.resize();
+  assert.equal(touch.avatar.getTouchFrame(), null, "mini-scenes do not expose touch framing");
+  assert.equal(touch.avatar.moveView(10, 10), false);
+  assert.notDeepEqual(pose(), adjusted);
+  touch.shell.classList.add("is-room-only");
+  touch.avatar.resize();
+  assert(touch.avatar.getTouchFrame(), "immersive framing works even from another tab");
+  touch.shell.classList.remove("is-room-only");
+  touch.shell.dataset.view = "home";
+  touch.avatar.resize();
+  pose().forEach((value, i) => assert(Math.abs(value - adjusted[i]) < 1e-9,
+    "the custom framing comes back on Accueil"));
+  assert(touch.avatar.resetView());
+  assert.deepEqual(pose(), initial, "Recentrer restores the exact original transform");
+  assert.equal(await touch.avatar.selectModel("classic"), true);
+  assert.equal(touch.avatar.getTouchFrame(), null, "classic is outside the touch feature");
+
   const hidden = await client({hidden:true});
   assert.equal(hidden.models.at(-1).autoUpdate,false);
   assert.equal(await hidden.avatar.selectModel("next"),true); await flush();

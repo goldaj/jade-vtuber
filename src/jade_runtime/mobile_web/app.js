@@ -1281,7 +1281,8 @@
   fullscreenButton.addEventListener("click", toggleRoomFullscreen);
   scene?.addEventListener("dblclick", event => {
     // Touch browsers can also emit a compatibility dblclick after pointerup.
-    if (event.defaultPrevented || event.button !== 0 || isSceneControl(event.target) ||
+    if (window.JadeAvatarGestures?.shouldIgnoreFullscreenTap?.(event) ||
+        event.defaultPrevented || event.button !== 0 || isSceneControl(event.target) ||
         event.sourceCapabilities?.firesTouchEvents || event.timeStamp - lastTouchTime < 800) return;
     event.preventDefault();
     void toggleRoomFullscreen();
@@ -1304,6 +1305,10 @@
   scene?.addEventListener("pointerup", event => {
     if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
     lastTouchTime = event.timeStamp;
+    if (window.JadeAvatarGestures?.shouldIgnoreFullscreenTap?.(event)) {
+      resetSceneGesture();
+      return;
+    }
     const pointer = scenePointer;
     scenePointer = null;
     if (!pointer || pointer.id !== event.pointerId || event.defaultPrevented ||

@@ -217,6 +217,25 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 /* The room gesture keeps native scrolling/pinch zoom, without double-tap zoom. */
 .room{touch-action:manipulation}
 
+#avatar-touch-zone{
+  position:absolute;z-index:3;touch-action:none;user-select:none;-webkit-touch-callout:none;
+  border-radius:18px
+}
+#avatar-touch-zone.is-grabbed{outline:2px solid #fffdf7;outline-offset:2px}
+#avatar-recenter{
+  position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:12px;
+  z-index:5;min-height:44px;padding:6px 12px;
+  background:#fffdf7ed;color:#28523b;border:1px solid #c9dfc8;border-radius:14px;
+  box-shadow:0 3px 14px #244c3424;font:inherit;font-size:.79rem;font-weight:700;cursor:pointer
+}
+#avatar-recenter:focus-visible{outline:3px solid #e9b943;outline-offset:2px}
+.shell.is-room-only #avatar-recenter{
+  left:calc(12px + env(safe-area-inset-left,0px))
+}
+#avatar-touch-zone[hidden],#avatar-recenter[hidden],
+.shell:not([data-view="home"]):not(.is-room-only) :is(#avatar-touch-zone,#avatar-recenter),
+.room:not([data-avatar-model="next"]) :is(#avatar-touch-zone,#avatar-recenter){display:none}
+
 /* Choose the shared scenery on Home only, leaving the mini-scenes unobstructed. */
 .room-picker{
   position:absolute;top:12px;left:12px;z-index:5;

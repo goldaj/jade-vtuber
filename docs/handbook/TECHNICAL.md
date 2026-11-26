@@ -84,6 +84,8 @@ Le chargeur détient les ressources d’un seul modèle à la fois, y compris ce
 
 Le sélecteur appelle `JadeConversation.stopForModelChange()` avant le remplacement. La PWA arrête la capture et les sources audio, annule la requête ou le duplex, et ignore les événements tardifs. La conversation peut être relancée manuellement quand la bascule se termine. `JadeAvatar.setIntent` choisit une seule variante r21 par réponse. Le paramètre de bouche reste piloté par l’enveloppe audio, avec fermeture à l’arrêt ou à la fin de la lecture. [Résultats et limites de validation](../operations/handoffs/2026-11-26-codex-mobile-r21.md)
 
+Sur l’Accueil et en plein écran, `avatar-gestures.js` écoute les pointeurs tactiles dans la zone du r21 et distingue les gestes consommés des appuis courts du plein écran. Le rendu applique le zoom et le déplacement par-dessus le cadrage de scène. Une limite conserve une partie saisissable dans la zone visible. Les gestes sont annulés au départ du modèle ou de la vue et le bouton **Recentrer** rétablit le cadrage de référence.
+
 **Modèle de sécurité :** aucune ouverture publique du port mobile, aucune CORS générale, aucun Funnel, pas de transit par le VPS trading. Le fait de posséder l'URL privée ne dispense pas du bon compte Tailscale et du token. Un code local sur le PC capable d'usurper l'en-tête sur loopback reste hors du modèle de confiance, ce qui rend l'isolation du PC importante.
 
 ## 7. Infra, opérations, limites et tests

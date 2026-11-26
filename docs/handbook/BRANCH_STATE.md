@@ -19,6 +19,7 @@ Le contrôleur privé Windows et le superviseur de processus PyCharm Run remplac
 
 ## PWA · Jade r21 et modèle classique (26/11/2026)
 
+- Sur l’Accueil et en plein écran, deux doigts zooment le r21. Un appui maintenu sur Jade permet de la saisir, de la déplacer et de la poser au relâchement. Le cadrage laisse une partie du modèle visible et **Recentrer** restaure la vue de référence. Les mini-scènes utilisent leur cadrage de base. [Gestes et recette](../operations/handoffs/2026-11-26-codex-mobile-gestures.md)
 - **Jade actuelle (r21 v45.1)** s’affiche au démarrage, debout dans la chambre et la cuisine. **Profil → Modèle de Jade** permet de retrouver Jade classique (r20), assise en chambre et debout en cuisine, puis de revenir au r21. Chaque nouvelle ouverture démarre sur le r21. Le r20 sert de repli si le r21 est indisponible.
 - Chaque bascule coupe le micro et le son et annule la réponse mobile en cours. Le chargeur libère le modèle sortant, ses textures et, en chambre classique, le corps assis, avant de charger le suivant. Profil affiche le résultat réel. Une libération incertaine bloque le chargement.
 - Le r21 joue son repos et une variante A/B selon chacune des sept intentions. La bouche suit l’audio joué. Le paquet livré via Git LFS sert par défaut. `JADE_MOBILE_SECOND_MODEL_DIR` peut désigner un paquet mobile de remplacement. [Contrat technique](TECHNICAL.md#sélection-du-modèle-mobile-26112026) · [Passation et recette](../operations/handoffs/2026-11-26-codex-mobile-r21.md)

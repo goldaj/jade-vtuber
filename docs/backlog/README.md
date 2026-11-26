@@ -27,7 +27,7 @@
 
 **Transferts du 23/11 : DEV-037 (NEW-29, sous-titres mobiles, P2) et DEV-038 (NEW-38, autonomie fonctionnelle, P1) sont À qualifier, sans développement lancé. Les deux anciennes idées ont été retirées du catalogue actif.**
 
-**Lot mobile du 26/11 :** [DEV-042](01-DEVELOPPEMENT.md#dev-042--zoom-et-déplacement-tactile-du-r21) (P1) couvre le zoom et le déplacement du r21. [DEV-043](01-DEVELOPPEMENT.md#dev-043--service-jade-indépendant-du-pc) et [DEV-044](01-DEVELOPPEMENT.md#dev-044--application-android-installable) (P2) couvrent la continuité sur VPS et le client Android. L’idée [UX-20](../ameliorations/06-PRODUIT-MOBILE.md#ux-20--réaction-aux-secousses-p3) (P3) couvre la secousse du téléphone. [Décisions et ordre proposé](../operations/handoffs/2026-11-26-codex-backlog-mobile.md)
+**Lot mobile du 26/11 :** [REC-041](02-RECETTE.md) (P1, ancienne DEV-042) couvre la recette Android du zoom et du déplacement du r21. [DEV-043](01-DEVELOPPEMENT.md#dev-043--service-jade-indépendant-du-pc) et [DEV-044](01-DEVELOPPEMENT.md#dev-044--application-android-installable) (P2) couvrent la continuité sur VPS et le client Android. L’idée [UX-20](../ameliorations/06-PRODUIT-MOBILE.md#ux-20--réaction-aux-secousses-p3) (P3) couvre la secousse du téléphone. [Décisions et ordre proposé](../operations/handoffs/2026-11-26-codex-backlog-mobile.md)
 
 **Quick wins engagés le 22/11 : DEV-027 (VIS-04) et DEV-028 (RTE-12) sont en développement sur `develop`.** **Élargissement validé le même jour : DEV-029 (VIS-07) en développement, DEV-030 (LAT-10) À faire.** Les idées prospectives correspondantes sont retirées de la liste active, sans duplication. La CI mémoire en cours de remise au vert est suivie séparément.
 
@@ -51,8 +51,8 @@
 
 | Type | Vue | Objet | Nombre actuel |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 31 |
-| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, dont les anciennes cartes DEV déplacées | 40 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 30 |
+| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, dont les anciennes cartes DEV déplacées | 41 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 16 |
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 12 |
 | **Total** | | **Cartes uniques dans la vue priorisée ; OPS-012 est classée sans suite, hors vue** | **99** |
@@ -169,7 +169,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 76 | DEV-029 | A | Hystérésis du rendu Live2D mobile et reprise neutre (VIS-07) | [DEV](01-DEVELOPPEMENT.md) |
 | 77 | DEV-030 | A | Harmonisation des délais TTS et lecture audio (LAT-10) | [DEV](01-DEVELOPPEMENT.md) |
 | 78 | DEV-038 | Transverse | Connaissance des capacités et initiative autonome de Jade (NEW-38, P1) | [DEV](01-DEVELOPPEMENT.md) |
-| 79 | DEV-042 | B | Zoomer et déplacer Jade r21 au toucher | [DEV](01-DEVELOPPEMENT.md#dev-042--zoom-et-déplacement-tactile-du-r21) |
+| 79 | REC-041 | B | Valider le zoom et le déplacement tactile de Jade r21 (ancienne DEV-042) | [REC](02-RECETTE.md) |
 
 ### P2 · 20 tâches
 

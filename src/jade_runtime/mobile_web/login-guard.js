@@ -78,6 +78,7 @@
         "/vendor/cubism4.min.js",
         "/assets/avatar-model-loader.js",
         "/assets/avatar.js",
+        "/assets/avatar-gestures.js",
       ]) {
         try { await loadScript(url); }
         catch (error) {

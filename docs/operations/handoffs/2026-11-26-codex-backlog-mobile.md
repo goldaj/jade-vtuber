@@ -25,5 +25,7 @@ Les tests documentaires vérifient l’intégrité des cartes, de leurs priorit�
 - **Utilisateur, résumé** Réserver au nouveau modèle le zoom avec les gestes habituels, puis permettre une saisie par appui de 1 à 2 s avec confirmation haptique, déplacement sous le doigt et placement au relâchement. Priorité P1.
 - **Utilisateur, résumé** Faire réagir le modèle en secouant le téléphone, avec l’effet d’un modèle secoué à la souris dans VTube Studio. Priorité P3.
 - **Assistant, synthèse** La P1 peut commencer sur la PWA. La continuité du service et le maintien d’un moteur actif unique représentent le changement le plus structurant. Trois cartes DEV et une idée P3 sont inscrites.
+- **Utilisateur, extrait** « je suis d'accord pour les deux points que tu rajoutes ; recentrer + bornage pour garde toujours une partie visible ». Le propriétaire autorise le développement de DEV-042 et précise ensuite « tous ces trucs c'est sur l'accueil et le plein écran. Pas sur les autres menus ».
+- **Utilisateur, extrait** « le bouton pour recentrer on le mettra sur le bas gauche de l'écran accueil et plein écran ».
 
 Chat actif du 26 novembre 2026. Heures individuelles indisponibles. Les échanges sont des extraits et des résumés, avec le rôle indiqué.

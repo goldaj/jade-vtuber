@@ -1,3 +1,8 @@
+## 2026-11-26 — Zoom et déplacement tactile de Jade r21
+
+- `avatar-gestures.js`, `app.js` et le salon gèrent le pincement à deux doigts, la saisie tactile après appui maintenu et le bouton Recentrer. La zone est réservée à l’Accueil et au plein écran avec le r21 actif. Les gestes consommés sont exclus du double appui.
+- `avatar.js` applique une transformation locale et bornée au r21 par-dessus le cadrage d’origine. Le gateway sert le module après la connexion et les deux workflows Node rejouent ses interactions. [Recette et limites](handoffs/2026-11-26-codex-mobile-gestures.md)
+
 ## 2026-11-26 — Jambes du r21 continues jusqu’au bord de la chambre
 
 - Sur l’Accueil en chambre, le décalage au-dessus du micro remontait aussi le bord inférieur du canvas WebGL. `jade-theme.css` prolonge la surface du r21 vers le bas de la valeur du décalage. `avatar.js` calcule toujours le zoom et la position de la tête à partir de la toile de cadrage. Le bord de la scène détermine ainsi le recadrage.
