@@ -3,7 +3,7 @@
   "FileReferences": {
     "Moc": "mobile/Jade_r21_mobile.moc3",
     "Textures": [
-      "Jade_r21_v45.4096/texture_00.png",
+      "mobile/profile-smile/texture_00.png",
       "Jade_r21_v45.4096/texture_01.png",
       "Jade_r21_v45.4096/texture_02.png"
     ],

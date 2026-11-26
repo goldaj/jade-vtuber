@@ -247,6 +247,15 @@
     return easePose(progress);
   }
 
+  function profileSmileOpening(core, opening, mouthForm) {
+    const yaw = Math.abs(core.getParameterValueById?.("ParamAngleX") ?? 0);
+    const turn = easePose(clamp((yaw - 11) / 18, 0, 1));
+    const smile = clamp(mouthForm / .26, 0, 1);
+    // Preserve the articulation curve, with less aperture at a turned
+    // smile's widest vowel. Small openings and straight-on views stay free.
+    return opening * (1 - .18 * turn * smile * opening ** 2);
+  }
+
   function earGestureAt(gesture, age, variant) {
     const keys = gesture.keys;
     const next = keys.findIndex(([time]) => time > age);
@@ -313,6 +322,7 @@
     const updateFace = () => {
       const now = performance.now();
       const weight = r21Reply ? replyPoseWeight(r21Reply, now) : 0;
+      let opening = mouth;
       if (earResponses.length) {
         // Read the same breath as the chest, after the SDK and physics. The
         // SDK restores parameters after drawing, so these offsets never stack.
@@ -336,6 +346,7 @@
         const openForm = pose.mouthAtFullOpen ?? pose.mouth;
         const mouthForm = pose.mouth + (openForm - pose.mouth) * mouth;
         core.setParameterValueById("ParamMouthForm", mouthForm, weight);
+        opening = profileSmileOpening(core, mouth, mouthForm * weight);
         core.addParameterValueById("ParamBrowLY", pose.browL, weight);
         core.addParameterValueById("ParamBrowRY", pose.browR, weight);
         if (acting) {
@@ -346,7 +357,7 @@
           core.multiplyParameterValueById("ParamEyeROpen", right, weight);
         }
       }
-      core.setParameterValueById("ParamMouthOpenY", mouth);
+      core.setParameterValueById("ParamMouthOpenY", opening);
     };
     internal.eyeBlink = undefined;
     internal.on?.("beforeMotionUpdate", resetMotionParameters);

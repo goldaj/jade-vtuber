@@ -1,3 +1,8 @@
+## 2026-11-26 — Sourires de trois-quarts du r21
+
+- La nouvelle page d’atlas mobile retouche la rangée de dents supérieure commune aux sourires. La bande ivoire est plus courte et rejoint l’ombre sous la lèvre, ce qui rétablit un contour continu dans les deux trois-quarts.
+- Le rendu mobile adoucit progressivement les grandes ouvertures d’un sourire lorsque la tête tourne. Les voyelles conservent leur dynamique, avec une ouverture intacte de face. [Correction et contrôle](handoffs/2026-11-26-codex-mobile-intentions.md#sourires-de-trois-quarts)
+
 ## 2026-11-26 — Dix variantes complètent le jeu du r21 mobile
 
 - Les deux gestes de chaque intention sont livrés dans le manifeste mobile, avec les courbes éditables PSD2Live. Neutre, Curieuse, Enthousiaste, Tendre et Rassurante disposent de nouveaux appuis, de mouvements de tête et de trajectoires de regard propres à chaque paire.

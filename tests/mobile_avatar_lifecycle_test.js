@@ -421,6 +421,7 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   assert.equal(drawCount,16,"one random draw per reply");
   nextDefault.avatar.setSpeaking(true);
   nextDefault.avatar.setMouth(.53);
+  r21.internalModel.coreModel.setParameterValueById("ParamAngleX", 25);
   r21.blinkOpening = 0;
   r21.internalModel.emit("afterMotionUpdate");
   r21.internalModel.emit("beforeModelUpdate");
@@ -429,6 +430,7 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   assert.equal(r21.parameters.get("ParamEyeROpen").value,0);
   delete r21.blinkOpening;
   assert.deepEqual(r21.lastParameter,{id:"ParamMouthOpenY",value:.53});
+  r21.internalModel.coreModel.setParameterValueById("ParamAngleX", 0);
   nextDefault.avatar.setSpeaking(false);
   nextDefault.avatar.setMouth(0);
   nextDefault.avatar.finishReply(true);
@@ -450,7 +452,22 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   nextDefault.avatar.setMouth(1);
   r21.internalModel.emit("beforeModelUpdate");
   assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:.26,weight:1},"open vowels soften the playful mouth");
-  nextDefault.avatar.setMouth(0);
+  function smileOpening(yaw, envelope) {
+    r21.internalModel.coreModel.setParameterValueById("ParamAngleX", yaw);
+    nextDefault.avatar.setMouth(envelope);
+    r21.internalModel.emit("beforeModelUpdate");
+    return r21.lastParameter.value;
+  }
+  assert.equal(smileOpening(0,1),1);
+  const leftProfile = smileOpening(-23,1);
+  assert(leftProfile > .85 && leftProfile < .90, "the strongest vowel is softened in three-quarter view");
+  assert.equal(smileOpening(23,1),leftProfile);
+  assert(smileOpening(23,.3) > .29, "small syllables remain visible");
+  const profileOpenings = [0,.25,.5,.75,1].map(envelope => smileOpening(30,envelope));
+  assert.equal(profileOpenings[0],0);
+  assert(profileOpenings.slice(1).every((opening,index) => opening > profileOpenings[index]),
+    "the profile adjustment preserves the volume dynamics");
+  smileOpening(0,0);
   assert.equal(await nextDefault.avatar.selectModel("classic"),true);
   const classic = nextDefault.models.at(-1);
   const neutralOnClassic = classic.neutral;
