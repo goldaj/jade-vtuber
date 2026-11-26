@@ -1,9 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-labelledby="title">
-<title>Jade</title><defs><linearGradient id="b" x2="1" y2="1">
-<stop stop-color="#4c3f77"/><stop offset="1" stop-color="#151027"/></linearGradient>
-<linearGradient id="c" x2="1" y2="1"><stop stop-color="#f2d6fa"/><stop offset=".7" stop-color="#a994ec"/><stop offset="1" stop-color="#77d5db"/></linearGradient></defs>
-<rect width="192" height="192" rx="45" fill="url(#b)"/>
-<path d="M96 24 125 72 167 96 125 119 96 168 68 119 25 96 68 72Z" fill="url(#c)"/>
-<circle cx="96" cy="96" r="19" fill="#1d1630" opacity=".75"/>
-<circle cx="96" cy="96" r="9" fill="#ece7ff"/>
+<title>Jade · fleurs de sa robe</title>
+<defs><linearGradient id="sage" x2=".9" y2="1"><stop stop-color="#c8dcc7"/><stop offset="1" stop-color="#85b18d"/></linearGradient><linearGradient id="gold" x2="1" y2="1"><stop stop-color="#fff7c5"/><stop offset=".55" stop-color="#f7d774"/><stop offset="1" stop-color="#b78b2e"/></linearGradient></defs>
+<rect x="1" y="1" width="190" height="190" rx="38" fill="url(#sage)" stroke="#5a875b" stroke-width="2"/>
+<rect x="8" y="8" width="176" height="176" rx="33" fill="none" stroke="url(#gold)" stroke-width="2"/>
+<path d="M22 117C47 33 130 33 171 64 M21 133C63 190 157 163 176 87" fill="none" stroke="url(#gold)" stroke-width="3"/>
+<g fill="#2f5d45"><path d="M73 99Q30 71 27 52Q63 58 73 99Z"/><path d="M107 115Q150 111 166 128Q131 144 107 115Z"/><path d="M128 66Q142 22 168 25Q164 61 128 66Z"/></g>
+<g fill="#fffdf7" stroke="#f8e9c0" stroke-width=".7">
+<g transform="translate(77 112)"><ellipse cy="-26" rx="18" ry="28"/><ellipse cy="-26" rx="18" ry="28" transform="rotate(72)"/><ellipse cy="-26" rx="18" ry="28" transform="rotate(144)"/><ellipse cy="-26" rx="18" ry="28" transform="rotate(216)"/><ellipse cy="-26" rx="18" ry="28" transform="rotate(288)"/></g>
+<g transform="translate(138 61) scale(.62)"><ellipse cy="-26" rx="18" ry="28"/><ellipse cy="-26" rx="18" ry="28" transform="rotate(72)"/><ellipse cy="-26" rx="18" ry="28" transform="rotate(144)"/><ellipse cy="-26" rx="18" ry="28" transform="rotate(216)"/><ellipse cy="-26" rx="18" ry="28" transform="rotate(288)"/></g>
+</g>
+<circle cx="77" cy="112" r="10" fill="#f7d774"/><circle cx="138" cy="61" r="7" fill="#f7d774"/>
+<g fill="#f7d774"><path d="m39 37 3-8 3 8 8 3-8 3-3 8-3-8-8-3Z"/><path d="m155 151 2-6 2 6 6 2-6 2-2 6-2-6-6-2Z"/></g>
 </svg>

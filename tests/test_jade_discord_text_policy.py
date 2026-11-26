@@ -59,6 +59,7 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
                    mentions=[SimpleNamespace(id=42)])
         selected = policy.observe(ping, parse_discord_message(ping), own_user_id=42)
         self.assertTrue(selected.force_reply)
+        self.assertTrue(selected.direct_request)
         self.assertEqual(selected.context[-1], "Alice : On se retrouve demain.")
         self.assertEqual(selected.text, "<@42> Tu en penses quoi ?")
 
@@ -105,6 +106,13 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn(code, str(followup.context))
         self.assertIn("[code masqué]", str(followup.context))
 
+    def test_direct_requests_are_distinct_from_ambient_group_participation(self):
+        policy = DiscordTextPolicy(auto_rate=0)
+        msg_dm = msg("Bonjour", guild=None)
+        direct = policy.observe(msg_dm, parse_discord_message(msg_dm), own_user_id=42)
+        self.assertTrue(direct.direct_request)
+        self.assertTrue(direct.private_channel)
+
     def test_dm_and_reply_to_jade_are_direct(self):
         policy = DiscordTextPolicy(auto_rate=0)
         dm = msg("Salut", ident=1, guild=None)
@@ -144,7 +152,9 @@ class TextPolicyTests(unittest.IsolatedAsyncioTestCase):
                                    clock=clock, rng=FixedRandom(0))
         prime_group(policy)
         a = msg("Comment ça marche ?", ident=1)
-        self.assertTrue(policy.observe(a, parse_discord_message(a), own_user_id=42).force_reply)
+        selected_a = policy.observe(a, parse_discord_message(a), own_user_id=42)
+        self.assertTrue(selected_a.force_reply)
+        self.assertFalse(selected_a.direct_request)
         b = msg("Pourquoi ?", ident=2)
         self.assertIsNone(policy.observe(b, parse_discord_message(b), own_user_id=42))
         clock.now += 181

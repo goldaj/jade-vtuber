@@ -1,7 +1,7 @@
 """Launch the owner's local Discord/mobile test profile in PyCharm on Windows.
 
 Private configuration is read on this PC, never embedded in the IDE project.
-The Python runtime remains in the debugger process, so breakpoints work.
+The Run tab owns one child runtime; debugger breakpoints are not preserved.
 """
 from __future__ import annotations
 
@@ -13,12 +13,32 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 from pathlib import Path
-import runpy
 import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 MODES = ("--live", "--voice", "--discord", "--discord-voice", "--avatar", "--mobile")
+# Accepted flags mirror main.py. A user-owned PyCharm Run configuration may
+# pass its exact modes through this wrapper rather than adopting the test preset.
+MODE_FLAGS = (
+    "--live", "--voice", "--mic", "--twitch", "--discord", "--vts",
+    "--http", "--discord-voice", "--avatar", "--mobile", "--all-channels",
+)
+
+
+def selected_modes(argv: list[str]) -> tuple[bool, tuple[str, ...]]:
+    """Return preflight-only and the requested Jade flags, preserving their order.
+
+    The historical shared test configuration has no arguments; keep its
+    existing preset. Explicit flags must never pick up an extra --avatar/mic.
+    """
+    parser = argparse.ArgumentParser(description="Profil PyCharm Jade géré à distance")
+    parser.add_argument("--preflight-only", action="store_true")
+    for flag in MODE_FLAGS:
+        parser.add_argument(flag, action="store_true")
+    args = parser.parse_args(argv)
+    explicit = tuple(flag for flag in argv if flag in MODE_FLAGS)
+    return args.preflight_only, explicit if explicit else MODES
 
 
 class LaunchError(Exception):
@@ -31,12 +51,20 @@ def check_develop(root: Path) -> None:
                                 capture_output=True, text=True, timeout=10, check=True)
     except (OSError, subprocess.SubprocessError):
         raise LaunchError("Impossible de verifier la branche Git de Jade.") from None
-    if result.stdout.strip() != "develop":
-        raise LaunchError("Le test PyCharm de Jade exige la branche develop.")
+    branch = result.stdout.strip()
+    # Optional local-only recipe before merge; never enables mobile branch switching.
+    test_ref = os.environ.get("JADE_PYCHARM_TEST_BRANCH", "").strip()
+    if branch != "develop" and not (test_ref == branch
+                                     and branch == "feat/jade-pycharm-remote-control-20261123"):
+        raise LaunchError("Le test PyCharm de Jade exige develop (ou sa branche d'essai autorisée).")
 
 
-def load_environment(env: dict[str, str]) -> None:
-    """Populate the established PC profile without displaying private values."""
+def load_environment(env: dict[str, str], *, preserve_runtime: bool = False) -> None:
+    """Load the owner's private mobile identity without leaking it.
+
+    For a custom Run configuration preserve application-specific settings from
+    the selected private .env instead of imposing the shared test profile.
+    """
     private = Path(env.get("JADE_PYCHARM_PRIVATE_DIR", r"D:\Codex\private\jade-runtime"))
     config_path = private / "develop-mobile.json"
     token_path = private / "develop-mobile.token"
@@ -51,6 +79,30 @@ def load_environment(env: dict[str, str]) -> None:
             raise ValueError
     except (OSError, ValueError, TypeError):
         raise LaunchError("Configuration privee Discord/mobile absente ou invalide sur ce PC.") from None
+
+    if preserve_runtime:
+        from src.utility.private_config import environ
+        # Keep the caller's environment and the selected private .env as the
+        # sources of truth. The profile's JSON/token are fallback values only.
+        env.setdefault("PYTHONUTF8", "1")
+        env.setdefault("PYTHONPYCACHEPREFIX", r"D:\Codex\caches\python")
+        env["JADE_SECRETS_FILE"] = str(secrets_path)
+        defaults = {
+            "JADE_MOBILE_ENABLED": "1",
+            "JADE_MOBILE_PUBLIC_ORIGIN": config["origin"],
+            "JADE_MOBILE_OWNER_LOGIN": config["owner"],
+            "JADE_MOBILE_TOKEN": token,
+            "JADE_MOBILE_PORT": "8766",
+            "JADE_MOBILE_VENDOR_DIR": r"D:\Jade\private\mobile-sdk",
+        }
+        for key, fallback in defaults.items():
+            env.setdefault(key, str(environ(key, fallback)))
+        # In particular do not force JADE_AUDIO_OUTPUT=none: the existing
+        # 'discord & mobile' setup may play sound on the Windows host.
+        ffmpeg = env.get("JADE_FFMPEG_DIR", r"D:\Codex\tools\ffmpeg-2025-02-20\bin")
+        tailscale = env.get("JADE_TAILSCALE_DIR", r"D:\Codex\tools\Tailscale")
+        env["PATH"] = os.pathsep.join((ffmpeg, tailscale, env.get("PATH", "")))
+        return
 
     env.update({
         "PYTHONUTF8": "1",
@@ -151,29 +203,23 @@ def technical_log(directory: Path):
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Profil local de test Jade pour PyCharm")
-    parser.add_argument("--preflight-only", action="store_true")
-    args = parser.parse_args()
+    preflight_only, modes = selected_modes(sys.argv[1:])
     check_develop(ROOT)
     with single_instance():
         check_other_runtime()
-        load_environment(os.environ)
+        load_environment(os.environ, preserve_runtime=any(flag in MODE_FLAGS for flag in sys.argv[1:]))
         os.chdir(ROOT)
-        preflight = subprocess.run([sys.executable, str(ROOT / "main.py"), "--preflight", *MODES],
+        preflight = subprocess.run([sys.executable, str(ROOT / "main.py"), "--preflight", *modes],
                                    check=False)
-        if preflight.returncode or args.preflight_only:
+        if preflight.returncode or preflight_only:
             return preflight.returncode
-        # Run in this interpreter, not in a subprocess invisible to PyCharm.
-        sys.argv = [str(ROOT / "main.py"), *MODES]
-        if str(ROOT) not in sys.path:
-            sys.path.insert(0, str(ROOT))
+        # The PyCharm Run tab stays alive while its single Jade child restarts.
+        # Direct Python debugger breakpoints are intentionally not supported.
+        from src.jade_runtime.remote_pycharm import PycharmManager
+        from src.utility.private_config import environ
+        token = str(environ("JADE_DEPLOY_SUPERVISOR_TOKEN", ""))
         log_dir = Path(os.environ.get("JADE_PYCHARM_PRIVATE_DIR", r"D:\Codex\private\jade-runtime")) / "logs"
-        with technical_log(log_dir):
-            try:
-                runpy.run_path(str(ROOT / "main.py"), run_name="__main__")
-            except Exception:
-                logging.getLogger("jade.pycharm").exception("Arret inattendu du programme Jade")
-                raise
+        PycharmManager(ROOT, token, log_dir=log_dir, flags=modes).run()
     return 0
 
 

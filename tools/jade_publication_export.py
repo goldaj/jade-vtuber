@@ -26,19 +26,42 @@ PUBLIC_PREFIXES = ("src/", "tests/", "config/profiles/")
 # Never include SDK vendor binaries, LFS model art or private configuration.
 MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/index.html",
+    "src/jade_runtime/mobile_web/salon.html",
+    "src/jade_runtime/mobile_web/login.css",
     "src/jade_runtime/mobile_web/styles.css",
+    "src/jade_runtime/mobile_web/jade-theme.css",
+    "src/jade_runtime/mobile_web/splash.js",
+    "src/jade_runtime/mobile_web/login-guard.js",
+    "src/jade_runtime/mobile_web/splash-jade.png",
+    "src/jade_runtime/mobile_web/icon-source-96.png",
     "src/jade_runtime/mobile_web/avatar.js",
+    "src/jade_runtime/mobile_web/avatar-gestures.js",
+    "src/jade_runtime/mobile_web/avatar-shake.js",
+    "src/jade_runtime/mobile_web/avatar-models.js",
+    "src/jade_runtime/mobile_web/avatar-model-loader.js",
     "src/jade_runtime/mobile_web/room-motion.js",
-    "src/jade_runtime/mobile_web/room-spring.webp",
+    "src/jade_runtime/mobile_web/seated-scene.js",
+    "src/jade_runtime/mobile_web/portrait-bedroom-motion.js",
+    "src/jade_runtime/mobile_web/head-isolation.js",
+    "src/jade_runtime/mobile_web/room-bedroom-portrait.avif",
+    "src/jade_runtime/mobile_web/jade-seated-body.avif",
+    "src/jade_runtime/mobile_web/room-kitchen.webp",
     "src/jade_runtime/mobile_web/intent-visuals.json",
+    "src/jade_runtime/mobile_web/r21-expressions/Blink.exp3.json",
+    "src/jade_runtime/mobile_web/r21-expressions/WinkL.exp3.json",
+    "src/jade_runtime/mobile_web/r21-expressions/WinkR.exp3.json",
+    "src/jade_runtime/mobile_web/r21-expressions/Surprised.exp3.json",
     "src/jade_runtime/mobile_web/app.js",
     "src/jade_runtime/mobile_web/duplex-client.js",
     "src/jade_runtime/mobile_web/manifest.webmanifest",
     "src/jade_runtime/mobile_web/sw.js",
     "src/jade_runtime/mobile_web/icon.svg",
 })
-ROOM_BACKGROUND = "src/jade_runtime/mobile_web/room-spring.webp"
-ROOM_BACKGROUND_SHA256 = "5b7217ff8c1351a22c9ccb51d76889b3a9bb3fe8b7894d7855e2cd4961fe3671"
+ROOM_BACKGROUND = "src/jade_runtime/mobile_web/room-bedroom-portrait.avif"
+ROOM_BACKGROUND_SHA256 = "9631e7bece4da1f2c7545e630af4b54e4323dffe57a5add5abc027704b33299c"
+SPLASH_SOURCE = "src/jade_runtime/mobile_web/splash-jade.png"
+ICON_SOURCE = "src/jade_runtime/mobile_web/icon-source-96.png"
+ICON_SOURCE_SHA256 = "6898ee1d8853948fb014f3f4e301916484960fc361963cfcf81df93e412a71ef"
 PUBLIC_TOOLS = frozenset({
     "tools/jade_publication_audit.py",
     "tools/jade_publication_export.py",
@@ -105,13 +128,41 @@ def create_preview(root: Path, dest: Path, paths: list[str], *, include_portrait
         sourcefile = root / source
         if not sourcefile.is_file() or not sourcefile.resolve().is_relative_to(root):
             raise ValueError("Source for public preview missing or outside checkout")
-        if sourcefile.stat().st_size > 2_000_000:
+        if sourcefile.stat().st_size > (8_000_000 if source == SPLASH_SOURCE else 2_000_000):
             raise ValueError("Oversized source excluded from public preview")
         if source == ROOM_BACKGROUND:
             image = sourcefile.read_bytes()
-            if (image[:4] != b"RIFF" or image[8:12] != b"WEBP"
+            if (image[4:12] != b"ftypavif"
                     or hashlib.sha256(image).hexdigest() != ROOM_BACKGROUND_SHA256):
                 raise ValueError("Mobile background digest does not match the reviewed source")
+        elif source == SPLASH_SOURCE:
+            # Exact owner-uploaded private PNG; never decode image as text.
+            import struct
+            image = sourcefile.read_bytes()
+            if (len(image) < 32 or image[:8] != b"\x89PNG\r\n\x1a\n"
+                    or image[12:16] != b"IHDR"):
+                raise ValueError("Invalid Jade splash PNG")
+            width, height = struct.unpack(">II", image[16:24])
+            if not (700 <= width <= 4096 and 1500 <= height <= 8192
+                    and height > width):
+                raise ValueError("Unexpected Jade splash dimensions")
+        elif source == ICON_SOURCE:
+            image = sourcefile.read_bytes()
+            if (not image.startswith(b"\x89PNG\r\n\x1a\n")
+                    or hashlib.sha256(image).hexdigest() != ICON_SOURCE_SHA256):
+                raise ValueError("Mobile icon does not match owner's approved source")
+        elif source in MOBILE_WEB_PUBLIC and source.endswith(".webp"):
+            image = sourcefile.read_bytes()
+            # Local kitchen artwork is explicitly allowlisted.
+            if (len(image) < 20 or len(image) > 500_000
+                    or image[:4] != b"RIFF" or image[8:12] != b"WEBP"):
+                raise ValueError("Invalid mobile room layer")
+        elif source in MOBILE_WEB_PUBLIC and source.endswith(".avif"):
+            # Keep visual artwork binary; never decode compressed bytes as text.
+            image = sourcefile.read_bytes()
+            if (len(image) < 32 or len(image) > 500_000
+                    or image[4:8] != b"ftyp" or image[8:12] != b"avif"):
+                raise ValueError("Invalid mobile seated illustration")
         elif scan_text(sourcefile.read_text(encoding="utf-8")):
             raise ValueError("Potential credential in preview source")
     portrait = _verified_portrait(root, paths) if include_portrait else None

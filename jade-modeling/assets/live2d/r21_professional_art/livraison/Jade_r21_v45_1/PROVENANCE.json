@@ -1,0 +1,64 @@
+{
+  "modele": "Jade r21",
+  "version_de_livraison": "45.1",
+  "dossier_installable": "Jade_r21_v45",
+  "outils": {
+    "edition_native": "Cubism PRO 5.3.05",
+    "lecture": "VTube Studio 1.35.10",
+    "courbes_editables": "PSD2Live"
+  },
+  "convention": "Les chemins du champ origine décrivent la provenance dans le projet de production. Les membres de la copie Git sont recensés dans SHA256SUMS.txt.",
+  "provenance": [
+    {
+      "fichiers": "Jade_r21_v45/ (hors profil .vtube.json)",
+      "origine": "vts_export/v45_1/Jade_r21_v45",
+      "detail": "Rig natif de parole v43, gestes v45 et page d’atlas des iris v45.1. Copie intégrale des 24 fichiers de cet export."
+    },
+    {
+      "fichier": "Jade_r21_v45/Jade_r21_v45.vtube.json",
+      "origine": "Réglages de suivi et de physique de la v45.1 validée.",
+      "detail": "Profil portable avec ses propres identifiants. Les vingt correspondances de suivi et les seize commandes reproduisent les réglages du modèle validé.",
+      "sha256": "fd19404256ae1c28791f01e84bc95f47cd44455450c5f007c02829752d1b3cde"
+    },
+    {
+      "fichier": "Edition/Jade_r21_v45_1_iris.cmo3",
+      "origine": "working_v005/Jade_r21_v45_1_iris.cmo3",
+      "sha256": "fc2e768aec679baaa6b2061dc7c25913822d022e2b1df6ceec1c97cbd36b20bc",
+      "detail": "CMO3 éditable de référence pour le dessin, la déformation et l’atlas de la v45.1. La référence au PSD source a été rendue portable dans la copie Git."
+    },
+    {
+      "fichier": "Edition/Jade_r21_v45_motions.psd2live",
+      "origine": "working_v005/Jade_r21_v45_motions.psd2live",
+      "sha256": "97407f808445f432e2c19def1f24c8fb4b04c89b27d914e592aeccd3bfacfb4e",
+      "detail": "Atelier d’animation v45. Les sources graphiques embarquées correspondent à l’import antérieur à la retouche des iris. La copie Git est préparée pour le partage. Les références de travail propres au poste sont retirées."
+    },
+    {
+      "fichiers": "Edition/intent_motions/*.psd2live-motions.json",
+      "origine": "intent_motions/",
+      "detail": "Courbes et tangentes éditables des sept paires."
+    },
+    {
+      "fichiers": "Sources/",
+      "origine": "Sources/Sources.json",
+      "detail": "Le manifeste des calques documente les sources graphiques et leur correspondance avec le modèle."
+    }
+  ],
+  "verification_modele_isole": {
+    "scenario": "Copie de Jade_r21_v45 dans un autre Live2DModels, hors de l’installation VTube Studio. Résolution de toutes les références locales, décodage des atlas et ouverture du MOC avec le Core livré par VTube Studio.",
+    "fichiers": 25,
+    "maillages": 93,
+    "parametres_du_moc3": 47,
+    "pages_atlas_4096": 3,
+    "groupes_physiques": 15,
+    "gestes": 14,
+    "expressions": 2,
+    "duree_repos_secondes": 36,
+    "raccourcis": 16,
+    "mappings_de_suivi": 20,
+    "observations": [
+      "Les sept intentions ont deux variantes, toutes accessibles par un raccourci actif.",
+      "Les paramètres des mouvements, des expressions et des entrées et sorties de physique existent dans le MOC.",
+      "Les deux maillages continus de jambe et de pied sont visibles sur les trois poses contrôlées. Les deux sprites de fermeture apparaissent à fermeture complète et sont masqués à mi-ouverture et à ouverture complète."
+    ]
+  }
+}

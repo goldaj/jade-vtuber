@@ -40,6 +40,22 @@ Les journaux conservent les décisions successives, même contradictoires. La sy
 
 Après toute nouvelle intervention, ajouter les échanges effectivement accessibles, avec leur rôle et leur fidélité. Utiliser les heures réelles seulement lorsqu’elles sont attestées ; ne pas dater rétroactivement un propos à partir de l’heure d’une commande.
 
+## Jade r21 par défaut dans la PWA le 26 novembre 2026
+
+Les décisions du propriétaire et les réponses de cadrage accessibles figurent dans la [passation du raccordement mobile](../../operations/handoffs/2026-11-26-codex-mobile-r21.md#échanges-accessibles). Heures individuelles indisponibles. La passation ne reprend ni les données privées ni les sorties d’outils.
+
+Les demandes suivantes de zoom et déplacement tactile, service indépendant sur VPS, application Android dédiée et réaction aux secousses figurent dans la [passation du lot mobile](../../operations/handoffs/2026-11-26-codex-backlog-mobile.md#échanges-accessibles), avec rôles distincts, extraits et synthèses.
+
+L’autorisation de développer le push-to-talk en maintien et les secousses est consignée dans la [passation mobile du 26 novembre](../../operations/handoffs/2026-11-26-codex-mobile-ptt-shake.md#échanges-accessibles).
+
+## Chambre portrait dans la PWA le 26 novembre 2026
+
+Le signalement du propriétaire et la réponse technique sont résumés dans la [passation de la chambre portrait](../../operations/handoffs/2026-11-26-codex-chambre-portrait.md). Aucune heure individuelle n’est attestée.
+
+## Préparation du modèle r21 le 25 novembre 2026
+
+[Échanges sur la reprise et les MCP](2026-11-25-modele-jade-mcp.md), résumés avec rôles distincts et heures individuelles indisponibles. La [passation opérationnelle](../../operations/handoffs/2026-11-25-codex-jade-r21-reprise.md) et le [plan approuvé](../../../jade-modeling/MODEL2D_MASTER_PLAN.md) décrivent l’état applicable.
+
 ## Décisions du 15 novembre 2026 : modèle 2D et intentions
 
 Le propriétaire a corrigé l'interprétation « modèle 3D » : Jade utilise bien un **modèle 2D Live2D**. Il autorise le branchement intention → modèle avec un toggle, demande une approche professionnelle multi-rôles et exige **deux réactions graphiques et deux représentations textuelles par intention**, puis **14 animations réellement différentes** une fois créées. Le lot de base sur la branche `feat/live2d-intent-expression-sync-20261115` utilise des expressions r20 existantes, et réserve les nouvelles motions à Codex jusqu'à validation complète. Cette synthèse ne prétend pas être le verbatim ni contenir des heures individuelles. Voir [passation Live2D](../gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).

@@ -55,6 +55,20 @@ class HTTPTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Réponse mobile".encode(), result)
         self.assertFalse(self.gateway.pending)
 
+    async def test_failure_has_bounded_explanation_only_after_authorization(self):
+        async def failed(messages):
+            raise ConnectionError("PRIVATE: personal email and API key")
+        self.echo.complete = failed
+        response = await self.request(key="token" * 9, value={"text": "Jade, aide-moi"})
+        self.assertIn(b"503 Service Unavailable", response)
+        payload = json.loads(response.split(b"\r\n\r\n", 1)[1])
+        self.assertEqual(payload["error"], "unavailable")  # Stable API contract
+        self.assertEqual(payload["incident_code"], "unavailable")
+        self.assertIn("indisponible", payload["message"])
+        self.assertNotIn("PRIVATE", str(payload))
+        self.assertNotIn("API key", str(payload))
+        self.assertFalse(self.gateway.pending)
+
     async def test_unrecognized_fields_never_enter_our_bot(self):
         result = await self.request(key="token"*9,
                                     value={"text": "Jade", "admin": True})

@@ -150,3 +150,23 @@ Les corrections historiques de CI sont conservées dans [l'audit DevOps](../hist
 ## Suivi des dépenses OpenAI sur mobile
 
 Configuration et limites : [guide des dépenses OpenAI](../operations/reference/OPENAI-COSTS.md).
+
+
+## DEV-036 · Rappels persistants et push Android (22/11/2026)
+
+**Architecture :** les rappels sont stockés côté PC dans le fichier privé jade-reminders.sqlite3 (voisin du chemin JADE_MEMORY_DB_PATH). Un ordonnanceur léger fonctionne tant que Jade est lancée avec le connecteur mobile/Discord ; aucun token OpenAI n'est utilisé pour déclencher une échéance. L'application Android ne reste pas active : le Service Worker est réveillé ponctuellement par les notifications push.
+
+**Préparation unique sur le PC :** dans le même environnement Poetry que Jade, installer la bibliothèque de transport Web Push maintenue (module Python pywebpush, avec py-vapid). Elle n'est pas intégrée au verrou Poetry actuel : un environnement neuf exige donc cette installation facultative explicite avant que push soit déclaré prêt.
+
+~~~powershell
+poetry run python -m pip install pywebpush
+poetry run python scripts/setup_web_push.py --directory D:/Jade/private
+~~~
+
+Le script refuse d'écraser une clé privée déjà existante. Il affiche **la clé publique** et le chemin du PEM privé, mais jamais le contenu de la clé privée. Dans JADE_SECRETS_FILE, renseigner exactement JADE_PUSH_VAPID_PUBLIC_KEY (clé retournée), JADE_PUSH_VAPID_PRIVATE_KEY (chemin absolu du PEM) et JADE_PUSH_VAPID_SUBJECT (un contact valide du type mailto:adresse@example.com). **Ne jamais committer ce PEM ni publier les subscriptions push.** Garder la même paire VAPID pendant toute la durée d'utilisation des abonnements ; une rotation exige une nouvelle inscription des téléphones.
+
+**Activation Android :** redémarrer Jade avec --live --mobile ou --all-channels, vérifier le VPN Tailscale et la PWA installée sur son URL HTTPS privée, puis ouvrir « Rappels et notifications » et toucher « Activer les notifications ». Accepter la permission Android/navigateur. La PWA transmet au PC la subscription chiffrée par le navigateur via l'API authentifiée ; la réception à écran fermé est assurée par l'OS et le fournisseur push compatible, non par un socket/timer vivant dans la page. Toucher la notification ouvre/focalise Jade, puis nécessite à nouveau le jeton privé pour lire le titre.
+
+**Recette sur le vrai téléphone :** créer un rappel à deux minutes via le panneau ou la conversation. Tester (a) PWA ouverte, (b) PWA quittée normalement, (c) téléphone verrouillé ; vérifier l'affichage système, l'ouverture du bon rappel, puis reporter et annuler. Redémarrer Jade avant une échéance et après une échéance ; contrôler les statuts. Tester également un rappel Discord dans le canal autorisé après association du compte, et la révocation des permissions. Ne jamais appeler un succès de transport « affiché sur l'écran » sans observation réelle.
+
+**Limites :** PC arrêté = aucun envoi jusqu'à sa reprise ; hors ligne/économiseur Android/arrêt forcé/permissions désactivées peuvent empêcher l'affichage. Les retries du serveur sont limités à 12 tentatives, et un succès signifie acceptation par un fournisseur push, pas preuve de lecture. Les notifications sont génériques, ne contiennent aucun texte privé dans le payload et ne nécessitent pas de micro ou de LLM actif. Pas de connexion Google Calendar/Outlook ni de récurrence pour DEV-036.

@@ -1,0 +1,37 @@
+{
+  "Type": "Live2D Expression",
+  "FadeInTime": 0.48,
+  "FadeOutTime": 0.48,
+  "Parameters": [
+    {
+      "Id": "ParamMouthForm",
+      "Value": -0.82,
+      "Blend": "VTS_Add"
+    },
+    {
+      "Id": "ParamEyeBallY",
+      "Value": -0.24,
+      "Blend": "VTS_Add"
+    },
+    {
+      "Id": "ParamBrowLY",
+      "Value": 0.16,
+      "Blend": "VTS_Add"
+    },
+    {
+      "Id": "ParamBrowRY",
+      "Value": 0.11,
+      "Blend": "VTS_Add"
+    },
+    {
+      "Id": "ParamBrowLAngle",
+      "Value": 0.84,
+      "Blend": "VTS_Add"
+    },
+    {
+      "Id": "ParamBrowRAngle",
+      "Value": 0.72,
+      "Blend": "VTS_Add"
+    }
+  ]
+}

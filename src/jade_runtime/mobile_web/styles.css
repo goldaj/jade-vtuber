@@ -46,7 +46,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
 }
 .room-plane {position:absolute;inset:0}
 .room-plane > img:first-child {display:block;width:100%;height:100%;object-fit:cover}
-.room-curtain,.room-shadow,.room-reflection,.room-steam {display:none}
 @supports (width: 1cqh) {
   .room-plane {
     inset:50% auto auto 50%;
@@ -54,128 +53,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
     aspect-ratio:4 / 3;
     transform:translate(-50%,-50%);
   }
-  .room-curtain,.room-shadow,.room-reflection,.room-steam {display:block}
-}
-/* No partially assembled layers during image loading, fallback, or reduced motion. */
-.room-curtain[hidden],.room-shadow[hidden],.room-reflection[hidden],.room-steam[hidden] {
-  display:none !important;
-}
-.room-curtain,.room-shadow {
-  position:absolute;
-  object-fit:fill;
-  pointer-events:none;
-  will-change:transform,opacity;
-}
-/* Textile crop x900..1162 / y66..362; pivot close to the fixed rings.
-   Neither this texture nor its transform contains window-sash geometry. */
-.room-curtain {
-  left:62.1547%;
-  top:6.0773%;
-  width:18.0939%;
-  height:27.255%;
-  transform-origin:61% 7%;
-  /* Extra silhouette guard against residual static sill pixels under lace. */
-  clip-path:polygon(49% 0%,100% 0%,100% 74%,91% 76%,74% 79%,58% 79%,48% 83%,38% 87%,28% 92%,15% 98%,3% 97%,0% 91%,12% 77%,29% 51%);
-}
-.room-shadow svg {
-  display:block;
-  width:100%;
-  height:100%;
-  overflow:visible;
-  filter:blur(5px);
-}
-.room-shadow .shadow-leaves {
-  fill:#78506b;
-  opacity:.48;
-}
-.room-shadow .shadow-branch {
-  fill:none;
-  stroke:#78506b;
-  stroke-width:7;
-  stroke-linecap:round;
-}
-.room-shadow-left {
-  left:19.7514%;
-  top:12.7993%;
-  width:26.7956%;
-  height:45.2118%;
-  transform-origin:58% 5%;
-}
-.room-shadow-right {
-  left:52.9696%;
-  top:36.5562%;
-  width:18.4392%;
-  height:42.7256%;
-  transform-origin:85% 6%;
-}
-.room-reflection {
-  position:absolute;
-  left:53%;
-  top:78%;
-  width:44%;
-  height:19%;
-  background:radial-gradient(ellipse, #fff2bc75, transparent 67%);
-  mix-blend-mode:screen;
-  pointer-events:none;
-  animation:room-sun 10.2s ease-in-out infinite;
-}
-.room-steam {
-  position:absolute;
-  left:25.05%;
-  top:38.64%;
-  width:8.01%;
-  height:18.88%;
-  pointer-events:none;
-  will-change:transform;
-}
-.room-steam svg {display:block;width:100%;height:100%;overflow:visible}
-.room-steam .wisp {
-  fill:none;
-  stroke:#fff9ee;
-  stroke-width:2.15;
-  stroke-linecap:round;
-  opacity:0;
-  filter:blur(.55px);
-  transform-box:fill-box;
-  transform-origin:50% 100%;
-}
-.room-steam .wisp-one {
-  animation:room-wisp-a 6.7s ease-in-out infinite;
-}
-.room-steam .wisp-two {
-  stroke-width:1.7;
-  animation:room-wisp-b 7.9s ease-in-out -2.1s infinite;
-}
-.room-steam .wisp-three {
-  stroke-width:1.4;
-  animation:room-wisp-a 8.9s ease-in-out -4.3s infinite;
-}
-.room-steam .wisp-four {
-  stroke-width:1.5;
-  animation:room-wisp-b 7.2s ease-in-out -3.6s infinite;
-}
-.room-art[data-paused] .room-steam .wisp,
-.room-art[data-paused] .room-reflection {
-  animation-play-state:paused;
-}
-@keyframes room-sun {
-  0%,100% {transform:translate3d(0,0,0) scale(1);opacity:.22}
-  47% {transform:translate3d(-11%,-7%,0) rotate(-3.5deg) scale(1.10);opacity:.78}
-}
-@keyframes room-wisp-a {
-  0% {transform:translate3d(-11%, 16%, 0) rotate(-8deg) scale(.68);opacity:0}
-  25% {opacity:.66}
-  63% {transform:translate3d(15%,-5%,0) rotate(8deg) scale(.94);opacity:.53}
-  100% {transform:translate3d(-17%,-23%,0) rotate(-9deg) scale(1.12);opacity:0}
-}
-@keyframes room-wisp-b {
-  0% {transform:translate3d(10%,17%,0) rotate(6deg) scale(.72);opacity:0}
-  30% {opacity:.61}
-  65% {transform:translate3d(-16%,-3%,0) rotate(-8deg) scale(.96);opacity:.47}
-  100% {transform:translate3d(19%,-20%,0) rotate(12deg) scale(1.10);opacity:0}
-}
-@media (prefers-reduced-motion:reduce) {
-  .room-curtain,.room-shadow,.room-reflection,.room-steam {display:none !important}
 }
 #avatar-container{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   overflow:hidden;z-index:1;pointer-events:none}
@@ -272,3 +149,120 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
 .billing-panel p {margin:8px 0}
 .billing-panel a {color:#e7c4f9}
 .billing-panel button {background:#c8b0e7;color:#21182f;border:0;padding:8px;border-radius:8px}
+
+/* DEV-032 : la pièce jointe est un bouton sans HTML issu du modèle. */
+.attachment-button {display:block;max-width:100%;margin:9px 0 0;padding:9px 10px;
+  white-space:normal;overflow-wrap:anywhere;text-align:left;background:#5d4b77;
+  color:#fff;border:1px solid #bfa6db;border-radius:10px;font-size:.8rem}
+.attachment-button:focus-visible {outline:2px solid #e8caff;outline-offset:2px}
+
+/* DEV-036: reminder controls stay readable in a narrow Android PWA. */
+#reminders-panel #reminders-list {margin:8px 0;padding-left:20px}
+#reminders-panel #reminders-list li {margin:9px 0;line-height:1.5;overflow-wrap:anywhere}
+#reminders-panel #reminders-list li button {margin:4px 5px 2px 0;padding:5px 8px}
+#reminders-panel #reminder-form {display:grid;grid-template-columns:1fr;gap:7px;margin:10px 0}
+#reminders-panel #reminder-form button {grid-column:1}
+#reminders-panel #reminder-title,#reminders-panel #reminder-date {width:100%;box-sizing:border-box}
+#reminders-panel #notification-status,#reminders-panel #reminder-status {overflow-wrap:anywhere}
+
+/* Kitchen-specific accents. Coordinates follow the fixed 4:3 room-plane,
+   not the viewport. No movement or re-rendering of the kitchen photograph. */
+.kitchen-effects{display:none;position:absolute;inset:0;pointer-events:none;overflow:hidden}
+@supports (width:1cqh){.kitchen-effects{display:block}}
+.kitchen-effects[hidden]{display:none!important}
+.kitchen-steam,.kitchen-vine,.kitchen-sunlight{position:absolute;pointer-events:none}
+.kitchen-steam{left:70.4%;top:28.2%;width:7.2%;height:14.1%}
+.kitchen-steam svg,.kitchen-vine{display:block;width:100%;height:100%;overflow:visible}
+.kitchen-wisp{
+ fill:none;stroke:#fff9ef;stroke-width:2.2;stroke-linecap:round;
+ opacity:0;transform-box:fill-box;transform-origin:50% 100%;
+ animation:kitchen-wisp-rise 6.9s ease-in-out infinite;
+}
+.kitchen-wisp-two{stroke-width:1.7;animation-duration:8.2s;animation-delay:-3.3s}
+.kitchen-wisp-three{stroke-width:1.35;animation-duration:7.8s;animation-delay:-5.4s}
+.kitchen-vine{fill:#568438;opacity:.70;transform-origin:50% 0;will-change:transform}
+.kitchen-vine .kitchen-stem{fill:none;stroke:#618748;stroke-width:2.2;stroke-linecap:round}
+.kitchen-vine-window{left:8%;top:11.5%;width:8.4%;height:20.2%;animation:kitchen-leaf-sway 9.4s ease-in-out -1.9s infinite}
+.kitchen-vine-fridge{left:82.6%;top:12.3%;width:7.9%;height:23.3%;animation:kitchen-leaf-sway 11.3s ease-in-out -5.6s infinite reverse}
+.kitchen-vine-shelf{left:58.7%;top:25.2%;width:4.6%;height:17.1%;opacity:.58;animation:kitchen-leaf-sway 7.8s ease-in-out -3.1s infinite}
+/* Floor-only light gradient. The wood grain underneath remains entirely still. */
+.kitchen-sunlight{inset:0;overflow:hidden;clip-path:polygon(0 65%,30% 62%,67% 61%,100% 61%,100% 100%,0 100%)}
+.kitchen-sunlight::before{
+ content:"";position:absolute;inset:-2%;
+ background:
+   radial-gradient(ellipse 27% 14% at 33% 85%,rgba(255,247,207,.55),transparent 100%),
+   radial-gradient(ellipse 23% 13% at 69% 71%,rgba(255,241,191,.48),transparent 100%),
+   radial-gradient(ellipse 27% 12% at 9% 91%,rgba(255,239,183,.36),transparent 100%);
+ mix-blend-mode:screen;opacity:.19;animation:kitchen-sun-breathe 19.2s ease-in-out infinite
+}
+@keyframes kitchen-wisp-rise{
+ 0%{transform:translate3d(-7%,16%,0) scale(.73);opacity:0}
+ 23%{opacity:.36}
+ 61%{transform:translate3d(10%,-6%,0) scale(.93);opacity:.25}
+ 100%{transform:translate3d(-9%,-23%,0) scale(1.09);opacity:0}
+}
+@keyframes kitchen-leaf-sway{
+ 0%,100%{transform:translate3d(0,0,0) rotate(-1.3deg)}
+ 35%{transform:translate3d(.7%,0,0) rotate(1.8deg)}
+ 68%{transform:translate3d(-.4%,0,0) rotate(-.7deg)}
+}
+@keyframes kitchen-sun-breathe{
+ 0%,100%{transform:translate3d(0,0,0);opacity:.14}
+ 46%{transform:translate3d(1.3%,-.6%,0);opacity:.38}
+ 73%{transform:translate3d(.3%,.2%,0);opacity:.22}
+}
+.room-art[data-paused] .kitchen-wisp,
+.room-art[data-paused] .kitchen-vine,
+.room-art[data-paused] .kitchen-sunlight::before{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.kitchen-effects{display:none!important}}
+
+
+/* PyCharm Run remote admin: readable, scrollable mobile console. */
+.deployment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: .65rem;
+  margin: .75rem 0;
+}
+.deployment-actions button { flex: 1 1 11rem; min-height: 2.8rem; }
+.deployment-console-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+.deployment-console-head h3 { margin: 0; flex: 1 1 100%; font-size: 1rem; }
+.deployment-console-head select,
+.deployment-console-head button { flex: 1 1 auto; max-width: 100%; }
+.deployment-console {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 10rem;
+  height: min(42dvh, 24rem);
+  padding: .85rem;
+  overflow: auto;
+  color: #d8e8d9;
+  background: #13241b;
+  border: 1px solid rgba(130, 185, 148, .35);
+  border-radius: .65rem;
+  font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+}
+
+
+/* Owner-only local administration console: compact and readable on Android. */
+.deployment-log-heading{display:flex;justify-content:space-between;align-items:center;gap:.65rem;margin-top:1rem}
+.deployment-log-heading h3{font-size:1rem;margin:0}
+.deployment-log-controls{display:flex;align-items:center;flex-wrap:wrap;gap:.6rem;font-size:.83rem}
+.deployment-log-controls select{max-width:13rem;width:auto;min-height:2.2rem}
+.deployment-log-controls label{display:inline-flex;align-items:center;gap:.35rem}
+.deployment-log-controls input[type="checkbox"]{width:auto;margin:0}
+.deployment-logs{box-sizing:border-box;width:100%;height:min(40dvh,360px);margin:.5rem 0;padding:.75rem;
+  border:1px solid #506a5e;border-radius:.6rem;background:#0f1715;color:#d4e6d7;
+  font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;overflow:auto;
+  white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}

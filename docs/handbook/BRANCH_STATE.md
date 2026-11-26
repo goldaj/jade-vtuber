@@ -1,4 +1,49 @@
+## Contrôle distant PyCharm sur develop (24 novembre 2026)
+
+Le contrôleur privé Windows et le superviseur de processus PyCharm Run remplacent le déploiement mobile par changement de branche. Le mode Debug n'est plus pris en charge dans cette configuration, et la branche develop est fixe pour les mises à jour. Log live et page de secours disponibles via Tailscale Serve /control ; tâche à l'ouverture de session et raccourci invisible prévus. **Intégré sur develop ; redémarrage simple confirmé, mise à jour à recetter.** Le fast-forward conserve les modifications locales non conflictuelles, refuse les écrasements et expose les erreurs Git, le SHA distant du dernier fetch et le résultat distinct du redémarrage. Voir [guide](../operations/reference/REMOTE-PYCHARM-CONTROL-20261123.md).
+
 # État de develop — fonctionnalités codées
+
+## PWA · Décors interchangeables Chambre/Cuisine (22/11/2026)
+
+- Le bouton « Décor », disponible **uniquement dans l’Accueil fenêtré**, permet de choisir **Chambre** ou **Cuisine**, sans remonter le modèle Live2D. Le choix reste commun à tous les onglets et persiste dans l’URL locale via `?room=kitchen` ; l’absence du paramètre conserve la chambre par défaut. Le sélecteur est absent des mini-scènes Chat/Rappels/Profil et de tout plein écran immersif.
+- Chambre : le portrait vertical `room-bedroom-portrait.avif` s’affiche dès le chargement du salon. Son cadrage et son animation suivent la vue active pendant que le modèle charge, se remplace ou échoue. Cuisine : le fond `room-kitchen.webp` reste statique avec trois types de détails animés **propres à la cuisine** : vapeur discrète de la bouilloire, fins rameaux végétaux sur trois retombées et lumière solaire lente au sol. Ce sont des calques SVG/CSS transparents ajoutés au premier plan ; les plantes peintes, armoires, fenêtre et parquet de la photo ne sont jamais déplacés ni déformés.
+- Le passage en cuisine suspend la boucle JavaScript de la chambre. Les effets CSS de la cuisine s’arrêtent hors écran ou onglet, ou quand le mouvement réduit est actif. La chambre utilise des mouvements adoucis selon cette préférence. À vérifier sur Android : alignement des trois rameaux et de la vapeur, qualité de l'effet solaire, portrait/paysage et non-régression chambre.
+
+### Mini-scènes et double appui (26/11/2026)
+
+- Chat, Rappels et Profil donnent la priorité au sommet de la tête et au visage ; le bas du personnage peut être coupé. La chambre conserve le repère commun du corps assis et de la tête animée, avec une limite de taille sur les cadres courts. Le fond et ses animations couvrent ensemble toute la miniature. La cuisine et le repli debout ancrent le modèle entier sous le bord supérieur.
+- Un **double clic souris ou double appui tactile/stylet sur la scène** ouvre le plein écran depuis les quatre onglets ; le même geste le ferme et restitue l’onglet de départ. Le bouton dédié reste disponible. Les contrôles, le défilement, les glissements et les gestes à plusieurs doigts sont exclus ; un événement souris synthétique après le tactile ne provoque pas de seconde bascule.
+- Le plein écran natif et son repli CSS utilisent le même chemin. Le modèle reste monté et le microphone conserve son état. [Passation, mesures de cadrage et validation](../operations/handoffs/2026-11-26-chatgpt-mobile-scenes.md).
+
+
+## PWA · Jade r21 et modèle classique (26/11/2026)
+
+- Le micro mobile enregistre pendant l’appui et termine l’énoncé au relâchement. Le WebSocket reçoit les trames pendant la prise lorsque la connexion est prête. Dans Profil, **Réagir aux secousses** permet au r21 d’accompagner une secousse volontaire sur l’Accueil et en plein écran. [Fonctionnement et recette](../operations/handoffs/2026-11-26-codex-mobile-ptt-shake.md)
+- Sur l’Accueil et en plein écran, deux doigts zooment le r21. Un appui maintenu sur Jade permet de la saisir, de la déplacer et de la poser au relâchement. Le cadrage laisse une partie du modèle visible et **Recentrer** restaure la vue de référence. Les mini-scènes utilisent leur cadrage de base. [Gestes et recette](../operations/handoffs/2026-11-26-codex-mobile-gestures.md)
+- **Jade actuelle (r21, révision mobile v49.1)** s’affiche au démarrage, debout dans la chambre et la cuisine. **Profil → Modèle de Jade** permet de retrouver Jade classique (r20), assise en chambre et debout en cuisine, puis de revenir au r21. Chaque nouvelle ouverture démarre sur le r21. Le r20 sert de repli si le r21 est indisponible.
+- Chaque bascule coupe le micro et le son et annule la réponse mobile en cours. Le chargeur libère le modèle sortant, ses textures et, en chambre classique, le corps assis, avant de charger le suivant. Profil affiche le résultat réel. Une libération incertaine bloque le chargement.
+- Le r21 tire un geste A ou B une fois par réponse. Il prend une expression avant la voix, la garde durant les pauses et la tient environ 600 ms après la lecture. L’audio pilote l’ouverture de la bouche, l’intention pilote sa forme. Le paquet livré via Git LFS sert par défaut et `JADE_MOBILE_SECOND_MODEL_DIR` peut désigner un paquet de remplacement. [Contrat technique](TECHNICAL.md#sélection-du-modèle-mobile-26112026) · [Recette des intentions](../operations/handoffs/2026-11-26-codex-mobile-intentions.md)
+- Le r21 mobile dispose de la course de regard élargie du rig v45.2 et de deux gestes révisés par intention. Le regard, les paupières, les sourcils et les appuis composent la pose durant la phrase. Le vrai clignement et l’articulation restent indépendants. [Recette des variantes](../operations/handoffs/2026-11-26-codex-mobile-intentions.md#quatrième-étape--dix-variantes-restantes)
+- Les oreilles du r21 suivent le souffle avec un léger retard, puis jouent un mouvement propre à chacune des sept intentions. Elles gardent l’attitude pendant la parole et reviennent progressivement à la respiration. [Recette des oreilles](../operations/handoffs/2026-11-26-codex-mobile-oreilles-r21.md)
+
+## Splash de lancement PWA (22/11/2026)
+
+- Image propriétaire `splash-jade.png` servie et affichée plein écran au lancement de l'interface HTML, puis retirée automatiquement. Sur la **connexion par jeton**, la même image reste nette en fond jusqu'à l'entrée dans le salon ; une carte compacte légèrement sous le centre affiche seulement l'icône, « Espace privé de Jade », « Jeton d'accès », le champ et « Entrer dans le salon ». Le formulaire et l'authentification ne changent pas. Android contrôle toujours **la phase native préalable**, constituée de l'icône, du nom et du fond du manifeste. L'icône SVG est ajoutée comme ressource vectorielle alternative ; les PNG restent des fallbacks à source raster 96 px.
+- Chargement sans appel IA ni capture, UI/Live2D intacts. Recette sur Redmi Note 13 non encore réalisée.
+
+## PWA · Nouvelle DA Jade inspirée de la robe (22/11/2026)
+
+- **Maquette propriétaire retenue :** dernier concept botanique avec Jade visible dans sa chambre, icône florale aux deux fleurs, vert sauge / vert profond / blanc crème / jaune doux. Nouveau thème CSS séparé de la scène Live2D et des animations.
+- **Navigation mobile (révision 22/11) :** quatre onglets : Accueil avec scène et saisie sans rappels, Chat, Rappels (liste visible, formulaire de création replié, radios pour le push Android), Profil (boutons de redémarrage mieux séparés). Activités supprimé. L'icône florale SVG est rétablie dans l'en-tête. Le plein écran montre Jade et son décor, le bouton de sortie et le microphone centré en bas (même contrôle vocal, état et préférence audio conservés), et conserve le modèle Live2D monté ; repli immersif CSS si Fullscreen API indisponible.
+- **Portée :** UI de la PWA mobile et icônes installables ; pas de changement des fonctionnalités Discord ou du modèle Live2D ni des images de décor existantes. Validation physique Android et rendu dépendant de la licence SDK restent à recetter.
+
+## DEV-036 · Rappels persistants et notifications Web Push Android (22/11/2026)
+
+- **Présent dans le code develop :** rendez-vous et rappels internes stockés dans la base privée jade-reminders.sqlite3 ; outil modèle pour créer/lister/corriger/annuler, avec autorisation propriétaire sur PWA et compte Discord lié ; scheduler indépendant des appels OpenAI et reprise des échéances après redémarrage.
+- **PWA :** panneau des rappels, permission explicite Web Push, inscription et désinscription, service worker qui reçoit un identifiant opaque, notification générique et ouverture/focalisation du rappel détaillé après authentification.
+- **Conditions :** pywebpush + clés VAPID hors Git, PC allumé et en ligne, téléphone/navigateur compatibles, permissions actives. Push accepté n'est pas un affichage prouvé ; fermeture forcée, optimisation batterie et coupures réseau peuvent empêcher la réception.
+- **Preuve de recette :** aucun essai physique Android ou livraison push réelle dans cette session. DEV-036 reste En cours ; calendrier Google/Outlook, récurrence et exécution conversationnelle Android permanente non implémentés.
 
 **Référence :** sources de `goldaj/jade-vtuber`, état préparé pour `develop` sur la PR #34 (21 novembre 2026). **Code raccordé = fonctionnalité implémentée** ; la recette Android/Discord physique reste indépendante, et la configuration privée du PC peut remplacer les valeurs par défaut.
 
@@ -10,9 +55,25 @@
 - **REC-035 (ex DEV-025) :** signaux d'apartés ; discussions multi-fils non pleinement reconnues.
 - **REC-036 (ex DEV-026) :** personnalité mémorielle corrigible ; évolution expérientielle plus profonde différée P3.
 - **REC-037 (ex DEV-020) :** superviseur local Windows et administration mobile ; pas de recette physique.
-- **DEV-010** : décor statique tant que calques manquent ; **OPS-015** : inventaire sans comparaison artistique sémantique. Les deux restent **À faire**.
+- **DEV-010** : décor mobile animé en calques et validé par le propriétaire, **Done** ; **OPS-015** : inventaire artistique **Bloqué** dans l'attente de tokens Codex.
 
-**Tous les sept REC restent À valider**, pas `Done`. [Audit](../operations/handoffs/2026-11-22-audit-technique-fonctionnel-ci-pr38.md).
+**REC-031/032/033/034 sont Done après validation du propriétaire ; REC-035/036/037 restent À valider.** Les réserves historiques sont détaillées dans l'[audit](../operations/handoffs/2026-11-22-audit-technique-fonctionnel-ci-pr38.md) et dans la vue REC.
+
+## Quick wins VIS-04 / RTE-12, développés le 22 novembre 2026
+
+- **DEV-027, Live2D mobile :** la PWA coupe le ticker PixiJS et l'auto-actualisation du modèle quand l'onglet est caché ou le composant démonté ; pour l'avatar hors viewport, **DEV-029 (VIS-07)** introduit désormais une grâce de **6,5 secondes** avant la pause. Le dialogue, la voix et les connecteurs restent actifs. L'absence d'IntersectionObserver est gérée ; reprise sans nouveau modèle ni relance de l'Idle, et expression visuelle neutralisée après une vraie pause. La batterie/FPS Android ne sont pas encore mesurés réellement.
+- **DEV-028, livraison :** les destinations initialement planifiées sont distinctes des événements `delivery_evidence` : confirmation d'acceptation par l'API Discord texte, fin de lecture ffplay ou consommation audio Discord. Les redirections mobiles/HTTP et Twitch sans accusé réel ne sont jamais présentées comme livrées ; aucun statut n'affirme que l'utilisateur a entendu le son. Pas de contenu privé dans ces nouvelles preuves.
+- Les tests et conditions de recette sont dans [la passation](../operations/handoffs/2026-11-22-chatgpt-vis04-rte12.md) et la [backlog DEV](../backlog/01-DEVELOPPEMENT.md). **Statut de recette réel à vérifier avant Done.**
+
+**DEV-030 (LAT-10, P1) a été inscrit dans la backlog au statut À faire** ; aucun timeout vocal n'a été modifié. Voir la [passation VIS-07/LAT-10](../operations/handoffs/2026-11-22-vis07-lat10-quickwins.md).
+
+## Explications d'indisponibilité NEW-20 (DEV-031, 22 novembre 2026)
+
+- **Fonctionnel :** erreurs utilisateur explicites (délai, connexion, saturation, autorisation, service) décrites en français sans appeler le LLM ; aucune assertion de livraison ou de résolution non confirmée.
+- **Discord texte :** uniquement demande directement adressée à Jade, message incident dans le salon/MP d'origine si le tour a échoué avant la première tentative de livraison. Une réponse déjà engagée, un tour spontané ou annulé n'est jamais doublé ; échec du transport d'incident sans nouvelle tentative.
+- **Mobile / HTTP local :** JSON d'erreur authentifié enrichi sans rompre les anciens champs ; le client affiche le motif et garde le texte lorsque seul l'audio échoue.
+- **Prudence :** pas d'incident vocal payant envoyé en Discord/Twitch/OBS, pas d'intelligence factice du LLM sur une opération qu'il n'a pas vue. Le comportement détaillé et les limites sont décrits dans la [passation](../operations/handoffs/2026-11-22-new20-incidents-and-new25-retirement.md). **Recette matérielle encore requise avant Done.**
+- **Catalogue :** NEW-25 est retirée par décision explicite, aucune autre proposition multilingue active trouvée. Cette décision n'altère pas la langue française existante de Jade.
 
 ## Recherche web facultative (REC-038, 22 novembre 2026)
 
@@ -49,7 +110,7 @@
 3. **Concurrence :** l'orchestrateur attend la fin du tour et de sa diffusion pour avancer, même si la curation et les connecteurs peuvent travailler à côté.
 4. **Mémoire :** rappels par identité/salon et autres portées liées **uniquement en privé** ; sélection lexicale locale et curation groupée intégrées, mais pas encore de préchargement de présence L1/L2, index FTS approfondi ni de recherche sémantique profonde. La fenêtre SQLite 24 h reste intacte.
 5. **Mobile :** WebSocket duplex réseau intégré (PCM entrant par fragments, STT après fin de l'énoncé et sortie TTS progressive) ; ce n'est **pas** une conversation OpenAI Realtime audio continu, ni un APK natif. Tailscale Serve/Chrome Android et vraie latence restent à recetter.
-6. **Graphique :** l'avatar autonome r20 démarre avec `--all-channels` et ne dépend pas encore de sa visibilité. Les **14 animations corporelles originales** et le rig final r21 ne font pas partie du catalogue de visages existant.
+6. **Graphique :** l'avatar Windows autonome r20 démarre avec `--all-channels`. Le raccordement des 14 motions r21 y reste à réaliser dans DEV-001.
 7. **Modèle IA :** Luna demeure la valeur de configuration par défaut ; un moteur Realtime conversationnel léger sans Luna est prévu ultérieurement, pas intégré.
 8. **Installation :** les ports, SDK, comptes et ressources effectifs sont fournis par le PC et sa configuration privée ; le code n'est pas un inventaire des secrets du poste.
 
@@ -58,3 +119,8 @@
 [Manuel](README.md) · [architecture](TECHNICAL.md) · [atlas des parcours](../architecture/atlas-fonctionnel-2026-11-16/README.md) · [passation dialogue](../history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md) · [backlog prospectif](../ameliorations/README.md).
 
 Les PR, audits et CI antérieurs sont conservés dans [`docs/history/gpt6-jade/`](../history/gpt6-jade/) et [`docs/history/conversations/`](../history/conversations/). Ils conservent leur date historique, sans se substituer à ce document ou au code actuel. Les passations actives des agents figurent dans [`docs/operations/handoffs/`](../operations/handoffs/).
+
+
+## DEV-032 → REC-039 : documents (22/11/2026, recette propriétaire Done)
+
+Le moteur partagé propose une création de fichier réelle, ouverte **par défaut à tout utilisateur Discord identifié par le transport** (sans liaison SQLite Goldaj obligatoire) et aux utilisateurs authentifiés de la PWA privée. Les modes `owner` et `allowlist` restent facultatifs. La création produit une liste de pièces jointes dans `Reply`. Les transports Mobile HTTP/NDJSON/WebSocket et Discord texte/vocal suivent cette liste. Les artefacts privés sont conservés au plus 24 h sur disque ; le nettoyage Discord effectue la suppression des messages concernés avec réessai. Les paramètres non secrets sont `JADE_DOCUMENT_DIR`, `JADE_DOCUMENT_ACCESS_MODE` et `JADE_DOCUMENT_ALLOWED_DISCORD_IDS`. Réception de pièces jointes entrantes non prévue. Le code et les tests automatisés sont validés sur Linux/Windows par la [CI du SHA dc8f0fb2](https://github.com/goldaj/jade-vtuber/actions/runs/45043574769). Le propriétaire accepte explicitement le plafond de longueur lié aux tokens et le PDF minimal. **Recette propriétaire validée sur l'ensemble des parcours PWA/Discord, incluant la confidentialité selon son acceptation globale le 22/11/2026 : [REC-039 Done](../backlog/02-RECETTE.md).**

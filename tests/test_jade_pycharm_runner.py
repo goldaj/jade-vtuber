@@ -13,6 +13,37 @@ import xml.etree.ElementTree as ET
 from tools import jade_pycharm_runner as runner
 
 
+class SelectedRunModeTests(unittest.TestCase):
+    def test_existing_test_configuration_keeps_its_legacy_flags(self):
+        self.assertEqual(runner.selected_modes([]), (False, runner.MODES))
+        self.assertEqual(runner.selected_modes(["--preflight-only"]), (True, runner.MODES))
+
+    def test_custom_discord_mobile_configuration_is_preserved(self):
+        requested = ["--live", "--discord", "--discord-voice", "--voice", "--mobile"]
+        self.assertEqual(runner.selected_modes(requested), (False, tuple(requested)))
+        self.assertNotIn("--avatar", runner.selected_modes(requested)[1])
+
+    def test_custom_configuration_rejects_unrecognized_flags(self):
+        with self.assertRaises(SystemExit):
+            runner.selected_modes(["--discord", "--invalid"])
+
+    def test_custom_configuration_is_forwarded_to_preflight_and_manager(self):
+        requested = ["--live", "--discord", "--discord-voice", "--voice", "--mobile"]
+        with patch.object(runner.sys, "argv", ["runner", *requested]), \
+             patch.object(runner, "check_develop"), \
+             patch.object(runner, "single_instance", return_value=nullcontext()), \
+             patch.object(runner, "check_other_runtime"), \
+             patch.object(runner, "load_environment") as loaded, \
+             patch.object(runner.os, "chdir"), \
+             patch.object(runner.subprocess, "run", return_value=SimpleNamespace(returncode=0)) as preflight, \
+             patch("src.utility.private_config.environ", return_value="x" * 40), \
+             patch("src.jade_runtime.remote_pycharm.PycharmManager") as manager:
+            self.assertEqual(runner.main(), 0)
+        self.assertEqual(preflight.call_args.args[0][-len(requested):], requested)
+        self.assertEqual(manager.call_args.kwargs["flags"], tuple(requested))
+        self.assertTrue(loaded.call_args.kwargs["preserve_runtime"])
+
+
 class EnvironmentTests(unittest.TestCase):
     def test_private_files_are_loaded_only_into_environment(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -45,10 +76,10 @@ class EnvironmentTests(unittest.TestCase):
              patch.object(runner, "check_other_runtime"), patch.object(runner, "load_environment"), \
              patch.object(runner.os, "chdir"), \
              patch.object(runner.subprocess, "run", return_value=SimpleNamespace(returncode=0)) as preflight, \
-             patch.object(runner.runpy, "run_path") as run:
+             patch("src.jade_runtime.remote_pycharm.PycharmManager") as manager:
             self.assertEqual(runner.main(), 0)
         self.assertIn("--preflight", preflight.call_args.args[0])
-        run.assert_not_called()
+        manager.assert_not_called()
 
     def test_previous_legacy_runtime_is_rejected_without_exposing_command_line(self):
         with patch.object(runner.subprocess, "run", return_value=SimpleNamespace(stdout="123\n")), \

@@ -7,7 +7,10 @@
   const $ = (id) => document.getElementById(id);
   const form = $("composer"), input = $("message"), log = $("messages");
   const mic = $("mic"), send = $("send"), status = $("status");
+  const micFeedback = $("mic-feedback");
   const modal = $("auth-modal"), authForm = $("auth-form"), authInput = $("auth-token");
+  const authFeedback = $("auth-feedback"), authSubmit = authForm.querySelector('button[type="submit"]');
+  let authPending = false;
   const connection = $("connection-status"), soundToggle = $("sound-toggle");
   const newChat = $("new-chat");
   const linkForm = $("identity-link-form"), linkResult = $("identity-result");
@@ -18,17 +21,51 @@
   let token = "";
   let busy = false;
   let recording = null;
-  let starting = false;
+  let starting = null;
+  let micPress = null;
+  let voicePending = false;
+  let conversationGeneration = 0;
+  let modelChanging = false;
   let soundEnabled = true;
   let audioContext = null;
-  let playing = null;
   let playFrame = null;
+  let playbackGeneration = 0;
+  let replyPlayback = null;
+  const REPLY_FACE_LEAD_MS = 200;
   let streamController = null;
   let activeDuplex = null;
-  const streamSources = new Set();
-  let streamAnalyser = null;
-  let streamNextTime = 0;
+  const audioSources = new Set();
+  let playbackAnalyser = null;
+  let nextAudioTime = 0;
   let thread = newThread();
+  const shell = document.querySelector(".shell");
+  const navItems = Array.from(document.querySelectorAll(".app-nav-item"));
+  // Move the existing control, preserving its recording and disabled states.
+  function syncMicPlacement() {
+    if (shell.dataset.view === "home" || shell.classList.contains("is-room-only")) {
+      const dock = document.querySelector?.(".room-bottom");
+      if (dock && mic.parentElement !== dock) dock.appendChild?.(mic);
+    } else if (mic.parentElement !== form && typeof form.insertBefore === "function") {
+      form.insertBefore(mic, input);
+    }
+  }
+  function showView(view) {
+    if (!["home", "chat", "reminders", "profile"].includes(view)) return;
+    if (view !== shell.dataset.view) finishMicPress(false);
+    shell.dataset.view = view;
+    syncMicPlacement();
+    window.JadeAvatar?.resize?.();
+    navItems.forEach(button => {
+      const active = button.dataset.viewTarget === view;
+      button.classList.toggle("is-active", active);
+      if (active) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    });
+    if (view === "reminders" && token) loadReminders();
+    if (view === "profile" && token) refreshNotificationChoice();
+  }
+  navItems.forEach(button => button.addEventListener("click", () =>
+    showView(button.dataset.viewTarget)));
 
   function newThread() {
     // The opaque session is not identity/authentication. Only the Tailscale
@@ -40,11 +77,21 @@
   }
 
   function setStatus(message, working = false) {
+    working = working || modelChanging;
+    if (micFeedback && (message !== status.textContent || message === "Prête.")) micFeedback.hidden = true;
     status.textContent = message;
     send.disabled = working;
     newChat.disabled = working;
     input.disabled = working;
-    mic.disabled = working && !recording && !activeDuplex;
+    mic.disabled = modelChanging || (working && !micPress && !voicePending);
+  }
+
+  function setMicStatus(message, working = false) {
+    setStatus(message, working);
+    if (micFeedback) {
+      micFeedback.textContent = message;
+      micFeedback.hidden = false;
+    }
   }
 
   function authorizeAgain() {
@@ -53,11 +100,12 @@
     linkResult.textContent = "";
     linkCopy.disabled = true;
     authInput.value = "";
+    authFeedback.textContent = "";
     modal.classList.remove("hidden");
     connection.classList.remove("online");
     connection.textContent = "Hors connexion";
     setStatus("Accès expiré : ressaisis ton jeton.");
-    authInput.focus();
+    window.JadeLogin?.show();
   }
 
   function addBubble(text, kind, when = new Date()) {
@@ -72,18 +120,60 @@
     entry.append(content, info);
     log.appendChild(entry);
     log.scrollTop = log.scrollHeight;
+    return entry;
+  }
+
+  function addJadeReply(text, files) {
+    const entry = addBubble(text, "jade");
+    for (const item of Array.isArray(files) ? files.slice(0, 4) : []) {
+      if (!item || !/^\/api\/documents\/[a-f0-9]{32}$/.test(item.url)) continue;
+      const control = document.createElement("button");
+      control.type = "button";
+      control.className = "attachment-button";
+      control.textContent = "Télécharger " + item.name + " · 24 h";
+      control.addEventListener("click", async () => {
+        if (!token) { authorizeAgain(); return; }
+        control.disabled = true;
+        try {
+          const response = await fetch(item.url, {method:"GET", mode:"same-origin",
+            credentials:"omit", cache:"no-store",
+            headers:{"Authorization":"Bearer " + token}});
+          if (response.status === 401) { authorizeAgain(); return; }
+          if (!response.ok) throw new Error("Pièce jointe expirée ou indisponible.");
+          const url = URL.createObjectURL(await response.blob());
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = item.name;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+        } catch (error) {
+          setStatus(error.message || "Téléchargement impossible.");
+        } finally {
+          control.disabled = false;
+        }
+      });
+      entry.appendChild(control);
+    }
+    return entry;
   }
 
   function setReplyIntent(intent) {
-    avatar().setIntent(intent || "neutral");
+    const prepared = avatar().setIntent(intent || "neutral", {deferMotion:soundEnabled});
+    replyPlayback = {
+      faceReadyAt:prepared && soundEnabled ? performance.now() + REPLY_FACE_LEAD_MS : 0,
+      started:false, sealed:false,
+    };
   }
 
-  async function makeRequest(path, body, extraHeaders) {
+  async function makeRequest(path, body, extraHeaders, signal) {
     const headers = Object.assign({"Authorization":"Bearer " + token}, extraHeaders);
     const response = await fetch(path, {
       method: "POST", mode: "same-origin", credentials: "omit",
-      cache: "no-store", headers, body
+      cache: "no-store", headers, body, signal
     });
+    if (signal?.aborted) return null;
     if (response.status === 401) {
       authorizeAgain();
       throw new Error("Jeton mobile incorrect : ressaisis-le.");
@@ -92,12 +182,13 @@
       throw new Error("Accès réservé au propriétaire Tailscale : vérifie ton VPN et ton identité.");
     }
     const result = await response.json().catch(() => ({}));
+    if (signal?.aborted) return null;
     if (!response.ok) {
       const messages = {
         429: "Jade est occupée. Réessaie dans quelques instants.",
         504: "La réponse a pris trop de temps."
       };
-      throw new Error(messages[response.status] || result.error || "Erreur de communication avec Jade.");
+      throw new Error(result.message || messages[response.status] || result.error || "Erreur de communication avec Jade.");
     }
     connection.textContent = "Connectée à Jade";
     connection.classList.add("online");
@@ -113,37 +204,91 @@
     return audioContext.resume().then(() => audioContext);
   }
 
-  function stopPlayback() {
+  function primeVoicePlayback() {
+    if (!soundEnabled) return;
+    try { ensureAudioContext().catch(() => {}); }
+    catch (_) { /* A failed output device must not block the user's message. */ }
+  }
+
+  function stopMouthPlayback() {
     if (playFrame) cancelAnimationFrame(playFrame);
     playFrame = null;
-    if (playing) {
-      try { playing.stop(); } catch (_) {}
-      playing = null;
-      avatar().setSpeaking(false);
-    }
-    for (const source of streamSources) {
-      try { source.stop(); } catch (_) {}
-    }
-    streamSources.clear();
-    if (streamAnalyser) { streamAnalyser.disconnect(); streamAnalyser = null; }
-    streamNextTime = 0;
-    avatar().setSpeaking(false);
+    playbackAnalyser?.disconnect();
+    playbackAnalyser = null;
     avatar().setMouth(0);
   }
 
-  function abortMobileStream() {
-    if (streamController) streamController.abort();
+  function stopPlayback() {
+    playbackGeneration++;
+    replyPlayback = null;
+    for (const source of audioSources) {
+      source.onended = null;
+      try { source.stop(); } catch (_) {}
+      source.disconnect();
+    }
+    audioSources.clear();
+    nextAudioTime = 0;
+    stopMouthPlayback();
+    avatar().setSpeaking(false);
+    avatar().resetIntent();
+  }
+
+  function finishDrainedReply() {
+    if (!replyPlayback?.sealed || audioSources.size) return;
+    const hadAudio = replyPlayback.started;
+    replyPlayback = null;
+    nextAudioTime = 0;
+    if (hadAudio) avatar().setSpeaking(false);
+    avatar().finishReply?.(hadAudio);
+  }
+
+  function sealReplyAudio() {
+    if (!replyPlayback) return;
+    replyPlayback.sealed = true;
+    finishDrainedReply();
+  }
+
+  function cancelConversation() {
+    conversationGeneration++;
+    clearMicPress();
+    cancelRecordingStart();
+    cancelRecording();
+    streamController?.abort();
+    streamController = null;
+    activeDuplex?.cancel();
+    activeDuplex = null;
+    busy = false;
+    voicePending = false;
+    resetMicButton();
+    stopPlayback();
+    setStatus(status.textContent);
+  }
+
+  function stopForModelChange() {
+    modelChanging = true;
+    cancelConversation();
+    setStatus("Chargement du modèle…");
+    return () => {
+      modelChanging = false;
+      setStatus(token ? "Prête." : status.textContent);
+    };
   }
 
   function createMobileAudioTiming(transport) {
     const startedAt = performance.now();
     let firstReceivedAt = null, firstScheduledAt = null;
+    let gapCount = 0, gapMs = 0;
     return {
       received() {
         if (firstReceivedAt === null) firstReceivedAt = performance.now();
       },
-      scheduled(when) {
-        if (firstScheduledAt === null && typeof when === "number") firstScheduledAt = when;
+      scheduled(result) {
+        if (!result) return;
+        if (firstScheduledAt === null) firstScheduledAt = result.scheduledAt;
+        if (result.gapMs >= 1) {
+          gapCount++;
+          gapMs += result.gapMs;
+        }
       },
       done() {
         const endedAt = performance.now();
@@ -153,6 +298,8 @@
           first_pcm_received_ms: ms(firstReceivedAt),
           first_play_scheduled_ms: ms(firstScheduledAt),
           stream_finished_ms: ms(endedAt),
+          playback_gaps: gapCount,
+          playback_gap_ms: Math.round(gapMs),
           play_scheduled_before_stream_finished:
             firstScheduledAt === null ? null : firstScheduledAt < endedAt
         }));
@@ -165,7 +312,9 @@
     if (rate !== 24000 || base64Audio.length > 12000) throw new Error("Fragment audio invalide.");
     const binary = atob(base64Audio);
     if (!binary.length || binary.length % 2) throw new Error("Fragment audio incomplet.");
+    const generation = playbackGeneration;
     const context = await ensureAudioContext();
+    if (generation !== playbackGeneration || !replyPlayback) return null;
     const buffer = context.createBuffer(1, binary.length / 2, rate);
     const samples = buffer.getChannelData(0);
     for (let i = 0; i < samples.length; i++) {
@@ -173,13 +322,52 @@
       if (value >= 32768) value -= 65536;
       samples[i] = value / 32768;
     }
-    if (!streamAnalyser) {
-      streamAnalyser = context.createAnalyser();
-      streamAnalyser.fftSize = 1024;
-      streamAnalyser.connect(context.destination);
-      const analyser = streamAnalyser, data = new Uint8Array(analyser.fftSize);
+    return scheduleAudio(context, buffer);
+  }
+
+  function scheduleAudio(context, buffer) {
+    const reply = replyPlayback;
+    if (!reply || reply.sealed) return null;
+    const now = performance.now(), audioNow = context.currentTime;
+    const gapMs = reply.started ? Math.max(0, audioNow - nextAudioTime) * 1000 : 0;
+    // Keep adjacent fragments contiguous. A depleted queue can resume
+    // immediately if audio already ran, without adding another 50 ms gap.
+    const start = reply.started ? Math.max(audioNow, nextAudioTime)
+      : audioNow + Math.max(.05, (reply.faceReadyAt - now) / 1000);
+    const newAnalyser = !playbackAnalyser;
+    if (newAnalyser) {
+      playbackAnalyser = context.createAnalyser();
+      playbackAnalyser.fftSize = 1024;
+      playbackAnalyser.connect(context.destination);
+    }
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(playbackAnalyser);
+    source.onended = () => {
+      if (!audioSources.delete(source)) return;
+      source.disconnect();
+      if (!audioSources.size) stopMouthPlayback();
+      finishDrainedReply();
+    };
+    try {
+      source.start(start);
+    } catch (error) {
+      source.disconnect();
+      if (newAnalyser) stopMouthPlayback();
+      throw error;
+    }
+    audioSources.add(source);
+    nextAudioTime = start + buffer.duration;
+    const delayMs = (start - audioNow) * 1000;
+    if (!reply.started) {
+      reply.started = true;
+      avatar().setSpeaking(true);
+      avatar().startReplyMotion?.(delayMs);
+    }
+    if (newAnalyser) {
+      const analyser = playbackAnalyser, data = new Uint8Array(analyser.fftSize);
       const animate = () => {
-        if (streamAnalyser !== analyser) return;
+        if (playbackAnalyser !== analyser) return;
         analyser.getByteTimeDomainData(data);
         let sum = 0;
         for (const value of data) sum += ((value - 128) / 128) ** 2;
@@ -188,55 +376,38 @@
       };
       animate();
     }
-    const source = context.createBufferSource();
-    source.buffer = buffer;
-    source.connect(streamAnalyser);
-    streamSources.add(source);
-    const start = Math.max(context.currentTime + 0.05, streamNextTime);
-    streamNextTime = start + buffer.duration;
-    avatar().setSpeaking(true);
-    source.onended = () => {
-      streamSources.delete(source);
-      source.disconnect();
-      if (!streamSources.size) {
-        if (streamAnalyser) streamAnalyser.disconnect();
-        streamAnalyser = null;
-        if (playFrame) cancelAnimationFrame(playFrame);
-        playFrame = null;
-        avatar().setMouth(0);
-        avatar().setSpeaking(false);
-      }
-    };
-    const scheduledAt = performance.now() + Math.max(0, start - context.currentTime) * 1000;
-    source.start(start);
-    return scheduledAt;
+    return {scheduledAt:now + delayMs, gapMs};
   }
 
   async function makeStreamingRequest(path, body, extraHeaders) {
+    const generation = conversationGeneration;
+    const isCurrent = () => generation === conversationGeneration;
+    const controller = typeof AbortController === "undefined" ? null : new AbortController();
+    streamController = controller;
     // Choose the legacy format before sending anything: retrying afterward
     // could produce a second billable conversation and voice synthesis.
-    if (typeof ReadableStream === "undefined" || typeof TextDecoder === "undefined" ||
-        typeof AbortController === "undefined") {
-      await present(await makeRequest(path, body, extraHeaders));
-      return;
-    }
-    const controller = new AbortController();
-    streamController = controller;
     try {
+      if (!controller || typeof ReadableStream === "undefined" || typeof TextDecoder === "undefined") {
+        const result = await makeRequest(path, body, extraHeaders, controller?.signal);
+        if (isCurrent()) await present(result, generation);
+        return;
+      }
       const headers = Object.assign({"Authorization":"Bearer " + token, "X-Jade-Stream":"1"}, extraHeaders);
       const response = await fetch(path, {method:"POST", mode:"same-origin", credentials:"omit",
         cache:"no-store", headers, body, signal:controller.signal});
+      if (!isCurrent()) return;
       if (response.status === 401) { authorizeAgain(); throw new Error("Jeton mobile incorrect : ressaisis-le."); }
       if (response.status === 403) throw new Error("Accès réservé au propriétaire Tailscale.");
       if (!response.ok) {
         const result = await response.json().catch(() => ({}));
-        throw new Error(result.error || "Erreur de communication avec Jade.");
+        throw new Error(result.message || result.error || "Erreur de communication avec Jade.");
       }
       if (!response.body) throw new Error("La lecture progressive est indisponible sur ce navigateur.");
       connection.textContent = "Connectée à Jade";
       connection.classList.add("online");
       const reader = response.body.getReader(), decoder = new TextDecoder();
       let pending = "", receivedReply = false, done = false, audioFailed = false;
+      let audioFailureReason = null;
       const audioTiming = createMobileAudioTiming("http_ndjson");
       async function consume(line) {
         const event = JSON.parse(line);
@@ -244,7 +415,7 @@
           if (receivedReply) throw new Error("Réponse multiple inattendue.");
           receivedReply = true;
           if (event.transcript) addBubble(event.transcript, "me");
-          addBubble(String(event.reply || "…"), "jade");
+          addJadeReply(String(event.reply || "…"), event.attachments);
           setReplyIntent(event.intent);
         } else if (event.type === "pcm") {
           if (!receivedReply) throw new Error("Audio reçu avant la réponse.");
@@ -254,89 +425,79 @@
         } else if (event.type === "wav") {
           if (!receivedReply) throw new Error("Audio reçu avant la réponse.");
           if (soundEnabled && !(await playWav(event.audio_wav_b64))) audioFailed = true;
-        } else if (event.type === "audio_error") audioFailed = true;
-        else if (event.type === "done") { done = true; audioTiming.done(); }
+        } else if (event.type === "audio_error") {
+          audioFailed = true;
+          audioFailureReason = event.incident_code || null;
+        }
+        else if (event.type === "done") { done = true; audioTiming.done(); sealReplyAudio(); }
         else throw new Error("Réponse audio inattendue.");
       }
       while (true) {
         const part = await reader.read();
+        if (!isCurrent()) return;
         pending += decoder.decode(part.value || new Uint8Array(), {stream:!part.done});
         if (pending.length > 10_000_000) throw new Error("Réponse audio trop volumineuse.");
         let newline;
         while ((newline = pending.indexOf("\n")) !== -1) {
           const line = pending.slice(0, newline); pending = pending.slice(newline + 1);
           if (line) await consume(line);
+          if (!isCurrent()) return;
         }
         if (part.done) break;
       }
+      if (!isCurrent()) return;
       if (pending || !done || !receivedReply) throw new Error("Réponse audio interrompue.");
-      setStatus(audioFailed && soundEnabled ? "Réponse écrite reçue, mais la voix est indisponible." : "Prête.");
+      setStatus(audioFailed && soundEnabled ? audioUnavailableStatus(audioFailureReason) : "Prête.");
     } finally {
-      if (streamController === controller) streamController = null;
+      if (isCurrent()) {
+        streamController = null;
+        sealReplyAudio();
+      }
     }
   }
 
   async function playWav(base64Audio) {
-    stopPlayback();
     if (!base64Audio || !soundEnabled || document.hidden) return true;
+    const generation = playbackGeneration;
     try {
       const context = await ensureAudioContext();
+      if (generation !== playbackGeneration || !replyPlayback) return true;
       // Limit the size of an untrusted API response.
       if (base64Audio.length > 10_000_000) throw new Error("audio too large");
       const binary = atob(base64Audio);
       const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
       const decoded = await context.decodeAudioData(bytes.buffer.slice(0));
-      const src = context.createBufferSource();
-      src.buffer = decoded;
-      const analyser = context.createAnalyser();
-      analyser.fftSize = 1024;
-      src.connect(analyser);
-      analyser.connect(context.destination);
-      playing = src;
-      avatar().setSpeaking(true);
-      src.onended = () => {
-        if (playing === src) {
-          playing = null;
-          if (playFrame) cancelAnimationFrame(playFrame);
-          playFrame = null;
-          avatar().setMouth(0);
-          avatar().setSpeaking(false);
-        }
-      };
-      const samples = new Uint8Array(analyser.fftSize);
-      function animateMouth() {
-        if (playing !== src) return;
-        analyser.getByteTimeDomainData(samples);
-        let sum = 0;
-        for (let i = 0; i < samples.length; i++) {
-          const value = (samples[i] - 128) / 128;
-          sum += value * value;
-        }
-        const volume = Math.sqrt(sum / samples.length);
-        avatar().setMouth(Math.min(1, Math.max(0, volume * 7)));
-        playFrame = requestAnimationFrame(animateMouth);
-      }
-      src.start(0);
-      animateMouth();
+      if (generation !== playbackGeneration) return true;
+      scheduleAudio(context, decoded);
       return true;
     } catch (_) {
+      if (generation !== playbackGeneration) return true;
       avatar().setMouth(0);
       return false;
     }
   }
 
-  async function present(result) {
+  function audioUnavailableStatus(code) {
+    if (code === "timeout") return "Réponse écrite reçue, mais la synthèse vocale a dépassé son délai.";
+    if (code === "connection") return "Réponse écrite reçue, mais la connexion au service vocal a échoué.";
+    if (code === "provider_limit") return "Réponse écrite reçue, mais le service vocal est temporairement limité.";
+    if (code === "permission") return "Réponse écrite reçue, mais le service vocal n'est pas autorisé.";
+    return "Réponse écrite reçue, mais la voix est indisponible.";
+  }
+
+  async function present(result, generation) {
     if (result.transcript) addBubble(result.transcript, "me");
-    addBubble(String(result.reply || "…"), "jade");
+    addJadeReply(String(result.reply || "…"), result.attachments);
     setReplyIntent(result.intent);
     if (result.audio_wav_b64 && soundEnabled) {
       const played = await playWav(result.audio_wav_b64);
+      if (generation !== conversationGeneration) return;
       if (!played) {
         setStatus("Réponse écrite reçue, mais la lecture audio a échoué.");
         return;
       }
     } else if (result.audio_unavailable && soundEnabled) {
-      setStatus("La réponse est là, mais la synthèse vocale est indisponible.");
+      setStatus(audioUnavailableStatus(result.audio_unavailable_reason?.incident_code));
       return;
     }
     setStatus("Prête.");
@@ -344,10 +505,12 @@
 
   async function submitText(event) {
     event.preventDefault();
-    if (busy || recording || starting) return;
+    if (modelChanging || busy || recording || starting) return;
     if (!token) { authorizeAgain(); return; }
     const text = input.value.trim();
     if (!text) return;
+    const generation = conversationGeneration;
+    showView("chat");
     busy = true;
     stopPlayback();
     setStatus("Jade réfléchit…", true);
@@ -360,14 +523,13 @@
         JSON.stringify({text, session:thread, speak:soundEnabled}),
         {"Content-Type":"application/json"});
     } catch (error) {
-      setStatus(error.message || "Impossible de joindre Jade.");
+      if (generation === conversationGeneration) setStatus(error.message || "Impossible de joindre Jade.");
     } finally {
-      busy = false;
-      send.disabled = false;
-      newChat.disabled = false;
-      input.disabled = false;
-      mic.disabled = false;
-      input.focus();
+      if (generation === conversationGeneration) {
+        busy = false;
+        setStatus(status.textContent);
+        input.focus();
+      }
     }
   }
 
@@ -404,30 +566,68 @@
     return new Blob([out], {type:"audio/wav"});
   }
 
-  async function startRecording() {
+  function clearMicPress() {
+    const pointerId = micPress?.pointerId;
+    micPress = null;
+    try {
+      if (pointerId !== undefined && mic.hasPointerCapture?.(pointerId))
+        mic.releasePointerCapture(pointerId);
+    } catch (_) { /* The browser may already have dropped the pointer. */ }
+  }
+
+  function finishMicPress(sendUtterance) {
+    const press = micPress;
+    if (!press) return;
+    clearMicPress();
+    if (press.interrupt) {
+      if (sendUtterance && voicePending) {
+        cancelConversation();
+        setMicStatus("Réponse vocale interrompue.");
+      }
+    } else if (starting) {
+      cancelRecordingStart();
+      resetMicButton();
+      setMicStatus(sendUtterance ? "Micro relâché avant le début de la prise." : "Prise vocale annulée.");
+    } else if (sendUtterance) {
+      void stopRecording();
+    } else {
+      cancelRecording();
+    }
+  }
+
+  async function startRecording(press) {
+    if (modelChanging || document.hidden || micPress || recording || starting || (busy && !voicePending)) return;
     if (!token) { authorizeAgain(); return; }
-    if (busy || recording || starting) return;
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setStatus("Microphone indisponible : ouvrir l'application en HTTPS via Tailscale.");
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!voicePending && (!navigator.mediaDevices?.getUserMedia || !Ctx)) {
+      setMicStatus("Microphone indisponible : ouvrir l'application en HTTPS via Tailscale.");
       return;
     }
+    micPress = {...press, interrupt:voicePending};
+    if (press.pointerId !== undefined) {
+      try { mic.setPointerCapture?.(press.pointerId); }
+      catch (_) { /* The window still observes release and cancellation. */ }
+    }
+    if (voicePending) return;
     stopPlayback();
-    if (activeDuplex) { activeDuplex.cancel(); activeDuplex = null; }
-    // Android may auto-stop after 20 seconds (no further user gesture).
-    // Unlock the output context on the initial microphone tap too.
-    if (soundEnabled) ensureAudioContext().catch(() => {});
-    starting = true;
-    mic.disabled = true;
-    setStatus("Autorisation du microphone…");
-    let stream, context;
+    const attempt = {}, generation = conversationGeneration;
+    starting = attempt;
+    setMicStatus("Ouverture du micro… Garde ton appui.", true);
+    let duplex = null;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
+      primeVoicePlayback();
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {echoCancellation:true, noiseSuppression:true, autoGainControl:true},
         video: false
       });
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      context = new Ctx();
+      if (starting !== attempt) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+      attempt.stream = stream;
+      const context = attempt.context = new Ctx();
       await context.resume();
+      if (starting !== attempt) return;
       if (document.hidden) throw new Error("la page est en arrière-plan");
       const source = context.createMediaStreamSource(stream);
       const processor = context.createScriptProcessor(4096, 1, 1);
@@ -435,15 +635,22 @@
       silent.gain.value = 0;
       const chunks = [];
       let frames = 0;
-      let duplex = null;
+      const frameLimit = Math.floor(context.sampleRate * 20);
       const duplexTiming = createMobileAudioTiming("websocket");
+      function recordingInterrupted(error) {
+        if (generation !== conversationGeneration || recording?.context !== context) return;
+        finishMicPress(false);
+        setMicStatus(error?.message || "Connexion vocale interrompue.");
+      }
       if (window.JadeDuplex?.supported()) {
-        duplex = window.JadeDuplex.create({
+        const options = {
           token, session:thread, speak:soundEnabled,
+          onDisconnect:recordingInterrupted,
           onEvent:async event => {
+            if (generation !== conversationGeneration || activeDuplex !== duplex) return;
             if (event.type === "reply") {
               if (event.transcript) addBubble(event.transcript, "me");
-              addBubble(String(event.reply || "…"), "jade");
+              addJadeReply(String(event.reply || "…"), event.attachments);
               setReplyIntent(event.intent);
             } else if (event.type === "pcm") {
               duplexTiming.received();
@@ -451,85 +658,98 @@
             } else if (event.type === "wav") {
               if (soundEnabled) await playWav(event.audio_wav_b64);
             } else if (event.type === "audio_error") {
-              setStatus("Réponse écrite reçue, mais la voix est indisponible.");
+              setMicStatus("Réponse écrite reçue, mais la voix est indisponible.");
             } else if (event.type === "done") {
               duplexTiming.done();
+              sealReplyAudio();
               setStatus("Prête.");
             }
           }
-        });
+        };
+        try { duplex = window.JadeDuplex.create(options); }
+        catch (_) { /* The constructor failed before sending. Keep the WAV fallback. */ }
         activeDuplex = duplex;
       }
       processor.onaudioprocess = event => {
         if (!recording || recording.context !== context) return;
         const sample = event.inputBuffer.getChannelData(0);
-        if (frames >= context.sampleRate * 20) {
-          stopRecording();
-          return;
-        }
-        const part = new Float32Array(sample);
-        chunks.push(part);
+        const part = sample.slice(0, frameLimit - frames);
+        // Only keep a WAV copy while retrying is safe. Once the socket is
+        // ready, it owns this utterance and a second transport must not send it.
+        if (duplex?.ready) chunks.length = 0;
+        else chunks.push(part);
         frames += part.length;
-        // Lightweight local end-of-utterance detection: after meaningful
-        // speech, 1.2s of silence finalizes the utterance. Manual stop stays.
-        let energy = 0;
-        for (let n = 0; n < sample.length; n++) energy += sample[n] * sample[n];
-        const loudness = Math.sqrt(energy / Math.max(1, sample.length));
-        const now = Date.now();
-        if (loudness > 0.024) {
-          recording.voiceDetected = true;
-          recording.lastVoiceAt = now;
-        } else if (recording.voiceDetected && now - recording.lastVoiceAt > 1200
-                   && now - recording.started > 800) {
-          stopRecording();
-          return;
-        }
         if (duplex) {
           try { duplex.push(part, context.sampleRate); }
           catch (error) {
-            if (recording) recording.duplexFailed = error;
+            if (duplex.ready) return recordingInterrupted(error);
             duplex.cancel();
-            stopRecording();
           }
         }
+        if (frames >= frameLimit) limitRecording();
       };
       source.connect(processor);
       processor.connect(silent);
       silent.connect(context.destination);
       recording = {stream, context, source, processor, silent, chunks, duplex,
-                   voiceDetected:false, lastVoiceAt:0,
-                   get frames() {return frames;}, started:Date.now()};
+                   get frames() {return frames;}};
+      starting = null;
+      stream.getTracks().forEach(track => track.addEventListener?.("ended", () => {
+        if (!recording?.captureClosed) recordingInterrupted(new Error("Le microphone s’est arrêté."));
+      }, {once:true}));
       mic.classList.add("recording");
       mic.setAttribute("aria-pressed", "true");
-      mic.setAttribute("aria-label", "Arrêter et envoyer le message vocal");
-      setStatus("J'enregistre ta voix… Touche le micro pour envoyer.");
+      mic.setAttribute("aria-label", "Relâcher pour envoyer");
+      mic.setAttribute("title", "Relâcher pour envoyer");
+      setMicStatus("J’enregistre ta voix… Relâche pour envoyer.", true);
       // Avoid leaving the microphone open after 20 seconds.
-      recording.timer = setTimeout(stopRecording, 20000);
+      recording.timer = setTimeout(limitRecording, 20000);
     } catch (_) {
-      if (activeDuplex) { activeDuplex.cancel(); activeDuplex = null; }
-      if (stream) stream.getTracks().forEach(track => track.stop());
-      if (context) await context.close().catch(() => {});
-      setStatus("Accès au micro refusé ou indisponible.");
-    } finally {
-      starting = false;
-      mic.disabled = false;
+      if (starting === attempt) {
+        duplex?.cancel();
+        if (activeDuplex === duplex) activeDuplex = null;
+        clearMicPress();
+        cancelRecordingStart();
+        resetMicButton();
+        setMicStatus("Accès au micro refusé ou indisponible.");
+      }
     }
   }
 
   function resetMicButton() {
     mic.classList.remove("recording");
     mic.setAttribute("aria-pressed", "false");
-    mic.setAttribute("aria-label", "Démarrer l'enregistrement vocal");
+    mic.setAttribute("aria-label", "Maintenir pour parler");
+    mic.setAttribute("title", "Maintenir pour parler, relâcher pour envoyer");
   }
 
-  async function releaseRecording(current) {
+  function closeMicrophone({stream, context}) {
+    stream?.getTracks().forEach(track => track.stop());
+    return context?.close().catch(() => {});
+  }
+
+  function cancelRecordingStart() {
+    const attempt = starting;
+    starting = null;
+    if (attempt) closeMicrophone(attempt);
+  }
+
+  function releaseRecording(current) {
+    if (current.captureClosed) return;
+    current.captureClosed = true;
     clearTimeout(current.timer);
     current.processor.onaudioprocess = null;
     for (const node of [current.source, current.processor, current.silent]) {
       try { node.disconnect(); } catch (_) {}
     }
-    current.stream.getTracks().forEach(track => track.stop());
-    await current.context.close().catch(() => {});
+    closeMicrophone(current);
+  }
+
+  function limitRecording() {
+    if (!recording || recording.captureClosed) return;
+    releaseRecording(recording);
+    mic.classList.remove("recording");
+    setMicStatus("Limite de 20 s atteinte. Relâche pour envoyer.", true);
   }
 
   function cancelRecording() {
@@ -538,61 +758,59 @@
     recording = null;
     resetMicButton();
     // Backgrounding the app must discard, never send, microphone data.
-    if (current.duplex) current.duplex.cancel();
     if (activeDuplex === current.duplex) activeDuplex = null;
-    releaseRecording(current).catch(() => {});
-    setStatus("Enregistrement interrompu, aucun audio envoyé.");
+    current.duplex?.cancel();
+    releaseRecording(current);
+    setMicStatus("Prise vocale annulée.");
   }
 
   async function stopRecording() {
     const current = recording;
     if (!current || busy) return;
+    const generation = conversationGeneration;
     recording = null;
-    busy = true;  // Prevent a second tap/turn while audio tracks are closing.
-    // Unlock playback inside the stop-button gesture, before network awaits.
-    if (soundEnabled) ensureAudioContext().catch(() => {});
+    busy = voicePending = true;
+    // Unlock playback inside the release gesture, before network awaits.
+    primeVoicePlayback();
     resetMicButton();
-    setStatus("Je transmets ta voix à Jade…", true);
+    mic.setAttribute("aria-label", "Interrompre la réponse vocale");
+    mic.setAttribute("title", "Interrompre la réponse vocale");
+    setMicStatus("Je transmets ta voix à Jade…", true);
     const rate = current.context.sampleRate, frames = current.frames;
     try {
-      await releaseRecording(current);
-      if (Date.now() - current.started < 250 || frames < 4000) {
+      releaseRecording(current);
+      if (frames < rate / 4) {
         if (current.duplex) current.duplex.cancel();
-        setStatus("Enregistrement trop court.");
+        setMicStatus("Enregistrement trop court.");
         return;
       }
-      if (current.duplexFailed) throw current.duplexFailed;
       if (current.duplex) {
         try {
           await current.duplex.finish();
+          return;
         } catch (error) {
+          if (generation !== conversationGeneration) return;
           // Before the authenticated WebSocket was ready, STT never started.
           // Once ready, NEVER retry: that could charge for a second response.
           if (current.duplex.ready) throw error;
-          const wav = buildWav(current.chunks, rate, frames);
-          await makeStreamingRequest("/api/voice", wav, {
-            "Content-Type":"audio/wav",
-            "X-Jade-Session":thread,
-            "X-Jade-Speak":soundEnabled ? "1" : "0"
-          });
         }
-      } else {
-        const wav = buildWav(current.chunks, rate, frames);
-        await makeStreamingRequest("/api/voice", wav, {
-          "Content-Type":"audio/wav",
-          "X-Jade-Session": thread,
-          "X-Jade-Speak": soundEnabled ? "1" : "0"
-        });
       }
+      const wav = buildWav(current.chunks, rate, frames);
+      await makeStreamingRequest("/api/voice", wav, {
+        "Content-Type":"audio/wav",
+        "X-Jade-Session":thread,
+        "X-Jade-Speak":soundEnabled ? "1" : "0"
+      });
     } catch (error) {
-      setStatus(error.message || "Message vocal non transmis.");
+      if (generation === conversationGeneration) setMicStatus(error.message || "Message vocal non transmis.");
     } finally {
-      if (activeDuplex === current.duplex) activeDuplex = null;
-      busy = false;
-      send.disabled = false;
-      newChat.disabled = false;
-      input.disabled = false;
-      mic.disabled = false;
+      if (generation === conversationGeneration) {
+        if (activeDuplex === current.duplex) activeDuplex = null;
+        sealReplyAudio();
+        busy = voicePending = false;
+        resetMicButton();
+        setStatus(status.textContent);
+      }
     }
   }
 
@@ -644,83 +862,100 @@
 
   const deploymentPanel = $("deployment-panel");
   const deploymentLoad = $("deployment-load"), deploymentRun = $("deployment-run");
-  const deploymentRestart = $("deployment-restart"), deploymentBranch = $("deployment-branch");
-  const deploymentState = $("deployment-state");
-  let deploymentPending = false;
+  const deploymentRestart = $("deployment-restart"), deploymentState = $("deployment-state");
+  const deploymentLogs = $("deployment-logs"), deploymentLogsLoad = $("deployment-logs-load");
+  const deploymentLevel = $("deployment-level"), deploymentAutoscroll = $("deployment-autoscroll");
+  let deploymentPending = false, deploymentPolling = null, deploymentRawLogs = "";
 
-  async function deploymentRequest(operation, extras = {}) {
-    return makeRequest("/api/deployment",
-      JSON.stringify(Object.assign({operation}, extras)),
-      {"Content-Type":"application/json"});
+  // Control runs outside Jade on Windows and stays online during a restart.
+  // Tailscale Serve mounts /control to the private service on 127.0.0.1:8771.
+  async function controlRequest(path, payload) {
+    if (!token) throw new Error("Connecte-toi avant d’administrer Jade.");
+    const response = await fetch("/control/api/" + path, {
+      method:payload === undefined ? "GET" : "POST",
+      cache:"no-store", credentials:"omit",
+      headers:Object.assign({"Authorization":"Bearer " + token},
+        payload === undefined ? {} : {"Content-Type":"application/json"}),
+      ...(payload === undefined ? {} : {body:JSON.stringify(payload)})
+    });
+    if (response.status === 401) { authorizeAgain(); throw new Error("Jeton expiré."); }
+    if (response.status === 403) throw new Error("Accès administrateur refusé par Tailscale.");
+    let result;
+    try { result = await response.json(); } catch (_) { throw new Error("Réponse de contrôle invalide."); }
+    if (!response.ok) throw new Error(result.error || "Contrôleur Windows indisponible.");
+    return result;
+  }
+
+  function renderDeploymentLogs() {
+    let lines = deploymentRawLogs.split("\n");
+    if (deploymentLevel.value === "error")
+      lines = lines.filter(line => /\b(ERROR|CRITICAL|Traceback|Exception)\b/i.test(line));
+    else if (deploymentLevel.value === "warning")
+      lines = lines.filter(line => /\b(WARNING|ERROR|CRITICAL|Traceback|Exception)\b/i.test(line));
+    deploymentLogs.textContent = lines.join("\n") || "Aucune ligne correspondant au filtre.";
+    if (deploymentAutoscroll.checked) deploymentLogs.scrollTop = deploymentLogs.scrollHeight;
   }
 
   async function refreshDeployment() {
-    if (deploymentPending || !token) return;
-    deploymentPending = true;
-    deploymentLoad.disabled = true;
-    deploymentState.textContent = "Interrogation du superviseur local…";
+    if (!token || !deploymentPanel.open || document.hidden || deploymentPending) return;
     try {
-      const [current, response] = await Promise.all([
-        deploymentRequest("status"), deploymentRequest("branches")
+      const [state, result] = await Promise.all([
+        controlRequest("status"), controlRequest("logs")
       ]);
-      const branchNames = Array.isArray(response.branches) ? response.branches : [];
-      const former = deploymentBranch.value;
-      deploymentBranch.replaceChildren();
-      for (const name of branchNames) {
-        if (typeof name !== "string") continue;
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        deploymentBranch.appendChild(option);
-      }
-      if (branchNames.includes(former)) deploymentBranch.value = former;
-      deploymentBranch.disabled = !branchNames.length;
-      deploymentRun.disabled = !branchNames.length;
-      deploymentState.textContent =
-        "Version active : " + (current.sha || "non connue") +
-        " ; statut : " + (current.phase || "inconnu") +
-        " ; processus : " + (current.running ? "en marche" : "arrêté") +
-        (current.error ? " ; incident : " + current.error : "");
+      const phase = state.phase || "inconnu";
+      const live = state.running ? "En cours" : "Arrêtée";
+      const pycharm = state.pycharm_run ? "Run ouvert" : "PyCharm non connecté";
+      deploymentState.textContent = "Jade : " + live + " · " + pycharm +
+        " · " + (state.branch || "branche inconnue") + " " +
+        (state.sha ? String(state.sha).slice(0, 8) : "(version inconnue)") +
+        " · " + phase +
+        (state.target_sha ? " · Distant (dernier fetch) : " + String(state.target_sha).slice(0, 8) : "") +
+        ({updated:" · Mise à jour réussie", already_current:" · Déjà à jour",
+          restarted:" · Redémarrage seul réussi", failed:" · Opération échouée"}[state.result] || "") +
+        (state.error ? " · Erreur : " + state.error : "");
+      deploymentRestart.disabled = !state.pycharm_run || phase !== "idle";
+      deploymentRun.disabled = deploymentRestart.disabled || state.branch !== "develop";
+      deploymentRawLogs = typeof result.text === "string" ? result.text : "";
+      renderDeploymentLogs();
     } catch (error) {
-      deploymentState.textContent = error.message || "Superviseur indisponible.";
-      deploymentBranch.disabled = true;
-      deploymentRun.disabled = true;
-    } finally {
-      deploymentPending = false;
-      deploymentLoad.disabled = false;
+      deploymentState.textContent = error.message || "Contrôleur indisponible.";
+      deploymentRun.disabled = deploymentRestart.disabled = true;
     }
   }
 
   async function submitDeployment(operation) {
     if (deploymentPending || !token) return;
-    const branch = deploymentBranch.value;
-    if (operation === "deploy" && (!branch || deploymentBranch.disabled)) return;
-    const question = operation === "deploy"
-      ? "Redéployer la branche " + branch + " et redémarrer Jade ?"
-      : "Redémarrer Jade sans mettre à jour le code ?";
-    if (!window.confirm(question)) return;
+    if (!window.confirm(operation === "update"
+      ? "Mettre à jour develop et redémarrer la Jade exécutée dans PyCharm ?"
+      : "Redémarrer la Jade exécutée dans PyCharm sans mise à jour ?")) return;
     deploymentPending = true;
     deploymentRun.disabled = deploymentRestart.disabled = true;
-    deploymentState.textContent = "Demande de redémarrage envoyée…";
+    deploymentState.textContent = "Demande envoyée au contrôleur Windows…";
     try {
-      await deploymentRequest(operation,
-        operation === "deploy" ? {branch, confirm:true} : {confirm:true});
-      deploymentState.textContent =
-        "Redémarrage engagé. La connexion peut être interrompue ; actualise ici après le retour de Jade.";
+      await controlRequest(operation, {confirm:true});
+      deploymentState.textContent = "Opération demandée. Suivi dans cette console jusqu’à la reprise.";
     } catch (error) {
-      deploymentState.textContent = error.message || "Redémarrage non confirmé.";
+      deploymentState.textContent = error.message || "Opération refusée.";
     } finally {
       deploymentPending = false;
-      deploymentRestart.disabled = false;
-      deploymentRun.disabled = deploymentBranch.disabled;
+      refreshDeployment();
     }
   }
 
   deploymentPanel.addEventListener("toggle", () => {
-    if (deploymentPanel.open) refreshDeployment();
+    if (deploymentPolling !== null) {
+      window.clearInterval(deploymentPolling);
+      deploymentPolling = null;
+    }
+    if (deploymentPanel.open) {
+      refreshDeployment();
+      deploymentPolling = window.setInterval(refreshDeployment, 3000);
+    }
   });
   deploymentLoad.addEventListener("click", refreshDeployment);
-  deploymentRun.addEventListener("click", () => submitDeployment("deploy"));
+  deploymentLogsLoad.addEventListener("click", refreshDeployment);
+  deploymentLevel.addEventListener("change", renderDeploymentLogs);
+  deploymentRun.addEventListener("click", () => submitDeployment("update"));
   deploymentRestart.addEventListener("click", () => submitDeployment("restart"));
 
   const billingPanel = $("billing-panel"), billingRefresh = $("billing-refresh");
@@ -768,16 +1003,256 @@
     if (billingPanel.open && !document.hidden && token) loadBilling();
   }, 300000);
 
-  authForm.addEventListener("submit", event => {
+  // DEV-036: reminders live on the PC. The phone never polls while closed.
+  // Its service worker is only awakened by the operating system's Push API.
+  const remindersList = $("reminders-list");
+  const remindersStatus = $("reminder-status");
+  const notificationStatus = $("notification-status");
+  const reminderForm = $("reminder-form");
+  const reminderTitle = $("reminder-title");
+  const reminderDate = $("reminder-date");
+  const reminderHeaders = {"Content-Type":"application/json"};
+  const reminderRequest = (action, id = null, title = null, due_at = null) =>
+    makeRequest("/api/reminders", JSON.stringify({action, id, title, due_at}), reminderHeaders);
+
+  function formatReminderDate(seconds) {
+    return new Date(Number(seconds) * 1000).toLocaleString("fr-FR", {
+      dateStyle:"medium", timeStyle:"short"
+    });
+  }
+  function renderReminders(items) {
+    remindersList.replaceChildren();
+    if (!items.length) {
+      const empty = document.createElement("li");
+      empty.textContent = "Aucun rappel enregistré.";
+      remindersList.appendChild(empty);
+      return;
+    }
+    for (const reminder of items) {
+      const line = document.createElement("li");
+      line.id = "reminder-item-" + reminder.id;
+      line.tabIndex = -1;
+      const info = document.createElement("span");
+      const states = {pending:"programmé", retry:"en attente d'envoi",
+        sending:"envoi en cours", sent:"envoyé (en attente de ton OK)"};
+      info.textContent = reminder.title + " · " + formatReminderDate(reminder.due_at)
+        + " · " + (states[reminder.state] || reminder.state)
+        + " · " + (reminder.destination === "discord" ? "Discord" : "mobile");
+      line.appendChild(info);
+      if (reminder.state === "sent") {
+        const acknowledge = document.createElement("button");
+        acknowledge.type = "button";
+        acknowledge.textContent = "OK";
+        acknowledge.setAttribute("aria-label", "Confirmer le rappel " + reminder.title);
+        acknowledge.addEventListener("click", async () => {
+          acknowledge.disabled = true;
+          try {
+            await reminderRequest("ack", reminder.id);
+            await loadReminders();
+            remindersStatus.textContent = "Rappel confirmé.";
+          } catch (error) {
+            remindersStatus.textContent = error.message;
+            acknowledge.disabled = false;
+          }
+        });
+        line.appendChild(acknowledge);
+      } else {
+        const defer = document.createElement("button");
+        defer.type = "button";
+        defer.textContent = "Reporter 10 min";
+        defer.addEventListener("click", async () => {
+          try {
+            const when = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+            await reminderRequest("update", reminder.id, null, when);
+            remindersStatus.textContent = "Rappel reporté.";
+            await loadReminders();
+          } catch (error) { remindersStatus.textContent = error.message; }
+        });
+        line.appendChild(defer);
+      }
+      if (reminder.state !== "sent") {
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.textContent = "Annuler";
+        cancel.addEventListener("click", async () => {
+          try {
+            await reminderRequest("cancel", reminder.id);
+            remindersStatus.textContent = "Rappel annulé.";
+            await loadReminders();
+          } catch (error) { remindersStatus.textContent = error.message; }
+        });
+        line.appendChild(cancel);
+      }
+      remindersList.appendChild(line);
+    }
+  }
+  let remindersLoadVersion = 0;
+  async function loadReminders() {
+    if (!token) return;
+    const version = ++remindersLoadVersion;
+    try {
+      const result = await reminderRequest("list");
+      if (version !== remindersLoadVersion) return;
+      renderReminders(result.items || []);
+      remindersStatus.textContent = "";
+    } catch (error) {
+      if (version === remindersLoadVersion)
+        remindersStatus.textContent = "Rappels indisponibles : " + error.message;
+    }
+  }
+  // Refresh only while the reminders tab is actually open. No background PWA polling.
+  setInterval(() => {
+    if (token && !document.hidden && shell.dataset.view === "reminders")
+      loadReminders();
+  }, 30000);
+  reminderForm.addEventListener("submit", async event => {
     event.preventDefault();
-    const value = authInput.value;
-    if (value.length < 32 || value.length > 256) return;
-    token = value;
-    authInput.value = "";
-    modal.classList.add("hidden");
-    setStatus("Jeton saisi. Tu peux parler ou écrire à Jade.");
-    input.focus();
+    if (!token) { authorizeAgain(); return; }
+    const title = reminderTitle.value.trim();
+    const date = new Date(reminderDate.value);
+    if (!title || Number.isNaN(date.getTime())) {
+      remindersStatus.textContent = "Titre et date valides requis.";
+      return;
+    }
+    try {
+      await reminderRequest("create", null, title, date.toISOString());
+      reminderForm.reset();
+      $("reminder-create-panel").open = false;
+      remindersStatus.textContent = "Rappel enregistré sur le PC.";
+      await loadReminders();
+    } catch (error) { remindersStatus.textContent = error.message; }
   });
+  $("refresh-reminders").addEventListener("click", loadReminders);
+
+  const decodeVapidKey = value => {
+    const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+    const binary = atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, "="));
+    return Uint8Array.from(binary, char => char.charCodeAt(0));
+  };
+  async function registrationForPush() {
+    if (!window.isSecureContext || !("serviceWorker" in navigator) ||
+        !("PushManager" in window) || !("Notification" in window)) {
+      throw new Error("Ce navigateur ne prend pas en charge le push pour cette PWA.");
+    }
+    return navigator.serviceWorker.ready;
+  }
+  const notificationOn = $("notifications-on"), notificationOff = $("notifications-off");
+  let confirmedNotificationChoice = "";
+  let notificationBusy = false;
+  function showNotificationChoice(value) {
+    notificationOn.checked = value === "on";
+    notificationOff.checked = value === "off";
+  }
+  function lockNotificationChoice(value) {
+    notificationOn.disabled = value;
+    notificationOff.disabled = value;
+  }
+  // Refresh from browser state. Never prompt for permission while rendering the page.
+  async function refreshNotificationChoice() {
+    if (!token || notificationBusy) return;
+    try {
+      const registration = await registrationForPush();
+      const subscription = await registration.pushManager.getSubscription();
+      confirmedNotificationChoice = subscription && Notification.permission === "granted" ? "on" : "off";
+      showNotificationChoice(confirmedNotificationChoice);
+      lockNotificationChoice(false);
+      notificationStatus.textContent = confirmedNotificationChoice === "on"
+        ? "Notifications activées sur cet appareil." : "Notifications désactivées sur cet appareil.";
+    } catch (error) {
+      confirmedNotificationChoice = "";
+      showNotificationChoice("");
+      lockNotificationChoice(true);
+      notificationStatus.textContent = "Notifications indisponibles : " + error.message;
+    }
+  }
+  async function changeNotificationChoice(enable) {
+    if (notificationBusy) return;
+    if (!token) { showNotificationChoice(confirmedNotificationChoice); authorizeAgain(); return; }
+    notificationBusy = true;
+    lockNotificationChoice(true);
+    try {
+      const registration = await registrationForPush();
+      if (enable) {
+        const config = await makeRequest("/api/push", JSON.stringify({action:"config"}), reminderHeaders);
+        if (!config.enabled) throw new Error("Push non configuré sur le PC Jade.");
+        if (await Notification.requestPermission() !== "granted")
+          throw new Error("Permission de notifications refusée.");
+        let subscription = await registration.pushManager.getSubscription();
+        if (!subscription) subscription = await registration.pushManager.subscribe({
+          userVisibleOnly:true, applicationServerKey:decodeVapidKey(config.vapid_public_key)
+        });
+        await makeRequest("/api/push", JSON.stringify({
+          action:"subscribe", subscription:subscription.toJSON()
+        }), reminderHeaders);
+      } else {
+        const subscription = await registration.pushManager.getSubscription();
+        if (subscription) {
+          await makeRequest("/api/push", JSON.stringify({
+            action:"unsubscribe", endpoint:subscription.endpoint
+          }), reminderHeaders);
+          if (!await subscription.unsubscribe())
+            throw new Error("Le navigateur n'a pas confirmé la désinscription.");
+        }
+      }
+      confirmedNotificationChoice = enable ? "on" : "off";
+      showNotificationChoice(confirmedNotificationChoice);
+      notificationStatus.textContent = enable
+        ? "Notifications activées sur cet appareil." : "Notifications désactivées sur cet appareil.";
+    } catch (error) {
+      showNotificationChoice(confirmedNotificationChoice);
+      notificationStatus.textContent = (enable ? "Activation impossible : " : "Désactivation incomplète : ") + error.message;
+    } finally {
+      notificationBusy = false;
+      lockNotificationChoice(false);
+    }
+  }
+  notificationOn.addEventListener("change", () => {
+    if (notificationOn.checked) changeNotificationChoice(true);
+  });
+  notificationOff.addEventListener("change", () => {
+    if (notificationOff.checked) changeNotificationChoice(false);
+  });
+
+  async function showReminder(reminderId) {
+    if (!/^[0-9a-f]{24}$/.test(reminderId)) return;
+    showView("reminders");
+    if (!token) return;
+    try {
+      const result = await makeRequest("/api/reminders", JSON.stringify({
+        action:"get", id:reminderId
+      }), reminderHeaders);
+      const reminder = result.reminder;
+      remindersStatus.textContent = "Rappel Jade : " + reminder.title + " · "
+        + formatReminderDate(reminder.due_at) + ".";
+      await loadReminders();
+      const row = $("reminder-item-" + reminderId);
+      if (row) {
+        row.classList.add("reminder-highlight");
+        row.scrollIntoView?.({block:"nearest"});
+      }
+      remindersStatus.textContent = "Rappel Jade : " + reminder.title + " · "
+        + formatReminderDate(reminder.due_at) + ".";
+    } catch (error) {
+      remindersStatus.textContent = "Rappel inaccessible : " + error.message;
+    }
+  }
+  function openReminderFromHash() {
+    const match = /^#reminder-([0-9a-f]{24})$/.exec(window.location.hash);
+    if (match) showReminder(match[1]);
+  }
+  window.addEventListener("hashchange", openReminderFromHash);
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", event => {
+      if (event.data && event.data.type === "jade-open-reminder" &&
+          typeof event.data.id === "string" && /^[0-9a-f]{24}$/.test(event.data.id)) {
+        const target = "#reminder-" + event.data.id;
+        if (window.location.hash === target) showReminder(event.data.id);
+        else window.location.hash = target;
+      }
+    });
+  }
+  openReminderFromHash();
+
   form.addEventListener("submit", submitText);
   input.addEventListener("keydown", event => {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -785,28 +1260,59 @@
       form.requestSubmit();
     }
   });
-  mic.addEventListener("click", () => {
-    if (recording) stopRecording();
-    else if (activeDuplex && busy) {
-      activeDuplex.cancel();
-      activeDuplex = null;
-      stopPlayback();
-      setStatus("Réponse vocale interrompue.");
-    } else if (!starting && !busy) startRecording();
+  mic.addEventListener("pointerdown", event => {
+    if (event.button !== 0 || event.isPrimary === false) return;
+    event.preventDefault();
+    return startRecording({pointerId:event.pointerId});
+  });
+  window.addEventListener("pointerup", event => {
+    if (micPress?.pointerId === event.pointerId) finishMicPress(true);
+  }, true);
+  window.addEventListener("pointercancel", event => {
+    if (micPress?.pointerId === event.pointerId) finishMicPress(false);
+  }, true);
+  mic.addEventListener("lostpointercapture", event => {
+    if (micPress?.pointerId === event.pointerId) finishMicPress(false);
+  });
+  mic.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      if (voicePending) {
+        cancelConversation();
+        setMicStatus("Réponse vocale interrompue.");
+      } else finishMicPress(false);
+      return;
+    }
+    if (event.key !== " " && event.key !== "Enter") return;
+    event.preventDefault();
+    if (!event.repeat) return startRecording({key:event.key});
+  });
+  mic.addEventListener("keyup", event => {
+    if (micPress?.key !== event.key) return;
+    event.preventDefault();
+    finishMicPress(true);
+  });
+  mic.addEventListener("blur", () => {
+    if (micPress?.key !== undefined) finishMicPress(false);
+  });
+  mic.addEventListener("contextmenu", event => {
+    if (micPress) event.preventDefault();
+  });
+  window.addEventListener("blur", () => finishMicPress(false));
+  window.addEventListener("offline", () => {
+    if (!micPress && !voicePending) return;
+    cancelConversation();
+    setMicStatus("Connexion interrompue pendant le tour vocal.");
   });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
-      cancelRecording();
-      abortMobileStream();
-      if (activeDuplex) { activeDuplex.cancel(); activeDuplex = null; }
-      stopPlayback();
+      const interrupted = Boolean(starting || busy || recording);
+      cancelConversation();
+      if (interrupted && !modelChanging) setStatus("Conversation interrompue.");
+    } else if (token && shell.dataset.view === "reminders") {
+      loadReminders();
     }
   });
-  window.addEventListener("pagehide", () => {
-    cancelRecording();
-    abortMobileStream();
-    stopPlayback();
-  });
+  window.addEventListener("pagehide", cancelConversation);
   soundToggle.addEventListener("click", () => {
     soundEnabled = !soundEnabled;
     soundToggle.textContent = soundEnabled ? "Voix activée" : "Voix coupée";
@@ -814,22 +1320,150 @@
     if (!soundEnabled) stopPlayback();
   });
   newChat.addEventListener("click", () => {
-    if (busy || recording || starting) return;
+    if (modelChanging || busy || recording || starting) return;
     thread = newThread();
     stopPlayback();
-    avatar().resetIntent();
     log.replaceChildren();
-    const intro = document.createElement("div");
-    intro.className = "welcome";
-    intro.textContent = "Un nouveau fil commence. Jade est prête.";
-    log.appendChild(intro);
     setStatus("Nouveau fil.");
   });
-  $("fullscreen").addEventListener("click", () => {
-    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
-    else document.documentElement.requestFullscreen?.().catch(() => {});
+  const fullscreenButton = $("fullscreen");
+  const roomPlane = document.querySelector(".room-plane");
+  const scene = document.querySelector(".room");
+  let nativeRoomFullscreen = false;
+  let fullscreenPending = false;
+  let scenePointer = null, previousSceneTap = null;
+  let lastTouchTime = -Infinity;
+  const sceneControls = "button,a,input,select,textarea,label,summary,[role='button'],[contenteditable],.room-picker";
+  const isSceneControl = target => Boolean(target?.closest?.(sceneControls));
+  function resetSceneGesture() {
+    scenePointer = null;
+    previousSceneTap = null;
+  }
+  function setRoomFullscreen(active) {
+    resetSceneGesture();
+    // Freeze the 4:3 background width before its enclosing viewport expands.
+    if (active && roomPlane) {
+      const width = roomPlane.getBoundingClientRect().width;
+      if (width > 0) shell.style.setProperty("--room-immersive-width", width + "px");
+    }
+    shell.classList.toggle("is-room-only", active);
+    syncMicPlacement();
+    if (!active) shell.style.removeProperty("--room-immersive-width");
+    fullscreenButton.textContent = active ? "⤢" : "⛶";
+    const description = active ? "Quitter le plein écran" : "Afficher uniquement Jade en plein écran";
+    fullscreenButton.setAttribute("aria-label", description);
+    fullscreenButton.setAttribute("title", description);
+    fullscreenButton.setAttribute("aria-pressed", String(active));
+    window.JadeAvatar?.resize?.();
+  }
+  async function toggleRoomFullscreen() {
+    // A native fullscreen transition may outlive a click. Keep repeated input
+    // from starting a competing request/exit while the browser is settling.
+    if (fullscreenPending) {
+      resetSceneGesture();
+      return;
+    }
+    fullscreenPending = true;
+    try {
+      if (shell.classList.contains("is-room-only")) {
+        setRoomFullscreen(false);
+        if (document.fullscreenElement === shell) {
+          try { await document.exitFullscreen?.(); } catch (_) { /* CSS view already closed */ }
+        }
+        return;
+      }
+      setRoomFullscreen(true);
+      if (shell.requestFullscreen) {
+        try { await shell.requestFullscreen(); } catch (_) { /* CSS fullscreen stays available */ }
+      }
+    } finally {
+      fullscreenPending = false;
+    }
+  }
+  fullscreenButton.addEventListener("click", toggleRoomFullscreen);
+  scene?.addEventListener("dblclick", event => {
+    // Touch browsers can also emit a compatibility dblclick after pointerup.
+    if (window.JadeAvatarGestures?.shouldIgnoreFullscreenTap?.(event) ||
+        event.defaultPrevented || event.button !== 0 || isSceneControl(event.target) ||
+        event.sourceCapabilities?.firesTouchEvents || event.timeStamp - lastTouchTime < 800) return;
+    event.preventDefault();
+    void toggleRoomFullscreen();
+  });
+  scene?.addEventListener("pointerdown", event => {
+    if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
+    lastTouchTime = event.timeStamp;
+    if (event.defaultPrevented || event.isPrimary === false || scenePointer || isSceneControl(event.target)) {
+      resetSceneGesture();
+      return;
+    }
+    scenePointer = {id:event.pointerId, x:event.clientX, y:event.clientY, time:event.timeStamp,
+      view:shell.dataset.view, immersive:shell.classList.contains("is-room-only")};
+  });
+  scene?.addEventListener("pointermove", event => {
+    if (scenePointer?.id === event.pointerId &&
+        Math.hypot(event.clientX - scenePointer.x, event.clientY - scenePointer.y) > 12)
+      resetSceneGesture();
+  });
+  scene?.addEventListener("pointerup", event => {
+    if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
+    lastTouchTime = event.timeStamp;
+    if (window.JadeAvatarGestures?.shouldIgnoreFullscreenTap?.(event)) {
+      resetSceneGesture();
+      return;
+    }
+    const pointer = scenePointer;
+    scenePointer = null;
+    if (!pointer || pointer.id !== event.pointerId || event.defaultPrevented ||
+        isSceneControl(event.target) || event.timeStamp - pointer.time > 300 ||
+        Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y) > 12 ||
+        pointer.view !== shell.dataset.view || pointer.immersive !== shell.classList.contains("is-room-only")) {
+      previousSceneTap = null;
+      return;
+    }
+    const previous = previousSceneTap;
+    previousSceneTap = {x:event.clientX, y:event.clientY, time:event.timeStamp,
+      view:pointer.view, immersive:pointer.immersive};
+    if (previous && event.timeStamp - previous.time <= 350 &&
+        Math.hypot(event.clientX - previous.x, event.clientY - previous.y) <= 32 &&
+        previous.view === pointer.view && previous.immersive === pointer.immersive) {
+      event.preventDefault();
+      void toggleRoomFullscreen();
+    }
+  });
+  scene?.addEventListener("pointercancel", resetSceneGesture);
+  // A second finger outside the scene must also cancel a possible double tap.
+  document.addEventListener("pointerdown", event => {
+    if (event.isPrimary === false || !scene?.contains(event.target)) resetSceneGesture();
+  }, true);
+  document.addEventListener("scroll", resetSceneGesture, true);
+  window.addEventListener("blur", resetSceneGesture);
+  document.addEventListener("fullscreenchange", () => {
+    if (document.fullscreenElement === shell) nativeRoomFullscreen = true;
+    else if (nativeRoomFullscreen) {
+      nativeRoomFullscreen = false;
+      setRoomFullscreen(false);
+    }
   });
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   }
+  // Chat is initialized independently of the optional Live2D renderer.
+  window.JadeConversation = {stopForModelChange};
+  window.JadeMobileApp = {
+    login(value) {
+      token = value;
+      authInput.value = "";
+      authFeedback.textContent = "";
+      modal.classList.add("hidden");
+      connection.textContent = "Connectée à Jade";
+      connection.classList.add("online");
+      setStatus("Connexion vérifiée. Tu peux parler ou écrire à Jade.");
+      // Do not display the Android keyboard on the room-first landing page.
+      openReminderFromHash();
+      if (shell.dataset.view === "reminders") {
+        loadReminders();
+      }
+      if (shell.dataset.view === "profile") refreshNotificationChoice();
+    }
+  };
 })();

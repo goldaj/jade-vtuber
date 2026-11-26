@@ -1,0 +1,2842 @@
+{
+  "canvas": [
+    3840,
+    5000
+  ],
+  "model_images": {
+    "JAD_R21_HAIR_FRONT_LOCK_R": {
+      "guid": "351fea0a-eeb9-41b5-b853-7d11dfa227de",
+      "member": "imageFileBuf.png",
+      "sha256": "aff45638c8c01936ccdc9005cff2c61bec390f9896916abdac29c45f71390ca6",
+      "size_px": [
+        293,
+        735
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1992.0,
+        0.0,
+        1.0,
+        722.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_FRONT_LOCK_R",
+          "neutral_opacity": 0.0,
+          "render_order": 81,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1992,
+        722
+      ]
+    },
+    "JAD_R21_HAIR_FRONT_LOCK_L": {
+      "guid": "23d2268f-5c07-4126-a7f5-ccf5dfcd3131",
+      "member": "imageFileBuf_0.png",
+      "sha256": "154198e30d46e7b353759f2a0bfab17c8244ff3cc65ea5ce2909a07bf1246069",
+      "size_px": [
+        299,
+        731
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1555.0,
+        0.0,
+        1.0,
+        722.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_FRONT_LOCK_L",
+          "neutral_opacity": 0.0,
+          "render_order": 80,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1555,
+        722
+      ]
+    },
+    "JAD_R21_HAIR_FRONT_TEMPLE_R": {
+      "guid": "d141eb44-8b39-4d98-81ff-07b7905a9ffb",
+      "member": "imageFileBuf_1.png",
+      "sha256": "48b308071b9dcf215e9b2187d6701290d3b3637ee87cbd9338112627bc01a289",
+      "size_px": [
+        232,
+        1068
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2160.0,
+        0.0,
+        1.0,
+        400.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_FRONT_TEMPLE_R",
+          "neutral_opacity": 0.0,
+          "render_order": 79,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2160,
+        400
+      ]
+    },
+    "JAD_R21_HAIR_FRONT_BANG_R_OUTER": {
+      "guid": "bf3d1a9c-f5f6-430a-9584-3f9acbd86fca",
+      "member": "imageFileBuf_2.png",
+      "sha256": "e098bc17abb36da982710269b05ceb35374d8c8484e2615dc6689ce1e9463d27",
+      "size_px": [
+        260,
+        720
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2005.0,
+        0.0,
+        1.0,
+        302.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_FRONT_BANG_R_OUTER",
+          "neutral_opacity": 0.0,
+          "render_order": 71,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2005,
+        302
+      ]
+    },
+    "JAD_R21_HAIR_FRONT_BANG_R_INNER": {
+      "guid": "aee4b3d3-0521-4075-9ed4-fa1f00dac234",
+      "member": "imageFileBuf_3.png",
+      "sha256": "d144fbf6105f7d5cd9b70f205ee0dce54c2f7b129460646185361e67d0e6f035",
+      "size_px": [
+        172,
+        772
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1970.0,
+        0.0,
+        1.0,
+        265.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_FRONT_BANG_R_INNER",
+          "neutral_opacity": 0.0,
+          "render_order": 70,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1970,
+        265
+      ]
+    },
+    "JAD_R21_HAIR_FRONT_BANG_CENTER_R": {
+      "guid": "09c33794-366b-40db-a87d-c4feae4ccfcb",
+      "member": "imageFileBuf_4.png",
+      "sha256": "3009c02f234f4f65fdb3a0d22e7283816dc0dbd40c34c15ead8e0ef717196349",
+      "size_px": [
+        117,
+        391
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1905.0,
+        0.0,
+        1.0,
+        353.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_FRONT_BANG_CENTER_R",
+          "neutral_opacity": 0.0,
+          "render_order": 69,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1905,
+        353
+      ]
+    },
+    "JAD_R21_HAIR_FRONT_BANG_CENTER_L": {
+      "guid": "7694346c-6bee-4456-bcf6-a18b4ad5c518",
+      "member": "imageFileBuf_5.png",
+      "sha256": "13b91795509b0075bd67338f9161b5aaf10cb7918afae603954dda18d70dece0",
+      "size_px": [
+        118,
+        384
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1797.0,
+        0.0,
+        1.0,
+        353.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_FRONT_BANG_CENTER_L",
+          "neutral_opacity": 0.0,
+          "render_order": 68,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1797,
+        353
+      ]
+    },
+    "JAD_R21_HAIR_FRONT_BANG_L_INNER": {
+      "guid": "96c000b2-7d24-4d2f-9daa-db376aac0b0c",
+      "member": "imageFileBuf_6.png",
+      "sha256": "3b67359eb96b9739c3547aebd4ca899dc87ce1e6a90310cdf7094e3b420224e0",
+      "size_px": [
+        178,
+        775
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1678.0,
+        0.0,
+        1.0,
+        284.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_FRONT_BANG_L_INNER",
+          "neutral_opacity": 0.0,
+          "render_order": 67,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1678,
+        284
+      ]
+    },
+    "JAD_R21_HAIR_FRONT_BANG_L_OUTER": {
+      "guid": "b0fd312c-5d2d-4f52-92b4-d6b86ab9cf9a",
+      "member": "imageFileBuf_7.png",
+      "sha256": "38d631f248c2eda05b2e6ee5ce4c5492464fac31e41cf4a34e13c9f4d05abe31",
+      "size_px": [
+        247,
+        675
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1557.0,
+        0.0,
+        1.0,
+        313.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_FRONT_BANG_L_OUTER",
+          "neutral_opacity": 0.0,
+          "render_order": 66,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1557,
+        313
+      ]
+    },
+    "JAD_R21_HAIR_FRONT_TEMPLE_L": {
+      "guid": "1e4bf7a5-2daa-4a44-8674-f1646b043a88",
+      "member": "imageFileBuf_8.png",
+      "sha256": "945a8b076b9a0c9ec5aa6f77b74bcebf9c9405ed353860b74d24ba49a55ce10d",
+      "size_px": [
+        230,
+        1018
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1429.0,
+        0.0,
+        1.0,
+        420.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_FRONT_TEMPLE_L",
+          "neutral_opacity": 0.0,
+          "render_order": 78,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1429,
+        420
+      ]
+    },
+    "JAD_R21_HAIR_AHOGE": {
+      "guid": "299dec52-1b7d-411f-bf19-8527d420a709",
+      "member": "imageFileBuf_9.png",
+      "sha256": "2fcf574f5cfcf3583419f1533e1b742962badae872f518e16c9ec9e2e1c92477",
+      "size_px": [
+        339,
+        272
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1743.0,
+        0.0,
+        1.0,
+        90.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_AHOGE",
+          "neutral_opacity": 0.0,
+          "render_order": 65,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1743,
+        90
+      ]
+    },
+    "JAD_R21_MOUTH_OPEN_OUTLINE": {
+      "guid": "5dd9a878-dadd-4802-b82a-634abfcc249d",
+      "member": "jade_v43_pigment_outline.png",
+      "sha256": "b54c9cf8683c6289eb8b4172a8deceaeb719485a1d286949cf8be5787119bf12",
+      "size_px": [
+        103,
+        56
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1867.0,
+        0.0,
+        1.0,
+        899.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_MOUTH_OPEN_OUTLINE",
+          "neutral_opacity": 0.0,
+          "render_order": 64,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v43_bouche/JAD_R21_MOUTH_OPEN_OUTLINE.png"
+      ],
+      "paint_layer_origin_px": [
+        1867,
+        899
+      ]
+    },
+    "JAD_R21_MOUTH_OPEN_TEETH_UPPER": {
+      "guid": "eb506aab-3d3b-4f9b-9f00-c533dc6a5b8f",
+      "member": "jade_v43_pigment_teeth_upper.png",
+      "sha256": "f55898d467a54d7ac64fa801ca0776cba7122abbac1f24a98ac5a7d7cf7f9a96",
+      "size_px": [
+        88,
+        32
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1875.0,
+        0.0,
+        1.0,
+        899.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_MOUTH_OPEN_TEETH_UPPER",
+          "neutral_opacity": 0.0,
+          "render_order": 63,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v43_bouche/JAD_R21_MOUTH_OPEN_TEETH_UPPER.png"
+      ],
+      "paint_layer_origin_px": [
+        1875,
+        899
+      ]
+    },
+    "JAD_R21_MOUTH_OPEN_TONGUE": {
+      "guid": "5c22af4e-a9bd-417f-af6a-b6efdeefc961",
+      "member": "jade_v43_pigment_tongue.png",
+      "sha256": "5e19364e575c11abfe6eeefcfd37407f51b230188df8db493e8eba5ef3c50417",
+      "size_px": [
+        102,
+        52
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1868.0,
+        0.0,
+        1.0,
+        925.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_MOUTH_OPEN_TONGUE",
+          "neutral_opacity": 0.0,
+          "render_order": 62,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v43_bouche/JAD_R21_MOUTH_OPEN_TONGUE.png"
+      ],
+      "paint_layer_origin_px": [
+        1868,
+        925
+      ]
+    },
+    "JAD_R21_MOUTH_OPEN_INTERIOR": {
+      "guid": "17fd9245-3012-43e5-8f2d-650ad39f3b15",
+      "member": "jade_v43_pigment_interior.png",
+      "sha256": "2a4332152abcce239ef2db30a25ef79929166204862789144c2e0764d59a4abd",
+      "size_px": [
+        107,
+        55
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1865.0,
+        0.0,
+        1.0,
+        891.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_MOUTH_OPEN_INTERIOR",
+          "neutral_opacity": 0.0,
+          "render_order": 61,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v43_bouche/JAD_R21_MOUTH_OPEN_INTERIOR.png"
+      ],
+      "paint_layer_origin_px": [
+        1865,
+        891
+      ]
+    },
+    "JAD_R21_MOUTH_NEUTRAL_CLEAN": {
+      "guid": "f9c09ab5-665f-4d7f-9f9d-d9bb5e28dc30",
+      "member": "jade_r21_mouth_neutral_master_clean.png",
+      "sha256": "98753ec72cbf5ce6e513c23181d2928810c8a59221f87e51621b14081ed02ccd",
+      "size_px": [
+        92,
+        42
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1875.0,
+        0.0,
+        1.0,
+        911.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_MOUTH_NEUTRAL_CLEAN",
+          "neutral_opacity": 1.0,
+          "render_order": 60,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v36_restoration/JAD_R21_MOUTH_NEUTRAL_CLEAN.png"
+      ],
+      "paint_layer_origin_px": [
+        1875,
+        911
+      ]
+    },
+    "JAD_R21_JAW_NECK_EDGE_PATCH": {
+      "guid": "9278508b-c168-42eb-9708-3ac2c751312c",
+      "member": "imageFileBuf_15.png",
+      "sha256": "861e4ce3af3526b400130a9d4963518f967d10ca5ea5231321f345fe68825061",
+      "size_px": [
+        166,
+        68
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1827.0,
+        0.0,
+        1.0,
+        974.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_JAW_NECK_EDGE_PATCH",
+          "neutral_opacity": 0.0,
+          "render_order": 59,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1827,
+        974
+      ]
+    },
+    "JAD_R21_BROW_R_MASTER": {
+      "guid": "4760c988-3cd1-4507-a47d-511ff93259e4",
+      "member": "jad_r21_brow_r_master_expression_v39.png",
+      "sha256": "52a842dce966dfe3f381fa2e0fa7f21517e0f5e90c80e30aa8bd370948a90456",
+      "size_px": [
+        193,
+        114
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1651.0,
+        0.0,
+        1.0,
+        611.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_BROW_R_MASTER",
+          "neutral_opacity": 1.0,
+          "render_order": 92,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v39_expression/JAD_R21_BROW_R_MASTER.png"
+      ],
+      "paint_layer_origin_px": [
+        1651,
+        611
+      ]
+    },
+    "JAD_R21_BROW_L_MASTER": {
+      "guid": "5aa3da2e-aabd-4de2-bab6-2e1a348486e7",
+      "member": "jad_r21_brow_l_master_expression_v39.png",
+      "sha256": "e75ef1df97ce3293ce5ee44d840bdd85267ba16c48d4ddb5c16e73726605e1f2",
+      "size_px": [
+        191,
+        114
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1975.0,
+        0.0,
+        1.0,
+        611.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_BROW_L_MASTER",
+          "neutral_opacity": 1.0,
+          "render_order": 91,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v39_expression/JAD_R21_BROW_L_MASTER.png"
+      ],
+      "paint_layer_origin_px": [
+        1975,
+        611
+      ]
+    },
+    "JAD_R21_EYE_R_CLOSED_TRUE": {
+      "guid": "536b1062-e629-424b-8dd7-e1758ad541f5",
+      "member": "imageFileBuf_18.png",
+      "sha256": "9ec73ab255dbd740cb61daa5521d487aa01a0f38041799ff97486f83bbb284ce",
+      "size_px": [
+        149,
+        58
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1705.0,
+        0.0,
+        1.0,
+        779.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_EYE_R_CLOSED_TRUE",
+          "neutral_opacity": 0.0,
+          "render_order": 58,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1705,
+        779
+      ]
+    },
+    "JAD_R21_EYE_R_OPEN_MASTER": {
+      "guid": "82b37cbf-b662-4c2e-9ebc-0ed342eb20cd",
+      "member": "jad_r21_eye_r_open_master_expression_v39.png",
+      "sha256": "123991964a06cc2861facdad659699d3956e80d906b47fdb4affa327daead02c",
+      "size_px": [
+        202,
+        188
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1654.0,
+        0.0,
+        1.0,
+        652.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_EYE_R_OPEN_MASTER",
+          "neutral_opacity": 1.0,
+          "render_order": 57,
+          "masks": [
+            "JAD_R21_EYE_R_APERTURE_MASK"
+          ]
+        },
+        {
+          "name": "JAD_R21_EYE_R_LID_FRAME",
+          "neutral_opacity": 1.0,
+          "render_order": 51,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v39_expression/JAD_R21_EYE_R_OPEN_MASTER.png"
+      ],
+      "paint_layer_origin_px": [
+        1654,
+        652
+      ]
+    },
+    "JAD_R21_EYE_L_CLOSED_TRUE": {
+      "guid": "43dec0bc-81b9-4a49-94e9-ed86cab2b013",
+      "member": "imageFileBuf_20.png",
+      "sha256": "1f40e22fb9e5d55eb80ecb555ab33c8e99770fcea0d72760379b2e9c5f24d34a",
+      "size_px": [
+        151,
+        44
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1986.0,
+        0.0,
+        1.0,
+        782.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_EYE_L_CLOSED_TRUE",
+          "neutral_opacity": 0.0,
+          "render_order": 56,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1986,
+        782
+      ]
+    },
+    "JAD_R21_EYE_L_OPEN_MASTER": {
+      "guid": "643f9a6a-2b76-4684-bf1b-9259bcbf9b04",
+      "member": "jad_r21_eye_l_open_master_expression_v39.png",
+      "sha256": "f9e073154ef334a242841b8c5a59fb01f572171aabadc3539b9f7b5908ac5fef",
+      "size_px": [
+        200,
+        190
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1978.0,
+        0.0,
+        1.0,
+        652.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_EYE_L_OPEN_MASTER",
+          "neutral_opacity": 1.0,
+          "render_order": 55,
+          "masks": [
+            "JAD_R21_EYE_L_APERTURE_MASK"
+          ]
+        },
+        {
+          "name": "JAD_R21_EYE_L_LID_FRAME",
+          "neutral_opacity": 1.0,
+          "render_order": 53,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v39_expression/JAD_R21_EYE_L_OPEN_MASTER.png"
+      ],
+      "paint_layer_origin_px": [
+        1978,
+        652
+      ]
+    },
+    "JAD_R21_EAR_R_NORMAL": {
+      "guid": "fae7ba52-ac2c-44a9-8830-c3ea0ea06bb9",
+      "member": "imageFileBuf_22.png",
+      "sha256": "c1fa3532b857163732740b567480ecd8f5528f3d9c66f7c0fe10cfecd2351432",
+      "size_px": [
+        323,
+        398
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2216.0,
+        0.0,
+        1.0,
+        447.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_EAR_R_NORMAL",
+          "neutral_opacity": 0.0,
+          "render_order": 50,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2216,
+        447
+      ]
+    },
+    "JAD_R21_EAR_L_NORMAL": {
+      "guid": "1f13d2a4-aeaa-41a2-82dd-18a72ebdaeb9",
+      "member": "imageFileBuf_23.png",
+      "sha256": "e98c41e4b916273a249582b015afe1223b992cc374e2e83fdc89d2287c0f835e",
+      "size_px": [
+        311,
+        398
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1293.0,
+        0.0,
+        1.0,
+        447.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_EAR_L_NORMAL",
+          "neutral_opacity": 0.0,
+          "render_order": 49,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1293,
+        447
+      ]
+    },
+    "JAD_R21_HAND_R": {
+      "guid": "5b61536d-30c2-4da5-976b-beaa2186c355",
+      "member": "r21_restore_jad_r21_hand_r.png",
+      "sha256": "2ef684a3612f0b7fc453c4cc996ff41d0c511052bcf83705595385be8aa03066",
+      "size_px": [
+        138,
+        255
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2441.0,
+        0.0,
+        1.0,
+        2587.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAND_R",
+          "neutral_opacity": 0.0,
+          "render_order": 90,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2441,
+        2587
+      ]
+    },
+    "JAD_R21_ARM_R_FOREARM": {
+      "guid": "f5b45a17-ca96-46c9-a21d-a6a14a82bba0",
+      "member": "jad_r21_arm_r_forearm_v33_elbow_master.png",
+      "sha256": "e6a004beda5755b2466db180036f9cd117b25c20091e966a858b2c571b4d5cc0",
+      "size_px": [
+        266,
+        645
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2285.0,
+        0.0,
+        1.0,
+        1950.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_ARM_R_FOREARM",
+          "neutral_opacity": 0.0,
+          "render_order": 89,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2285,
+        1950
+      ]
+    },
+    "JAD_R21_ARM_R_UPPER": {
+      "guid": "4929f393-eb50-4b4f-bc40-c154fd1ad480",
+      "member": "jad_r21_arm_r_upper_v33_elbow_master.png",
+      "sha256": "fc92b15fa29bfd997b307202a4ec9a8ba69de516d8394a22b0ba0678ac7ef1ba",
+      "size_px": [
+        167,
+        377
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2237.0,
+        0.0,
+        1.0,
+        1581.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_ARM_R_UPPER",
+          "neutral_opacity": 0.0,
+          "render_order": 48,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2237,
+        1581
+      ]
+    },
+    "JAD_R21_HAND_L": {
+      "guid": "1c2324c7-e32d-44de-beb6-249e166886ea",
+      "member": "r21_restore_jad_r21_hand_l.png",
+      "sha256": "8acfb2ea05793508a0957878dbd31767b45dcf00b5168b5e867d02c3beaa9d32",
+      "size_px": [
+        140,
+        257
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1246.0,
+        0.0,
+        1.0,
+        2587.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAND_L",
+          "neutral_opacity": 0.0,
+          "render_order": 88,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1246,
+        2587
+      ]
+    },
+    "JAD_R21_ARM_L_FOREARM": {
+      "guid": "d0482e16-af08-417d-a3d9-7e61e72049b9",
+      "member": "jad_r21_arm_l_forearm_v33_elbow_master.png",
+      "sha256": "aed100401bee2af1990182e0384198de3871b87b5a07de613a76e956dfc9815f",
+      "size_px": [
+        264,
+        645
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1270.0,
+        0.0,
+        1.0,
+        1950.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_ARM_L_FOREARM",
+          "neutral_opacity": 0.0,
+          "render_order": 87,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1270,
+        1950
+      ]
+    },
+    "JAD_R21_ARM_L_UPPER": {
+      "guid": "b273de89-99e5-446f-95cf-4c07ee3b2f6f",
+      "member": "jad_r21_arm_l_upper_v33_elbow_master.png",
+      "sha256": "858e6b68f970d1df487f74bab1380ce6552e884f6fa3a40d79bf0d8423becb33",
+      "size_px": [
+        158,
+        391
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1427.0,
+        0.0,
+        1.0,
+        1567.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_ARM_L_UPPER",
+          "neutral_opacity": 0.0,
+          "render_order": 47,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1427,
+        1567
+      ]
+    },
+    "JAD_R21_EYE_R_SOCKET_SKIN": {
+      "guid": "d6f9fc33-5d6a-44fb-9eb9-5f8aace6e79e",
+      "member": "jade_v45_1_iris_R.png",
+      "sha256": "b13995467d6a4e463c93a00729608f97e4d1832248358ab7da7de567bd4159a7",
+      "size_px": [
+        252,
+        192
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1621.0,
+        0.0,
+        1.0,
+        681.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_EYE_R_SOCKET_SKIN",
+          "neutral_opacity": 1.0,
+          "render_order": 74,
+          "masks": [
+            "JAD_R21_EYE_R_APERTURE_MASK"
+          ]
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v45_1_iris/JAD_R21_EYE_R_SOCKET_SKIN.png"
+      ],
+      "paint_layer_origin_px": [
+        1621,
+        681
+      ]
+    },
+    "JAD_R21_EYE_L_SOCKET_SKIN": {
+      "guid": "38264269-e041-487e-875b-37eceac61533",
+      "member": "jade_v45_1_iris_L.png",
+      "sha256": "dc8138609a98bf67fd980badda48479a9365a4bc420a53412661c5eecdc46ec5",
+      "size_px": [
+        252,
+        192
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1945.0,
+        0.0,
+        1.0,
+        681.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_EYE_L_SOCKET_SKIN",
+          "neutral_opacity": 1.0,
+          "render_order": 73,
+          "masks": [
+            "JAD_R21_EYE_L_APERTURE_MASK"
+          ]
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v45_1_iris/JAD_R21_EYE_L_SOCKET_SKIN.png"
+      ],
+      "paint_layer_origin_px": [
+        1945,
+        681
+      ]
+    },
+    "JAD_R21_MOUTH_SOCKET_SKIN": {
+      "guid": "ee50b8a1-2d64-4bda-8b37-a905bcfef39e",
+      "member": "imageFileBuf_32.png",
+      "sha256": "1269392ad60f7e35cf9c649b852bcef20af224bccb46b17eb0baffffa9b8b0d8",
+      "size_px": [
+        149,
+        110
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1844.0,
+        0.0,
+        1.0,
+        880.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_MOUTH_SOCKET_SKIN",
+          "neutral_opacity": 1.0,
+          "render_order": 46,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1844,
+        880
+      ]
+    },
+    "JAD_R21_FACE_SKIN": {
+      "guid": "e7b65a0f-c281-4cf3-8a44-a2a1fa06c224",
+      "member": "jade_r21_face_mouth_corner_alpha.png",
+      "sha256": "1afeb7c9186c9e2caa318e63865cf9e91b57be2509aa0050b3cab37348958270",
+      "size_px": [
+        616,
+        611
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1596.0,
+        0.0,
+        1.0,
+        592.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_FACE_SKIN",
+          "neutral_opacity": 0.0,
+          "render_order": 45,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1596,
+        592
+      ]
+    },
+    "JAD_R21_SHOULDERS_UNDERPAINT_V1": {
+      "guid": "6ce3848e-d3c7-58ea-888e-025bbdf6014f",
+      "member": "reference_00.png",
+      "sha256": "12064f7d17ff07e5a199b58a2dbd9b1a2352cfda30527b5b21e134c375479223",
+      "size_px": [
+        1152,
+        1536
+      ],
+      "material_to_canvas": [
+        1.2306985239369128,
+        -6.715366041021298e-09,
+        1202.386955982164,
+        3.844581179234516e-09,
+        1.2085597769256875,
+        1030.908959740205
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_NECK_SKIN",
+          "neutral_opacity": 0.0,
+          "render_order": 44,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_DRESS_SLEEVE_R",
+          "neutral_opacity": 0.0,
+          "render_order": 35,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_DRESS_SLEEVE_L",
+          "neutral_opacity": 0.0,
+          "render_order": 34,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_DRESS_BODICE",
+          "neutral_opacity": 0.0,
+          "render_order": 33,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_SHOULDERS_UNDERPAINT_V1",
+          "neutral_opacity": 0.0,
+          "render_order": 19,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1202,
+        1031
+      ]
+    },
+    "JAD_R21_SKIRT_PANEL_07_R_OUTER": {
+      "guid": "fc88e10e-28ec-4d6c-ad93-7f0346ffa9b0",
+      "member": "imageFileBuf_35.png",
+      "sha256": "d94e9a2b6a42e0232cb4d20221dd0437bbddcb2d83347b5a9e2bfddac7d11cab",
+      "size_px": [
+        416,
+        1542
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2173.0,
+        0.0,
+        1.0,
+        1912.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_SKIRT_PANEL_07_R_OUTER",
+          "neutral_opacity": 0.0,
+          "render_order": 43,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2173,
+        1912
+      ]
+    },
+    "JAD_R21_SKIRT_PANEL_06_R": {
+      "guid": "a700efba-d0c4-4095-81b5-e72418fd93db",
+      "member": "imageFileBuf_36.png",
+      "sha256": "169fa638e8bf97402d6495fb0336142d7f358956f2ab37585d859aeeb220e237",
+      "size_px": [
+        375,
+        1447
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2070.0,
+        0.0,
+        1.0,
+        2057.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_SKIRT_PANEL_06_R",
+          "neutral_opacity": 0.0,
+          "render_order": 42,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2070,
+        2057
+      ]
+    },
+    "JAD_R21_SKIRT_PANEL_05_R_INNER": {
+      "guid": "66518c4f-773b-4a3c-a816-ecd218470775",
+      "member": "imageFileBuf_37.png",
+      "sha256": "3cdd1d9383f59a5cdeb321fb00d2a6897b964cf3c76adad555413efd2e955b44",
+      "size_px": [
+        276,
+        1479
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1961.0,
+        0.0,
+        1.0,
+        2057.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_SKIRT_PANEL_05_R_INNER",
+          "neutral_opacity": 0.0,
+          "render_order": 41,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1961,
+        2057
+      ]
+    },
+    "JAD_R21_SKIRT_PANEL_04_CENTER": {
+      "guid": "49ee974c-819c-4735-930e-dadfff44a3a3",
+      "member": "imageFileBuf_38.png",
+      "sha256": "c10e20bb41729b76e3263e5e19563b7a7f794c9401f887f565a29bcb0c4a76dd",
+      "size_px": [
+        229,
+        1483
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1795.0,
+        0.0,
+        1.0,
+        2057.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_SKIRT_PANEL_04_CENTER",
+          "neutral_opacity": 0.0,
+          "render_order": 40,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1795,
+        2057
+      ]
+    },
+    "JAD_R21_SKIRT_PANEL_03_L_INNER": {
+      "guid": "c64dfdd5-5482-4dab-87cb-e4f2fe4b275e",
+      "member": "imageFileBuf_39.png",
+      "sha256": "2ea884b4b9924e068b00ea87e6bfdbbe639c68d80fe1b4c4ccdc71bd338da526",
+      "size_px": [
+        279,
+        1483
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1579.0,
+        0.0,
+        1.0,
+        2057.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_SKIRT_PANEL_03_L_INNER",
+          "neutral_opacity": 0.0,
+          "render_order": 39,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1579,
+        2057
+      ]
+    },
+    "JAD_R21_SKIRT_PANEL_02_L": {
+      "guid": "259c8a25-ceb9-42a4-a05b-0dd5a0de0c4f",
+      "member": "imageFileBuf_40.png",
+      "sha256": "043e3c61f3e8c5143da69ef3959cd06c8b908689043a7a86e0b7ddf411211457",
+      "size_px": [
+        379,
+        1455
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1370.0,
+        0.0,
+        1.0,
+        2057.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_SKIRT_PANEL_02_L",
+          "neutral_opacity": 0.0,
+          "render_order": 38,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1370,
+        2057
+      ]
+    },
+    "JAD_R21_SKIRT_PANEL_01_L_OUTER": {
+      "guid": "a47820ea-dad3-407a-a30d-d3e78aad73ec",
+      "member": "imageFileBuf_41.png",
+      "sha256": "c3e55bb2e8c95ea6d7e623ed2f1e10b91a1d21476f5688f85cd4719c2c015381",
+      "size_px": [
+        421,
+        1557
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1224.0,
+        0.0,
+        1.0,
+        1912.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_SKIRT_PANEL_01_L_OUTER",
+          "neutral_opacity": 0.0,
+          "render_order": 37,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1224,
+        1912
+      ]
+    },
+    "JAD_R21_DRESS_BELT": {
+      "guid": "8273f442-e9fc-465b-9533-b667e3f6a28c",
+      "member": "imageFileBuf_42.png",
+      "sha256": "716c75a4b9c2c1d03de81596ad5ea35a21104735e0fd34f5822e15064faa06fc",
+      "size_px": [
+        778,
+        225
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1520.0,
+        0.0,
+        1.0,
+        1842.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_DRESS_BELT",
+          "neutral_opacity": 0.0,
+          "render_order": 36,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1520,
+        1842
+      ]
+    },
+    "JAD_R21_MASTER_USED_CROP": {
+      "guid": "34370961-d552-5c64-9fc0-5a87b08e6d1c",
+      "member": "reference_01.png",
+      "sha256": "04782fc0a91f388968a71d4057347602acd12592557d8cb79d42749b7980870e",
+      "size_px": [
+        1472,
+        768
+      ],
+      "material_to_canvas": [
+        0.9999999846954809,
+        -7.123190037816585e-09,
+        1199.0000140968414,
+        1.2519590041305393e-10,
+        1.0000000144739642,
+        941.9999927832874
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_BACK_R_LOWER",
+          "neutral_opacity": 0.0,
+          "render_order": 32,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_HAIR_BACK_L_LOWER",
+          "neutral_opacity": 0.0,
+          "render_order": 28,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_HAIR_BACK_L_OUTER",
+          "neutral_opacity": 0.0,
+          "render_order": 27,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_HAIR_FRONT_PAINTED_TIP_L",
+          "neutral_opacity": 0.0,
+          "render_order": 83,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_HAIR_FRONT_PAINTED_TIP_R",
+          "neutral_opacity": 0.0,
+          "render_order": 82,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_HAIR_BACK_L_MID_OUTER_PAINT_RESTORED",
+          "neutral_opacity": 0.0,
+          "render_order": 23,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_HAIR_BACK_R_OUTER_PAINT_RESTORED",
+          "neutral_opacity": 0.0,
+          "render_order": 22,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_HAIR_BACK_R_MID_OUTER_PAINT_RESTORED",
+          "neutral_opacity": 0.0,
+          "render_order": 21,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_HAIR_NECK_OVERLAP_L",
+          "neutral_opacity": 0.0,
+          "render_order": 18,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_HAIR_NECK_OVERLAP_R",
+          "neutral_opacity": 0.0,
+          "render_order": 17,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_HAIR_FRONT_TEMPLE_L_PAINT_RESTORED",
+          "neutral_opacity": 0.0,
+          "render_order": 16,
+          "masks": []
+        },
+        {
+          "name": "JAD_R21_HAIR_FRONT_TEMPLE_R_PAINT_RESTORED",
+          "neutral_opacity": 0.0,
+          "render_order": 15,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1199,
+        942
+      ]
+    },
+    "JAD_R21_HAIR_BACK_R_OUTER": {
+      "guid": "a7fe958d-97e5-4346-9df0-062d8f7c6ca2",
+      "member": "imageFileBuf_47.png",
+      "sha256": "7f6a438d36b1d722a4a55b33bf37677fdb748bd5ce832fa89de1276666d82dbc",
+      "size_px": [
+        248,
+        987
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2367.0,
+        0.0,
+        1.0,
+        521.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_BACK_R_OUTER",
+          "neutral_opacity": 0.0,
+          "render_order": 31,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2367,
+        521
+      ]
+    },
+    "JAD_R21_HAIR_BACK_R_MID_OUTER": {
+      "guid": "e670f4e8-874b-4ad7-8006-1d0ca9b334bc",
+      "member": "imageFileBuf_48.png",
+      "sha256": "84a3573f73fdd60ea71d8420c9460c764ef1be57010de85de82fa6ea19385bd5",
+      "size_px": [
+        174,
+        899
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2338.0,
+        0.0,
+        1.0,
+        727.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_BACK_R_MID_OUTER",
+          "neutral_opacity": 0.0,
+          "render_order": 30,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2338,
+        727
+      ]
+    },
+    "JAD_R21_HAIR_BACK_R_MID_INNER": {
+      "guid": "2026b6f6-6f23-4b48-ac51-f969351bda0e",
+      "member": "imageFileBuf_49.png",
+      "sha256": "649b3e606418d34f353600e963c55c7dd0359dcc91ae2911750822c8d9a4d6c7",
+      "size_px": [
+        121,
+        329
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2218.0,
+        0.0,
+        1.0,
+        1436.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_BACK_R_MID_INNER",
+          "neutral_opacity": 0.0,
+          "render_order": 29,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2218,
+        1436
+      ]
+    },
+    "JAD_R21_HAIR_BACK_L_MID_OUTER": {
+      "guid": "7f5f4ab0-6a09-4de7-a3b9-d2e428ae202b",
+      "member": "imageFileBuf_52.png",
+      "sha256": "9dbcc38464905375c3c11ec459b939ad0609783aa7b97b8e516764bd908617f8",
+      "size_px": [
+        158,
+        806
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1322.0,
+        0.0,
+        1.0,
+        729.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_BACK_L_MID_OUTER",
+          "neutral_opacity": 0.0,
+          "render_order": 26,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1322,
+        729
+      ]
+    },
+    "JAD_R21_HAIR_BACK_L_MID_INNER": {
+      "guid": "c85f5ff9-bd68-4133-9443-0fad50bf3789",
+      "member": "imageFileBuf_53.png",
+      "sha256": "cba6884e0779eb16f8aaf4ee75ffaca12893fcd778b80af65a5e529f1c0c4466",
+      "size_px": [
+        124,
+        226
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1478.0,
+        0.0,
+        1.0,
+        1437.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_BACK_L_MID_INNER",
+          "neutral_opacity": 0.0,
+          "render_order": 25,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1478,
+        1437
+      ]
+    },
+    "JAD_R21_HAIR_DEPTH_UNDERLAY": {
+      "guid": "25a516ac-44a5-4d41-a459-9a216cb5c95f",
+      "member": "imageFileBuf_54.png",
+      "sha256": "eead922fc02405559dd5136cd7113af3de379e098dc7c19af12c760da3b6a109",
+      "size_px": [
+        1362,
+        1667
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1245.0,
+        0.0,
+        1.0,
+        93.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_DEPTH_UNDERLAY",
+          "neutral_opacity": 0.0,
+          "render_order": 24,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1245,
+        93
+      ]
+    },
+    "JAD_R21_RESIDUAL_UNDERLAY": {
+      "guid": "d31ba1a8-43fb-43e7-9021-08774acc83a0",
+      "member": "imageFileBuf_55.png",
+      "sha256": "2119a182ab4c5a584174f882cc2364329880aba92dd856737aa30636acf76995",
+      "size_px": [
+        789,
+        732
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1553.0,
+        0.0,
+        1.0,
+        351.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_RESIDUAL_UNDERLAY",
+          "neutral_opacity": 0.0,
+          "render_order": 20,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1553,
+        351
+      ]
+    },
+    "JAD_R21_APERTURE_WHITE_L": {
+      "guid": "3dc60626-437d-5b2a-a28e-bb28528df9f4",
+      "member": "jade_r21_white_aperture_l.png",
+      "sha256": "10ac492948521f143ef60e8ee58190a4ea80ff9e973345b4236226c24af6813d",
+      "size_px": [
+        64,
+        64
+      ],
+      "material_to_canvas": [
+        8.0,
+        0.0,
+        1802.5,
+        0.0,
+        8.0,
+        519.5
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_EYE_L_APERTURE_MASK",
+          "neutral_opacity": 0.0,
+          "render_order": 54,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1802,
+        520
+      ]
+    },
+    "JAD_R21_APERTURE_WHITE_R": {
+      "guid": "1bc6be81-c366-5b6d-9671-2da96afb8a7d",
+      "member": "jade_r21_white_aperture_r.png",
+      "sha256": "10ac492948521f143ef60e8ee58190a4ea80ff9e973345b4236226c24af6813d",
+      "size_px": [
+        64,
+        64
+      ],
+      "material_to_canvas": [
+        8.0,
+        0.0,
+        1523.5,
+        0.0,
+        8.0,
+        519.5
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_EYE_R_APERTURE_MASK",
+          "neutral_opacity": 0.0,
+          "render_order": 52,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1524,
+        520
+      ]
+    },
+    "JAD_R21_CROP_IMAGE_01": {
+      "guid": "54ff5c5c-7ee2-59a6-b5f7-d8abc1b12f4e",
+      "member": "reference_02.png",
+      "sha256": "8ec5637525e0aa70fc9121cb6df3559ace3b987616219087b4219370ba575b8f",
+      "size_px": [
+        768,
+        640
+      ],
+      "material_to_canvas": [
+        1.9593750061766997,
+        -6.785659145691625e-09,
+        1216.9437530175314,
+        -3.744127747028741e-09,
+        1.9593750004311667,
+        1788.237500251913
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_SHORT_SKIRT_V3",
+          "neutral_opacity": 0.0,
+          "render_order": 77,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1217,
+        1788
+      ]
+    },
+    "JAD_R21_CROP_IMAGE_02": {
+      "guid": "044a9e08-641f-59f0-b01f-80bc16ae8e82",
+      "member": "reference_03.png",
+      "sha256": "eac902ec9fa4f47189a632bb107d3594774692fa877bc6a25f1b29b662e15d16",
+      "size_px": [
+        256,
+        960
+      ],
+      "material_to_canvas": [
+        1.7144531293695735,
+        -6.5763030576704296e-09,
+        1535.8386727814134,
+        5.139733154552994e-09,
+        1.714453126122418,
+        2780.447656184637
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_LEG_R_V3",
+          "neutral_opacity": 0.0,
+          "render_order": 1,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1536,
+        2780
+      ]
+    },
+    "JAD_R21_CROP_IMAGE_03": {
+      "guid": "9c8a4a0b-d631-558b-a028-01be0c07b8a4",
+      "member": "reference_04.png",
+      "sha256": "5ee4e648d49d7a7fa8c9edeaf567b0c653ec4e7a7d8b22bd58a09b3c33d1e6ba",
+      "size_px": [
+        256,
+        960
+      ],
+      "material_to_canvas": [
+        1.7144529959949504,
+        2.7677757863386887e-09,
+        1916.5289204318524,
+        -1.5868562113771315e-09,
+        1.7144531286870475,
+        2782.162108102238
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_LEG_L_V3",
+          "neutral_opacity": 0.0,
+          "render_order": 0,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1917,
+        2782
+      ]
+    },
+    "JAD_R21_CROP_IMAGE_04": {
+      "guid": "c6b99a23-fa21-5579-99b5-eb1970121e46",
+      "member": "reference_05.png",
+      "sha256": "1bbb234b5e1caed2ab0bc33d35f2c3d9de4da81b035b3a493af1118cbb4ab5b3",
+      "size_px": [
+        192,
+        448
+      ],
+      "material_to_canvas": [
+        1.4695312170479227,
+        -1.3420642375194802e-09,
+        1633.698440048147,
+        -1.0232030786760834e-08,
+        1.4695312397624178,
+        4205.625002069337
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_SHOE_R_V3",
+          "neutral_opacity": 0.0,
+          "render_order": 6,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1634,
+        4206
+      ]
+    },
+    "JAD_R21_CROP_IMAGE_05": {
+      "guid": "a9208a29-7504-5fe3-93c1-ea2310085dbf",
+      "member": "reference_06.png",
+      "sha256": "69836564aad9fcae8cbfae93e6fcc9b695deee091b91f06262c0c697692e5362",
+      "size_px": [
+        192,
+        448
+      ],
+      "material_to_canvas": [
+        1.4695312518436736,
+        -1.5152323840084136e-10,
+        1954.1242193666244,
+        8.611491153675971e-09,
+        1.4695312397084628,
+        4205.625000657267
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_SHOE_L_V3",
+          "neutral_opacity": 0.0,
+          "render_order": 5,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1954,
+        4206
+      ]
+    },
+    "JAD_R21_CROP_IMAGE_06": {
+      "guid": "a6541aca-b5c1-5099-b0e8-a444d6aff929",
+      "member": "reference_07.png",
+      "sha256": "a79c5346bfe382b78e43f15a91e1721d16b1959cb0b6983081a219f716bf3e31",
+      "size_px": [
+        320,
+        576
+      ],
+      "material_to_canvas": [
+        0.9006892623430034,
+        2.2957784118204927e-08,
+        1422.650363025574,
+        -5.437677981661673e-08,
+        1.1864542164045293,
+        1039.416837159541
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_SHOULDER_UNDERPAINT_L",
+          "neutral_opacity": 0.0,
+          "render_order": 12,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        1423,
+        1039
+      ]
+    },
+    "JAD_R21_CROP_IMAGE_07": {
+      "guid": "96e38e32-376a-59c3-82db-db1ec3723568",
+      "member": "reference_08.png",
+      "sha256": "e98778ac981d0cf496b2d918ffde7d984cfa4c2b6dccd314e7163c4edc868335",
+      "size_px": [
+        320,
+        576
+      ],
+      "material_to_canvas": [
+        0.9006891550584255,
+        3.569374040779394e-08,
+        2172.362152557587,
+        5.437689079795196e-08,
+        1.1864542164044805,
+        1039.416822369057
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_SHOULDER_UNDERPAINT_R",
+          "neutral_opacity": 0.0,
+          "render_order": 11,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2172,
+        1039
+      ]
+    },
+    "JAD_R21_HAIR_RIGHT_SEAM_UNDERPAINT_IMAGE": {
+      "guid": "5196050f-50e0-5e4f-949c-71153a66e20c",
+      "member": "jade_r21_hair_right_seam_master_crop.png",
+      "sha256": "1c87ec45142ea331b9f6e88cb8096cdf0e625b7e2792479ea65f96d362634536",
+      "size_px": [
+        192,
+        704
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2176.0,
+        0.0,
+        1.0,
+        384.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_HAIR_RIGHT_SEAM_UNDERPAINT",
+          "neutral_opacity": 0.0,
+          "render_order": 9,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [],
+      "paint_layer_origin_px": [
+        2176,
+        384
+      ]
+    },
+    "JAD_R21_RESTORED_HAIR_BACK_SRC": {
+      "guid": "b537b375-98e1-5222-82ba-62854d03e253",
+      "member": "jade_r21_v41_rear_shoulder_brush.png",
+      "sha256": "4bb466be57ed5accef173c130dec1bdb26d3acb0a3008e447e8e8cc4e50a7821",
+      "size_px": [
+        1390,
+        1379
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1228.0,
+        0.0,
+        1.0,
+        412.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_RESTORED_HAIR_BACK",
+          "neutral_opacity": 1.0,
+          "render_order": 2,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v41_cheveux/JAD_R21_RESTORED_HAIR_BACK_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        1228,
+        412
+      ]
+    },
+    "JAD_R21_RESTORED_NECK_SRC": {
+      "guid": "d5620d6e-d438-523c-862b-d2cfbedb4dbc",
+      "member": "jade_v38_cervical_jad_r21_restored_neck.png",
+      "sha256": "f5a63a750e32e2ba7ac889064770d1e9b60a1ba80f24592fa4687e5592488472",
+      "size_px": [
+        375,
+        369
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1735.0,
+        0.0,
+        1.0,
+        980.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_RESTORED_NECK",
+          "neutral_opacity": 1.0,
+          "render_order": 7,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v38_portrait/JAD_R21_RESTORED_NECK_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        1735,
+        980
+      ]
+    },
+    "JAD_R21_RESTORED_FACE_SRC": {
+      "guid": "fa750240-28e8-5913-bce3-c3ed6d69b8f5",
+      "member": "jade_r21_v38_forehead42_face.png",
+      "sha256": "e8757b9c359e3099b9d04a64147240340396222e8062c8fc5c33ee21b61b3baa",
+      "size_px": [
+        474,
+        408
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1686.0,
+        0.0,
+        1.0,
+        625.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_RESTORED_FACE",
+          "neutral_opacity": 1.0,
+          "render_order": 8,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v42_amplitude/JAD_R21_RESTORED_FACE_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        1686,
+        625
+      ]
+    },
+    "JAD_R21_RESTORED_EAR_R_SRC": {
+      "guid": "8cab490d-d32d-542c-a099-e2b4d71daa38",
+      "member": "jade_r21_v38_ear_tip_motion_ear_r.png",
+      "sha256": "af32d0f2c7a568215f7ca5d0d99f2d3bc3e7eb831bdeb4a62c671b6cd88518cb",
+      "size_px": [
+        310,
+        393
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1292.0,
+        0.0,
+        1.0,
+        450.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_RESTORED_EAR_R",
+          "neutral_opacity": 1.0,
+          "render_order": 76,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v38_portrait/JAD_R21_RESTORED_EAR_R_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        1292,
+        450
+      ]
+    },
+    "JAD_R21_RESTORED_EAR_L_SRC": {
+      "guid": "6e9c6d32-6392-582a-9cb7-abb7201cfe52",
+      "member": "jade_r21_v38_ear_tip_motion_ear_l.png",
+      "sha256": "462357b515b42bda8a4abd4973be71e2c9af90b29e514dcd7cb3f63ed582b7d3",
+      "size_px": [
+        323,
+        393
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2218.0,
+        0.0,
+        1.0,
+        450.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_RESTORED_EAR_L",
+          "neutral_opacity": 1.0,
+          "render_order": 75,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v38_portrait/JAD_R21_RESTORED_EAR_L_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        2218,
+        450
+      ]
+    },
+    "JAD_R21_RESTORED_HAIR_LOCK_R_SRC": {
+      "guid": "f4ffe6a8-cab3-5f54-94bc-5c4a3356d1dd",
+      "member": "jade_r21_v38_jaw_finish_hair_lock_r.png",
+      "sha256": "9762f47384029e0ab840c8e8dbf3108426dce1228ca88a0cc034e7d8bc8430af",
+      "size_px": [
+        322,
+        521
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1554.0,
+        0.0,
+        1.0,
+        812.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_RESTORED_HAIR_LOCK_R",
+          "neutral_opacity": 1.0,
+          "render_order": 85,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v39_expression/JAD_R21_RESTORED_HAIR_LOCK_R_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        1554,
+        812
+      ]
+    },
+    "JAD_R21_RESTORED_HAIR_LOCK_L_SRC": {
+      "guid": "7c2850ad-be36-58f8-9da2-b758b6310558",
+      "member": "jade_r21_v38_jaw_finish_hair_lock_l.png",
+      "sha256": "3df5106f9d3ed08396ba886e7be14a4c98095c0da04a6d90eb53433a0ed41e35",
+      "size_px": [
+        334,
+        551
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1978.0,
+        0.0,
+        1.0,
+        784.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_RESTORED_HAIR_LOCK_L",
+          "neutral_opacity": 1.0,
+          "render_order": 84,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v39_expression/JAD_R21_RESTORED_HAIR_LOCK_L_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        1978,
+        784
+      ]
+    },
+    "JAD_R21_RESTORED_HAIR_CAP_SRC": {
+      "guid": "8750fd4d-b133-5a46-9e24-245a4de1a922",
+      "member": "jad_r21_restored_hair_cap_src_expression_v39.png",
+      "sha256": "9fc8201ad7dece61800b1e611ae5f93890f8bf70d01f265a4353dd2996707926",
+      "size_px": [
+        792,
+        814
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1509.0,
+        0.0,
+        1.0,
+        87.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_RESTORED_HAIR_CAP",
+          "neutral_opacity": 1.0,
+          "render_order": 86,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v39_expression/JAD_R21_RESTORED_HAIR_CAP_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        1509,
+        87
+      ]
+    },
+    "JAD_R21_ARM_L_WHOLE_SRC": {
+      "guid": "ae09b816-3139-5d15-b9c5-9633f53586c5",
+      "member": "jad_r21_arm_l_whole.png",
+      "sha256": "986fd816ecd5c5702efbea9451396a338552079e95bdf7621a4da89ee7cd1c13",
+      "size_px": [
+        448,
+        1344
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1216.0,
+        0.0,
+        1.0,
+        1536.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_ARM_L_WHOLE",
+          "neutral_opacity": 1.0,
+          "render_order": 14,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v36_restoration/JAD_R21_ARM_L_WHOLE_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        1216,
+        1536
+      ]
+    },
+    "JAD_R21_ARM_R_WHOLE_SRC": {
+      "guid": "96b55af8-4719-582a-b057-81e86a7559fc",
+      "member": "jad_r21_arm_r_whole.png",
+      "sha256": "d6fee92758806e17076ed430dd2e4bae935b00ba225a99f34c7e5ffe59f34f12",
+      "size_px": [
+        448,
+        1344
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        2176.0,
+        0.0,
+        1.0,
+        1536.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_ARM_R_WHOLE",
+          "neutral_opacity": 1.0,
+          "render_order": 13,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v36_restoration/JAD_R21_ARM_R_WHOLE_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        2176,
+        1536
+      ]
+    },
+    "JAD_R21_RESTORED_TORSO_SRC": {
+      "guid": "4a31bbac-db0c-5c44-a20c-7779c4a1f2e1",
+      "member": "jade_v38_cervical_jad_r21_restored_torso.png",
+      "sha256": "3bd80fcb5ce6d32bf2f5dd702cae06857ec8d134113fe829110ee3bc1de22aea",
+      "size_px": [
+        1018,
+        917
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1417.0,
+        0.0,
+        1.0,
+        1069.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_RESTORED_TORSO",
+          "neutral_opacity": 1.0,
+          "render_order": 72,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v38_portrait/JAD_R21_RESTORED_TORSO_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        1417,
+        1069
+      ]
+    },
+    "JAD_R21_RESTORED_SKIRT_SRC": {
+      "guid": "87bf9c51-cf0f-57b7-8b57-b4e2e21d1073",
+      "member": "jad_r21_restored_skirt.png",
+      "sha256": "49c4e488963940aed0683523ffc17cf5a9b236a9604fcab640a737c0907799e5",
+      "size_px": [
+        1349,
+        1143
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1221.0,
+        0.0,
+        1.0,
+        1867.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_RESTORED_SKIRT",
+          "neutral_opacity": 1.0,
+          "render_order": 10,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v36_restoration/JAD_R21_RESTORED_SKIRT_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        1221,
+        1867
+      ]
+    },
+    "JAD_R21_LEG_FOOT_R_CONTINUOUS_SRC": {
+      "guid": "f898b47d-c1d2-5e68-a62d-c28334add639",
+      "member": "jad_r21_leg_foot_r_continuous.png",
+      "sha256": "a91a05b2cba54e22824ab80f6261c1f1ed22c11100d5cadedac99aee94ac9b1f",
+      "size_px": [
+        323,
+        1948
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1547.0,
+        0.0,
+        1.0,
+        2792.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_LEG_FOOT_R_CONTINUOUS",
+          "neutral_opacity": 1.0,
+          "render_order": 4,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v36_restoration/JAD_R21_LEG_FOOT_R_CONTINUOUS_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        1547,
+        2792
+      ]
+    },
+    "JAD_R21_LEG_FOOT_L_CONTINUOUS_SRC": {
+      "guid": "80acc8e1-acc8-5a1b-b4f1-f433fa656898",
+      "member": "jad_r21_leg_foot_l_continuous.png",
+      "sha256": "b37d36a76ed1177919a95554d1ca394dbd68eae9293d983d566fb246d2762dab",
+      "size_px": [
+        311,
+        1947
+      ],
+      "material_to_canvas": [
+        1.0,
+        0.0,
+        1927.0,
+        0.0,
+        1.0,
+        2794.0
+      ],
+      "meshes": [
+        {
+          "name": "JAD_R21_LEG_FOOT_L_CONTINUOUS",
+          "neutral_opacity": 1.0,
+          "render_order": 3,
+          "masks": []
+        }
+      ],
+      "corresponding_project_sources": [
+        "source_sync_v36_restoration/JAD_R21_LEG_FOOT_L_CONTINUOUS_SRC.png"
+      ],
+      "paint_layer_origin_px": [
+        1927,
+        2794
+      ]
+    }
+  },
+  "neutral": [
+    {
+      "name": "JAD_R21_RESTORED_HAIR_BACK",
+      "origin": [
+        1235,
+        415
+      ],
+      "size": [
+        1380,
+        1249
+      ],
+      "order": 2
+    },
+    {
+      "name": "JAD_R21_LEG_FOOT_L_CONTINUOUS",
+      "origin": [
+        1930,
+        2797
+      ],
+      "size": [
+        305,
+        1940
+      ],
+      "order": 3
+    },
+    {
+      "name": "JAD_R21_LEG_FOOT_R_CONTINUOUS",
+      "origin": [
+        1550,
+        2795
+      ],
+      "size": [
+        317,
+        1941
+      ],
+      "order": 4
+    },
+    {
+      "name": "JAD_R21_RESTORED_NECK",
+      "origin": [
+        1737,
+        983
+      ],
+      "size": [
+        370,
+        364
+      ],
+      "order": 7
+    },
+    {
+      "name": "JAD_R21_RESTORED_FACE",
+      "origin": [
+        1689,
+        626
+      ],
+      "size": [
+        468,
+        399
+      ],
+      "order": 8
+    },
+    {
+      "name": "JAD_R21_RESTORED_SKIRT",
+      "origin": [
+        1227,
+        1872
+      ],
+      "size": [
+        1340,
+        1132
+      ],
+      "order": 10
+    },
+    {
+      "name": "JAD_R21_ARM_R_WHOLE",
+      "origin": [
+        2211,
+        1568
+      ],
+      "size": [
+        372,
+        1278
+      ],
+      "order": 13
+    },
+    {
+      "name": "JAD_R21_ARM_L_WHOLE",
+      "origin": [
+        1243,
+        1552
+      ],
+      "size": [
+        391,
+        1294
+      ],
+      "order": 14
+    },
+    {
+      "name": "JAD_R21_MOUTH_SOCKET_SKIN",
+      "origin": [
+        1848,
+        883
+      ],
+      "size": [
+        145,
+        104
+      ],
+      "order": 46
+    },
+    {
+      "name": "JAD_R21_EYE_R_LID_FRAME",
+      "origin": [
+        1699,
+        704
+      ],
+      "size": [
+        156,
+        73
+      ],
+      "order": 51
+    },
+    {
+      "name": "JAD_R21_EYE_L_LID_FRAME",
+      "origin": [
+        1982,
+        701
+      ],
+      "size": [
+        167,
+        75
+      ],
+      "order": 53
+    },
+    {
+      "name": "JAD_R21_EYE_L_OPEN_MASTER",
+      "origin": [
+        1982,
+        729
+      ],
+      "size": [
+        167,
+        92
+      ],
+      "order": 55
+    },
+    {
+      "name": "JAD_R21_EYE_R_OPEN_MASTER",
+      "origin": [
+        1704,
+        732
+      ],
+      "size": [
+        151,
+        90
+      ],
+      "order": 57
+    },
+    {
+      "name": "JAD_R21_MOUTH_NEUTRAL_CLEAN",
+      "origin": [
+        1875,
+        911
+      ],
+      "size": [
+        92,
+        42
+      ],
+      "order": 60
+    },
+    {
+      "name": "JAD_R21_RESTORED_TORSO",
+      "origin": [
+        1420,
+        1140
+      ],
+      "size": [
+        1012,
+        843
+      ],
+      "order": 72
+    },
+    {
+      "name": "JAD_R21_EYE_L_SOCKET_SKIN",
+      "origin": [
+        2004,
+        729
+      ],
+      "size": [
+        88,
+        91
+      ],
+      "order": 73
+    },
+    {
+      "name": "JAD_R21_EYE_R_SOCKET_SKIN",
+      "origin": [
+        1751,
+        732
+      ],
+      "size": [
+        86,
+        89
+      ],
+      "order": 74
+    },
+    {
+      "name": "JAD_R21_RESTORED_EAR_L",
+      "origin": [
+        2221,
+        453
+      ],
+      "size": [
+        319,
+        387
+      ],
+      "order": 75
+    },
+    {
+      "name": "JAD_R21_RESTORED_EAR_R",
+      "origin": [
+        1293,
+        453
+      ],
+      "size": [
+        306,
+        387
+      ],
+      "order": 76
+    },
+    {
+      "name": "JAD_R21_RESTORED_HAIR_LOCK_L",
+      "origin": [
+        2013,
+        787
+      ],
+      "size": [
+        292,
+        546
+      ],
+      "order": 84
+    },
+    {
+      "name": "JAD_R21_RESTORED_HAIR_LOCK_R",
+      "origin": [
+        1575,
+        815
+      ],
+      "size": [
+        256,
+        516
+      ],
+      "order": 85
+    },
+    {
+      "name": "JAD_R21_RESTORED_HAIR_CAP",
+      "origin": [
+        1512,
+        90
+      ],
+      "size": [
+        786,
+        808
+      ],
+      "order": 86
+    },
+    {
+      "name": "JAD_R21_BROW_L_MASTER",
+      "origin": [
+        1998,
+        629
+      ],
+      "size": [
+        109,
+        30
+      ],
+      "order": 91
+    },
+    {
+      "name": "JAD_R21_BROW_R_MASTER",
+      "origin": [
+        1685,
+        629
+      ],
+      "size": [
+        143,
+        44
+      ],
+      "order": 92
+    }
+  ],
+  "moc_sha256": "0b70bda8982fead29728faeaa81b5d9a16a745086070048d9fde880b22fb51e7",
+  "schema": "Jade v45.1 sources de peinture",
+  "cmo3": "Jade_r21_v45_1_iris.cmo3",
+  "cmo3_sha256": "fc2e768aec679baaa6b2061dc7c25913822d022e2b1df6ceec1c97cbd36b20bc",
+  "native_guid_scope": "ModelImage GUID du CMO3. Les noms des surfaces Cubism figurent dans meshes.",
+  "material_to_canvas_convention": "m00, m01, tx, m10, m11, ty ; canevas en pixels, origine en haut à gauche. Une plaque brute est posée à taille native au point paint_layer_origin_px arrondi ; la transformation complète, les masques et la déformation sont appliqués dans le CMO3.",
+  "validation_krita_5_3_2_1": {
+    "kra": {
+      "layer_count": 100,
+      "strict_bgra_matches": 100,
+      "painted_bgra_matches": 100,
+      "projection_sha256": "4d9d1845ceb7b7d2172a33640cb88687295451a31eb15abf51c8135d9fbb9744",
+      "bytes": 49578562,
+      "file_sha256": "2cfaff675edac9dee561b284f371707b71b0aabaaaae6b40fb7791144dce3437"
+    },
+    "psd": {
+      "layer_count": 100,
+      "strict_bgra_matches": 82,
+      "painted_bgra_matches": 100,
+      "projection_sha256": "4d9d1845ceb7b7d2172a33640cb88687295451a31eb15abf51c8135d9fbb9744",
+      "bytes": 57578300,
+      "file_sha256": "d0655731b161b0f73ed1f01fd4e724b3ed489e3eaf1fb8436886d1667f67c155"
+    }
+  },
+  "neutral_against_core_on_gray_128": {
+    "portrait": {
+      "bounds": [
+        1450,
+        420,
+        2380,
+        1160
+      ],
+      "painted_pixels": 657648,
+      "mean_max_channel": 0.0007,
+      "p99": 0.0,
+      "over_3": 0,
+      "max": 1
+    },
+    "epaules_cheveux": {
+      "bounds": [
+        1050,
+        1030,
+        2790,
+        1700
+      ],
+      "painted_pixels": 721677,
+      "mean_max_channel": 0.0094,
+      "p99": 0.0,
+      "over_3": 0,
+      "max": 1
+    },
+    "buste_bras": {
+      "bounds": [
+        1040,
+        1680,
+        2800,
+        2300
+      ],
+      "painted_pixels": 555355,
+      "mean_max_channel": 0.0,
+      "p99": 0.0,
+      "over_3": 0,
+      "max": 1
+    },
+    "mains_ourlet": {
+      "bounds": [
+        1100,
+        2200,
+        2710,
+        3030
+      ],
+      "painted_pixels": 970730,
+      "mean_max_channel": 0.0015,
+      "p99": 0.0,
+      "over_3": 0,
+      "max": 1
+    },
+    "jambes": {
+      "bounds": [
+        1430,
+        3000,
+        2390,
+        4100
+      ],
+      "painted_pixels": 440352,
+      "mean_max_channel": 0.0,
+      "p99": 0.0,
+      "over_3": 0,
+      "max": 1
+    },
+    "pieds": {
+      "bounds": [
+        1450,
+        4050,
+        2390,
+        4900
+      ],
+      "painted_pixels": 175599,
+      "mean_max_channel": 0.0,
+      "p99": 0.0,
+      "over_3": 0,
+      "max": 0
+    }
+  }
+}

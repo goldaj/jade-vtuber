@@ -9,6 +9,7 @@ from .avatar import child_environment
 from .messages import Reply
 from .openai_services import OpenAIServices
 from .pitch_shift import shift_pcm, shift_wav
+from .turn_logging import observe_delivery
 
 LOG = logging.getLogger("jade.output")
 
@@ -49,6 +50,7 @@ class AudioOutput:
             status = await process.wait()
             if status:
                 raise RuntimeError("ffplay could not play the supplied WAV")
+            observe_delivery("playback_completed", "local_audio", proof="ffplay_exit_zero")
         except BaseException:
             if process is None and spawn is not None and not spawn.cancelled():
                 try:

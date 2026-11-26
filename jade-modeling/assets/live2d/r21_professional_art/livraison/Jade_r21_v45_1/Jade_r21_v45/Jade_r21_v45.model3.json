@@ -1,0 +1,103 @@
+{
+  "Version": 3,
+  "FileReferences": {
+    "Moc": "Jade_r21_v45.moc3",
+    "Textures": [
+      "Jade_r21_v45.4096/texture_00.png",
+      "Jade_r21_v45.4096/texture_01.png",
+      "Jade_r21_v45.4096/texture_02.png"
+    ],
+    "DisplayInfo": "Jade_r21_v45.cdi3.json",
+    "Physics": "Jade_r21_v45.physics3.json",
+    "Motions": {
+      "Idle": [
+        {
+          "File": "Jade_r21_idle.motion3.json"
+        }
+      ],
+      "Curious": [
+        {
+          "File": "Jade_curious_A.motion3.json"
+        },
+        {
+          "File": "Jade_curious_B.motion3.json"
+        }
+      ],
+      "Neutral": [
+        {
+          "File": "Jade_neutral_A.motion3.json"
+        },
+        {
+          "File": "Jade_neutral_B.motion3.json"
+        }
+      ],
+      "Playful": [
+        {
+          "File": "Jade_playful_A.motion3.json"
+        },
+        {
+          "File": "Jade_playful_B.motion3.json"
+        }
+      ],
+      "Excited": [
+        {
+          "File": "Jade_excited_A.motion3.json"
+        },
+        {
+          "File": "Jade_excited_B.motion3.json"
+        }
+      ],
+      "Tender": [
+        {
+          "File": "Jade_tender_A.motion3.json"
+        },
+        {
+          "File": "Jade_tender_B.motion3.json"
+        }
+      ],
+      "Reassuring": [
+        {
+          "File": "Jade_reassuring_A.motion3.json"
+        },
+        {
+          "File": "Jade_reassuring_B.motion3.json"
+        }
+      ],
+      "Serious": [
+        {
+          "File": "Jade_serious_A.motion3.json"
+        },
+        {
+          "File": "Jade_serious_B.motion3.json"
+        }
+      ]
+    },
+    "Expressions": [
+      {
+        "Name": "Smile",
+        "File": "expressions/Smile.exp3.json"
+      },
+      {
+        "Name": "Sad",
+        "File": "expressions/Sad.exp3.json"
+      }
+    ]
+  },
+  "Groups": [
+    {
+      "Target": "Parameter",
+      "Name": "EyeBlink",
+      "Ids": [
+        "ParamEyeLOpen",
+        "ParamEyeROpen"
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Name": "LipSync",
+      "Ids": [
+        "ParamMouthOpenY"
+      ]
+    }
+  ]
+}

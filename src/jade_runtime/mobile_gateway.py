@@ -16,11 +16,12 @@ import logging
 from pathlib import Path, PurePosixPath
 import re
 import secrets
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, quote
 import wave
 import time
 
 from .messages import Incoming
+from .incidents import incident_for_client
 from .intent_visuals import public_visual_contract
 
 LOG = logging.getLogger("jade.mobile")
@@ -28,6 +29,9 @@ HERE = Path(__file__).resolve().parent
 WEB_ROOT = HERE / "mobile_web"
 ROOT = HERE.parents[1]
 DEFAULT_MODEL = ROOT / "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete"
+R21_MODEL = (ROOT / "jade-modeling/assets/live2d/r21_professional_art/livraison"
+             / "Jade_r21_v45_1/Jade_r21_v45")
+R21_EXPRESSIONS = ("Blink", "WinkL", "WinkR", "Surprised")
 SESSION = re.compile(r"[A-Za-z0-9_-]{8,64}\Z")
 MODEL_FILE = re.compile(r"[A-Za-z0-9_./-]{1,140}\Z")
 MAX_WAV = 1_000_000  # 20s of 16kHz mono PCM16, plus a small header.
@@ -37,12 +41,25 @@ VENDOR_NAMES = frozenset((
 ))
 WEB_FILES = {
     "/": ("index.html", "text/html; charset=utf-8"),
+    "/assets/salon.html": ("salon.html", "text/html; charset=utf-8"),
+    "/assets/login.css": ("login.css", "text/css; charset=utf-8"),
     "/assets/styles.css": ("styles.css", "text/css; charset=utf-8"),
+    "/assets/jade-theme.css": ("jade-theme.css", "text/css; charset=utf-8"),
+    "/assets/splash.js": ("splash.js", "text/javascript; charset=utf-8"),
+    "/assets/login-guard.js": ("login-guard.js", "text/javascript; charset=utf-8"),
+    "/assets/splash-jade.png": ("splash-jade.png", "image/png"),
     "/assets/avatar.js": ("avatar.js", "text/javascript; charset=utf-8"),
+    "/assets/avatar-gestures.js": ("avatar-gestures.js", "text/javascript; charset=utf-8"),
+    "/assets/avatar-shake.js": ("avatar-shake.js", "text/javascript; charset=utf-8"),
+    "/assets/avatar-models.js": ("avatar-models.js", "text/javascript; charset=utf-8"),
+    "/assets/avatar-model-loader.js": ("avatar-model-loader.js", "text/javascript; charset=utf-8"),
     "/assets/room-motion.js": ("room-motion.js", "text/javascript; charset=utf-8"),
-    "/assets/room-spring.webp": ("room-spring.webp", "image/webp"),
-    "/assets/room-backdrop.webp": ("room-backdrop.webp", "image/webp"),
-    "/assets/room-curtain.webp": ("room-curtain.webp", "image/webp"),
+    "/assets/seated-scene.js": ("seated-scene.js", "text/javascript; charset=utf-8"),
+    "/assets/portrait-bedroom-motion.js": ("portrait-bedroom-motion.js", "text/javascript; charset=utf-8"),
+    "/assets/head-isolation.js": ("head-isolation.js", "text/javascript; charset=utf-8"),
+    "/assets/room-bedroom-portrait.avif": ("room-bedroom-portrait.avif", "image/avif"),
+    "/assets/jade-seated-body.avif": ("jade-seated-body.avif", "image/avif"),
+    "/assets/room-kitchen.webp": ("room-kitchen.webp", "image/webp"),
     "/assets/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/assets/duplex-client.js": ("duplex-client.js", "text/javascript; charset=utf-8"),
     "/manifest.webmanifest": ("manifest.webmanifest", "application/manifest+json"),
@@ -85,15 +102,19 @@ class MobileGateway:
 
     def __init__(self, runtime, services, *, token: str, port=8766,
                  web_root: Path | None = None, model_dir: Path | None = None,
+                 second_model_dir: Path | None = None,
                  vendor_dir: Path | None = None, owner_login: str | None = None,
                  public_origin: str | None = None,
                  avatar_intent_enabled: bool = True, billing_admin_key: str = "",
-                 deploy_supervisor_token: str = "", deploy_supervisor_port: int = 8770):
+                 deploy_supervisor_token: str = "", deploy_supervisor_port: int = 8770,
+                 reminder_service=None):
         if not isinstance(token, str) or len(token) < 32 or len(token) > 256:
             raise ValueError("JADE_MOBILE_TOKEN must contain 32-256 characters")
         if type(port) is not int or not 1024 <= port <= 65535:
             raise ValueError("invalid mobile port")
         self.runtime, self.services = runtime, services
+        self.document_store = getattr(getattr(runtime, "document_service", None), "store", None)
+        self.reminders = reminder_service
         if owner_login is not None and (not isinstance(owner_login, str)
                                          or not 3 <= len(owner_login.strip()) <= 256
                                          or not owner_login.isascii()):
@@ -112,6 +133,8 @@ class MobileGateway:
         self.public_origin = public_origin
         self.web_root = Path(web_root or WEB_ROOT)
         self.model_dir = Path(model_dir or DEFAULT_MODEL)
+        # This slot is opt-in. Never search the repository for newer artwork.
+        self.second_model_dir = Path(second_model_dir) if second_model_dir else None
         self.vendor_dir = Path(vendor_dir) if vendor_dir else None
         self.pending: dict[str, asyncio.Future] = {}
         self.connections: set[asyncio.Task] = set()
@@ -121,11 +144,8 @@ class MobileGateway:
         self.request_timeout = 75
         from .billing import BillingCosts
         self.billing = BillingCosts(billing_admin_key)
-        self.deployment = None
-        if deploy_supervisor_token:
-            from .deployment_client import DeploymentClient
-            self.deployment = DeploymentClient(
-                deploy_supervisor_token, port=deploy_supervisor_port)
+        # Remote administration now lives outside Jade, at /control via Tailscale
+        # Serve, and stays available while this runtime is restarting.
 
     def deliver(self, reply) -> None:
         """Called on the shared Runtime's response callback, before local TTS."""
@@ -162,6 +182,29 @@ class MobileGateway:
         if not payload:
             await asyncio.wait_for(writer.drain(), timeout=5)
 
+    async def _download_document(self, writer, route: str):
+        if self.document_store is None:
+            await self._json(writer, 404, {"error": "document unavailable"})
+            return
+        try:
+            record = await asyncio.to_thread(
+                self.document_store.read, route[len("/api/documents/"):])
+        except ValueError:
+            record = None
+        if record is None:
+            await self._json(writer, 404, {"error": "document expired or unavailable"})
+            return
+        attachment, payload = record
+        disposition = ("Content-Disposition: attachment; filename*=UTF-8''"
+                       + quote(attachment.name, safe="") + "\r\n")
+        header = self._headers(200, "application/octet-stream", len(payload))
+        header = header.replace(b"Connection: close\r\n",
+                                disposition.encode("ascii") + b"Connection: close\r\n")
+        writer.write(header)
+        for start in range(0, len(payload), 65536):
+            writer.write(payload[start:start + 65536])
+            await asyncio.wait_for(writer.drain(), timeout=5)
+
     async def _json(self, writer, code: int, value: dict):
         await self._send(writer, code, json.dumps(
             value, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
@@ -194,9 +237,10 @@ class MobileGateway:
                 raise
             except (ConnectionError, OSError):
                 raise
-            except Exception:
+            except Exception as exc:
                 LOG.warning("Mobile streaming voice unavailable; text answer preserved")
-                await self._stream_event(writer, {"type": "audio_error"})
+                await self._stream_event(writer, {"type": "audio_error",
+                                                  **incident_for_client(exc)})
             finally:
                 try:
                     await events.aclose()
@@ -264,7 +308,113 @@ class MobileGateway:
                    and not name.startswith("/")}
         return allowed, json.dumps(model, separators=(",", ":")).encode("utf-8")
 
+    def _second_model_files(self) -> tuple[dict[str, tuple[Path, Path]], dict]:
+        """Validate the local r21 and prepare its web manifest without editing the export."""
+        built_in = self.second_model_dir is None
+        base = self.second_model_dir or R21_MODEL
+        manifest_name = "Jade.model3.json"
+        if built_in:
+            manifest_name = "Jade_r21_mobile.model3.json"
+            if not (base / manifest_name).exists():
+                manifest_name = "Jade_r21_v45.model3.json"
+
+        def local_asset(name: str, directory: Path = base) -> Path:
+            if (not isinstance(name, str) or not MODEL_FILE.fullmatch(name)
+                    or any(part in ("", ".", "..") for part in name.split("/"))):
+                raise ValueError("invalid model asset reference")
+            if directory.is_symlink() or not directory.is_dir():
+                raise ValueError("model bundle unavailable")
+            path = directory
+            for part in PurePosixPath(name).parts:
+                path = path / part
+                if path.is_symlink():
+                    raise ValueError("symlink in model bundle")
+            if (not path.resolve(strict=True).is_relative_to(directory.resolve())
+                    or not path.is_file() or not 0 < path.stat().st_size <= 40_000_000):
+                raise ValueError("invalid model asset")
+            with path.open("rb") as asset:
+                prefix = asset.read(128)
+            if prefix.startswith(b"version https://git-lfs.github.com/spec/v1"):
+                raise ValueError("model asset not materialized")
+            if ((path.suffix.lower() == ".moc3" and not prefix.startswith(b"MOC3"))
+                    or (path.suffix.lower() == ".png" and not prefix.startswith(b"\x89PNG\r\n\x1a\n"))):
+                raise ValueError("invalid model binary asset")
+            return path
+
+        manifest = local_asset(manifest_name)
+        if manifest.stat().st_size > 1_000_000:
+            raise ValueError("oversized model manifest")
+        model = json.loads(manifest.read_text(encoding="utf-8"))
+        if not isinstance(model, dict) or model.get("Version") != 3:
+            raise ValueError("invalid model manifest")
+        refs = model.get("FileReferences")
+        if not isinstance(refs, dict):
+            raise ValueError("invalid model references")
+        allowed = {"Jade.model3.json": (manifest, base)}
+
+        def include(name, suffixes, directory=base):
+            if not isinstance(name, str) or PurePosixPath(name).suffix.lower() not in suffixes:
+                raise ValueError("invalid model asset type")
+            path = local_asset(name, directory)
+            if path.suffix.lower() == ".json":
+                if path.stat().st_size > 8_000_000 or not isinstance(
+                        json.loads(path.read_text(encoding="utf-8")), dict):
+                    raise ValueError("invalid model JSON asset")
+            allowed[name] = (path, directory)
+            if len(allowed) > 256:
+                raise ValueError("too many model assets")
+
+        include(refs.get("Moc"), {".moc3"})
+        textures = refs.get("Textures")
+        if not isinstance(textures, list) or not 1 <= len(textures) <= 64:
+            raise ValueError("model requires 1-64 textures")
+        for name in textures:
+            include(name, {".png"})
+        for key in ("DisplayInfo", "Physics", "Pose", "UserData"):
+            if key in refs:
+                include(refs[key], {".json"})
+        expressions = refs.get("Expressions", [])
+        motions = refs.get("Motions", {})
+        if not isinstance(expressions, list) or not isinstance(motions, dict):
+            raise ValueError("invalid model animations")
+        groups = [expressions, *motions.values()]
+        for group in groups:
+            if not isinstance(group, list):
+                raise ValueError("invalid model animation group")
+            for entry in group:
+                if not isinstance(entry, dict):
+                    raise ValueError("invalid model animation")
+                include(entry.get("File"), {".json"})
+                if "Sound" in entry:
+                    include(entry["Sound"], {".wav", ".mp3", ".ogg"})
+        if built_in:
+            for name in R21_EXPRESSIONS:
+                filename = f"r21-expressions/{name}.exp3.json"
+                include(filename, {".json"}, self.web_root)
+                expressions.append({"Name": name, "File": filename})
+            refs["Expressions"] = expressions
+        return allowed, model
+
+    def _avatar_models(self) -> dict:
+        try:
+            _, model = self._second_model_files()
+            available = True
+            idle = "Idle" if model["FileReferences"].get("Motions", {}).get("Idle") else None
+        except (OSError, ValueError, TypeError, KeyError, RuntimeError):
+            available, idle = False, None
+        return {"version": 1, "defaultId": "next" if available else "classic", "models": [
+            {"id": "classic", "label": "Jade classique (r20)", "available": True,
+             "manifestUrl": "/model/Jade.model3.json", "presentation": "seated",
+             "classicIntents": True, "idleMotion": "Idle"},
+            {"id": "next", "label": "Jade actuelle (r21)", "available": available,
+             "manifestUrl": "/models/next/Jade.model3.json" if available else None,
+             "presentation": "full", "classicIntents": False, "idleMotion": idle},
+        ]}
+
     async def _static(self, writer, route: str):
+        if route == "/assets/avatar-models.json":
+            await self._json(writer, 200, await asyncio.to_thread(self._avatar_models))
+            return
         if route == "/assets/intent-visuals.json":
             try:
                 await self._json(writer, 200, public_visual_contract(self.avatar_intent_enabled))
@@ -280,22 +430,30 @@ class MobileGateway:
         if route in WEB_FILES:
             filename, mime = WEB_FILES[route]
             path = self.web_root / filename
+            base = self.web_root
         elif route.startswith("/vendor/"):
             filename = route[len("/vendor/"):]
             if filename not in VENDOR_NAMES or self.vendor_dir is None:
                 await self._json(writer, 404, {"error": "vendor runtime not configured"})
                 return
             path, mime = self.vendor_dir / filename, "text/javascript; charset=utf-8"
-        elif route.startswith("/model/"):
-            filename = route[len("/model/"):]
+            base = self.vendor_dir
+        elif route.startswith(("/model/", "/models/next/")):
+            second = route.startswith("/models/next/")
+            prefix = "/models/next/" if second else "/model/"
+            filename = route[len(prefix):]
             if (not MODEL_FILE.fullmatch(filename) or
                     ".." in PurePosixPath(filename).parts or
                     filename.startswith("/")):
                 await self._json(writer, 404, {"error": "asset not found"})
                 return
             try:
-                allowed, virtual_model = await asyncio.to_thread(self._model_files)
-            except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+                if second:
+                    allowed, model = await asyncio.to_thread(self._second_model_files)
+                    virtual_model = json.dumps(model, separators=(",", ":")).encode("utf-8")
+                else:
+                    allowed, virtual_model = await asyncio.to_thread(self._model_files)
+            except (OSError, ValueError, KeyError, TypeError, RuntimeError):
                 await self._json(writer, 503, {"error": "Live2D model unavailable"})
                 return
             if filename not in allowed:
@@ -304,19 +462,24 @@ class MobileGateway:
             if filename == "Jade.model3.json":
                 await self._send(writer, 200, virtual_model, "application/json; charset=utf-8")
                 return
-            path = self.model_dir.joinpath(*PurePosixPath(filename).parts)
+            if second:
+                path, base = allowed[filename]
+            else:
+                base = self.model_dir
+                path = base.joinpath(*PurePosixPath(filename).parts)
             mime = {
                 ".moc3": "application/octet-stream",
                 ".png": "image/png",
                 ".json": "application/json; charset=utf-8",
+                ".wav": "audio/wav",
+                ".mp3": "audio/mpeg",
+                ".ogg": "audio/ogg",
             }.get(path.suffix, "application/octet-stream")
         else:
             await self._json(writer, 404, {"error": "unknown route"})
             return
         try:
             # No redirects or symlinks to a private file outside approved roots.
-            base = (self.web_root if route in WEB_FILES else
-                    self.vendor_dir if route.startswith("/vendor/") else self.model_dir)
             if (base is None or not path.resolve().is_relative_to(base.resolve())
                     or path.is_symlink() or not path.is_file()
                     or path.stat().st_size > 40_000_000):
@@ -368,7 +531,7 @@ class MobileGateway:
             self.pending.pop(incoming.message_id, None)
 
     async def _post(self, writer, route: str, headers: dict, body: bytes, *, streaming=False):
-        if route == "/api/deployment":
+        if route in ("/api/push", "/api/reminders"):
             if headers.get("content-type", "").split(";")[0].strip() != "application/json":
                 await self._json(writer, 400, {"error": "expected JSON"})
                 return
@@ -377,27 +540,85 @@ class MobileGateway:
             except (UnicodeDecodeError, ValueError):
                 await self._json(writer, 400, {"error": "invalid JSON"})
                 return
-            if (self.deployment is None or type(request) is not dict
-                    or request.get("operation") not in (
-                        "status", "branches", "deploy", "restart")):
-                await self._json(writer, 409, {"error": "supervisor_not_configured"})
+            if not isinstance(request, dict) or not isinstance(request.get("action"), str):
+                await self._json(writer, 400, {"error": "invalid action"})
                 return
-            operation = request["operation"]
-            if operation in ("status", "branches") and set(request) == {"operation"}:
-                params = {}
-            elif operation == "restart" and request == {
-                    "operation": "restart", "confirm": True}:
-                params = {"confirm": True}
-            elif (operation == "deploy" and set(request) ==
-                  {"operation", "branch", "confirm"} and request["confirm"] is True
-                  and isinstance(request["branch"], str)
-                  and 1 <= len(request["branch"]) <= 100):
-                params = {"branch": request["branch"], "confirm": True}
-            else:
-                await self._json(writer, 400, {"error": "invalid_deployment_request"})
+            if self.reminders is None:
+                await self._json(writer, 409, {"error": "reminders unavailable"})
                 return
-            code, result = await self.deployment.request(operation, **params)
-            await self._json(writer, code, result)
+            if route == "/api/push":
+                action = request["action"]
+                if action == "config" and set(request) == {"action"}:
+                    await self._json(writer, 200, {
+                        "enabled": self.reminders.push.configured,
+                        "vapid_public_key": (self.reminders.push.public_key
+                                             if self.reminders.push.configured else ""),
+                        "reason": ("ready" if self.reminders.push.configured else
+                                   "push_not_configured"),
+                    })
+                    return
+                if not self.reminders.push.configured:
+                    await self._json(writer, 409, {"error": "push_not_configured"})
+                    return
+                try:
+                    if action == "subscribe" and set(request) == {"action", "subscription"}:
+                        await asyncio.to_thread(
+                            self.reminders.store.subscribe, request["subscription"])
+                    elif (action == "unsubscribe"
+                          and set(request) == {"action", "endpoint"}):
+                        await asyncio.to_thread(
+                            self.reminders.store.unsubscribe, request["endpoint"])
+                    else:
+                        raise ValueError("invalid push operation")
+                except (ValueError, TypeError, KeyError):
+                    await self._json(writer, 400, {"error": "invalid push subscription"})
+                    return
+                await self._json(writer, 200, {"status": "ok"})
+                return
+            action = request["action"]
+            if action == "get" and set(request) == {"action", "id"}:
+                try:
+                    item = await asyncio.to_thread(
+                        self.reminders.store.get, request["id"])
+                except (ValueError, TypeError):
+                    item = None
+                await self._json(writer, 200 if item else 404,
+                                 {"status": "ok", "reminder": item} if item
+                                 else {"error": "reminder_not_found"})
+                return
+            if set(request) != {"action", "id", "title", "due_at"}:
+                await self._json(writer, 400, {"error": "invalid reminder request"})
+                return
+            if action == "list":
+                items = await asyncio.to_thread(
+                    self.reminders.store.list, visible_only=True)
+                await self._json(writer, 200, {"status": "ok", "items": items})
+                return
+            if action == "ack":
+                if request["title"] is not None or request["due_at"] is not None:
+                    await self._json(writer, 400, {"error": "invalid reminder request"})
+                    return
+                try:
+                    item = await asyncio.to_thread(
+                        self.reminders.store.acknowledge, request["id"])
+                except (ValueError, TypeError):
+                    await self._json(writer, 400, {"error": "reminder_not_sent"})
+                    return
+                await self._json(writer, 200, {"status": "ok", "reminder": item})
+                return
+            from .reminders import ReminderAction
+            result = await ReminderAction(
+                self.reminders, "mobile", "").manage_reminder(
+                    json.dumps(request, ensure_ascii=False))
+            await self._json(writer, 200 if result["status"] == "ok" else 400, result)
+            return
+        if route == "/api/auth":
+            # Bearer and Tailscale identity are checked at the common gateway.
+            if (headers.get("content-type", "").split(";")[0].strip()
+                    != "application/json" or body.strip() != b"{}"):
+                await self._json(writer, 400, {"error": "expected empty JSON object"})
+                return
+            await self._json(writer, 200, {"status": "ok"})
             return
         if route == "/api/metrics":
             if (headers.get("content-type", "").split(";")[0].strip() != "application/json"
@@ -502,7 +723,8 @@ class MobileGateway:
             await self._json(writer, 400, {"error": "invalid session"})
             return
         if self.semaphore.locked():
-            await self._json(writer, 429, {"error": "Jade est occupée"})
+            await self._json(writer, 429, {"error": "Jade est occupée",
+                                          **incident_for_client(asyncio.QueueFull())})
             return
         async with self.semaphore:
             stream_started = False
@@ -528,6 +750,7 @@ class MobileGateway:
                     )
                     reply = await self._conversation(source)
                     payload = {"reply": reply.text, "intent": reply.intent,
+                               "attachments": [item.public() for item in getattr(reply, "attachments", ())],
                                "transcript": text if modality == "voice" else None,
                                "audio_wav_b64": None, "audio_unavailable": False}
                     speak = source.requested_speech
@@ -552,20 +775,24 @@ class MobileGateway:
                             payload["audio_wav_b64"] = base64.b64encode(audio).decode("ascii")
                         except asyncio.CancelledError:
                             raise
-                        except Exception:
+                        except Exception as exc:
                             LOG.warning("Mobile voice unavailable; text answer preserved")
                             payload["audio_unavailable"] = True
+                            payload["audio_unavailable_reason"] = incident_for_client(exc)
                     await self._json(writer, 200, payload)
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as exc:
                 if not stream_started:
-                    await self._json(writer, 504, {"error": "Jade n'a pas répondu à temps"})
-            except asyncio.QueueFull:
+                    await self._json(writer, 504, {"error": "Jade n'a pas répondu à temps",
+                                                  **incident_for_client(exc)})
+            except asyncio.QueueFull as exc:
                 if not stream_started:
-                    await self._json(writer, 429, {"error": "Jade est occupée"})
-            except Exception:
+                    await self._json(writer, 429, {"error": "Jade est occupée",
+                                                  **incident_for_client(exc)})
+            except Exception as exc:
                 LOG.warning("Mobile turn failed; no transcript/secret logged")
                 if not stream_started:
-                    await self._json(writer, 503, {"error": "Jade indisponible"})
+                    await self._json(writer, 503, {"error": "Jade indisponible",
+                                                  **incident_for_client(exc)})
 
     async def _handle(self, reader, writer):
         try:
@@ -612,6 +839,22 @@ class MobileGateway:
                 await self._json(writer, 403, {"error": "private owner required"})
                 return
             if method == "GET":
+                if route == "/assets/salon.html":
+                    # Only deliver the salon document after token validation.
+                    if not hmac.compare_digest(
+                            headers.get("authorization", ""), "Bearer " + self.token):
+                        await self._json(writer, 401, {"error": "authentication required"})
+                        return
+                if route.startswith("/api/documents/"):
+                    if (not self._origin_allowed(headers) or not headers.get("host")):
+                        await self._json(writer, 403, {"error": "invalid origin"})
+                        return
+                    if not hmac.compare_digest(
+                            headers.get("authorization", ""), "Bearer " + self.token):
+                        await self._json(writer, 401, {"error": "authentication required"})
+                        return
+                    await self._download_document(writer, route)
+                    return
                 if route == "/api/duplex":
                     if not self._origin_allowed(headers) or not headers.get("host"):
                         await self._json(writer, 403, {"error": "invalid websocket origin"})
@@ -621,7 +864,8 @@ class MobileGateway:
                     return
                 await self._static(writer, route)
                 return
-            if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing", "/api/metrics", "/api/deployment"):
+            if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing", "/api/metrics",
+                              "/api/push", "/api/reminders", "/api/auth"):
                 await self._json(writer, 404, {"error": "unknown route"})
                 return
             if (headers.get("transfer-encoding") or not self._origin_allowed(headers)
@@ -637,18 +881,18 @@ class MobileGateway:
                 await self._json(writer, 400, {"error": "Content-Length required"})
                 return
             size = int(size_str)
-            max_size = MAX_WAV if route == "/api/voice" else 4096
+            max_size = MAX_WAV if route == "/api/voice" else (12288 if route == "/api/push" else 4096)
             if not 1 <= size <= max_size:
                 await self._json(writer, 413, {"error": "request too large"})
                 return
             body = await asyncio.wait_for(reader.readexactly(size), timeout=10)
             streaming = headers.get("x-jade-stream") == "1" and route in ("/api/chat", "/api/voice")
-            if not streaming:
+            if route not in ("/api/chat", "/api/voice"):
                 await self._post(writer, route, headers, body)
             else:
                 # Notice a disconnected phone even while STT/LLM is still
                 # running, before a response can be written to the socket.
-                work = asyncio.create_task(self._post(writer, route, headers, body, streaming=True))
+                work = asyncio.create_task(self._post(writer, route, headers, body, streaming=streaming))
                 disconnected = asyncio.create_task(reader.read(1))
                 try:
                     done, _ = await asyncio.wait((work, disconnected), return_when=asyncio.FIRST_COMPLETED)

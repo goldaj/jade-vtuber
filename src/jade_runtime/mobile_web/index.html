@@ -3,173 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1c172d">
+  <meta name="theme-color" content="#2f5d45">
   <meta name="description" content="Jade, espace privé de conversation avec Goldaj.">
   <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="icon" type="image/svg+xml" href="/icon.svg">
-  <link rel="stylesheet" href="/assets/styles.css">
+  <link rel="preload" as="image" href="/assets/splash-jade.png" fetchpriority="high">
+  <link rel="icon" type="image/png" href="/icon-192.png">
+  <link rel="stylesheet" href="/assets/login.css">
   <title>Jade · Espace privé</title>
-  <!-- All SDK JS files must be installed LOCALLY on the PC after license review.
-       No remote CDNs or embedded proprietary Live2D libraries. -->
-  <script src="/vendor/pixi.min.js" defer></script>
-  <script src="/vendor/pixi-unsafe-eval.min.js" defer></script>
-  <script src="/vendor/live2dcubismcore.min.js" defer></script>
-  <script src="/vendor/cubism4.min.js" defer></script>
-  <script src="/assets/room-motion.js" defer></script>
-  <script src="/assets/avatar.js" defer></script>
-  <script src="/assets/duplex-client.js" defer></script>
-  <script src="/assets/app.js" defer></script>
+  <!-- No room, app or Live2D is fetched before a verified login. -->
+  <script src="/assets/splash.js" defer></script>
+  <script src="/assets/login-guard.js" defer></script>
 </head>
 <body>
-  <main class="shell">
-    <header class="topbar">
-      <div class="mark"><span class="mark-gem">✧</span><span><b>Jade</b><small>Votre salon privé</small></span></div>
-      <div class="top-actions">
-        <span id="connection-status" class="connection" role="status">Hors connexion</span>
-        <button type="button" class="icon-button" id="fullscreen" aria-label="Plein écran" title="Plein écran">⛶</button>
-      </div>
-    </header>
-    <section class="room" aria-label="Jade et son décor animé">
-      <div class="room-art" data-paused aria-hidden="true">
-        <div class="room-plane">
-          <img src="/assets/room-spring.webp" width="1448" height="1086" alt="">
-          <div class="room-shadow room-shadow-left" hidden>
-            <svg viewBox="0 0 388 491" aria-hidden="true" focusable="false">
-              <g class="shadow-leaves">
-                <path d="M-20 118 Q69 148 127 211 T290 275 M79 177 Q103 123 182 99 M173 231 Q216 176 300 178 M112 204 Q129 265 215 316" class="shadow-branch"/>
-                <ellipse cx="45" cy="137" rx="29" ry="13" transform="rotate(26 45 137)"/>
-                <ellipse cx="83" cy="151" rx="31" ry="16" transform="rotate(-20 83 151)"/>
-                <ellipse cx="101" cy="187" rx="30" ry="14" transform="rotate(31 101 187)"/>
-                <ellipse cx="147" cy="196" rx="34" ry="16" transform="rotate(-32 147 196)"/>
-                <ellipse cx="167" cy="103" rx="25" ry="13" transform="rotate(42 167 103)"/>
-                <ellipse cx="200" cy="114" rx="31" ry="15" transform="rotate(-18 200 114)"/>
-                <ellipse cx="245" cy="186" rx="33" ry="17" transform="rotate(38 245 186)"/>
-                <ellipse cx="267" cy="228" rx="25" ry="13" transform="rotate(-22 267 228)"/>
-                <ellipse cx="208" cy="300" rx="38" ry="15" transform="rotate(22 208 300)"/>
-                <ellipse cx="246" cy="322" rx="25" ry="12" transform="rotate(-40 246 322)"/>
-                <ellipse cx="306" cy="265" rx="29" ry="16" transform="rotate(18 306 265)"/>
-              </g>
-            </svg>
-          </div>
-          <div class="room-shadow room-shadow-right" hidden>
-            <svg viewBox="0 0 267 464" aria-hidden="true" focusable="false">
-              <g class="shadow-leaves">
-                <path d="M270 88 Q196 127 162 184 T40 358 M189 142 Q133 121 90 99 M148 216 Q200 229 221 274" class="shadow-branch"/>
-                <ellipse cx="221" cy="117" rx="24" ry="11" transform="rotate(-30 221 117)"/>
-                <ellipse cx="172" cy="167" rx="27" ry="12" transform="rotate(38 172 167)"/>
-                <ellipse cx="136" cy="191" rx="30" ry="15" transform="rotate(-32 136 191)"/>
-                <ellipse cx="100" cy="232" rx="35" ry="15" transform="rotate(24 100 232)"/>
-                <ellipse cx="83" cy="288" rx="27" ry="13" transform="rotate(-30 83 288)"/>
-                <ellipse cx="49" cy="335" rx="32" ry="13" transform="rotate(38 49 335)"/>
-                <ellipse cx="90" cy="108" rx="25" ry="12" transform="rotate(42 90 108)"/>
-                <ellipse cx="208" cy="279" rx="30" ry="14" transform="rotate(-16 208 279)"/>
-                <ellipse cx="157" cy="247" rx="31" ry="15" transform="rotate(19 157 247)"/>
-              </g>
-            </svg>
-          </div>
-          <img class="room-curtain" src="" width="262" height="296" hidden alt="">
-          <div class="room-reflection" hidden></div>
-          <div class="room-steam" hidden>
-            <svg viewBox="0 0 116 205" aria-hidden="true" focusable="false">
-              <path class="wisp wisp-one" d="M51 199 C34 169 72 147 48 118 C29 92 59 62 37 34 C29 22 40 12 45 2"/>
-              <path class="wisp wisp-two" d="M68 205 C88 179 51 160 78 128 C102 98 55 80 80 54 C95 36 67 25 73 4"/>
-              <path class="wisp wisp-three" d="M59 196 C82 173 39 153 59 124 C82 93 45 80 62 45 C68 34 57 20 65 9"/>
-              <path class="wisp wisp-four" d="M40 198 C23 180 46 163 35 140 C19 111 54 97 39 64 C28 41 47 28 48 12"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-      <div id="avatar-container" aria-label="Avatar Live2D de Jade">
-        <div id="avatar-fallback" class="avatar-fallback" role="status">
-          <span class="avatar-sigil" aria-hidden="true">✧</span>
-          <span id="avatar-state">Chargement du modèle Live2D…</span>
-        </div>
-      </div>
-      <div class="room-bottom">
-        <div class="character-label"><span class="tiny-star">✧</span> Jade <span class="label-small">· à tes côtés</span></div>
-        <div class="mood-line" id="mood-line" aria-live="off">Je suis là.</div>
-      </div>
-    </section>
+  <div id="jade-launch-splash" class="jade-launch-splash" role="status" aria-label="Ouverture de Jade">
+    <img src="/assets/splash-jade.png" alt="" fetchpriority="high" decoding="async">
+  </div>
 
-    <section class="conversation" aria-label="Discussion">
-      <div class="chat-heading">
-        <span><span class="chat-pulse"></span> Conversation avec Jade</span>
-        <div class="chat-tools">
-          <button type="button" class="text-button" id="sound-toggle" aria-pressed="true">Voix activée</button>
-          <button type="button" class="text-button" id="new-chat">Nouveau fil</button>
-        </div>
-      </div>
-      <details class="billing-panel" id="billing-panel">
-        <summary>Suivi OpenAI</summary>
-        <p>Solde prépayé : indisponible dans l’API ; aucune alerte de solde possible. <a href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" rel="noopener noreferrer">Voir la facturation OpenAI</a></p>
-        <p>Coûts de toute l’organisation API, éventuellement publiés avec retard.</p>
-        <p>Dépenses aujourd’hui (UTC) : <strong id="billing-today">—</strong><br>Dépenses du mois (UTC) : <strong id="billing-month">—</strong></p>
-        <p id="billing-status" role="status">Ouvre ce panneau pour consulter les dépenses.</p>
-        <button type="button" id="billing-refresh">Actualiser</button>
-      </details>
-      <details class="identity-panel" id="deployment-panel">
-        <summary>Administrer Jade sur le PC (branche et redémarrage)</summary>
-        <p>Fonction réservée au propriétaire. Nécessite le superviseur Windows indépendant et une connexion privée Tailscale. Aucune modification de la branche Git distante.</p>
-        <button type="button" id="deployment-load">Afficher les branches et la version active</button>
-        <p id="deployment-state" role="status">Superviseur non interrogé.</p>
-        <label for="deployment-branch">Branche distante à exécuter</label>
-        <select id="deployment-branch" disabled><option value="">Charger les branches…</option></select>
-        <button type="button" id="deployment-run" disabled>Mettre à jour et redémarrer</button>
-        <button type="button" id="deployment-restart">Redémarrer sans mise à jour</button>
-        <p>En cas de coupure de Jade pendant le redémarrage, reconnecte-toi puis recharge l'état du superviseur.</p>
-      </details>
-      <details class="identity-panel" id="identity-panel">
-        <summary>Associer mon compte Discord ou Twitch</summary>
-        <p>Cette association sert à faire reconnaître ton compte Discord ou Twitch par Jade. Elle n'est pas nécessaire pour activer la mémoire de l'application mobile, déjà associée au profil privé du propriétaire lorsque la mémoire est activée.</p>
-        <ol class="identity-steps">
-          <li>
-            <strong>Sur Discord ou Twitch, depuis le compte à associer (pas dans cette application mobile) :</strong>
-            <p><strong>Discord (MP ou serveur) :</strong> la mémoire s'active automatiquement dès qu'un compte identifié interagit avec Jade. Envoie seulement <code>!jade-memoire identite</code> à Jade.</p>
-            <p><strong>Twitch (chat) :</strong> envoie d'abord <code>!jade-memoire activer</code>, puis <code>!jade-memoire identite</code> à Jade.</p>
-            <p>Recopie l'identifiant <strong>numérique</strong> renvoyé par Jade, pas le pseudo du compte.</p>
-          </li>
-          <li>
-            <strong>Dans cette application mobile :</strong>
-            <p>Choisis le service du compte à associer et saisis son identifiant numérique.</p>
-            <form id="identity-link-form">
-              <label for="identity-platform">Compte externe</label>
-              <select id="identity-platform"><option value="discord">Discord</option><option value="twitch">Twitch</option></select>
-              <label for="identity-id">Identifiant numérique renvoyé par Jade</label>
-              <input id="identity-id" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,24}" required maxlength="25" autocomplete="off">
-              <button type="submit">Générer le code de confirmation</button>
-            </form>
-            <p><strong>Le code de confirmation expire au bout de 5 minutes.</strong> Il est à usage unique et lié à ce compte. <strong>L'association, une fois confirmée, n'expire pas.</strong></p>
-            <p id="identity-result" role="status" class="identity-result"></p>
-            <button type="button" id="identity-copy" disabled>Copier la commande de confirmation</button>
-          </li>
-          <li>
-            <strong>Retour sur Discord ou Twitch, depuis ce même compte :</strong>
-            <p>Envoie à Jade la commande <code>!jade-memoire confirmer [code généré]</code> fournie par l'application mobile, avant l'expiration du code. Les souvenirs condensés des comptes liés peuvent être retrouvés sur mobile, au micro PC et en MP Discord. Les salons publics et les historiques complets restent isolés.</p>
-          </li>
-        </ol>
-        <p>Depuis Discord ou Twitch, <code>!jade-memoire delier</code> sépare les comptes sans effacer leurs souvenirs ; <code>!jade-memoire oublier</code> efface les données du compte concerné.</p>
-      </details>
-      <div class="messages" id="messages" role="log" aria-live="polite" aria-label="Historique de la discussion">
-        <div class="welcome">Bienvenue chez nous. Parle-moi ou écris-moi, comme tu préfères.</div>
-      </div>
-      <form id="composer" class="composer">
-        <button type="button" id="mic" class="mic" aria-label="Démarrer l'enregistrement vocal" aria-pressed="false" title="Parler à Jade">🎙</button>
-        <label class="visually-hidden" for="message">Ton message</label>
-        <textarea id="message" rows="1" maxlength="1200" placeholder="Écris à Jade…" autocomplete="off"></textarea>
-        <button type="submit" id="send" class="send" aria-label="Envoyer le message">➤</button>
-      </form>
-      <div class="footer-status" id="status" role="status">Connecte-toi pour commencer.</div>
-    </section>
-  </main>
   <div id="auth-modal" class="auth-layer" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-    <form id="auth-form" class="auth-card">
-      <div class="auth-icon" aria-hidden="true">✧</div>
-      <h1 id="auth-title">L'espace privé de Jade</h1>
-      <p>Réservé à Goldaj. Connecte ton téléphone à Tailscale, puis saisis le jeton privé du client mobile.</p>
+    <form id="auth-form" class="auth-card" novalidate>
+      <div class="auth-heading">
+        <img class="auth-icon" src="/icon.svg" width="44" height="44" alt="">
+        <h1 id="auth-title">Espace privé de Jade</h1>
+      </div>
       <label for="auth-token">Jeton d'accès</label>
-      <input id="auth-token" type="password" required minlength="32" maxlength="256" autocomplete="off" spellcheck="false" placeholder="Jeton privé de Jade">
+      <input id="auth-token" type="password" required minlength="32" maxlength="256" autocomplete="off" spellcheck="false">
       <button class="unlock" type="submit">Entrer dans le salon</button>
-      <small>Le jeton reste uniquement en mémoire pendant cette session. Il n'est jamais sauvegardé sur ton téléphone.</small>
+      <output id="auth-feedback" role="status" aria-live="polite"></output>
     </form>
   </div>
 </body>

@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 from src.jade_runtime.config import Settings
-from src.jade_runtime.memory_store import MemoryStore
+from src.jade_runtime.memory_store import MemoryStore, SCHEMA_VERSION
 from src.jade_runtime.memory_service import MemoryService
 from src.jade_runtime.messages import Incoming, Reply
 
@@ -45,7 +45,7 @@ class AutoEnrollmentStoreTests(unittest.TestCase):
         reopened = MemoryStore(self.path)
         self.assertTrue(reopened.auto_enable(("discord", "999")))
         with closing(sqlite3.connect(self.path)) as db:
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 5)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], SCHEMA_VERSION)
 
     def test_v4_legacy_block_table_migrates_without_losing_memories(self):
         account = ("discord", "123")
@@ -64,7 +64,7 @@ class AutoEnrollmentStoreTests(unittest.TestCase):
         self.assertTrue(reopened.auto_enable(("discord", "456")))
         self.assertEqual(len(reopened.list_for_account(account)), 1)
         with closing(sqlite3.connect(self.path)) as db:
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 5)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], SCHEMA_VERSION)
             self.assertIsNone(db.execute("SELECT name FROM sqlite_master "
                 "WHERE type='table' AND name='memory_auto_enrollment_blocks'").fetchone())
 

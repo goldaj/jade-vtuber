@@ -2,6 +2,7 @@
 import argparse
 import asyncio
 import logging
+import os
 from contextlib import AsyncExitStack
 from pathlib import Path
 
@@ -11,13 +12,24 @@ from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming
 from src.jade_runtime.openai_services import OpenAIServices
 from src.jade_runtime.orchestrator import Runtime
-from src.jade_runtime.turn_logging import enable_console_logs, planned_destinations
+from src.jade_runtime.turn_logging import enable_console_logs, planned_destinations, observe_delivery
 from src.jade_runtime.session_logging import start_session_logging, event, summary
 from src.jade_runtime.output import AudioOutput, SpeechOutput
 from src.jade_runtime.twitch_token import validate_twitch_token
 from src.jade_runtime.voice_pipeline import VoiceInput
 
 LOG = logging.getLogger("jade.main")
+
+
+class _RunnerStopRequested(Exception):
+    """Private request to stop a PyCharm child, without exiting its Run tab."""
+
+
+async def _watch_runner_stop(path: str) -> None:
+    """Only enabled for the child launched by PyCharm's remote manager."""
+    while not Path(path).is_file():
+        await asyncio.sleep(0.25)
+    raise _RunnerStopRequested()
 
 
 class DemoChat:
@@ -80,6 +92,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     discord_voice_bridge = None
     local_api = None
     mobile_gateway = None
+    reminders = None
     shutdown_deadline = None
 
     async with AsyncExitStack() as scopes:
@@ -167,6 +180,17 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             if vts_tasks:
                 await asyncio.gather(*vts_tasks, return_exceptions=True)
 
+        documents = None
+        if live and (mobile or discord):
+            from src.jade_runtime.documents import DocumentService
+            documents = DocumentService(
+                config.document_dir, memory_store=memory.store if memory else None,
+                identity_db_path=config.memory_db_path,
+                access_mode=config.document_access_mode,
+                allowed_discord_ids=config.document_allowed_discord_ids)
+            await documents.start()
+            scopes.push_async_callback(documents.close)
+
         async def on_reply(reply):
             if local_api is not None:
                 local_api.deliver(reply)
@@ -198,11 +222,21 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 # Delivery is REQUIRED for a Discord reply, not an optional
                 # decoration: an undelivered DM must not be stored as "sent"
                 # or trigger autonomous curation. Never log private contents.
+                extra = ({"attachments": reply.attachments} if reply.attachments else {})
                 sent = await asyncio.wait_for(discord_client.send_chat(
                     reply.source.channel, reply.text,
-                    source_message_id=reply.source.message_id), timeout=20)
+                    source_message_id=reply.source.message_id, **extra), timeout=20)
                 if not sent:
                     raise RuntimeError("Discord message delivery not confirmed")
+                observe_delivery("transport_accepted", "discord_text", proof="discord_api")
+            if (reply.source.platform == "discord_voice" and reply.attachments
+                    and discord_client is not None):
+                sent = await discord_client.send_chat(
+                    reply.source.channel,
+                    "Voici les documents demandés (disponibles pendant 24 h).",
+                    attachments=reply.attachments)
+                if not sent:
+                    raise RuntimeError("Discord voice document not delivered")
             if (vts_client is not None and speech is not None and config.vts_speak_hotkey
                     and not reply.spoken
                     and reply.source.platform in ("microphone", "discord_voice", "console")):
@@ -218,6 +252,16 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 # 20-second total could cut off an otherwise valid answer.
                 await optional("voice", lambda: speech.speak(reply),
                                timeout=min(180, config.timeout_seconds + 120))
+
+        async def on_incident(incoming, incident):
+            # No LLM/TTS call or cross-post. DiscordTextPolicy marked the
+            # source as a direct request on the authorized original channel.
+            if incoming.platform == "discord" and discord_client is not None:
+                await discord_client.send_chat(
+                    incoming.channel, incident.message,
+                    source_message_id=incoming.message_id)
+            elif incoming.platform in ("console", "microphone"):
+                print("Jade (indisponible) :", incident.message)
 
         def start_early_voice(source):
             turn = speech.start_early(source)
@@ -246,11 +290,20 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
 
         from src.jade_runtime.web_search import build_web_search_service
         web_service = build_web_search_service(config) if live else None
+        if live and (mobile or discord):
+            from src.jade_runtime.reminders import ReminderService
+            reminders = ReminderService(
+                Path(config.memory_db_path).with_name("jade-reminders.sqlite3"),
+                memory_store=memory.store if memory is not None else None,
+                vapid_public=config.push_vapid_public,
+                vapid_private=config.push_vapid_private,
+                vapid_subject=config.push_vapid_subject)
         runtime = Runtime(dialogue, on_reply, config.max_queue,
                           on_stream_start=(start_early_voice if speech and config.early_voice else None),
                           delivery_plan=describe_delivery,
-                          memory_service=memory,
-                          cross_channel=cross_channel, web_service=web_service)
+                          memory_service=memory, on_incident=on_incident,
+                          cross_channel=cross_channel, web_service=web_service,
+                          document_service=documents, reminder_service=reminders)
         await runtime.start()
         async def stop_runtime():
             remaining = 5 if shutdown_deadline is None else max(
@@ -273,7 +326,9 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 public_origin=config.mobile_public_origin,
                 vendor_dir=Path(config.mobile_vendor_dir) if config.mobile_vendor_dir else None,
                 model_dir=Path(config.mobile_model_dir) if config.mobile_model_dir else None,
-                avatar_intent_enabled=config.avatar_intent_enabled)
+                second_model_dir=Path(config.mobile_second_model_dir) if config.mobile_second_model_dir else None,
+                avatar_intent_enabled=config.avatar_intent_enabled,
+                reminder_service=reminders)
         social_policy = None
         initiatives = None
         if discord and live and config.memory_enabled:
@@ -334,7 +389,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     voice_bridge=discord_voice_bridge, bot_name=config.bot_name,
                     auto_rate=config.discord_text_auto_rate,
                     cooldown_seconds=config.discord_text_cooldown_seconds,
-                    social_policy=social_policy, initiatives=initiatives)
+                    social_policy=social_policy, initiatives=initiatives,
+                    document_store=documents.store if documents else None)
 
             if twitch or discord or mic or http or mobile:
                 print("Jade connecteurs activés. Quitter avec Ctrl+C.")
@@ -355,9 +411,20 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                         tasks.append(asyncio.create_task(local_api.serve_forever()))
                     if mobile_gateway is not None:
                         tasks.append(asyncio.create_task(mobile_gateway.serve_forever()))
+                    if reminders is not None:
+                        async def send_reminder_to_discord(channel, text):
+                            if discord_client is None:
+                                return False
+                            return await discord_client.send_chat(channel, text)
+                        tasks.append(asyncio.create_task(
+                            reminders.run_forever(discord_sender=send_reminder_to_discord)))
+                    stop_signal = os.environ.get("JADE_RUNNER_STOP_FILE", "")
+                    if stop_signal:
+                        tasks.append(asyncio.create_task(_watch_runner_stop(stop_signal)))
                     done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
                     for task in done:
-                        task.result()
+                        if not task.cancelled() and not isinstance(task.exception(), _RunnerStopRequested):
+                            task.result()
                 finally:
                     shutdown_deadline = asyncio.get_running_loop().time() + 5
                     runtime.begin_shutdown()

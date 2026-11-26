@@ -1,5 +1,6 @@
 """Bounded per-channel conversation. No paid calls in unit tests."""
 import asyncio
+from datetime import datetime, timezone
 from collections import deque
 import random
 import time
@@ -11,6 +12,8 @@ from .sentence_stream import SentenceAccumulator
 from .intent_engine import INTENT_PROMPT, IntentStreamParser, parse_reply
 from .memory_actions import MEMORY_PROMPT
 from .web_search import WEB_PROMPT, ToolActions
+from .documents import DOCUMENT_PROMPT, DOCUMENT_ALLOWED_PROMPT, DOCUMENT_DENIED_PROMPT
+from .reminders import REMINDER_PROMPT
 from .session_logging import event
 
 
@@ -75,7 +78,8 @@ class Dialogue:
     async def respond(self, incoming: Incoming, *, valid=lambda: True,
                       on_sentence=None, on_timing=None, defer_history=False,
                       on_intent=None, memory_context="", history_messages=None,
-                      memory_action=None, web_action=None) -> Reply | None:
+                      memory_action=None, web_action=None, document_action=None,
+                       reminder_action=None) -> Reply | None:
         # Reject stale duplicates by transport ID, not by repeated message text.
         if len(incoming.text) > 1200 or not self.should_reply(incoming):
             return None
@@ -116,17 +120,35 @@ class Dialogue:
                     + memory_context[:3500]}] if memory_context else [])
                 selected_history = (select_context(history, incoming.text)
                                     if self.selective_context else history)
-                tools_action = (ToolActions(memory_action, web_action)
-                                if web_action is not None else memory_action)
+                tools_action = (ToolActions(memory_action, web_action, document_action,
+                                            reminder_action)
+                                if (web_action is not None or reminder_action is not None or
+                                    (document_action is not None and document_action.allowed))
+                                else memory_action)
                 can_use_tools = (
                     tools_action is not None
                     and callable(getattr(type(self.backend), "complete_with_tools", None))
                     and (on_sentence is None or callable(getattr(
                         type(self.backend), "complete_stream_with_tools", None)))
                 )
+                document_note = ""
+                if document_action is not None:
+                    document_note = DOCUMENT_PROMPT + (
+                        DOCUMENT_ALLOWED_PROMPT
+                        if (document_action.allowed and can_use_tools)
+                        else DOCUMENT_DENIED_PROMPT)
+                if (document_action is not None
+                        and document_action.owner_verified
+                        and incoming.platform in ("discord", "discord_voice")):
+                    owner_note += ("\nCompte Discord de cet interlocuteur : "
+                                   "identité Goldaj vérifiée par liaison existante.")
                 system_prompt = (self.prompt + "\n\n" + INTENT_PROMPT + owner_note
                                  + (MEMORY_PROMPT if can_use_tools and memory_action is not None else "")
                                  + (WEB_PROMPT if can_use_tools and web_action is not None else "")
+                                 + document_note
+                                 + (REMINDER_PROMPT + "\nHeure serveur UTC de ce tour : " +
+                                    datetime.now(timezone.utc).isoformat(timespec="seconds")
+                                  if can_use_tools and reminder_action is not None else "")
                                  + "\nPour une demande qui appelle une réponse longue, "
                                    "donne plutôt une synthèse claire de 3 à 5 phrases "
                                    "(environ 120 mots, soit ~320 tokens visibles au maximum). "
@@ -197,7 +219,8 @@ class Dialogue:
                     raise TimeoutError("message expired")
                 if not isinstance(answer, str) or not answer.strip():
                     raise ValueError("chat backend returned an empty response")
-                result = Reply(incoming, answer.strip(), intent=selected_intent)
+                result = Reply(incoming, answer.strip(), intent=selected_intent,
+                                attachments=tuple(getattr(document_action, "attachments", ())))
                 if not defer_history:
                     history.extend((user, {"role": "assistant", "content": result.text}))
                     if incoming.message_id:

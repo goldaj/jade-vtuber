@@ -71,18 +71,24 @@ class VoluntaryMemoryTests(unittest.IsolatedAsyncioTestCase):
                                if m["kind"] == "core_relationship")["expires_at"])
         self.assertEqual(len(reopened.recall_self_core(OWNER)), 1)
 
-    async def test_no_verified_identity_no_tool_and_no_external_autobiography(self):
-        self.assertIsNone(await self.service.prepare_memory_action(
-            incoming("discord", account_id="", channel="room")))
+    async def test_unverified_identity_can_read_globally_but_cannot_write(self):
+        unknown = await self.service.prepare_memory_action(
+            incoming("discord", account_id="", channel="room"))
+        self.assertIsNotNone(unknown)
+        self.assertFalse(unknown.write_enabled)
+        self.assertEqual((await unknown(arguments()))["status"], "refusé")
+
+        # Verified Discord accounts may be enrolled automatically. Jade can
+        # autonomously choose an L3 autobiographical Core from that context.
         key = ("discord", "123")
-        self.store.enable(key)
         source = incoming("discord", account_id="123", channel="77")
         action = await self.service.prepare_memory_action(source)
-        self.assertEqual((await action(arguments("core_self")))["status"], "refusé")
+        self.assertTrue(action.write_enabled)
+        self.assertEqual((await action(arguments("core_self")))["status"], "enregistré")
         self.assertEqual((await action(arguments()))["status"], "enregistré")
         self.assertEqual(self.store.recall(key, "discord:99"), [])
         self.assertEqual(len(self.store.recall(key, "discord:77")), 1)
-        self.assertEqual(self.store.recall_self_core(OWNER), [])
+        self.assertEqual(len(self.store.recall_self_core(OWNER)), 1)
 
     async def test_human_core_request_does_not_force_a_core(self):
         request = Incoming(
@@ -90,7 +96,7 @@ class VoluntaryMemoryTests(unittest.IsolatedAsyncioTestCase):
             "Jade, garde dans tes Core Memories : nous avons fini le roman.",
             message_id="request")
         reply = await self.service.command(request)
-        self.assertIn("mémoire ordinaire", reply.text)
+        self.assertIsNone(reply)  # Human Core suggestions must reach Jade, not force L2.
         self.assertEqual(self.store.recall_self_core(OWNER), [])
         # The human's command never creates L3. A separate autonomous tool
         # invocation *may* create it: Jade, not the user, chooses that action.
@@ -100,18 +106,21 @@ class VoluntaryMemoryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await action(candidate))["status"], "enregistré")
         self.assertEqual(len(self.store.recall_self_core(OWNER)), 1)
 
-    async def test_unfounded_or_sensitive_content_is_refused(self):
+    async def test_freeform_wording_allowed_but_malformed_payloads_refused(self):
         action = await self.service.prepare_memory_action(incoming())
+        # A word such as 'token' in Jade's own recollection is not proof of
+        # malicious content, and evidence is not required from the last turn.
+        valid = arguments(summary="Jade a employé le mot token dans une histoire fictive.")
+        self.assertEqual((await action(valid))["status"], "enregistré")
         invalid = [
-            # Earlier authorized context need not be quoted in this turn.
-            arguments(summary="Mot de passe sk-secret123"),
             arguments(evidence="terminé notre premier roman", summary=""),
             '{"kind":"ordinary","summary":"x"}',
             "{" * 3000,
         ]
         for payload in invalid:
-            self.assertEqual((await action(payload))["status"], "refusé")
-        self.assertEqual(self.store.list_for_account(OWNER), [])
+            with self.subTest(payload=payload[:28]):
+                self.assertEqual((await action(payload))["status"], "refusé")
+        self.assertEqual(len(self.store.list_for_account(OWNER)), 1)
 
     async def test_replaced_profile_and_sqlite_error(self):
         action = await self.service.prepare_memory_action(incoming())
@@ -127,7 +136,10 @@ class VoluntaryMemoryTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_disabled_account_cannot_write(self):
         self._simulate_profile_removal()
-        self.assertIsNone(await self.service.prepare_memory_action(incoming()))
+        action = await self.service.prepare_memory_action(incoming())
+        self.assertIsNotNone(action)
+        self.assertFalse(action.write_enabled)
+        self.assertEqual((await action(arguments()))["status"], "refusé")
 
     async def test_runtime_exposes_tool_to_model_and_no_second_curator(self):
         class Model:

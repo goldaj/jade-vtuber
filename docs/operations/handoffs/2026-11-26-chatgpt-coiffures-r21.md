@@ -1,0 +1,10 @@
+# Mission : cadrage des coiffures interchangeables de Jade r21
+
+- Agent : ChatGPT (mode chat), cadrage produit à la demande du propriétaire le 26/11/2026.
+- Carte : [DEV-045](../../backlog/01-DEVELOPPEMENT.md#dev-045--coiffures-interchangeables-en-temps-réel), P2, jalon B, **À faire**. Priorité P2 proposée car personnalisation non bloquante ; dépendances ART-011 et DEV-001.
+- Branche : develop, base `80b30b15103c8361f8aa5a1b4ba900766e1d5b4e`. Livraison documentaire par commit unique sur develop, demandée explicitement ; aucune intervention locale ni sur main.
+- Décision : deuxième coiffure = carré long fleuri, référence approuvée. Garder la coiffure originelle et les autres concepts pour plus tard. Sélecteur dans Profil, modification visuelle à chaud et persistance locale proposées ; réutilisation maximale du rig, indépendance des vêtements futurs. Les critères sont dans la carte canonique.
+- Référence source : fichier `jade_et_son_nœud_fleuri.png`, 1122 × 1402, 621505 octets, SHA-256 `d7c61258ea03184ef48343110063ae1de3cd30bb8f858febcea441cfe465677c`. Destination prévue `docs/backlog/references/jade_r21_carre_long_noeud_fleuri.png`. **Limite : PNG exact accessible dans la conversation et le conteneur mais non transféré via le connecteur GitHub dans cette session.** Ne pas utiliser le dessin sans nœud ni une régénération. Ajouter les octets originaux et vérifier l'empreinte avant réalisation.
+- Modifications : carte dans la vue DEV, classement et compteurs dans l'index, présente passation et lien dans l'index des passations. Aucun changement de code, de rig, de modèle, de configuration ou de contrat de runtime ; pas de CI locale ou recette Android revendiquée.
+- Validation : cohérence documentaire (ID unique, dépendances existantes et rangs) à vérifier ; aucune validation d'implémentation, la carte reste ouverte.
+- Suite : déposer la référence exacte ; atelier PSD2Live/Cubism, prototype de groupes commutables sur copie du r21 ; intégrer le sélecteur et tests ; recette visuelle réelle et validation Codex ou propriétaire selon DoD.

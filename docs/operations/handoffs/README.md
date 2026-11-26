@@ -6,6 +6,29 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Lot Live mobile · DEV-040/041 et DEV-046 à DEV-051](2026-11-26-chatgpt-live-mobile-roadmap.md) · Architecture, Profil ON/OFF, fermeture au kill, mémoire/outils et coûts ; huit US À faire, cadrage documentaire prêt pour DEV-046.
+- [ART-013 · Oreilles du r21](2026-11-26-codex-mobile-oreilles-r21.md) · Respiration et jeu des sept intentions sur mobile.
+- [DEV-001 · Jeu des intentions sur mobile](2026-11-26-codex-mobile-intentions.md) · Première étape de synchronisation entre la pose, le geste et la lecture.
+- [DEV-045 · Coiffures interchangeables r21](2026-11-26-chatgpt-coiffures-r21.md) · US P2, référence graphique à déposer, développement non commencé.
+- [DEV-039 et UX-20 · Push-to-talk et secousses](2026-11-26-codex-mobile-ptt-shake.md) · Micro en maintien et réaction physique du r21.
+- [DEV-042 · Gestes tactiles du r21](2026-11-26-codex-mobile-gestures.md) · Pincement, saisie, bornage, recentrage et recette sur Android.
+- [Lot mobile · Gestes, service sur VPS et application Android](2026-11-26-codex-backlog-mobile.md) · Arbitrage du 26/11 dans DEV-042 à DEV-044 et UX-20.
+
+- [PWA · Second emplacement de modèle préparé (26/11)](2026-11-26-chatgpt-mobile-model-selection.md) · Sélecteur Profil, modèle actuel par défaut, second modèle désactivé ; catalogue et cycle exclusif préparés, branchement réel distinct.
+
+- [PWA · Mini-scènes et double appui (26/11)](2026-11-26-chatgpt-mobile-scenes.md) · Demande directe du propriétaire : choix du décor à l’Accueil, cadrage prioritaire sur la tête, plein écran au double geste.
+
+- [DEV-001 · Jade r21 dans la PWA](2026-11-26-codex-mobile-r21.md) · Modèle r21 par défaut, bascule exclusive et coupure de la conversation.
+- [ART-010/011/012 · Livraison Jade v45.1](2026-11-25-codex-livraison-modele-jade.md) · Sources et paquet livrés, modèle calibré. Recette intégrée après DEV-001.
+
+- [ART-001/002 : préparation Jade r21 avec Turboism et PSD2Live (25/11)](2026-11-25-codex-jade-r21-reprise.md) · plan approuvé et exécuté, historique de la construction du r21.
+
+- [REC-037 : correctif mise à jour Git distante (24/11)](2026-11-24-chatgpt-rec037-git-update.md) · redémarrage confirmé, mise à jour à recetter.
+
+- [DEV-036 : qualification des rappels et notifications, NEW-16 (22/11)](2026-11-22-chatgpt-dev036-rappels-notifications.md) · transfert documentaire uniquement, statut **À qualifier**, aucun développement commencé.
+
+- [DEV-032 : fichiers téléchargeables multi-canaux, travail en cours (22/11)](2026-11-22-chatgpt-dev032-documents.md) · code sur `develop`, validations CI/recette encore requises.
+
 - [OPS-017 : décision de protection de `main` et suivi des passations (21/11)](2026-11-21-chatgpt-ops017-protection-branches.md) · carte **Done sur demande expresse du propriétaire**, malgré réglage GitHub encore non appliqué ; pas de protection active présumée.
 
 - [Qualification DEV-010, fenêtre et rideau mobile (21/11)](2026-11-21-chatgpt-qualification-dev010-fenetre-rideau.md) · choix du propriétaire : reconstruction en calques séparés ; carte P2 passée de `À qualifier` à `À faire` sans développement.

@@ -105,6 +105,44 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         return {"Authorization": "Bearer " + "x" * 40,
                 "Content-Type": content_type}
 
+    async def test_salon_document_requires_token_but_login_does_not(self):
+        status, body, _ = await self.request("GET", "/")
+        self.assertEqual(status, 200)
+        self.assertIn(b'id="auth-form"', body)
+        self.assertNotIn(b'id="avatar-container"', body)
+        status, _, _ = await self.request("GET", "/assets/salon.html")
+        self.assertEqual(status, 401)
+        status, body, _ = await self.request(
+            "GET", "/assets/salon.html",
+            headers={"Authorization": "Bearer " + "x" * 40})
+        self.assertEqual(status, 200)
+        self.assertIn(b'id="avatar-container"', body)
+
+    async def test_login_handshake_auth_and_origin(self):
+        status, _, _ = await self.request(
+            "POST", "/api/auth", body=b"{}",
+            headers={"Content-Type": "application/json"})
+        self.assertEqual(status, 401)
+        status, _, _ = await self.request(
+            "POST", "/api/auth", body=b"{}",
+            headers={**self.headers("application/json"),
+                     "Authorization": "Bearer " + "z" * 40})
+        self.assertEqual(status, 401)
+        status, _, _ = await self.request(
+            "POST", "/api/auth", body=b"{}",
+            headers={**self.headers("application/json"),
+                     "Origin": "https://evil.example"})
+        self.assertEqual(status, 403)
+        status, _, _ = await self.request(
+            "POST", "/api/auth", body=b'{"other":true}',
+            headers=self.headers("application/json"))
+        self.assertEqual(status, 400)
+        status, body, raw = await self.request(
+            "POST", "/api/auth", body=b"{}", headers=self.headers("application/json"))
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body), {"status": "ok"})
+        self.assertIn(b"Cache-Control: no-store", raw)
+
     async def test_billing_requires_auth_and_validates_requests(self):
         self.mobile.billing.get = AsyncMock(return_value={"status": "ok", "month": {"usd": "1.25"}})
         status, _, _ = await self.request("POST", "/api/billing", body=b"{}",
@@ -206,6 +244,9 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
             headers=self.headers("application/json"))
         self.assertEqual(status, 503)
         self.assertEqual(json.loads(body)["error"], "Jade indisponible")
+        self.assertEqual(json.loads(body)["incident_code"], "unavailable")
+        self.assertIn("indisponible", json.loads(body)["message"])
+        self.assertNotIn("synthetic provider", str(json.loads(body)))
         self.assertFalse(self.fake.speeches)
         self.assertFalse(self.mobile.pending)
 
@@ -230,6 +271,7 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
             headers=self.headers("application/json"))
         self.assertTrue(entered.is_set())
         self.assertEqual(status, 504)
+        self.assertEqual(json.loads(body)["incident_code"], "timeout")
         await asyncio.wait_for(released.wait(), 1)
         await asyncio.wait_for(self.runtime.idle(), 1)
         self.assertFalse(self.reply_log)
@@ -244,6 +286,23 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status, 200)
         self.assertTrue(json.loads(body)["audio_wav_b64"])
         self.assertEqual(len(self.fake.speeches), 1)
+
+    async def test_optional_tts_failure_keeps_answer_and_explains_voice_failure(self):
+        async def failed_tts(text, *, intent="neutral"):
+            raise ConnectionError("private-user-api-key")
+        self.fake.synthesize_speech = failed_tts
+        payload = json.dumps({"text":"Jade, bonjour", "session":"m-123456789012",
+                              "speak":True}).encode()
+        status, body, _ = await self.request(
+            "POST", "/api/chat", body=payload,
+            headers=self.headers("application/json"))
+        self.assertEqual(status, 200)
+        result = json.loads(body)
+        self.assertEqual(result["reply"], "Bonjour papa, je t'écoute.")
+        self.assertTrue(result["audio_unavailable"])
+        self.assertEqual(result["audio_unavailable_reason"]["incident_code"], "connection")
+        self.assertNotIn("private-user-api-key", str(result))
+        self.assertEqual(len(self.fake.prompts), 1)  # Never regenerate text.
 
     async def test_owner_tailscale_identity_is_checked_for_all_files_and_api(self):
         self.mobile.owner_login = "creator@example.test"
@@ -356,20 +415,30 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
     async def test_safe_assets_served_and_r20_idle_is_virtual(self):
         status, page, headers = await self.request("GET", "/")
         self.assertEqual(status, 200)
-        self.assertIn(b'id="avatar-container"', page)
-        self.assertIn(b'/assets/room-motion.js', page)
-        self.assertIn(b'/assets/room-spring.webp', page)
-        status, image, response = await self.request("GET", "/assets/room-spring.webp")
+        self.assertIn(b'id="auth-form"', page)
+        self.assertNotIn(b'id="avatar-container"', page)
+        self.assertNotIn(b'/vendor/', page)
+        status, salon, _ = await self.request(
+            "GET", "/assets/salon.html", headers=self.headers("application/json"))
         self.assertEqual(status, 200)
-        self.assertEqual(image[:4], b"RIFF")
-        self.assertEqual(image[8:12], b"WEBP")
-        self.assertIn(b"Content-Type: image/webp", response)
+        self.assertIn(b'id="avatar-container"', salon)
+        self.assertIn(b'/assets/room-bedroom-portrait.avif', salon)
+        loader = (WEB_ROOT / "login-guard.js").read_text(encoding="utf-8")
+        self.assertIn("/assets/room-motion.js", loader)
+        status, image, response = await self.request("GET", "/assets/room-bedroom-portrait.avif")
+        self.assertEqual(status, 200)
+        self.assertEqual(image[4:12], b"ftypavif")
+        self.assertIn(b"Content-Type: image/avif", response)
+        for name in ("room-spring.webp", "room-backdrop.webp", "room-curtain.webp"):
+            self.assertNotIn(name.encode(), salon)
+            code, _, _ = await self.request("GET", f"/assets/{name}")
+            self.assertEqual(code, 404)
         self.assertIn(b"frame-ancestors 'none'", headers)
         self.assertIn(b"script-src 'self' 'wasm-unsafe-eval'", headers)
         self.assertNotIn(b" 'unsafe-eval'", headers)
         patch_url = "/vendor/pixi-unsafe-eval.min.js"
-        self.assertLess(page.index(b"/vendor/pixi.min.js"), page.index(patch_url.encode()))
-        self.assertLess(page.index(patch_url.encode()), page.index(b"/assets/avatar.js"))
+        self.assertLess(loader.index("/vendor/pixi.min.js"), loader.index(patch_url))
+        self.assertLess(loader.index(patch_url), loader.index("/assets/avatar.js"))
         self.mobile.vendor_dir = Path(self.temp.name)
         (self.mobile.vendor_dir / "pixi-unsafe-eval.min.js").write_bytes(b"/* local patch */")
         status, patch, _ = await self.request("GET", patch_url)
@@ -426,7 +495,9 @@ class MobileAppAssetsTests(unittest.TestCase):
         self.assertNotIn("https://cdn", app)
         web = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
         self.assertIn("manifest.webmanifest", web)
-        self.assertIn("/vendor/live2dcubismcore.min.js", web)
+        self.assertNotIn("/vendor/live2dcubismcore.min.js", web)
+        self.assertIn("/vendor/live2dcubismcore.min.js",
+                      (WEB_ROOT / "login-guard.js").read_text(encoding="utf-8"))
 
     def test_js_syntax_when_node_is_installed(self):
         node = shutil.which("node")

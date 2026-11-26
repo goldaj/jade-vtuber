@@ -183,7 +183,7 @@ def backlog_integrity_errors(root: Path = ROOT) -> list[str]:
     counts = {}
     expected = {}
     for line in lines:
-        heading = re.match(r"^### (P[0-3]) · (\d+) tâches$", line)
+        heading = re.match(r"^### (P[0-3]) · (\d+) tâches?$", line)
         if heading:
             priority = heading.group(1)
             expected[priority] = int(heading.group(2))

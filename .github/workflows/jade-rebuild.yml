@@ -36,7 +36,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          $files = @('scripts/jade-launcher.ps1', 'scripts/jade-runner.ps1', 'scripts/install-jade-launcher.ps1')
+          $files = @('scripts/jade-launcher.ps1', 'scripts/jade-runner.ps1', 'scripts/install-jade-launcher.ps1', 'scripts/install-jade-control.ps1')
           foreach ($file in $files) {
             $tokens = $null
             $errors = $null
@@ -59,6 +59,33 @@ jobs:
           poetry run python -m pip install --disable-pip-version-check tzdata
       - name: Compile Python
         run: poetry run python -m compileall -q src main.py
+      - name: Browser Live2D visibility lifecycle
+        run: |
+          node --check src/jade_runtime/mobile_web/app.js
+          node --check src/jade_runtime/mobile_web/login-guard.js
+          node tests/mobile_login_flow_test.js
+          node --check src/jade_runtime/mobile_web/avatar-models.js
+          node --check src/jade_runtime/mobile_web/avatar-gestures.js
+          node --check src/jade_runtime/mobile_web/avatar-shake.js
+          node --check src/jade_runtime/mobile_web/avatar-model-loader.js
+          node tests/mobile_avatar_models_test.js
+          node tests/mobile_avatar_model_loader_test.js
+          node tests/mobile_avatar_lifecycle_test.js
+          node --check src/jade_runtime/mobile_web/avatar.js
+          node tests/mobile_avatar_visibility_test.js
+          node tests/mobile_scene_framing_test.js
+          node tests/mobile_scene_gestures_test.js
+          node tests/mobile_avatar_gestures_test.js
+          node tests/mobile_avatar_shake_test.js
+          node tests/mobile_duplex_client_test.js
+          node --check src/jade_runtime/mobile_web/room-motion.js
+          node tests/mobile_room_selection_test.js
+          node --check src/jade_runtime/mobile_web/seated-scene.js
+          node tests/seated_scene_test.js
+          node --check src/jade_runtime/mobile_web/portrait-bedroom-motion.js
+          node tests/portrait_bedroom_motion_test.js
+          node --check src/jade_runtime/mobile_web/head-isolation.js
+          node tests/mobile_head_isolation_test.js
       - name: Run offline unit tests
         run: poetry run python -m unittest discover -s tests -v
       - name: Documentation contract

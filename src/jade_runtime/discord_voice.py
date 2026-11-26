@@ -24,6 +24,7 @@ from .pcm_timing import PCMProgressTiming, active_pcm_timing
 from .orchestrator import Work
 from .voice_turns import PcmTurnSegmenter
 from .voice_decision import ConversationTurnDecider
+from .turn_logging import observe_delivery
 
 PCM_CHUNK_BYTES = 48000 * 2 * 2 * 2  # 2 sec × stereo × signed 16-bit
 MAX_PENDING_USERS = 12
@@ -829,7 +830,13 @@ class DiscordVoiceBridge:
                     or entry[0] != getattr(source, 'voice_session_id', None)
                     or entry[1] != getattr(source, 'speaker_id', None)):
                 return False
-            return self._decider.mark_replied(entry[0], entry[2])
+            recorded = self._decider.mark_replied(entry[0], entry[2])
+        # A transport observation happens only after the existing voice
+        # acknowledgment succeeds. It never changes its return value.
+        if recorded:
+            observe_delivery("playback_completed", "discord_voice",
+                             proof="discord_audio_consumer")
+        return recorded
 
     def _begin_playback(self, connection, generation, session_id):
         """Invalidate buffered input before starting a half-duplex response."""

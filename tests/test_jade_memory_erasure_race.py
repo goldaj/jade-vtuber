@@ -65,10 +65,12 @@ class CuratorRevocation(unittest.IsolatedAsyncioTestCase):
         await self._run_model(backend, forget_and_reenable=True)
         self.assertEqual(self.store.list_for_account(self.key), [])
 
-    async def test_secret_in_significance_is_not_persisted(self):
+    async def test_voluntary_significance_is_not_automatically_keyword_filtered(self):
         backend = DelayedModel(significance="Contient un mot de passe, à ne pas retenir.")
         await self._run_model(backend)
-        self.assertEqual(self.store.list_for_account(self.key), [])
+        items = self.store.list_for_account(self.key)
+        self.assertEqual(len(items), 1)
+        self.assertIn("mot de passe", items[0]["significance"])
 
 
 if __name__ == "__main__":

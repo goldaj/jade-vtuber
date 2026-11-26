@@ -14,7 +14,7 @@
 
 ![Jade en pied, avec jambes et chaussures](jade-modeling/assets/live2d/r21_professional_art/Jade_r21_fullbody_restoration_chroma_v2.png)
 
-*Référence artistique r21 en pied (fond magenta de détourage). Le rig Live2D r21 animé n'est pas encore validé comme modèle final.*
+*Référence artistique r21 en pied (fond magenta de détourage). Le [modèle animé Jade v45.1](jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md) est disponible avec ses sources éditables et ses 14 gestes.*
 
 Jade est un projet expérimental de VTuber IA : un personnage 2D conçu pour
 interagir par texte et par voix. Ce dépôt présente le moteur Python qui reçoit
@@ -85,7 +85,7 @@ installées, la démo et les tests n’appellent pas de service IA distant.
 
 ## Fonctions implémentées sur develop
 
-Discord écrit/vocal, Twitch IRC, micro PC, API HTTP locale, PWA mobile, mémoire SQLite privée activée par défaut en mode réel (inscription automatique des comptes Discord vérifiés, suppression ciblée des souvenirs), intentions, voix OpenAI, r20 PC/PWA et orchestration sont raccordés au runtime. Voir **[l'inventaire actuel du code](docs/handbook/BRANCH_STATE.md)** pour leurs limites, sans tableau redondant d'état de recette.
+Discord écrit/vocal, Twitch IRC, micro PC, API HTTP locale, PWA mobile, mémoire SQLite privée activée par défaut en mode réel (inscription automatique des comptes Discord vérifiés, suppression ciblée des souvenirs), intentions, voix OpenAI et orchestration sont raccordés au runtime. La PWA ouvre Jade r21 et propose le classique r20 dans Profil. L’avatar Windows utilise le r20. [Inventaire du code](docs/handbook/BRANCH_STATE.md)
 
 ## Options et configuration privée
 
@@ -142,7 +142,7 @@ Un [launcher Windows personnel](docs/operations/reference/LAUNCHER-WINDOWS-20261
 
 **Implémenté :** sept intentions avec **deux variantes faciales r20 et deux textes PWA par intention**, voix Étincelle, dialogue configurable (par défaut `gpt-6-luna`, `low`, 320 tokens), historique de 48 messages et mémoire SQLite v3 des échanges complets, activée par défaut en mode réel avec inscription automatique des participants identifiés d'un serveur Discord, MP Discord à inscription automatique, Twitch à activation manuelle et suppression ciblée des souvenirs. Voir [dialogue/mémoire](docs/history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md) et [Live2D](docs/history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
 
-**À développer ultérieurement :** 14 motions corporelles r21, routage exclusif par canal d'origine, mémoire anticipée, avatar à visibilité conditionnelle et moteur Realtime léger sans Luna. Ces projets figurent dans [le backlog unique](docs/ameliorations/README.md).
+**Travaux à venir.** Le raccordement des 14 gestes r21 au bot Windows et la recette Android de leur intégration dans la PWA sont suivis dans [DEV-001](docs/backlog/01-DEVELOPPEMENT.md). Le routage exclusif par canal d’origine, la mémoire anticipée, l’avatar à visibilité conditionnelle et le moteur Realtime léger sans Luna figurent dans le [catalogue des améliorations](docs/ameliorations/README.md).
 
 ## Audits historiques
 

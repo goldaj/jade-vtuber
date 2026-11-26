@@ -2,8 +2,8 @@
   {
     "path": "jade-modeling/CONTINUATION.md",
     "source_group": "current-documentation",
-    "bytes": 8848,
-    "sha256": "a2a353b66e7ba1e2965969b0aa7b1009463fdc263d2f921d7a094a1f1add3610",
+    "bytes": 7183,
+    "sha256": "d9227240da77b4e3a547468f02eb4181fdd555cb5b1a94d72cecf9b15afb9692",
     "storage": "git",
     "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
   },
@@ -34,8 +34,8 @@
   {
     "path": "jade-modeling/PLAN_MODELE_JADE.md",
     "source_group": "current-documentation",
-    "bytes": 5532,
-    "sha256": "07eab620d2b95951caacc24d4ba71d120ac3d8ff295d4d63eb04c6cbe45615e7",
+    "bytes": 6094,
+    "sha256": "ab9e932bc1b7b46bfe54b0c09a97f73c13631bbfdae6f420a192f96a828e9781",
     "storage": "git",
     "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
   },
@@ -1654,5 +1654,349 @@
     "sha256": "56c47f1cb06603ba0e02cf4738bcd98323861bccf315eebf48f42332551eca85",
     "storage": "git",
     "selection_reason": "Current workflow entry point"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/CALIBRATION.md",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 4151,
+    "sha256": "30451b37e3c4fcd122600d61b74af11835d20d00553bc70e97fba2826479cae0",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/intent_motions/Jade_curious.psd2live-motions.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 36379,
+    "sha256": "9d902183eee0837a71d6b9aef20d6621cb1aa4c2c37351639b532a17c07cc80d",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/intent_motions/Jade_excited.psd2live-motions.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 45827,
+    "sha256": "c2b0b6bb22a64f2d003bf7faba211da3f568803b5f50ed3a16f60dfdbab477ca",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/intent_motions/Jade_neutral.psd2live-motions.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 22456,
+    "sha256": "9badf789c4c96ba02f90b325db26b0eebc093b64cc553b1b59fda872103dc1cc",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/intent_motions/Jade_playful.psd2live-motions.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 43945,
+    "sha256": "5aa07a7593b716a451a2478dbaf45db3ae0c39ff5e938c4840f46837d8811c21",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/intent_motions/Jade_reassuring.psd2live-motions.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 28149,
+    "sha256": "2e345ad4fdc3002dd7c16b536dbd04478bc32f73678a4f9d8148f255196082e5",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/intent_motions/Jade_serious.psd2live-motions.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 29194,
+    "sha256": "f9e9cd6168e8c6e6baa728fbc4c8ef31d2215867c4f01b3c1ce63e131222b26f",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/intent_motions/Jade_tender.psd2live-motions.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 28351,
+    "sha256": "ac1bbe43b8e3a4068bc43151c6f72c12bbf57cb1a834be77b60db6732472f6dd",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/Jade_r21_v45_1_iris.cmo3",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 316583115,
+    "sha256": "fc2e768aec679baaa6b2061dc7c25913822d022e2b1df6ceec1c97cbd36b20bc",
+    "storage": "git-lfs",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/Jade_r21_v45_motions.psd2live",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 634702347,
+    "sha256": "97407f808445f432e2c19def1f24c8fb4b04c89b27d914e592aeccd3bfacfb4e",
+    "storage": "git-lfs",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/expressions/Sad.exp3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 669,
+    "sha256": "ce4c8d5bee4ca85f588ffc2b65b1ba29f6f5cbf5c31b4fc5b7387f43546ad44e",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/expressions/Smile.exp3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 668,
+    "sha256": "3b52153e458a846ae31f6b0dd8e335f4de7992b84e2551eee649dccebddf764e",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_curious_A.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 5275,
+    "sha256": "acefa4366e44b12bdc08f489221fbc72e20c155846098443353d45801f0c4934",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_curious_B.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 8752,
+    "sha256": "4ee309118d9440d634a2e5a0fb197f0133a06bf931709a7c71e69834c8b1a6fb",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_excited_A.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 8428,
+    "sha256": "fb9a802b395f65cc43c28f3e1ff018c4589ea3b4870066b76c6dbfe133e20da6",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_excited_B.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 9887,
+    "sha256": "ddcd3548caae97ad6d47bcb9622a25b31b30f05673dfd37ed0d72540058fca9c",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_neutral_A.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 5018,
+    "sha256": "9cef2e0c7e2f6c41b00696b05a12e48fa356d206c72ce53f8c66a9bf8d15a5e5",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_neutral_B.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 4457,
+    "sha256": "5726c8f58706ff207a8a961f16e9c3581dcc80534c672ddbee645f8ffd8a6b4a",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_playful_A.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 8434,
+    "sha256": "a94dc6a31cd350addba61cdcbdeb9acfef3ee8c4fc3dc1d4ff1b9114e28d7517",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_playful_B.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 9268,
+    "sha256": "fa6651ece24f24fd83991f6388ef278305a9cee89048d818e7dc7b8d413eee88",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_r21_idle.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 20785,
+    "sha256": "71f18df5b447aacb7e25a91d9a483b62625a8a4e390e3e0392bac64220e29f49",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_r21_v45.4096/texture_00.png",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 8506284,
+    "sha256": "40691ef49b63d5f298e8c16f3a97a51ab7a76fee2b16842069def788fb071b1c",
+    "storage": "git-lfs",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_r21_v45.4096/texture_01.png",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 4468925,
+    "sha256": "86fad58408ab161a87722635730f9a1e1fb5ab8d44b81fcf2cfe61b8b09eee41",
+    "storage": "git-lfs",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_r21_v45.4096/texture_02.png",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 4694535,
+    "sha256": "a431880757e832109309d1b244577e376bff3f9c2d41725911988d961e7af541",
+    "storage": "git-lfs",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_r21_v45.cdi3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 4412,
+    "sha256": "0e87011a9e9d0159baac71cf6bc36589948ae6524cebbe0afea7216f264c783d",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_r21_v45.moc3",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 2582272,
+    "sha256": "0b70bda8982fead29728faeaa81b5d9a16a745086070048d9fde880b22fb51e7",
+    "storage": "git-lfs",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_r21_v45.model3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 2169,
+    "sha256": "df9c2c46cc98e560f2303a12d4b84fdc4638df868ca543ca497d49d181ca9f1d",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_r21_v45.physics3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 43142,
+    "sha256": "1f19de3b17aea99aace4c287051747cabc8b3404e57092a39bf400bd24dd4216",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_r21_v45.vtube.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 65695,
+    "sha256": "fd19404256ae1c28791f01e84bc95f47cd44455450c5f007c02829752d1b3cde",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_reassuring_A.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 5705,
+    "sha256": "93faae6b84e3205d592fc0d809ac6dbcbaf4e589e1f3cb3ba2a61fc860ce6e84",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_reassuring_B.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 5922,
+    "sha256": "7342b54e8b2808d6c74480d985d9664bf5f4ecc83b99e71a2b82d89c68899122",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_serious_A.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 6180,
+    "sha256": "cdc9a81f2c2d496b63777c658a78025a2b59be1d9c9d96ddf49bb78b2d5afacc",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_serious_B.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 5859,
+    "sha256": "dedeca0dd11fd76acb97d5305fa8437bfd4006f7759caa8ca568609e6f1ed45f",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_tender_A.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 5302,
+    "sha256": "3c3764c70677a2f1536e1475744e94f44282e86adbaf22a3b512dd599d528adf",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_tender_B.motion3.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 6499,
+    "sha256": "3c161c486f301b0230a305a4373e96a8a3293074e1806082864a73f7fea12cb5",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 3238,
+    "sha256": "b1870fe042c92b75579b8153301bf147883c9c569205e42f33814329b01151cf",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/PROVENANCE.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 3316,
+    "sha256": "3f72c5bc6337e46af2858f4cd5ae67e66f9a665c6485d213f9779fe6a3c7a218",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Sources/Jade_r21_v45_1.kra",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 49578562,
+    "sha256": "2cfaff675edac9dee561b284f371707b71b0aabaaaae6b40fb7791144dce3437",
+    "storage": "git-lfs",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Sources/Jade_r21_v45_1.psd",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 57578300,
+    "sha256": "d0655731b161b0f73ed1f01fd4e724b3ed489e3eaf1fb8436886d1667f67c155",
+    "storage": "git-lfs",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Sources/LISEZMOI.md",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 2506,
+    "sha256": "200ccaafae165ececa266ca0a8883ff5b93ee4aa91303356b17cfab09e631585",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Sources/Sources.json",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 67957,
+    "sha256": "2d77a1ece4df6652667cd6a35c169ecea48ce6789881ea70e9e680e201bd1e8d",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Verifier.ps1",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 1281,
+    "sha256": "9ce550249f2edf060d1d9dc9c53959981f104086c33f22aa60d937d5c82f03d1",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/SHA256SUMS.txt",
+    "source_group": "jade-r21-release-v45.1",
+    "bytes": 4420,
+    "sha256": "a0e1c3fe2fb095e9e02c0031cbb793503d2c1faec0a3c17c16a2a45d0ca1b245",
+    "storage": "git",
+    "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
   }
 ]

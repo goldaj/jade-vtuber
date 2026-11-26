@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Jade · Contrôle de secours</title>
+<style>
+:root{font-family:system-ui;color-scheme:dark;background:#14241b;color:#f2f7ef}
+*{box-sizing:border-box}body{margin:0}main{max-width:760px;margin:auto;min-height:100dvh;padding:1rem;display:grid;align-content:start;gap:1rem}
+h1{font-size:1.35rem;margin:0}h2{font-size:1.05rem}p{line-height:1.5}
+section{background:#20372a;padding:1rem;border-radius:1rem}
+label{display:block;margin-bottom:.5rem}input{background:#122319;color:white;border:1px solid #597462;padding:.7rem;border-radius:.5rem;width:100%;font:inherit}
+button{font:inherit;background:#bfdabf;color:#102416;border:0;border-radius:.5rem;padding:.75rem 1rem;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}.controls{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:55dvh;overflow:auto;background:#101a14;border-radius:.5rem;padding:1rem;font:12px/1.5 ui-monospace,monospace}
+#feedback{color:#eddc9f}
+</style></head>
+<body><main>
+<h1>Jade · Contrôle de secours</h1>
+<p>Accessible même quand Jade redémarre, tant que le service Windows et Tailscale restent actifs.</p>
+<section><label for="token">Jeton de l'application Jade</label><input type="password" id="token" autocomplete="off" minlength="32" maxlength="256">
+<div class="controls"><button id="connect">Se connecter</button><button id="refresh" disabled>Actualiser</button></div></section>
+<section><h2>Instance PyCharm Run</h2><p id="status">Non connecté.</p>
+<div class="controls"><button id="update" disabled>Mettre à jour develop et redémarrer</button><button id="restart" disabled>Redémarrer sans mise à jour</button></div>
+<p id="feedback" role="status"></p></section>
+<section><h2>Console PyCharm</h2><pre id="logs" aria-live="off">Les logs apparaîtront après connexion.</pre></section>
+</main><script>
+"use strict";
+(() => {
+  const $ = id => document.getElementById(id);
+  let token = "", timer = null, pending = false;
+  // Tailscale Serve may strip /control before forwarding.
+  const endpoint = name => "/control/api/" + name;
+  async function call(name, method = "GET", body) {
+    const response = await fetch(endpoint(name), {
+      method, cache:"no-store", credentials:"omit",
+      headers:{"Authorization":"Bearer " + token,
+               ...(body ? {"Content-Type":"application/json"} : {})},
+      ...(body ? {body:JSON.stringify(body)} : {})
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Erreur HTTP " + response.status);
+    return data;
+  }
+  async function refresh() {
+    if (pending || !token || document.hidden) return;
+    try {
+      const [state, logs] = await Promise.all([call("status"),call("logs")]);
+      $("status").textContent = state.pycharm_run
+        ? "PyCharm : connecté · Jade : " + (state.running ? "active" : "arrêtée")
+          + " · État : " + state.phase + " · Commit : " + (state.sha || "inconnu")
+          + (state.target_sha ? " · Distant (dernier fetch) : " + state.target_sha : "")
+          + ({updated:" · Mise à jour réussie", already_current:" · Déjà à jour",
+              restarted:" · Redémarrage seul réussi", failed:" · Opération échouée"}[state.result] || "")
+          + (state.error ? " · Erreur : " + state.error : "")
+        : "PyCharm Run indisponible. Lance la configuration Run sur ton PC.";
+      $("logs").textContent = logs.text || "Pas encore de logs.";
+      const allowed = state.pycharm_run && state.phase === "idle";
+      $("restart").disabled = !allowed;
+      $("update").disabled = !allowed || state.branch !== "develop";
+    } catch (error) {
+      $("status").textContent = error.message;
+      $("update").disabled = $("restart").disabled = true;
+    }
+  }
+  $("connect").onclick = () => {
+    token = $("token").value.trim(); $("token").value = "";
+    if (token.length < 32 || token.length > 256) {
+      $("feedback").textContent = "Jeton invalide."; return;
+    }
+    $("feedback").textContent = "";
+    $("refresh").disabled = false;
+    if (timer) clearInterval(timer);
+    timer = setInterval(refresh, 2500); refresh();
+  };
+  $("refresh").onclick = refresh;
+  for (const operation of ["update", "restart"]) {
+    $(operation).onclick = async () => {
+      if (pending || !confirm(operation === "update"
+        ? "Mettre à jour develop et relancer Jade dans PyCharm ?"
+        : "Relancer Jade dans PyCharm sans mise à jour ?")) return;
+      pending = true;
+      $("update").disabled = $("restart").disabled = true;
+      try {
+        await call(operation, "POST", {confirm:true});
+        $("feedback").textContent = "Commande acceptée. L'état sera actualisé automatiquement.";
+      } catch(error) {
+        $("feedback").textContent = "Échec : " + error.message;
+      } finally { pending = false; refresh(); }
+    };
+  }
+})();
+</script></body></html>
