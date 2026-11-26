@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [DEV-045 · Coiffures interchangeables r21](2026-11-26-chatgpt-coiffures-r21.md) · US P2, référence graphique à déposer, développement non commencé.
+
 - [DEV-039 et UX-20 · Push-to-talk et secousses](2026-11-26-codex-mobile-ptt-shake.md) · Micro en maintien et réaction physique du r21.
 - [DEV-042 · Gestes tactiles du r21](2026-11-26-codex-mobile-gestures.md) · Pincement, saisie, bornage, recentrage et recette sur Android.
 - [Lot mobile · Gestes, service sur VPS et application Android](2026-11-26-codex-backlog-mobile.md) · Arbitrage du 26/11 dans DEV-042 à DEV-044 et UX-20.
