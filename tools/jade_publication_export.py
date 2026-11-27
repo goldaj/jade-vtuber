@@ -54,7 +54,6 @@ MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/room-kitchen-portrait.avif",
     "src/jade_runtime/mobile_web/room-living-portrait.avif",
     "src/jade_runtime/mobile_web/jade-seated-body.avif",
-    "src/jade_runtime/mobile_web/room-kitchen.webp",
     "src/jade_runtime/mobile_web/intent-visuals.json",
     "src/jade_runtime/mobile_web/r21-expressions/Blink.exp3.json",
     "src/jade_runtime/mobile_web/r21-expressions/WinkL.exp3.json",
@@ -166,18 +165,12 @@ def create_preview(root: Path, dest: Path, paths: list[str], *, include_portrait
             if (not image.startswith(b"\x89PNG\r\n\x1a\n")
                     or hashlib.sha256(image).hexdigest() != ICON_SOURCE_SHA256):
                 raise ValueError("Mobile icon does not match owner's approved source")
-        elif source in MOBILE_WEB_PUBLIC and source.endswith(".webp"):
-            image = sourcefile.read_bytes()
-            # Local kitchen artwork is explicitly allowlisted.
-            if (len(image) < 20 or len(image) > 500_000
-                    or image[:4] != b"RIFF" or image[8:12] != b"WEBP"):
-                raise ValueError("Invalid mobile room layer")
         elif source in MOBILE_WEB_PUBLIC and source.endswith(".avif"):
             # Keep visual artwork binary; never decode compressed bytes as text.
             image = sourcefile.read_bytes()
             if (len(image) < 32 or len(image) > 500_000
                     or image[4:8] != b"ftyp" or image[8:12] != b"avif"):
-                raise ValueError("Invalid mobile seated illustration")
+                raise ValueError("Invalid mobile AVIF illustration")
         elif scan_text(sourcefile.read_text(encoding="utf-8")):
             raise ValueError("Potential credential in preview source")
     portrait = _verified_portrait(root, paths) if include_portrait else None

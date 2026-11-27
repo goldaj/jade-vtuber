@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 
 from decouple import Config, RepositoryEnv
-from dotenv import set_key
 
 from src.utility.public_profile import profile_default
 
@@ -32,13 +31,3 @@ def environ(name, default=""):
     if not path.is_file():
         return fallback
     return Config(RepositoryEnv(str(path)))(name, default=fallback)
-
-
-def save_twitch_tokens(access_token, refresh_token):
-    """Persist refreshed credentials without rewriting tracked Python files."""
-    path = secrets_file()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    set_key(str(path), "TWITCH_TOKEN", access_token)
-    set_key(str(path), "TWITCH_REFRESH_TOKEN", refresh_token)
-    os.environ["TWITCH_TOKEN"] = access_token
-    os.environ["TWITCH_REFRESH_TOKEN"] = refresh_token

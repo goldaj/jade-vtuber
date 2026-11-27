@@ -23,7 +23,7 @@ Pour chaque demande de modification du modèle 2D, quel que soit le travail pré
 
 ## Branches, poste et confidentialité
 
-- Travailler sur `develop` pour les changements autorisés ; pas de merge sur `main` sans autorisation explicite et renouvelée. Ne pas effacer ou écraser les travaux locaux de Terra/Codex. Ne pas copier les documents de develop tels quels sur main.
+- `develop` reçoit les changements courants. Chaque mise à jour de `main` exige l’autorisation explicite du propriétaire. Garder ces deux branches permanentes. Vérifier l’intégration d’une branche de travail avant de retirer sa référence, et préserver les travaux locaux ou divergents.
 - Sur le PC du propriétaire, conserver dépôt, outils, modèles, caches et temporaires sur **D:**, en préservant fichiers uniques et checkpoints. En phase de tests, lancer Jade depuis PyCharm ; pour la production, utiliser un lancement autonome. Le launcher est installé séparément du dépôt et se réinstalle quand ses scripts changent.
 - Ne jamais publier secrets, configuration privée, mémoire SQLite, transcriptions ou captations audio. La configuration privée est sélectionnable avec `JADE_SECRETS_FILE`. Ne pas activer de connecteurs, microphones ou appels facturés sans autorisation.
 - Mobile privé uniquement par Tailscale Serve et identité propriétaire + Bearer ; **pas de Funnel public**, pas d'exposition LAN, pas d'utilisation/modification du VPS Hyperliquid.

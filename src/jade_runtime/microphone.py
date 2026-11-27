@@ -60,10 +60,6 @@ def capture_wav(seconds: float = 3.0, *, sample_rate=16000,
     return pcm_to_wav(samples, sample_rate=sample_rate)
 
 
-async def capture_async(seconds: float = 3.0) -> bytes | None:
-    return await asyncio.to_thread(capture_wav, seconds)
-
-
 class MicrophoneCapture:
     """One owned capture thread, with explicit stop and completion acknowledgement."""
     def __init__(self):

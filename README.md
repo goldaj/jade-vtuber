@@ -1,6 +1,8 @@
 # Jade — un personnage virtuel capable de dialoguer
 
-**Architecture fonctionnelle détaillée (`develop`) :** [atlas visuel des cinq parcours](docs/architecture/atlas-fonctionnel-2026-11-16/README.md) et [contrat d'appels, décisions et parallélisme](docs/architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md), datés du 16 novembre 2026. Le code reste la source de vérité.
+**Build de référence.** `main` contient l’instantané publié avant le nettoyage du 27 novembre. `develop` reçoit les changements en cours. [Maintenance des branches](docs/handbook/BRANCH_MAINTENANCE.md)
+
+L’[architecture actuelle](docs/handbook/TECHNICAL.md) décrit le moteur, la mémoire et les flux audio. Les [diagrammes d’architecture](docs/architecture/README.md) donnent les repères et leurs dates.
 
 **Pour les agents et la collaboration :** [AGENTS.md](AGENTS.md), [centre opérationnel](docs/operations/README.md), [passations actives](docs/operations/handoffs/README.md) et [historique](docs/history/README.md).
 
@@ -8,13 +10,13 @@
 
 **Travaux opérationnels et recettes en attente :** [backlog priorisé et file de reprise](docs/backlog/README.md) · [Definition of Done officielle](docs/backlog/DEFINITION_OF_DONE.md). Les agents y retrouvent les tâches réalisables et les validations réelles à effectuer.
 
-**Améliorations envisagées, distinctes du backlog opérationnel (pas de développement autorisé avant les tests PC) :** [catalogue central par thème](docs/ameliorations/README.md).
+Le [catalogue des améliorations](docs/ameliorations/README.md) recense les idées à étudier.
 
 **Démo immédiate Windows :** double-cliquer `Installer-Demo-Express.cmd` ou `Lancer-Demo-Express.cmd`. Démo **simulée** : aucune IA, aucune clé, aucun canal ni Live2D requis. **Produit réel :** installer/configurer tous les canaux puis utiliser le launcher unique `--all-channels`, voir les guides. 
 
 ![Jade en pied, avec jambes et chaussures](jade-modeling/assets/live2d/r21_professional_art/Jade_r21_fullbody_restoration_chroma_v2.png)
 
-*Référence artistique r21 en pied (fond magenta de détourage). Le [modèle animé Jade v45.1](jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md) est disponible avec ses sources éditables et ses 14 gestes.*
+*Référence artistique en pied. Le [paquet r21](jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md) contient les sources éditables et les ressources Live2D. La PWA utilise la révision mobile v49.1 et ses dix-huit mouvements d’intention.*
 
 Jade est un projet expérimental de VTuber IA : un personnage 2D conçu pour
 interagir par texte et par voix. Ce dépôt présente le moteur Python qui reçoit
@@ -28,18 +30,12 @@ symbolique retenue pour Jade, et non d'une date de création Git vérifiée.
 
 **État de develop :** les fonctions raccordées sont implémentées ; leur activation sur le PC dépend des paramètres privés, comptes et dépendances installés.
 
-## Ce que fait le moteur
+## Ce que fait Jade
 
-- Reçoit les messages depuis Discord écrit/vocal, Twitch, micro Windows,
-  API HTTP locale et PWA Android privée. Le launcher active tous ces canaux
-  simultanément via --all-channels, sans choix de mode.
-- Met les demandes dans une file bornée, maintient un historique limité par
-  conversation et produit des réponses via une interface de dialogue modulaire.
-- Utilise **OpenAI exclusivement pour la transcription et la synthèse vocale** ;
-  le modèle de dialogue OpenAI est configurable. Une réponse de démonstration
-  remplace l’appel réseau en mode hors ligne.
-- Prépare la lecture vocale, les sous-titres OBS et les interactions avec l’API
-  locale de VTube Studio. Ces intégrations sont désactivées par défaut.
+- Reçoit les échanges sur Discord, Twitch, le micro Windows, l’API HTTP locale et la PWA Android privée. Le launcher ouvre les connecteurs configurés dans une seule instance.
+- Arbitre les tours en attente, sélectionne le contexte utile et dirige chaque réponse vers son canal.
+- Utilise OpenAI pour le dialogue, la transcription et la synthèse. GPT-Live propose une conversation vocale directe sur PWA et Discord. Le mode vocal classique reste disponible.
+- Synchronise la bouche et les gestes avec la parole. Le r21 de la PWA joue neuf intentions avec deux variantes par intention. VTube Studio et OBS disposent de sorties dédiées.
 
 ```text
 Discord / Twitch / HTTP / Android PWA ─────┐
@@ -85,7 +81,7 @@ installées, la démo et les tests n’appellent pas de service IA distant.
 
 ## Fonctions implémentées sur develop
 
-Discord écrit/vocal, Twitch IRC, micro PC, API HTTP locale, PWA mobile, mémoire SQLite privée activée par défaut en mode réel (inscription automatique des comptes Discord vérifiés, suppression ciblée des souvenirs), intentions, voix OpenAI et orchestration sont raccordés au runtime. La PWA ouvre Jade r21 et propose le classique r20 dans Profil. L’avatar Windows utilise le r20. [Inventaire du code](docs/handbook/BRANCH_STATE.md)
+La PWA ouvre Jade r21 par défaut et garde le choix historique du modèle dans Config. Le rendu autonome Windows dépend encore du paquet r20 pris en charge par `--avatar`. Le raccordement r21 sur Windows est suivi dans DEV-001. [Inventaire du code](docs/handbook/BRANCH_STATE.md)
 
 ## Options et configuration privée
 
@@ -138,11 +134,13 @@ Les documents de suivi du projet et l’index des conversations sont dans `docs/
 
 Un [launcher Windows personnel](docs/operations/reference/LAUNCHER-WINDOWS-20261115.md) permet de choisir une branche et de lancer **tous les supports simultanément, sans choix de profil** : Discord vocal et écrit, Twitch, microphone local, HTTP local, application mobile privée, voix et avatar. Le moteur Jade arbitre les messages en attente, sans priorité fixe par support. Depuis le clone sur D:, exécuter `Installer-Launcher-Jade.cmd`, puis `D:\Jade\launcher\Lancer-Jade.cmd`. Il faut configurer tous les connecteurs dans la configuration privée ; un préflight incomplet bloque le démarrage plutôt que lancer un sous-ensemble invisible. Le démarrage peut facturer OpenAI. **Pour installer l'application Android avec l'aide de Codex : consulter le [guide opérationnel Windows + Android](docs/history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md)**. Il couvre Tailscale Serve sur le PC, les secrets privés, le SDK Web Live2D, la PWA Chrome, le diagnostic et les tests réels.
 
-## Intentions, mémoire et futurs travaux
+## Intentions, mémoire et recettes
 
-**Implémenté :** sept intentions avec **deux variantes faciales r20 et deux textes PWA par intention**, voix Étincelle, dialogue configurable (par défaut `gpt-6-luna`, `low`, 320 tokens), historique de 48 messages et mémoire SQLite v3 des échanges complets, activée par défaut en mode réel avec inscription automatique des participants identifiés d'un serveur Discord, MP Discord à inscription automatique, Twitch à activation manuelle et suppression ciblée des souvenirs. Voir [dialogue/mémoire](docs/history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md) et [Live2D](docs/history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+Le dialogue classique propose une intention masquée avant la livraison. Le GPT-Live natif utilise les consignes de prosodie et déclenche les gestes à partir de la transcription. Le profil GPT-Live du propriétaire est Friponne. Le TTS classique utilise par défaut `shimmer` à 1,25× et un filtre de pitch optionnel. [Voix et utilisation](docs/handbook/USER_GUIDE.md#9-voix-et-intonations)
 
-**Travaux à venir.** Le raccordement des 14 gestes r21 au bot Windows et la recette Android de leur intégration dans la PWA sont suivis dans [DEV-001](docs/backlog/01-DEVELOPPEMENT.md). Le routage exclusif par canal d’origine, la mémoire anticipée, l’avatar à visibilité conditionnelle et le moteur Realtime léger sans Luna figurent dans le [catalogue des améliorations](docs/ameliorations/README.md).
+La mémoire SQLite privée v8 récupère la conversation récente par compte et salon. Jade peut rechercher tous ses souvenirs L1/L2/L3, y compris depuis un salon public, avec indication de leur origine. Le droit d’écrire ou de supprimer un souvenir dépend de l’identité. Les réglages de dialogue, la rétention et les commandes sont dans le manuel. [Mémoire et Core Memories](docs/handbook/USER_GUIDE.md#10-mémoire-persistante-et-core-memories)
+
+La recette des neuf intentions du r21, de leur rendu et de leur voix est suivie dans REC-053. DEV-001 couvre le raccordement de l’avatar autonome Windows au r21. [Backlog](docs/backlog/README.md)
 
 ## Audits historiques
 

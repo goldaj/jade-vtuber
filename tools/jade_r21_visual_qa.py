@@ -112,8 +112,8 @@ window.__qaSnapshot=()=> {
 
 def html_page() -> bytes:
     scripts = ("/assets/room-motion.js", "/assets/avatar-models.js",
-               "/vendor/pixi.min.js", "/vendor/unsafe-eval.min.js",
-               "/vendor/live2dcubismcore.min.js", "/vendor/pixi-live2d-display.min.js",
+               "/vendor/pixi.min.js", "/vendor/pixi-unsafe-eval.min.js",
+               "/vendor/live2dcubismcore.min.js", "/vendor/cubism4.min.js",
                "/assets/avatar-model-loader.js")
     tags = "".join(f'<script src="{src}"></script>' for src in scripts)
     return ("<!doctype html><html lang='fr'><head><meta charset='utf-8'>"

@@ -270,21 +270,3 @@ async def _periodic_checks(check, interval, *, clock=None, sleep=None):
         started = clock()
         await check()
         await sleep(max(0, interval - (clock() - started)))
-
-
-async def watch_twitch_token(manager: TwitchTokenManager, on_rotation, on_backup_pending,
-                             *, interval: float = MAX_VALIDATION_INTERVAL):
-    """Revalidate at least hourly; caller owns connector shutdown/reconnection.
-
-    Both callbacks are coroutines. Failure propagates so the caller can stop
-    the Twitch session rather than silently maintaining an invalid token.
-    """
-    if not 0 < interval <= MAX_VALIDATION_INTERVAL:
-        raise ValueError("Twitch validation interval must be at most 50 minutes")
-    async def check():
-        state = await asyncio.to_thread(manager.check)
-        if state.backup_pending:
-            await on_backup_pending()
-        if state.rotated:
-            await on_rotation(state)
-    await _periodic_checks(check, interval)

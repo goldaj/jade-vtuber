@@ -2,19 +2,16 @@
 
 **Référence :** `goldaj/jade-vtuber`, branche `develop`, état consolidé au **26 novembre 2026**. Ce catalogue contient uniquement des **propositions encore distinctes** ; elles ne constituent pas un ordre de développement, une recette en attente ni une autorisation de coûts API ou de mise en production. Le [backlog opérationnel](../backlog/README.md) est la source de vérité pour les travaux acceptés, les recettes, les OPS et le modèle 2D r21.
 
-## État après dédoublonnage
+## État du catalogue
 
-- **192 idées initialement identifiées** dans 11 thèmes le 21/11/2026 (dont ajouts du 20 et du 21 novembre).
-- **83 entrées retirées du catalogue actif** le 22/11/2026 : six transférées dans DEV, les autres déjà couvertes par une carte de backlog, par le code actuellement livré, ou absorbées dans une autre idée prospective conservée. Le détail des décisions figure dans [la passation de dédoublonnage](../operations/handoffs/2026-11-22-catalogue-dedoublonnage.md).
-- **109 idées prospectives après le dédoublonnage**, puis **4 perspectives complémentaires différées** et une idée mobile additionnelle consignées le 22/11/2026 : **114 idées actives avant les deux présentes inscriptions**. Avec **L2D-01 (P1)** et **NEW-38 (P2)** : **116 idées prospectives actives avant promotion de VIS-04 et RTE-12** ; après leur transfert explicite en DEV-027 et DEV-028 le 22/11/2026 : **110 idées prospectives après les retraits précédents**, puis **104 idées actives dans 11 thèmes** après les six nouvelles décisions (retraits NEW-12 et NEW-19 ; promotions UX-19 et PER-01/02/03), après promotion supplémentaire de VIS-07 et LAT-10 vers DEV-029/DEV-030. Les identifiants retirés ne sont **pas** réattribués ; la version précédente reste consultable dans l'historique Git.
-- Les six idées promues ont été codées via PR #38 et suivies désormais dans **`RTE-15 → REC-031`, `NRM-10 → REC-032`, `MEM-01 → REC-033`, `LAT-01 → REC-034`, `NEW-17 → REC-035`, `NEW-36 → REC-036`**, toutes À valider. Les ID DEV-021 à DEV-026 sont historiques.
+La revue du 22 novembre a retiré les idées déjà livrées ou transférées au backlog. Les décisions et les anciens totaux restent dans la passation d’origine. Le nettoyage du 27 novembre retire MEM-17, couvert par la lecture globale de la mémoire. Les ID retirés se retrouvent dans l’historique Git. [Dédoublonnage du 22 novembre](../operations/handoffs/2026-11-22-catalogue-dedoublonnage.md) · [Mémoire actuelle](../operations/handoffs/2026-11-22-jade-global-memory.md)
 
 ## Idées encore actives par thème
 
 | Thème | Document | Propositions actives | Périmètre restant |
 | --- | --- | ---: | --- |
 | Latence, voix | [01-LATENCE-VOIX.md](01-LATENCE-VOIX.md) | 12 | VAD Discord/PC, cache de prompt, qualité TTS, mesures côté lecteur et rapprochement des coûts, moteur vocal alternatif |
-| Mémoire et présence | [02-MEMOIRE-PRESENCE.md](02-MEMOIRE-PRESENCE.md) | 7 | Personnes annoncées, présence serveur à arbitrer, mémoire partagée, curation qualitative et contrôles avancés |
+| Mémoire et présence | [02-MEMOIRE-PRESENCE.md](02-MEMOIRE-PRESENCE.md) | 6 | Personnes annoncées, présence serveur à arbitrer, mémoire partagée, curation qualitative et contrôles avancés |
 | Canaux, concurrence | [03-CANAUX-ROUTAGE.md](03-CANAUX-ROUTAGE.md) | 10 | Routeur de sortie, tour non bloquant, annulation étendue, livraison, extensions Discord et intentions intercanaux avancées |
 | Avatar, visibilité | [04-AVATAR-VISIBILITE.md](04-AVATAR-VISIBILITE.md) | 8 | Rendu conditionnel à la visibilité, filtrage par audience et économies GPU |
 | Architecture IA | [05-ARCHITECTURE-IA.md](05-ARCHITECTURE-IA.md) | 7 | Moteurs/fournisseurs échangeables, contrats de modules, tests et comparaison de modèles |
@@ -24,7 +21,7 @@
 | Perception multimodale | [09-PERCEPTION-MULTIMODALE.md](09-PERCEPTION-MULTIMODALE.md) | 7 | Consentement des images, sources vidéo, temporalité, réactions live et budgets ; PER-01/02/03 désormais en backlog |
 | Données et normalisation | [10-NORMALISATION-DONNEES-MEMOIRE.md](10-NORMALISATION-DONNEES-MEMOIRE.md) | 10 | Contrats d'événements, données structurées, provenance, migrations |
 | Capacités et comportement | [11-CAPACITES-COMPORTEMENT-CONTROLE.md](11-CAPACITES-COMPORTEMENT-CONTROLE.md) | 27 | Sécurité, outils et interactions sociales encore prospectifs ; NEW-29 et NEW-38 sont en backlog |
-| **Total** | | **97** | |
+| **Total** | | **96** | |
 
 **Décision supplémentaire du 22/11/2026 :** NEW-20 est transférée dans [DEV-031](../backlog/01-DEVELOPPEMENT.md) (explications d'indisponibilité), tandis que NEW-25 (proposition multilingue) a été **abandonnée** à la demande du propriétaire. Une recherche sur les 11 thèmes n'a trouvé aucune autre proposition de fonctionnalité multilingue à retirer. Les fonctions et contenus existants ne sont pas modifiés par cette décision.
 

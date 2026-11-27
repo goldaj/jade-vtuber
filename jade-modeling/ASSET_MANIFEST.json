@@ -2,8 +2,8 @@
   {
     "path": "jade-modeling/CONTINUATION.md",
     "source_group": "current-documentation",
-    "bytes": 7183,
-    "sha256": "d9227240da77b4e3a547468f02eb4181fdd555cb5b1a94d72cecf9b15afb9692",
+    "bytes": 7364,
+    "sha256": "34b2b5aa181d52b2a9bf7b5f1b6d840f26e33a15d6cb8ac2ddfb821f18d3fafb",
     "storage": "git",
     "selection_reason": "Current continuation/plan or evidence referenced by the current continuation"
   },
@@ -1914,16 +1914,16 @@
   {
     "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md",
     "source_group": "jade-r21-release-v45.1",
-    "bytes": 3238,
-    "sha256": "b1870fe042c92b75579b8153301bf147883c9c569205e42f33814329b01151cf",
+    "bytes": 4130,
+    "sha256": "9a358680327452888c849f8c97afb7eb32187b0f0180ee018e1664604febca3b",
     "storage": "git",
     "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
   },
   {
     "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/PROVENANCE.json",
     "source_group": "jade-r21-release-v45.1",
-    "bytes": 3316,
-    "sha256": "3f72c5bc6337e46af2858f4cd5ae67e66f9a665c6485d213f9779fe6a3c7a218",
+    "bytes": 3816,
+    "sha256": "8dff0539a9e3b1df7df2a3cb8c51da71a47de576ed266459e7bb04bf7327514e",
     "storage": "git",
     "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
   },
@@ -1970,8 +1970,8 @@
   {
     "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/SHA256SUMS.txt",
     "source_group": "jade-r21-release-v45.1",
-    "bytes": 4420,
-    "sha256": "a0e1c3fe2fb095e9e02c0031cbb793503d2c1faec0a3c17c16a2a45d0ca1b245",
+    "bytes": 9339,
+    "sha256": "a4fd8d52fa7a12a20c42c7ebcaf32c2c87341d55f09d0669ba1b1802c6fe339a",
     "storage": "git",
     "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
   },
@@ -2038,5 +2038,205 @@
     "sha256": "152e0ac47f150c5ec7d5c19ffcd953109109b38526571fc308163ab077e200c2",
     "storage": "git",
     "selection_reason": "Original Sad/Angry r21 motions, editable PSD2Live curves and shared manifests; existing rig and fourteen animations preserved"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/visage-continu-v49-033196b5b3/Jade_r21_mobile.moc3",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 2637504,
+    "sha256": "033196b5b31c5e12885fb2d70b371354e0f2c3e1965dbc92e55e57d0ece5b875",
+    "storage": "git-lfs",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/visage-continu-v49-033196b5b3/texture_00.png",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 11874322,
+    "sha256": "e12ef61ca6c0326ae663a65acc9622b14470ec1935810f2e95002c4ecfbc8947",
+    "storage": "git-lfs",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/visage-continu-v49-033196b5b3/texture_02.png",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 7329579,
+    "sha256": "bf88f9b0314ec590063ee47504f093be5cea17134b00bc5a06714800b3d4a1f4",
+    "storage": "git-lfs",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_curious_A.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 12794,
+    "sha256": "70e4b0dafa7c64ca0713c3876f12e7c3bab5244640b0a285c72ca04751b2ec55",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_curious_B.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 13392,
+    "sha256": "236d0bd5920240c7ed7c1eee43fbc2728eb5d6960e98d6d7ea8dbff8ecd3b9a1",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_neutral_A.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 9187,
+    "sha256": "78cc87f107e86aeb294df0d7e8cddc42e49e08a42d88d6009c3000d601d3ee2a",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_neutral_B.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 11326,
+    "sha256": "ae74f8fc109ee506018e0de6215944086c186b587468d5c4bbfa7b41af339c6b",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_playful_A.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 10605,
+    "sha256": "caf2cb87b9b73221797c43341489fe92ad91b2787e4f7b20bb5e0587f5997d71",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_playful_B.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 13004,
+    "sha256": "67832b7e1fa733e9381f896fc677263cf3231f6e4b3b6bca26023a67f9dcc03b",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_excited_A.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 15682,
+    "sha256": "831a70326cb8e3177ee98acb8e8c5b1671876f2ddd43a9131318247521035c94",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_excited_B.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 16712,
+    "sha256": "f071fbba7fb05bb1fa02e955ccaa5f0a3ea294a8bd8f19c28ff9b27f2839f113",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_tender_A.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 10970,
+    "sha256": "4d8952601c3b32617bb73186421772b04c900629832357fd5ddfc84626105498",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_tender_B.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 11541,
+    "sha256": "6cbac24df7c0486350a94d322a668f4c6860d5f449eb0ba32deb911c680f2b35",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_reassuring_A.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 11529,
+    "sha256": "5dcb2e360578e7721009f1141c43969709cbe7f94eddb3ddfd5dc990704b1de3",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_reassuring_B.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 14267,
+    "sha256": "48a31aa52010321b9f64e719826403191bfa24082da7003a356f85d5f3b80838",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_serious_A.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 7811,
+    "sha256": "70e69ef3c04cbaf254e0dc936bca521e909dbb268d52bddcf38517fe6a9773d5",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_serious_B.motion3.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 7878,
+    "sha256": "a6b8c4d9cf998d13c962f61f12326d77e3a948e6d6ee91956501a2b2e25206ce",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/mobile-intentions/Jade_curious.psd2live-motions.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 69687,
+    "sha256": "0347d573351f9262bc2dfa98317a7ee71a354849cb329695dcfa4cafc9753768",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/mobile-intentions/Jade_excited.psd2live-motions.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 87278,
+    "sha256": "60e3488df803454108ebb798268069b2825dd3d4952115ab79ed00b8f8f5017d",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/mobile-intentions/Jade_neutral.psd2live-motions.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 54021,
+    "sha256": "edb0700967f13b50258e2008e64f290f390d422ba5111c33960a45a9375294d8",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/mobile-intentions/Jade_playful.psd2live-motions.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 62604,
+    "sha256": "b3bb4617f174ec684fb8bc9c2f7462cfe4bd1a7e26fe3224c4f445c505c6f4f4",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/mobile-intentions/Jade_reassuring.psd2live-motions.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 67806,
+    "sha256": "cfb349b92e115ee0cc913f0477273a756944816a8039c9e94bee7da9e2eb41a5",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/mobile-intentions/Jade_serious.psd2live-motions.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 40488,
+    "sha256": "ccd663fa49ab21ff78fa32b026027f2d657e477483eac2be42059b9cd7aa955c",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/mobile-intentions/Jade_tender.psd2live-motions.json",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 58767,
+    "sha256": "5fab5d620f6859c098e501e8b57448bfeae9bc60efd61118bcd9a41c25da978f",
+    "storage": "git",
+    "selection_reason": "Profil mobile v49.1 ou dépendance de ses neuf intentions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/working_v005/Jade_r21_v49_1_visage_continu.cmo3",
+    "source_group": "jade-r21-mobile-current",
+    "bytes": 59911213,
+    "sha256": "9b9bcf406d22f58aaf3f89d1b5c5dea752279a5afe09a9c777ff69b1aae4e53e",
+    "storage": "git-lfs",
+    "selection_reason": "Source éditable du visage continu r21 v49.1"
   }
 ]

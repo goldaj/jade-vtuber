@@ -1,5 +1,7 @@
 # Jade — plan produit et technique du profil économique (21 novembre 2026)
 
+Le plan ci-dessous restitue les décisions du 21 novembre 2026. Depuis le 27 novembre, le salut automatique à l’entrée du vocal est retiré. Discord peut utiliser GPT-Live selon ses seuils et le mobile dispose de GPT-Live avec sa politique propre. La lecture globale de la mémoire est en service. Consulter en priorité les contrats courants. [Discord](../architecture/DISCORD_LIVE.md) · [Mobile](../architecture/LIVE_MOBILE.md) · [Mémoire](../operations/handoffs/2026-11-22-jade-global-memory.md)
+
 > **ARCHIVE DE CONCEPTION (22/11/2026) :** ce document explique les décisions du 21/11 et leurs preuves, **il ne constitue plus une liste d'idées actives ni une seconde backlog**. Les développements de contexte, curation et premiers repères de personnalité ont été livrés (DEV-013/014) ; les recettes économiques sont suivies par REC-027 à REC-030, avec leurs statuts propres. La personnalité **durable au-delà des repères existants** est désormais suivie par DEV-026. Référence courante : [backlog opérationnel](../backlog/README.md) ; [catalogue dédoublonné](README.md) ; [passation du 22/11](../operations/handoffs/2026-11-22-catalogue-dedoublonnage.md).
 
 

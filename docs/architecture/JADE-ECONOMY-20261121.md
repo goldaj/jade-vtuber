@@ -1,8 +1,8 @@
 # Architecture des six évolutions économiques de Jade — 21/11/2026
 
-**Branche d'implémentation :** `feat/jade-economie-social-memoire-voix-20261121` (PR #34 vers `develop`). **Ne jamais fusionner vers `main` sans accord.**
+Cette fiche conserve l’architecture du lot livré en novembre 2026 sur la PR #34. Lors de cette livraison, un événement vocal pouvait déclencher un salut. Depuis le 27 novembre, l’arrivée actualise la présence et Jade attend une interaction. Le nettoyage retire l’ancien code de salut et ses réglages de dépenses. Le moteur social conserve son budget. Discord utilise ses seuils Live et la PWA suit le Live sans plafond. [Architecture Discord](DISCORD_LIVE.md) · [Architecture mobile](LIVE_MOBILE.md)
 
-## Décision produit finale sur les initiatives
+## Décision d’origine sur les initiatives, remplacée le 27 novembre
 
 - **Déclenchement permis dès un événement** : un humain rejoint le vocal, Jade peut saluer sans que quiconque lui ait encore parlé. Aucune limite de nombre par jour.
 - **Stop quand elle est ignorée** : après une initiative, Jade **n'enchaîne pas de relances autonomes** dans le même salon tant qu'une personne ne lui répond pas réellement (interpellation directe, réponse à son message, ou courte salutation dans les 120 secondes). Le bavardage entre tiers ne compte pas ; un salon vidé puis rejoint constitue une nouvelle session.
@@ -72,7 +72,7 @@ PWA HTTPS/Tailscale -> WebSocket /api/duplex [owner Tailscale + token mémoire]
 
 Le vieux `POST /api/voice` WAV reste présent. Une déconnexion après un appel facturable démarré ne permet **pas** de garantir un remboursement ou un coût nul.
 
-## Options d'arrêt et limites actuelles
+## Options et limites du lot d’origine
 
 - `JADE_INITIATIVES_ENABLED=0` désactive les initiatives tout en conservant le dialogue ; **défaut = 1**.
 - `JADE_SOCIAL_HYBRID_ENABLED=0` restaure la décision Discord locale sans classifier ; par défaut activé mais la classification payante nécessite des budgets USD positifs.

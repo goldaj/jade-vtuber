@@ -23,7 +23,7 @@
 | ID | Priorité / nature | Proposition et critères de réussite |
 | --- | --- | --- |
 | NEW-18 | **P1 / P** | **Apprentissage supervisé par retours humains** : accepter notes/retours du propriétaire ou participants autorisés sur réponses utiles, erronées, mal placées ou inadaptées ; rattacher chaque retour à son contexte, analyser les motifs récurrents, proposer des ajustements de comportement/prompts. Pas de mise à jour automatique irréversible du modèle, des permissions ou de la personnalité ; évaluer avant/après et respecter le droit à l'effacement. |
-| NEW-32 | P2 / P | **Direction vocale expressive affinée** : rythme, pauses, emphase, nuances émotionnelles et prosodie au-delà des sept intentions, compatibles avec les capacités réelles des différents fournisseurs TTS. |
+| NEW-32 | P2 / P | **Direction vocale expressive affinée** : rythme, pauses, emphase, nuances émotionnelles et prosodie au-delà des neuf intentions, compatibles avec les capacités réelles des différents fournisseurs TTS. |
 | NEW-37 | **P3 / D** | **Évolution expérientielle et auto-évaluation ponctuelle de la personnalité** : étudier, en complément des repères dérivés des souvenirs de [DEV-026](../backlog/01-DEVELOPPEMENT.md), la capacité de Jade à réviser elle-même et graduellement goûts, habitudes et comportement après plusieurs expériences pertinentes **sur des événements autorisés**, plutôt qu'une simple reformulation de souvenirs. Prévoir provenance, observations longitudinales, contradiction/correction, historique réversible et comparaison de comportements avant/après. **Jade seule décide de ses Core Memories ; aucun utilisateur n'impose un trait**. Jamais de boucle LLM permanente en inactivité, d'auto-réécriture incontrôlée du prompt, ni d'apprentissage opaque ; envisager une analyse différée *seulement si* coût, stabilité, pertinence et gains sont démontrés. À distinguer de NEW-18 (retours humains) et de NEW-35 (banc d'expérimentation). |
 
 ## C. Connaissances, autonomie et tâches
@@ -52,7 +52,7 @@
 | NEW-24 | **P1 / P** | **Compréhension des sons non verbaux** : rire, applaudissements, surprise ou événements acoustiques pertinents, avec niveau de confiance et réaction proportionnée ; ne pas déduire une identité ou un état émotionnel certain de simples sons. |
 | NEW-26 | P2 / P | **Télémétrie de jeux structurée** : fournisseurs d'événements de jeu (scores, manches, victoires, etc.) lorsqu'une API ou source locale autorisée existe ; corréler avec le visuel sans supposer l'existence d'une API universelle. |
 | NEW-27 | P2 / P | **Gestion de l'attention multimodale** : arbitrer entre événements vocaux, textuels, visuels et API en temps réel selon importance, coût, latence, consentement et priorité des conversations directes. Complète le TurnArbiter textuel existant et PER-09. |
-| NEW-28 | P2 / P | **Gestuelle contextuelle non émotionnelle** : gestes de présentation, désignation d'éléments, orientation du regard, posture et synchronisation ; extension distincte des 14 motions associées aux intentions. |
+| NEW-28 | P2 / P | **Gestuelle contextuelle non émotionnelle** : gestes de présentation, désignation d'éléments, orientation du regard, posture et synchronisation ; extension distincte des dix-huit mouvements associés aux intentions du r21. |
 | NEW-31 | P2 / P | **Auto-calibration contrôlée** : comparer paramètres de VAD, durée des réponses, fréquence d'analyse et autres réglages sur mesures, proposer des ajustements ; validation humaine et retour arrière avant application. |
 
 ## F. Reproductibilité et qualité produit

@@ -1,3 +1,10 @@
+## 2026-11-27 — Nettoyage du dépôt après sauvegarde de develop
+
+- `main@e5dd826` contient l’arbre exact de `develop@56eb108`, vérifié avant le nettoyage. Les références de branches et leurs assets Git LFS ont été sauvegardés avant le retrait des branches temporaires.
+- Retrait des anciens adaptateurs Twitch et mobile, du déclencheur d’arrivée Discord et de fonctions de capture sans appelant. La configuration privée des transports actifs et les commandes indépendantes restent disponibles.
+- Retrait de six dérivés mobiles hors des manifestes utilisés. Catalogue d’actifs et empreintes du paquet r21 mis à jour.
+- Guides courants actualisés sur le Live, le r21, la mémoire et les installations. Contrôles et périmètre dans la [passation de nettoyage](handoffs/2026-11-27-codex-nettoyage-depot.md).
+
 ## 2026-11-27 — Triste et Colère, neuf intentions sur r21
 
 - Le contrat de dialogue, les directions vocales Realtime WAV/PCM, les consignes Live natives/déléguées et le catalogue visuel acceptent `sad` et `angry`. La détection Live privilégie le réconfort et l'émotion propre explicitement exprimée par Jade ; un préambule isolé attend la suite. Les balises restent absentes du texte, de l'historique et de la parole.
@@ -46,7 +53,7 @@
 
 - La candidate Pétillante enregistrée sert de voix à l’essai dans Jade. La consigne de session choisie par le propriétaire vise un registre très aigu, un jeu inspiré du manga et un accent français de France.
 - `JADE_LIVE_VOICE_STYLE=petillante` associe cette consigne au profil d’essai et exige l’ID de la voix dans `JADE_LIVE_VOICE_ID`. Le serveur applique la consigne à l’ouverture des sessions Live mobiles et Discord, avec le contexte de Jade. La voix et l’identifiant de l’essai sont conservés dans le projet API et dans la configuration privée du poste.
-- Le Playground a produit une réplique dans une session de 21 secondes. La recette avec l’avatar r21 reste ouverte en [REC-052](../backlog/02-RECETTE.md#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041). [Passation](handoffs/2026-11-27-codex-voix-petillante.md)
+- Le Playground a produit une réplique dans une session de 21 secondes. La recette avec l’avatar r21 reste ouverte en [REC-052](../backlog/02-RECETTE.md#rec-052--voix-friponne-avec-lavatar-de-jade-ancienne-dev-041). [Passation](handoffs/2026-11-27-codex-voix-petillante.md)
 
 ## 2026-11-27 — Commande du Live Discord et couleur de la conversation mobile
 
@@ -240,7 +247,7 @@ Le modèle en service conserve le profil v45 et ses quatorze raccourcis. Les bor
 
 ## 2026-11-25 — Deux gestes de curiosité pour Jade v44
 
-- Le modèle dispose de deux actions jouables en parole. Jade se penche et tend l’oreille dans la première. Dans la seconde, elle cherche dans deux directions et ponctue sa réaction d’un hochement. Ce dernier mouvement a été repris après la première revue au cadrage de diffusion. Les pilotes de parole et d’expressions reconnaissent le paquet v44. [Fichiers et commandes](../../jade-modeling/CONTINUATION.md#déclencher-la-curiosité-dans-vtube-studio) · [Suivi ART-009](../backlog/04-PRODUCTION-2D.md)
+- Le modèle dispose de deux actions jouables en parole. Jade se penche et tend l’oreille dans la première. Dans la seconde, elle cherche dans deux directions et ponctue sa réaction d’un hochement. Ce dernier mouvement a été repris après la première revue au cadrage de diffusion. Les pilotes de parole et d’expressions reconnaissent le paquet v44. [Fichiers et commandes](../../jade-modeling/CONTINUATION.md#jouer-les-quatorze-gestes) · [Suivi ART-009](../backlog/04-PRODUCTION-2D.md)
 
 ## 2026-11-25 — Bouche et transitions de parole de Jade v43
 

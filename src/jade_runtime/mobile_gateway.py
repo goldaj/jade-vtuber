@@ -113,7 +113,6 @@ class MobileGateway:
                  vendor_dir: Path | None = None, owner_login: str | None = None,
                  public_origin: str | None = None,
                  avatar_intent_enabled: bool = True, billing_admin_key: str = "",
-                 deploy_supervisor_token: str = "", deploy_supervisor_port: int = 8770,
                  reminder_service=None, live_manager=None):
         if not isinstance(token, str) or len(token) < 32 or len(token) > 256:
             raise ValueError("JADE_MOBILE_TOKEN must contain 32-256 characters")

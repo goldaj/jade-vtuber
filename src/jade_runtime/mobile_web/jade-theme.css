@@ -10,7 +10,6 @@
   --sage:#c8dcc7; --sage-wash:#e8f0e3;
   --forest:#2f5d45; --forest-deep:#204b36;
   --cream:#fffdf7; --white:#fff;
-  --flower:#f7d774;
   --muted:#698071; --line:rgba(47,93,69,.18);
   --accent:#2f5d45; --accent-deep:#204b36;
 }
@@ -24,7 +23,7 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .connection{color:#486c53;font-size:.7rem}
 .connection:before{background:#aab9aa}
 .connection.online:before{background:#398f59;box-shadow:0 0 0 3px #bbe9bb}
-.icon-button,.notification-button{color:var(--forest);border:1px solid #cbdac9;background:#fffefacc;border-radius:13px;min-width:36px;height:36px;display:grid;place-items:center}
+.icon-button{color:var(--forest);border:1px solid #cbdac9;background:#fffefacc;border-radius:13px;min-width:36px;height:36px;display:grid;place-items:center}
 #fullscreen{padding:0}
 #fullscreen svg{display:block;width:22px;height:22px;fill:none;stroke:currentColor;
   stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
@@ -44,14 +43,10 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .live-indicator-dot{width:9px;height:9px;border-radius:50%;background:currentColor;
   box-shadow:0 0 0 2px #fffdf7}
 #live-indicator:not(.live-standby):not(.live-on-air) .live-indicator-dot{background:#4995d7}
-.notification-button{position:relative;padding:4px}
-.notification-dot{position:absolute;top:3px;right:2px;background:var(--flower);border:2px solid #fff;border-radius:100%;width:11px;height:11px}
 .scene-panel{margin:10px 12px 4px;gap:8px}
 .room{background:#b9d3bd;border-radius:20px;
   box-shadow:0 8px 22px #2d624122;border:1px solid #9bb79a}
 .room-bottom{padding:12px 13px;background:linear-gradient(transparent,#173b2c7a)}
-.character-label{background:#fffdf7d9;border:1px solid #ffffff90;color:#254d37;backdrop-filter:blur(7px);box-shadow:0 2px 8px #133e2e20}
-.label-small{color:#43674b}.tiny-star{color:#e6b333}
 .mood-line{color:#fffdf7;text-shadow:0 2px 7px #153924}
 .avatar-fallback{color:#254d37;background:#fffdf7c4;box-shadow:0 8px 20px #1a4b2a36}
 .avatar-sigil{color:#e9bd42;text-shadow:0 0 20px #eacf69}
@@ -59,9 +54,8 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
   border-top:0;box-shadow:none;color:#244934}
 .chat-heading{font-size:.85rem;color:var(--forest);background:#fffdf7e8;
   padding:11px 15px;border-bottom:1px solid #dbe7d7}
-.chat-pulse{background:#5b9770}.text-button{color:var(--forest);font-weight:600;font-size:.74rem}
+.text-button{color:var(--forest);font-weight:600;font-size:.74rem}
 .messages{scrollbar-color:#b4d1b6 transparent;gap:12px;padding:14px}
-.welcome{color:#55725d}
 .bubble{box-shadow:0 3px 10px #224e3121;border:1px solid #dce9d9}
 .bubble.me{background:#2f5d45;color:#fff;border-color:#2f5d45;border-radius:18px 18px 5px 18px}
 .bubble.jade{background:#fff;color:#294634;border-radius:18px 18px 18px 5px}
@@ -79,7 +73,7 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .footer-status{font-size:.66rem;color:#597967;min-height:20px;padding:5px 17px}
 .identity-panel,.billing-panel{color:#425e4b;border-bottom:1px solid #dfe8dc;font-size:.81rem}
 .identity-panel summary,.billing-panel summary{color:var(--forest);padding:3px 0;font-weight:700}
-.identity-panel button,.billing-panel button,.activities-overview button{
+.identity-panel button,.billing-panel button{
   color:#fff;background:#2f5d45;border:0;border-radius:12px;padding:10px 12px;font-weight:600}
 .identity-panel input,.identity-panel select,.auth-card input{background:#fff;color:#234b36;border:1px solid #bacdb9;border-radius:10px}
 .identity-panel>p,.billing-panel p{color:#4a6755}.identity-panel>p strong{color:#244d36}

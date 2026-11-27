@@ -12,8 +12,9 @@ streaming. Le travail sur le personnage et son animation est mené séparément.
 
 ## Ce que fait le moteur
 
-- Reçoit du texte depuis une console et propose des connecteurs optionnels
-  pour Twitch, Discord et une interface HTTP locale.
+- Reçoit du texte depuis une console et dispose de connecteurs Twitch, Discord,
+  HTTP local et PWA Android privée. Le Live vocal est pris en charge sur mobile
+  et Discord dans le dépôt complet.
 - Met les demandes dans une file bornée, maintient un historique limité par
   conversation et produit des réponses via une interface de dialogue modulaire.
 - Utilise **OpenAI exclusivement pour la transcription et la synthèse vocale** ;
@@ -80,11 +81,7 @@ peuvent utiliser un profil de `config/profiles/`. Le prompt du personnage peut
 être fourni séparément via `JADE_PROMPT_FILE` ou `JADE_ASSETS_ROOT` ; le prompt
 inclus dans cet aperçu est un exemple générique.
 
-Le passage en mode réel exige explicitement `--live`, une configuration valide
-et peut générer des frais. Le microphone, Twitch, Discord, VTube Studio et
-l’interface HTTP s’activent séparément par leurs options ; l’envoi vers les
-chats Twitch/Discord demande en plus son réglage dédié. Les extras Poetry
-disponibles sont `mic`, `discord`, `discord-voice` et `vts`.
+Dans le dépôt complet, le lanceur `main.py --all-channels` ouvre les connecteurs configurés ensemble. Les options individuelles servent au diagnostic. L’exécution réelle utilise les comptes privés configurés et peut générer des frais. Les extras Poetry utiles dépendent des connecteurs employés.
 
 La lecture locale nécessite ffplay. Avant un essai vocal, vérifier les appareils
 et avertir les participants : les segments vocaux destinés à la transcription

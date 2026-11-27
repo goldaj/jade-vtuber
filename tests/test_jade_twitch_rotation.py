@@ -5,13 +5,12 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs
 
 from src.jade_runtime.twitch_rotation import (
     BackupPending, RotationError, RotationUncertain, TwitchTokenManager, _lock, _refresh,
-    watch_twitch_token,
 )
 from src.jade_runtime.twitch_token import TwitchIdentity, TwitchTokenError, TwitchTokenExpired
 
@@ -159,23 +158,6 @@ class TwitchRotationTests(unittest.TestCase):
 
 
 class TwitchWatchTests(unittest.IsolatedAsyncioTestCase):
-    async def test_hourly_watcher_routes_rotation_and_pending_backup(self):
-        state = type("State", (), {"rotated": True, "backup_pending": True})()
-        manager = type("Manager", (), {"check": lambda self: state})()
-        on_rotation, on_pending = AsyncMock(), AsyncMock()
-        with patch("src.jade_runtime.twitch_rotation.asyncio.sleep", new=AsyncMock()) as sleep:
-            async def stop(value): raise asyncio.CancelledError()
-            on_rotation.side_effect = stop
-            with self.assertRaises(asyncio.CancelledError):
-                await watch_twitch_token(manager, on_rotation, on_pending, interval=3000)
-            sleep.assert_awaited_once_with(3000)
-            on_pending.assert_awaited_once()
-            on_rotation.assert_awaited_once_with(state)
-
-    async def test_interval_over_one_hour_is_rejected(self):
-        with self.assertRaises(ValueError):
-            await watch_twitch_token(None, None, None, interval=3001)
-
     async def test_slow_check_does_not_add_its_duration_to_interval(self):
         from src.jade_runtime.twitch_rotation import _periodic_checks
         now = [0.0]

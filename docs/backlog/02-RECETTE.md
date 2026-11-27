@@ -277,7 +277,7 @@ Le propriétaire rapporte deux arrêts durant une discussion à plusieurs : reco
 ### REC-035 (ancienne DEV-025) — NEW-17 · Compréhension sémantique des groupes
 
 - **Besoin :** Jade reconnaît destinataire, apartés, changements de sujet, conflits de fils et moments pertinents dans un salon de groupe. **Ne pas recoder** la sélection sociale hybride existante (REC-027 Done).
-- **Conception cible :** enrichir la décision sociale avec une représentation de sujets et des destinataires par conversation autorisée, en privilégiant mentions et adresses directes, indices locaux et classifieur LLM facultatif seulement en cas d'ambiguïté réelle. Conserver budget de classification, silence après initiative ignorée, identité des auteurs et détection de changement d'audience.
+- **Conception cible :** enrichir la décision sociale avec une représentation de sujets et des destinataires par conversation autorisée, en privilégiant mentions et adresses directes, indices locaux et classifieur LLM facultatif seulement en cas d'ambiguïté réelle. Conserver le budget de classification, l’identité des auteurs et la détection de changement d’audience. L’arrivée dans le vocal met à jour la présence.
 - **Acceptation :** (1) phrase adressée à un autre participant ne déclenche pas une réponse indue ; (2) Jade intervient sur question qui lui est réellement adressée, même en discussion animée ; (3) deux sujets parallèles ne se contaminent pas ; (4) aucun polling ou coût en veille, aucun texte/son d'un autre salon révélé ; (5) évolution mesurée sur corpus de dialogues annotés (précision d'adresse, interventions utiles et intempestives, coût).
 - **Tests :** scénarios synthétiques avec mentions, pseudos identiques, apartés et alternance de sujets ; Discord réel si disponible, Twitch reporté selon suspension existante.
 
@@ -310,7 +310,7 @@ Le propriétaire accepte la livraison **telle qu'elle fonctionne**. Les limitati
 
 ## Lot Live mobile intégré sur develop — 26 novembre 2026
 
-Sept suivis passent de DEV vers REC, sans double carte. Ces recettes ne sont pas Done : le code est intégré sur develop, les services réels et le Redmi restent à observer. La sélection de Pétillante le 27/11 transfère DEV-041 vers [REC-052](#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041).
+Sept suivis passent de DEV vers REC, sans double carte. Ces recettes ne sont pas Done : le code est intégré sur develop, les services réels et le Redmi restent à observer. La sélection de Pétillante le 27/11 transfère DEV-041 vers [REC-052](#rec-052--voix-friponne-avec-lavatar-de-jade-ancienne-dev-041).
 
 **Correction produit du 26/11 :** Live mobile activé par défaut, désactivable dans Profil, **sans budget financier mobile ni plafond quotidien**. Les critères initiaux contraires sont remplacés ci-dessous. Le seul seuil financier demandé est mensuel, global toutes API, et décide du moteur Discord : 50 EUR ou 40 EUR si le suivi est incomplet. [Correctif et preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-default-no-budget.md).
 

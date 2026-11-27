@@ -89,11 +89,8 @@ class Settings:
     discord_text_auto_rate: float = 0.20
     discord_text_cooldown_seconds: int = 180
     social_hybrid_enabled: bool = True
-    initiatives_enabled: bool = True
     social_budget_daily_usd: float = 0.0
     social_budget_monthly_usd: float = 0.0
-    initiative_budget_daily_usd: float = 0.0
-    initiative_budget_monthly_usd: float = 0.0
     avatar_intent_enabled: bool = True  # Facial/text reactions, not voice intent metadata.
     vts_enabled: bool = False
     vts_token: str = ""
@@ -122,8 +119,6 @@ class Settings:
     mobile_token: str = field(default="", repr=False)
     mobile_owner_login: str = ""
     mobile_public_origin: str = ""
-    deploy_supervisor_port: int = 8770
-    deploy_supervisor_token: str = field(default="", repr=False)
     mobile_port: int = 8766
     mobile_vendor_dir: str = ""
     mobile_model_dir: str = ""
@@ -176,11 +171,8 @@ class Settings:
             discord_text_auto_rate=float(environ("JADE_DISCORD_TEXT_AUTO_RATE", "0.20")),
             discord_text_cooldown_seconds=int(environ("JADE_DISCORD_TEXT_COOLDOWN_SECONDS", "180")),
             social_hybrid_enabled=_enabled(str(environ("JADE_SOCIAL_HYBRID_ENABLED", "1")).lower()),
-            initiatives_enabled=_enabled(str(environ("JADE_INITIATIVES_ENABLED", "1")).lower()),
             social_budget_daily_usd=float(environ("JADE_SOCIAL_BUDGET_DAILY_USD", "0")),
             social_budget_monthly_usd=float(environ("JADE_SOCIAL_BUDGET_MONTHLY_USD", "0")),
-            initiative_budget_daily_usd=float(environ("JADE_INITIATIVE_BUDGET_DAILY_USD", "0")),
-            initiative_budget_monthly_usd=float(environ("JADE_INITIATIVE_BUDGET_MONTHLY_USD", "0")),
             avatar_intent_enabled=_enabled(str(environ("JADE_AVATAR_INTENT_ENABLED", "1")).lower()),
             vts_enabled=_enabled(str(environ("JADE_VTS_ENABLED", "0")).lower()),
             vts_token=str(environ("JADE_VTS_TOKEN", "")),
@@ -207,8 +199,6 @@ class Settings:
             mobile_token=str(environ("JADE_MOBILE_TOKEN", "")),
             mobile_owner_login=str(environ("JADE_MOBILE_OWNER_LOGIN", "")).strip(),
             mobile_public_origin=str(environ("JADE_MOBILE_PUBLIC_ORIGIN", "")).strip(),
-            deploy_supervisor_port=int(environ("JADE_DEPLOY_SUPERVISOR_PORT", "8770")),
-            deploy_supervisor_token=str(environ("JADE_DEPLOY_SUPERVISOR_TOKEN", "")),
             mobile_port=int(environ("JADE_MOBILE_PORT", "8766")),
             mobile_vendor_dir=str(environ("JADE_MOBILE_VENDOR_DIR", "")),
             mobile_model_dir=str(environ("JADE_MOBILE_MODEL_DIR", "")),
@@ -267,8 +257,7 @@ class Settings:
                 or not 1 <= self.timeout_seconds <= 120):
             raise ValueError("invalid runtime safety bounds")
         if any(not math.isfinite(value) or not 0 <= value <= 10000 for value in (
-                self.social_budget_daily_usd, self.social_budget_monthly_usd,
-                self.initiative_budget_daily_usd, self.initiative_budget_monthly_usd)):
+                self.social_budget_daily_usd, self.social_budget_monthly_usd)):
             raise ValueError("invalid optional API budget")
         if (not 0 <= self.discord_voice_auto_rate <= 1
                 or not 0 <= self.discord_text_auto_rate <= 1
@@ -276,10 +265,6 @@ class Settings:
             raise ValueError("invalid Discord text participation limits")
         if not 1024 <= self.http_port <= 65535:
             raise ValueError("invalid local API port")
-        if not 1024 <= self.deploy_supervisor_port <= 65535:
-            raise ValueError("invalid supervisor port")
-        if self.deploy_supervisor_token and not 32 <= len(self.deploy_supervisor_token) <= 256:
-            raise ValueError("invalid supervisor token")
         if any((self.push_vapid_public, self.push_vapid_private, self.push_vapid_subject)) and not all((self.push_vapid_public, self.push_vapid_private, self.push_vapid_subject)):
             raise ValueError("push requires public key, private key and contact subject")
         if not 1024 <= self.mobile_port <= 65535:

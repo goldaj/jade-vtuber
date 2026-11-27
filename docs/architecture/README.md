@@ -53,6 +53,9 @@ Consulter [AGENTS.md](../../AGENTS.md), le [guide technique](../handbook/TECHNIC
 
 Les deux PNG sont ajoutés tels que fournis, sans retouche. Aucun secret ni donnée privée du runtime ne doit être placé dans ce dossier.
 
-## Extension des flux (15 novembre 2026)
+## Flux de voix et de rendu sur develop
 
-Les figures historiques ne représentent pas exhaustivement cette nouvelle liaison et ne doivent pas être interprétées comme la preuve d'une animation 2D prête. **Lien complémentaire réel :** `Reply.intent` (après filtre `intent_engine`) → `main.py:on_reply` → `Avatar.set_intent` → processus Live2D r20 Windows ; en parallèle `Reply.intent` → `MobileGateway` → `mobile_web/app.js` → `JadeAvatar.setIntent` → expressions r20 et texte PWA. Les deux renderers lisent le même catalogue versionné via `intent_visuals.py` / `intent-visuals.json`, piloté par `JADE_AVATAR_INTENT_ENABLED`. La voix TTS continue séparément, et aucun motion asset « 2 par intention » n'est encore connecté. Les deux schémas devront être **redessinés** par Codex une fois les animations finales r21 et leurs transitions réellement disponibles ; ne pas altérer leurs pixels sans livrer une figure vérifiée. Voir [passation dédiée](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md).
+- Le dialogue classique transmet `Reply.intent` après filtrage. L’avatar autonome Windows reçoit une expression. La PWA applique une pose et un mouvement A/B du r21.
+- Sur le GPT-Live natif, Jade parle directement et l’avatar estime le geste à partir des premiers mots de sa réponse. En délégation, le pont transmet l’intention du dialogue. [Architecture Live mobile](LIVE_MOBILE.md)
+- Discord Live partage le contexte de Jade et utilise son propre transport audio, avec repli vers le moteur vocal classique selon les réglages et la disponibilité. [Architecture Discord Live](DISCORD_LIVE.md)
+- Le r21 mobile dispose de neuf intentions et dix-huit mouvements. DEV-001 suit l’autonomie du r21 au démarrage Windows. Les schémas ci-dessus restent des repères datés. [État courant](../handbook/BRANCH_STATE.md)
