@@ -1,4 +1,4 @@
-/* Room selection, delayed kitchen loading and static portrait kitchen. */
+/* Room selection, independent static portrait loading and selection. */
 "use strict";
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -13,8 +13,8 @@ const settle = () => new Promise(resolve => setImmediate(resolve));
 
 async function run({startRoom = null, manual = false, storage = new Map()} = {}) {
   const events = {}, requests = [], roomEvents = [];
-  const kitchenImage = {src:""};
-  const scene = {querySelector(q){return q === ".room-plane > img" ? kitchenImage : null;}};
+  const staticImage = {src:""};
+  const scene = {querySelector(q){return q === ".room-plane > img" ? staticImage : null;}};
   const room = {dataset:{room:"bedroom"}, dispatchEvent(event){roomEvents.push(event.type);}};
   const chooser = {value:"bedroom", addEventListener(name, fn){events["choose:"+name] = fn;}};
   const document = {
@@ -42,7 +42,7 @@ async function run({startRoom = null, manual = false, storage = new Map()} = {})
   vm.runInContext(preferencesSource,context,{filename:"preferences.js"});
   vm.runInContext(source,context,{filename:"room-motion.js"});
   await settle();
-  return {kitchenImage,room,chooser,events,window,document,requests,roomEvents,storage,
+  return {staticImage,room,chooser,events,window,document,requests,roomEvents,storage,
     async change(next){chooser.value=next;events["choose:change"]();await settle();}};
 }
 
@@ -55,7 +55,7 @@ async function run({startRoom = null, manual = false, storage = new Map()} = {})
   assert.equal(a.requests.length,0,"bedroom needs no script-selected replacement");
 
   await a.change("kitchen");
-  assert.equal(a.kitchenImage.src,"/assets/room-kitchen-portrait.avif");
+  assert.equal(a.staticImage.src,"/assets/room-kitchen-portrait.avif");
   assert.equal(a.room.dataset.room,"kitchen");
   assert.equal(a.window.location.search,"?room=kitchen");
   await a.change("bedroom");
@@ -72,7 +72,7 @@ async function run({startRoom = null, manual = false, storage = new Map()} = {})
 
   const b=await run({startRoom:"kitchen"});
   assert.equal(b.room.dataset.room,"kitchen","direct room links still work");
-  assert.equal(b.kitchenImage.src,"/assets/room-kitchen-portrait.avif");
+  assert.equal(b.staticImage.src,"/assets/room-kitchen-portrait.avif");
 
   const race=await run({manual:true});
   await race.change("kitchen");
@@ -94,8 +94,61 @@ async function run({startRoom = null, manual = false, storage = new Map()} = {})
   await settle();
   assert.equal(failed.room.dataset.room,"kitchen","a failed image can be retried");
 
-  assert.match(html,/id="portrait-kitchen" width="941" height="1672"/);
+  const living=await run({startRoom:"living"});
+  assert.equal(living.room.dataset.room,"living","direct salon link works");
+  assert.equal(living.staticImage.src,"/assets/room-living-portrait.avif");
+  assert.equal(living.requests.length,1,"only the selected static room loads");
+  await living.change("kitchen");
+  assert.equal(living.room.dataset.room,"kitchen");
+  assert.equal(living.staticImage.src,"/assets/room-kitchen-portrait.avif");
+  await living.change("living");
+  assert.equal(living.staticImage.src,"/assets/room-living-portrait.avif");
+  assert.equal(living.requests.length,2,"both static rooms retain independent decoded sources");
+  assert.equal((await run({storage:living.storage})).room.dataset.room,"living");
+  const override=await run({storage:living.storage,startRoom:"kitchen"});
+  assert.equal(override.room.dataset.room,"kitchen","URL overrides saved salon");
+  await override.change("living");
+  assert.equal(override.window.location.search,"?room=living");
+  await override.change("bedroom");
+  assert.equal(override.window.location.search,"");
+  assert.equal((await run({storage:living.storage})).room.dataset.room,"bedroom");
+
+  const crossed=await run({manual:true});
+  await crossed.change("kitchen");
+  await crossed.change("living");
+  crossed.requests[1].resolve();
+  await settle();
+  assert.equal(crossed.room.dataset.room,"living");
+  assert.equal(crossed.staticImage.src,"/assets/room-living-portrait.avif");
+  crossed.requests[0].resolve();
+  await settle();
+  assert.equal(crossed.room.dataset.room,"living");
+  assert.equal(crossed.staticImage.src,"/assets/room-living-portrait.avif","late kitchen decode must not replace salon");
+  await crossed.change("kitchen");
+  assert.equal(crossed.staticImage.src,"/assets/room-kitchen-portrait.avif");
+
+  const rejected=await run({manual:true});
+  await rejected.change("kitchen");
+  rejected.requests[0].resolve();
+  await settle();
+  await rejected.change("living");
+  rejected.requests[1].reject(new Error("offline"));
+  await settle();
+  assert.equal(rejected.room.dataset.room,"kitchen");
+  assert.equal(rejected.chooser.value,"kitchen");
+  assert.equal(rejected.staticImage.src,"/assets/room-kitchen-portrait.avif");
+  assert.equal(rejected.window.JadePreferences.get("room"),"kitchen");
+  await rejected.change("living");
+  rejected.requests[2].resolve();
+  await settle();
+  assert.equal(rejected.room.dataset.room,"living","failed salon decode can retry");
+  await rejected.change("invalid");
+  assert.equal(rejected.room.dataset.room,"living");
+  assert.equal(rejected.requests.length,3,"invalid room cannot request an asset");
+
+  assert.match(html,/<option value="living">Salon<\/option>/);
+  assert.match(html,/id="portrait-static-room" width="941" height="1672"/);
   assert.match(css,/\.room-plane,\.bedroom-frame\{/);
   assert.doesNotMatch(html + source + css,/kitchen-(?:effects|vine|steam|wisp|sunlight)|room-kitchen\.webp/);
-  console.log("Room selection: canonical portrait, kitchen transitions, loading races and static portrait PASS");
+  console.log("Room selection: all three rooms, persistence, independent assets, failures and loading races PASS");
 })().catch(error=>{console.error(error);process.exitCode=1;});

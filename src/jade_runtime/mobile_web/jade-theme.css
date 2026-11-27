@@ -332,15 +332,15 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
   }
 }
 
-/* Both Jade models use the same bedroom camera. The seated image belongs
+/* All three portrait rooms share the camera. The seated image belongs
  * to the classic model and shares its head registration. */
 .avatar-frame{position:absolute;inset:0;z-index:2;pointer-events:none}
 .avatar-frame #avatar-container{z-index:3}
-.room:is([data-room="bedroom"],[data-room="kitchen"]){
+.room:is([data-room="bedroom"],[data-room="kitchen"],[data-room="living"]){
   container-type:size; /* cqw / cqh refer to the room */
 }
 .room[data-room="bedroom"]{background:#aa7b8f}
-.room[data-room="kitchen"]{background:#c49b80}
+.room:is([data-room="kitchen"],[data-room="living"]){background:#c49b80}
 .room[data-room="bedroom"] .room-art,.bedroom-frame,.portrait-seated-body{display:none}
 .room[data-room="bedroom"] .bedroom-frame{display:block}
 .room-plane,.bedroom-frame{position:absolute;inset:0;z-index:1;pointer-events:none}
@@ -361,14 +361,14 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
     top:12px;width:100cqw;height:177.6833cqw;transform:translate(-50%,-21%);
   }
 }
-.room[data-room="kitchen"][data-avatar-model="next"] .avatar-frame,
+.room:is([data-room="kitchen"],[data-room="living"])[data-avatar-model="next"] .avatar-frame,
 .room[data-room="bedroom"]:is([data-seated-ready="true"],[data-avatar-model="next"]) .avatar-frame{
   inset:auto;left:50%;top:50%;height:auto;
   width:100%;aspect-ratio:941 / 1672;
   transform:translate(-50%,-50%);
 }
 @supports(width:1cqh){
-  .room[data-room="kitchen"][data-avatar-model="next"] .avatar-frame,
+  .room:is([data-room="kitchen"],[data-room="living"])[data-avatar-model="next"] .avatar-frame,
 .room[data-room="bedroom"]:is([data-seated-ready="true"],[data-avatar-model="next"]) .avatar-frame{
     width:max(100cqw,56.28cqh);
   }
@@ -377,12 +377,12 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
  * Keep that point below the top edge and reserve 24% of the plane for the face,
  * including its animation envelope. Cap the whole plane on short/wide scenes;
  * the seated body and head retain their exact registration. */
-.shell:not([data-view="home"]):not(.is-room-only) .room[data-room="kitchen"][data-avatar-model="next"] .avatar-frame,
+.shell:not([data-view="home"]):not(.is-room-only) .room:is([data-room="kitchen"],[data-room="living"])[data-avatar-model="next"] .avatar-frame,
 .shell:not([data-view="home"]):not(.is-room-only) .room[data-room="bedroom"]:is([data-seated-ready="true"],[data-avatar-model="next"]) .avatar-frame{
   top:12px;transform:translate(-50%,-21%);
 }
 @supports(width:1cqh){
-  .shell:not([data-view="home"]):not(.is-room-only) .room[data-room="kitchen"][data-avatar-model="next"] .avatar-frame,
+  .shell:not([data-view="home"]):not(.is-room-only) .room:is([data-room="kitchen"],[data-room="living"])[data-avatar-model="next"] .avatar-frame,
 .shell:not([data-view="home"]):not(.is-room-only) .room[data-room="bedroom"]:is([data-seated-ready="true"],[data-avatar-model="next"]) .avatar-frame{
     width:min(100cqw,calc(234.5cqh - 56.28px));
   }
@@ -398,16 +398,16 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 
 /* Lift both models above the microphone in the home view. The seated
  * display and its fallback use the same offset as the animated head. */
-.shell[data-view="home"]:not(.is-room-only) .room:is([data-room="bedroom"],[data-room="kitchen"]){
+.shell[data-view="home"]:not(.is-room-only) .room:is([data-room="bedroom"],[data-room="kitchen"],[data-room="living"]){
   --seated-home-lift:clamp(84px,12cqh,120px);
 }
-.shell[data-view="home"]:not(.is-room-only) .room[data-room="kitchen"][data-avatar-model="next"] #avatar-container,
+.shell[data-view="home"]:not(.is-room-only) .room:is([data-room="kitchen"],[data-room="living"])[data-avatar-model="next"] #avatar-container,
 .shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"]:is([data-seated-ready="true"],[data-avatar-model="next"]) #avatar-container,
 .shell[data-view="home"]:not(.is-room-only) .room[data-room="bedroom"][data-seated-ready="true"] .portrait-seated-body{
   transform:translateY(calc(-1 * var(--seated-home-lift)));
 }
 /* Keep the standing model's render surface down to the room edge after the lift. */
-.shell[data-view="home"]:not(.is-room-only) .room:is([data-room="bedroom"],[data-room="kitchen"])[data-avatar-model="next"] #avatar-container{
+.shell[data-view="home"]:not(.is-room-only) .room:is([data-room="bedroom"],[data-room="kitchen"],[data-room="living"])[data-avatar-model="next"] #avatar-container{
   bottom:calc(-1 * var(--seated-home-lift));
 }
 /* The portrait home view uses the same magnified bedroom artwork for both
@@ -424,10 +424,10 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 /* Reuse the menu camera in a wide bedroom where the classic home crop
  * puts the face above the visible room. */
 @container (min-aspect-ratio: 3/2){
-  .shell:is([data-view="home"],.is-room-only) .room:is([data-room="bedroom"],[data-room="kitchen"])[data-avatar-model="next"] .avatar-frame{
+  .shell:is([data-view="home"],.is-room-only) .room:is([data-room="bedroom"],[data-room="kitchen"],[data-room="living"])[data-avatar-model="next"] .avatar-frame{
     top:12px;width:min(100cqw,calc(234.5cqh - 56.28px));transform:translate(-50%,-21%);
   }
-  .shell[data-view="home"]:not(.is-room-only) .room:is([data-room="bedroom"],[data-room="kitchen"])[data-avatar-model="next"] #avatar-container{
+  .shell[data-view="home"]:not(.is-room-only) .room:is([data-room="bedroom"],[data-room="kitchen"],[data-room="living"])[data-avatar-model="next"] #avatar-container{
     bottom:0;transform:none;
   }
   .shell:is([data-view="home"],.is-room-only) .room-plane,

@@ -125,6 +125,8 @@ async function client() {
         "the original model proportions are preserved");
       for (let count = 0; count < 10; count++)
         sameGeometry(a.resize(width, height, view), geometry, "repeated resize must not drift");
+      a.room.dataset.room = "living";
+      sameGeometry(a.resize(width, height, view), geometry, "salon and kitchen share the standing framing");
       a.room.dataset.room = "bedroom";
       sameGeometry(a.resize(width, height, view), geometry, "missing seated artwork uses the same face-priority framing");
     }
@@ -144,6 +146,10 @@ async function client() {
     a.resize(336, 180, view);
     sameGeometry(a.resize(390, 650, "home"), home, "home camera is restored on return");
   }
+
+  a.room.dataset.room = "living";
+  sameGeometry(a.resize(390, 650, "home"), home, "salon home uses the kitchen camera");
+  sameGeometry(a.resize(390, 844, "home", true), fullscreen, "salon fullscreen uses the kitchen camera");
 
   // The seated head and body keep one registration. The CSS camera moves the
   // common scene plane; entering a menu must not reposition the head alone.

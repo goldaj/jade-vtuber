@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Salon portrait statique](2026-11-27-chatgpt-salon-portrait.md) · Troisième environnement, sélection persistante et cadrage partagé, chargement indépendant des deux décors statiques ; recette visuelle à réaliser.
+
 - [REC-052 · Rendu de Friponne sur Discord Live](2026-11-27-codex-rendu-friponne-discord.md) · Conversion PCM des aigus et écoute comparative avec le mobile.
 
 - [Cuisine portrait statique](2026-11-27-chatgpt-cuisine-portrait.md) · Nouveau décor AVIF, remplacement du WebP, retrait des anciens effets et cadrage partagé ; recette visuelle à réaliser.

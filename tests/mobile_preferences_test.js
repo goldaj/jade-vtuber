@@ -37,6 +37,8 @@ for (const [name, value] of Object.entries(settings)) assert.equal(second.get(na
 assert.equal(second.set("soundEnabled", true), true);
 assert.equal(open(storage).get("soundEnabled"), true, "a later choice replaces the earlier one");
 assert.equal(storage.size, 1, "settings use one bounded record");
+assert.equal(second.set("room", "living"), true);
+assert.equal(open(storage).get("room"), "living", "salon survives reopening");
 
 for (const [name, value] of [
   ["token","private"], ["thread","chat"], ["liveSession","active"], ["identityId","123"],

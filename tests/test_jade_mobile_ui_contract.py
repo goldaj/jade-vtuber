@@ -49,10 +49,13 @@ class MobileUiLayoutContract(unittest.TestCase):
         self.assertIn("immersive ? 1.9 : 1.5", AVATAR)
         self.assertIn('window.JadeAvatar?.resize?.()', JS)
         self.assertIn('.shell:not([data-view="home"]),.shell[data-view="chat"]', CSS)
-        self.assertIn('id="portrait-kitchen" width="941" height="1672"', HTML)
+        self.assertIn('id="portrait-static-room" width="941" height="1672"', HTML)
+        self.assertIn('<option value="living">Salon</option>', HTML)
+        self.assertIn('.room:is([data-room="kitchen"],[data-room="living"])[data-avatar-model="next"]', CSS)
+        self.assertIn('.room:is([data-room="bedroom"],[data-room="kitchen"],[data-room="living"])', CSS)
         self.assertNotIn("room-kitchen.webp", CSS + JS + HTML)
         self.assertNotIn("kitchen-effects", HTML)
-        self.assertIn('["bedroom", "kitchen"].includes(room?.dataset.room)', AVATAR)
+        self.assertIn('["bedroom", "kitchen", "living"].includes(room?.dataset.room)', AVATAR)
         self.assertIn('.room[data-room="bedroom"] .room-art,.bedroom-frame,.portrait-seated-body{display:none}', CSS)
 
 

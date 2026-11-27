@@ -8,7 +8,7 @@
     notificationsEnabled: value => typeof value === "boolean",
     portraitMotionEnabled: value => typeof value === "boolean",
     avatarShakeEnabled: value => typeof value === "boolean",
-    room: value => ["bedroom", "kitchen"].includes(value),
+    room: value => ["bedroom", "kitchen", "living"].includes(value),
     avatarModel: value => ["classic", "next"].includes(value),
     deploymentLevel: value => ["all", "warning", "error"].includes(value)
   });

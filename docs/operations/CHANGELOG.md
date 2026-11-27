@@ -1,3 +1,8 @@
+## 2026-11-27 — Salon portrait statique
+
+- Ajout du troisième décor Salon, AVIF 941 × 1672 choisi par le propriétaire, dans le sélecteur Accueil et les préférences persistantes. Cadrage commun avec la cuisine ; aucune animation de décor, aucune modification du modèle ou de la chambre.
+- Le chargeur met en cache les sources décodées par pièce, ignore les chargements obsolètes et conserve la dernière pièce valide en cas d'erreur. Tests de sélection, de persistance, de cadrage et de passerelle étendus. Asset vérifié (232741 octets, SHA Git `2e74be0113616631e92eeb98c695ee9e7703c671`). CI et recette sur téléphone à confirmer. [Passation](handoffs/2026-11-27-chatgpt-salon-portrait.md)
+
 ## 2026-11-27 — Fidélité des aigus sur Discord Live
 
 - Le propriétaire entend une différence entre Friponne sur le mobile et sur Discord Live et préfère le rendu mobile. La conversion du PCM de GPT-Live vers Discord utilise maintenant une interpolation à huit points. Elle préserve mieux les aigus tout en gardant des trames de 20 ms. L’écoute comparative reste en REC-052. [Passation](handoffs/2026-11-27-codex-rendu-friponne-discord.md)

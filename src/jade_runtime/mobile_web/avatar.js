@@ -876,7 +876,7 @@
     const naturalWidth = Math.max(model.width / (model.scale.x || 1), 1);
     const naturalHeight = Math.max(model.height / (model.scale.y || 1), 1);
     const r21 = activeProfile?.id === "next";
-    const standingPortrait = r21 && ["bedroom", "kitchen"].includes(room?.dataset.room);
+    const standingPortrait = r21 && ["bedroom", "kitchen", "living"].includes(room?.dataset.room);
     // The lifted standing avatar can render beyond its camera frame down to the room edge.
     const cameraViewportHeight = standingPortrait ? target.parentElement?.clientHeight || height : height;
     const cameraWidth = r21 ? CLASSIC_CAMERA.width : naturalWidth;
