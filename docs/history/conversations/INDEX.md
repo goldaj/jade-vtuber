@@ -59,6 +59,8 @@ La [passation Discord Live](../../operations/handoffs/2026-11-27-codex-discord-l
 
 La [passation de reprise du Live mobile](../../operations/handoffs/2026-11-27-codex-reprise-fermeture-live-mobile.md#échanges-accessibles) consigne le signalement du micro inactif et le diagnostic de fermeture non confirmée.
 
+La [passation Pétillante et intentions](../../operations/handoffs/2026-11-27-codex-petillante-intentions-live.md#échanges-accessibles) consigne la confirmation du fonctionnement du Live, puis les demandes sur la voix, les intonations, le mouvement et le débit.
+
 ## Synchronisation du clone de développement le 26 novembre 2026
 
 - **Propriétaire** (extrait de la conversation) « Je veux que tu push le local, mais attention il va y avoir du merge à faire ».

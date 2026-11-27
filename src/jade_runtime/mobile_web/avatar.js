@@ -611,6 +611,10 @@
     setSpeaking(value) {
       speaking = Boolean(value);
       if (activeProfile?.id !== "next" && !speaking && pendingIntent !== "neutral") returnToIdle();
+      if (speaking && r21Reply?.fadeAt === null && resetTimer !== null) {
+        clearTimeout(resetTimer);
+        resetTimer = null;
+      }
     },
     startReplyMotion, finishReply,
     resetIntent() {

@@ -44,6 +44,31 @@ _DIRECTIONS = MappingProxyType({
 
 INTENTS = frozenset(_DIRECTIONS)
 
+# Native Live speaks without the text model's leading metadata tag. A small
+# set of early, unambiguous French cues gives the avatar a local default.
+_LIVE_CUES = tuple((label, re.compile(pattern)) for label, pattern in (
+    ("reassuring", r"\b(?:ne t'inquiète pas|t'inquiète pas|pas de panique|prends ton temps|tu n'es pas seul[e]?)\b"),
+    ("tender", r"\b(?:ça me touche|tu me touches|je t'envoie un câlin|avec tendresse)\b"),
+    ("playful", r"\b(?:haha|héhé|je te taquine|bien tenté|petit malin|tu m'as eue?)\b"),
+    ("excited", r"\b(?:génial[e]?|bravo|trop bien|youpi|quelle bonne nouvelle|c'est fantastique)\b"),
+    ("serious", r"\b(?:c'est (?:très )?important|c'est sérieux|il y a un risque|en cas d'urgence|attention à)\b"),
+    ("curious", r"\b(?:raconte-moi|je me demande|comment ça|qu'est-ce qui|dis-m'en plus)\b"),
+))
+
+
+def classify_live_intent(text: str) -> str | None:
+    """Choose a visual intention after enough of the spoken prefix arrives."""
+    prefix = text[:160].strip().casefold().replace("’", "'")
+    for label, pattern in _LIVE_CUES:
+        if pattern.search(prefix):
+            return label
+    if "?" in prefix:
+        return "curious"
+    if len(prefix) >= 64 or prefix.endswith((".", "!", "…")):
+        return "neutral"
+    return None
+
+
 INTENT_PROMPT = """\
 Voice-intention output contract (required for EVERY reply, text or voice):
 Begin the response with EXACTLY ONE tag [INTENT:label], followed by the

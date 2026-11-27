@@ -55,6 +55,23 @@ class LiveProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(body, {"session": config, "transport": {"type": "webrtc", "sdp": SDP}})
         self.assertNotIn("unit-test-key", str(result))
 
+    async def test_resolved_voice_is_logged_without_provider_identifiers(self):
+        requested = "voice_test_selected"
+        config = LiveConfig(voice_id=requested).session_config()
+        for reported, result in (({"id": requested}, "matched"), ("marin", "mismatch")):
+            response = httpx2.Response(201, json={
+                "session": {"id": "live_original_123", "audio": {"output": {"voice": reported}}},
+                "transport": {"type": "webrtc", "sdp": SDP},
+            })
+            with self.subTest(result=result), self.assertLogs("src.jade_runtime.live_provider") as logged:
+                async with httpx2.AsyncClient(transport=httpx2.MockTransport(lambda request: response)) as http:
+                    provider = OpenAILiveProvider("unit-test-key", http_client=http)
+                    await provider.create_session(SDP, config)
+            self.assertEqual(len(logged.output), 1)
+            self.assertIn(f"Live voice transport=webrtc kind=custom result={result}", logged.output[0])
+            self.assertNotIn(requested, logged.output[0])
+            self.assertNotIn("live_original_123", logged.output[0])
+
     async def test_invalid_server_event_selectors_are_rejected_before_http(self):
         http = AsyncMock()
         provider = OpenAILiveProvider("unit-test-key", http_client=http)

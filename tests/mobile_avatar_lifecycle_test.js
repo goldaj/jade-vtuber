@@ -434,6 +434,14 @@ async function client({hidden = false, initialError = false, delayBodyImage = fa
   nextDefault.avatar.setSpeaking(false);
   nextDefault.avatar.setMouth(0);
   nextDefault.avatar.finishReply(true);
+  nextDefault.advanceTime(350);
+  nextDefault.avatar.setSpeaking(true);
+  nextDefault.runTimers(600);
+  r21.internalModel.emit("beforeModelUpdate");
+  assert.deepEqual(r21.parameters.get("ParamMouthForm"),{value:-.74,weight:1},"resuming after a pause keeps the face");
+  assert.equal(r21.motions.length,beforeSpeech + 1,"resuming the same reply does not replay its motion");
+  nextDefault.avatar.setSpeaking(false);
+  nextDefault.avatar.finishReply(true);
   nextDefault.advanceTime(600);
   r21.internalModel.emit("beforeModelUpdate");
   assert.deepEqual(r21.lastParameter,{id:"ParamMouthOpenY",value:0});

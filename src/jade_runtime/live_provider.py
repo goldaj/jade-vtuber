@@ -13,6 +13,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 import copy
 import json
+import logging
 import math
 import re
 from typing import AsyncContextManager, AsyncIterator, Protocol, TypedDict
@@ -21,6 +22,7 @@ from urllib.parse import quote
 from .live_voice import LiveVoice
 
 
+LOG = logging.getLogger(__name__)
 MAX_SDP_BYTES = 64 * 1024
 MAX_EVENT_BYTES = 1024 * 1024
 MAX_SESSION_CONFIG_BYTES = 128 * 1024
@@ -52,6 +54,21 @@ class LiveChannel(Protocol):
 class LiveProvider(Protocol):
     async def create_session(self, sdp: str, session_config: dict) -> LiveSession: ...
     def attach(self, session_id: str) -> AsyncContextManager[LiveChannel]: ...
+
+
+def report_live_voice_confirmation(requested, resolved_session, *, transport: str) -> None:
+    """Compare the provider's optional resolved voice without logging identifiers."""
+    audio = resolved_session.get("audio") if isinstance(resolved_session, dict) else None
+    output = audio.get("output") if isinstance(audio, dict) else None
+    reported = output.get("voice") if isinstance(output, dict) else None
+    reported_id = reported.get("id") if isinstance(reported, dict) else reported
+    if not isinstance(reported_id, str) or not reported_id:
+        return
+    custom = isinstance(requested, dict)
+    matches = requested["id"] == reported_id if custom else requested == reported
+    LOG.log(logging.INFO if matches else logging.WARNING,
+            "Live voice transport=%s kind=%s result=%s", transport,
+            "custom" if custom else "builtin", "matched" if matches else "mismatch")
 
 
 def validate_sdp(sdp: object) -> str:
@@ -273,6 +290,8 @@ class OpenAILiveProvider:
             except (ValueError, TypeError, KeyError, AttributeError, LiveProviderError):
                 raise LiveProviderError("invalid_session_creation_response", ambiguous=True,
                                         session_id=session_id) from None
+            report_live_voice_confirmation(config["audio"]["output"]["voice"], result["session"],
+                                           transport="webrtc")
             return {"session_id": session_id, "sdp": answer, "expires_at": expires_at}
         finally:
             if self._http is None:

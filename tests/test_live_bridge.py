@@ -13,7 +13,9 @@ import unittest
 
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.documents import DocumentService
+from src.jade_runtime.intent_engine import voice_direction
 from src.jade_runtime.live_bridge import LiveConversationBridge, LiveJournalConflict
+from src.jade_runtime.live_provider import LiveProviderError
 from src.jade_runtime.memory_service import MemoryService
 from src.jade_runtime.memory_store import MemoryStore
 from src.jade_runtime.messages import Incoming
@@ -200,6 +202,35 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(self.classic), 1)
         self.assertEqual(len(self.journal_rows("live_events")), 2)
 
+    async def test_native_replies_project_one_intent_from_the_spoken_prefix(self):
+        def intents():
+            return [event["intent"] for event in self.published if event["type"] == "live_intent"]
+
+        await self.transcript("user", "J'ai réussi mon examen.", 0, 500)
+        await self.transcript("assistant", "Trop", 700, 800)
+        self.assertEqual(intents(), [])
+        event = await self.transcript("assistant", " bien ! Félicitations.", 800, 1400)
+        await self.bridge.handle_event(event, self.ctx, self.send)
+        await self.transcript("assistant", " Tu peux être fière.", 1410, 1630)
+        self.assertEqual(intents(), ["excited"])
+        await self.transcript("user", "Tu veux en savoir plus ?", 1800, 2100)
+        await self.transcript("assistant", "Raconte-moi comment ça s'est passé.", 2200, 2750)
+        await self.transcript("assistant", "Ah, pardon, ", 650, 690)
+        self.assertEqual(intents(), ["excited", "curious"])
+        self.assertEqual(self.model.requests, [])
+        self.assertTrue(all("intent_hint" not in segment for segment in self.published[-1]["segments"]))
+
+    async def test_delegated_intent_wins_over_native_transcript_for_its_reply(self):
+        await self.transcript("user", "Vérifie et explique-moi.", 0, 1000)
+        await self.delegation()
+        await self.transcript("assistant", "C'est génial, j'ai trouvé quelque chose !", 1200, 1800)
+        await self.transcript("user", "Et pour l'autre ?", 2000, 2500)
+        await self.transcript("assistant", "Pas de panique, on peut regarder.", 2800, 3500)
+        self.assertEqual([event["intent"] for event in self.published if event["type"] == "live_delegation"],
+                         ["curious"])
+        self.assertEqual([event["intent"] for event in self.published if event["type"] == "live_intent"],
+                         ["reassuring"])
+
     async def test_late_cache_invalidation_loads_inside_dialogue_lock(self):
         await self.bridge.prepare_context("Goldaj", self.ctx["thread_id"])
         incoming = Incoming("mobile", "Goldaj", "Continue.", channel=self.ctx["thread_id"], force_reply=True)
@@ -277,14 +308,32 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(completed["intent"], "excited")
         self.assertTrue(completed["attachments"][0]["url"].startswith("/api/documents/"))
         self.assertFalse(any("[INTENT" in event.get("content", "") for event in self.sent))
+        self.assertEqual([event["type"] for event in self.sent], [
+            "session.thinking.append", "session.thinking.append", "session.commentary.append",
+        ])
+        self.assertEqual({event["delegation_id"] for event in self.sent}, {"delegation1"})
+        self.assertEqual(self.sent[0]["content"], "")
+        self.assertIn(voice_direction("excited"), self.sent[1]["content"])
+        self.assertEqual(self.sent[2]["content"], "Ton document et ton rappel sont prêts.")
         self.assertEqual(self.settlements[-1][2], {"input_tokens": 120, "output_tokens": 30})
         await self.delegation()  # New event ID, same delegation ID.
         await self.delegation("duplicate_id_for_same_input")
         self.assertEqual(len(self.model.requests), 1)
+
+        async def reject_voice_direction(event):
+            if event["type"] == "session.thinking.append" and event["content"]:
+                raise LiveProviderError("test_voice_cue_rejected")
+            self.sent.append(event)
+
+        self.send = reject_voice_direction
         # A genuinely repeated user request has new input IDs and remains actionable.
         await self.transcript("user", "Recherche ce fait, prépare les notes et un rappel.", 6000, 7000)
         await self.delegation("second_request", 7000)
         self.assertEqual(len(self.model.requests), 2)
+        self.assertEqual(self.sent[-1]["delegation_id"], "second_request")
+        self.assertEqual(self.sent[-1]["type"], "session.commentary.append")
+        self.assertEqual(self.sent[-1]["content"], "Ton document et ton rappel sont prêts.")
+        self.assertEqual(self.settlements[-1][-1], "completed")
         self.assertEqual(len(self.runtime.reminder_service.store.list()), 2)
 
     async def test_native_context_reaches_backend_delegation(self):

@@ -1,3 +1,8 @@
+## 2026-11-27 — Intonations et mouvements de Pétillante en Live
+
+- Le profil Pétillante garde la voix enregistrée et la consigne choisie. GPT-Live reçoit une direction d’intonation selon le contexte et un débit légèrement plus vif. Les tours délégués reçoivent leur propre consigne de jeu silencieuse. La configuration résolue par le fournisseur est comparée si elle est présente, sans publier d’identifiant.
+- Les réponses natives déclenchent les mouvements existants à partir d’indices de transcription. Les délégations réutilisent l’intention du dialogue. Les tests contrôlent le montage des consignes, la projection des intentions sur plusieurs échanges et le retour au repos. [Passation et recette acoustique](handoffs/2026-11-27-codex-petillante-intentions-live.md)
+
 ## 2026-11-27 — Reprise du Live mobile après une fermeture non confirmée
 
 - La passerelle et la PWA distinguent la fermeture en cours, l’ancienne session connue sans terminal et la création ambiguë sans identifiant. L’action de reprise peut retirer une génération arrêtée localement tout en gardant son usage indéterminé. Le retour de disponibilité ne déclenche aucune capture automatique. [Diagnostic et reprise](handoffs/2026-11-27-codex-reprise-fermeture-live-mobile.md)

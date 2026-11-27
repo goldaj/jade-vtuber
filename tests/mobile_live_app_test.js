@@ -58,7 +58,8 @@ const window = {document, location:{hash:""}, crypto:{randomUUID:() => "thread-"
   addEventListener(name, fn) { (windows[name] ||= []).push(fn); },
   JadeAvatar:{setMouth:value => avatarEvents.push(["mouth", value]), setSpeaking:value => avatarEvents.push(["speaking", value]),
     setIntent:(value, config) => avatarEvents.push(["intent", value, config]), resetIntent:() => avatarEvents.push(["reset"]),
-    startReplyMotion:value => avatarEvents.push(["motion", value]), resize() {}},
+    startReplyMotion:value => avatarEvents.push(["motion", value]),
+    finishReply:value => avatarEvents.push(["finish", value]), resize() {}},
   AudioContext:class { resume() { return Promise.resolve(); } },
 };
 const sandbox = {window, document, navigator:{}, crypto:window.crypto, performance:{now:() => 0},
@@ -193,6 +194,17 @@ function expectLiveColor(onAir) {
   liveOptions.onIntent("tender");
   assert.equal(avatarEvents.at(-1)[0], "intent");
   assert.equal(avatarEvents.at(-1)[2].deferMotion, false, "Live does not add the classic 200 ms facial delay");
+  liveOptions.onPlayback(0, false);
+  assert.deepEqual(avatarEvents.at(-1), ["finish", true], "a Live gesture relaxes after speech");
+  const livesFinished = avatarEvents.filter(event => event[0] === "finish").length;
+  liveOptions.onPlayback(0, false);
+  assert.equal(avatarEvents.filter(event => event[0] === "finish").length, livesFinished);
+  liveOptions.onIntent("excited");
+  assert.equal(avatarEvents.at(-1)[2].deferMotion, true, "the next reply waits for audible audio");
+  liveOptions.onPlayback(.5, true);
+  assert.deepEqual(avatarEvents.at(-1), ["motion", 0], "the next reply in the same session animates when audible");
+  liveOptions.onPlayback(.4, true);
+  assert.deepEqual(avatarEvents.at(-1), ["speaking", true], "audio frames never restart the gesture");
 
   let resolveClose;
   pendingClose = new Promise(resolve => { resolveClose = resolve; });

@@ -497,7 +497,6 @@
       }
       opening = true;
       pendingResponse = true;
-      callbacks("onIntent", "neutral");
       state.session_state = "opening";
       state.message = "";
       publish();

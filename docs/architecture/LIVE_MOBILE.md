@@ -83,7 +83,9 @@ Le registre de sessions et le journal des opérations restent nécessaires à la
 
 ## Voix et suite Discord
 
-**Pétillante** est la candidate choisie pour l’essai. Renseigner `JADE_LIVE_VOICE_ID` avec l’identifiant de la candidate enregistrée et `JADE_LIVE_VOICE_STYLE=petillante` dans la configuration privée. Le serveur joint la consigne vocale choisie au contexte de Jade à chaque ouverture, pour la PWA et le moteur Discord Live. Le lecteur WebRTC fournit à l’analyseur le signal qui pilote la bouche et la motion de réponse. La vérification conjointe du son et du mouvement avec cette voix sur r21 est suivie dans [REC-052](../backlog/02-RECETTE.md#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041).
+**Pétillante** est la candidate choisie pour l’essai. Renseigner `JADE_LIVE_VOICE_ID` avec l’identifiant de la candidate enregistrée et `JADE_LIVE_VOICE_STYLE=petillante` dans la configuration privée. Le serveur joint la consigne choisie et une direction de débit et d’intonation au contexte des nouvelles sessions PWA et Discord Live. Le débit est une instruction de jeu du modèle. [Guide de direction vocale GPT-Live](https://developers.openai.com/api/docs/guides/live-prompting#pace)
+
+Le lecteur WebRTC fournit à l’analyseur le signal qui pilote la bouche et la motion de réponse. Une intention visuelle est déduite localement de la transcription d’un tour natif, avec retour au neutre en l’absence d’indices. Le résultat délégué conserve l’intention du dialogue pour l’avatar et transmet une direction de lecture silencieuse. La vérification conjointe du son et du mouvement avec cette voix sur r21 est suivie dans [REC-052](../backlog/02-RECETTE.md#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041).
 
 Le profil de style est facultatif. Le catalogue utilise `brise` par défaut. L’identifiant d’Aube n’a pas été confirmé dans l’API lors du prototype. Le script `scripts/live_voice_preview.py` reste un outil de préparation hors ligne.
 

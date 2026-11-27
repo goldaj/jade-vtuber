@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Callable
 
-from .live_voice import LiveVoice, PETILLANTE_SESSION_PROMPT
+from .live_voice import LIVE_DELIVERY_PROMPT, PETILLANTE_SESSION_PROMPT, LiveVoice
 from .discord_config import is_discord_enabled
 
 
@@ -166,11 +166,11 @@ class LiveConfig:
             }},
             "input": input if input is not None else [],
         }
+        sections = [instructions] if instructions else []
         if self.voice_style == "petillante":
-            voice_direction = f"Direction vocale\n{PETILLANTE_SESSION_PROMPT}"
-            instructions = f"{instructions}\n\n{voice_direction}" if instructions else voice_direction
-            if len(instructions.encode("utf-8")) > 16384:
-                raise ValueError("Live instructions and voice style exceed the conservative instruction budget")
-        if instructions:
-            session["instructions"] = instructions
+            sections.append(f"Direction vocale\n{PETILLANTE_SESSION_PROMPT}")
+        sections.append(f"Jeu et débit\n{LIVE_DELIVERY_PROMPT}")
+        session["instructions"] = "\n\n".join(sections)
+        if len(session["instructions"].encode("utf-8")) > 16384:
+            raise ValueError("Live instructions and vocal delivery exceed the conservative instruction budget")
         return session

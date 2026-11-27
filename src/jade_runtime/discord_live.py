@@ -162,10 +162,12 @@ class _Conversation:
 
 class DiscordLiveAdapter:
     def __init__(self, bridge, runtime, config, policy, provider, conversation,
-                 *, publish_reply=None, registry=None, clock=time.monotonic, poll_seconds=1.0):
+                 *, publish_reply=None, set_avatar_intent=None,
+                 registry=None, clock=time.monotonic, poll_seconds=1.0):
         self.bridge, self.runtime, self.config = bridge, runtime, config
         self.policy, self.provider, self.conversation = policy, provider, conversation
         self.publish_reply = publish_reply
+        self.set_avatar_intent = set_avatar_intent
         self.registry = registry
         self.clock, self.poll_seconds = clock, poll_seconds
         self._loop = None
@@ -857,7 +859,11 @@ class DiscordLiveAdapter:
         state = self._current
         if state is None or not self._valid(state) or context["session_id"] != state.context["session_id"]:
             return
-        if event.get("type") != "live_delegation" or event.get("status") != "completed":
+        kind = event.get("type")
+        delegated = kind == "live_delegation" and event.get("status") == "completed"
+        if self.set_avatar_intent is not None and (kind == "live_intent" or delegated):
+            self.set_avatar_intent(event.get("intent", "neutral"))
+        if not delegated:
             return
         if not event.get("attachments") or self.publish_reply is None:
             return
@@ -908,7 +914,8 @@ class DiscordLiveAdapter:
         await self.conversation.close()
 
 
-async def create_discord_live(bridge, runtime, settings, spend_policy, *, provider=None, publish_reply=None):
+async def create_discord_live(bridge, runtime, settings, spend_policy, *,
+                              provider=None, publish_reply=None, set_avatar_intent=None):
     """Create local wiring only; no provider connection opens before speech."""
     if not getattr(settings, "discord_enabled", True) or not getattr(settings, "api_key", None):
         return None
@@ -920,7 +927,7 @@ async def create_discord_live(bridge, runtime, settings, spend_policy, *, provid
             provider or DiscordLiveProvider(settings.api_key,
                 opening_timeout_seconds=config.opening_timeout_seconds,
                 close_timeout_seconds=config.close_timeout_seconds),
-            conversation, publish_reply=publish_reply,
+            conversation, publish_reply=publish_reply, set_avatar_intent=set_avatar_intent,
             registry=DiscordLiveRegistry(conversation.journal.path))
         conversation.publish = adapter._publish
 

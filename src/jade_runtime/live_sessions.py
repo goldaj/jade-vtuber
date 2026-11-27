@@ -801,6 +801,8 @@ class LiveSessionManager:
             projection["type"] = "transcript"
         elif kind == "live_incident":
             projection["type"] = "incident"
+        elif kind == "live_intent":
+            projection["type"] = "intent"
         elif kind == "live_delegation":
             if projection.get("attachments"):
                 self._broadcast(session.owner, {"type": "attachments", "session_id": session.handle,

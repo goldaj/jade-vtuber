@@ -21,7 +21,9 @@ import secrets
 import struct
 import time
 
-from .live_provider import LiveProviderError, MAX_EVENT_BYTES, MAX_SESSION_CONFIG_BYTES
+from .live_provider import (
+    LiveProviderError, MAX_EVENT_BYTES, MAX_SESSION_CONFIG_BYTES, report_live_voice_confirmation,
+)
 from .live_voice import LiveVoice
 
 
@@ -165,6 +167,7 @@ class DiscordLiveSession:
         self._audio_lock = asyncio.Lock()
         self._closing = False
         self._ready = False
+        self._requested_voice = None
         self._failure = None
         self._close_task = None
         self._next_audio_at = 0.0
@@ -192,6 +195,7 @@ class DiscordLiveSession:
 
     async def _start(self, config, timeout):
         deadline = self._clock() + timeout
+        self._requested_voice = config["audio"]["output"]["voice"]
         await self._write({"type": "session.start", "event_id": "jade-" + secrets.token_hex(12),
                            "session": config})
         await _bounded(self._started.wait(), deadline - self._clock(), "discord_live_open_timeout")
@@ -240,6 +244,8 @@ class DiscordLiveSession:
                     if fmt is not None and fmt != {"type": "audio/pcm", "rate": PCM_RATE}:
                         self._fail("discord_live_audio_format_mismatch")
                         continue
+                    if not self._ready and self._requested_voice is not None:
+                        report_live_voice_confirmation(self._requested_voice, snapshot, transport="discord")
                     self._ready = True
                     self._started.set()
                 elif kind == "session.output_audio.delta":

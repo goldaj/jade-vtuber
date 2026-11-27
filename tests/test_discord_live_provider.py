@@ -90,12 +90,17 @@ class DiscordLiveProviderTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_primary_start_payload_passes_official_sdk_without_webrtc_fields(self):
         provider, socket, factory = self.provider()
-        config = build_discord_live_config(LiveConfig(), instructions="Jade",
+        config = build_discord_live_config(LiveConfig(voice_id="voice_test_selected"), instructions="Jade",
             input=[{"type": "message", "role": "user", "content": [
                 {"type": "input_text", "text": "Bonjour"}]}])
         self.assertEqual(factory.calls, [])
-        session = await provider.open(config)
+        with self.assertLogs("src.jade_runtime.live_provider") as logged:
+            session = await provider.open(config)
         try:
+            self.assertEqual(len(logged.output), 1)
+            self.assertIn("Live voice transport=discord kind=custom result=matched", logged.output[0])
+            self.assertNotIn("voice_test_selected", logged.output[0])
+            self.assertNotIn("live_discord_test", logged.output[0])
             self.assertEqual(session.session_id, "live_discord_test")
             self.assertEqual(factory.calls[0][0], "wss://api.openai.com/v1/live/sessions")
             self.assertEqual(factory.calls[0][1]["extra_headers"], {"Authorization": "Bearer test-key"})

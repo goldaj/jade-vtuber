@@ -6,7 +6,8 @@ import unittest
 from src.jade_runtime.discord_live_provider import build_discord_live_config
 from src.jade_runtime.live_config import LiveConfig
 from src.jade_runtime.live_voice import (
-    JADE_VOICE_PROMPT, PETILLANTE_SESSION_PROMPT, VOICE_REVIEW_CORPUS, LiveVoice, prepare_voice_review,
+    JADE_VOICE_PROMPT, LIVE_DELIVERY_PROMPT, PETILLANTE_SESSION_PROMPT, VOICE_REVIEW_CORPUS,
+    LiveVoice, prepare_voice_review,
 )
 
 
@@ -143,9 +144,10 @@ class LiveConfigTests(unittest.TestCase):
         mobile = config.session_config(instructions=persona)
         discord = build_discord_live_config(config, instructions=persona)
         for payload in (mobile, discord):
-            self.assertEqual(payload["audio"]["output"]["voice"], {"id": "voice_selected_for_test"})
+            self.assertEqual(payload["audio"]["output"], {"voice": {"id": "voice_selected_for_test"}})
             self.assertTrue(payload["instructions"].startswith(persona))
             self.assertEqual(payload["instructions"].count(PETILLANTE_SESSION_PROMPT), 1)
+            self.assertEqual(payload["instructions"].count(LIVE_DELIVERY_PROMPT), 1)
         self.assertEqual(mobile["instructions"], discord["instructions"])
 
     def test_petillante_does_not_change_default_or_unrelated_custom_voice(self):
@@ -154,7 +156,9 @@ class LiveConfigTests(unittest.TestCase):
             with self.subTest(voice_id=voice_id):
                 payload = LiveConfig(voice_id=voice_id).session_config(instructions=persona)
                 self.assertEqual(payload["audio"]["output"]["voice"], expected)
-                self.assertEqual(payload["instructions"], persona)
+                self.assertTrue(payload["instructions"].startswith(persona))
+                self.assertNotIn(PETILLANTE_SESSION_PROMPT, payload["instructions"])
+                self.assertEqual(payload["instructions"].count(LIVE_DELIVERY_PROMPT), 1)
 
     def test_petillante_requires_a_custom_voice_and_an_explicit_supported_style(self):
         for env in ({"JADE_LIVE_VOICE_STYLE": "petillante"},

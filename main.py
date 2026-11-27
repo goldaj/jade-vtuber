@@ -384,7 +384,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             if discord_live_policy is not None:
                 discord_voice_bridge.live = await create_discord_live(
                     discord_voice_bridge, runtime, config, discord_live_policy,
-                    publish_reply=publish_discord_live_reply)
+                    publish_reply=publish_discord_live_reply,
+                    set_avatar_intent=avatar_client.set_intent if avatar_client is not None else None)
                 if discord_voice_bridge.live is not None:
                     scopes.push_async_callback(discord_voice_bridge.live.shutdown)
             if mobile_gateway is not None:

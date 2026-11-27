@@ -209,6 +209,19 @@ class DiscordLiveTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(.03)
         await asyncio.wait_for(self.bridge.pending.join(), 1)
 
+    async def test_current_live_intents_reach_discord_avatar_without_documents(self):
+        self.group()
+        intent = Mock()
+        self.adapter.set_avatar_intent = intent
+        state = self.adapter._new(self.source(), "group")
+        await self.adapter._publish(state.context, {"type": "live_intent", "intent": "curious"})
+        await self.adapter._publish(state.context, {
+            "type": "live_delegation", "status": "completed", "intent": "reassuring"})
+        await self.adapter._publish({**state.context, "session_id": "previous-session"}, {
+            "type": "live_intent", "intent": "playful"})
+        self.assertEqual([call.args for call in intent.call_args_list],
+                         [("curious",), ("reassuring",)])
+
     async def test_start_and_silence_are_free_then_solo_streams_verified_pcm(self):
         self.assertEqual(self.provider.calls, [])
         self.bridge.receive_pcm(12, "Alice", pcm(.2, 0))

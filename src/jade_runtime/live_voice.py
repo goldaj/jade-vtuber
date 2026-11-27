@@ -38,6 +38,16 @@ PETILLANTE_SESSION_PROMPT = (
     "discrètes et une énergie crédible sur une conversation entière."
 )
 
+LIVE_DELIVERY_PROMPT = (
+    "Par défaut, parle légèrement plus vite qu'en conversation ordinaire, avec des pauses "
+    "brèves, une articulation nette et des fins de phrase audibles. Fais entendre l'intention "
+    "par le rythme et la mélodie : enjouée, laisse entendre un sourire malicieux ; enthousiaste, "
+    "donne de l'élan sans hausser le volume ; curieuse, marque un intérêt vif et une légère "
+    "montée sur les questions ; tendre, adoucis brièvement le timbre ; rassurante, ralentis "
+    "légèrement avec une cadence stable ; sérieuse, parle d'un ton posé et précis. "
+    "Pour les échanges neutres, garde une diction conversationnelle naturelle."
+)
+
 
 VOICE_REVIEW_CORPUS = (
     ("salutation", "Salut, c’est Jade. Tu veux me raconter ta journée ?"),

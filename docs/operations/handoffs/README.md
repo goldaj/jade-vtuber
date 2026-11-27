@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Pétillante, intonations et mouvements GPT-Live](2026-11-27-codex-petillante-intentions-live.md) · Vérification du profil personnalisé, débit et expressions des tours natifs et délégués.
+
 - [Reprise après fermeture Live non confirmée](2026-11-27-codex-reprise-fermeture-live-mobile.md) · Déblocage local explicite, conservation de l’usage indéterminé et état du micro.
 
 - [REC-052 · Pétillante sur GPT-Live et l’avatar r21](2026-11-27-codex-voix-petillante.md) · Prompt de session choisi par le propriétaire, sélection de la voix existante et recette mobile à valider.

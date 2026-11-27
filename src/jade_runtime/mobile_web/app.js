@@ -421,6 +421,7 @@
         avatar().setMouth(level);
         avatar().setSpeaking(speaking);
         if (speaking && liveMotionPending) { avatar().startReplyMotion?.(0); liveMotionPending = false; }
+        if (liveSpeaking && !speaking) avatar().finishReply?.(true);
         liveSpeaking = speaking;
       },
       onAuthFailure:() => { if (token) authorizeAgain(); },
