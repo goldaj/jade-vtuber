@@ -1,3 +1,9 @@
+## 2026-11-27 — Pétillante sur GPT-Live
+
+- La candidate Pétillante enregistrée sert de voix à l’essai dans Jade. La consigne de session choisie par le propriétaire vise un registre très aigu, un jeu inspiré du manga et un accent français de France.
+- `JADE_LIVE_VOICE_STYLE=petillante` associe cette consigne au profil d’essai et exige l’ID de la voix dans `JADE_LIVE_VOICE_ID`. Le serveur applique la consigne à l’ouverture des sessions Live mobiles et Discord, avec le contexte de Jade. La voix et l’identifiant de l’essai sont conservés dans le projet API et dans la configuration privée du poste.
+- Le Playground a produit une réplique dans une session de 21 secondes. La recette avec l’avatar r21 reste ouverte en [REC-052](../backlog/02-RECETTE.md#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041). [Passation](handoffs/2026-11-27-codex-voix-petillante.md)
+
 ## 2026-11-27 — Commande du Live Discord et couleur de la conversation mobile
 
 - Le salon Discord n’émet plus de salut automatique à l’arrivée. Le moteur Live possède la sortie vocale jusqu’à la fin de sa session. Les réponses classiques prennent la suite à la prochaine interaction admissible après bascule.

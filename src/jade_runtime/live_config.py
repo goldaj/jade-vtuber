@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Callable
 
-from .live_voice import LiveVoice
+from .live_voice import LiveVoice, PETILLANTE_SESSION_PROMPT
 from .discord_config import is_discord_enabled
 
 
@@ -48,6 +48,7 @@ class LiveConfig:
     max_delegations_per_session: int = 12
     usage_db_path: str = field(default_factory=_default_db_path)
     session_db_path: str = ""
+    voice_style: str = ""
 
     @classmethod
     def from_env(cls, getter: Callable[[str, str], object]) -> "LiveConfig":
@@ -61,6 +62,7 @@ class LiveConfig:
             model=get("JADE_LIVE_MODEL", "gpt-live-1.1"),
             voice=get("JADE_LIVE_VOICE", "brise"),
             voice_id=get("JADE_LIVE_VOICE_ID", ""),
+            voice_style=get("JADE_LIVE_VOICE_STYLE", ""),
             heartbeat_seconds=float(get("JADE_LIVE_HEARTBEAT_SECONDS", 2)),
             lease_seconds=float(get("JADE_LIVE_LEASE_SECONDS", 5)),
             idle_standby_seconds=int(get("JADE_LIVE_IDLE_STANDBY_SECONDS", 8)),
@@ -87,6 +89,10 @@ class LiveConfig:
         if self.model not in ("gpt-live-1", "gpt-live-1.1"):
             raise ValueError("Live requires a documented Live model, not a Realtime TTS model")
         LiveVoice(self.voice, self.voice_id).validate()
+        if self.voice_style not in ("", "petillante"):
+            raise ValueError("unsupported JADE_LIVE_VOICE_STYLE")
+        if self.voice_style and not self.voice_id:
+            raise ValueError("JADE_LIVE_VOICE_STYLE requires JADE_LIVE_VOICE_ID")
         bounds = {
             "heartbeat_seconds": (0.5, 10), "lease_seconds": (1, 30),
             "idle_close_seconds": (5, 300), "opening_timeout_seconds": (1, 30),
@@ -160,6 +166,11 @@ class LiveConfig:
             }},
             "input": input if input is not None else [],
         }
+        if self.voice_style == "petillante":
+            voice_direction = f"Direction vocale\n{PETILLANTE_SESSION_PROMPT}"
+            instructions = f"{instructions}\n\n{voice_direction}" if instructions else voice_direction
+            if len(instructions.encode("utf-8")) > 16384:
+                raise ValueError("Live instructions and voice style exceed the conservative instruction budget")
         if instructions:
             session["instructions"] = instructions
         return session

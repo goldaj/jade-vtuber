@@ -3,8 +3,11 @@ from pathlib import Path
 import tempfile
 import unittest
 
+from src.jade_runtime.discord_live_provider import build_discord_live_config
 from src.jade_runtime.live_config import LiveConfig
-from src.jade_runtime.live_voice import LiveVoice, JADE_VOICE_PROMPT, VOICE_REVIEW_CORPUS, prepare_voice_review
+from src.jade_runtime.live_voice import (
+    JADE_VOICE_PROMPT, PETILLANTE_SESSION_PROMPT, VOICE_REVIEW_CORPUS, LiveVoice, prepare_voice_review,
+)
 
 
 class LiveConfigTests(unittest.TestCase):
@@ -130,6 +133,43 @@ class LiveConfigTests(unittest.TestCase):
         self.assertNotIn("voice_saved_123", str(custom.public_status()))
         self.assertTrue(JADE_VOICE_PROMPT)
         self.assertEqual(len(VOICE_REVIEW_CORPUS), 7)
+
+    def test_petillante_reuses_the_private_voice_and_preserves_instructions_in_both_transports(self):
+        config = LiveConfig.from_env({
+            "JADE_LIVE_VOICE_ID": "voice_selected_for_test",
+            "JADE_LIVE_VOICE_STYLE": "petillante",
+        }.get)
+        persona = "Tu es Jade. Garde les règles du canal et délègue les recherches."
+        mobile = config.session_config(instructions=persona)
+        discord = build_discord_live_config(config, instructions=persona)
+        for payload in (mobile, discord):
+            self.assertEqual(payload["audio"]["output"]["voice"], {"id": "voice_selected_for_test"})
+            self.assertTrue(payload["instructions"].startswith(persona))
+            self.assertEqual(payload["instructions"].count(PETILLANTE_SESSION_PROMPT), 1)
+        self.assertEqual(mobile["instructions"], discord["instructions"])
+
+    def test_petillante_does_not_change_default_or_unrelated_custom_voice(self):
+        persona = "Tu es Jade."
+        for voice_id, expected in (("", "brise"), ("voice_other", {"id": "voice_other"})):
+            with self.subTest(voice_id=voice_id):
+                payload = LiveConfig(voice_id=voice_id).session_config(instructions=persona)
+                self.assertEqual(payload["audio"]["output"]["voice"], expected)
+                self.assertEqual(payload["instructions"], persona)
+
+    def test_petillante_requires_a_custom_voice_and_an_explicit_supported_style(self):
+        for env in ({"JADE_LIVE_VOICE_STYLE": "petillante"},
+                    {"JADE_LIVE_VOICE_STYLE": "unknown", "JADE_LIVE_VOICE_ID": "voice_other"}):
+            with self.subTest(env=env), self.assertRaises(ValueError):
+                LiveConfig.from_env(env.get)
+
+    def test_petillante_instruction_limit_counts_utf8_bytes_after_joining(self):
+        config = LiveConfig(voice_id="voice_selected_for_test", voice_style="petillante")
+        overhead = len(config.session_config(instructions="a")["instructions"].encode("utf-8")) - 1
+        remaining = 16_384 - overhead
+        persona = "é" * (remaining // 2) + "a" * (remaining % 2)
+        self.assertEqual(len(config.session_config(instructions=persona)["instructions"].encode("utf-8")), 16_384)
+        with self.assertRaises(ValueError):
+            config.session_config(instructions=persona + "a")
 
     def test_voice_packet_is_an_offline_plan_not_a_created_or_previewed_voice(self):
         packet = prepare_voice_review()

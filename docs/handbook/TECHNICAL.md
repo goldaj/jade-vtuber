@@ -17,7 +17,8 @@ Les valeurs sont lues par `Settings.live` depuis la configuration privée habitu
 | `DISCORD_ENABLED` dans `src/jade_runtime/discord_config.py` | `True` | Unique interrupteur code de tout Discord et de sa sélection vocale automatique ; anciennes variables privées Discord ignorées |
 | `JADE_LIVE_MODEL` | `gpt-live-1.1` | Modèle distinct du dialogue et du TTS classique |
 | `JADE_LIVE_VOICE` | `brise` | Voix API explicite ; Aube non confirmée, aucune équivalence supposée |
-| `JADE_LIVE_VOICE_ID` | vide | ID autorisé d'une voix personnalisée, prioritaire sur le nom |
+| `JADE_LIVE_VOICE_ID` | vide | ID autorisé d’une voix personnalisée, prioritaire sur le nom |
+| `JADE_LIVE_VOICE_STYLE` | vide | `petillante` joint la consigne vocale choisie aux sessions mobiles et Discord Live et exige un `JADE_LIVE_VOICE_ID` privé |
 | `JADE_LIVE_HEARTBEAT_SECONDS` / `JADE_LIVE_LEASE_SECONDS` | `2` / `5` | Cadence de contrôle et expiration du bail |
 | `JADE_LIVE_IDLE_STANDBY_SECONDS` / `JADE_LIVE_IDLE_CLOSE_SECONDS` | `8` / `30` | Veille fournisseur puis fermeture idle avec bail conservé |
 | `JADE_LIVE_OPENING_TIMEOUT_SECONDS` / `JADE_LIVE_CLOSE_TIMEOUT_SECONDS` | `8` / `5` | Deadlines de création et de demande de clôture |
@@ -48,7 +49,7 @@ Les routes conservent identité Tailscale, origine privée et Bearer. L'envelopp
 
 La clôture fournisseur confirme `session.closed`, pas une déconnexion. `opening_unknown` et `close_unconfirmed` restent visibles et bloquent une nouvelle session. Le serveur invalide les travaux avant les attentes, tente les fermetures bornées et reprend la réconciliation au démarrage. Un heartbeat ne prolonge ni le délai de mute ni l'activité conversationnelle. La curation en attente ne démarre qu'à la prochaine session active, avec contrôle du bail et de l'idempotence, sans condition financière.
 
-Les compteurs d'usage mobile restent passifs. La politique Discord distincte ci-dessous agrège les dépenses globales ; aucun seuil quotidien ni plafond mobile. Le script `python scripts/live_voice_preview.py` prépare uniquement les variantes et le corpus ; aucune création/écoute ni sélection acoustique n'est incluse.
+Les compteurs d'usage mobile restent passifs. La politique Discord distincte ci-dessous agrège les dépenses globales ; aucun seuil quotidien ni plafond mobile. Le script `python scripts/live_voice_preview.py` prépare hors ligne les variantes et le corpus. Voir [REC-052](../backlog/02-RECETTE.md#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041) pour le profil Pétillante et l’essai avec l’avatar.
 
 ## Discord Live automatique — 27 novembre 2026
 

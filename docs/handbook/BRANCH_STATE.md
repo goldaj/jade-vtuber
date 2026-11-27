@@ -17,11 +17,11 @@
 - Chat par segments, pièces jointes privées et états de lecture explicites. Le lecteur WebRTC du navigateur joue la voix distante et un analyseur synchronise la bouche et la motion de réponse de l’avatar. Le graphe Web Audio reprend la sortie si la lecture du lecteur est refusée.
 - Usages cumulés et métriques passifs, sans plafonds quotidiens/mensuels ni arrêt pour dépense. Les anciennes variables de montant Live sont ignorées. Une panne du suivi d'usage ne désactive pas le mobile ; le registre de sessions et le journal métier restent nécessaires. Coûts backend incomplets explicitement identifiés. La politique Discord ci-dessous reste indépendante du mobile.
 - Config explique les indisponibilités et les erreurs de chargement ; les refus fournisseur distinguent authentification, accès au modèle, quota fournisseur et connexion, sans publier de contenu privé.
-- Aube est souhaitée mais non confirmée dans l'API ; Brise est le recours explicite. Support d'un ID personnalisé et kit de comparaison hors ligne prêts ; voix originale encore à créer/choisir.
+- Pétillante est la voix enregistrée retenue pour l’essai. Le profil privé `JADE_LIVE_VOICE_STYLE=petillante` utilise son identifiant et la consigne choisie à l’ouverture d’une session Live mobile ou Discord. Pour une configuration utilisant le catalogue, Brise est le choix de départ.
 
 **Correctif de reprise du 27/11 (DEV-055) :** permissions d’événements serveur au format objet conforme à l’API, validation avant réseau et contrôle par le SDK officiel dans le test du corps HTTP. Le message de fin de réponse disparaît dès l’arrêt ; les diagnostics restent visibles. Le kit vocal ne mentionne plus de budget mobile. [Preuves](../operations/handoffs/2026-11-27-chatgpt-live-resume.md).
 
-**Suivis :** sept développements transférés en REC-044 à REC-050, À valider, avec tests automatisés et recette OpenAI/Redmi restante. DEV-041 conserve la voix originale. La demande complémentaire du 27/11 engage l'automatisme Discord ci-dessous.
+**Suivis :** sept développements transférés en REC-044 à REC-050, À valider, avec tests automatisés et recette OpenAI/Redmi restante. [REC-052](../backlog/02-RECETTE.md#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041), ancienne DEV-041, suit l’essai de Pétillante avec r21. La demande complémentaire du 27/11 engage l'automatisme Discord ci-dessous.
 
 ## Discord Live automatique et commande manuelle (27 novembre 2026)
 

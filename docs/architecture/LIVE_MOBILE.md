@@ -83,7 +83,9 @@ Le registre de sessions et le journal des opérations restent nécessaires à la
 
 ## Voix et suite Discord
 
-**Aube** reste la préférence du propriétaire pour le prototype. Sa présence dans ChatGPT ne prouve pas un ID d'API utilisable ; aucune équivalence avec **Brise** n'est affirmée. La configuration initiale explicite `brise` et accepte un ID de voix personnalisée. Le paragraphe permanent sur cette limite a été retiré de Config à la demande du propriétaire le 27/11. `scripts/live_voice_preview.py` prépare le prompt original et sept cas français sans créer de voix ni payer une préécoute. Création, écoute et choix sont encore DEV-041.
+**Pétillante** est la candidate choisie pour l’essai. Renseigner `JADE_LIVE_VOICE_ID` avec l’identifiant de la candidate enregistrée et `JADE_LIVE_VOICE_STYLE=petillante` dans la configuration privée. Le serveur joint la consigne vocale choisie au contexte de Jade à chaque ouverture, pour la PWA et le moteur Discord Live. Le lecteur WebRTC fournit à l’analyseur le signal qui pilote la bouche et la motion de réponse. La vérification conjointe du son et du mouvement avec cette voix sur r21 est suivie dans [REC-052](../backlog/02-RECETTE.md#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041).
+
+Le profil de style est facultatif. Le catalogue utilise `brise` par défaut. L’identifiant d’Aube n’a pas été confirmé dans l’API lors du prototype. Le script `scripts/live_voice_preview.py` reste un outil de préparation hors ligne.
 
 **Demande complémentaire du 27/11 :** [Discord Live automatique](DISCORD_LIVE.md) est développé, avec la constante unique `DISCORD_ENABLED` dans `src/jade_runtime/discord_config.py`. `True` active Discord avec sélection Live/classique selon le total mensuel toutes API, à 50 EUR si couverture complète et fraîche ou 40 EUR pour les relevés estimés ; `False` désactive tout Discord. L'ancien `JADE_DISCORD_LIVE_ENABLED` n'est plus utilisé. Le mobile n'a aucun budget propre ; ses préférences et sessions ne sont jamais pilotées par cette règle. Sa consommation contribue seulement au total utilisé pour la décision Discord. DEV-052 est transférée en REC-051 pour la recette réelle.
 

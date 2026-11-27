@@ -27,6 +27,18 @@ JADE_VOICE_PROMPT = (
     "Ne pas imiter une personne réelle ni reproduire une voix existante."
 )
 
+# The owner auditioned these session instructions with the already saved voice.
+PETILLANTE_SESSION_PROMPT = (
+    "Voix féminine jeune très aigüe pour son âge, façon personnage de manga, "
+    "mais en français de France, avec une diction naturelle et des fins de phrase bien audibles. "
+    "Registre très haut, timbre clair, avec un léger sourire qui s’entend au détour d’une phrase. "
+    "Débit vif mais souple, comme une streameuse qui réagit sur le moment. Une petite pause "
+    "avant une pique, une intonation qui monte de surprise puis retombe. Elle sonne sûre d’elle, "
+    "malicieuse et proche de son interlocuteur. Garde une articulation nette, des respirations "
+    "discrètes et une énergie crédible sur une conversation entière."
+)
+
+
 VOICE_REVIEW_CORPUS = (
     ("salutation", "Salut, c’est Jade. Tu veux me raconter ta journée ?"),
     ("plaisanterie", "J’avais prévu une réponse très sérieuse… puis tu es arrivé."),
