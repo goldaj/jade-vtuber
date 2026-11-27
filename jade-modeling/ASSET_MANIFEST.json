@@ -1608,22 +1608,6 @@
     "selection_reason": "Current workflow entry point"
   },
   {
-    "path": "jade-modeling/tools/vts_final_showcase_r20.py",
-    "source_group": "current-tools",
-    "bytes": 8974,
-    "sha256": "38129a914f221bee111c0db1f68fa4f106b65da140d90c655ad82e0b124ba932",
-    "storage": "git",
-    "selection_reason": "Current workflow entry point"
-  },
-  {
-    "path": "jade-modeling/tools/vts_idle_observe_r20.py",
-    "source_group": "current-tools",
-    "bytes": 8433,
-    "sha256": "35abd26706da667d902676b1b0ff8d23c6c0703ed9d0b05a7da68b805d075d90",
-    "storage": "git",
-    "selection_reason": "Current workflow entry point"
-  },
-  {
     "path": "jade-modeling/tools/vts_model_switch.py",
     "source_group": "current-tools",
     "bytes": 10496,
@@ -1646,14 +1630,6 @@
     "sha256": "d8999c4818a3cef5834e150dd2c3e5729584337b6653e021c6853807ed40892d",
     "storage": "git",
     "selection_reason": "Current unvalidated working-model builder for per-part atlas crops"
-  },
-  {
-    "path": "jade-modeling/tools/vts_toggle_matrix_r20.py",
-    "source_group": "current-tools",
-    "bytes": 11717,
-    "sha256": "56c47f1cb06603ba0e02cf4738bcd98323861bccf315eebf48f42332551eca85",
-    "storage": "git",
-    "selection_reason": "Current workflow entry point"
   },
   {
     "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/CALIBRATION.md",

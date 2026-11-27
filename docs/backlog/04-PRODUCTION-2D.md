@@ -2,7 +2,9 @@
 
 **Branche :** develop · **Révision :** 27 novembre 2026 · **Type :** ART.
 
-Production du modèle complet r21 à partir des sources et checkpoints existants, sans réintroduire les anciennes démos. Le lot Triste/Colère et la non-régression des sept intentions utilisent exclusivement le r21 mobile v49.1 actif ; r20 reste dans l’application, hors de cette campagne de recette.
+Production du modèle complet r21 à partir des sources et checkpoints existants, sans réintroduire les anciennes démos. Le lot Triste/Colère et la non-régression des sept intentions utilisent le r21 mobile v49.1 actif.
+
+**Décision propriétaire du 27/11/2026 — maintenance et tests :** r21 est le seul modèle maintenu et testé. r20, ses ressources et le sélecteur existant restent dans l’application, mais aucune nouvelle maintenance ni recette r20 ne doit être engagée. Cette décision s’applique à toutes les cartes actives, au-delà du lot Triste/Colère. Les anciennes validations et preuves datées restent conservées comme historique ; elles ne prescrivent pas de nouveaux essais r20.
 
 **Priorité :** valeur et dépendances, pas un engagement de calendrier. **DoD officielle :** [règle de clôture commune](DEFINITION_OF_DONE.md), adaptée aux assets, à Cubism/VTS et aux essais graphiques. **Codex (tout modèle/sous-agent) OU le propriétaire** peut valider chaque carte après une vérification explicite et des preuves réelles.
 

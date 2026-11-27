@@ -335,7 +335,7 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         # The identity header is provided only by trusted Tailscale Serve.
         status, _, _ = await self.request("GET", "/")
         self.assertEqual(status, 403)
-        status, _, _ = await self.request("GET", "/model/Jade.model3.json")
+        status, _, _ = await self.request("GET", "/models/next/Jade.model3.json")
         self.assertEqual(status, 403)
         status, _, _ = await self.request(
             "GET", "/", headers={"Tailscale-User-Login":"someone@example.test"})
@@ -438,7 +438,7 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(int.from_bytes(body[20:24], "big"), dimension)
                 self.assertIn(b"Content-Type: image/png", response)
 
-    async def test_safe_assets_served_and_r20_idle_is_virtual(self):
+    async def test_safe_application_and_portrait_assets_are_served(self):
         status, page, headers = await self.request("GET", "/")
         self.assertEqual(status, 200)
         self.assertIn(b'id="auth-form"', page)
@@ -480,23 +480,6 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((status, patch), (200, b"/* local patch */"))
         status, _, _ = await self.request("GET", "/assets/app.js")
         self.assertEqual(status, 200)
-        model_dir = Path(self.temp.name) / "model"
-        model_dir.mkdir()
-        original = {"Version":3,"FileReferences":{
-            "Moc":"Jade.moc3", "Textures":["Jade.4096/texture_00.png"]}}
-        (model_dir / "Jade.model3.json").write_text(json.dumps(original), encoding="utf-8")
-        (model_dir / "Jade_idle.motion3.json").write_text("{}", encoding="utf-8")
-        (model_dir / "Jade.moc3").write_bytes(b"\x00" * 32)
-        self.mobile.model_dir = model_dir
-        status, doc, _ = await self.request("GET", "/model/Jade.model3.json")
-        self.assertEqual(status, 200)
-        self.assertIn("Idle", json.loads(doc)["FileReferences"]["Motions"])
-        self.assertNotIn("Motions", original["FileReferences"])
-        status, raw, _ = await self.request("GET", "/model/Jade.moc3")
-        self.assertEqual(status, 200)
-        self.assertEqual(raw, b"\x00" * 32)
-        status, _, _ = await self.request("GET", "/model/../.env")
-        self.assertEqual(status, 404)
 
     async def test_invalid_token_and_missing_flags(self):
         with self.assertRaises(ValueError):

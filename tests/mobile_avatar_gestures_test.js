@@ -173,7 +173,7 @@ assert(visualOnly.zone.classList.contains("is-grabbed"), "visual feedback remain
 visualOnly.pointer("pointerup");
 assert(!visualOnly.zone.classList.contains("is-grabbed"));
 
-for (const interruption of ["microphone", "rotation", "cancel", "lostcapture", "classic", "chat", "hidden"]) {
+for (const interruption of ["microphone", "rotation", "cancel", "lostcapture", "unloaded", "chat", "hidden"]) {
   const interrupted = client();
   interrupted.pointer("pointerdown");
   if (interruption === "microphone")
@@ -181,7 +181,7 @@ for (const interruption of ["microphone", "rotation", "cancel", "lostcapture", "
   else if (interruption === "rotation") interrupted.resize();
   else if (interruption === "cancel") interrupted.pointer("pointercancel");
   else if (interruption === "lostcapture") interrupted.zone.releasePointerCapture(1);
-  else if (interruption === "classic") interrupted.model("classic");
+  else if (interruption === "unloaded") interrupted.model(null);
   else if (interruption === "chat") interrupted.view("chat");
   else {
     interrupted.document.hidden = true;
@@ -204,6 +204,6 @@ for (const tab of ["chat", "reminders", "profile"]) {
 assert.deepEqual(gates.calls.vibrations, []);
 gates.view("chat", true);
 assert(!gates.zone.hidden && !gates.recenter.hidden, "the fullscreen scene keeps touch framing available");
-gates.model("classic");
-assert(gates.zone.hidden && gates.recenter.hidden, "the classic model is excluded even in fullscreen");
+gates.model(null);
+assert(gates.zone.hidden && gates.recenter.hidden, "an unavailable r21 has no touch controls even in fullscreen");
 console.log("Avatar touch interactions: r21 scene gate, pinch, haptic hold, release, recenter and cancellations PASS");

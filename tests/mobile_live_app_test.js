@@ -259,7 +259,7 @@ function expectLiveColor(phase) {
   const resets = avatarEvents.filter(event => event[0] === "reset").length;
   await live.refresh();
   assert.equal(avatarEvents.filter(event => event[0] === "reset").length, resets,
-    "a read-only Profile refresh must not reset the classic avatar's current reply");
+    "a read-only Profile refresh must not reset r21's current classic-voice reply");
   emitState({mode:"classic", supported:false, available:false,
     availability_message:"Ce navigateur ne permet pas le mode Live : AudioWorklet manque."});
   assert.match(element("live-mode-status").textContent, /navigateur.*AudioWorklet/,

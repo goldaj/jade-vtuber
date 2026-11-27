@@ -1,5 +1,7 @@
 # Backlog opérationnel de Jade — source de vérité
 
+**Décision propriétaire du 27/11/2026 — maintenance et tests :** r21 est le seul modèle maintenu et testé. r20, ses ressources et le sélecteur existant restent dans l’application, mais aucune nouvelle maintenance ni recette r20 ne doit être engagée. Cette décision s’applique à toutes les cartes actives, au-delà du lot Triste/Colère. Les anciennes validations et preuves datées restent conservées comme historique ; elles ne prescrivent pas de nouveaux essais r20.
+
 **Arbitrage du 21/11/2026 :** les cartes exigeant le **microphone physique local du PC**, **Twitch** ou **OBS** sont suspendues en `Bloqué` jusqu'à nouvel ordre. Ce n'est **pas** une suspension générale des travaux sur Windows ni des tests Discord/Android/mémoire. Les sous-tests indépendants restent possibles, mais les cartes mixtes ne sont pas closes. [Passation](../operations/handoffs/2026-11-21-chatgpt-suspension-micro-twitch-obs.md).
 
 **Recettes automatisées du 21/11/2026 :** `REC-021` et `REC-025` ont maintenant **des tests d'acceptation exécutés avec succès sous Linux et Windows**, [CI sur le SHA `955ca2e255`](https://github.com/goldaj/jade-vtuber/actions/runs/44947197393). **Mise à jour du 22/11/2026 :** les deux cartes sont maintenant **`Done` sur validation expresse du propriétaire**, avec réserves documentées ; aucune inspection nouvelle des archives privées n'est affirmée pour REC-025. La vue [REC](02-RECETTE.md#compte-rendu-des-recettes-automatiques-rec-021-et-rec-025-21-novembre-2026) décrit les preuves.
@@ -41,7 +43,7 @@
 
 **Microphone physique du PC, Twitch et OBS restent suspendus** dans leurs cartes concernées. [Décision et limites](../operations/handoffs/2026-11-22-validation-rec031-rec033-rec034.md).
 
-**Intentions supplémentaires — développement du 27/11 :** **DEV-053 → [REC-053](02-RECETTE.md#rec-053--intentions-triste-et-colère-sur-r21-ancienne-dev-053)**, en **P1**, après implémentation de **Triste et Colère** : contrat commun, prosodie, représentations textuelles et intégration r21. [ART-014](04-PRODUCTION-2D.md#art-014--expressions-et-animations-triste-et-colère-p1) conserve l’acceptation des quatre motions originales A/B livrées sur le rig existant. La campagne porte exclusivement sur **r21, neuf intentions et dix-huit variantes** ; r20 est conservé dans l’application et n’est pas testé. Les voix en service et le Redmi n’ont pas été observés. La refonte faciale ART-015 est reportée faute d’accès natif. Statuts et critères dans les vues canoniques ; [réalisation, preuves et limites](../operations/handoffs/2026-11-27-chatgpt-intentions-r21-implementation.md).
+**Intentions supplémentaires — développement du 27/11 :** **DEV-053 → [REC-053](02-RECETTE.md#rec-053--intentions-triste-et-colère-sur-r21-ancienne-dev-053)**, en **P1**, après implémentation de **Triste et Colère** : contrat commun, prosodie, représentations textuelles et intégration r21. [ART-014](04-PRODUCTION-2D.md#art-014--expressions-et-animations-triste-et-colère-p1) conserve l’acceptation des quatre motions originales A/B livrées sur le rig existant. La campagne porte exclusivement sur **r21, neuf intentions et dix-huit variantes** ; r20 est conservé dans l’application sans maintenance ni tests, dans ce lot comme dans les suivants. Les voix en service et le Redmi n’ont pas été observés. La refonte faciale ART-015 est reportée faute d’accès natif. Statuts et critères dans les vues canoniques ; [réalisation, preuves et limites](../operations/handoffs/2026-11-27-chatgpt-intentions-r21-implementation.md).
 
 ## Focus de travail léger (limite indicative : 3 tâches réellement « En cours »)
 
@@ -79,7 +81,7 @@ Les sous-tâches de recette et les étapes matérielles restent séparées lorsq
 
 ### A · Jade actuelle opérationnelle
 
-Une instance `--all-channels` réellement utilisable, son, Discord écrit/vocal, Twitch, micro PC, accès HTTP local et PWA Android, mémoire opt-in et rendu r20, avec tests des audiences, des coupures, du coût et des limites constatées. **Le r21 final n'est pas bloquant pour ce jalon.** Une preuve matérielle reste à collecter ; les fonctionnalités sont néanmoins codées dans `develop`.
+Une instance `--all-channels` réellement utilisable, son, Discord écrit/vocal, Twitch, micro PC, accès HTTP local et PWA Android, mémoire opt-in et rendu mobile r21, avec tests des audiences, des coupures, du coût et des limites constatées. **La finition artistique finale du r21 n’est pas bloquante pour ce jalon.** Le renderer Windows historique r20 reste présent sans maintenance ni recette ; son raccordement r21 est suivi dans DEV-001. Les suspensions de recette existantes restent applicables. Une preuve matérielle reste à collecter ; les fonctionnalités sont néanmoins codées dans `develop`.
 
 ### B · Jade visuellement aboutie
 

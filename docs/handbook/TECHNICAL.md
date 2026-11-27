@@ -115,7 +115,7 @@ Le STT et TTS reposent sur **OpenAI**, non sur une synthèse locale alternative 
 
 `intent_engine.py` interprète le préfixe strict `[INTENT:...]` proposé par le LLM, le supprime des sorties visibles et des mémoires et fournit une direction vocale limitée. Le pitch Étincelle +2 demi-tons est un traitement PCM dans `pitch_shift.py` si FFmpeg/rubberband est disponible, **pas** une option `pitch` universelle du TTS OpenAI. `output.py` gère WAV, observation d'animation et fichiers de sous-titres temporaires ; `avatar.py` démarre l'avatar autonome r20 via son processus local. `vtube_studio.py` fournit un renderer optionnel distinct à URL WebSocket loopback.
 
-Le modèle r20 est suivi via **Git LFS**. Les paquets graphiques Web propriétaire et les formats `.moc3` Cubism exigent des licences et une compatibilité testée ; leur présence dans le dépôt Python n'assure pas le rendu Android.
+Le modèle r20 est suivi via **Git LFS** et reste dans l'application. **Depuis la décision du propriétaire du 27/11, sa maintenance et ses recettes sont arrêtées ; les tests spécifiques r20 sont supprimés. Le r21 est l'unique modèle maintenu et testé.** Les contrôles génériques du mode vocal classique ne concernent pas le modèle r20 et restent applicables. Les paquets graphiques Web propriétaire et les formats `.moc3` Cubism exigent des licences et une compatibilité testée ; leur présence dans le dépôt Python n'assure pas le rendu Android.
 
 ## 6. Connecteurs texte, HTTP et PWA
 
@@ -201,7 +201,7 @@ Flux : LLM → préfixe `[INTENT:...]` filtré par `intent_engine.py` → `Reply
 
 **Modèle classique et repli mobile.** `mobile_gateway.py` sert la palette sous identité Tailscale. Pour le r20, `avatar.js` applique l’expression de la palette via les `.exp3` disponibles. Le chat et la voix restent utilisables si le SDK, les ressources ou la palette sont indisponibles. Le r21 suit la chronologie décrite dans la [sélection du modèle mobile](#sélection-du-modèle-mobile-26112026).
 
-**Runtime Windows.** Les variantes sont les expressions faciales du r20. Le raccordement du catalogue de motions r21 au bot Windows reste suivi dans DEV-001. Le lot Triste/Colère ne migre pas ce renderer et ne recette pas le r20. [Passation Live2D d’origine](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md)
+**Runtime Windows.** Les variantes sont les expressions faciales historiques du r20, conservé sans maintenance ni recette. Le raccordement du catalogue de motions r21 au bot Windows reste suivi dans DEV-001. Le lot Triste/Colère ne migre pas ce renderer. [Passation Live2D d’origine](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md)
 
 **Triste et Colère — REC-053 (ancienne DEV-053).** `sad` et `angry` étendent le registre, les consignes du dialogue et les directions de prosodie. Le TTS Realtime les applique en WAV et en PCM, y compris sur une connexion réutilisée ; chaque demande remplace la direction précédente. Le chemin historique Speech API non-Realtime conserve son comportement sans direction d’intention. En Live natif, `classify_live_intent` estime localement l’intention dans le début de transcription ; le réconfort explicite précède les déclarations de tristesse/colère de Jade, puis les autres indices. Le Live délégué garde `Reply.intent` comme autorité et transmet la direction par une consigne silencieuse. Aucun classificateur supplémentaire facturé.
 

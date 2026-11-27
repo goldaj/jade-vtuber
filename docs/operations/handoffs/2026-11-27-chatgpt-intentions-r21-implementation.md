@@ -3,6 +3,7 @@
 ## Autorisation et périmètre
 
 - **Demande propriétaire du 27 novembre 2026 :** réaliser l'ensemble du lot des deux nouvelles intentions et la non-régression des sept autres sur **r21 exclusivement**. L'ancien r20 demeure dans l'application. La refonte faciale peut attendre si elle exige des API ou applications inaccessibles.
+- **Arbitrage complémentaire pendant la réalisation :** supprimer les tests r20 ; ce modèle reste disponible mais ne fait plus l'objet de maintenance ni de recette. Cette décision s'applique aux suites et scripts de recette actuels, au-delà du seul lot des intentions.
 - **Agents / rôles :** ChatGPT coordinateur ; sous-agents distincts pour contrat/voix, client mobile et motions. Contre-revues croisées du backend, du frontend, des exports et du banc WebGL après réalisation.
 - **Base :** `develop`, `d7655cd4f4bf5c4e0ba1e177c625493ecfee1cd6`. Branche de livraison : `feat/intentions-triste-colere-r21-20261127`. Référence d'intégration : la PR portant cette fiche, à destination de `develop` uniquement.
 - **Cartes :** développement DEV-053 transféré vers **REC-053 À valider** ; **ART-014 À valider** après livraison des quatre motions ; **ART-015 P0 reportée/Bloqué** jusqu'à disponibilité de l'atelier natif. DEV-001 conserve le raccordement Windows r21 déjà prévu. Pas de seconde carte DEV active pour la recette du code livré.
@@ -48,7 +49,7 @@ La recherche des capacités disponibles n'a trouvé aucun accès exploitable à 
 
 ## Vérifications et preuves
 
-La campagne n'initialise ni modèle ni rendu r20. Les suites générales conservent leurs contrats logiciels historiques ; les observations visuelles et la recette des intentions de cette mission ciblent r21.
+La campagne n'initialise ni modèle ni rendu r20. Les tests spécifiques à ses assets, à son rendu et à son comportement sont supprimés. Les contrats de chargement, d'isolation, de cadrage, de visibilité et de cycle de vie restent exercés sur r21. Le profil `classic` éventuellement présent comme métadonnée imposée par le catalogue n'est jamais chargé par ces bancs. Les tests du **mode vocal classique** sont conservés : ce mode audio est indépendant de la version graphique.
 
 | Niveau | Vérification observée | Limite |
 | --- | --- | --- |
@@ -57,7 +58,7 @@ La campagne n'initialise ni modèle ni rendu r20. Les suites générales conserv
 | Assets | Deux manifestes, dix-huit motions, courbes/métadonnées/bornes, paramètres libres, variantes distinctes et export reproductible | Validation structurelle, complétée par le Core réel |
 | Core réel | **3 587 poses / 18 motions** échantillonnées à 60 Hz, paramètres dans les bornes du rig réel, sommets finis et retour exact au repos | Contrôle géométrique ; aucun jugement acoustique ou graphique natif |
 | WebGL réel local | **18 variantes et 9 combinaisons de pièce/cadrage** ; un seul canvas r21, geste du bon groupe/index, articulation sur Web Audio synthétique, fermeture complète commandée avant la pose, retour au neutre | Chromium local 393 × 873 ; aucune observation physique du Redmi |
-| Livraison | Compilation ; 1 023 tests Python du dépôt (12 skips), 1 023 depuis l'export isolé (23 skips), aucun échec ; suites JavaScript, préflight de 293 sources, export/réexport, contrat documentaire et non-modification des assets antérieurs | Résultats de CI et commit d'intégration dans la PR |
+| Livraison | Après retrait r20 : 1 019 tests Python du dépôt (12 skips), 1 019 depuis l'export isolé (22 skips), aucun échec ; 26 commandes JavaScript distinctes des gates CI, compilation, préflight de 290 sources, export/réexport, contrat documentaire et non-modification des assets antérieurs | Résultats de CI et commit d'intégration dans la PR |
 
 Preuves conservées dans [le dossier de recette](../evidence/2026-11-27-r21-intentions/README.md) : rapport Core avec empreintes et comparaison des quatorze clips antérieurs, rapport WebGL, planches de captures et commandes reproductibles. Les captures montrent le modèle réellement rendu avec ses textures ; elles ne représentent pas la refonte ART-015.
 
@@ -69,6 +70,12 @@ Preuves conservées dans [le dossier de recette](../evidence/2026-11-27-r21-inte
 - Relecture export par l'agent frontend : tests d'assets stricts dans le dépôt, skips seulement dans l'export marqué qui exclut entièrement l'atelier. Deux AVIF publics Cuisine/Salon absents de l'allowlist avant cette mission ont été ajoutés ; les tests d'export/smoke/réexport passent. Aucun modèle ou fichier d'atelier ajouté à l'export.
 
 Ces vérifications autorisent la livraison du code ; elles ne valent pas observation des scénarios physiques manquants ni acceptation implicite par le propriétaire. Les cartes de recette restent **À valider**, sans faux `Done`.
+
+### Recentrage des tests après la première CI
+
+La première CI de la [PR #55](https://github.com/goldaj/jade-vtuber/pull/55) a reproduit un oracle de cadrage devenu obsolète avant cette mission : la Cuisine r21 était comparée à l'ancienne caméra du modèle classic. La suite est recentrée sur les repères du plan portrait r21 dans les trois pièces. Les suites de composition hybride et d'isolation de tête r20 sont retirées, ainsi que les scénarios de manifeste/idle/expressions propres à ce modèle. Les scripts VTS d'observation exclusivement r20 sont supprimés ; les sources artistiques et le code applicatif demeurent.
+
+Le job Windows déclarait le bloc JavaScript réussi malgré cette assertion intermédiaire, puis poursuivait les tests Python. Le bloc emploie désormais Bash comme sur Linux, avec arrêt au premier échec. Les contrôles r21, les préférences et le cycle Live restent exécutés dans la CI. Ces corrections ne changent ni le rig, ni le rendu, ni les captures Core/WebGL du lot.
 
 ## Suite de recette
 

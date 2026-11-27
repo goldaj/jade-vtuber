@@ -6,7 +6,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 const source = fs.readFileSync(path.join(__dirname,
   "../src/jade_runtime/mobile_web/avatar-model-loader.js"), "utf8");
-const profile = {manifestUrl:"/models/next/Jade.model3.json"};
+const profile = {id:"next", manifestUrl:"/models/next/Jade.model3.json"};
 
 function deferred() {
   let resolve, reject;
@@ -149,7 +149,7 @@ function client({manifest, setup = "success", textureGates = {}, brokenCleanup =
 
   for (const manifest of [
     {Version:2,FileReferences:{Moc:"Jade.moc3",Textures:["a.png"]}},
-    {Version:3,FileReferences:{Moc:"../classic.moc3",Textures:["a.png"]}},
+    {Version:3,FileReferences:{Moc:"../outside.moc3",Textures:["a.png"]}},
     {Version:3,FileReferences:{Moc:"Jade.moc3",Textures:[]}},
     {Version:3,FileReferences:{Moc:"Jade.moc3",Textures:["https://other.example/a.png"]}},
     {Version:3,FileReferences:{Moc:"Jade.moc3",Textures:["a.png"],Motions:{Idle:[{File:"../idle.motion3.json"}]}}}
