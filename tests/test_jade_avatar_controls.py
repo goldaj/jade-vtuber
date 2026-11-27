@@ -1,7 +1,6 @@
 """Offline tests for the bounded avatar control protocol."""
 from io import StringIO
 import json
-from pathlib import Path
 import unittest
 from unittest.mock import Mock, call, patch
 
@@ -16,16 +15,6 @@ except ModuleNotFoundError as exc:
 
 @unittest.skipIf(AvatarControls is None, "Live2D renderer omitted from this preview")
 class AvatarControlsTests(unittest.TestCase):
-    def test_expression_allowlist_matches_original_model(self):
-        root = Path(__file__).resolve().parents[1]
-        model = root / "jade-modeling/runtime-installed/Jade_professional_r20_idle_complete/Jade.model3.json"
-        if not model.is_file():
-            self.skipTest("model omitted from this preview")
-        data = json.loads(model.read_text(encoding="utf-8"))
-        names = [item["Name"] for item in data["FileReferences"]["Expressions"]]
-        self.assertEqual(list(EXPRESSIONS), names)
-        self.assertEqual(len(EXPRESSIONS), 7)
-
     def test_expression_is_bounded_coalesced_and_independent_of_mouth(self):
         controls = AvatarControls()
         for name in (*EXPRESSIONS, NEUTRAL_EXPRESSION):

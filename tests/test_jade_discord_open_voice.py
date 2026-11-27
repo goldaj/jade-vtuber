@@ -263,6 +263,41 @@ class OpenVoiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.channel.connect.await_count, 3)  # setup, ready, resume
         self.assertEqual(self.connection.listen.call_count, 3)
 
+    async def test_voice_join_only_updates_transport_and_prefetches_memory(self):
+        test = self
+        member = types.SimpleNamespace(id=13, bot=False)
+        previous = types.SimpleNamespace(channel=None)
+        current = types.SimpleNamespace(channel=self.channel)
+        self.runtime.memory_service = types.SimpleNamespace(prefetch_voice_member=AsyncMock())
+
+        class Client:
+            def __init__(self, **kwargs):
+                self.user = test.client.user
+
+            async def start(self, token):
+                self._gateway_available = True
+                await self.on_voice_state_update(member, previous, current)
+                await asyncio.sleep(0)
+
+            async def close(self):
+                pass
+
+        discord = __import__("discord")
+        discord.Client = Client
+        discord.Intents = types.SimpleNamespace(default=lambda: types.SimpleNamespace())
+        discord.AllowedMentions = types.SimpleNamespace(none=lambda: None)
+        accepted = AsyncMock()
+        connector = DiscordText("synthetic", accepted, voice_bridge=self.bridge)
+        # A legacy in-process hook must not dispatch greetings anymore.
+        connector.initiatives = types.SimpleNamespace(voice_join=AsyncMock(return_value=object()))
+        with patch.object(self.bridge, "voice_state_changed",
+                          wraps=self.bridge.voice_state_changed) as changed:
+            await connector.connect_forever()
+        changed.assert_awaited_once_with(member, previous, current, own_bot_id=100)
+        self.runtime.memory_service.prefetch_voice_member.assert_awaited_once_with(13, 45)
+        connector.initiatives.voice_join.assert_not_awaited()
+        accepted.assert_not_awaited()
+
     async def test_voice_only_loss_retries_and_rejoins_with_a_fresh_session(self):
         test = self
 

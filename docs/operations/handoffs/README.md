@@ -6,7 +6,44 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
-- [Lot Live mobile · DEV-040/041 et DEV-046 à DEV-051](2026-11-26-chatgpt-live-mobile-roadmap.md) · Architecture, Profil ON/OFF, fermeture au kill, mémoire/outils et coûts ; huit US À faire, cadrage documentaire prêt pour DEV-046.
+- [REC-053 / ART-014 · Neuf intentions et dix-huit variantes r21](2026-11-27-chatgpt-intentions-r21-implementation.md) · Réalisation de Triste/Colère, non-régression des sept intentions sur r21, preuves automatisées et rendu réel local ; refonte faciale native ART-015 reportée selon la décision propriétaire.
+
+- [REC-051 · Continuité de la parole dans Discord Live](2026-11-27-codex-saccades-discord-live.md) · Distribution du PCM, interruption de parole et diagnostic de la coupure micro sur haut-parleur mobile.
+
+- [Salon portrait statique](2026-11-27-chatgpt-salon-portrait.md) · Troisième environnement, sélection persistante et cadrage partagé, chargement indépendant des deux décors statiques ; recette visuelle à réaliser.
+
+- [REC-052 · Rendu de Friponne sur Discord Live](2026-11-27-codex-rendu-friponne-discord.md) · Conversion PCM des aigus et écoute comparative avec le mobile.
+
+- [Cuisine portrait statique](2026-11-27-chatgpt-cuisine-portrait.md) · Nouveau décor AVIF, remplacement du WebP, retrait des anciens effets et cadrage partagé ; recette visuelle à réaliser.
+
+- [REC-052 · Friponne sur GPT-Live](2026-11-27-codex-voix-friponne.md) · Voix choisie dans le Playground, léger ajustement du débit et écoute à mener avec r21.
+
+- [ART-015 · Expressions faciales manga en P0](2026-11-27-chatgpt-expressions-manga-p0.md) · Un visage expressif dédié par intention, bascules très marquées et continuité du design ; ajout à la backlog.
+
+- [Pastille Live et micro coupé](2026-11-27-codex-pastille-live.md) · Distinction immédiate entre micro coupé et veille.
+
+- [Pétillante, intonations et mouvements GPT-Live](2026-11-27-codex-petillante-intentions-live.md) · Vérification du profil personnalisé, débit et expressions des tours natifs et délégués.
+
+- [Reprise après fermeture Live non confirmée](2026-11-27-codex-reprise-fermeture-live-mobile.md) · Déblocage local explicite, conservation de l’usage indéterminé et état du micro.
+
+- [REC-052 · Pétillante sur GPT-Live et l’avatar r21](2026-11-27-codex-voix-petillante.md) · Prompt de session choisi par le propriétaire, sélection de la voix existante et recette mobile à valider.
+
+- [Commande du Live Discord et indicateurs mobiles](2026-11-27-codex-discord-live-control.md) · Retrait du salut, sortie vocale exclusive, compteur mensuel, commande depuis Config et reprise du rouge pendant la parole.
+
+- [Voix et interface du Live mobile](2026-11-27-codex-mobile-live-playback.md) · Lecture WebRTC, animation de parole, indicateurs Live, plein écran et maintien sur Jade r21.
+
+- [Config mobile épurée et réglages persistants](2026-11-27-chatgpt-mobile-config.md) · Demande du 27/11 : cases Live/voix/rappels, textes allégés, boutons hors scène, retours d’appui et sauvegarde automatique.
+
+- [REC-051 · Discord Live automatique et interrupteur global (ancienne DEV-052)](2026-11-27-chatgpt-discord-auto-live.md) · Demande complémentaire du 27/11 : switch code unique, transport vocal Live, dépenses API globales 50/40 EUR, repli classique et indépendance mobile.
+
+- [DEV-055 · Reprise et correctifs du Live mobile](2026-11-27-chatgpt-live-resume.md) · Audit de `3d2f3ea`, contrat des sélecteurs API, libellé d’arrêt et kit vocal ; recettes physiques conservées ouvertes.
+
+- [DEV-054 · Live mobile par défaut, sans plafond financier](2026-11-26-chatgpt-live-mobile-default-no-budget.md) · Correction propriétaire du 26/11, diagnostics visibles, usage passif et politique Discord strictement séparée.
+
+- [DEV-053 / ART-014 · Intentions Triste et Colère](2026-11-26-chatgpt-intentions-triste-colere.md) · Ajout P1, neuf intentions et dix-huit variantes avec parité voix/animations ; cadrage uniquement.
+
+- [Implémentation Live mobile · REC-044 à REC-050, DEV-041/052](2026-11-26-chatgpt-live-mobile-implementation.md) · Code `90ec0c7` et tests intégrés sur develop le 26/11 sur autorisation du propriétaire ; recette fournisseur/Redmi et voix originale restantes. [Cadrage initial](2026-11-26-chatgpt-live-mobile-roadmap.md) conservé comme référence.
+- [ART-006 · Trois-quarts du visage sur mobile](2026-11-26-codex-volume-visage-r21.md) · Contour joue–menton, recouvrement des mèches et clignement sur les deux rotations.
 - [ART-013 · Oreilles du r21](2026-11-26-codex-mobile-oreilles-r21.md) · Respiration et jeu des sept intentions sur mobile.
 - [DEV-001 · Jeu des intentions sur mobile](2026-11-26-codex-mobile-intentions.md) · Première étape de synchronisation entre la pose, le geste et la lecture.
 - [DEV-045 · Coiffures interchangeables r21](2026-11-26-chatgpt-coiffures-r21.md) · US P2, référence graphique à déposer, développement non commencé.

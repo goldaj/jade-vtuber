@@ -159,6 +159,32 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(b"Cache-Control: no-store", raw)
         self.mobile.billing.get.assert_awaited_once_with(refresh=True)
 
+    async def test_discord_live_settings_require_owner_auth_and_a_boolean(self):
+        route = "/api/discord/live"
+        self.mobile.owner_login = "local-owner"
+        headers = dict(self.headers("application/json"), **{"Tailscale-User-Login": "local-owner"})
+        policy = AsyncMock()
+        adapter = AsyncMock()
+        self.mobile.discord_live_policy, self.mobile.discord_live_adapter = policy, adapter
+        summary = {"enabled": False, "month": "2026-11", "minutes": 2.5, "partial": False}
+        policy.mobile_settings.return_value = summary
+        self.assertEqual((await self.request("GET", route, headers=self.headers("application/json")))[0], 403)
+        owner = {"Tailscale-User-Login": "local-owner", "Content-Type": "application/json"}
+        self.assertEqual((await self.request("GET", route, headers=owner))[0], 401)
+        self.assertEqual((await self.request("POST", route, body=b'{"enabled":false}', headers=owner))[0], 401)
+        policy.mobile_settings.assert_not_awaited()
+        for payload in (b'{"enabled":"false"}', b'{"enabled":0}', b'{', b'{"enabled":false,"extra":true}'):
+            self.assertEqual((await self.request("POST", route, body=payload, headers=headers))[0], 400)
+        policy.mobile_settings.assert_not_awaited()
+        status, body, raw = await self.request("GET", route, headers=headers)
+        self.assertEqual((status, json.loads(body)), (200, summary))
+        self.assertIn(b"Cache-Control: no-store", raw)
+        policy.mobile_settings.assert_awaited_once_with(None)
+        status, body, _ = await self.request("POST", route, body=b'{"enabled":false}', headers=headers)
+        self.assertEqual((status, json.loads(body)), (200, summary))
+        policy.mobile_settings.assert_any_await(False)
+        adapter.apply_owner_preference.assert_awaited_once_with(False)
+
     async def test_owner_link_endpoint_binds_target_without_public_token_issuance(self):
         store = MemoryStore(Path(self.temp.name) / "linked.sqlite3")
         owner, target = ("microphone", "goldaj"), ("twitch", "6001")
@@ -309,7 +335,7 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         # The identity header is provided only by trusted Tailscale Serve.
         status, _, _ = await self.request("GET", "/")
         self.assertEqual(status, 403)
-        status, _, _ = await self.request("GET", "/model/Jade.model3.json")
+        status, _, _ = await self.request("GET", "/models/next/Jade.model3.json")
         self.assertEqual(status, 403)
         status, _, _ = await self.request(
             "GET", "/", headers={"Tailscale-User-Login":"someone@example.test"})
@@ -412,7 +438,7 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(int.from_bytes(body[20:24], "big"), dimension)
                 self.assertIn(b"Content-Type: image/png", response)
 
-    async def test_safe_assets_served_and_r20_idle_is_virtual(self):
+    async def test_safe_application_and_portrait_assets_are_served(self):
         status, page, headers = await self.request("GET", "/")
         self.assertEqual(status, 200)
         self.assertIn(b'id="auth-form"', page)
@@ -429,7 +455,16 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status, 200)
         self.assertEqual(image[4:12], b"ftypavif")
         self.assertIn(b"Content-Type: image/avif", response)
-        for name in ("room-spring.webp", "room-backdrop.webp", "room-curtain.webp"):
+        status, image, response = await self.request("GET", "/assets/room-kitchen-portrait.avif")
+        self.assertEqual(status, 200)
+        self.assertEqual(image[4:12], b"ftypavif")
+        self.assertIn(b"Content-Type: image/avif", response)
+        self.assertIn(b'<option value="living">Salon</option>', salon)
+        status, image, response = await self.request("GET", "/assets/room-living-portrait.avif")
+        self.assertEqual(status, 200)
+        self.assertEqual(image[4:12], b"ftypavif")
+        self.assertIn(b"Content-Type: image/avif", response)
+        for name in ("room-spring.webp", "room-backdrop.webp", "room-curtain.webp", "room-kitchen.webp"):
             self.assertNotIn(name.encode(), salon)
             code, _, _ = await self.request("GET", f"/assets/{name}")
             self.assertEqual(code, 404)
@@ -445,23 +480,6 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((status, patch), (200, b"/* local patch */"))
         status, _, _ = await self.request("GET", "/assets/app.js")
         self.assertEqual(status, 200)
-        model_dir = Path(self.temp.name) / "model"
-        model_dir.mkdir()
-        original = {"Version":3,"FileReferences":{
-            "Moc":"Jade.moc3", "Textures":["Jade.4096/texture_00.png"]}}
-        (model_dir / "Jade.model3.json").write_text(json.dumps(original), encoding="utf-8")
-        (model_dir / "Jade_idle.motion3.json").write_text("{}", encoding="utf-8")
-        (model_dir / "Jade.moc3").write_bytes(b"\x00" * 32)
-        self.mobile.model_dir = model_dir
-        status, doc, _ = await self.request("GET", "/model/Jade.model3.json")
-        self.assertEqual(status, 200)
-        self.assertIn("Idle", json.loads(doc)["FileReferences"]["Motions"])
-        self.assertNotIn("Motions", original["FileReferences"])
-        status, raw, _ = await self.request("GET", "/model/Jade.moc3")
-        self.assertEqual(status, 200)
-        self.assertEqual(raw, b"\x00" * 32)
-        status, _, _ = await self.request("GET", "/model/../.env")
-        self.assertEqual(status, 404)
 
     async def test_invalid_token_and_missing_flags(self):
         with self.assertRaises(ValueError):

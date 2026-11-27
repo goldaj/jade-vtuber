@@ -3,11 +3,13 @@ import argparse
 import asyncio
 import logging
 import os
+import sqlite3
 from contextlib import AsyncExitStack
 from pathlib import Path
 
 from src.jade_runtime.assets import load_prompt
 from src.jade_runtime.config import Settings
+from src.jade_runtime.discord_config import selected_discord_channels
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming
 from src.jade_runtime.openai_services import OpenAIServices
@@ -42,6 +44,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                   avatar=False, mobile=False, all_channels=False):
     config = Settings.load()
     config.validate()
+    discord, discord_voice = selected_discord_channels(
+        config.discord_enabled, discord, discord_voice)
     enable_console_logs(enable_latency=config.latency_logging)
     summary("runtime_configuration", live=live, discord=discord, discord_voice=discord_voice,
             mobile=mobile, microphone=mic, twitch=twitch, memory=config.memory_enabled,
@@ -92,6 +96,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     discord_voice_bridge = None
     local_api = None
     mobile_gateway = None
+    live_manager = None
+    discord_live_policy = None
     reminders = None
     shutdown_deadline = None
 
@@ -317,6 +323,12 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                                   port=config.http_port)
         if mobile:
             from src.jade_runtime.mobile_gateway import MobileGateway
+            from src.jade_runtime.live_runtime import create_mobile_live
+            live_manager = await create_mobile_live(runtime, config)
+            if live_manager is not None:
+                if live_manager.bridge is not None:
+                    scopes.push_async_callback(live_manager.bridge.close)
+                scopes.push_async_callback(live_manager.stop)
             mobile_gateway = MobileGateway(
                 runtime, chat, token=config.mobile_token, port=config.mobile_port,
                 billing_admin_key=config.billing_admin_key,
@@ -328,31 +340,57 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 model_dir=Path(config.mobile_model_dir) if config.mobile_model_dir else None,
                 second_model_dir=Path(config.mobile_second_model_dir) if config.mobile_second_model_dir else None,
                 avatar_intent_enabled=config.avatar_intent_enabled,
-                reminder_service=reminders)
+                reminder_service=reminders, live_manager=live_manager)
         social_policy = None
-        initiatives = None
-        if discord and live and config.memory_enabled:
+        if discord and live and config.memory_enabled and config.social_hybrid_enabled:
             from src.jade_runtime.cost_guard import CostGuard
             from src.jade_runtime.social_intelligence import HybridSocialPolicy
-            from src.jade_runtime.initiatives import InitiativeScheduler
             guard = CostGuard(Path(config.memory_db_path))
-            if config.social_hybrid_enabled:
-                social_policy = HybridSocialPolicy(
-                    chat, guard, daily_usd=config.social_budget_daily_usd,
-                    monthly_usd=config.social_budget_monthly_usd)
-            if config.initiatives_enabled:
-                initiatives = InitiativeScheduler(
-                    guard, daily_usd=config.initiative_budget_daily_usd,
-                    monthly_usd=config.initiative_budget_monthly_usd)
+            social_policy = HybridSocialPolicy(
+                chat, guard, daily_usd=config.social_budget_daily_usd,
+                monthly_usd=config.social_budget_monthly_usd)
         if discord_voice:
             from src.jade_runtime.discord_voice import OpenVoiceBridge
             discord_voice_bridge = OpenVoiceBridge(
                 chat, runtime, config.discord_voice_channel,
                 group_reply_rate=config.discord_voice_auto_rate)
-            discord_voice_bridge.initiatives = initiatives
             speech.secondary_player = discord_voice_bridge
             if avatar_client is not None:
                 discord_voice_bridge.playback_observer = avatar_client.observer("discord")
+            from src.jade_runtime.global_spend import GlobalSpendCollector
+            from src.jade_runtime.discord_live_policy import DiscordLiveSpendPolicy
+            from src.jade_runtime.discord_live import create_discord_live
+
+            async def publish_discord_live_reply(reply):
+                if discord_client is None or not reply.attachments:
+                    return False
+                return await discord_client.send_chat(
+                    reply.source.channel,
+                    "Voici les documents demandés (disponibles pendant 24 h).",
+                    attachments=reply.attachments)
+
+            try:
+                spend_collector = GlobalSpendCollector(
+                    admin_key=config.billing_admin_key,
+                    tavily_key=config.tavily_api_key,
+                    web_enabled=config.web_enabled,
+                    db_path=Path(config.live.usage_db_path).with_name("jade-global-spend.sqlite3"))
+                discord_live_policy = DiscordLiveSpendPolicy(spend_collector)
+                await discord_live_policy.start()
+                scopes.push_async_callback(discord_live_policy.close)
+            except (OSError, sqlite3.Error, ValueError):
+                LOG.error("Discord monthly usage tracking unavailable; Discord uses classic voice")
+                discord_live_policy = None
+            if discord_live_policy is not None:
+                discord_voice_bridge.live = await create_discord_live(
+                    discord_voice_bridge, runtime, config, discord_live_policy,
+                    publish_reply=publish_discord_live_reply,
+                    set_avatar_intent=avatar_client.set_intent if avatar_client is not None else None)
+                if discord_voice_bridge.live is not None:
+                    scopes.push_async_callback(discord_voice_bridge.live.shutdown)
+            if mobile_gateway is not None:
+                mobile_gateway.discord_live_policy = discord_live_policy
+                mobile_gateway.discord_live_adapter = discord_voice_bridge.live
 
         async def accept(message):
             # Twitch needs the Work.finished signal to ignore stale chat while replying.
@@ -389,7 +427,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     voice_bridge=discord_voice_bridge, bot_name=config.bot_name,
                     auto_rate=config.discord_text_auto_rate,
                     cooldown_seconds=config.discord_text_cooldown_seconds,
-                    social_policy=social_policy, initiatives=initiatives,
+                    social_policy=social_policy,
                     document_store=documents.store if documents else None)
 
             if twitch or discord or mic or http or mobile:
@@ -459,6 +497,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
         except (EOFError, KeyboardInterrupt):
             pass
         finally:
+            if live_manager is not None:
+                await live_manager.stop()
             await stop_runtime()
 
 
@@ -492,9 +532,14 @@ def main():
         # the autonomous r20 avatar is started in every case.
         settings = Settings.load()
         args.update(live=True, voice=True, mic=True, twitch=True,
-                    discord=True, discord_voice=True, http=True,
+                    discord=settings.discord_enabled,
+                    discord_voice=settings.discord_enabled, http=True,
                     avatar=True, mobile=True, vts=settings.vts_enabled,
                     all_channels=True)
+    elif args["discord"] or args["discord_voice"]:
+        settings = Settings.load()
+        args["discord"], args["discord_voice"] = selected_discord_channels(
+            settings.discord_enabled, args["discord"], args["discord_voice"])
     if preflight:
         from src.jade_runtime.diagnostics import inspect_environment
         try:

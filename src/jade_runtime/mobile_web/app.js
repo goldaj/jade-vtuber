@@ -1,18 +1,28 @@
-/* Jade owner-only phone client. No cookies, localStorage, sessionStorage,
- * analytics, third-party servers, remote libraries or alternative AI engines.
- * Speech recognition is performed by Jade's existing OpenAI STT on the PC.
+/* Jade owner-only phone client. Only non-sensitive interface preferences are
+ * persisted by JadePreferences; tokens, conversations and media stay in memory.
+ * No analytics, third-party servers, remote libraries or alternative AI engines.
+ * Classic voice uses Jade's existing STT; optional Live uses its own WebRTC
+ * client. Only one of those paths may own capture and audible output.
  */
 "use strict";
 (() => {
   const $ = (id) => document.getElementById(id);
   const form = $("composer"), input = $("message"), log = $("messages");
   const mic = $("mic"), send = $("send"), status = $("status");
-  const micFeedback = $("mic-feedback");
   const modal = $("auth-modal"), authForm = $("auth-form"), authInput = $("auth-token");
   const authFeedback = $("auth-feedback"), authSubmit = authForm.querySelector('button[type="submit"]');
   let authPending = false;
   const connection = $("connection-status"), soundToggle = $("sound-toggle");
   const newChat = $("new-chat");
+  const liveModeToggle = $("live-mode-toggle"), liveModeStatus = $("live-mode-status");
+  const liveModeRetry = $("live-mode-retry");
+  const liveIndicator = $("live-indicator");
+  const preferences = window.JadePreferences;
+  let liveClient = null, liveState = null, liveMotionPending = false, liveSpeaking = false;
+  let liveLoadMessage = "", liveRetrying = false;
+  let liveAuthentication = 0;
+  let liveCloseTimer = null, liveCloseChecks = 0;
+  const liveTranscripts = new Map();
   const linkForm = $("identity-link-form"), linkResult = $("identity-result");
   const linkCopy = $("identity-copy");
   let linkCommand = "";
@@ -26,7 +36,8 @@
   let voicePending = false;
   let conversationGeneration = 0;
   let modelChanging = false;
-  let soundEnabled = true;
+  let soundEnabled = preferences?.get("soundEnabled", true) ?? true;
+  soundToggle.checked = soundEnabled;
   let audioContext = null;
   let playFrame = null;
   let playbackGeneration = 0;
@@ -62,7 +73,11 @@
       else button.removeAttribute("aria-current");
     });
     if (view === "reminders" && token) loadReminders();
-    if (view === "profile" && token) refreshNotificationChoice();
+    if (view === "profile" && token) {
+      refreshNotificationChoice();
+      liveClient?.refresh();
+      if (discordLivePanel?.open) refreshDiscordLive();
+    }
   }
   navItems.forEach(button => button.addEventListener("click", () =>
     showView(button.dataset.viewTarget)));
@@ -78,23 +93,29 @@
 
   function setStatus(message, working = false) {
     working = working || modelChanging;
-    if (micFeedback && (message !== status.textContent || message === "Prête.")) micFeedback.hidden = true;
     status.textContent = message;
     send.disabled = working;
     newChat.disabled = working;
     input.disabled = working;
     mic.disabled = modelChanging || (working && !micPress && !voicePending);
+    renderLiveMic();
   }
 
-  function setMicStatus(message, working = false) {
-    setStatus(message, working);
-    if (micFeedback) {
-      micFeedback.textContent = message;
-      micFeedback.hidden = false;
-    }
+  function resetLiveAuthentication(reason) {
+    // Stop the previous media owner before discarding its reference. Each
+    // authentication gets a fresh preference read and its own pending reads.
+    cancelConversation(reason);
+    liveAuthentication++;
+    liveClient = liveState = null;
+    liveLoadMessage = "";
+    liveRetrying = false;
+    clearLiveCloseChecks();
+    if (liveModeToggle) liveModeToggle.disabled = true;
+    resetDiscordLivePanel();
   }
 
   function authorizeAgain() {
+    resetLiveAuthentication("auth_lost");
     token = "";
     linkCommand = "";
     linkResult.textContent = "";
@@ -125,8 +146,17 @@
 
   function addJadeReply(text, files) {
     const entry = addBubble(text, "jade");
+    appendAttachments(entry, files);
+    return entry;
+  }
+
+  function appendAttachments(entry, files) {
+    if (!entry) return;
+    const attached = entry.jadeAttachmentUrls || (entry.jadeAttachmentUrls = new Set());
     for (const item of Array.isArray(files) ? files.slice(0, 4) : []) {
       if (!item || !/^\/api\/documents\/[a-f0-9]{32}$/.test(item.url)) continue;
+      if (attached.has(item.url)) continue;
+      attached.add(item.url);
       const control = document.createElement("button");
       control.type = "button";
       control.className = "attachment-button";
@@ -156,11 +186,295 @@
       });
       entry.appendChild(control);
     }
-    return entry;
+  }
+
+  function liveOnAir() {
+    return liveState?.capture === "armed" &&
+      (["opening", "active"].includes(liveState.session_state) ||
+        liveState.media_state === "connecting" ||
+        liveState.speech_active === true || liveState.playback_active === true);
+  }
+
+  function liveDescription() {
+    if (liveLoadMessage) return liveLoadMessage;
+    if (!liveState) return "Vérification du mode vocal…";
+    if (!liveState.supported) return liveState.availability_message ||
+      "Ce navigateur ne permet pas le mode Live.";
+    if (liveState.waiting_for_close && !liveState.active) return liveState.availability_message ||
+      "La conversation Live précédente se ferme encore. Réessaie dans quelques instants.";
+    if (liveState.message) return liveState.message;
+    if (!liveState.loaded) return "Vérification du mode vocal…";
+    if (!liveState.available && !liveState.active) return liveState.availability_message ||
+      "Le mode Live est momentanément indisponible.";
+    if (liveState.mode !== "live") return "";
+    if (liveState.lease_state === "draining") return "Micro coupé. Jade termine sa réponse.";
+    if (liveState.capture === "requesting") return "Ouverture du micro…";
+    if (liveState.capture === "closed" && liveState.session_state === "closing") return "Micro coupé · Fermeture du Live…";
+    if (liveState.capture === "armed") {
+      if (liveState.session_state === "opening" || liveState.media_state === "connecting") return "Micro actif · Connexion à Jade…";
+      return liveOnAir() ? "Live en cours." : "Micro actif · Jade en veille. Parle quand tu veux.";
+    }
+    return "";
+  }
+
+  function renderLiveMic() {
+    const enabled = Boolean(token && liveState?.loaded && liveState.mode === "live");
+    const capturing = enabled && liveState.capture !== "closed";
+    const onAir = enabled && liveOnAir();
+    if (liveIndicator) {
+      const standby = enabled && liveState.capture === "armed" && !onAir;
+      liveIndicator.hidden = !enabled;
+      liveIndicator.classList.toggle("live-on-air", onAir);
+      liveIndicator.classList.toggle("live-standby", standby);
+      liveIndicator.setAttribute("aria-label", onAir ? "Live en cours" :
+        standby ? "Live en veille" : "Live inactif");
+    }
+    mic.classList.toggle("live-mode-indicator", enabled);
+    mic.classList.toggle("live-on-air", onAir);
+    if (!liveState?.loaded) {
+      // Until the owner's persisted choice is known, a tap cannot fall through
+      // to classic capture while the default Live module is still loading.
+      if (token) {
+        mic.disabled = true;
+        mic.setAttribute("aria-label", "Vérification du mode vocal");
+      }
+    } else if (!enabled) {
+      mic.disabled = modelChanging || (busy && !micPress && !voicePending);
+    } else {
+      const draining = liveState.lease_state === "draining";
+      const canCheckClose = !liveState.active && liveState.supported && liveState.waiting_for_close &&
+        liveState.session_state !== "opening_unknown";
+      mic.classList.remove("recording");
+      mic.disabled = modelChanging || busy || liveState.changing || (canCheckClose ? liveRetrying :
+        ((liveState.capture === "closed" && liveState.session_state === "closing" && !draining) ||
+         (!liveState.active && (!liveState.available || !soundEnabled))));
+      mic.setAttribute("aria-pressed", String(capturing));
+      mic.setAttribute("aria-label", canCheckClose ? "Vérifier la fermeture de la conversation Live" :
+        draining ? "Interrompre la réponse Live" : "Micro Live");
+    }
+  }
+
+  function renderLiveAvailability() {
+    if (liveModeStatus) {
+      const description = liveDescription();
+      liveModeStatus.textContent = description;
+      liveModeStatus.hidden = !description;
+    }
+    if (liveModeRetry) {
+      liveModeRetry.hidden = !(liveLoadMessage || (!liveState?.loaded && liveState?.message) ||
+        (liveState?.loaded && (!liveState.available || liveState.waiting_for_close) && liveState.supported));
+      liveModeRetry.disabled = liveRetrying;
+      liveModeRetry.textContent = liveRetrying ? "Vérification…" : "Réessayer";
+    }
+    renderLiveMic();
+  }
+
+  function liveModuleFailed() {
+    liveLoadMessage = "Le mode Live n’a pas pu charger. Réessaie depuis Config.";
+    if (liveModeToggle) liveModeToggle.disabled = true;
+    renderLiveAvailability();
+  }
+
+  function clearLiveCloseChecks() {
+    if (liveCloseTimer !== null) window.clearTimeout(liveCloseTimer);
+    liveCloseTimer = null;
+    liveCloseChecks = 0;
+  }
+
+  function scheduleLiveCloseCheck() {
+    if (!token || !liveClient || document.hidden || liveState?.mode !== "live" ||
+        !liveState.waiting_for_close || liveState.active) {
+      clearLiveCloseChecks();
+      return;
+    }
+    // Short foreground capability checks only. A user action owns recovery
+    // and a later, separate microphone gesture still owns capture.
+    if (liveCloseTimer !== null || liveCloseChecks >= 8) return;
+    const client = liveClient;
+    liveCloseTimer = window.setTimeout(() => {
+      liveCloseTimer = null;
+      liveCloseChecks++;
+      if (client === liveClient && !document.hidden) void client.refresh();
+    }, 2000);
+  }
+
+  function renderLiveState(value) {
+    const wasLive = liveState?.mode === "live";
+    const hadPreference = liveState?.loaded;
+    const wasActive = liveState?.active;
+    const hadSession = liveState?.session_id;
+    liveState = value;
+    liveLoadMessage = "";
+    if (liveModeToggle) {
+      liveModeToggle.checked = Boolean(value.loaded && value.mode === "live");
+      // Turning OFF remains possible after a kill switch, provider refusal
+      // or loss of browser capability. Admission restrictions only gate ON.
+      liveModeToggle.disabled = value.changing || !value.loaded ||
+        (value.mode !== "live" && !value.available && !(value.supported && value.waiting_for_close));
+    }
+    if (value.loaded && value.mode !== "live" && (wasLive || !hadPreference)) {
+      resetMicButton();
+      mic.disabled = modelChanging || (busy && !micPress && !voicePending);
+    }
+    renderLiveAvailability();
+    scheduleLiveCloseCheck();
+    if (((wasActive && !value.active) || (hadSession && !value.session_id)) && !busy && !voicePending) {
+      liveMotionPending = liveSpeaking = false;
+      avatar().setMouth(0);
+      avatar().setSpeaking(false);
+      avatar().resetIntent();
+    }
+  }
+
+  function receiveLiveTranscript(event) {
+    const sessionId = String(event.session_id || "");
+    if (!sessionId) return;
+    let session = liveTranscripts.get(sessionId);
+    if (!session) {
+      session = {entries:new Map(), documents:null, lastJade:null};
+      liveTranscripts.set(sessionId, session);
+    }
+    const segments = Array.isArray(event.segments) ? event.segments : [event];
+    const present = new Set();
+    for (const segment of segments) {
+      const id = String(segment.segment_id || "");
+      const text = String(segment.text || "").replace(/\[INTENT\s*:[^\]]*\]/gi, "").trim();
+      if (!id || !text || !["user", "assistant"].includes(segment.role)) continue;
+      present.add(id);
+      let item = session.entries.get(id);
+      if (!item) {
+        const entry = addBubble(text, segment.role === "assistant" ? "jade" : "me");
+        const delivery = document.createElement("small");
+        delivery.className = "live-transcript-status";
+        entry.appendChild(delivery);
+        item = {entry, content:entry.firstElementChild || entry.children[0], delivery, role:segment.role};
+        session.entries.set(id, item);
+      }
+      item.content.textContent = text;
+      const labels = {interrupted:"Réponse interrompue", cancelled:"Tour annulé", delivery_unknown:"Lecture non confirmée"};
+      item.delivery.textContent = labels[segment.status] || "Transcription Live";
+      item.entry.setAttribute("data-live-status", segment.status || "received");
+      if (segment.role === "assistant") session.lastJade = item.entry;
+      if (segment.attachments) receiveLiveAttachments(session, segment.attachments);
+    }
+    if (event.replace) {
+      for (const [id, item] of session.entries) {
+        if (present.has(id)) continue;
+        item.entry.remove();
+        session.entries.delete(id);
+      }
+      // Snapshot order can change when a late fragment joins two segments.
+      for (const segment of segments) {
+        const item = session.entries.get(String(segment.segment_id));
+        if (item) log.appendChild(item.entry);
+      }
+      session.lastJade = [...segments].reverse().map(segment => session.entries.get(String(segment.segment_id)))
+        .find(item => item?.role === "assistant")?.entry || null;
+    }
+    if (event.attachments) receiveLiveAttachments(session, event.attachments);
+    if (session.documents) log.appendChild(session.documents);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function receiveLiveAttachments(session, files) {
+    const valid = (Array.isArray(files) ? files : []).filter(item => item && /^\/api\/documents\/[a-f0-9]{32}$/.test(item.url));
+    if (!valid.length) return;
+    // An action can finish before Jade's spoken reply. Display its documents
+    // immediately without inventing another assistant message or attaching
+    // them to the preceding, unrelated transcript segment.
+    if (!session.documents) {
+      session.documents = document.createElement("article");
+      session.documents.className = "bubble jade live-attachments";
+      session.documents.setAttribute("aria-label", "Documents de la conversation Live");
+    }
+    appendAttachments(session.documents, valid);
+    log.appendChild(session.documents);
+  }
+
+  function initializeLive() {
+    if (!window.JadeLive || !token) return;
+    try {
+      if (!liveClient) {
+      const generation = liveAuthentication, authenticatedToken = token;
+      const options = {
+      getToken:() => authenticatedToken, getThread:() => thread, getSoundEnabled:() => soundEnabled,
+      beforeArm:() => cancelConversation("live_arm", {keepLive:true}),
+      onState:renderLiveState,
+      onTranscript:receiveLiveTranscript,
+      onInterruption:(sessionId, status) => {
+        const session = liveTranscripts.get(sessionId);
+        const item = session && [...session.entries.values()].find(value => value.entry === session.lastJade);
+        if (!item) return;
+        item.entry.setAttribute("data-live-status", status);
+        item.delivery.textContent = status === "interrupted" ? "Réponse interrompue" : "Lecture non confirmée";
+      },
+      onAttachments:event => {
+        let session = liveTranscripts.get(event.session_id);
+        if (!session) {
+          session = {entries:new Map(), documents:null, lastJade:null};
+          liveTranscripts.set(event.session_id, session);
+        }
+        receiveLiveAttachments(session, event.attachments);
+      },
+      onIntent:intent => {
+        applyAvatarIntent(intent, !liveSpeaking);
+        liveMotionPending = !liveSpeaking;
+      },
+      onPlayback:(level, speaking) => {
+        avatar().setMouth(level);
+        avatar().setSpeaking(speaking);
+        if (speaking && liveMotionPending) { avatar().startReplyMotion?.(0); liveMotionPending = false; }
+        if (liveSpeaking && !speaking) avatar().finishReply?.(true);
+        liveSpeaking = speaking;
+      },
+      onAuthFailure:() => { if (token) authorizeAgain(); },
+      };
+      for (const name of ["beforeArm", "onState", "onTranscript", "onInterruption", "onAttachments", "onIntent", "onPlayback", "onAuthFailure"]) {
+        const callback = options[name];
+        options[name] = (...args) => {
+          if (generation === liveAuthentication) return callback(...args);
+        };
+      }
+      liveClient = window.JadeLive.create(options);
+      }
+      if (liveClient.state) renderLiveState(liveClient.state);
+      if (token) void liveClient.refresh();
+    } catch (_) { liveModuleFailed(); }
+  }
+  window.addEventListener("jade-live-ready", initializeLive);
+  async function retryLiveAvailability() {
+    if (liveRetrying || !token) return;
+    const generation = liveAuthentication;
+    liveRetrying = true;
+    liveLoadMessage = "";
+    clearLiveCloseChecks();
+    renderLiveAvailability();
+    try {
+      if (liveClient) await (liveState?.session_state === "close_unconfirmed"
+        ? liveClient.recover() : liveClient.refresh());
+      else {
+        const ready = await window.JadeLogin?.retryLive?.();
+        if (generation === liveAuthentication && !ready) liveModuleFailed();
+      }
+    } catch (_) { if (generation === liveAuthentication) liveModuleFailed(); }
+    finally {
+      if (generation === liveAuthentication) { liveRetrying = false; renderLiveAvailability(); }
+    }
+  }
+  liveModeRetry?.addEventListener("click", retryLiveAvailability);
+  liveModeToggle?.addEventListener("change", () => {
+    if (!liveClient || !liveState?.loaded || liveState.changing) return;
+    const mode = liveModeToggle.checked ? "live" : "classic";
+    cancelConversation("mode_change");
+    return liveClient.setMode(mode);
+  });
+
+  function applyAvatarIntent(intent, deferMotion) {
+    return avatar().setIntent(intent || "neutral", {deferMotion});
   }
 
   function setReplyIntent(intent) {
-    const prepared = avatar().setIntent(intent || "neutral", {deferMotion:soundEnabled});
+    const prepared = applyAvatarIntent(intent, soundEnabled);
     replyPlayback = {
       faceReadyAt:prepared && soundEnabled ? performance.now() + REPLY_FACE_LEAD_MS : 0,
       started:false, sealed:false,
@@ -170,7 +484,7 @@
   async function makeRequest(path, body, extraHeaders, signal) {
     const headers = Object.assign({"Authorization":"Bearer " + token}, extraHeaders);
     const response = await fetch(path, {
-      method: "POST", mode: "same-origin", credentials: "omit",
+      method: body === undefined ? "GET" : "POST", mode: "same-origin", credentials: "omit",
       cache: "no-store", headers, body, signal
     });
     if (signal?.aborted) return null;
@@ -248,7 +562,8 @@
     finishDrainedReply();
   }
 
-  function cancelConversation() {
+  function cancelConversation(reason = "conversation_cancelled", {keepLive = false} = {}) {
+    const liveStopped = keepLive ? null : liveClient?.stop(typeof reason === "string" ? reason : "pagehide");
     conversationGeneration++;
     clearMicPress();
     cancelRecordingStart();
@@ -262,11 +577,12 @@
     resetMicButton();
     stopPlayback();
     setStatus(status.textContent);
+    return liveStopped;
   }
 
   function stopForModelChange() {
     modelChanging = true;
-    cancelConversation();
+    cancelConversation("model_change");
     setStatus("Chargement du modèle…");
     return () => {
       modelChanging = false;
@@ -510,6 +826,7 @@
     const text = input.value.trim();
     if (!text) return;
     const generation = conversationGeneration;
+    const liveStopped = liveClient?.stop("text");
     showView("chat");
     busy = true;
     stopPlayback();
@@ -519,6 +836,8 @@
     addBubble(text, "me");
     input.value = "";
     try {
+      await liveStopped;
+      if (generation !== conversationGeneration) return;
       await makeStreamingRequest("/api/chat",
         JSON.stringify({text, session:thread, speak:soundEnabled}),
         {"Content-Type":"application/json"});
@@ -582,12 +901,12 @@
     if (press.interrupt) {
       if (sendUtterance && voicePending) {
         cancelConversation();
-        setMicStatus("Réponse vocale interrompue.");
+        setStatus("Réponse vocale interrompue.");
       }
     } else if (starting) {
       cancelRecordingStart();
       resetMicButton();
-      setMicStatus(sendUtterance ? "Micro relâché avant le début de la prise." : "Prise vocale annulée.");
+      setStatus(sendUtterance ? "Micro relâché avant le début de la prise." : "Prise vocale annulée.");
     } else if (sendUtterance) {
       void stopRecording();
     } else {
@@ -600,7 +919,7 @@
     if (!token) { authorizeAgain(); return; }
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!voicePending && (!navigator.mediaDevices?.getUserMedia || !Ctx)) {
-      setMicStatus("Microphone indisponible : ouvrir l'application en HTTPS via Tailscale.");
+      setStatus("Microphone indisponible : ouvrir l'application en HTTPS via Tailscale.");
       return;
     }
     micPress = {...press, interrupt:voicePending};
@@ -612,7 +931,7 @@
     stopPlayback();
     const attempt = {}, generation = conversationGeneration;
     starting = attempt;
-    setMicStatus("Ouverture du micro… Garde ton appui.", true);
+    setStatus("Ouverture du micro… Garde ton appui.", true);
     let duplex = null;
     try {
       primeVoicePlayback();
@@ -640,7 +959,7 @@
       function recordingInterrupted(error) {
         if (generation !== conversationGeneration || recording?.context !== context) return;
         finishMicPress(false);
-        setMicStatus(error?.message || "Connexion vocale interrompue.");
+        setStatus(error?.message || "Connexion vocale interrompue.");
       }
       if (window.JadeDuplex?.supported()) {
         const options = {
@@ -658,7 +977,7 @@
             } else if (event.type === "wav") {
               if (soundEnabled) await playWav(event.audio_wav_b64);
             } else if (event.type === "audio_error") {
-              setMicStatus("Réponse écrite reçue, mais la voix est indisponible.");
+              setStatus("Réponse écrite reçue, mais la voix est indisponible.");
             } else if (event.type === "done") {
               duplexTiming.done();
               sealReplyAudio();
@@ -700,8 +1019,7 @@
       mic.classList.add("recording");
       mic.setAttribute("aria-pressed", "true");
       mic.setAttribute("aria-label", "Relâcher pour envoyer");
-      mic.setAttribute("title", "Relâcher pour envoyer");
-      setMicStatus("J’enregistre ta voix… Relâche pour envoyer.", true);
+      setStatus("J’enregistre ta voix… Relâche pour envoyer.", true);
       // Avoid leaving the microphone open after 20 seconds.
       recording.timer = setTimeout(limitRecording, 20000);
     } catch (_) {
@@ -711,7 +1029,7 @@
         clearMicPress();
         cancelRecordingStart();
         resetMicButton();
-        setMicStatus("Accès au micro refusé ou indisponible.");
+        setStatus("Accès au micro refusé ou indisponible.");
       }
     }
   }
@@ -720,7 +1038,7 @@
     mic.classList.remove("recording");
     mic.setAttribute("aria-pressed", "false");
     mic.setAttribute("aria-label", "Maintenir pour parler");
-    mic.setAttribute("title", "Maintenir pour parler, relâcher pour envoyer");
+    renderLiveMic();
   }
 
   function closeMicrophone({stream, context}) {
@@ -749,7 +1067,7 @@
     if (!recording || recording.captureClosed) return;
     releaseRecording(recording);
     mic.classList.remove("recording");
-    setMicStatus("Limite de 20 s atteinte. Relâche pour envoyer.", true);
+    setStatus("Limite de 20 s atteinte. Relâche pour envoyer.", true);
   }
 
   function cancelRecording() {
@@ -761,7 +1079,7 @@
     if (activeDuplex === current.duplex) activeDuplex = null;
     current.duplex?.cancel();
     releaseRecording(current);
-    setMicStatus("Prise vocale annulée.");
+    setStatus("Prise vocale annulée.");
   }
 
   async function stopRecording() {
@@ -774,14 +1092,13 @@
     primeVoicePlayback();
     resetMicButton();
     mic.setAttribute("aria-label", "Interrompre la réponse vocale");
-    mic.setAttribute("title", "Interrompre la réponse vocale");
-    setMicStatus("Je transmets ta voix à Jade…", true);
+    setStatus("Je transmets ta voix à Jade…", true);
     const rate = current.context.sampleRate, frames = current.frames;
     try {
       releaseRecording(current);
       if (frames < rate / 4) {
         if (current.duplex) current.duplex.cancel();
-        setMicStatus("Enregistrement trop court.");
+        setStatus("Enregistrement trop court.");
         return;
       }
       if (current.duplex) {
@@ -802,7 +1119,7 @@
         "X-Jade-Speak":soundEnabled ? "1" : "0"
       });
     } catch (error) {
-      if (generation === conversationGeneration) setMicStatus(error.message || "Message vocal non transmis.");
+      if (generation === conversationGeneration) setStatus(error.message || "Message vocal non transmis.");
     } finally {
       if (generation === conversationGeneration) {
         if (activeDuplex === current.duplex) activeDuplex = null;
@@ -841,7 +1158,7 @@
         throw new Error("Réponse de liaison inattendue.");
       }
       linkCommand = "!jade-memoire confirmer " + result.code;
-      linkResult.textContent = linkCommand + "\nÀ envoyer depuis ce même compte " + (platform === "discord" ? "Discord" : "Twitch") + " dans les 5 minutes. Une fois confirmée, l'association n'expire pas.";
+      linkResult.textContent = linkCommand;
       linkCopy.disabled = false;
     } catch (error) {
       linkResult.textContent = error.message || "Liaison indisponible.";
@@ -854,7 +1171,7 @@
     if (!linkCommand) return;
     try {
       await navigator.clipboard.writeText(linkCommand);
-      linkResult.textContent = "Commande copiée. À envoyer depuis le compte Discord ou Twitch à associer avant l'expiration du code (5 minutes). La liaison restera active.";
+      linkResult.textContent = linkCommand + "\nCommande copiée.";
     } catch (_) {
       linkResult.textContent = linkCommand + "\nCopie manuellement la commande.";
     }
@@ -863,8 +1180,9 @@
   const deploymentPanel = $("deployment-panel");
   const deploymentLoad = $("deployment-load"), deploymentRun = $("deployment-run");
   const deploymentRestart = $("deployment-restart"), deploymentState = $("deployment-state");
-  const deploymentLogs = $("deployment-logs"), deploymentLogsLoad = $("deployment-logs-load");
-  const deploymentLevel = $("deployment-level"), deploymentAutoscroll = $("deployment-autoscroll");
+  const deploymentLogs = $("deployment-logs");
+  const deploymentLevel = $("deployment-level");
+  deploymentLevel.value = preferences?.get("deploymentLevel", "all") ?? "all";
   let deploymentPending = false, deploymentPolling = null, deploymentRawLogs = "";
 
   // Control runs outside Jade on Windows and stays online during a restart.
@@ -893,7 +1211,7 @@
     else if (deploymentLevel.value === "warning")
       lines = lines.filter(line => /\b(WARNING|ERROR|CRITICAL|Traceback|Exception)\b/i.test(line));
     deploymentLogs.textContent = lines.join("\n") || "Aucune ligne correspondant au filtre.";
-    if (deploymentAutoscroll.checked) deploymentLogs.scrollTop = deploymentLogs.scrollHeight;
+    deploymentLogs.scrollTop = deploymentLogs.scrollHeight;
   }
 
   async function refreshDeployment() {
@@ -953,12 +1271,63 @@
     }
   });
   deploymentLoad.addEventListener("click", refreshDeployment);
-  deploymentLogsLoad.addEventListener("click", refreshDeployment);
-  deploymentLevel.addEventListener("change", renderDeploymentLogs);
+  deploymentLevel.addEventListener("change", () => {
+    preferences?.set("deploymentLevel", deploymentLevel.value);
+    renderDeploymentLogs();
+  });
   deploymentRun.addEventListener("click", () => submitDeployment("update"));
   deploymentRestart.addEventListener("click", () => submitDeployment("restart"));
 
-  const billingPanel = $("billing-panel"), billingRefresh = $("billing-refresh");
+  const discordLivePanel = $("discord-live-panel"), discordLiveToggle = $("discord-live-enabled");
+  const discordLiveMinutes = $("discord-live-minutes"), discordLiveStatus = $("discord-live-status");
+  const discordMinutesFormat = new Intl.NumberFormat("fr-FR", {maximumFractionDigits:2});
+  let discordLiveEnabled = null, discordLiveRequest = null;
+  function resetDiscordLivePanel() {
+    discordLiveRequest?.abort();
+    discordLiveRequest = discordLiveEnabled = null;
+    if (!discordLiveToggle) return;
+    discordLiveToggle.checked = true;
+    discordLiveToggle.disabled = true;
+    discordLiveMinutes.textContent = "—";
+    discordLiveStatus.hidden = true;
+  }
+  async function refreshDiscordLive(enabled) {
+    if (!token || discordLiveRequest || (enabled !== undefined && discordLiveEnabled === null)) return;
+    const controller = new AbortController();
+    discordLiveRequest = controller;
+    discordLiveToggle.disabled = true;
+    const body = enabled === undefined ? undefined : JSON.stringify({enabled});
+    try {
+      const result = await makeRequest("/api/discord/live", body,
+        body === undefined ? undefined : {"Content-Type":"application/json"}, controller.signal);
+      if (controller.signal.aborted) return;
+      if (typeof result?.enabled !== "boolean") throw new Error("Suivi Discord indisponible.");
+      discordLiveEnabled = result.enabled;
+      const recorded = Number.isFinite(result.minutes) && result.minutes >= 0;
+      discordLiveMinutes.textContent = recorded ? discordMinutesFormat.format(result.minutes) : "—";
+      discordLiveStatus.textContent = recorded
+        ? (result.partial ? "Relevé partiel pour ce mois." : "")
+        : "Relevé indisponible.";
+    } catch (_) {
+      if (controller.signal.aborted) return;
+      discordLiveStatus.textContent = enabled === undefined
+        ? "Impossible de charger le suivi Discord."
+        : "Impossible de confirmer le changement. Réessaie.";
+    } finally {
+      if (discordLiveRequest === controller) {
+        discordLiveRequest = null;
+        discordLiveToggle.checked = discordLiveEnabled ?? true;
+        discordLiveToggle.disabled = discordLiveEnabled === null;
+        discordLiveStatus.hidden = !discordLiveStatus.textContent;
+      }
+    }
+  }
+  discordLivePanel?.addEventListener("toggle", () => {
+    if (discordLivePanel.open) refreshDiscordLive();
+  });
+  discordLiveToggle?.addEventListener("change", () => refreshDiscordLive(discordLiveToggle.checked));
+
+  const billingPanel = $("billing-panel");
   const billingStatus = $("billing-status"), billingToday = $("billing-today"), billingMonth = $("billing-month");
   let billingPending = false;
   function formatCosts(costs) {
@@ -970,35 +1339,27 @@
   async function loadBilling(refresh = false) {
     if (billingPending || !token) return;
     billingPending = true;
-    billingRefresh.disabled = true;
-    billingStatus.textContent = "Chargement des dépenses…";
     try {
       const result = await makeRequest("/api/billing", JSON.stringify({refresh}), {"Content-Type":"application/json"});
       if (result.status === "ok" || result.status === "stale") {
         billingToday.textContent = formatCosts(result.today);
         billingMonth.textContent = formatCosts(result.month);
-        const checked = new Date(result.checked_at).toLocaleString("fr-FR");
-        billingStatus.textContent = result.status === "stale"
-          ? `Dernière actualisation : ${checked}. Actualisation indisponible.`
-          : `Dernière actualisation : ${checked}. Les dépenses peuvent être reportées par OpenAI avec un délai.`;
+        const checkedAt = new Date(result.checked_at);
+        const checked = result.checked_at && Number.isFinite(checkedAt.getTime())
+          ? checkedAt.toLocaleString("fr-FR") : "—";
+        billingStatus.textContent = `Dernière actualisation : ${checked}`;
       } else {
         billingToday.textContent = billingMonth.textContent = "—";
-        billingStatus.textContent = result.status === "not_configured"
-          ? "Suivi non configuré : une clé administrateur OpenAI est nécessaire sur le PC de Jade."
-          : result.status === "access_denied"
-            ? "Accès refusé : vérifie la clé administrateur de l’organisation OpenAI."
-            : "Dépenses momentanément indisponibles. Réessaie plus tard.";
+        billingStatus.textContent = "Dernière actualisation : —";
       }
-    } catch (error) {
-      billingToday.textContent = billingMonth.textContent = "—";
-      billingStatus.textContent = error.message || "Dépenses momentanément indisponibles.";
+    } catch (_) {
+      // Keep the last dated snapshot when a refresh fails. No successful
+      // update time is invented and unavailable amounts remain unspecified.
     } finally {
       billingPending = false;
-      billingRefresh.disabled = false;
     }
   }
   billingPanel.addEventListener("toggle", () => { if (billingPanel.open) loadBilling(); });
-  billingRefresh.addEventListener("click", () => loadBilling(true));
   setInterval(() => {
     if (billingPanel.open && !document.hidden && token) loadBilling();
   }, 300000);
@@ -1136,40 +1497,49 @@
     }
     return navigator.serviceWorker.ready;
   }
-  const notificationOn = $("notifications-on"), notificationOff = $("notifications-off");
-  let confirmedNotificationChoice = "";
+  const notificationToggle = $("notifications-enabled");
+  let confirmedNotificationChoice = preferences?.get("notificationsEnabled", false) ? "on" : "off";
   let notificationBusy = false;
+  let notificationReadVersion = 0;
   function showNotificationChoice(value) {
-    notificationOn.checked = value === "on";
-    notificationOff.checked = value === "off";
+    notificationToggle.checked = value === "on";
   }
   function lockNotificationChoice(value) {
-    notificationOn.disabled = value;
-    notificationOff.disabled = value;
+    notificationToggle.disabled = value;
   }
+  function showNotificationMessage(message = "") {
+    notificationStatus.textContent = message;
+    notificationStatus.hidden = !message;
+  }
+  showNotificationChoice(confirmedNotificationChoice);
   // Refresh from browser state. Never prompt for permission while rendering the page.
   async function refreshNotificationChoice() {
     if (!token || notificationBusy) return;
+    const version = ++notificationReadVersion;
     try {
       const registration = await registrationForPush();
       const subscription = await registration.pushManager.getSubscription();
+      if (version !== notificationReadVersion || notificationBusy) return;
       confirmedNotificationChoice = subscription && Notification.permission === "granted" ? "on" : "off";
+      preferences?.set("notificationsEnabled", confirmedNotificationChoice === "on");
       showNotificationChoice(confirmedNotificationChoice);
       lockNotificationChoice(false);
-      notificationStatus.textContent = confirmedNotificationChoice === "on"
-        ? "Notifications activées sur cet appareil." : "Notifications désactivées sur cet appareil.";
+      showNotificationMessage();
     } catch (error) {
-      confirmedNotificationChoice = "";
-      showNotificationChoice("");
+      if (version !== notificationReadVersion || notificationBusy) return;
+      showNotificationChoice(confirmedNotificationChoice);
       lockNotificationChoice(true);
-      notificationStatus.textContent = "Notifications indisponibles : " + error.message;
+      showNotificationMessage("Notifications indisponibles : " + error.message);
     }
   }
   async function changeNotificationChoice(enable) {
     if (notificationBusy) return;
     if (!token) { showNotificationChoice(confirmedNotificationChoice); authorizeAgain(); return; }
     notificationBusy = true;
+    notificationReadVersion++;
     lockNotificationChoice(true);
+    showNotificationMessage();
+    let createdSubscription = null;
     try {
       const registration = await registrationForPush();
       if (enable) {
@@ -1178,9 +1548,12 @@
         if (await Notification.requestPermission() !== "granted")
           throw new Error("Permission de notifications refusée.");
         let subscription = await registration.pushManager.getSubscription();
-        if (!subscription) subscription = await registration.pushManager.subscribe({
-          userVisibleOnly:true, applicationServerKey:decodeVapidKey(config.vapid_public_key)
-        });
+        if (!subscription) {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly:true, applicationServerKey:decodeVapidKey(config.vapid_public_key)
+          });
+          createdSubscription = subscription;
+        }
         await makeRequest("/api/push", JSON.stringify({
           action:"subscribe", subscription:subscription.toJSON()
         }), reminderHeaders);
@@ -1195,23 +1568,23 @@
         }
       }
       confirmedNotificationChoice = enable ? "on" : "off";
+      preferences?.set("notificationsEnabled", enable);
       showNotificationChoice(confirmedNotificationChoice);
-      notificationStatus.textContent = enable
-        ? "Notifications activées sur cet appareil." : "Notifications désactivées sur cet appareil.";
+      showNotificationMessage();
     } catch (error) {
+      // A browser subscription without the matching server registration is
+      // not an enabled setting. Remove only a subscription created by this try.
+      if (createdSubscription) {
+        try { await createdSubscription.unsubscribe(); } catch (_) {}
+      }
       showNotificationChoice(confirmedNotificationChoice);
-      notificationStatus.textContent = (enable ? "Activation impossible : " : "Désactivation incomplète : ") + error.message;
+      showNotificationMessage((enable ? "Activation impossible : " : "Désactivation incomplète : ") + error.message);
     } finally {
       notificationBusy = false;
       lockNotificationChoice(false);
     }
   }
-  notificationOn.addEventListener("change", () => {
-    if (notificationOn.checked) changeNotificationChoice(true);
-  });
-  notificationOff.addEventListener("change", () => {
-    if (notificationOff.checked) changeNotificationChoice(false);
-  });
+  notificationToggle.addEventListener("change", () => changeNotificationChoice(notificationToggle.checked));
 
   async function showReminder(reminderId) {
     if (!/^[0-9a-f]{24}$/.test(reminderId)) return;
@@ -1261,9 +1634,16 @@
     }
   });
   mic.addEventListener("pointerdown", event => {
-    if (event.button !== 0 || event.isPrimary === false) return;
+    if (mic.disabled || liveClient?.mode === "live" || event.button !== 0 || event.isPrimary === false) return;
     event.preventDefault();
     return startRecording({pointerId:event.pointerId});
+  });
+  mic.addEventListener("click", () => {
+    if (mic.disabled || liveClient?.mode !== "live") return;
+    if (shell.dataset.view === "home" || shell.classList.contains("is-room-only")) {
+      if (liveState?.waiting_for_close && !liveState.active) return retryLiveAvailability();
+      return liveClient.toggleMicrophone();
+    }
   });
   window.addEventListener("pointerup", event => {
     if (micPress?.pointerId === event.pointerId) finishMicPress(true);
@@ -1278,12 +1658,13 @@
     if (event.key === "Escape") {
       if (voicePending) {
         cancelConversation();
-        setMicStatus("Réponse vocale interrompue.");
+        setStatus("Réponse vocale interrompue.");
       } else finishMicPress(false);
       return;
     }
-    if (event.key !== " " && event.key !== "Enter") return;
+    if (liveClient?.mode === "live" || (event.key !== " " && event.key !== "Enter")) return;
     event.preventDefault();
+    if (mic.disabled) return;
     if (!event.repeat) return startRecording({key:event.key});
   });
   mic.addEventListener("keyup", event => {
@@ -1295,39 +1676,44 @@
     if (micPress?.key !== undefined) finishMicPress(false);
   });
   mic.addEventListener("contextmenu", event => {
-    if (micPress) event.preventDefault();
+    if (micPress || liveClient?.mode === "live") event.preventDefault();
   });
   window.addEventListener("blur", () => finishMicPress(false));
   window.addEventListener("offline", () => {
-    if (!micPress && !voicePending) return;
-    cancelConversation();
-    setMicStatus("Connexion interrompue pendant le tour vocal.");
+    if (!micPress && !voicePending && !liveClient?.active) return;
+    cancelConversation("offline");
+    setStatus("Connexion interrompue pendant le tour vocal.");
   });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
-      const interrupted = Boolean(starting || busy || recording);
-      cancelConversation();
+      const interrupted = Boolean(starting || busy || recording || liveClient?.active);
+      cancelConversation("background");
       if (interrupted && !modelChanging) setStatus("Conversation interrompue.");
-    } else if (token && shell.dataset.view === "reminders") {
-      loadReminders();
+    } else {
+      scheduleLiveCloseCheck();
+      if (token && shell.dataset.view === "reminders") loadReminders();
     }
   });
   window.addEventListener("pagehide", cancelConversation);
-  soundToggle.addEventListener("click", () => {
-    soundEnabled = !soundEnabled;
-    soundToggle.textContent = soundEnabled ? "Voix activée" : "Voix coupée";
-    soundToggle.setAttribute("aria-pressed", String(soundEnabled));
-    if (!soundEnabled) stopPlayback();
+  soundToggle.addEventListener("change", () => {
+    soundEnabled = soundToggle.checked;
+    preferences?.set("soundEnabled", soundEnabled);
+    if (!soundEnabled) {
+      liveClient?.stop("sound_off");
+      stopPlayback();
+    }
+    if (liveState) renderLiveState(liveState);
   });
   newChat.addEventListener("click", () => {
     if (modelChanging || busy || recording || starting) return;
+    cancelConversation("new_thread");
     thread = newThread();
     stopPlayback();
     log.replaceChildren();
+    liveTranscripts.clear();
     setStatus("Nouveau fil.");
   });
   const fullscreenButton = $("fullscreen");
-  const roomPlane = document.querySelector(".room-plane");
   const scene = document.querySelector(".room");
   let nativeRoomFullscreen = false;
   let fullscreenPending = false;
@@ -1341,15 +1727,8 @@
   }
   function setRoomFullscreen(active) {
     resetSceneGesture();
-    // Freeze the 4:3 background width before its enclosing viewport expands.
-    if (active && roomPlane) {
-      const width = roomPlane.getBoundingClientRect().width;
-      if (width > 0) shell.style.setProperty("--room-immersive-width", width + "px");
-    }
     shell.classList.toggle("is-room-only", active);
     syncMicPlacement();
-    if (!active) shell.style.removeProperty("--room-immersive-width");
-    fullscreenButton.textContent = active ? "⤢" : "⛶";
     const description = active ? "Quitter le plein écran" : "Afficher uniquement Jade en plein écran";
     fullscreenButton.setAttribute("aria-label", description);
     fullscreenButton.setAttribute("title", description);
@@ -1450,7 +1829,11 @@
   // Chat is initialized independently of the optional Live2D renderer.
   window.JadeConversation = {stopForModelChange};
   window.JadeMobileApp = {
+    liveModuleReady:initializeLive,
+    liveModuleFailed,
+    liveModuleLoading() { liveLoadMessage = ""; renderLiveAvailability(); },
     login(value) {
+      resetLiveAuthentication("auth_changed");
       token = value;
       authInput.value = "";
       authFeedback.textContent = "";
@@ -1458,12 +1841,17 @@
       connection.textContent = "Connectée à Jade";
       connection.classList.add("online");
       setStatus("Connexion vérifiée. Tu peux parler ou écrire à Jade.");
+      renderLiveAvailability();
+      initializeLive();
       // Do not display the Android keyboard on the room-first landing page.
       openReminderFromHash();
       if (shell.dataset.view === "reminders") {
         loadReminders();
       }
-      if (shell.dataset.view === "profile") refreshNotificationChoice();
+      if (shell.dataset.view === "profile") {
+        refreshNotificationChoice();
+        if (discordLivePanel?.open) refreshDiscordLive();
+      }
     }
   };
 })();

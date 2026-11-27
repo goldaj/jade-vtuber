@@ -1,3 +1,132 @@
+## 2026-11-27 — Triste et Colère, neuf intentions sur r21
+
+- Le contrat de dialogue, les directions vocales Realtime WAV/PCM, les consignes Live natives/déléguées et le catalogue visuel acceptent `sad` et `angry`. La détection Live privilégie le réconfort et l'émotion propre explicitement exprimée par Jade ; un préambule isolé attend la suite. Les balises restent absentes du texte, de l'historique et de la parole.
+- Quatre nouvelles motions r21, sources de courbes éditables et exporteur reproductible ; poses du visage, regard, posture et oreilles dédiées. Les deux manifestes du paquet exposent neuf intentions / dix-huit variantes. Les quatorze motions antérieures, le MOC v49.1 et les textures sont conservés. ART-015 est différée faute d'accès natif, conformément à l'arbitrage du propriétaire.
+- Contrats Python/JavaScript, contre-revues distinctes, contrôle Cubism Core des dix-huit motions et recette WebGL locale du véritable r21 avec audio synthétique. Aucun rendu ni recette r20. La recette acoustique fournisseur et les observations physiques Redmi restent en REC-053 ; ART-014 reste À valider. [Passation, preuves et limites](handoffs/2026-11-27-chatgpt-intentions-r21-implementation.md).
+- La vérification de l'export privé a révélé l'absence préexistante des décors publics Cuisine/Salon dans son allowlist : ajout des deux AVIF nécessaires, sans exporter l'atelier ni les modèles. Les tests d'assets restent obligatoires dans le dépôt complet et sont explicitement ignorés uniquement dans un export marqué qui exclut entièrement l'atelier.
+- **Arbitrage complémentaire du propriétaire :** suppression des tests et des scripts de recette propres au r20, maintenu disponible sans maintenance. Chargement, cadrages, visibilité, gestes et cycle de vie sont recouverts sur r21 ; les tests du mode vocal classique restent distincts et conservés. Le cadrage utilise les repères du plan portrait r21 sans comparaison à l'ancien modèle. Le bloc JavaScript de CI utilise Bash sur Linux et Windows pour qu'un échec intermédiaire ne soit plus masqué par une commande ultérieure réussie, défaut effectivement observé dans la première CI de la PR #55.
+
+## 2026-11-27 — Continuité de la parole dans Discord Live
+
+- Pendant les réponses Discord Live, les fragments audio arrivent au lecteur indépendamment de la file bornée qui traite les transcriptions, les délégations et les relevés d’usage. En solo, 60 ms de signal vocal continu déclenchent l’interruption et l’envoi de la nouvelle prise de parole. Une demande d’arrêt reconnue reste immédiate. [Passation et recettes](handoffs/2026-11-27-codex-saccades-discord-live.md)
+
+## 2026-11-27 — Salon portrait statique
+
+- Ajout du troisième décor Salon, AVIF 941 × 1672 choisi par le propriétaire, dans le sélecteur Accueil et les préférences persistantes. Cadrage commun avec la cuisine ; aucune animation de décor, aucune modification du modèle ou de la chambre.
+- Le chargeur met en cache les sources décodées par pièce, ignore les chargements obsolètes et conserve la dernière pièce valide en cas d'erreur. Tests de sélection, de persistance, de cadrage et de passerelle étendus. Asset vérifié (232741 octets, SHA Git `2e74be0113616631e92eeb98c695ee9e7703c671`). CI et recette sur téléphone à confirmer. [Passation](handoffs/2026-11-27-chatgpt-salon-portrait.md)
+
+## 2026-11-27 — Fidélité des aigus sur Discord Live
+
+- Le propriétaire entend une différence entre Friponne sur le mobile et sur Discord Live et préfère le rendu mobile. La conversion du PCM de GPT-Live vers Discord utilise maintenant une interpolation à huit points. Elle préserve mieux les aigus tout en gardant des trames de 20 ms. L’écoute comparative reste en REC-052. [Passation](handoffs/2026-11-27-codex-rendu-friponne-discord.md)
+
+## 2026-11-27 — Cuisine portrait statique
+
+- Nouveau fond AVIF 941 × 1672 choisi par le propriétaire, retrait du précédent WebP et des calques SVG/CSS de la cuisine. Cadrage portrait commun aux deux décors et au r21 ; chambre animée et modèle classique préservés. La cuisine est chargée à la demande, sans animation.
+- Tests de sélection, gestes et contrat de passerelle adaptés ; vérification de l'asset (146261 octets, SHA Git `64c660bcc6deeb598e286412bb2677b9c4275634`). CI et recette visuelle Android à vérifier. [Passation](handoffs/2026-11-27-chatgpt-cuisine-portrait.md)
+
+## 2026-11-27 — Friponne sur GPT-Live
+
+- Le propriétaire a choisi Friponne après l’avoir entendue dans le Playground OpenAI. Le profil `friponne` dans `live_voice.py` et `live_config.py` associe la voix enregistrée à sa direction francilienne et demande un enchaînement des mots légèrement plus rapide. Le mobile et Discord Live utilisent la même consigne. Le profil `petillante` reste disponible.
+- Le propriétaire a confirmé le choix après une seconde écoute de 25 secondes portant sur le débit ajusté. L’écoute du nouveau débit avec r21 reste ouverte. [Passation et vérifications](handoffs/2026-11-27-codex-voix-friponne.md)
+
+## 2026-11-27 — Pastille Live et micro coupé
+
+- La pastille distingue le micro coupé en bleu clair de la veille avec micro ouvert en bleu foncé. La couleur bascule au moment du clic, y compris pendant la fin de lecture. [Passation et recette REC-050](handoffs/2026-11-27-codex-pastille-live.md)
+
+## 2026-11-27 — Intonations et mouvements de Pétillante en Live
+
+- Le profil Pétillante garde la voix enregistrée et la consigne choisie. GPT-Live reçoit une direction d’intonation selon le contexte et un débit légèrement plus vif. Les tours délégués reçoivent leur propre consigne de jeu silencieuse. La configuration résolue par le fournisseur est comparée si elle est présente, sans publier d’identifiant.
+- Les réponses natives déclenchent les mouvements existants à partir d’indices de transcription. Les délégations réutilisent l’intention du dialogue. Les tests contrôlent le montage des consignes, la projection des intentions sur plusieurs échanges et le retour au repos. [Passation et recette acoustique](handoffs/2026-11-27-codex-petillante-intentions-live.md)
+
+## 2026-11-27 — Reprise du Live mobile après une fermeture non confirmée
+
+- La passerelle et la PWA distinguent la fermeture en cours, l’ancienne session connue sans terminal et la création ambiguë sans identifiant. L’action de reprise peut retirer une génération arrêtée localement tout en gardant son usage indéterminé. Le retour de disponibilité ne déclenche aucune capture automatique. [Diagnostic et reprise](handoffs/2026-11-27-codex-reprise-fermeture-live-mobile.md)
+
+## 2026-11-27 — Pétillante sur GPT-Live
+
+- La candidate Pétillante enregistrée sert de voix à l’essai dans Jade. La consigne de session choisie par le propriétaire vise un registre très aigu, un jeu inspiré du manga et un accent français de France.
+- `JADE_LIVE_VOICE_STYLE=petillante` associe cette consigne au profil d’essai et exige l’ID de la voix dans `JADE_LIVE_VOICE_ID`. Le serveur applique la consigne à l’ouverture des sessions Live mobiles et Discord, avec le contexte de Jade. La voix et l’identifiant de l’essai sont conservés dans le projet API et dans la configuration privée du poste.
+- Le Playground a produit une réplique dans une session de 21 secondes. La recette avec l’avatar r21 reste ouverte en [REC-052](../backlog/02-RECETTE.md#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041). [Passation](handoffs/2026-11-27-codex-voix-petillante.md)
+
+## 2026-11-27 — Commande du Live Discord et couleur de la conversation mobile
+
+- Le salon Discord n’émet plus de salut automatique à l’arrivée. Le moteur Live possède la sortie vocale jusqu’à la fin de sa session. Les réponses classiques prennent la suite à la prochaine interaction admissible après bascule.
+- **Suivi Discord**, au-dessus de **Suivi OpenAI** dans Config, rapporte les minutes observées du mois Europe/Paris. La case serveur **Activer GPT-Live sur Discord**, cochée par défaut, permet de couper le Live et de réautoriser la politique automatique.
+- Les indicateurs Live mobiles suivent la parole captée et la voix reçue après la première ouverture. Contrôles hors réseau du panneau, du compteur, de la bascule exclusive et de deux tours mobiles successifs. [Passation et recette](handoffs/2026-11-27-codex-discord-live-control.md)
+
+## 2026-11-27 — Micro Live et indicateur dans la scène
+
+- Accueil et plein écran reprennent l’activation et la coupure du micro Live par appuis successifs. Config conserve le choix Live/classique. Aucun texte de micro ne s’affiche sur la scène. La pastille occupe le coin de la scène dans les quatre vues. Le mot « Live » reste sur Accueil fenêtré.
+- Les trois indicateurs sont bleus en veille. Le micro est rempli quand il écoute en veille. Le rouge correspond à la connexion ou à une session active avec la capture ouverte. Les tests d’intégration vérifient les appuis, la veille, la reprise et la coupure. [Décision et recette](handoffs/2026-11-27-codex-mobile-live-playback.md#mise-à-jour-du-micro-et-de-la-pastille)
+
+## 2026-11-27 — Lecture et interface du Live mobile
+
+- Le lecteur natif joue la piste distante WebRTC et l’analyseur alimente la bouche et la motion de réponse. Le graphe Web Audio reprend en cas de lecture native refusée. Le nettoyage retire le lecteur et empêche les reprises tardives. Le bouclage WebRTC synthétique dans Chromium reproduit le silence de l’ancien graphe et mesure un signal après le raccordement du lecteur. Recette Redmi encore ouverte.
+- Sur Accueil et en plein écran, le micro Live est rouge et passif. La pastille rouge indique Live dans toutes les vues et affiche « Live » sur Accueil uniquement. La capture s’active et se coupe depuis Config. Les retours visibles du micro sont donnés par la couleur. L’icône de sortie plein écran est centrée.
+- Le toucher sur la silhouette r21 prend la priorité sur le menu natif de la WebView pendant le maintien. Vérifications ciblées de l’interface et des gestes. [Passation et recette](handoffs/2026-11-27-codex-mobile-live-playback.md)
+
+## 2026-11-27 — Suivi CI Windows du lot Discord Live
+
+- La [CI de `0122897`](https://github.com/goldaj/jade-vtuber/actions/runs/45960438650) réussit sur Linux mais Windows atteint la limite globale de huit minutes. Le journal contient deux erreurs dans les tests du suivi mensuel, un échec de test mémoire compatible avec une persistance lente et un timeout de 180 s dans la suite complète relancée depuis l'export.
+- **Arrêt réellement terminé :** `global_spend.py` et `discord_live_policy.py` conservent la responsabilité de leurs threads SQLite/HTTP jusqu'à leur terminaison effective, avant de rendre l'annulation. Toutes les sources de collecte sont attendues, y compris après annulations répétées. Deux tests avec une connexion SQLite tenue par une barrière reproduisent le défaut avant correction puis passent après ; aucun seuil ni délai fournisseur augmenté.
+- **Fixture mémoire :** `test_live_bridge.py` n'annule plus une action métier pendant son commit à cause d'une limite arbitraire de trois secondes. L'attente reste bornée par le délai réel de délégation et une marge de persistance ; assertions L2/Core conservées. Le scénario injectant une persistance lente est rouge avant et vert après, sans modification du runtime mémoire.
+- **Couverture export conservée :** `test_jade_publication_export.py` conserve smoke isolé, imports, fichiers attendus et réexport. `tools/jade_preview_tests.py`, explicitement allowlisté, exécute toute la suite exportée dans un job CI séparé sur Linux et Windows, avec sortie continue. Chaque job garde huit minutes ; il n'y a plus une seconde suite complète cachée dans la première. Isolation des modules et retrait des credentials conservés.
+- Contre-revues indépendantes positives, suites ciblées puis validations complètes du dépôt et de l'export ; résultats et limites dans la [passation du lot](handoffs/2026-11-27-chatgpt-discord-auto-live.md#suivi-ci-windows-après-0122897).
+
+## 2026-11-27 — Config mobile simplifiée et sauvegarde automatique des réglages
+
+- **Demande propriétaire :** renommages Config/Paramètres/Modèle/Gestion GIT/Associer un compte, suppression des paragraphes et encarts signalés, cases Live/voix/rappels, facturation limitée aux montants/date/lien, logs toujours en défilement automatique. `salon.html`, `app.js` et les feuilles de style assurent ces parcours ; les états d’échec restent explicites. Les libellés de succès injectés après association sont également raccourcis.
+- **Disposition et appui :** Décor/Recentrer sortent de `.room` vers un bandeau dédié ; les mini-scènes et le plein écran gardent leur comportement. Effet d’appui commun aux boutons du salon, de connexion et de la page de secours, sans perturber les transformations du micro ou du plein écran.
+- **Persistance :** nouveau `preferences.js`, chargé avant le client et servi/exporté avec lui. Stockage local versionné et à champs autorisés pour les réglages non sensibles ; restauration du modèle/décor, des animations et des secousses ; voix ON seulement au premier usage. Le registre serveur reste maître du choix Live. Aucun jeton, dialogue, audio, bail ou capture sauvegardé ; aucune reprise automatique du micro.
+- **Vérifications :** tests de réouverture réelle des modules, erreurs de stockage et de sélection, notifications avec permission/souscription simulées, voix coupée appliquée à la requête, log automatique, suites frontend et contrats Python. Rendu Chromium contrôlé sur quatre formats et cinq vues ; huit états de bouton enfoncé vérifiés. Détails et résultats consolidés dans la [passation](handoffs/2026-11-27-chatgpt-mobile-config.md).
+- **Limites :** sauvegarde locale liée au navigateur/origine ; le retrait des données de l’application la supprime. La validation visuelle utilise le vrai décor et des états simulés, sans capture, appel IA ni observation physique sur le Redmi. Aucun changement des assets artistiques ou des règles Discord.
+
+## 2026-11-27 — DEV-052 → REC-051 : Discord Live automatique et interrupteur global
+
+- **Demande complémentaire du propriétaire :** développer maintenant Discord Live avec sélection automatique selon les dépenses API mensuelles globales, et un unique paramètre code ON/OFF. `discord_config.py` porte `DISCORD_ENABLED` ; configuration, CLI et préflight appliquent OFF avant les connecteurs, même avec `--all-channels`. Anciennes variables privées Discord ignorées ; mobile indépendant.
+- **Collecte et décision :** nouveaux `global_spend.py` et `discord_live_policy.py` : organisation OpenAI entière, compte Tavily, change ECB, mois Europe/Paris, seuil complet/frais 50 EUR ou estimé 40 EUR, sources inconnues explicites, verrou mensuel persistant et usage Live dédupliqué. Réservations ouverture/clôture atomiques et durables, exposition non observée distincte puis rapprochée de l'usage final. Aucun quota inutilisé ni réserve future compté comme consommation ; aucun budget financier mobile.
+- **Voix :** nouveaux `discord_live_provider.py` et `discord_live.py`, raccords `main.py`/`discord_voice.py`/`live_bridge.py` : PCM primaire WebSocket, solo natif et groupe après admission STT, contexte/mémoire/outils, lecture Discord, pièces jointes et clôtures persistantes sans replay ambigu. Nettoyage ordonné et buffers bornés.
+- **Documentation et tests :** architecture Discord, guides actuels, décision AGENTS, transfert unique DEV-052 → REC-051 et passation ; régressions switch, collecte, calcul, fournisseur, adaptateur et pont partagé. Les contre-revues vérifient annulation, reprise après crash, fin d'usage avant effacement et changement de moteur au milieu d'un tour.
+- **Limites :** 40 EUR est le régime des relevés standard, sans garantie de facture plafonnée. Sans données de coûts nécessaires, classique disponible avec motif. Groupe plus lent que solo ; recette réelle Discord/Redmi encore À valider. [Preuves et reprise](handoffs/2026-11-27-chatgpt-discord-auto-live.md).
+
+## 2026-11-27 — DEV-055 : reprise et correctifs du Live mobile
+
+- **Défaut d’ouverture :** `LiveConfig.session_config` envoyait les événements serveur autorisés comme chaînes, alors que la référence OpenAI et le SDK épinglé 3.42.1 exigent des objets `ServerEventSelector`. Format corrigé dans `live_config.py`, validation avant réseau renforcée dans `live_provider.py`. Les quatre événements autorisés et l’interdiction des commandes frontend sont conservés.
+- **Interface :** `live-client.js` ne conserve plus le libellé temporaire de fin de réponse dans le champ des diagnostics. L’état `draining` pilote déjà ce message ; la fermeture l’enlève sans effacer les erreurs fournisseur. Régressions sur délai, terminal serveur et conservation des diagnostics.
+- **Kit vocal :** `live_voice.py` et `scripts/live_voice_preview.py` ne mentionnent plus de budget mobile. La préparation demeure hors ligne, sans création ni écoute de voix.
+- **Vérification et risque :** test du corps HTTP réellement capturé validé par le modèle officiel `DataChannelConfig`, échec reproduit avant correction, rejets locaux des anciens formats, suites ciblées et contrôle documentaire. Aucun appel fournisseur réel ni kill Android observé ; ces recettes restent REC-044 à REC-050. La correction de schéma ne prétend pas prouver l’accès du compte ni la négociation WebRTC. [Passation et résultats](handoffs/2026-11-27-chatgpt-live-resume.md).
+
+## 2026-11-26 — DEV-054 : Live mobile par défaut, sans plafond financier
+
+- **Suivi CI Windows :** sur `893182c`, le scénario de migration de `test_live_usage.py` gardait sa connexion SQLite de fixture ouverte après la transaction. Windows refusait la suppression du fichier temporaire, également dans l'export autonome. Fermeture explicite et déterministe de cette connexion ; les assertions de migration sont conservées. Le runtime ferme déjà ses connexions dans `finally` et ne change pas. Vérification ciblée usage puis nouvelle CI Linux/Windows ; [preuve de l'échec initial](https://github.com/goldaj/jade-vtuber/actions/runs/45900608688).
+- **Correction produit demandée :** Live activé et sélectionné par défaut sur mobile ; choix classique explicite conservé dans Profil. Suppression des plafonds quotidien/mensuel et de la réserve backend introduits au premier lot. Les anciennes variables de montant sont ignorées, sans devoir renseigner de budget privé.
+- **Code :** configuration, gestionnaire et raccord Live ; `live_usage.py` remplace le ledger budgétaire par une observation passive, avec reprise des données existantes. Une panne du suivi ne bloque ni conversation ni outils. Les baux, arrêts, fermetures et déduplications métier restent indépendants et conservés.
+- **Interface :** préférence chargée avant tout geste vocal, module Live indépendant des assets visuels, indisponibilité expliquée, échec de chargement visible et reprise. Les refus OpenAI sont classés sans publier leurs contenus privés. Aucun microphone ni session distante n'est déclenché par le seul défaut ON.
+- **Discord :** diagnostic isolé ; le futur DEV-052 conserve exclusivement 50 EUR/mois ou 40 EUR si suivi incomplet, toutes API confondues, sans effet sur le mobile. Adaptateur et automatisme Discord non activés dans ce correctif.
+- **Vérifications et limites :** tests hors ligne de migration, absence de plafond, panne du suivi, délégations, fermeture, fournisseur et frontend ; commandes navigateur et compilation. Preuves consolidées et contre-revues dans la [passation DEV-054](handoffs/2026-11-26-chatgpt-live-mobile-default-no-budget.md). Les recettes OpenAI/Redmi restent REC-044 à REC-050 ; aucune observation matérielle présumée. Le préparateur de voix respecte désormais la limite de prompt de 2 000 caractères.
+
+## 2026-11-26 — Conservation des sources locales du visage r21
+
+- Ajout de la planche de référence, de la source Cubism v45.5, de trois dossiers d’exports intermédiaires et de la sonde Node de rotation. Le manifeste mobile continue de charger la v49.1 validée. Les anciennes textures communes sont dédupliquées par Git LFS. [Sources et rôle de la sonde](handoffs/2026-11-26-codex-volume-visage-r21.md)
+- Contrôles sur le poste : les 14 binaires ajoutés correspondent à leurs pointeurs LFS (taille et SHA-256). Le vérificateur des assets valide les 250 fichiers de son manifeste et les 87 références. La sonde passe le contrôle de syntaxe Node.
+
+## 2026-11-26 — Intégration du Live mobile sur develop pour recette
+
+- Après `8c10150`, Windows réussit ses 864 tests (2 skips), mais Linux atteint la limite du job pendant la fermeture du contrôle Live. Une reproduction sur sockets locales confirme qu'un envoi absorbant une annulation pouvait laisser le bail armé et bloquer la demande de clôture fournisseur derrière un `gather` de nettoyage. `mobile_live.py` libère désormais la session avant le nettoyage borné, et ses boucles ne repartent plus après l'arrêt. `mobile_duplex.py` et le contrôle Live utilisent `asyncio.timeout` avec les mêmes délais réseau pour préserver les annulations sous Python 3.11. Test de régression ciblé et préservation des contrôles de terminal fournisseur ; aucun budget, modèle, voix ou flag privé modifié.
+- CI Windows sur `182a8a3` : trois scénarios du pont Live supposaient que les fragments arrivaient en 40 ms et que la persistance se terminait en 100 ms. Les écritures SQLite plus lentes rendaient les assertions prématurées et la suppression des fichiers temporaires concurrente avec leur utilisation. `test_live_bridge.py` synchronise désormais les opérations dont il vérifie le résultat ; les délais et fermetures du code produit restent inchangés. Le test de fermeture bornée demeure distinct. Revalidation ciblée du pont et de l'export, puis CI Linux/Windows.
+- Vérification après intégration `2b80c31` : la CI révèle une extraction trop courte du Profil dans `mobile_avatar_models_test.js`, interrompue par la sous-section Live. L'ascendance réelle du sélecteur est inchangée ; le test suit désormais les sections imbriquées jusqu'à la fermeture du Profil en conservant les contrôles d'appartenance et d'unicité. Aucun HTML ni code produit modifié par ce correctif ; les 25 commandes de l'étape navigateur sont revérifiées.
+- Le propriétaire autorise l’intégration du lot `90ec0c7` pour effectuer son test. Fusion avec develop `b4a85e8`, en conservant les nouvelles cartes DEV-053 / ART-014 et leur passation. Seul le backlog se chevauche ; aucun conflit de code, historique et assets conservés.
+- État fonctionnel, guides, atlas, backlog et passation actualisés. REC-044 à REC-050 restent À valider ; DEV-041 conserve la voix à sélectionner et DEV-052 la future politique Discord 50/40 EUR.
+- Code identique au lot testé : 864 tests, zéro échec, 12 skips Discord optionnels. Contrôles documentaires/backlog et différences de code revérifiés pour l’intégration. Les flags/budgets privés ne sont pas activés à distance ; main n’est pas modifiée par cette livraison. [Passation et test](handoffs/2026-11-26-chatgpt-live-mobile-implementation.md#intégration-sur-develop-autorisée-le-26-novembre-2026).
+
+## 2026-11-26 — Live mobile raccordé sur branche dédiée
+
+- **Périmètre :** `feat/live-mobile-20261126`, develop repris au `6dc8d1b`, aucune fusion develop/main. Sept US logicielles transférées en REC-044 à REC-050 ; voix originale DEV-041 partiellement préparée, future politique Discord 50/40 EUR ajoutée en DEV-052.
+- **Fonction :** Profil ON/OFF, bail exclusif avant capture, VAD/pré-roll et WebRTC, watchdog/fermeture confirmée, budgets privés, pont persona/mémoire/outils, chat et avatar sur la sortie réellement jouée. Classique et transport Discord conservés, capture jamais restaurée automatiquement.
+- **Code :** modules `live_*`/`mobile_live.py`, raccord `main.py` et gateway/duplex, configuration/préflight, façade Runtime/Dialogue/mémoire, scripts frontend et kit vocal hors ligne. Export de prévisualisation mis à jour pour les deux scripts Live. Aucun changement des modèles ou assets 2D.
+- **Contrôles :** fournisseur simulé, ledger concurrent, courses et pannes de sessions, vrais HTTP/WS loopback, vrai Runtime/SQLite/outils avec modèle simulé, suites JS et non-régressions. Les preuves chiffrées finales sont dans la [passation](handoffs/2026-11-26-chatgpt-live-mobile-implementation.md). Assertion de décor devenue obsolète reproduite sur develop puis actualisée sans changer le décor.
+- **Limites :** pas d'appel payé ni d'essai Redmi/OpenAI. Les fermetures inconnues et coûts non réconciliés restent conservateurs ; les coûts backend sont estimés. Aube API non confirmée, Brise explicite ; création/écoute et choix de voix restent ouverts. Flags et budgets par défaut fermés. [Architecture](../architecture/LIVE_MOBILE.md).
+
 ## 2026-11-26 — Jade mobile v49.1 validée sur téléphone
 
 - Le propriétaire a validé la rotation continue du visage du modèle debout dans la PWA. Le manifeste mobile référence l’export Cubism SDK 5.0 et ses trois textures. La [source Cubism v49.1](../../jade-modeling/assets/live2d/r21_professional_art/working_v005/Jade_r21_v49_1_visage_continu.cmo3) permet de reprendre la version publiée.

@@ -1,0 +1,208 @@
+{
+  "verification": "Cubism Core geometry and parameter bounds; no visual or hardware acceptance",
+  "model": "r21",
+  "mocSha256": "033196b5b31c5e12885fb2d70b371354e0f2c3e1965dbc92e55e57d0ece5b875",
+  "coreJsSha256": "8741f739779b5d5210872bd3d7d99f0f1e56e6c87409e7d26d6bb4b80aa1ef47",
+  "coreVersion": 100663297,
+  "manifest": "Jade_r21_mobile.model3.json",
+  "manifestSha256": "7bcc09afebaa906aa03cb1ae8a57d27ac24bd10d351a56a46cd8707a82c23ab8",
+  "sampleFps": 60,
+  "poses": 3587,
+  "shoeDrawables": [
+    "JAD_R21_SHOE_R_V3",
+    "JAD_R21_SHOE_L_V3"
+  ],
+  "rows": [
+    {
+      "motion": "mobile/Jade_curious_A.motion3.json",
+      "sha256": "70e4b0dafa7c64ca0713c3876f12e7c3bab5244640b0a285c72ca04751b2ec55",
+      "durationSeconds": 3.58,
+      "maxShoePixels": 1.2827,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_curious_B.motion3.json",
+      "sha256": "236d0bd5920240c7ed7c1eee43fbc2728eb5d6960e98d6d7ea8dbff8ecd3b9a1",
+      "durationSeconds": 3.47,
+      "maxShoePixels": 0.9881,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_neutral_A.motion3.json",
+      "sha256": "78cc87f107e86aeb294df0d7e8cddc42e49e08a42d88d6009c3000d601d3ee2a",
+      "durationSeconds": 3.13,
+      "maxShoePixels": 0.7805,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_neutral_B.motion3.json",
+      "sha256": "ae74f8fc109ee506018e0de6215944086c186b587468d5c4bbfa7b41af339c6b",
+      "durationSeconds": 3.36,
+      "maxShoePixels": 0.8096,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_playful_A.motion3.json",
+      "sha256": "caf2cb87b9b73221797c43341489fe92ad91b2787e4f7b20bb5e0587f5997d71",
+      "durationSeconds": 2.9,
+      "maxShoePixels": 1.0277,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_playful_B.motion3.json",
+      "sha256": "67832b7e1fa733e9381f896fc677263cf3231f6e4b3b6bca26023a67f9dcc03b",
+      "durationSeconds": 3.26,
+      "maxShoePixels": 1.5534,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_excited_A.motion3.json",
+      "sha256": "831a70326cb8e3177ee98acb8e8c5b1671876f2ddd43a9131318247521035c94",
+      "durationSeconds": 3.12,
+      "maxShoePixels": 0.8561,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_excited_B.motion3.json",
+      "sha256": "f071fbba7fb05bb1fa02e955ccaa5f0a3ea294a8bd8f19c28ff9b27f2839f113",
+      "durationSeconds": 3.6,
+      "maxShoePixels": 1.8834,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_tender_A.motion3.json",
+      "sha256": "4d8952601c3b32617bb73186421772b04c900629832357fd5ddfc84626105498",
+      "durationSeconds": 3.14,
+      "maxShoePixels": 1.0782,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_tender_B.motion3.json",
+      "sha256": "6cbac24df7c0486350a94d322a668f4c6860d5f449eb0ba32deb911c680f2b35",
+      "durationSeconds": 3.04,
+      "maxShoePixels": 0.8003,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_reassuring_A.motion3.json",
+      "sha256": "5dcb2e360578e7721009f1141c43969709cbe7f94eddb3ddfd5dc990704b1de3",
+      "durationSeconds": 3.28,
+      "maxShoePixels": 0.6091,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_reassuring_B.motion3.json",
+      "sha256": "48a31aa52010321b9f64e719826403191bfa24082da7003a356f85d5f3b80838",
+      "durationSeconds": 3.54,
+      "maxShoePixels": 1.5291,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_serious_A.motion3.json",
+      "sha256": "70e69ef3c04cbaf254e0dc936bca521e909dbb268d52bddcf38517fe6a9773d5",
+      "durationSeconds": 3.08,
+      "maxShoePixels": 1.4521,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_serious_B.motion3.json",
+      "sha256": "a6b8c4d9cf998d13c962f61f12326d77e3a948e6d6ee91956501a2b2e25206ce",
+      "durationSeconds": 2.8,
+      "maxShoePixels": 0.7794,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_sad_A.motion3.json",
+      "sha256": "86ecfa20a2284d39f4304ac0b351d9373bf672faff7c482b9a5ecfee83dce34b",
+      "durationSeconds": 3.8,
+      "maxShoePixels": 0.8708,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_sad_B.motion3.json",
+      "sha256": "152e0ac47f150c5ec7d5c19ffcd953109109b38526571fc308163ab077e200c2",
+      "durationSeconds": 4.16,
+      "maxShoePixels": 0.7204,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_angry_A.motion3.json",
+      "sha256": "a314c65c6f1b3bdd3b5b83400a85acd001016707bc65af4aa58850fc5fb2ea82",
+      "durationSeconds": 2.86,
+      "maxShoePixels": 1.0536,
+      "restResidualPixels": 0
+    },
+    {
+      "motion": "mobile/Jade_angry_B.motion3.json",
+      "sha256": "4809eae458c8ea6753c074fdb66a7685fca9fafbf743102ea4b357b94f213528",
+      "durationSeconds": 3.26,
+      "maxShoePixels": 0.9938,
+      "restResidualPixels": 0
+    }
+  ],
+  "baselineComparison": {
+    "commit": "d7655cd4f4bf5c4e0ba1e177c625493ecfee1cd6",
+    "scope": "Fourteen pre-existing r21 mobile motion exports",
+    "filesCompared": 14,
+    "filesUnchanged": 14,
+    "identicalBytes": true,
+    "files": [
+      {
+        "motion": "mobile/Jade_curious_A.motion3.json",
+        "sha256": "70e4b0dafa7c64ca0713c3876f12e7c3bab5244640b0a285c72ca04751b2ec55"
+      },
+      {
+        "motion": "mobile/Jade_curious_B.motion3.json",
+        "sha256": "236d0bd5920240c7ed7c1eee43fbc2728eb5d6960e98d6d7ea8dbff8ecd3b9a1"
+      },
+      {
+        "motion": "mobile/Jade_neutral_A.motion3.json",
+        "sha256": "78cc87f107e86aeb294df0d7e8cddc42e49e08a42d88d6009c3000d601d3ee2a"
+      },
+      {
+        "motion": "mobile/Jade_neutral_B.motion3.json",
+        "sha256": "ae74f8fc109ee506018e0de6215944086c186b587468d5c4bbfa7b41af339c6b"
+      },
+      {
+        "motion": "mobile/Jade_playful_A.motion3.json",
+        "sha256": "caf2cb87b9b73221797c43341489fe92ad91b2787e4f7b20bb5e0587f5997d71"
+      },
+      {
+        "motion": "mobile/Jade_playful_B.motion3.json",
+        "sha256": "67832b7e1fa733e9381f896fc677263cf3231f6e4b3b6bca26023a67f9dcc03b"
+      },
+      {
+        "motion": "mobile/Jade_excited_A.motion3.json",
+        "sha256": "831a70326cb8e3177ee98acb8e8c5b1671876f2ddd43a9131318247521035c94"
+      },
+      {
+        "motion": "mobile/Jade_excited_B.motion3.json",
+        "sha256": "f071fbba7fb05bb1fa02e955ccaa5f0a3ea294a8bd8f19c28ff9b27f2839f113"
+      },
+      {
+        "motion": "mobile/Jade_tender_A.motion3.json",
+        "sha256": "4d8952601c3b32617bb73186421772b04c900629832357fd5ddfc84626105498"
+      },
+      {
+        "motion": "mobile/Jade_tender_B.motion3.json",
+        "sha256": "6cbac24df7c0486350a94d322a668f4c6860d5f449eb0ba32deb911c680f2b35"
+      },
+      {
+        "motion": "mobile/Jade_reassuring_A.motion3.json",
+        "sha256": "5dcb2e360578e7721009f1141c43969709cbe7f94eddb3ddfd5dc990704b1de3"
+      },
+      {
+        "motion": "mobile/Jade_reassuring_B.motion3.json",
+        "sha256": "48a31aa52010321b9f64e719826403191bfa24082da7003a356f85d5f3b80838"
+      },
+      {
+        "motion": "mobile/Jade_serious_A.motion3.json",
+        "sha256": "70e69ef3c04cbaf254e0dc936bca521e909dbb268d52bddcf38517fe6a9773d5"
+      },
+      {
+        "motion": "mobile/Jade_serious_B.motion3.json",
+        "sha256": "a6b8c4d9cf998d13c962f61f12326d77e3a948e6d6ee91956501a2b2e25206ce"
+      }
+    ]
+  }
+}

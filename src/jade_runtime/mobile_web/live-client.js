@@ -1,0 +1,737 @@
+/* Private mobile GPT-Live: local capture lease, WebRTC media, authenticated
+ * Jade control channel. The browser holds no provider key and sends no model
+ * commands. Bearer and pre-roll exist only in memory. */
+"use strict";
+(() => {
+  const publicReasons = {
+    live_disabled:"Le mode Live est désactivé dans la configuration de Jade.",
+    mobile_live_disabled:"Le Live mobile est désactivé dans la configuration de Jade.",
+    api_key_missing:"La connexion OpenAI n’est pas configurée sur Jade.",
+    live_unavailable:"Le service Live de Jade n’est pas disponible. Vérifie que Jade est à jour et relancée.",
+    live_state_unavailable:"Jade ne peut pas vérifier l’état de la conversation Live. Réessaie dans quelques instants.",
+    server_stopping:"Jade est en cours d’arrêt. Réessaie après son redémarrage.",
+    browser_insecure:"Le Live nécessite une connexion sécurisée. Ouvre l’adresse HTTPS privée de Jade.",
+    browser_unsupported:"Ce navigateur ne permet pas le mode Live. Utilise un navigateur compatible avec WebRTC et AudioWorklet.",
+    microphone_owned_by_other_client:"Le micro Live est déjà ouvert sur un autre appareil.",
+    previous_session_not_closed:"La conversation Live précédente se ferme encore. Réessaie dans quelques instants.",
+    close_unconfirmed:"La fermeture de l’ancienne conversation n’a pas été confirmée. Appuie sur Réessayer pour reprendre.",
+    creation_unconfirmed:"Jade attend de confirmer l’ouverture précédente. Le micro est coupé.",
+    live_mode_off:"Le mode Live a été désactivé. Vérifie le choix dans Config.",
+    preference_conflict:"Le choix vocal a changé sur un autre appareil. Vérifie Config.",
+    invalid_or_expired_live_lease:"L’autorisation du micro a expiré. Touche le micro pour reprendre.",
+    live_auth_failed:"OpenAI refuse l’authentification de Jade. Vérifie sa connexion OpenAI côté serveur.",
+    live_access_denied:"Le compte OpenAI de Jade n’a pas accès au Live.",
+    live_model_unavailable:"Le modèle Live configuré n’est pas disponible pour le compte OpenAI de Jade.",
+    live_quota_exceeded:"Le quota du compte OpenAI est épuisé. Vérifie le compte utilisé par Jade.",
+    live_rate_limited:"OpenAI reçoit trop de demandes Live. Réessaie dans quelques instants.",
+    live_connection_failed:"Jade ne parvient pas à joindre OpenAI. Réessaie dans quelques instants.",
+    live_open_failed:"OpenAI n’a pas pu ouvrir la conversation Live. Réessaie dans quelques instants.",
+    live_start_rate_limit:"Plusieurs connexions Live ont été ouvertes récemment. Patiente un instant avant de reprendre.",
+  };
+  const publicReason = code => publicReasons[code] || "Le mode Live est momentanément indisponible. Réessaie dans quelques instants.";
+  const closingReasons = {closing:"previous_session_not_closed", close_unconfirmed:"close_unconfirmed",
+    opening_unknown:"creation_unconfirmed"};
+  function closureReason(phase, reason) {
+    return closingReasons[phase] || (Object.values(closingReasons).includes(reason) ? reason : "");
+  }
+  function create(options = {}) {
+    const env = options.environment || window;
+    const doc = env.document || document;
+    const nav = env.navigator || navigator;
+    const clock = () => env.performance?.now?.() ?? performance.now();
+    const later = (fn, ms) => env.setTimeout(fn, ms);
+    const cancelLater = id => { if (id !== null) env.clearTimeout(id); };
+    const callbacks = (name, ...args) => { try { options[name]?.(...args); } catch (_) {} };
+    function identifier() {
+      const random = env.crypto;
+      if (typeof random?.randomUUID === "function") return random.randomUUID();
+      if (typeof random?.getRandomValues === "function") {
+        return Array.from(random.getRandomValues(new Uint8Array(16)), value => value.toString(16).padStart(2, "0")).join("");
+      }
+      // These identifiers correlate requests; identity and authorization always
+      // come from the authenticated Jade connection, never this fallback.
+      return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    }
+    const clientId = "live-" + identifier();
+    const AudioConstructor = env.AudioContext || env.webkitAudioContext;
+    const availableBrowser = Boolean(AudioConstructor && env.AudioWorkletNode &&
+      env.RTCPeerConnection && env.WebSocket && nav.mediaDevices?.getUserMedia && env.isSecureContext !== false);
+    const browserReason = env.isSecureContext === false ? "browser_insecure" : "browser_unsupported";
+    const state = {mode:"live", revision:-1, loaded:false, supported:availableBrowser,
+      available:false, availability_message:availableBrowser ? "" : publicReason(browserReason),
+      capabilities:null, capture:"closed", lease_state:"closed",
+      session_state:"absent", session_id:null, recovery_allowed:false, reason:"", message:"", changing:false};
+    let epoch = 0, preferenceRequest = 0, requestedMode = null;
+    let leaseId = null, leaseThread = null, socket = null, controlReady = false;
+    let heartbeatTimer = null, heartbeatSeq = 0, acknowledgedSeq = 0, lastAck = 0, lastHeartbeat = 0;
+    let context = null, media = null, source = null, worklet = null, destination = null;
+    let peer = null, dataChannel = null, remoteAudio = null, remoteSource = null, analyser = null, playbackFrame = null;
+    let openingTimer = null, drainTimer = null, disconnectTimer = null;
+    let opening = false, speechActive = false, playbackActive = false, lastAudible = -Infinity;
+    let pendingResponse = false, sentSpeech = false, closePromise = null, heldSession = null;
+    let pendingWake = false, wakeStarted = null;
+    let modeForcedOff = false;
+    let refreshPromise = null, recoveryPromise = null;
+    const snapshot = () => ({...state, active:Boolean(leaseId || state.capture !== "closed"),
+      waiting_for_close:Boolean(closureReason(state.session_state, state.reason)),
+      media_state:peer ? (opening ? "connecting" : "connected") : "absent",
+      playback_active:playbackActive, speech_active:speechActive});
+    const publish = () => callbacks("onState", snapshot());
+    const message = (reason, text) => { state.reason = reason; state.message = text; publish(); };
+    function waitForClose(reason) {
+      state.session_state = Object.keys(closingReasons).find(phase => closingReasons[phase] === reason);
+      state.available = false;
+      state.recovery_allowed = false;
+      state.reason = reason;
+      state.message = "";
+      state.availability_message = publicReason(reason);
+    }
+    const leaseMs = () => Math.max(1000, Number(state.capabilities?.lease_seconds || 5) * 1000);
+    const heartbeatMs = () => Math.max(250, Number(state.capabilities?.heartbeat_seconds || 2) * 1000);
+    function assertCurrent(generation) {
+      if (generation !== epoch || !leaseId || state.mode !== "live" || doc.hidden)
+        throw new Error("live_cancelled");
+    }
+    async function request(path, body, timeout = 5000, bearer = options.getToken?.()) {
+      if (!bearer) throw new Error("Accès mobile expiré.");
+      const controller = new (env.AbortController || AbortController)();
+      const timer = later(() => controller.abort(), timeout);
+      try {
+        const response = await (env.fetch || fetch)(path, {method:body === undefined ? "GET" : "POST",
+          mode:"same-origin", credentials:"omit", cache:"no-store", signal:controller.signal,
+          headers:{Authorization:"Bearer " + bearer, "Content-Type":"application/json"},
+          ...(body === undefined ? {} : {body:JSON.stringify(body)})});
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const code = result.code || result.error;
+          const error = new Error(publicReason(code));
+          error.code = code;
+          error.status = response.status;
+          error.result = result;
+          // Provider authentication is distinct from the owner's mobile login.
+          if ((response.status === 401 || response.status === 403) &&
+              !["live_auth_failed", "live_access_denied", "live_model_unavailable"].includes(code)) callbacks("onAuthFailure");
+          throw error;
+        }
+        return result;
+      } catch (error) {
+        if (error.result) throw error;
+        const failure = new Error(error.name === "AbortError" ?
+          "Jade ne répond pas. Vérifie la connexion, puis réessaie." :
+          "Connexion à Jade impossible. Vérifie Tailscale et la connexion, puis réessaie.");
+        failure.code = "live_gateway_unreachable";
+        throw failure;
+      } finally { cancelLater(timer); }
+    }
+    function preference(value) {
+      const revision = Number(value?.revision);
+      if (!Number.isSafeInteger(revision) || revision < state.revision ||
+          !["live", "classic"].includes(value?.mode)) return;
+      const off = value.mode === "classic";
+      state.revision = revision;
+      state.loaded = true;
+      state.mode = requestedMode === "classic" || modeForcedOff ? "classic" : value.mode;
+      if (off && (leaseId || state.capture !== "closed")) void stop("preference_off");
+      publish();
+    }
+    async function refreshState() {
+      const observedEpoch = epoch;
+      const results = await Promise.allSettled([
+        request("/api/live/capabilities"), request("/api/voice/preferences")]);
+      if (results[0].status === "fulfilled") {
+        state.capabilities = results[0].value;
+        state.available = Boolean(availableBrowser && state.capabilities.enabled && state.capabilities.available);
+        if (!state.available) {
+          state.reason = !availableBrowser ? browserReason : (state.capabilities.reason || "live_unavailable");
+          const reasons = Array.isArray(state.capabilities.reasons) && state.capabilities.reasons.length
+            ? state.capabilities.reasons : [state.reason];
+          state.availability_message = !availableBrowser ? publicReason(browserReason) :
+            [...new Set(reasons.map(publicReason))].join(" ");
+        } else state.availability_message = "";
+        // Read-only reconciliation after an uncertain close. A snapshot from
+        // another client never transfers its lease or authorizes capture here.
+        const observed = state.capabilities.state;
+        if (observedEpoch === epoch && !leaseId && state.capture === "closed" && !closePromise) {
+          const closure = closureReason(observed?.session_state, state.capabilities.reason);
+          if (closure) {
+            waitForClose(closure);
+            state.recovery_allowed = closure === "close_unconfirmed" && observed?.recovery_allowed === true;
+          }
+          else if (state.available && ["absent", "closed"].includes(observed?.session_state)) {
+            state.session_state = "absent";
+            state.session_id = null;
+            state.recovery_allowed = false;
+            state.reason = state.message = "";
+          }
+        }
+      } else {
+        state.available = false;
+        state.availability_message = !availableBrowser ? publicReason(browserReason) : results[0].reason.message;
+      }
+      if (results[1].status === "fulfilled") {
+        const value = results[1].value;
+        preference(value);
+        if (!state.loaded) state.message = "Le choix vocal n’a pas pu être vérifié. Réessaie.";
+      }
+      else state.message = "Le choix vocal n’a pas pu être vérifié. Réessaie depuis Config.";
+      publish();
+      return snapshot();
+    }
+    function refresh() {
+      if (!refreshPromise) refreshPromise = refreshState().finally(() => { refreshPromise = null; });
+      return refreshPromise;
+    }
+    function recover() {
+      if (state.session_state !== "close_unconfirmed" || closePromise || leaseId || doc.hidden) return refresh();
+      if (!recoveryPromise) {
+        recoveryPromise = (async () => {
+          if (!state.recovery_allowed) await refresh();
+          if (!state.recovery_allowed || state.session_state !== "close_unconfirmed" ||
+              closePromise || leaseId || doc.hidden) return snapshot();
+          try { await request("/api/live/recover", {}); }
+          catch (_) { /* The capability response remains authoritative. */ }
+          if (refreshPromise) await refreshPromise;
+          return refresh();
+        })().finally(() => { recoveryPromise = null; });
+      }
+      return recoveryPromise;
+    }
+    async function setMode(mode) {
+      if (!["classic", "live"].includes(mode)) return false;
+      const turn = ++preferenceRequest;
+      requestedMode = mode;
+      modeForcedOff = mode === "classic";
+      state.changing = true;
+      if (mode === "classic") { state.mode = "classic"; void stop("preference_off"); }
+      publish();
+      try {
+        if (!state.loaded) await refresh();
+        if (turn !== preferenceRequest) return false;
+        let result;
+        try { result = await request("/api/voice/preferences", {mode, revision:state.revision}); }
+        catch (error) {
+          const current = error.result?.preference || error.result?.state || error.result;
+          if (error.status === 409 && mode === "classic" && turn === preferenceRequest &&
+              Number.isSafeInteger(Number(current?.revision))) {
+            state.revision = Math.max(state.revision, Number(current.revision));
+            result = await request("/api/voice/preferences", {mode, revision:state.revision});
+          } else {
+            if (error.status === 409) preference(current);
+            throw error;
+          }
+        }
+        if (turn !== preferenceRequest) return false;
+        requestedMode = null;
+        modeForcedOff = false;
+        preference(result);
+        state.message = "";
+        state.reason = "";
+        return state.mode === mode;
+      } catch (error) {
+        if (turn === preferenceRequest) {
+          state.message = mode === "classic" ? "Micro coupé. La désactivation doit encore être confirmée par Jade." :
+            (error.status === 409 ? "Le choix a changé sur un autre appareil. Vérifie Config." : error.message);
+        }
+        return false;
+      } finally {
+        if (turn === preferenceRequest) { requestedMode = null; state.changing = false; publish(); }
+      }
+    }
+    function sendControl(value) {
+      if (!controlReady || socket?.readyState !== 1) return false;
+      try { socket.send(JSON.stringify(value)); return true; } catch (_) { return false; }
+    }
+    function observePlayback(kind) {
+      if (heldSession) sendControl({type:"playback", session_id:heldSession, state:kind});
+    }
+    function heartbeat(submittedSpeech = false) {
+      if (!controlReady) return;
+      lastHeartbeat = clock();
+      sendControl({type:"heartbeat", seq:++heartbeatSeq, visible:!doc.hidden,
+        capture:state.capture === "armed" ? "armed" : "closed",
+        playback_active:playbackActive, speech_active:submittedSpeech || speechActive});
+    }
+    function stopCapture() {
+      state.capture = "closed";
+      speechActive = false;
+      for (const stream of [media, destination?.stream])
+        for (const track of stream?.getTracks?.() || []) { try { track.stop(); } catch (_) {} }
+      if (worklet) {
+        worklet.port.onmessage = null;
+        try { worklet.port.postMessage({type:"stop"}); } catch (_) {}
+      }
+      try { source?.disconnect(); } catch (_) {}
+      try { worklet?.disconnect(); } catch (_) {}
+      media = source = worklet = destination = null;
+      for (const sender of peer?.getSenders?.() || []) {
+        if (sender.track?.kind !== "audio") continue;
+        try { Promise.resolve(sender.replaceTrack(null)).catch(() => {}); } catch (_) {}
+      }
+    }
+    function stopOutput(interrupted = true) {
+      if (interrupted && (playbackActive || pendingResponse)) {
+        observePlayback("interrupted");
+        callbacks("onInterruption", heldSession, playbackActive ? "interrupted" : "delivery_unknown");
+      }
+      if (playbackFrame !== null) env.cancelAnimationFrame(playbackFrame);
+      playbackFrame = null;
+      if (remoteAudio) {
+        remoteAudio.pause();
+        remoteAudio.srcObject = null;
+        remoteAudio.remove();
+        remoteAudio = null;
+      }
+      try { remoteSource?.disconnect(); analyser?.disconnect(); } catch (_) {}
+      remoteSource = analyser = null;
+      playbackActive = false;
+      lastAudible = -Infinity;
+      callbacks("onPlayback", 0, false);
+    }
+    function closePeer(interrupted = true) {
+      cancelLater(openingTimer); openingTimer = null;
+      cancelLater(disconnectTimer); disconnectTimer = null;
+      opening = false;
+      stopOutput(interrupted);
+      const old = peer;
+      peer = null;
+      if (old) {
+        old.ontrack = old.onconnectionstatechange = old.oniceconnectionstatechange = null;
+        try { old.close(); } catch (_) {}
+      }
+      if (dataChannel) {
+        dataChannel.onmessage = dataChannel.onclose = null;
+        try { dataChannel.close(); } catch (_) {}
+      }
+      dataChannel = null;
+      heldSession = null;
+      if (!pendingWake) wakeStarted = null;
+      pendingResponse = sentSpeech = false;
+      state.session_id = null;
+    }
+    function releaseAudio() {
+      stopCapture();
+      closePeer();
+      if (context) {
+        context.onstatechange = null;
+        Promise.resolve(context.close()).catch(() => {});
+      }
+      context = null;
+    }
+    function closeControl() {
+      if (heartbeatTimer !== null) env.clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+      controlReady = false;
+      if (socket) {
+        socket.onopen = socket.onmessage = socket.onclose = socket.onerror = null;
+        socket.close();
+      }
+      socket = null;
+    }
+    function finishLease(reason, sessionState = "absent") {
+      cancelLater(drainTimer); drainTimer = null;
+      epoch++;
+      releaseAudio();
+      closeControl();
+      leaseId = leaseThread = null;
+      pendingWake = false; wakeStarted = null;
+      state.lease_state = "closed";
+      state.session_state = sessionState;
+      state.reason = reason || state.reason;
+      const closure = closureReason(sessionState, reason);
+      if (closure) waitForClose(closure);
+      publish();
+    }
+    function acceptSnapshot(value, generation) {
+      if (!value || generation !== epoch) return;
+      if (value.session_state === "closed") value = {...value, session_state:"absent"};
+      preference(value);
+      if (generation !== epoch || !leaseId) return;
+      if (value.lease_id && value.lease_id !== leaseId) return;
+      if (value.lease_state) state.lease_state = value.lease_state;
+      if (value.session_state) state.session_state = value.session_state;
+      if (value.reason) state.reason = value.reason;
+      if (value.session_id) { state.session_id = value.session_id; heldSession ||= value.session_id; }
+      if (value.lease_state === "closed" || value.lease_state === "expired") {
+        finishLease(value.reason, value.session_state || "absent");
+        return;
+      }
+      if (value.lease_state === "draining") stopCapture();
+      if (value.session_state === "closing" && state.lease_state === "armed" && peer) {
+        closePeer(false);
+        worklet?.port.postMessage({type:"local"});
+      }
+      if (value.session_state === "absent" && (!opening || heldSession) && (peer || heldSession)) {
+        closePeer(false);
+        if (state.capture === "armed" && !pendingWake) worklet?.port.postMessage({type:"local"});
+      }
+      if (["close_unconfirmed", "opening_unknown"].includes(value.session_state)) {
+        // A missing provider terminal must never leave a local microphone or
+        // a second media generation running while the server reconciles it.
+        state.message = "Micro coupé. Jade vérifie encore l’état de la connexion distante.";
+        finishLease(value.reason || value.session_state, value.session_state);
+        return;
+      }
+      if (value.session_state === "absent" && pendingWake && state.capture === "armed") {
+        pendingWake = false;
+        void openSession(generation);
+      }
+      publish();
+    }
+    function connectControl(generation) {
+      return new Promise((resolve, reject) => {
+        const location = env.location;
+        const url = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/api/live/control";
+        const ws = new env.WebSocket(url, "jade-live-v1");
+        socket = ws;
+        let settled = false;
+        const timeout = later(() => failed(new Error("La supervision Live ne répond pas.")), leaseMs());
+        function failed(error) {
+          cancelLater(timeout);
+          if (!settled) { settled = true; reject(error); }
+          if (generation === epoch && leaseId) void stop("control_lost", {message:error.message});
+        }
+        ws.onopen = () => {
+          if (generation !== epoch) { ws.close(); return; }
+          ws.send(JSON.stringify({type:"auth", token:options.getToken?.(), client_id:clientId,
+            thread_id:leaseThread, lease_id:leaseId}));
+        };
+        ws.onerror = () => failed(new Error("Connexion Live interrompue."));
+        ws.onclose = () => failed(new Error("Supervision Live interrompue. Touche le micro pour reprendre."));
+        ws.onmessage = ({data}) => {
+          if (generation !== epoch || socket !== ws) return;
+          let event;
+          try { event = JSON.parse(data); } catch (_) { return; }
+          if (event.type === "ready") {
+            if (settled || controlReady) return;
+            controlReady = true;
+            lastAck = lastHeartbeat = clock();
+            heartbeatSeq = acknowledgedSeq = 0;
+            acceptSnapshot(event.state || event, generation);
+            if (generation !== epoch || !leaseId) { failed(new Error("Armement Live refusé.")); return; }
+            settled = true;
+            cancelLater(timeout);
+            heartbeatTimer = env.setInterval(() => {
+              if (generation !== epoch) return;
+              if (clock() - lastAck >= leaseMs()) {
+                void stop("heartbeat_timeout", {message:"Jade ne confirme plus la connexion. Micro coupé."});
+                return;
+              }
+              if (clock() - lastHeartbeat < heartbeatMs()) return;
+              heartbeat();
+            }, Math.min(250, heartbeatMs()));
+            resolve();
+          } else if (event.type === "state") {
+            const seq = Number(event.seq);
+            if (Number.isSafeInteger(seq) && seq > acknowledgedSeq && seq <= heartbeatSeq) {
+              acknowledgedSeq = seq;
+              lastAck = clock();
+            }
+            acceptSnapshot(event.state || event, generation);
+          } else if (event.type === "preference") preference(event);
+          else if (event.type === "incident") {
+            state.message = publicReasons[event.code] || event.message || "La conversation Live a été interrompue.";
+            state.reason = event.code || "incident";
+            publish();
+            if (event.fatal !== false) void stop(state.reason, {message:state.message});
+          } else if (event.session_id && event.session_id === heldSession) {
+            if (event.type === "transcript" || event.type === "live_transcript") callbacks("onTranscript", event);
+            else if (event.type === "attachments") callbacks("onAttachments", event);
+            else if (event.type === "intent") callbacks("onIntent", event.intent || "neutral");
+          }
+        };
+      });
+    }
+    function installOutput(stream, generation, connection) {
+      if (generation !== epoch || peer !== connection || !context || !options.getSoundEnabled?.()) return;
+      const replacedActiveOutput = playbackActive;
+      stopOutput(false);
+      // Attach the remote track to the browser's media player. Some Chromium
+      // builds leave WebRTC output silent with only a Web Audio consumer.
+      const audio = doc.createElement("audio");
+      audio.hidden = true;
+      audio.setAttribute("playsinline", "");
+      doc.body.appendChild(audio);
+      remoteAudio = audio;
+      audio.srcObject = stream;
+      remoteSource = context.createMediaStreamSource(stream);
+      analyser = context.createAnalyser();
+      analyser.fftSize = 512;
+      remoteSource.connect(analyser);
+      let webAudioOutput = false;
+      audio.play().catch(() => {
+        if (remoteAudio !== audio) return;
+        // The capture gesture already unlocked this context. Use it as the
+        // single audible sink if the media player is blocked by autoplay.
+        audio.muted = true;
+        analyser.connect(context.destination);
+        webAudioOutput = true;
+        // Muted playback can still activate the WebRTC track on Chromium.
+        audio.play().catch(() => {});
+      });
+      const samples = new Float32Array(analyser.fftSize);
+      function animate() {
+        if (generation !== epoch || peer !== connection || remoteAudio !== audio) return;
+        analyser.getFloatTimeDomainData(samples);
+        let power = 0;
+        for (const sample of samples) power += sample * sample;
+        const level = webAudioOutput || !audio.paused ? Math.sqrt(power / samples.length) : 0;
+        if (level > .006) lastAudible = clock();
+        const playing = clock() - lastAudible < 200;
+        if (playing !== playbackActive) {
+          playbackActive = playing;
+          if (playing) observePlayback("playing");
+          publish();
+        }
+        callbacks("onPlayback", Math.min(1, level * 7), playing);
+        playbackFrame = env.requestAnimationFrame(animate);
+      }
+      if (replacedActiveOutput) publish();
+      animate();
+    }
+    async function openSession(generation) {
+      if (opening || peer || state.capture !== "armed" || state.lease_state !== "armed") return;
+      if (wakeStarted === null) wakeStarted = clock();
+      if (["closing", "close_unconfirmed", "opening_unknown"].includes(state.session_state)) {
+        pendingWake = true;
+        return;
+      }
+      opening = true;
+      pendingResponse = true;
+      state.session_state = "opening";
+      state.message = "";
+      publish();
+      openingTimer = later(() => {
+        if (generation === epoch && opening) void stop("opening_timeout",
+          {message:"La connexion a pris trop de temps. Touche le micro pour reprendre."});
+      }, Math.max(0, Math.min(8000, Number(state.capabilities?.opening_timeout_seconds || 8) * 1000) - (clock() - wakeStarted)));
+      let connection;
+      try {
+        connection = new env.RTCPeerConnection();
+        peer = connection;
+        for (const track of destination.stream.getAudioTracks()) connection.addTrack(track, destination.stream);
+        // Official GPT-Live WebRTC channel. allowed_client_events is empty on
+        // the server: no session.start, response.create or audio.append here.
+        dataChannel = connection.createDataChannel("oai-events");
+        dataChannel.onmessage = ({data}) => {
+          if (generation !== epoch || peer !== connection) return;
+          let event;
+          try { event = JSON.parse(data); } catch (_) { return; }
+          if (event.type === "session.closed") {
+            // The server may close an idle remote generation while preserving
+            // the local arm lease. Await its authoritative terminal snapshot.
+            closePeer(false);
+            state.session_state = "closing";
+            if (state.capture === "armed") worklet?.port.postMessage({type:"local"});
+            publish();
+          }
+        };
+        connection.ontrack = event => {
+          if (event.track?.kind !== "audio") return;
+          const stream = event.streams?.[0] || new env.MediaStream([event.track]);
+          installOutput(stream, generation, connection);
+          if (event.track) event.track.onended = () => {
+            if (generation === epoch && peer === connection) void stop("media_ended");
+          };
+        };
+        const connectionChanged = () => {
+          if (generation !== epoch || peer !== connection) return;
+          const failed = [connection.connectionState, connection.iceConnectionState]
+            .some(value => ["failed", "disconnected", "closed"].includes(value));
+          if (failed) { void stop("media_lost", {message:"La liaison audio est interrompue. Micro coupé."}); return; }
+          if (connection.connectionState === "connected" ||
+              ["connected", "completed"].includes(connection.iceConnectionState)) {
+            if (!opening) return;
+            opening = false;
+            wakeStarted = null;
+            cancelLater(openingTimer); openingTimer = null;
+            worklet?.port.postMessage({type:"connected"});
+            state.session_state = "active";
+            publish();
+          }
+        };
+        connection.onconnectionstatechange = connection.oniceconnectionstatechange = connectionChanged;
+        const offer = await connection.createOffer();
+        assertCurrent(generation);
+        await connection.setLocalDescription(offer);
+        assertCurrent(generation);
+        const result = await request("/api/live/sessions", {client_id:clientId, thread_id:leaseThread,
+          lease_id:leaseId, request_id:identifier(), sdp:connection.localDescription?.sdp || offer.sdp}, 8000);
+        assertCurrent(generation);
+        if (peer !== connection || !result.session_id || !result.sdp) throw new Error("Réponse Live incomplète.");
+        heldSession = state.session_id = result.session_id;
+        await connection.setRemoteDescription({type:"answer", sdp:result.sdp});
+        assertCurrent(generation);
+        connectionChanged();
+      } catch (error) {
+        if (generation === epoch) void stop(error.code || "opening_failed",
+          {message:error.code ? error.message : (error.message === "live_cancelled" ? "Live interrompu." :
+            "Connexion Live impossible. Touche le micro pour reprendre.")});
+      }
+    }
+    async function arm() {
+      if (leaseId || state.capture !== "closed" || state.changing || closePromise || doc.hidden) return false;
+      if (state.mode !== "live" || !state.loaded || !state.available || !availableBrowser ||
+          closureReason(state.session_state, state.reason)) return false;
+      if (!options.getSoundEnabled?.()) { message("sound_off", "Réactive la voix dans Config pour parler en Live."); return false; }
+      const generation = ++epoch;
+      const bearer = options.getToken?.();
+      const requestedThread = options.getThread?.();
+      state.capture = "requesting";
+      state.reason = state.message = "";
+      publish();
+      callbacks("beforeArm");
+      try {
+        // Resume audio in the user gesture; acquiring input is deliberately
+        // deferred until the server grants this owner's exclusive arm lease.
+        context = new AudioConstructor();
+        let audioError = null;
+        const audioReady = context.resume().catch(error => { audioError = error; });
+        const currentContext = context;
+        const acquired = await request("/api/live/arm", {client_id:clientId, thread_id:requestedThread}, 5000, bearer);
+        if (generation !== epoch) {
+          if (acquired.lease_id) void request("/api/live/sessions/close", {client_id:clientId,
+            lease_id:acquired.lease_id, reason:"cancelled_before_capture", drain:false, release_arm:true}, 5000, bearer).catch(() => {});
+          return false;
+        }
+        leaseId = acquired.lease_id;
+        leaseThread = requestedThread;
+        preference(acquired);
+        assertCurrent(generation);
+        state.lease_state = acquired.lease_state || "armed";
+        state.session_state = acquired.session_state || "absent";
+        state.capabilities = {...state.capabilities,
+          heartbeat_seconds:acquired.heartbeat_seconds || state.capabilities?.heartbeat_seconds,
+          lease_seconds:acquired.lease_seconds || state.capabilities?.lease_seconds};
+        await connectControl(generation);
+        assertCurrent(generation);
+        const stream = await nav.mediaDevices.getUserMedia({audio:{channelCount:1,
+          echoCancellation:true, noiseSuppression:true, autoGainControl:true}, video:false});
+        if (generation !== epoch || doc.hidden) {
+          for (const track of stream.getTracks()) track.stop();
+          return false;
+        }
+        media = stream;
+        await audioReady;
+        if (audioError) throw audioError;
+        if (currentContext.state !== "running") throw new Error("L’audio est suspendu. Touche le micro pour reprendre.");
+        assertCurrent(generation);
+        await currentContext.audioWorklet.addModule("/assets/live-audio-worklet.js");
+        assertCurrent(generation);
+        destination = currentContext.createMediaStreamDestination();
+        worklet = new env.AudioWorkletNode(currentContext, "jade-live-capture", {
+          numberOfInputs:1, numberOfOutputs:1, outputChannelCount:[1], channelCount:1,
+          channelCountMode:"explicit"});
+        source = currentContext.createMediaStreamSource(stream);
+        source.connect(worklet);
+        worklet.connect(destination);
+        worklet.port.onmessage = ({data}) => {
+          if (generation !== epoch || state.capture !== "armed") return;
+          if (data.type === "speech") void openSession(generation);
+          else if (data.type === "speech_activity" && speechActive !== Boolean(data.active)) {
+            speechActive = Boolean(data.active);
+            publish();
+          }
+          else if (data.type === "sent_speech") {
+            // The initial voice may precede both the next periodic heartbeat
+            // and its provider transcript. Establish pending input before a
+            // rapid mute; this observation never creates/wakes a session.
+            if (!sentSpeech) heartbeat(true);
+            sentSpeech = true; pendingResponse = true;
+          }
+          else if (data.type === "overflow") void stop("buffer_overflow",
+            {message:"La connexion est trop lente. Touche le micro pour reprendre."});
+        };
+        for (const track of stream.getTracks()) track.onended = () => {
+          if (generation === epoch && state.capture === "armed") void stop("microphone_ended",
+            {message:"Le microphone s’est arrêté. Touche le micro pour reprendre."});
+        };
+        currentContext.onstatechange = () => {
+          if (generation === epoch && state.capture === "armed" && currentContext.state !== "running")
+            void stop("audio_suspended", {message:"L’audio a été suspendu. Touche le micro pour reprendre."});
+        };
+        state.capture = "armed";
+        publish();
+        return true;
+      } catch (error) {
+        if (generation === epoch) {
+          const stopping = stop("arm_failed", {message:error.name === "NotAllowedError" ?
+            "Accès au micro refusé. Autorise-le dans le navigateur, puis touche le micro." : error.message});
+          const closure = closureReason("", error.code);
+          if (closure) {
+            waitForClose(closure);
+            publish();
+          }
+          await stopping;
+        }
+        return false;
+      }
+    }
+    async function stop(reason = "user_stop", config = {}) {
+      // Physical capture/output are revoked synchronously, before any fetch.
+      const id = leaseId, bearer = options.getToken?.();
+      const shouldClose = Boolean(id);
+      const previousClosure = closureReason(state.session_state, state.reason);
+      epoch++;
+      releaseAudio();
+      closeControl();
+      cancelLater(drainTimer); drainTimer = null;
+      leaseId = leaseThread = null;
+      pendingWake = false; wakeStarted = null;
+      state.lease_state = "closed";
+      if (shouldClose || !previousClosure) {
+        state.session_state = shouldClose ? "closing" : "absent";
+        state.reason = reason;
+      }
+      if (config.message) state.message = config.message;
+      publish();
+      if (!shouldClose) return closePromise;
+      if (closePromise) return closePromise;
+      closePromise = (async () => {
+        try {
+          const result = await request("/api/live/sessions/close", {client_id:clientId, lease_id:id,
+            reason, drain:false, release_arm:true}, 5000, bearer);
+          state.session_state = result.session_state || result.state?.session_state || "absent";
+          if (state.session_state === "closed") state.session_state = "absent";
+        } catch (_) {
+          state.session_state = "close_unconfirmed";
+          if (!config.message) state.message = "Micro coupé. La fermeture distante reste à confirmer.";
+        } finally {
+          const closure = closureReason(state.session_state);
+          if (closure) waitForClose(closure);
+          closePromise = null; publish();
+        }
+      })();
+      return closePromise;
+    }
+    async function mute() {
+      if (state.lease_state === "draining") return stop("mute_again");
+      if (!leaseId || !peer || !sentSpeech || opening) return stop("mute");
+      const id = leaseId, generation = epoch;
+      stopCapture();
+      state.lease_state = "draining";
+      state.reason = "mute";
+      // The UI derives drain guidance from lease_state. Keep message for
+      // diagnostics so terminal states cannot retain a false pending reply.
+      publish();
+      // Never extended by transcripts, audio or new server activity.
+      drainTimer = later(() => {
+        if (generation === epoch) void stop("drain_timeout");
+      }, 15000);
+      try {
+        const result = await request("/api/live/sessions/close", {client_id:clientId, lease_id:id,
+          reason:"mute", drain:true, release_arm:true}, 5000);
+        if (generation === epoch) acceptSnapshot(result.state || result, generation);
+      } catch (_) {
+        if (generation === epoch) void stop("drain_failed");
+      }
+    }
+    function toggleMicrophone() {
+      return state.capture !== "closed" || leaseId ? mute() : arm();
+    }
+    return {refresh, recover, setMode, arm, mute, stop, toggleMicrophone,
+      get state() { return snapshot(); }, get mode() { return state.mode; },
+      get active() { return Boolean(leaseId || state.capture !== "closed" || closePromise); }};
+  }
+  window.JadeLive = {create};
+  if (typeof window.dispatchEvent === "function") window.dispatchEvent(new Event("jade-live-ready"));
+})();

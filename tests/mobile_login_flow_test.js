@@ -21,9 +21,9 @@ const form = {
   querySelector:()=>button,
   addEventListener:(type,fn)=>{handlers[type]=fn}
 };
-let loadedApp = false, currentMode = "success", lastToken = null;
-const requests = [], assets = [];
-const window = {setTimeout:()=>1,clearTimeout(){}};
+let loadedApp = false, currentMode = "success", lastToken = null, liveLoadMode = "error", timerId = 0;
+const requests = [], assets = [], liveEvents = [], timers = new Map();
+const window = {setTimeout(fn){timers.set(++timerId, fn);return timerId;},clearTimeout(id){timers.delete(id);}};
 const document = {
   getElementById(id){return ({
     "auth-form":form, "auth-token":input,"auth-feedback":feedback,
@@ -38,9 +38,18 @@ const document = {
     assets.push(element.href||element.src);
     queueMicrotask(()=>{
       if(element.src==="/assets/app.js"){
-        window.JadeMobileApp = {login(token){
+        window.JadeMobileApp = {
+          liveModuleLoading(){liveEvents.push("loading");},
+          liveModuleFailed(){liveEvents.push("failed");},
+          liveModuleReady(){liveEvents.push("ready");},
+          login(token){
           lastToken=token;input.value="";feedback.textContent="";modal.classList.add("hidden");
         }};
+      }
+      if(element.src==="/assets/live-client.js"){
+        if(liveLoadMode==="error"){element.onerror();return;}
+        if(liveLoadMode==="timeout")return;
+        window.JadeLive={create(){}};
       }
       element.onload();
     });
@@ -86,19 +95,42 @@ async function submit(value){
   assert.equal(requests[2].url,"/assets/salon.html");
   assert(assets.includes("/assets/styles.css"));
   assert(assets.includes("/assets/jade-theme.css"));
+  assert(assets.includes("/assets/preferences.js"));
   assert(assets.includes("/assets/app.js"));
+  assert(assets.indexOf("/assets/preferences.js") < assets.indexOf("/assets/app.js"),
+    "saved settings are restored before the conversation initializes");
   assert.equal(button.disabled,false);
   await new Promise(resolve=>setImmediate(resolve));
   assert(assets.indexOf("/vendor/pixi.min.js") > assets.indexOf("/assets/app.js"));
   const catalogue = assets.indexOf("/assets/avatar-models.js");
   const loader = assets.indexOf("/assets/avatar-model-loader.js");
   assert(catalogue > assets.indexOf("/assets/app.js"), "catalogue loads only after private login");
-  assert(catalogue < assets.indexOf("/assets/seated-scene.js"), "seated scene sees the catalogue");
+  assert(catalogue < loader, "the r21 loader receives the catalogue");
   assert(loader > assets.indexOf("/vendor/cubism4.min.js"), "model loader receives the complete SDK");
   assert(loader < assets.indexOf("/assets/avatar.js"), "renderer receives its selection loader");
   assert(assets.indexOf("/assets/avatar-gestures.js") > assets.indexOf("/assets/avatar.js"),
     "touch gestures load after the renderer");
   assert(assets.indexOf("/assets/avatar-shake.js") > assets.indexOf("/assets/avatar-gestures.js"),
     "device motion loads after touch gestures and the renderer");
+  assert(assets.indexOf("/assets/live-client.js") < assets.indexOf("/assets/duplex-client.js"),
+    "Live loads directly after authentication without waiting for optional classic or visual modules");
+  assert.equal(liveEvents.at(-1), "failed", "a missing Live asset is reported explicitly");
+  liveLoadMode="timeout";
+  const timedOut=window.JadeLogin.retryLive();
+  assert.equal(window.JadeLogin.retryLive(), timedOut, "concurrent retry does not load a second module");
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(timers.size, 1);
+  [...timers.values()][0]();
+  assert.equal(await timedOut, false);
+  assert.equal(liveEvents.at(-1), "failed", "a stalled module has a bounded failure state");
+  liveLoadMode="success";
+  assert.equal(await window.JadeLogin.retryLive(), true);
+  assert.equal(assets.filter(asset=>asset==="/assets/live-client.js").length, 3);
+  assert.equal(await window.JadeLogin.retryLive(), true);
+  assert.equal(liveEvents.at(-1), "ready");
+  assert.equal(assets.filter(asset=>asset==="/assets/live-client.js").length, 3,
+    "a ready Live module is reused, preserving its existing client");
+  assert.equal(requests.filter(request=>request.url==="/api/auth").length, 2,
+    "retry does not request or persist another bearer token");
   console.log("Mobile login OK: invalid/refused token loads zero app assets; authorized salon and deferred SDK");
 })().catch(e=>{console.error(e);process.exitCode=1});

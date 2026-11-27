@@ -46,11 +46,15 @@ class WebSocketPeer:
             bytes((0x80 | opcode, 126)) + struct.pack("!H", size)
             if size < 65536 else bytes((0x80 | opcode, 127)) + struct.pack("!Q", size))
         self.writer.write(head + data)
-        await asyncio.wait_for(self.writer.drain(), timeout=5)
+        # Keep cancellation on this task, including the Python 3.11 race where
+        # wait_for can return an already-finished future after external cancel.
+        async with asyncio.timeout(5):
+            await self.writer.drain()
 
     async def receive(self):
         while True:
-            header = await asyncio.wait_for(self.reader.readexactly(2), timeout=90)
+            async with asyncio.timeout(90):
+                header = await self.reader.readexactly(2)
             final, opcode = bool(header[0] & 0x80), header[0] & 0x0f
             if not final or opcode not in (1, 2, 8, 9, 10):
                 raise ValueError("invalid WS fragment/opcode")
@@ -146,6 +150,8 @@ async def duplex_session(gateway, reader, writer, headers):
                 work = None
                 await peer.send({"type": "cancelled"})
             elif cmd == "start":
+                if getattr(gateway, "live_manager", None) is not None:
+                    await gateway.live_manager.stop_owner("Goldaj", "classic_voice")
                 if frame.get("speak") not in (True, False):
                     raise ValueError("invalid speech flag")
                 if work is not None and not work.done():

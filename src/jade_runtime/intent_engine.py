@@ -40,19 +40,90 @@ _DIRECTIONS = MappingProxyType({
         "Speak in a focused, composed, respectful tone, clearly and naturally, "
         "without melodrama or a robotic monotone."
     ),
+    "sad": (
+        "Convey sadness or disappointment with a softened, slightly slower "
+        "cadence and falling phrase endings. Keep Jade's youthful timbre and "
+        "clearly audible words; no sobbing, whispering or melodrama."
+    ),
+    "angry": (
+        "Convey controlled anger or indignation with firmer articulation, "
+        "short decisive accents and a tense but natural cadence. Keep Jade's "
+        "youthful timbre and normal speaking volume; no shouting or growling."
+    ),
 })
 
 INTENTS = frozenset(_DIRECTIONS)
+
+# Native Live speaks without the text model's leading metadata tag. A small
+# set of early, unambiguous French cues gives the avatar a local default.
+_LIVE_COMFORT_CUE = re.compile(
+    r"\b(?:ne t'inquiète pas|t'inquiète pas|pas de panique|prends ton temps|tu n'es pas seul[e]?)\b"
+)
+_LIVE_PREAMBLE_ONLY = re.compile(r"(?:oh|ah|là|franchement|honnêtement)\s*[,!.…]*")
+_LIVE_CUES = tuple((label, re.compile(pattern)) for label, pattern in (
+    ("tender", r"\b(?:ça me touche|tu me touches|je t'envoie un câlin|avec tendresse)\b"),
+    ("playful", r"\b(?:haha|héhé|je te taquine|bien tenté|petit malin|tu m'as eue?)\b"),
+    ("excited", r"\b(?:génial[e]?|bravo|trop bien|youpi|quelle bonne nouvelle|c'est fantastique)\b"),
+    ("serious", r"\b(?:c'est (?:très )?important|c'est sérieux|il y a un risque|en cas d'urgence|attention à)\b"),
+    ("curious", r"\b(?:raconte-moi|je me demande|comment ça|qu'est-ce qui|dis-m'en plus)\b"),
+))
+
+# Negative emotions require Jade to express her own state at the beginning of
+# the reply. A mention, quotation or acknowledgement of the user's feelings is
+# not evidence that Jade is sad/angry. Existing comfort cues keep precedence.
+_LIVE_SELF_MOODS = tuple((label, re.compile(
+    r"^(?:(?:oh|ah|là|franchement|honnêtement)(?:\s*[,!.…]+\s*|\s+))?(?:" + pattern + r")\b"
+)) for label, pattern in (
+    ("sad", (
+        r"je suis (?:(?:vraiment|tellement|très|un peu) )?(?:triste|peinée|déçue)"
+        r"|ça me (?:rend (?:vraiment )?triste|peine)"
+        r"|j'ai (?:vraiment )?de la peine"
+    )),
+    ("angry", (
+        r"je suis (?:(?:vraiment|tellement|très|un peu) )?(?:en colère|furieuse|fâchée)"
+        r"|ça me (?:met (?:vraiment )?en colère|révolte)"
+    )),
+))
+
+
+def classify_live_intent(text: str) -> str | None:
+    """Choose a visual intention after enough of the spoken prefix arrives."""
+    prefix = text[:160].strip().casefold().replace("’", "'")
+    if _LIVE_COMFORT_CUE.search(prefix):
+        return "reassuring"
+    # An explicit opening emotion must not depend on whether a later sentence
+    # ("je me demande...", "c'est important...") arrives in the same fragment.
+    for label, pattern in _LIVE_SELF_MOODS:
+        if pattern.search(prefix):
+            return label
+    for label, pattern in _LIVE_CUES:
+        if pattern.search(prefix):
+            return label
+    if _LIVE_PREAMBLE_ONLY.fullmatch(prefix):
+        # "Oh !" can arrive before the actual emotional phrase. Do not lock a
+        # neutral reaction until it arrives; an unfinished preamble keeps the
+        # avatar's ordinary idle/closure behaviour without a late animation.
+        return None
+    if "?" in prefix:
+        return "curious"
+    if len(prefix) >= 64 or prefix.endswith((".", "!", "…")):
+        return "neutral"
+    return None
+
 
 INTENT_PROMPT = """\
 Voice-intention output contract (required for EVERY reply, text or voice):
 Begin the response with EXACTLY ONE tag [INTENT:label], followed by the
 spoken/written French answer on the same line. The only valid labels are:
-neutral, playful, excited, curious, tender, reassuring, serious.
+neutral, playful, excited, curious, tender, reassuring, serious, sad, angry.
 Select the single dominant delivery intention for the whole response:
 playful for friendly teasing, excited for genuine enthusiasm,
 curious for interest or questions, tender for rare shy affection,
-reassuring for comfort, serious for weighty matters, neutral otherwise.
+reassuring for comfort, serious for weighty matters,
+sad for Jade's own sadness or disappointment, angry for Jade's own anger or
+indignation, neutral otherwise. Do not adopt an emotion merely because the
+user mentions it: comforting sadness can be reassuring, and a firm factual
+explanation can be serious without being angry.
 The tag is metadata only and is removed before delivery. Never include it
 in speech, visible text, quotes, code or the reply body. Do not invent labels.
 Do not include any other bracketed stage direction such as [playful] or [rires].

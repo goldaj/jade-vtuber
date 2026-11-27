@@ -11,6 +11,7 @@
   let coreReady = false;
   let coreLoad = null;
   let optionalStarted = false;
+  let liveLoad = null;
 
   function loadStyle(url) {
     return new Promise((resolve, reject) => {
@@ -23,15 +24,46 @@
     });
   }
 
-  function loadScript(url) {
+  function loadScript(url, timeoutMs = 0) {
     return new Promise((resolve, reject) => {
       const script = document.createElement("script");
       script.src = url;
       script.async = false;
-      script.onload = resolve;
-      script.onerror = () => reject(new Error("Module du salon indisponible."));
+      let timer = null, settled = false;
+      function finish(error) {
+        if (settled) return;
+        settled = true;
+        if (timer !== null) window.clearTimeout(timer);
+        script.onload = script.onerror = null;
+        if (error) { script.remove?.(); reject(error); }
+        else resolve();
+      }
+      script.onload = () => finish();
+      script.onerror = () => finish(new Error("Module du salon indisponible."));
+      if (timeoutMs) timer = window.setTimeout(() => finish(new Error("Chargement du module trop lent.")), timeoutMs);
       document.head.appendChild(script);
     });
+  }
+
+  function loadLive() {
+    if (!coreReady) return Promise.resolve(false);
+    if (liveLoad) return liveLoad;
+    if (window.JadeLive?.create) {
+      window.JadeMobileApp?.liveModuleReady?.();
+      return Promise.resolve(true);
+    }
+    window.JadeMobileApp?.liveModuleLoading?.();
+    liveLoad = (async () => {
+      try {
+        await loadScript("/assets/live-client.js", 10000);
+        if (!window.JadeLive?.create) throw new Error("Module Live incomplet.");
+        return true;
+      } catch (_) {
+        window.JadeMobileApp?.liveModuleFailed?.();
+        return false;
+      } finally { liveLoad = null; }
+    })();
+    return liveLoad;
   }
 
   async function loadCore(value) {
@@ -52,6 +84,7 @@
           document.body.insertBefore(fragment.content, modal);
         }
         await Promise.all([loadStyle("/assets/styles.css"), loadStyle("/assets/jade-theme.css")]);
+        await loadScript("/assets/preferences.js");
         await loadScript("/assets/app.js");
         if (!window.JadeMobileApp?.login) throw new Error("Le salon n'a pas pu démarrer.");
         coreReady = true;
@@ -61,6 +94,9 @@
   }
 
   function loadOptionalAfterLogin() {
+    // The default voice choice must be ready on Home, independently of the
+    // classic duplex and visual modules. This only loads code and preference.
+    void loadLive();
     if (optionalStarted) return;
     optionalStarted = true;
     // Optional assets must never postpone the chat or the private login.
@@ -86,19 +122,22 @@
           /* Chat remains usable without the visual/voice enhancement. */
           if(url==="/assets/portrait-bedroom-motion.js"){
             const status=document.getElementById("portrait-motion-status");
-            if(status)status.textContent="Module des animations indisponible.";
+            if(status){status.textContent="Module des animations indisponible.";status.hidden=false;}
             console.warn("Portrait bedroom animation module unavailable:",error);
           }
           if (url === "/assets/avatar-shake.js") {
             const status = document.getElementById("avatar-shake-status");
-            if (status) status.textContent = "Le réglage des secousses n’a pas chargé. Rouvre l’application.";
+            if (status) {
+              status.textContent = "Le réglage des secousses n’a pas chargé. Rouvre l’application.";
+              status.hidden = false;
+            }
           }
         }
       }
     })();
   }
 
-  window.JadeLogin = {show() {
+  window.JadeLogin = {retryLive:loadLive, show() {
     modal.classList.remove("hidden");
     feedback.textContent = "";
     input.focus();

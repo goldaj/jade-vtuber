@@ -1,5 +1,7 @@
 # Backlog opérationnel de Jade — source de vérité
 
+**Décision propriétaire du 27/11/2026 — maintenance et tests :** r21 est le seul modèle maintenu et testé. r20, ses ressources et le sélecteur existant restent dans l’application, mais aucune nouvelle maintenance ni recette r20 ne doit être engagée. Cette décision s’applique à toutes les cartes actives, au-delà du lot Triste/Colère. Les anciennes validations et preuves datées restent conservées comme historique ; elles ne prescrivent pas de nouveaux essais r20.
+
 **Arbitrage du 21/11/2026 :** les cartes exigeant le **microphone physique local du PC**, **Twitch** ou **OBS** sont suspendues en `Bloqué` jusqu'à nouvel ordre. Ce n'est **pas** une suspension générale des travaux sur Windows ni des tests Discord/Android/mémoire. Les sous-tests indépendants restent possibles, mais les cartes mixtes ne sont pas closes. [Passation](../operations/handoffs/2026-11-21-chatgpt-suspension-micro-twitch-obs.md).
 
 **Recettes automatisées du 21/11/2026 :** `REC-021` et `REC-025` ont maintenant **des tests d'acceptation exécutés avec succès sous Linux et Windows**, [CI sur le SHA `955ca2e255`](https://github.com/goldaj/jade-vtuber/actions/runs/44947197393). **Mise à jour du 22/11/2026 :** les deux cartes sont maintenant **`Done` sur validation expresse du propriétaire**, avec réserves documentées ; aucune inspection nouvelle des archives privées n'est affirmée pour REC-025. La vue [REC](02-RECETTE.md#compte-rendu-des-recettes-automatiques-rec-021-et-rec-025-21-novembre-2026) décrit les preuves.
@@ -9,6 +11,12 @@
 **Recherche Internet Tavily (22/11) : REC-038 (P1) est `Done`**, après validation explicite du propriétaire attestant que Jade se connecte et recherche sur Internet. Les tests automatiques dédiés sont réussis ; les scénarios complémentaires non observés restent consignés comme réserves dans [la vue REC](02-RECETTE.md).
 
 ## REPRISE PRIORITAIRE — validations du 22 novembre 2026
+
+**Priorité P0 du 27 novembre 2026 — expressions faciales :** [ART-015](04-PRODUCTION-2D.md#art-015--refonte-des-visages-expressifs-manga-pour-chaque-intention-p0) reste en tête des P0 : un véritable visage manga par intention, des bascules extrêmement visibles façon trigger VTube Studio et une identité graphique continue. Le propriétaire autorise le report si les API ou applications nécessaires sont inaccessibles ; aucun accès natif Cubism, PSD2Live ou Turboism n’est disponible dans l’environnement de réalisation. Cette refonte est donc reportée, sans bloquer Triste/Colère et leur recette r21 dans ART-014 / REC-053. Le statut et les critères restent dans la vue ART. [Décision et livraison](../operations/handoffs/2026-11-27-chatgpt-intentions-r21-implementation.md).
+
+**Reprise du Live mobile le 27/11 :** le lot `3d2f3ea` était publié et sa CI Linux/Windows verte. L’audit retrouve un défaut de format des permissions envoyées à OpenAI et un message de fin de réponse périmé ; correction suivie dans **DEV-055**. [Diagnostic et preuves](../operations/handoffs/2026-11-27-chatgpt-live-resume.md). REC-044 à REC-050 restent les recettes mobiles. La demande suivante du propriétaire engage immédiatement Discord, suivi désormais en REC-051.
+
+**Correction produit du 26/11 :** Live mobile activé par défaut, désactivable dans Profil, **sans budget financier mobile ni plafond quotidien**. Les critères initiaux contraires sont remplacés ci-dessous. Le seul seuil financier demandé est mensuel, global toutes API, et décide du moteur Discord : 50 EUR ou 40 EUR si le suivi est incomplet. [Correctif et preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-default-no-budget.md). Le correctif est suivi dans **DEV-054** ; les sept recettes matérielles restent ouvertes.
 
 **Priorité du 26 novembre 2026.** Le propriétaire valide le jeu mobile de Sérieuse et Enjouée et lance [ART-013](04-PRODUCTION-2D.md), P0, pour faire des oreilles une composante du jeu de Jade. Ce lot précède la reprise des dix variantes restantes.
 
@@ -25,7 +33,7 @@
 
 **DEV-032 (UX-19) → REC-039 (P2, Done le 22/11/2026)** : génération de fichiers mobile et Discord, en texte et vocal, intégrée sur `develop`. **Le propriétaire confirme explicitement après recette réelle que l'ensemble de l'US fonctionne**. Les deux parcours mobiles avaient été vérifiés avant le correctif ; les trois parcours Discord ont été acceptés globalement après activation du mode `all` par défaut. [Statut canonique REC-039](02-RECETTE.md). Aucun DEV-032 actif en parallèle. DEV-033/034/035 (PER-01/02/03, images) restent « À qualifier ». **NEW-16 (P2) est prise en charge dans [DEV-036](01-DEVELOPPEMENT.md), statut « En cours »** : rappels persistants, push Android en arrière-plan et ouverture ciblée codés ; recette réelle Android et configuration Web Push restent ouvertes ; l'idée n'est plus active dans le catalogue prospectif et les autres idées supprimées ne sont pas réintroduites.
 
-**Lot vocal mobile — cadrage du 26/11 :** [REC-042](02-RECETTE.md) conserve la recette du PTT déjà livré. **DEV-040** porte le bouton Live ON/OFF dans Profil et la bascule ; **DEV-041** la voix originale. Le socle, l’audio, la fermeture au kill, le pont Jade, la restitution et les budgets sont répartis dans **DEV-046 à DEV-051**. [Plan et feuille de route prêts à coder](PLAN-LIVE-MOBILE.md) · [Critères canoniques des US](01-DEVELOPPEMENT.md#lot-p1-mobile--dialogue-vocal-naturel-et-économique-25-novembre-2026). **Prochaine étape de développement : DEV-046**, puis supervision/coûts avant exposition. Mobile uniquement, paramètre Discord réservé OFF ; cette passe a préparé la backlog sans implémentation ni appel facturé.
+**Lot vocal mobile — développement du 26/11 :** le code testé hors réseau dans `90ec0c7` est intégré sur `develop`, sur demande explicite du propriétaire pour son test mobile. La mise à jour develop `b4a85e8` et ses cartes DEV-053 / ART-014 sont conservées dans la fusion. **DEV-046/048/051/049/047/050/040 → REC-044/045/046/047/048/049/050**, avec recette réelle restante et sans doublon DEV/REC. **DEV-041 → [REC-052](02-RECETTE.md#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041)** après le choix de Pétillante pour l’essai ; **DEV-052 → REC-051**, P2 : automatisme Discord désormais développé sur instruction du 27/11, sous 50 EUR ou 40 EUR si suivi incomplet, avec un interrupteur unique et sans effet sur le mobile. [Passation et preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md) · [Architecture du code](../architecture/LIVE_MOBILE.md).
 
 **Transferts du 23/11 : DEV-037 (NEW-29, sous-titres mobiles, P2) et DEV-038 (NEW-38, autonomie fonctionnelle, P1) sont À qualifier, sans développement lancé. Les deux anciennes idées ont été retirées du catalogue actif.**
 
@@ -34,6 +42,8 @@
 **Quick wins engagés le 22/11 : DEV-027 (VIS-04) et DEV-028 (RTE-12) sont en développement sur `develop`.** **Élargissement validé le même jour : DEV-029 (VIS-07) en développement, DEV-030 (LAT-10) À faire.** Les idées prospectives correspondantes sont retirées de la liste active, sans duplication. La CI mémoire en cours de remise au vert est suivie séparément.
 
 **Microphone physique du PC, Twitch et OBS restent suspendus** dans leurs cartes concernées. [Décision et limites](../operations/handoffs/2026-11-22-validation-rec031-rec033-rec034.md).
+
+**Intentions supplémentaires — développement du 27/11 :** **DEV-053 → [REC-053](02-RECETTE.md#rec-053--intentions-triste-et-colère-sur-r21-ancienne-dev-053)**, en **P1**, après implémentation de **Triste et Colère** : contrat commun, prosodie, représentations textuelles et intégration r21. [ART-014](04-PRODUCTION-2D.md#art-014--expressions-et-animations-triste-et-colère-p1) conserve l’acceptation des quatre motions originales A/B livrées sur le rig existant. La campagne porte exclusivement sur **r21, neuf intentions et dix-huit variantes** ; r20 est conservé dans l’application sans maintenance ni tests, dans ce lot comme dans les suivants. Les voix en service et le Redmi n’ont pas été observés. La refonte faciale ART-015 est reportée faute d’accès natif. Statuts et critères dans les vues canoniques ; [réalisation, preuves et limites](../operations/handoffs/2026-11-27-chatgpt-intentions-r21-implementation.md).
 
 ## Focus de travail léger (limite indicative : 3 tâches réellement « En cours »)
 
@@ -53,23 +63,25 @@
 
 | Type | Vue | Objet | Nombre actuel |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 36 |
-| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, dont les anciennes cartes DEV déplacées | 43 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 30 |
+| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, dont les anciennes cartes DEV déplacées | 52 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 16 |
-| `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 13 |
-| **Total** | | **Cartes uniques dans la vue priorisée ; OPS-012 est classée sans suite, hors vue** | **108** |
+| `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 15 |
+| **Total** | | **Cartes uniques dans la vue priorisée. OPS-012 et REC-028 sont classées sans suite, hors vue** | **113** |
+
+Le décompte porte sur les cartes canoniques uniques de la vue priorisée ; les rappels d’une carte dans les tableaux de preuves ne constituent pas des cartes supplémentaires. La vue REC contient 53 identifiants canoniques, dont REC-028 classée sans suite : 52 restent dans la vue priorisée.
 
 **Definition of Done officielle :** [lire les règles de clôture](DEFINITION_OF_DONE.md). Toute carte n'est **Done** que si les cinq exigences sont satisfaites, dont validation explicite par **Codex (tous ses modèles et sous-agents) OU le propriétaire**, **au moins un des deux**. L'intervention humaine n'est plus obligatoire si Codex a validé. La présence du code ou d'une CI verte ne clôture pas à elle seule une recette physique.
 
 Les sous-tâches de recette et les étapes matérielles restent séparées lorsqu'elles fournissent une preuve indépendante. Une anomalie constatée ouvre une carte `DEV` liée à `REC` ; pas de duplication du développement livré. Les fichiers thématiques sont **canoniques pour le détail et le statut de chaque carte** ; la présente vue fournit le classement global. Lorsqu'une carte change de priorité, mettre à jour le détail puis le rang ici.
 
-**Règle simple du propriétaire (21/11/2026) :** si une fonctionnalité est déjà développée et que seule son acceptation reste à faire, une **seule carte REC** porte le statut `À valider`. Pas de double suivi DEV Done / REC À valider. Anciens identifiants : `DEV-011 → REC-026`, `DEV-015 → REC-027`, `DEV-016 → REC-028`, `DEV-017 → REC-029`, `DEV-018 → REC-030`. Les cartes DEV encore à développer, bloquées ou Done restent inchangées.
+**Règle simple du propriétaire (21/11/2026) :** si une fonctionnalité est déjà développée et que seule son acceptation reste à faire, une **seule carte REC** porte le statut `À valider`. Pas de double suivi DEV Done / REC À valider. Anciens identifiants : `DEV-011 → REC-026`, `DEV-015 → REC-027`, `DEV-016 → REC-028`, `DEV-017 → REC-029`, `DEV-018 → REC-030`, puis `DEV-053 → REC-053` le 27/11/2026. Les cartes DEV encore à développer, bloquées ou Done restent inchangées.
 
 ## Deux jalons produit
 
 ### A · Jade actuelle opérationnelle
 
-Une instance `--all-channels` réellement utilisable, son, Discord écrit/vocal, Twitch, micro PC, accès HTTP local et PWA Android, mémoire opt-in et rendu r20, avec tests des audiences, des coupures, du coût et des limites constatées. **Le r21 final n'est pas bloquant pour ce jalon.** Une preuve matérielle reste à collecter ; les fonctionnalités sont néanmoins codées dans `develop`.
+Une instance `--all-channels` réellement utilisable, son, Discord écrit/vocal, Twitch, micro PC, accès HTTP local et PWA Android, mémoire opt-in et rendu mobile r21, avec tests des audiences, des coupures, du coût et des limites constatées. **La finition artistique finale du r21 n’est pas bloquante pour ce jalon.** Le renderer Windows historique r20 reste présent sans maintenance ni recette ; son raccordement r21 est suivi dans DEV-001. Les suspensions de recette existantes restent applicables. Une preuve matérielle reste à collecter ; les fonctionnalités sont néanmoins codées dans `develop`.
 
 ### B · Jade visuellement aboutie
 
@@ -83,141 +95,144 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 
 ## Vue globale ordonnée
 
-### P0 · 24 tâches
+### P0 · 25 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 1 | ART-013 | B | Faire vivre les oreilles du r21 au repos et dans les sept intentions | [ART](04-PRODUCTION-2D.md) |
-| 2 | OPS-001 | A | Sécuriser l'état local avant intervention | [OPS](03-INSTALLATION-OPS.md) |
-| 3 | OPS-002 | A | Mettre à jour develop et les assets LFS | [OPS](03-INSTALLATION-OPS.md) |
-| 4 | OPS-003 | A | Installer/contrôler le socle Windows | [OPS](03-INSTALLATION-OPS.md) |
-| 5 | OPS-005 | A | Préparer la configuration privée de tous les connecteurs | [OPS](03-INSTALLATION-OPS.md) |
-| 6 | OPS-004 | A | Installer/actualiser le launcher réel | [OPS](03-INSTALLATION-OPS.md) |
-| 7 | OPS-006 | A | Exécuter la validation technique locale | [OPS](03-INSTALLATION-OPS.md) |
-| 8 | OPS-007 | A | Préparer le chemin microphone et lecture audio | [OPS](03-INSTALLATION-OPS.md) |
-| 9 | OPS-008 | A | Préparer Discord texte/vocal et DAVE | [OPS](03-INSTALLATION-OPS.md) |
-| 10 | REC-001 | A | Démarrer Jade entière en une instance | [REC](02-RECETTE.md) |
-| 11 | REC-002 | A | Discord écrit et messages privés | [REC](02-RECETTE.md) |
-| 12 | DEV-019 | A | Corriger les MP Discord écrits : réponse privée et identité réelle de chaque auteur | [DEV](01-DEVELOPPEMENT.md) |
-| 13 | REC-003 | A | Discord vocal réel | [REC](02-RECETTE.md) |
-| 14 | REC-004 | A | Microphone PC réel | [REC](02-RECETTE.md) |
-| 15 | REC-005 | A | Isolation des sorties et confidentialité | [REC](02-RECETTE.md) |
-| 16 | DEV-004 | A | Masquer les réponses privées dans les sous-titres OBS WAV | [DEV](01-DEVELOPPEMENT.md) |
-| 17 | REC-026 | A | Demande naturelle de souvenir ordinaire ; Jade décide seule des Core Memories | [REC](02-RECETTE.md) |
-| 18 | REC-008 | A | Commandes silence/reprise et interruption | [REC](02-RECETTE.md) |
-| 19 | REC-006 | A | PCM Discord progressif sous --all-channels | [REC](02-RECETTE.md) |
-| 20 | REC-007 | A | Repli WAV et absence de double diffusion | [REC](02-RECETTE.md) |
-| 21 | REC-009 | A | Arbitrage multi-conversations | [REC](02-RECETTE.md) |
-| 22 | REC-010 | A | Latence et coût d'une session réelle | [REC](02-RECETTE.md) |
-| 23 | DEV-003 | A | Corriger la sortie indésirable du repli WAV s'il se produit réellement | [DEV](01-DEVELOPPEMENT.md) |
-| 24 | REC-034 | Transverse | Mesure du temps réellement perçu, du coût et des p50/p95 par canal | [REC](02-RECETTE.md) |
+| 1 | ART-015 | B | Refondre les visages expressifs manga de chaque intention, avec bascule immédiatement visible | [ART](04-PRODUCTION-2D.md#art-015--refonte-des-visages-expressifs-manga-pour-chaque-intention-p0) |
+| 2 | ART-013 | B | Faire vivre les oreilles du r21 au repos et dans les sept intentions | [ART](04-PRODUCTION-2D.md) |
+| 3 | OPS-001 | A | Sécuriser l'état local avant intervention | [OPS](03-INSTALLATION-OPS.md) |
+| 4 | OPS-002 | A | Mettre à jour develop et les assets LFS | [OPS](03-INSTALLATION-OPS.md) |
+| 5 | OPS-003 | A | Installer/contrôler le socle Windows | [OPS](03-INSTALLATION-OPS.md) |
+| 6 | OPS-005 | A | Préparer la configuration privée de tous les connecteurs | [OPS](03-INSTALLATION-OPS.md) |
+| 7 | OPS-004 | A | Installer/actualiser le launcher réel | [OPS](03-INSTALLATION-OPS.md) |
+| 8 | OPS-006 | A | Exécuter la validation technique locale | [OPS](03-INSTALLATION-OPS.md) |
+| 9 | OPS-007 | A | Préparer le chemin microphone et lecture audio | [OPS](03-INSTALLATION-OPS.md) |
+| 10 | OPS-008 | A | Préparer Discord texte/vocal et DAVE | [OPS](03-INSTALLATION-OPS.md) |
+| 11 | REC-001 | A | Démarrer Jade entière en une instance | [REC](02-RECETTE.md) |
+| 12 | REC-002 | A | Discord écrit et messages privés | [REC](02-RECETTE.md) |
+| 13 | DEV-019 | A | Corriger les MP Discord écrits : réponse privée et identité réelle de chaque auteur | [DEV](01-DEVELOPPEMENT.md) |
+| 14 | REC-003 | A | Discord vocal réel | [REC](02-RECETTE.md) |
+| 15 | REC-004 | A | Microphone PC réel | [REC](02-RECETTE.md) |
+| 16 | REC-005 | A | Isolation des sorties et confidentialité | [REC](02-RECETTE.md) |
+| 17 | DEV-004 | A | Masquer les réponses privées dans les sous-titres OBS WAV | [DEV](01-DEVELOPPEMENT.md) |
+| 18 | REC-026 | A | Demande naturelle de souvenir ordinaire ; Jade décide seule des Core Memories | [REC](02-RECETTE.md) |
+| 19 | REC-008 | A | Commandes silence/reprise et interruption | [REC](02-RECETTE.md) |
+| 20 | REC-006 | A | PCM Discord progressif sous --all-channels | [REC](02-RECETTE.md) |
+| 21 | REC-007 | A | Repli WAV et absence de double diffusion | [REC](02-RECETTE.md) |
+| 22 | REC-009 | A | Arbitrage multi-conversations | [REC](02-RECETTE.md) |
+| 23 | REC-010 | A | Latence et coût d'une session réelle | [REC](02-RECETTE.md) |
+| 24 | DEV-003 | A | Corriger la sortie indésirable du repli WAV s'il se produit réellement | [DEV](01-DEVELOPPEMENT.md) |
+| 25 | REC-034 | Transverse | Mesure du temps réellement perçu, du coût et des p50/p95 par canal | [REC](02-RECETTE.md) |
 
-### P1 · 62 tâches
-
-| Rang | ID | Jalon | Tâche | Vue |
-| ---: | --- | --- | --- | --- |
-| 25 | REC-042 | A | Valider le push-to-talk classique mobile pendant l’appui (ancienne DEV-039) | [REC](02-RECETTE.md) |
-| 26 | DEV-046 | A | Socle API Live, configuration par canal et Discord désactivé | [DEV](01-DEVELOPPEMENT.md) |
-| 27 | DEV-048 | A | Cycle de vie, kill Android et fermeture fournisseur confirmée | [DEV](01-DEVELOPPEMENT.md) |
-| 28 | DEV-051 | A | Budgets Live persistants et mesures de coût/latence | [DEV](01-DEVELOPPEMENT.md) |
-| 29 | DEV-049 | Transverse | Personnalité, mémoire, histoire et délégations Live dans Jade | [DEV](01-DEVELOPPEMENT.md) |
-| 30 | DEV-047 | A | Audio mobile Live, réveil local, pré-roll et interruption | [DEV](01-DEVELOPPEMENT.md) |
-| 31 | DEV-050 | A | Chat, pièces jointes et avatar synchronisé sur le Live | [DEV](01-DEVELOPPEMENT.md) |
-| 32 | DEV-040 | A | Activer le Live dans Profil et intégrer la bascule classique/Live | [DEV](01-DEVELOPPEMENT.md) |
-| 33 | DEV-041 | A | Voix française originale de Jade par prompt | [DEV](01-DEVELOPPEMENT.md) |
-| 34 | REC-031 | Transverse | Conscience unique Jade et actions intercanaux autorisées | [REC](02-RECETTE.md) |
-| 35 | REC-033 | Transverse | Cache mémoire anticipé par présence et identité vérifiée | [REC](02-RECETTE.md) |
-| 36 | REC-036 | Transverse | Personnalité durable, cohérente et corrigible | [REC](02-RECETTE.md) |
-| 37 | REC-021 | A | Mémoire SQLite, Core et autobiographie | [REC](02-RECETTE.md) |
-| 38 | DEV-012 | A | Donner au LLM de Jade le contrôle conscient et confirmé des écritures mémoire L2/L3 | [DEV](01-DEVELOPPEMENT.md) |
-| 39 | REC-025 | A | Sauvegarde/restauration et suppression ciblée | [REC](02-RECETTE.md) |
-| 40 | OPS-009 | A | Configurer Tailscale Serve privé | [OPS](03-INSTALLATION-OPS.md) |
-| 41 | REC-014 | A | PWA Android texte et authentification | [REC](02-RECETTE.md) |
-| 42 | OPS-010 | A | Installer les dépendances Live2D Web de la PWA | [OPS](03-INSTALLATION-OPS.md) |
-| 43 | REC-019 | A | Avatar Web Android r20 | [REC](02-RECETTE.md) |
-| 44 | REC-015 | A | PWA Android voix et micro | [REC](02-RECETTE.md) |
-| 45 | REC-016 | A | PWA arrière-plan, connexion et réseau mobile | [REC](02-RECETTE.md) |
-| 46 | REC-017 | A | TTS mobile désactivé | [REC](02-RECETTE.md) |
-| 47 | OPS-011 | A | Préparer OAuth et authentification Twitch | [OPS](03-INSTALLATION-OPS.md) |
-| 48 | REC-012 | A | Twitch IRC réel | [REC](02-RECETTE.md) |
-| 49 | REC-013 | A | API HTTP locale authentifiée | [REC](02-RECETTE.md) |
-| 50 | REC-011 | A | Voix Étincelle et sept intentions | [REC](02-RECETTE.md) |
-| 51 | REC-018 | A | Avatar r20 Windows en rendu réel | [REC](02-RECETTE.md) |
-| 52 | REC-020 | A | Variantes d'intention A/B | [REC](02-RECETTE.md) |
-| 53 | REC-022 | A | Liaisons des comptes Discord/Twitch avec Goldaj | [REC](02-RECETTE.md) |
-| 54 | REC-023 | A | Résilience des canaux et arrêt propre | [REC](02-RECETTE.md) |
-| 55 | DEV-002 | A | Corriger une éventuelle incompatibilité SDK Live2D Web Android | [DEV](01-DEVELOPPEMENT.md) |
-| 56 | ART-001 | B | Aligner la reprise Codex avec l'avancement artistique v31 | [ART](04-PRODUCTION-2D.md) |
-| 57 | ART-002 | B | Identifier et sécuriser les sources r20/r21 | [ART](04-PRODUCTION-2D.md) |
-| 58 | ART-003 | B | Corriger les UV et construire un atlas plein pied | [ART](04-PRODUCTION-2D.md) |
-| 59 | ART-004 | B | Réparer les raccords cheveux, épaules, cou et vêtements | [ART](04-PRODUCTION-2D.md) |
-| 60 | ART-005 | B | Corriger le clignement et les yeux | [ART](04-PRODUCTION-2D.md) |
-| 61 | ART-006 | B | Finaliser tête, regard et rig du corps plein pied | [ART](04-PRODUCTION-2D.md) |
-| 62 | ART-007 | B | Finaliser les physiques cheveux, oreilles et vêtements | [ART](04-PRODUCTION-2D.md) |
-| 63 | ART-008 | B | Créer idle, expressions et règles de transitions r21 | [ART](04-PRODUCTION-2D.md) |
-| 64 | ART-009 | B | Créer 14 motions corporelles originales | [ART](04-PRODUCTION-2D.md) |
-| 65 | ART-010 | B | Réconcilier les sources éditables KRA/PSD avec le rig r21 | [ART](04-PRODUCTION-2D.md) |
-| 66 | ART-011 | B | Créer le bundle r21 versionné et réutilisable | [ART](04-PRODUCTION-2D.md) |
-| 67 | DEV-001 | B | Raccorder les 14 vraies motions r21 au runtime Jade | [DEV](01-DEVELOPPEMENT.md) |
-| 68 | ART-012 | B | Importer, calibrer et recetter r21 dans VTube Studio | [ART](04-PRODUCTION-2D.md) |
-| 69 | DEV-005 | A | Routage sans TTS pour Discord/Twitch/HTTP écrits | [DEV](01-DEVELOPPEMENT.md) |
-| 70 | DEV-006 | A | Hotkey VTS asynchrone, sans retarder la voix | [DEV](01-DEVELOPPEMENT.md) |
-| 71 | DEV-007 | A | Pool Realtime TTS partagé entre WAV et PCM | [DEV](01-DEVELOPPEMENT.md) |
-| 72 | DEV-008 | A | Jalons de latence multi-canaux sans contenu privé | [DEV](01-DEVELOPPEMENT.md) |
-| 73 | DEV-009 | A | Stabiliser le test micro synthétique avec Rubber Band | [DEV](01-DEVELOPPEMENT.md) |
-| 74 | DEV-013 | ECO | Contexte historique 24 h sélectif et curation mémoire par lots | [DEV](01-DEVELOPPEMENT.md) |
-| 75 | DEV-014 | ECO | Personnalité évolutive tirée des souvenirs autorisés | [DEV](01-DEVELOPPEMENT.md) |
-| 76 | REC-027 | ECO | Participation sociale hybride locale et LLM optionnel | [REC](02-RECETTE.md) |
-| 77 | REC-028 | ECO | Initiatives spontanées sur événement sans relance si ignorée | [REC](02-RECETTE.md) |
-| 78 | REC-029 | ECO | Audio mobile PCM WebSocket et réponse progressive | [REC](02-RECETTE.md) |
-| 79 | REC-030 | ECO | VAD locale et annulation mobile | [REC](02-RECETTE.md) |
-| 80 | REC-038 | A | Recherche Internet Tavily interchangeable et journal privé exhaustif | [REC](02-RECETTE.md) |
-
-| 81 | DEV-027 | A | Suspendre le rendu Live2D mobile hors écran | [DEV](01-DEVELOPPEMENT.md) |
-| 82 | DEV-028 | Transverse | Confirmer les livraisons et fins de lecture dans les journaux | [DEV](01-DEVELOPPEMENT.md) |
-| 83 | DEV-029 | A | Hystérésis du rendu Live2D mobile et reprise neutre (VIS-07) | [DEV](01-DEVELOPPEMENT.md) |
-| 84 | DEV-030 | A | Harmonisation des délais TTS et lecture audio (LAT-10) | [DEV](01-DEVELOPPEMENT.md) |
-| 85 | DEV-038 | Transverse | Connaissance des capacités et initiative autonome de Jade (NEW-38, P1) | [DEV](01-DEVELOPPEMENT.md) |
-| 86 | REC-041 | B | Valider le zoom et le déplacement tactile de Jade r21 (ancienne DEV-042) | [REC](02-RECETTE.md) |
-
-### P2 · 21 tâches
+### P1 · 65 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 87 | REC-032 | Transverse | Recherche de souvenirs ciblée, pertinente et sécurisée | [REC](02-RECETTE.md) |
-| 88 | REC-035 | Transverse | Compréhension des apartés et fils de discussion de groupe | [REC](02-RECETTE.md) |
-| 89 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
-| 90 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
-| 91 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
-| 92 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
-| 93 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
-| 94 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
-| 95 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
-| 96 | REC-037 | Transverse | Choisir une branche Git et redéployer/redémarrer Jade depuis l'application mobile | [REC](02-RECETTE.md) |
+| 26 | REC-042 | A | Valider le push-to-talk classique mobile pendant l’appui (ancienne DEV-039) | [REC](02-RECETTE.md) |
+| 27 | REC-044 | A | Socle API Live, configuration par canal et Discord désactivé | [REC](02-RECETTE.md) |
+| 28 | REC-045 | A | Cycle de vie, kill Android et fermeture fournisseur confirmée | [REC](02-RECETTE.md) |
+| 29 | REC-046 | A | Usage Live passif et mesures de coût/latence sans plafond mobile | [REC](02-RECETTE.md) |
+| 30 | REC-047 | Transverse | Personnalité, mémoire, histoire et délégations Live dans Jade | [REC](02-RECETTE.md) |
+| 31 | REC-048 | A | Audio mobile Live, réveil local, pré-roll et interruption | [REC](02-RECETTE.md) |
+| 32 | REC-049 | A | Chat, pièces jointes et avatar synchronisé sur le Live | [REC](02-RECETTE.md) |
+| 33 | REC-050 | A | Activer le Live dans Config et intégrer la bascule classique/Live | [REC](02-RECETTE.md) |
+| 34 | REC-052 | A | Valider Friponne avec son nouveau débit sur l’avatar r21 et sur Discord Live (ancienne DEV-041) | [REC](02-RECETTE.md#rec-052--voix-friponne-avec-lavatar-de-jade-ancienne-dev-041) |
+| 35 | REC-031 | Transverse | Conscience unique Jade et actions intercanaux autorisées | [REC](02-RECETTE.md) |
+| 36 | REC-033 | Transverse | Cache mémoire anticipé par présence et identité vérifiée | [REC](02-RECETTE.md) |
+| 37 | REC-036 | Transverse | Personnalité durable, cohérente et corrigible | [REC](02-RECETTE.md) |
+| 38 | REC-021 | A | Mémoire SQLite, Core et autobiographie | [REC](02-RECETTE.md) |
+| 39 | DEV-012 | A | Donner au LLM de Jade le contrôle conscient et confirmé des écritures mémoire L2/L3 | [DEV](01-DEVELOPPEMENT.md) |
+| 40 | REC-025 | A | Sauvegarde/restauration et suppression ciblée | [REC](02-RECETTE.md) |
+| 41 | OPS-009 | A | Configurer Tailscale Serve privé | [OPS](03-INSTALLATION-OPS.md) |
+| 42 | REC-014 | A | PWA Android texte et authentification | [REC](02-RECETTE.md) |
+| 43 | OPS-010 | A | Installer les dépendances Live2D Web de la PWA | [OPS](03-INSTALLATION-OPS.md) |
+| 44 | REC-019 | A | Avatar Web Android r20 | [REC](02-RECETTE.md) |
+| 45 | REC-015 | A | PWA Android voix et micro | [REC](02-RECETTE.md) |
+| 46 | REC-016 | A | PWA arrière-plan, connexion et réseau mobile | [REC](02-RECETTE.md) |
+| 47 | REC-017 | A | TTS mobile désactivé | [REC](02-RECETTE.md) |
+| 48 | OPS-011 | A | Préparer OAuth et authentification Twitch | [OPS](03-INSTALLATION-OPS.md) |
+| 49 | REC-012 | A | Twitch IRC réel | [REC](02-RECETTE.md) |
+| 50 | REC-013 | A | API HTTP locale authentifiée | [REC](02-RECETTE.md) |
+| 51 | REC-011 | A | Voix Étincelle et sept intentions | [REC](02-RECETTE.md) |
+| 52 | REC-018 | A | Avatar r20 Windows en rendu réel | [REC](02-RECETTE.md) |
+| 53 | REC-020 | A | Variantes d'intention A/B | [REC](02-RECETTE.md) |
+| 54 | ART-014 | B | Valider quatre variantes Triste et Colère sur le rig r21 existant | [ART](04-PRODUCTION-2D.md#art-014--expressions-et-animations-triste-et-colère-p1) |
+| 55 | REC-053 | Transverse | Valider Triste/Colère et la non-régression des neuf intentions et dix-huit variantes r21 | [REC](02-RECETTE.md#rec-053--intentions-triste-et-colère-sur-r21-ancienne-dev-053) |
+| 56 | REC-022 | A | Liaisons des comptes Discord/Twitch avec Goldaj | [REC](02-RECETTE.md) |
+| 57 | REC-023 | A | Résilience des canaux et arrêt propre | [REC](02-RECETTE.md) |
+| 58 | DEV-002 | A | Corriger une éventuelle incompatibilité SDK Live2D Web Android | [DEV](01-DEVELOPPEMENT.md) |
+| 59 | ART-001 | B | Aligner la reprise Codex avec l'avancement artistique v31 | [ART](04-PRODUCTION-2D.md) |
+| 60 | ART-002 | B | Identifier et sécuriser les sources r20/r21 | [ART](04-PRODUCTION-2D.md) |
+| 61 | ART-003 | B | Corriger les UV et construire un atlas plein pied | [ART](04-PRODUCTION-2D.md) |
+| 62 | ART-004 | B | Réparer les raccords cheveux, épaules, cou et vêtements | [ART](04-PRODUCTION-2D.md) |
+| 63 | ART-005 | B | Corriger le clignement et les yeux | [ART](04-PRODUCTION-2D.md) |
+| 64 | ART-006 | B | Finaliser tête, regard et rig du corps plein pied | [ART](04-PRODUCTION-2D.md) |
+| 65 | ART-007 | B | Finaliser les physiques cheveux, oreilles et vêtements | [ART](04-PRODUCTION-2D.md) |
+| 66 | ART-008 | B | Créer idle, expressions et règles de transitions r21 | [ART](04-PRODUCTION-2D.md) |
+| 67 | ART-009 | B | Créer 14 motions corporelles originales | [ART](04-PRODUCTION-2D.md) |
+| 68 | ART-010 | B | Réconcilier les sources éditables KRA/PSD avec le rig r21 | [ART](04-PRODUCTION-2D.md) |
+| 69 | ART-011 | B | Créer le bundle r21 versionné et réutilisable | [ART](04-PRODUCTION-2D.md) |
+| 70 | DEV-001 | B | Raccorder les 14 vraies motions r21 au runtime Jade | [DEV](01-DEVELOPPEMENT.md) |
+| 71 | ART-012 | B | Importer, calibrer et recetter r21 dans VTube Studio | [ART](04-PRODUCTION-2D.md) |
+| 72 | DEV-005 | A | Routage sans TTS pour Discord/Twitch/HTTP écrits | [DEV](01-DEVELOPPEMENT.md) |
+| 73 | DEV-006 | A | Hotkey VTS asynchrone, sans retarder la voix | [DEV](01-DEVELOPPEMENT.md) |
+| 74 | DEV-007 | A | Pool Realtime TTS partagé entre WAV et PCM | [DEV](01-DEVELOPPEMENT.md) |
+| 75 | DEV-008 | A | Jalons de latence multi-canaux sans contenu privé | [DEV](01-DEVELOPPEMENT.md) |
+| 76 | DEV-009 | A | Stabiliser le test micro synthétique avec Rubber Band | [DEV](01-DEVELOPPEMENT.md) |
+| 77 | DEV-013 | ECO | Contexte historique 24 h sélectif et curation mémoire par lots | [DEV](01-DEVELOPPEMENT.md) |
+| 78 | DEV-014 | ECO | Personnalité évolutive tirée des souvenirs autorisés | [DEV](01-DEVELOPPEMENT.md) |
+| 79 | REC-027 | ECO | Participation sociale hybride locale et LLM optionnel | [REC](02-RECETTE.md) |
+| 80 | REC-029 | ECO | Audio mobile PCM WebSocket et réponse progressive | [REC](02-RECETTE.md) |
+| 81 | REC-030 | ECO | VAD locale et annulation mobile | [REC](02-RECETTE.md) |
+| 82 | REC-038 | A | Recherche Internet Tavily interchangeable et journal privé exhaustif | [REC](02-RECETTE.md) |
+| 83 | DEV-027 | A | Suspendre le rendu Live2D mobile hors écran | [DEV](01-DEVELOPPEMENT.md) |
+| 84 | DEV-028 | Transverse | Confirmer les livraisons et fins de lecture dans les journaux | [DEV](01-DEVELOPPEMENT.md) |
+| 85 | DEV-029 | A | Hystérésis du rendu Live2D mobile et reprise neutre (VIS-07) | [DEV](01-DEVELOPPEMENT.md) |
+| 86 | DEV-030 | A | Harmonisation des délais TTS et lecture audio (LAT-10) | [DEV](01-DEVELOPPEMENT.md) |
+| 87 | DEV-038 | Transverse | Connaissance des capacités et initiative autonome de Jade (NEW-38, P1) | [DEV](01-DEVELOPPEMENT.md) |
+| 88 | REC-041 | B | Valider le zoom et le déplacement tactile de Jade r21 (ancienne DEV-042) | [REC](02-RECETTE.md) |
+| 89 | DEV-054 | A | Live mobile par défaut sans plafond financier et diagnostics utilisables | [DEV](01-DEVELOPPEMENT.md) |
+| 90 | DEV-055 | A | Corriger le contrat d’ouverture Live et l’affichage de son arrêt | [DEV](01-DEVELOPPEMENT.md) |
 
-| 97 | DEV-031 | Transverse | Explications d'indisponibilité sur demandes directes, PWA et client local (NEW-20) | [DEV](01-DEVELOPPEMENT.md) |
+### P2 · 22 tâches
 
-| 98 | REC-039 | A | Valider les fichiers téléchargeables PWA et Discord, texte et voix (UX-19, ancienne DEV-032) | [REC](02-RECETTE.md) |
-| 99 | DEV-033 | A | Réception explicite d'images fixes par Jade (PER-01) | [DEV](01-DEVELOPPEMENT.md) |
-| 100 | DEV-034 | A | Compréhension des images et du texte visible (PER-02) | [DEV](01-DEVELOPPEMENT.md) |
-| 101 | DEV-035 | A | Réactions conversationnelles contextualisées aux images (PER-03) | [DEV](01-DEVELOPPEMENT.md) |
-| 102 | DEV-036 | Transverse | Rappels persistants et notifications push Android (NEW-16), en cours | [DEV](01-DEVELOPPEMENT.md) |
-| 103 | REC-040 | A | Valider les quatre onglets PWA, les rappels et la chambre plein écran | [REC](02-RECETTE.md) |
-| 104 | DEV-037 | A | Sous-titres synchronisés de Jade dans l'application mobile (NEW-29, P2) | [DEV](01-DEVELOPPEMENT.md) |
-| 105 | DEV-043 | Transverse | Faire fonctionner Jade sur VPS avec le PC éteint et le mobile sans avatar | [DEV](01-DEVELOPPEMENT.md#dev-043--service-jade-indépendant-du-pc) |
-| 106 | DEV-044 | A | Livrer l’application Android installable (UX-14) | [DEV](01-DEVELOPPEMENT.md#dev-044--application-android-installable) |
-
-| 107 | DEV-045 | B | Changer de coiffure à chaud sur Jade r21 dans l'application mobile | [DEV](01-DEVELOPPEMENT.md#dev-045--coiffures-interchangeables-en-temps-réel) |
+| Rang | ID | Jalon | Tâche | Vue |
+| ---: | --- | --- | --- | --- |
+| 91 | REC-032 | Transverse | Recherche de souvenirs ciblée, pertinente et sécurisée | [REC](02-RECETTE.md) |
+| 92 | REC-035 | Transverse | Compréhension des apartés et fils de discussion de groupe | [REC](02-RECETTE.md) |
+| 93 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
+| 94 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
+| 95 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
+| 96 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
+| 97 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
+| 98 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
+| 99 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
+| 100 | REC-037 | Transverse | Choisir une branche Git et redéployer/redémarrer Jade depuis l'application mobile | [REC](02-RECETTE.md) |
+| 101 | DEV-031 | Transverse | Explications d'indisponibilité sur demandes directes, PWA et client local (NEW-20) | [DEV](01-DEVELOPPEMENT.md) |
+| 102 | REC-039 | A | Valider les fichiers téléchargeables PWA et Discord, texte et voix (UX-19, ancienne DEV-032) | [REC](02-RECETTE.md) |
+| 103 | DEV-033 | A | Réception explicite d'images fixes par Jade (PER-01) | [DEV](01-DEVELOPPEMENT.md) |
+| 104 | DEV-034 | A | Compréhension des images et du texte visible (PER-02) | [DEV](01-DEVELOPPEMENT.md) |
+| 105 | DEV-035 | A | Réactions conversationnelles contextualisées aux images (PER-03) | [DEV](01-DEVELOPPEMENT.md) |
+| 106 | DEV-036 | Transverse | Rappels persistants et notifications push Android (NEW-16), en cours | [DEV](01-DEVELOPPEMENT.md) |
+| 107 | REC-040 | A | Valider les quatre onglets PWA, les rappels et la chambre plein écran | [REC](02-RECETTE.md) |
+| 108 | DEV-037 | A | Sous-titres synchronisés de Jade dans l'application mobile (NEW-29, P2) | [DEV](01-DEVELOPPEMENT.md) |
+| 109 | DEV-043 | Transverse | Faire fonctionner Jade sur VPS avec le PC éteint et le mobile sans avatar | [DEV](01-DEVELOPPEMENT.md#dev-043--service-jade-indépendant-du-pc) |
+| 110 | DEV-044 | A | Livrer l’application Android installable (UX-14) | [DEV](01-DEVELOPPEMENT.md#dev-044--application-android-installable) |
+| 111 | DEV-045 | B | Changer de coiffure à chaud sur Jade r21 dans l'application mobile | [DEV](01-DEVELOPPEMENT.md#dev-045--coiffures-interchangeables-en-temps-réel) |
+| 112 | REC-051 | A | Valider Live Discord automatique (50/40 EUR) et interrupteur global, mobile indépendant | [REC](02-RECETTE.md#rec-051--live-discord-automatique-et-interrupteur-global-ancienne-dev-052) |
 
 ### P3 · 1 tâche
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 108 | REC-043 | B | Valider la réaction du r21 aux secousses du téléphone (ancienne UX-20) | [REC](02-RECETTE.md) |
+| 113 | REC-043 | B | Valider la réaction du r21 aux secousses du téléphone (ancienne UX-20) | [REC](02-RECETTE.md) |
 
-### Décision classée sans suite (hors liste de priorisation)
+### Décisions classées sans suite (hors liste de priorisation)
 
 **OPS-012 (P1, 22/11/2026)** : sauvegarde SQLite préalable aux migrations ou recettes mémoire **abandonnée sur décision du propriétaire**, sans reprise prévue à court terme. Les recettes automatisées REC-021/REC-025 ont été exécutées avec succès sur bases fictives, sans preuve d'une sauvegarde réelle de la base privée. La carte reste historiquement traçable dans la [vue OPS](03-INSTALLATION-OPS.md), mais n'est plus une tâche active et ne conditionne plus les recettes ouvertes.
+
+**REC-028 (P1, 27/11/2026)**. Le propriétaire retire l’accueil automatique à l’entrée du salon Discord. Les observations du 21/11 restent dans la [vue REC](02-RECETTE.md).
 
 ## Workflow et statut canonique
 

@@ -5,52 +5,50 @@
   const roomSelect = document.getElementById("room-selector");
   if (!room || !scene || !roomSelect) return;
 
-  const kitchenImage = scene.querySelector(".room-plane > img");
-  const kitchenEffects = scene.querySelector(".kitchen-effects");
-  if (!kitchenImage || !kitchenEffects) return;
-  const kitchenSource = "/assets/room-kitchen.webp";
-  const supportsKitchenEffects = typeof CSS !== "undefined" && CSS.supports("width", "1cqh");
-  const preference = matchMedia("(prefers-reduced-motion: reduce)");
+  const staticImage = scene.querySelector(".room-plane > img");
+  if (!staticImage) return;
+  const staticSources = Object.freeze({
+    kitchen: "/assets/room-kitchen-portrait.avif",
+    living: "/assets/room-living-portrait.avif"
+  });
+  const rooms = ["bedroom", ...Object.keys(staticSources)];
+  const loads = new Map();
   let activeRoom = "bedroom";
   let selectionRevision = 0;
-  let visible = true;
-  let kitchenLoad = null;
 
-  function sync() {
-    const enabled = activeRoom === "kitchen" && supportsKitchenEffects && !preference.matches;
-    kitchenEffects.hidden = !enabled;
-    scene.toggleAttribute("data-paused", !(enabled && visible && !document.hidden));
-  }
-
-  function loadKitchen() {
-    if (!kitchenLoad) {
+  function loadStaticRoom(next) {
+    if (!loads.has(next)) {
       const image = new Image();
-      image.src = kitchenSource;
-      kitchenLoad = image.decode().then(() => {
-        if (!image.naturalWidth || !image.naturalHeight) throw new Error("kitchen unavailable");
-        kitchenImage.src = image.src;
+      image.src = staticSources[next];
+      const pending = image.decode().then(() => {
+        if (!image.naturalWidth || !image.naturalHeight) throw new Error("room unavailable");
+        return image.src;
       }).catch(error => {
-        kitchenLoad = null;
+        loads.delete(next);
         throw error;
       });
+      loads.set(next, pending);
     }
-    return kitchenLoad;
+    return loads.get(next);
   }
 
   async function changeRoom(next) {
-    if (next !== "bedroom" && next !== "kitchen") return;
+    if (!rooms.includes(next)) return;
     const revision = ++selectionRevision;
+    let source = null;
     try {
-      if (next === "kitchen") await loadKitchen();
+      if (next !== "bedroom") source = await loadStaticRoom(next);
     } catch (_) {
       if (revision === selectionRevision) roomSelect.value = activeRoom;
       return;
     }
+    // A previous decode must never replace a more recently selected room.
     if (revision !== selectionRevision) return;
+    if (source !== null) staticImage.src = source;
     activeRoom = next;
+    window.JadePreferences?.set("room", next);
     room.dataset.room = next;
     roomSelect.value = next;
-    sync();
     room.dispatchEvent(new Event("jade-room-changed"));
     const url = new URL(window.location.href);
     if (next === "bedroom") url.searchParams.delete("room");
@@ -59,15 +57,9 @@
   }
 
   roomSelect.addEventListener("change", () => { void changeRoom(roomSelect.value); });
-  document.addEventListener("visibilitychange", sync);
-  if (typeof preference.addEventListener === "function") preference.addEventListener("change", sync);
-  else preference.addListener(sync);
-  if (typeof IntersectionObserver === "function") {
-    new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-      sync();
-    }).observe(scene);
-  }
-  sync();
-  if (new URLSearchParams(window.location.search).get("room") === "kitchen") void changeRoom("kitchen");
+  const fromUrl = new URLSearchParams(window.location.search).get("room");
+  const explicitRoom = rooms.includes(fromUrl);
+  const initialRoom = explicitRoom ? fromUrl : window.JadePreferences?.get("room", "bedroom");
+  if (rooms.includes(initialRoom) && initialRoom !== "bedroom") void changeRoom(initialRoom);
+  else if (explicitRoom) window.JadePreferences?.set("room", "bedroom");
 })();

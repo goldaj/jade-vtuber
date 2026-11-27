@@ -5,6 +5,7 @@ const fs=require("node:fs");
 const vm=require("node:vm");
 const path=require("node:path");
 const script=path.join(__dirname,"../src/jade_runtime/mobile_web/portrait-bedroom-motion.js");
+const preferences=fs.readFileSync(path.join(__dirname,"../src/jade_runtime/mobile_web/preferences.js"),"utf8");
 const m=require(script);
 assert.equal(m.W,864);assert.equal(m.H,1536);
 for(const p of [...m.curtainRegions,...m.blossomRegions,...m.lightRegions,m.birdRegion]){
@@ -36,7 +37,7 @@ for(let n=0;n<32;n++){
 }
 // Exercise the actual browser lifecycle, with a deliberately unsupported
 // image and a supported canvas mock. No GPU/DOM dependency in CI.
-function boot(width=864, pixelFailure=false, complete=true) {
+function boot(width=864, pixelFailure=false, complete=true, storage=new Map()) {
   const events={},frames=new Map();let id=0,intersection,draws=0,clears=0;
   function ctx(){return {
     drawImage(){draws++;},clearRect(){clears++;},fillRect(){},
@@ -63,13 +64,17 @@ function boot(width=864, pixelFailure=false, complete=true) {
       id==="portrait-motion-enabled"?toggle:id==="portrait-motion-status"?status:null;},createElement:canvas,
     addEventListener(n,fn){events[n]=fn;}};
   const media={matches:false,addEventListener(n,fn){events.media=fn;}};
-  vm.runInNewContext(fs.readFileSync(script,"utf8"),{
+  const window={localStorage:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value)}};
+  const context=vm.createContext({
+    window,
     document:doc,matchMedia:()=>media,console:{warn(){}},
     requestAnimationFrame(fn){frames.set(++id,fn);return id;},
     cancelAnimationFrame(n){frames.delete(n);},
     IntersectionObserver:class{constructor(fn){intersection=fn;}observe(target){assert.equal(target,room);}}
   });
-  return {output,room,doc,media,frames,events,backdrop,toggle,status,get draws(){return draws;},get clears(){return clears;},
+  vm.runInContext(preferences,context);
+  vm.runInContext(fs.readFileSync(script,"utf8"),context);
+  return {output,room,doc,media,frames,events,backdrop,toggle,status,storage,get draws(){return draws;},get clears(){return clears;},
     step(t){const a=[...frames.values()];frames.clear();a.forEach(f=>f(t));},
     intersect(v){intersection([{isIntersecting:v}]);}};
 }
@@ -85,10 +90,14 @@ b.doc.hidden=false;b.events.visibilitychange();assert.equal(b.frames.size,1);
 b.intersect(false);assert.equal(b.frames.size,0);
 b.intersect(true);assert.equal(b.frames.size,1);
 b.media.matches=true;b.events.media();assert.equal(b.frames.size,1);
-assert.match(b.status.textContent,/adoucis/);
+assert.equal(b.status.textContent,"");assert.equal(b.status.hidden,true);
 b.media.matches=false;b.events.media();assert.equal(b.frames.size,1);
 b.toggle.checked=false;b.events.toggle();assert.equal(b.frames.size,0);assert.equal(b.output.hidden,true);
+const restored=boot(864,false,true,b.storage);
+assert.equal(restored.toggle.checked,false,"animation setting survives a fresh page");
+assert.equal(restored.frames.size,0,"saved disabled animations never start a frame on reopening");
 b.toggle.checked=true;b.events.toggle();assert.equal(b.frames.size,1);
+assert.equal(boot(864,false,true,b.storage).toggle.checked,true,"reenabling replaces the saved setting");
 assert.equal(b.events["jade-seated-ready"],undefined,"bedroom does not listen to avatar readiness");
 const pending=boot(0,false,false);
 assert.equal(pending.frames.size,0);

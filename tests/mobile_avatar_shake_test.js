@@ -5,6 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const source = fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mobile_web/avatar-shake.js"), "utf8");
+const preferencesSource = fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mobile_web/preferences.js"), "utf8");
 
 class Target {
   constructor() { this.listeners = new Map(); }
@@ -19,7 +20,7 @@ class Target {
   }
 }
 
-function createClient({motion = {}, secure = true, reduced = false} = {}) {
+function createClient({motion = {}, secure = true, reduced = false, storage = new Map()} = {}) {
   const document = new Target();
   const window = new Target();
   const control = new Target();
@@ -39,15 +40,18 @@ function createClient({motion = {}, secure = true, reduced = false} = {}) {
   })[id];
   document.querySelector = name => ({".shell":shell, ".room":room})[name];
   Object.assign(window, {
+    localStorage:{getItem:key => storage.get(key) ?? null, setItem:(key, value) => storage.set(key, value)},
     DeviceMotionEvent:motion, isSecureContext:secure, matchMedia:() => media,
     screen:{orientation},
     JadeAvatar:{state, nudgeFromShake(x,y){impulses.push([x,y]);return true;}, stopShake(){stopCount++;}},
     setTimeout(callback){timers.add(callback);return callback;},
     clearTimeout(callback){timers.delete(callback);},
   });
-  vm.runInNewContext(source, {document, window});
+  const context = vm.createContext({document, window});
+  vm.runInContext(preferencesSource, context);
+  vm.runInContext(source, context);
   return {
-    window, status, control, impulses, orientation, state,
+    window, status, control, impulses, orientation, state, storage,
     get stopCount(){return stopCount;},
     view(view, immersive = false) {
       shell.dataset.view = view;
@@ -81,16 +85,16 @@ function createClient({motion = {}, secure = true, reduced = false} = {}) {
 (async () => {
   const session = createClient();
   assert(!session.control.checked, "motion is opt-in");
-  assert.match(session.status.textContent, /Active le réglage/, "instructions replace the HTML loading status");
+  assert.equal(session.status.hidden, true, "no routine instructional paragraph accompanies the checkbox");
   await session.toggle(true);
   assert.equal(session.window.count("devicemotion"), 0, "the Profile does not subscribe");
   await session.view("home");
   assert.equal(session.window.count("devicemotion"), 1);
-  assert.match(session.status.textContent, /En attente des données/);
+  assert.equal(session.status.hidden, true);
   session.runTimers();
   assert.match(session.status.textContent, /Aucune donnée.+Capteurs de mouvement/);
   await session.motion(0, 1, 0, 0);
-  assert.match(session.status.textContent, /Capteur de mouvement actif/, "a late sample clears the warning");
+  assert.equal(session.status.hidden, true, "a late sample clears the warning");
   for (let pulse = 0; pulse < 4; pulse++)
     await session.motion(80 + pulse * 220, pulse % 2 ? 6 : -6, 2, 0);
   assert.equal(session.impulses.length, 0, "routine motion cannot shake Jade");
@@ -101,7 +105,7 @@ function createClient({motion = {}, secure = true, reduced = false} = {}) {
   assert.equal(session.impulses.length, 1, "a fast deliberate reversal triggers one impulse");
   assert.deepEqual(session.impulses[0], [-1, 0], "a strong peak commands the full amplitude");
   await session.motion(1050, 0, 0, 0);
-  assert.equal(session.status.textContent, "Secousse détectée.", "following sensor samples preserve the result");
+  assert.equal(session.status.textContent, "", "normal motion adds no label");
   await session.motion(1270, 17, 0, 0);
   await session.motion(1345, -18, 0, 0);
   assert.equal(session.impulses.length, 1, "cooldown stops a second trigger in the same shake");
@@ -110,7 +114,7 @@ function createClient({motion = {}, secure = true, reduced = false} = {}) {
   assert.equal(session.impulses.length, 2, "forward/backward shakes produce a pitch impulse");
   assert(Math.abs(session.impulses[1][1]) > .5);
   await session.view("profile");
-  assert.equal(session.status.textContent, "Secousse détectée.", "the result remains visible in Profile");
+  assert.equal(session.status.hidden, true);
   await session.view("home");
   const beforeHide = session.stopCount;
   await session.visible(false);
@@ -123,11 +127,19 @@ function createClient({motion = {}, secure = true, reduced = false} = {}) {
   assert.equal(session.window.count("devicemotion"), 1, "fullscreen listens from any tab");
   await session.reduce(true);
   assert.equal(session.window.count("devicemotion"), 0);
-  assert.match(session.status.textContent, /mouvement réduit/);
+  assert.equal(session.status.hidden, true);
   await session.reduce(false);
-  session.state.modelId = "classic";
+  session.state.modelId = null;
+  session.state.status = "loading";
   await session.avatarChanged();
-  assert.equal(session.window.count("devicemotion"), 0, "r20 has no shake response");
+  assert.equal(session.window.count("devicemotion"), 0, "a loading r21 releases its motion sensor");
+  const restored = createClient({storage:session.storage});
+  assert.equal(restored.control.checked, true, "the saved checkbox is restored on reopening");
+  assert.equal(restored.window.count("devicemotion"), 0, "restored motion still respects the current view");
+  await restored.view("home");
+  assert.equal(restored.window.count("devicemotion"), 1, "Android can resume the opted-in sensor in the scene");
+  await restored.toggle(false);
+  assert.equal(createClient({storage:session.storage}).control.checked, false, "disabling is persisted too");
 
   const raw = createClient();
   await raw.toggle(true);
@@ -147,7 +159,7 @@ function createClient({motion = {}, secure = true, reduced = false} = {}) {
   assert(Math.abs(raw.impulses[1][0]) < 1e-6 && raw.impulses[1][1] > .8, "landscape rotates the impulse axes");
   await raw.toggle(false);
   assert.equal(raw.window.count("devicemotion"), 0);
-  assert.match(raw.status.textContent, /désactivée/);
+  assert.equal(raw.status.hidden, true);
 
   const sparse = createClient();
   await sparse.toggle(true);
@@ -179,6 +191,13 @@ function createClient({motion = {}, secure = true, reduced = false} = {}) {
   const unavailable = createClient({motion:null});
   assert(unavailable.control.disabled && unavailable.window.count("devicemotion") === 0);
   assert.match(unavailable.status.textContent, /indisponible/);
+  const permissionStorage = new Map();
+  const optedIn = createClient({storage:permissionStorage}); await optedIn.toggle(true);
+  let permissionRequests = 0;
+  const permissionRestore = createClient({storage:permissionStorage,
+    motion:{requestPermission(){permissionRequests++;return Promise.resolve("granted");}}});
+  assert.equal(permissionRestore.control.checked, true);
+  assert.equal(permissionRequests, 0, "restoring preferences never opens a new sensor permission dialog");
 
   console.log("Avatar shake: opt-in, motion filtering, gravity fallback, cooldown and scene scoping PASS");
 })().catch(error => {

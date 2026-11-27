@@ -1,6 +1,7 @@
 """Targeted offline regressions for progressive TTS and Discord PCM playback."""
 import asyncio
 from io import BytesIO
+import math
 from pathlib import Path
 import struct
 import tempfile
@@ -41,6 +42,40 @@ class PCMBufferTests(unittest.IsolatedAsyncioTestCase):
         await buffer.finish()
         self.assertEqual(len(buffer.read()), FRAME_BYTES)
         self.assertEqual(buffer.read(), b"")
+
+    async def test_live_preserves_high_frequencies_across_fragmented_real_time_frames(self):
+        # A 6 kHz tone loses about 1.4 dB with the classic linear conversion.
+        # Measure that frequency's amplitude independently of the filter delay.
+        tone = [round(12000 * math.sin(math.tau * index / 4)) for index in range(480)]
+        pcm = struct.pack("<480h", *tone)
+        live = DiscordPCMBuffer(live_audio=True)
+        unfragmented = DiscordPCMBuffer(live_audio=True)
+        for _ in range(3):
+            await live.feed(pcm[:63])
+            await live.feed(pcm[63:319])
+            await live.feed(pcm[319:])
+            await unfragmented.feed(pcm)
+            frame = live.read()
+            self.assertEqual(len(frame), FRAME_BYTES)
+            self.assertEqual(frame, unfragmented.read())
+            end = tuple(sample for (sample,) in struct.iter_unpack("<h", frame))[64::2]
+            sine = sum(value * math.sin(math.tau * index / 8) for index, value in enumerate(end))
+            cosine = sum(value * math.cos(math.tau * index / 8) for index, value in enumerate(end))
+            gain = 2 * math.hypot(sine, cosine) / (len(end) * 12000)
+            self.assertGreater(gain, 0.97)
+            self.assertLess(gain, 1.01)
+        await live.finish()
+        self.assertEqual(live.read(), b"")
+        self.assertEqual(live.metrics().underrun_silence_frames, 0)
+
+    async def test_live_interpolation_clamps_full_scale_transients(self):
+        live = DiscordPCMBuffer(live_audio=True)
+        samples = [-32768] * 240 + [32767] * 240
+        await live.feed(struct.pack("<480h", *samples))
+        frame = live.read()
+        self.assertEqual(len(frame), FRAME_BYTES)
+        self.assertIn(-32768, struct.unpack("<1920h", frame))
+        self.assertIn(32767, struct.unpack("<1920h", frame))
 
     async def test_backpressure_bounded_and_abort_unblocks_writer(self):
         buffer = DiscordPCMBuffer(max_frames=5)
@@ -89,6 +124,28 @@ class PCMBufferTests(unittest.IsolatedAsyncioTestCase):
         await buffer.feed(b"\x00")
         with self.assertRaisesRegex(ValueError, "incomplete"):
             await buffer.finish()
+
+    async def test_live_can_exceed_tts_duration_without_growing_the_buffer(self):
+        buffer = DiscordPCMBuffer(max_frames=5, max_input_bytes=48_000 * 102)
+        frame = b"\x12\x00" * 480
+        # 101 seconds of synthetic audio, drained immediately without waiting
+        # for wall clock or retaining a long recording in the test process.
+        for index in range(5050):
+            await buffer.feed(frame)
+            self.assertEqual(len(buffer.read()), FRAME_BYTES)
+            if index % 250 == 0:
+                await asyncio.sleep(0)
+        await buffer.finish()
+        self.assertEqual(buffer.read(), b"")
+        self.assertEqual(buffer.metrics().frames_read, 5050)
+        self.assertLessEqual(buffer.metrics().max_queued_frames, 5)
+        self.assertLessEqual(len(buffer._tail), FRAME_BYTES)
+
+    async def test_default_tts_duration_limit_remains_bounded(self):
+        buffer = DiscordPCMBuffer()
+        buffer._received = 4_800_000
+        with self.assertRaisesRegex(ValueError, "limit"):
+            await buffer.feed(b"\x01\x00" * 480)
 
 
 class TTSStreamTests(unittest.IsolatedAsyncioTestCase):

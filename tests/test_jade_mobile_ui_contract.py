@@ -33,20 +33,30 @@ class MobileUiLayoutContract(unittest.TestCase):
         self.assertNotIn("      input.focus();\n      openReminderFromHash();", JS)
 
     def test_notifications_move_into_profile(self):
-        self.assertEqual(HTML.count('class="notification-choice"'), 1)
-        self.assertLess(HTML.index('class="notification-choice"'), HTML.index('id="reminders-panel"'))
-        self.assertIn(":not(.notification-choice)", CSS)
+        self.assertEqual(HTML.count('id="notifications-enabled"'), 1)
+        self.assertLess(HTML.index('id="notifications-enabled"'), HTML.index('id="reminders-panel"'))
         self.assertIn('view === "profile" && token', JS)
-        self.assertIn('id="notifications-on"', HTML)
-        self.assertIn('id="notifications-off"', HTML)
+        profile = HTML.split('id="profile-intro"', 1)[1].split('<div class="chat-heading">', 1)[0]
+        self.assertIn('id="notifications-enabled"', profile)
+        self.assertNotIn('id="notifications-on"', HTML)
+        self.assertNotIn('id="notifications-off"', HTML)
+        self.assertNotIn('<fieldset class="notification-choice"', HTML)
 
     def test_scenes_remain_undistorted_and_avatar_zooms_separately(self):
-        self.assertIn('roomPlane.getBoundingClientRect().width', JS)
-        self.assertIn("var(--room-immersive-width,100%)", CSS)
+        self.assertNotIn("room-immersive-width", JS + CSS)
+        self.assertIn(".room-plane,.bedroom-frame{", CSS)
+        self.assertIn("width:max(100cqw,56.28cqh);height:max(177.6833cqw,100cqh);", CSS)
         self.assertIn("immersive ? 1.9 : 1.5", AVATAR)
         self.assertIn('window.JadeAvatar?.resize?.()', JS)
         self.assertIn('.shell:not([data-view="home"]),.shell[data-view="chat"]', CSS)
-        self.assertIn('.room-art[data-room="kitchen"]::before', CSS)
+        self.assertIn('id="portrait-static-room" width="941" height="1672"', HTML)
+        self.assertIn('<option value="living">Salon</option>', HTML)
+        self.assertIn('.room:is([data-room="kitchen"],[data-room="living"])[data-avatar-model="next"]', CSS)
+        self.assertIn('.room:is([data-room="bedroom"],[data-room="kitchen"],[data-room="living"])', CSS)
+        self.assertNotIn("room-kitchen.webp", CSS + JS + HTML)
+        self.assertNotIn("kitchen-effects", HTML)
+        self.assertIn('["bedroom", "kitchen", "living"].includes(room?.dataset.room)', AVATAR)
+        self.assertIn('.room[data-room="bedroom"] .bedroom-frame{display:block}', CSS)
 
 
 if __name__ == "__main__":

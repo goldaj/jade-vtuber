@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 from tools import jade_publication_export as exporter
 from tools.jade_publication_export import create_preview, selected_paths, tracked_paths
+from tools.jade_preview_tests import isolated_test_command, preview_environment
 
 class ExportTests(unittest.TestCase):
     def test_mobile_room_export_copies_reviewed_image_and_script(self):
@@ -136,7 +137,7 @@ class ExportTests(unittest.TestCase):
 
     @unittest.skipIf(os.environ.get("JADE_PREVIEW_CLOSURE_INNER") == "1",
                      "avoid recursively rebuilding the preview")
-    def test_real_preview_runs_its_own_offline_suite(self):
+    def test_real_preview_runs_isolated_smoke_and_can_reexport(self):
         root = Path(__file__).resolve().parents[1]
         if not (root / ".git").exists():
             self.skipTest("closure check requires a Git checkout")
@@ -148,28 +149,14 @@ class ExportTests(unittest.TestCase):
             from src.jade_runtime.mobile_gateway import WEB_FILES
             for route, (filename, _) in WEB_FILES.items():
                 self.assertTrue((dest / "src/jade_runtime/mobile_web" / filename).is_file(), route)
-            env = {k: v for k, v in os.environ.items()
-                   if not k.startswith(("JADE_", "OPENAI_", "TWITCH_", "DISCORD_", "ELEVENLABS_"))
-                   and k != "BOT_NAME"}
-            env["JADE_SECRETS_FILE"] = str(Path(directory) / "nonexistent-private.env")
-            env["JADE_PREVIEW_CLOSURE_INNER"] = "1"
-            env.pop("PYTHONPATH", None)
-            # -I ignores PYTHONPATH; remove editable-install source paths too.
-            # Assert both app and tool modules resolve from the exported copy.
-            bootstrap = '''
-import pathlib, sys, unittest
-source = pathlib.Path(sys.argv[1]).resolve()
-root = pathlib.Path.cwd().resolve()
-sys.path[:] = [str(root)] + [p for p in sys.path if p and not pathlib.Path(p).resolve().is_relative_to(source)]
-import src, tools.jade_ci_preflight as preflight
-assert pathlib.Path(src.__file__).resolve().is_relative_to(root)
-assert pathlib.Path(preflight.__file__).resolve().is_relative_to(root)
-result = unittest.TextTestRunner(verbosity=1).run(unittest.defaultTestLoader.discover('tests'))
-raise SystemExit(not result.wasSuccessful() or result.testsRun == 0)
-'''
-            proc = subprocess.run([sys.executable, "-I", "-X", "utf8", "-c", bootstrap, str(root)],
+            self.assertTrue((dest / "tools/jade_preview_tests.py").is_file())
+            env = preview_environment(Path(directory))
+            # The complete exported suite has its own CI job. Keep this test
+            # focused on isolation, bootstrap and re-export, without nesting
+            # another full run inside every unit-suite invocation.
+            proc = subprocess.run(isolated_test_command(root, full_suite=False),
                                   cwd=dest, env=env, capture_output=True, text=True,
-                                  encoding="utf-8", errors="replace", timeout=180)
+                                  encoding="utf-8", errors="replace", timeout=45)
             self.assertEqual(proc.returncode, 0, proc.stdout[-2000:] + proc.stderr[-6000:])
             # Once the preview becomes a standalone repository, its retained
             # templates and tools must also support its own export command.

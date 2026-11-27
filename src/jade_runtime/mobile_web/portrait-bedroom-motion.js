@@ -95,11 +95,20 @@
   // a gentler preset instead of silently disabling all five effects.
   const toggle=document.getElementById("portrait-motion-enabled");
   const status=document.getElementById("portrait-motion-status");
-  function report(state,message) {
+  if(toggle)toggle.checked=window.JadePreferences?.get("portraitMotionEnabled",true)??true;
+  function report(state,message="") {
     room.dataset.portraitMotion=state;
-    if(status&&status.textContent!==message)status.textContent=message;
+    if(status){
+      const problem=state==="unavailable"||state==="partial";
+      status.textContent=problem?message:"";
+      status.hidden=!problem;
+    }
   }
   const output=canvas.getContext("2d");
+  toggle?.addEventListener("change",()=>{
+    window.JadePreferences?.set("portraitMotionEnabled",toggle.checked);
+    if(output)sync();
+  });
   if(!output){report("unavailable","Animations indisponibles sur ce navigateur.");return;}
   let prepared=null,visible=true,frame=null,elapsed=0,last=null,lastPaint=-Infinity;
   const disabledEffects=new Set();
@@ -334,21 +343,19 @@
     if(inBedroom&&enabled&&visible&&!document.hidden&&!backdrop.naturalWidth){
       stop();
       if(backdrop.complete)report("unavailable","Décor de la chambre indisponible.");
-      else report("loading","Chargement des animations…");
+      else report("loading");
       return;
     }
     const running=shouldRun(Boolean(backdrop.naturalWidth),inBedroom,visible,document.hidden,enabled);
-    if(!running){stop();report("paused",enabled?"Animations en pause hors chambre ou hors écran.":"Animations désactivées.");return;}
+    if(!running){stop();report("paused");return;}
     prepare();
-    if(!prepared){stop();report("loading","Chargement des animations…");return;}
+    if(!prepared){stop();report("loading");return;}
     canvas.hidden=false;
     const counts=prepared.curtains.length+prepared.lights.length+prepared.branches.length;
     const partial=prepared.pixelFallback||disabledEffects.size>0||counts<3;
-    report(partial?"partial":"active",partial?"Animations actives, certains calques indisponibles.":
-      preference.matches?"Animations actives (mouvements adoucis).":"Animations de la chambre actives.");
+    report(partial?"partial":"active",partial?"Animations actives, certains calques indisponibles.":"");
     if(frame===null)frame=requestAnimationFrame(tick);
   }
-  toggle?.addEventListener("change",sync);
   room.addEventListener("jade-room-changed",sync);
   backdrop.addEventListener("load",sync);
   backdrop.addEventListener("error",sync);

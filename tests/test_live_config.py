@@ -1,0 +1,192 @@
+from dataclasses import replace
+from pathlib import Path
+import tempfile
+import unittest
+
+from src.jade_runtime.discord_live_provider import build_discord_live_config
+from src.jade_runtime.live_config import LiveConfig
+from src.jade_runtime.live_voice import (
+    FRIPONNE_SESSION_PROMPT, JADE_VOICE_PROMPT, LIVE_DELIVERY_PROMPT, PETILLANTE_SESSION_PROMPT,
+    VOICE_REVIEW_CORPUS,
+    LiveVoice, prepare_voice_review,
+)
+
+
+class LiveConfigTests(unittest.TestCase):
+    def test_defaults_enable_mobile_and_follow_the_single_discord_code_switch(self):
+        keys = []
+
+        def get(key, default):
+            keys.append(key)
+            return default
+
+        config = LiveConfig.from_env(get)
+        self.assertTrue(config.enabled)
+        self.assertTrue(config.mobile_enabled)
+        self.assertTrue(config.discord_enabled)
+        self.assertTrue(config.preflight(api_key_present=True)["available"])
+        self.assertFalse(hasattr(config, "daily_usd"))
+        self.assertFalse(hasattr(config, "monthly_usd"))
+        self.assertFalse(hasattr(config, "backend_reservation_usd"))
+        self.assertNotIn("OPENAI_API_KEY", keys)
+        self.assertNotIn("JADE_DISCORD_LIVE_ENABLED", keys)
+
+    def test_old_financial_settings_are_ignored_even_when_zero_or_invalid(self):
+        obsolete = {"JADE_LIVE_DAILY_USD", "JADE_LIVE_MONTHLY_USD",
+                    "JADE_LIVE_BACKEND_RESERVATION_USD"}
+        for value in ("0", "-1", "NaN", "invalid", "999999999"):
+            with self.subTest(value=value):
+                requested = []
+
+                def get(key, default):
+                    requested.append(key)
+                    return value if key in obsolete else default
+
+                config = LiveConfig.from_env(get)
+                self.assertTrue(config.preflight(api_key_present=True)["available"])
+                self.assertTrue(obsolete.isdisjoint(requested))
+
+    def test_key_and_explicit_off_are_still_respected(self):
+        config = LiveConfig.from_env({}.get)
+        self.assertTrue(config.preflight(api_key_present=True)["available"])
+        self.assertFalse(config.preflight(api_key_present=False)["available"])
+        config = LiveConfig.from_env({"JADE_LIVE_ENABLED": "0"}.get)
+        self.assertEqual(config.preflight(api_key_present=True)["reasons"], ["live_disabled"])
+
+    def test_empty_usage_path_uses_private_default_and_old_path_is_migration_alias(self):
+        defaults = LiveConfig.from_env({}.get)
+        for empty in ("", "   "):
+            with self.subTest(value=empty):
+                config = LiveConfig.from_env({"JADE_LIVE_USAGE_DB_PATH": empty,
+                                              "JADE_LIVE_BUDGET_DB_PATH": empty}.get)
+                self.assertEqual(config.usage_db_path, defaults.usage_db_path)
+                self.assertTrue(Path(config.usage_db_path).is_absolute())
+        with tempfile.TemporaryDirectory() as directory:
+            old = str(Path(directory) / "old.sqlite3")
+            new = str(Path(directory) / "usage.sqlite3")
+            self.assertEqual(LiveConfig.from_env({"JADE_LIVE_BUDGET_DB_PATH": old}.get).usage_db_path, old)
+            config = LiveConfig.from_env({"JADE_LIVE_USAGE_DB_PATH": new,
+                                          "JADE_LIVE_BUDGET_DB_PATH": old}.get)
+            self.assertEqual(config.usage_db_path, new)
+
+    def test_discord_flag_does_not_claim_missing_adapter_exists(self):
+        config = replace(LiveConfig(), discord_enabled=True)
+        result = config.preflight(api_key_present=True, discord_adapter_available=False)
+        self.assertEqual(result["reasons"], [])
+        self.assertTrue(result["available"])
+        self.assertFalse(result["discord"]["available"])
+        self.assertEqual(result["discord"]["reason"], "discord_adapter_unavailable")
+
+    def test_invalid_config_is_fail_closed(self):
+        bad = (
+            {"enabled": 1}, {"heartbeat_seconds": float("nan")},
+            {"lease_seconds": 4}, {"idle_standby_seconds": 8.5},
+            {"idle_standby_seconds": 4}, {"idle_close_seconds": 8},
+            {"max_starts_per_minute": 0}, {"max_delegations_per_session": True},
+            {"opening_timeout_seconds": float("inf")},
+            {"model": "gpt-realtime-2.1-mini"}, {"voice": "aube"},
+            {"usage_db_path": "state.sqlite3"},
+            {"voice_style": None}, {"voice_style": False},
+        )
+        for changes in bad:
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                replace(LiveConfig(), **changes).validate()
+
+    def test_config_cannot_put_private_ledger_in_git(self):
+        path = Path(__file__).resolve().parents[1] / "unsafe.sqlite3"
+        with self.assertRaises(ValueError):
+            replace(LiveConfig(), usage_db_path=str(path)).validate()
+        self.assertFalse(path.exists())
+
+    def test_config_accepts_external_private_paths_without_creating_them(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "new" / "usage.sqlite3"
+            config = replace(LiveConfig(), usage_db_path=str(path))
+            config.validate()
+            self.assertFalse(path.parent.exists())
+
+    def test_session_contract_is_live_client_delegation_and_no_client_commands(self):
+        history = [{"type": "message", "role": "user",
+                    "content": [{"type": "input_text", "text": "Bonjour"}]}]
+        payload = LiveConfig().session_config(instructions="Jade", input=history)
+        self.assertEqual(payload["model"], "gpt-live-1.1")
+        self.assertEqual(payload["delegation"]["type"], "client")
+        self.assertFalse(payload["store"])
+        self.assertEqual(payload["wake_policy"], {"type": "speech"})
+        self.assertEqual(payload["idle_timeout_s"], 8)
+        self.assertNotIn("format", payload["audio"])
+        self.assertEqual(payload["client"]["data_channel"]["allowed_client_events"], [])
+        self.assertEqual(payload["client"]["data_channel"]["allowed_server_events"], [
+            {"type": "session.started"}, {"type": "session.resumed"},
+            {"type": "session.paused"}, {"type": "session.closed"},
+        ])
+        self.assertEqual(payload["input"], history)
+
+    def test_voice_selection_never_invents_aube_identifier_or_alias(self):
+        selection = LiveVoice()
+        self.assertEqual(selection.api_value(), "brise")
+        status = selection.public_status()
+        self.assertEqual(status["requested_prototype"], "Aube")
+        self.assertTrue(status["fallback"])
+        self.assertFalse(status["aube_api_verified"])
+        with self.assertRaises(ValueError):
+            LiveVoice("aube").api_value()
+        custom = LiveVoice(custom_id="voice_saved_123")
+        self.assertEqual(custom.api_value(), {"id": "voice_saved_123"})
+        self.assertNotIn("voice_saved_123", str(custom.public_status()))
+        self.assertTrue(JADE_VOICE_PROMPT)
+        self.assertEqual(len(VOICE_REVIEW_CORPUS), 7)
+
+    def test_saved_voice_styles_use_the_selected_voice_and_prompt_in_both_transports(self):
+        persona = "Tu es Jade. Garde les règles du canal et délègue les recherches."
+        for style, prompt in (("petillante", PETILLANTE_SESSION_PROMPT), ("friponne", FRIPONNE_SESSION_PROMPT)):
+            with self.subTest(style=style):
+                voice_id = f"voice_test_{style}"
+                config = LiveConfig.from_env({"JADE_LIVE_VOICE_ID": voice_id, "JADE_LIVE_VOICE_STYLE": style}.get)
+                mobile = config.session_config(instructions=persona)
+                discord = build_discord_live_config(config, instructions=persona)
+                expected = f"{persona}\n\nDirection vocale\n{prompt}\n\nJeu et débit\n{LIVE_DELIVERY_PROMPT}"
+                for payload in (mobile, discord):
+                    self.assertEqual(payload["audio"]["output"], {"voice": {"id": voice_id}})
+                    self.assertEqual(payload["instructions"], expected)
+
+    def test_no_voice_style_is_applied_to_default_or_unrelated_custom_voice(self):
+        persona = "Tu es Jade."
+        for voice_id, expected in (("", "brise"), ("voice_other", {"id": "voice_other"})):
+            with self.subTest(voice_id=voice_id):
+                payload = LiveConfig(voice_id=voice_id).session_config(instructions=persona)
+                self.assertEqual(payload["audio"]["output"]["voice"], expected)
+                self.assertTrue(payload["instructions"].startswith(persona))
+                self.assertNotIn(PETILLANTE_SESSION_PROMPT, payload["instructions"])
+                self.assertNotIn(FRIPONNE_SESSION_PROMPT, payload["instructions"])
+                self.assertEqual(payload["instructions"].count(LIVE_DELIVERY_PROMPT), 1)
+
+    def test_voice_styles_require_a_custom_voice_and_an_explicit_supported_style(self):
+        for env in ({"JADE_LIVE_VOICE_STYLE": "petillante"},
+                    {"JADE_LIVE_VOICE_STYLE": "friponne"},
+                    {"JADE_LIVE_VOICE_STYLE": "unknown", "JADE_LIVE_VOICE_ID": "voice_other"}):
+            with self.subTest(env=env), self.assertRaises(ValueError):
+                LiveConfig.from_env(env.get)
+
+    def test_petillante_instruction_limit_counts_utf8_bytes_after_joining(self):
+        config = LiveConfig(voice_id="voice_selected_for_test", voice_style="petillante")
+        overhead = len(config.session_config(instructions="a")["instructions"].encode("utf-8")) - 1
+        remaining = 16_384 - overhead
+        persona = "é" * (remaining // 2) + "a" * (remaining % 2)
+        self.assertEqual(len(config.session_config(instructions=persona)["instructions"].encode("utf-8")), 16_384)
+        with self.assertRaises(ValueError):
+            config.session_config(instructions=persona + "a")
+
+    def test_voice_packet_is_an_offline_plan_not_a_created_or_previewed_voice(self):
+        packet = prepare_voice_review()
+        self.assertEqual(packet["request"]["json"]["type"], "prompt")
+        self.assertFalse(packet["voice_created"])
+        self.assertFalse(packet["audio_listened"])
+        self.assertNotIn("id", packet["request"]["json"])
+        self.assertEqual(len(packet["corpus"]), 7)
+        with self.assertRaises(ValueError):
+            prepare_voice_review(prompt=" ")
+
+
+if __name__ == "__main__":
+    unittest.main()

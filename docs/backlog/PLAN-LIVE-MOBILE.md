@@ -1,12 +1,18 @@
 # GPT-Live mobile — plan d'architecture et feuille de route
 
-**Cadrage du 26 novembre 2026**, demandé par Goldaj. Code audité : `develop`, `990dfbe043f16619359d86405f5c128b435d0bb8`. Ce document décrit le **travail à réaliser**, pas une fonctionnalité déjà disponible. Les statuts et critères de chaque US restent canoniques dans [la vue DEV](01-DEVELOPPEMENT.md) ; ce plan n'ajoute aucun suivi concurrent. La présente livraison est documentaire, sans activation du micro, création de voix ni appel API facturé.
+**Actualisation du 27/11/2026 :** le propriétaire demande de développer maintenant l'automatisme Discord 50/40 EUR avec un seul paramètre code ON/OFF. Ce lot complémentaire est décrit dans [DISCORD_LIVE.md](../architecture/DISCORD_LIVE.md), suivi par **REC-051 (ancienne DEV-052)**. Il remplace les mentions de Discord « futur/réservé » du cadrage daté ci-dessous ; les règles mobiles sans budget restent inchangées.
+
+**Cadrage du 26 novembre 2026**, demandé par Goldaj. Code audité : `develop`, `990dfbe043f16619359d86405f5c128b435d0bb8`. Ce document conserve le cadrage technique, corrigé par la décision propriétaire ci-dessous. La note de mise en œuvre ci-dessous renvoie au code actuel ; les statuts restent canoniques dans [DEV](01-DEVELOPPEMENT.md) et [REC](02-RECETTE.md). Aucun micro, création de voix ni appel API facturé n’a été activé pendant cette mission.
+
+**Mise en œuvre du 26/11 :** ce cadrage initial est conservé comme référence datée. Le code de `feat/live-mobile-20261126` (`90ec0c7`) est désormais intégré sur `develop`, après reprise de `6dc8d1b` et autorisation du propriétaire pour son test ; voir [architecture actuelle](../architecture/LIVE_MOBILE.md) et [preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md). Sept suivis sont transférés en REC-044 à REC-050, sans recette OpenAI/Android présumée. DEV-041 garde les voix à créer/choisir. DEV-052 ajoute la politique Discord 50/40 EUR future, sans changement de préférence mobile ni adaptateur Discord livré dans ce lot.
 
 **Accord propriétaire du 26/11 après revue :** Goldaj valide le reste du cadrage, avec ajustements possibles des US au fil du développement, et demande **Aube comme voix de prototype souhaitée** en attendant la voix originale. La disponibilité d'Aube dans l'API reste à confirmer selon la section 3.4 ; cet accord produit ne clôt aucune US de développement.
 
+**Correction impérative du 26/11 :** Live activé et sélectionné par défaut sur mobile, OFF dans Profil conservé, aucun budget financier mobile ni plafond quotidien. Les anciennes propositions de plafonds sont retirées du plan. Seul DEV-052 prévoit une décision Discord selon le total mensuel toutes API de 50 EUR ou 40 EUR si suivi incomplet, sans effet sur le mobile. [Correctif](../operations/handoffs/2026-11-26-chatgpt-live-mobile-default-no-budget.md).
+
 ## 1. Résultat produit à construire
 
-Depuis **Profil**, Goldaj pourra activer ou désactiver **Mode Live**. Activé, ce choix sélectionne le moteur vocal du mobile ; il ne déclenche ni microphone ni session OpenAI. Le micro reste une action distincte : un toucher pour parler librement, un second pour le couper. Le mode classique conserve son appui maintenu. Le choix du moteur survit à une réouverture ; l'autorisation de capturer et une session distante n'y survivent jamais.
+Le **Mode Live** est sélectionné par défaut. Depuis **Profil**, Goldaj peut le désactiver ou le réactiver ; un choix classique explicitement enregistré est conservé. Activé, ce choix sélectionne le moteur vocal du mobile ; il ne déclenche ni microphone ni session OpenAI. Le micro reste une action distincte : un toucher pour parler librement, un second pour le couper. Le mode classique conserve son appui maintenu. Le choix du moteur survit à une réouverture ; l'autorisation de capturer et une session distante n'y survivent jamais.
 
 La V1 vise la **PWA Android privée existante, en priorité le Redmi Note 13**. Discord continue sur sa chaîne actuelle. Un paramètre serveur réservé et une interface par canal préparent son futur branchement ; le paramètre ne prétend pas livrer un adaptateur Discord absent. VPS (`DEV-043`), APK (`DEV-044`), sous-titres synchronisés (`DEV-037`) et registre général des capacités (`DEV-038`) ne sont pas des prérequis du Live mobile.
 
@@ -32,7 +38,7 @@ Les réserves des REC déjà acceptées ne sont pas rouvertes artificiellement. 
 
 ### 3.1 API et transport
 
-**Cible : `gpt-live-1.1`, API Live, WebRTC entre mobile et OpenAI, signalisation par le serveur Jade.** Le serveur échange l'offre SDP, impose la configuration, garde les secrets et ouvre un **sideband** de contrôle. Le client ne choisit ni modèle facturé, ni identité, ni canal, ni budget. Aucune clé OpenAI durable ou autorisation de création libre ne lui est remise. [S1, S2, S3]
+**Cible : `gpt-live-1.1`, API Live, WebRTC entre mobile et OpenAI, signalisation par le serveur Jade.** Le serveur échange l'offre SDP, impose la configuration, garde les secrets et ouvre un **sideband** de contrôle. Le client ne choisit ni modèle facturé, ni identité, ni canal. Aucune clé OpenAI durable ou autorisation de création libre ne lui est remise. [S1, S2, S3]
 
 Le mode de délégation est **`client`** : Jade conserve son workflow et ses modèles configurés. Les demandes nécessitant réflexion, souvenirs explicites ou outils reviennent au backend existant. Il n'y a pas de seconde chaîne STT/LLM/TTS systématique derrière chaque phrase Live. [S4]
 
@@ -78,7 +84,7 @@ Trois axes d’interface séparés : **préférence** (`classic` / `live`), **ca
 | --- | --- |
 | Profil : Live ON | Persister la préférence propriétaire ; aucune capture, permission micro ou création fournisseur. Si classique en cours, l'annuler proprement avant de changer de propriétaire audio. |
 | Profil : Live OFF | Révoquer côté serveur l’armement et fermer toute session Live de ce propriétaire, même sur un autre client ; notifier une nouvelle révision de préférence. Capture/lecture arrêtées ; classique sélectionné, aucun replay. |
-| Micro Live, premier toucher | Vérifier son disponible, foreground, authentification, disponibilité et budget ; obtenir le bail exclusif d’armement **avant getUserMedia**, puis ouvrir la détection locale. Première parole : création distante et réinjection du début capturé. Aucun appel LLM pour surveiller le silence. |
+| Micro Live, premier toucher | Vérifier son disponible, foreground, authentification et disponibilité ; obtenir le bail exclusif d’armement **avant getUserMedia**, puis ouvrir la détection locale. Première parole : création distante et réinjection du début capturé. Aucun appel LLM pour surveiller le silence. |
 | Micro Live, second toucher | Fermer toutes les pistes et la détection locale, vider le pré-roll ; aucune réouverture sur bruit. Une réponse déjà demandée peut finir seulement si la page reste visible, jusqu'à une borne de 15 s initiale, puis clôture. Après audio utilisateur envoyé, une réponse peut encore être attendue même sans son/transcript : appliquer la borne si son achèvement est incertain ; clôture immédiate seulement lorsque aucune réponse ni tâche n’est attendue. |
 | Parole pendant la réponse | Barge-in natif ; réception des nouveaux mots et arrêt de l'ancien son observable. Une courte pause du transcript ne devient pas artificiellement un tour terminé. |
 | Pause courte | Standby fournisseur si configuré ; état encore facturable. Heartbeat de contrôle distinct de l'activité de conversation. |
@@ -91,7 +97,7 @@ Trois axes d’interface séparés : **préférence** (`classic` / `live`), **ca
 | Background, verrouillage, perte d'auth, appel/interruptions audio système | Arrêt immédiat local et clôture serveur, sans laisser finir une réponse. Le retour demande un nouveau geste micro. |
 | Kill/crash ou disparition réseau | Le serveur invalide le bail et ferme la session même sans callback client. Reconnexion et notification ne réarment rien. |
 | Perte du backend/sideband pendant média encore actif | Le mobile ferme également capture, audio et PeerConnection ; le backend tente la clôture de son côté. |
-| Quota, budget, modèle/voix indisponible | Incident déterministe, aucune boucle de retry ni bascule audio cachée ; texte disponible et retour classique explicite, sans rejouer une demande ambiguë. |
+| Quota fournisseur ou modèle/voix indisponible | Incident déterministe, aucune boucle de retry ni bascule audio cachée ; texte disponible et retour classique explicite, sans rejouer une demande ambiguë. |
 | Second client pour Goldaj | Refuser le deuxième armement **avant capture**, même si le premier client est en silence sans session fournisseur. Une reprise explicite ferme d'abord la première et attend sa confirmation ; aucune capture silencieuse sur deux appareils. |
 
 La préférence est stockée **côté serveur par identité propriétaire**, chargée après authentification. Elle est commune aux clients du même propriétaire, mais ne leur accorde pas le droit de capter. Aucun token persistant nouveau dans le navigateur. Un seul bail d’armement et une seule session Live distante au maximum par propriétaire pour la V1. La révision de préférence est monotone : OFF depuis un second client révoque l’armement du premier ; ON et les notifications d’état ne réarment aucun client. Un ancien acquittement ON ne peut pas annuler un OFF plus récent. Le droit propriétaire d’arrêter globalement ne donne pas au second client le droit de lire ou de reprendre le handle, les médias et le fil de l’autre instance ; une reprise nécessite son propre geste et l’acquisition d’un nouveau bail.
@@ -112,39 +118,38 @@ Demander suppression d'écho, réduction de bruit et gain automatique, puis les 
 
 ### 6.1 Configuration proposée
 
-Ces paramètres sont **à coder**, ils n'existent pas encore dans la configuration livrée. Ne pas détourner `--live`, qui signifie déjà l'exécution réelle de Jade.
+Ces paramètres sont désormais codés ; les valeurs ci-dessous intègrent la correction du propriétaire. Ne pas détourner `--live`, qui signifie déjà l'exécution réelle de Jade.
 
 | Paramètre / réglage | Valeur initiale proposée | Règle |
 | --- | --- | --- |
-| `JADE_LIVE_ENABLED` | `false` | Verrou serveur global de déploiement ; doit pouvoir couper toutes les sessions Live. |
+| `JADE_LIVE_ENABLED` | `true` | Live disponible par défaut ; OFF explicite permet de désactiver le moteur. |
 | `JADE_MOBILE_LIVE_ENABLED` | `true` | Autorise seulement le canal mobile lorsque le verrou global est ouvert et les contrôles passent. |
-| `JADE_DISCORD_LIVE_ENABLED` | `false` | Réservé au futur adaptateur ; actuellement `true` doit produire « adaptateur non disponible » au préflight, jamais activer un autre chemin. |
+| `DISCORD_ENABLED` dans `discord_config.py` | `True` | Depuis le 27/11 : interrupteur unique de tout Discord avec sélection Live/classique ; `False` coupe tout Discord. Ancien `JADE_DISCORD_LIVE_ENABLED` ignoré. |
 | `JADE_LIVE_MODEL` | `gpt-live-1.1` | Indépendant de `JADE_TTS_MODEL` et des modèles backend. |
 | `JADE_LIVE_VOICE` | Identifiant API validé ; `brise` comme recours technique documenté | Aube est prioritaire si son accès API est confirmé ; aucun identifiant `aube` ni équivalence avec Brise supposés. Remplacer ensuite par la voix originale validée dans DEV-041. |
-| Préférence `voice_mode` | `classic` | Persistante côté serveur ; la capture ne l'est jamais. |
+| Préférence `voice_mode` | `live` | Persistante côté serveur ; choix classique explicite conservé ; la capture ne l’est jamais. |
 | `JADE_LIVE_HEARTBEAT_SECONDS` / `JADE_LIVE_LEASE_SECONDS` | `2` / `5` | Temps monotone serveur ; contraintes de validation et tests de races. |
 | `JADE_LIVE_IDLE_STANDBY_SECONDS` / `JADE_LIVE_IDLE_CLOSE_SECONDS` | `8` / `30` | Cibles à comparer ; l'activité audio/lecture/tâches conditionne la fermeture d'inactivité. |
 | `JADE_LIVE_CLOSE_TIMEOUT_SECONDS` | `5` | Borne d'attente nominale du terminal ; dépassement = fermeture non confirmée, pas succès. |
 | `JADE_LIVE_MUTED_DRAIN_SECONDS` | `15` | Maximum de fin d'une réponse déjà demandée après mute volontaire visible. |
 | `JADE_LIVE_MAX_SESSION_SECONDS` | `600` | Borne locale dure d'une connexion ; arrêt puis geste requis, pas reconnexion automatique. Aucun équivalent fournisseur court présumé. |
-| `JADE_LIVE_MAX_STARTS_PER_MINUTE` | `3` | Anti-boucle/faux réveils ; au dépassement suspendre et demander un geste, sans contourner le budget. |
-| `JADE_LIVE_DAILY_USD` / `JADE_LIVE_MONTHLY_USD` | `0` / `0` | **0 interdit les dépenses Live**, jamais « illimité ». Des montants privés explicites sont requis pour le pilote réel. |
+| `JADE_LIVE_MAX_STARTS_PER_MINUTE` | `3` | Anti-boucle/faux réveils ; au dépassement suspendre et demander un geste, sans relancer automatiquement. |
 
-Les seuils ci-dessus sont des **valeurs de départ modifiables et mesurables**, pas des résultats de performance. Les budgets réels ne sont pas décidés par ce document. L'interface affiche une indisponibilité compréhensible si leur configuration manque ; aucun budget positif implicite.
+Les bornes techniques ci-dessus sont des **valeurs de départ modifiables et mesurables**, pas des résultats de performance ni des plafonds financiers. Aucun budget mobile n'est requis. L'interface expose les motifs de disponibilité réels sans message de budget local.
 
 ### 6.2 Routes et objets internes
 
 Prévoir dans le gateway existant : `GET /api/live/capabilities`, `GET/POST /api/voice/preferences`, `POST /api/live/arm`, `POST /api/live/sessions`, un canal authentifié `/api/live/control`, `POST /api/live/sessions/close`. Le nom final peut suivre les conventions locales ; le contrat fonctionnel reste celui-ci :
 
 - Toutes les opérations vérifient Tailscale/propriétaire, Bearer, origine et état serveur. Le contrôle WebSocket utilise le mécanisme d'authentification existant, sans secret dans l'URL ; taille, fréquence, débit et nombre de connexions bornés.
-- `/api/live/arm` acquiert atomiquement le bail exclusif, sans session OpenAI ; il doit réussir avant ouverture du micro. Refus d’auth/disponibilité/budget : pas de capture. Le bail est libéré si la permission échoue.
-- Les verrous de fonctionnalité, quota et budget contrôlent **l’ouverture**, jamais la possibilité de fermer une session. Les routes exposées gardent leur authentification ; le superviseur serveur reste habilité à clôturer après révocation, bail expiré ou flag OFF, sans dépendre d’un client encore connecté.
+- `/api/live/arm` acquiert atomiquement le bail exclusif, sans session OpenAI ; il doit réussir avant ouverture du micro. Refus d’auth/disponibilité : pas de capture. Le bail est libéré si la permission échoue.
+- Les verrous de fonctionnalité et de présence contrôlent **l’ouverture**, jamais la possibilité de fermer une session. Les routes exposées gardent leur authentification ; le superviseur serveur reste habilité à clôturer après révocation, bail expiré ou flag OFF, sans dépendre d’un client encore connecté.
 - Limiter explicitement le data channel OpenAI : `session.client.data_channel.allowed_client_events=[]`, commandes via Jade/sideband ; `allowed_server_events` limité aux signaux d’état nécessaires au navigateur (dont démarrage/terminal/erreur). Le chat et les résultats métier sont projetés par Jade. Ne pas laisser la valeur fournisseur allow-all par omission. [S11]
 - La création contient offre SDP, identifiant d'instance cliente et nonce de demande ; le canal mobile et l'identité sont dérivés du serveur. Limite d'offre dédiée, **64 Kio initialement**, sans relever la limite de tous les POST.
-- Réserver budget et place de session avant l'appel externe ; création avec retry automatique désactivé. Le `request_id` local déduplique les demandes concurrentes, sans supposer une idempotence HTTP fournisseur non documentée.
+- Acquérir une place exclusive de session avant l'appel externe ; création avec retry automatique désactivé. Le `request_id` local déduplique les demandes concurrentes, sans supposer une idempotence HTTP fournisseur non documentée.
 - Retourner SDP et handle applicatif, pas de secret durable ni de contexte métier arbitrairement choisi par le client. Enregistrer l'ID fournisseur dès sa réception, même si le mobile a déjà annulé.
 - Le contrôle transporte bail, état, incidents, événements d'affichage et observations de lecture. Un message client ne constitue pas une autorité sur les droits, coûts ou résultats métier ; les événements fournisseurs sont observés côté serveur.
-- Interfacer `LiveSessionManager`, `LiveProvider`, `LiveConversationBridge`, `LiveBudgetLedger` et le contrôleur mobile. Noms proposés : rôles séparés, pas six nouveaux services à déployer.
+- Interfacer `LiveSessionManager`, `LiveProvider`, `LiveConversationBridge`, `LiveUsageLedger` et le contrôleur mobile. Noms proposés : rôles séparés, pas six nouveaux services à déployer.
 
 ### 6.3 Événements fournisseur à ne pas confondre
 
@@ -179,19 +184,15 @@ Le bail client et les générations fournisseur sont rattachés à l’identité
 
 Le watchdog est une tâche indépendante du worker de dialogue, avec I/O non bloquantes, deadlines et mesure de dérive de boucle. Il ne dépend pas d'un callback `beforeunload`, d'une animation ou du service worker. Le téléphone surveille aussi le canal Jade : sa perte coupe le média direct. L'arrêt normal de Jade ferme toutes les sessions avant de terminer ; un redémarrage réconcilie le petit registre privé des sessions non confirmées, sans les reprendre.
 
-Si la création HTTP devient ambiguë avant obtention d'un ID fournisseur, garder une réservation et l'état `opening_unknown` ; aucune nouvelle création automatique. Utiliser seulement une récupération documentée si disponible, sinon diagnostic et rapprochement d'usage. Ne pas affirmer qu'une session sans identifiant a été raccrochée. Tester ce cas au même titre qu'une fermeture sans terminal.
+Si la création HTTP devient ambiguë avant obtention d'un ID fournisseur, garder le suivi technique et l’état `opening_unknown` ; aucune nouvelle création automatique. Utiliser seulement une récupération documentée si disponible, sinon diagnostic et rapprochement d'usage. Ne pas affirmer qu'une session sans identifiant a été raccrochée. Tester ce cas au même titre qu'une fermeture sans terminal.
 
-### Coûts et limites
+### Usage et limites techniques
 
-Au 26/11/2026, les tarifs consultés sont **0,05 USD/min active** et **0,02 USD/min standby WebRTC**, facturés à la seconde ; modèles et outils backend sont séparés. Le silence avant mise en veille et l'attente d'un outil peuvent rester actifs. Une piste muette ne ferme pas l'inférence. [S1, S7, S8]
+Le mobile ne possède **aucun plafond financier quotidien ou mensuel**. Les sessions et les délégations ne dépendent pas d'un montant configuré, de la disponibilité d'un relevé comptable ou de la consommation des autres canaux. Les bornes de présence, d'inactivité, de durée et de fréquence sont des contrôles techniques, sans décision financière.
 
-La documentation décrit, **avec le démarrage WebRTC par défaut**, 15 secondes facturées à l'initialisation puis créditées sur la durée réelle. Ne pas les ajouter une seconde fois à une session active ; ne pas présumer les créations avortées gratuites. Qualifier ce comportement avec la configuration `wake_policy.type=speech` choisie. La réservation initiale couvre conservativement cette exposition tant que sa mesure ne la précise pas. [S7]
+Le suivi privé reste passif : durées cumulées dédupliquées, actif/standby lorsque disponible, tokens backend connus et qualité de couverture. Une estimation ne s'ajoute pas à une consommation confirmée des mêmes unités ; les coûts incomplets ne sont jamais présentés comme une facture exhaustive. Les données historiques sont conservées après mise à jour. Une panne de suivi ne bloque pas le dialogue.
 
-Le ledger Live calcule l’exposition comme **consommation déjà comptabilisée + reste réservé non consommé**. Un usage confirmé remplace l’estimation et réduit sa réservation, sans compter deux fois les mêmes unités. Les appels backend distincts s’ajoutent à la voix. Exemple : réserve 0,05 USD, consommation finale 0,03 USD et libération 0,02 USD donnent 0,03 USD consommé, pas 0,08 USD. Il persiste après redémarrage, utilise des montants décimaux, déduplique les snapshots et expose la différence **estimé / confirmé fournisseur / agrégat facturé**. Le rapprochement `BillingCosts` reste informatif et n'exige pas de nouvelle clé admin pour fonctionner.
-
-Vérifier les plafonds avant création, avant délégation et pendant la session. Garder une marge de fermeture ; à l'atteinte de la borne arrêter capture/lecture et clôturer, pas seulement muter. Réserver les coûts maximums de délégation selon les limites des modèles/outils configurés ; lorsqu'un coût ne peut pas être borné, bloquer cette délégation ou la soumettre au budget explicite concerné. Ne pas annoncer de plafond exact garanti face à une panne fournisseur.
-
-Les journées/mois de budget sont en **Europe/Paris**, avec tests de minuit, changement de mois et heure d'hiver/été ; l'agrégat fournisseur UTC reste identifié comme tel. Aucun appel IA pour rafraîchir la jauge, aucun crédit promotionnel présumé durable ni réduction supposée sur le coût brut.
+Le total toutes API confondues, tous canaux inclus, sera exploité **uniquement par DEV-052 pour choisir le moteur Discord**, sur le mois civil Europe/Paris : Live sous 50 EUR avec couverture suffisante, sous 40 EUR lorsque la collecte est incomplète ou insuffisamment fraîche. Ni limite quotidienne, ni plafond mobile. Aucun appel LLM pour rafraîchir une jauge.
 
 ## 8. Fichiers et responsabilités prévues
 
@@ -204,7 +205,7 @@ Les journées/mois de budget sont en **Europe/Paris**, avec tests de minuit, cha
 | Conversation commune | `orchestrator.py`, `dialogue.py`, `messages.py`, `responses_chat.py`, nouveau `live_bridge.py` | Façade de contexte/conclusion, délégations sans TTS redondant, annulation et arbitrage. |
 | Mémoire et outils | `memory_service.py`, `memory_store.py`, `memory_actions.py`, `cross_channel.py`, `web_search.py`, `documents.py`, `reminders.py` | Réutilisation des services, journal et idempotence, résultats tardifs cohérents ; migrations seulement si nécessaires, sur copie. |
 | Chat et avatar | `app.js`, `avatar.js`, `turn_logging.py`, `turn_metrics.py` | Transcriptions progressives, états interrompu/inconnu, vraie lecture, lip-sync privé et événements préparant DEV-037. |
-| Coûts | `cost_guard.py`, nouveau `live_budget.py`, intégration `billing.py` | Réservations Live persistantes, coût séparé, coupe-circuit serveur et mesures. |
+| Usage | `live_usage.py`, métriques existantes ; future intégration `billing.py` dans DEV-052 | Observation passive, coût séparé et qualité de couverture ; aucun coupe-circuit financier mobile. |
 | Régression | tests gateway/stream/duplex/plein écran/avatar/rappels + nouveaux tests Live | Doubles fournisseur, horloge contrôlée, courses et scénarios discriminants ; recette Redmi distincte. |
 
 Les noms de modules nouveaux sont des recommandations d'implantation, pas des fichiers déjà livrés. Ne pas transformer `mobile_gateway.py` ou `app.js` en gestionnaire monolithique de toute la logique Live. Le SDK actuel est épinglé à `openai 3.42.1` : vérifier son support réel des ressources Live avant toute mise à jour ciblée, sans migration globale gratuite du client OpenAI.
@@ -214,13 +215,13 @@ Les noms de modules nouveaux sont des recommandations d'implantation, pas des fi
 | Étape | Cartes | Résultat concret avant la suite |
 | --- | --- | --- |
 | 1 — Socle contractuel | **DEV-046** | Schémas/SDK vérifiés, configuration par canal, faux fournisseur, création/sideband/terminal modélisés ; registre et contrats d'erreur disponibles. |
-| 2 — Contrôle avant exposition | **DEV-048 + DEV-051** | Baux, stop, fermeture incertaine, reprise serveur, budgets persistants et aucune création sans admission. Travaux parallèles possibles sur interfaces convenues. |
+| 2 — Contrôle avant exposition | **DEV-048 + DEV-051** | Baux, stop, fermeture incertaine, reprise serveur, usage passif et aucune création sans bail authentifié. Travaux parallèles possibles sur interfaces convenues. |
 | 3 — Conversation et audio | **DEV-049 + DEV-047** | Pont mémoire/outils/arbitrage et capture WebRTC/pré-roll. Prototypes sur doubles possibles dès étape 1 ; activation réelle seulement après étape 2. |
 | 4 — Restitution et interface | **DEV-050 + DEV-040** | Chat, bouche, annulations, Profil ON/OFF et bascule classique/Live intégrés. Maquette logique du Profil possible plus tôt, fonctionnalité réelle verrouillée jusqu'aux dépendances. |
 | Voix en parallèle | **DEV-041** | Prompt préparé dès le début ; échantillons et choix lorsque le chemin audio est sûr. Aube est souhaitée pour le prototype si accessible par API ; sinon Brise permet les essais techniques explicites. La voix originale reste à sélectionner. |
 | 5 — Pilote et livraison | Critères des huit US, **REC-042** pour le classique | Preuves hors ligne puis Redmi/fournisseur ; passage DEV → REC de chaque fonction livrée encore à accepter, sans doublon actif. |
 
-**Dépendances et acceptation :** une dépendance doit fournir une interface utilisable et les mécanismes testés nécessaires à l’intégration, sans exiger prématurément son statut Done. Par exemple, DEV-051 fournit son ledger et ses tests hors ligne à DEV-047 ; son benchmark final dépend ensuite du client et de la restitution intégrés. Ce retour de validation ne crée ni cycle d’exécution ni faux Done. Les cartes demeurent ouvertes jusqu’à leurs preuves finales.
+**Dépendances et acceptation :** une dépendance doit fournir une interface utilisable et les mécanismes testés nécessaires à l’intégration, sans exiger prématurément son statut Done. DEV-048 fournit le bail et les arrêts requis par DEV-047. DEV-051 fournit uniquement l'observabilité passive ; sa disponibilité ne conditionne jamais l'admission mobile. Son benchmark final dépend du client et de la restitution intégrés. Ce retour de validation ne crée ni cycle d’exécution ni faux Done. Les cartes demeurent ouvertes jusqu’à leurs preuves finales.
 
 Ordre conseillé des commits : contrats/configuration → supervision et ledger → pont/backend et client audio → restitution → parcours Profil complet → voix retenue. Garder au plus trois travaux réellement en cours, chaque lot avec vérifications pertinentes et documents de comportement mis à jour. Aucun calendrier fictif ni estimation de jours sans connaissance du poste.
 
@@ -228,14 +229,14 @@ Les premières preuves à collecter sont les risques qui peuvent invalider le ch
 
 ## 10. Matrice de recette transverse
 
-Les preuves ci-dessous sont **à produire**, pas exécutées pendant ce cadrage. Une recette simulée ne valide ni l'acoustique ni la facturation réelle. Les appels payants et les budgets du pilote seront traités au lancement effectif, sans demander de clé pour écrire cette backlog.
+Les preuves ci-dessous sont **à produire**, pas exécutées pendant ce cadrage. Une recette simulée ne valide ni l'acoustique ni la facturation réelle. Le pilote utilise le mode mobile sans plafond financier ; les observations matérielles et fournisseur restent à consigner.
 
 | Scénario | Preuve attendue | US porteuse |
 | --- | --- | --- |
 | Profil ON/OFF, lancement avec Live mémorisé | Zéro micro et zéro création sans geste micro ; états et labels cohérents | DEV-040 |
 | Classique déjà livré | Trames avant relâchement, un seul tour, plafond classique conservé, aucun fournisseur Live | REC-042, DEV-040 |
 | Premier mot, silence 5/30 s puis plusieurs minutes | Début intact, aucune duplication, reprise mesurée ; zéro consommation Live pendant période effectivement déconnectée | DEV-047 |
-| 30–60 min sans interlocuteur, bruits/écho | Pas de boucle distante ; faux réveils et coût bornés, micro local correctement signalé | DEV-047, DEV-051 |
+| 30–60 min sans interlocuteur, bruits/écho | Pas de boucle distante ; faux réveils bornés et coût observé, micro local correctement signalé | DEV-047, DEV-051 |
 | Interruption, parole simultanée, mute pendant réponse | Capture stoppée au mute, fin bornée, transcript interrompu, pas de double son | DEV-047, DEV-050 |
 | Kill pendant opening/active/standby/outil | Fermeture observée côté fournisseur sans callback client, délais et coût résiduel ; aucune réouverture | DEV-048 |
 | Background, lock, permission refusée/révoquée/tardive | Tracks/timers/lecture libérés ; aucun réarmement au retour | DEV-047, DEV-048 |
@@ -243,14 +244,14 @@ Les preuves ci-dessous sont **à produire**, pas exécutées pendant ce cadrage.
 | Backend tué/redémarré, absence de terminal | Mobile coupe, registre réconcilié, état non confirmé visible, pas de deuxième session | DEV-048 |
 | Deux clients en silence puis parole simultanée | Un seul armement avant capture ; les générations fournisseur restent distinctes du bail client | DEV-046, DEV-047, DEV-048 |
 | OFF depuis autre client, vieux ON/heartbeat, ouverture tardive | Révocation propriétaire propagée, révision monotone et aucun réarmement | DEV-040, DEV-048 |
-| Flag OFF, budget épuisé ou auth révoquée pendant appel | Ces refus d’ouverture ne bloquent jamais la clôture interne et sa réconciliation | DEV-046, DEV-048 |
+| Flag OFF ou auth révoquée pendant appel | Ces refus d’ouverture ne bloquent jamais la clôture interne et sa réconciliation | DEV-046, DEV-048 |
 | Commande interdite depuis data channel frontend | Rejet sans mutation métier ni appel payant supplémentaire | DEV-046 |
 | Live → classique → Live et crash après effet métier | Cache et DB cohérents, résultat d’action réconcilié sans répétition | DEV-049 |
 | Rejeu sideband / délégation avant dernier fragment | Une seule action et un contexte correct, jamais une demande vide ou précédente | DEV-049, DEV-050 |
 | Mémoire L2/L3, recherche, rappel, document | Droits/règles actuels, vraie action et livraison privée ; action accomplie non répétée après reconnect | DEV-049 |
 | Texte, nouveau fil, changement r20/r21, notifications | Aucun résultat tardif dans le mauvais fil ; reprise micro explicite ; rappels conservés | DEV-040, DEV-050 |
-| Usage 12 → 15 → 15 ; création avortée ; budget concurrent | Total 15, réservation non perdue, dépassement prévenu, pas d'initialisation comptée deux fois | DEV-051 |
-| Coût proche du plafond, minuit/mois/redémarrage | Arrêt serveur avant exposition non réservée ; compteurs durables et dates correctes | DEV-051 |
+| Usage 12 → 15 → 15 ; création avortée ; observations concurrentes | Total 15, données conservées, pas d’initialisation comptée deux fois ; aucune admission financière | DEV-051 |
+| Anciennes variables à zéro, usage élevé ou suivi en panne | Mobile toujours utilisable, outils compris ; agrégats passifs durables et aucune limite quotidienne | DEV-051 |
 | Même corpus français classique/Live | p50/p95 première réponse utile réellement entendue, latence froide/chaude, coût voix+backend et qualité notés séparément | DEV-051, DEV-041 |
 | Wi-Fi/mobile, haut-parleur/écouteurs/Bluetooth | Écho, bruit, appel entrant, latence et coupures observés sur Redmi | DEV-047 |
 | 20–30 bascules, avatar actif, plein écran | Une capture/lecture, retour des ressources à leur base, absence de fuite mémoire et CPU/batterie évalués | DEV-040, DEV-050 |
@@ -259,7 +260,7 @@ Les preuves ci-dessous sont **à produire**, pas exécutées pendant ce cadrage.
 
 ### Critères de sortie du pilote
 
-- Tous les scénarios bloquants d'arrêt, droits, budget, duplication et capture froide sont prouvés. Le kill réel Android est testé pendant écoute, réponse, standby et création.
+- Tous les scénarios bloquants d'arrêt, droits, absence de plafond mobile, duplication et capture froide sont prouvés. Le kill réel Android est testé pendant écoute, réponse, standby et création.
 - L'écoute française confirme le gain de fluidité et l'absence de régression majeure ; les mesures A/B sont publiées sans audio/transcription privés. Une interjection d'attente n'est pas comptée comme première réponse utile.
 - La fermeture fournisseur est confirmée, et les essais distinguent consommation après détection et consommation après terminal. Aucune affirmation « zéro coût instantané » invérifiable.
 - Régression classique, rappels, mémoire, documents, canaux existants et modèle mobile couverte selon les fonctions touchées. Les recettes PC micro/Twitch/OBS suspendues ne sont pas réactivées par ce lot ; leurs contrôles hors ligne restent possibles.
@@ -282,4 +283,4 @@ Sources officielles consultées le **26/11/2026** ; revérifier schémas, tarifs
 - **S11** — [Création de session et permissions frontend](https://developers.openai.com/api/reference/resources/live/methods/create).
 - **S12** — [Voix de ChatGPT, dont Aube et Rivage](https://help.openai.com/fr-fr/articles/20001274-chatgpt-voice) ; catalogue produit distinct du catalogue API, aucune équivalence supposée.
 
-**Prochaine action de développement : DEV-046**, avec interfaces convenues pour DEV-048/051. Aucune question produit bloquante n'est laissée ouverte pour commencer le code ; disponibilité du compte, budgets privés du pilote, faisabilité acoustique et choix de voix final restent des contrôles d'exécution explicitement assignés.
+**Suite actuelle :** correctif DEV-054, puis recettes REC-044 à REC-050. Le code des sept US initiales est intégré ; la disponibilité du compte, la faisabilité acoustique et le choix de voix final restent des contrôles d’exécution assignés. Aucun budget privé mobile à configurer.

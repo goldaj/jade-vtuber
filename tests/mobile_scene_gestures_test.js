@@ -85,7 +85,9 @@ function client(mode = "css") {
   document.hidden = false; document.fullscreenElement = null;
   window.location = {hash:""}; window.crypto = webcrypto;
   let resizeCount = 0, requestCount = 0, exitCount = 0, finishRequest;
-  window.JadeAvatar = {resize(){resizeCount++;}};
+  window.JadeAvatar = {
+    resize(){resizeCount++;}, setMouth(){}, setSpeaking(){}, resetIntent(){}
+  };
   const documentEvent = type => (document.listeners[type] || []).forEach(({listener}) => listener({type}));
   if (mode !== "css") shell.requestFullscreen = async () => {
     requestCount++;
@@ -146,13 +148,11 @@ function client(mode = "css") {
     assert.equal(a.mic.disabled, true);
     assert.equal(a.mic.classList.contains("recording"), true);
     assert.equal(a.button.attributes["aria-pressed"], "true");
-    assert.equal(a.shell.properties["--room-immersive-width"], "480px");
     await a.emit(a.picture, "dblclick", {timeStamp:1300});
     assert.equal(a.fullscreen, false, `${view}: mouse returns to the previous view`);
     assert.equal(a.shell.dataset.view, view);
     assert.equal(a.mic.parentElement, view === "home" ? a.dock : a.form);
     assert.equal(a.button.attributes["aria-pressed"], "false");
-    assert.equal(a.shell.properties["--room-immersive-width"], undefined);
 
     const b = client(); await b.view(view);
     await b.tap(10); assert.equal(b.fullscreen, false, "one tap has no effect");

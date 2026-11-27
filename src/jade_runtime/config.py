@@ -6,6 +6,8 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from src.utility.private_config import environ
+from .live_config import LiveConfig
+from .discord_config import is_discord_enabled
 
 
 def _default_memory_db_path() -> str:
@@ -72,8 +74,9 @@ class Settings:
     twitch_send: bool = False
     twitch_auto_refresh: bool = False
     discord_token: str = ""
-    # Legacy switches remain readable for old callers but are ignored by CLI.
-    discord_enabled: bool = False
+    # A single code switch controls every Discord connection and its Live policy.
+    discord_enabled: bool = field(default_factory=is_discord_enabled)
+    # Other legacy switches remain readable for old callers but are ignored by CLI.
     discord_send: bool = False
     discord_voice_enabled: bool = False
     # Legacy compatibility fields. The active open Discord bridge ignores them.
@@ -132,11 +135,13 @@ class Settings:
         Path(_default_memory_db_path()).with_name("jade-documents")))
     document_access_mode: str = "all"
     document_allowed_discord_ids: tuple[int, ...] = field(default=(), repr=False)
+    live: LiveConfig = field(default_factory=LiveConfig)
 
     @classmethod
     def load(cls) -> "Settings":
         """The project-private dotenv is preferred over a tracked file."""
         cfg = cls(
+            live=LiveConfig.from_env(environ),
             model=str(environ("JADE_LLM_MODEL", "gpt-6-luna")),
             reasoning_effort=str(environ("JADE_LLM_REASONING_EFFORT", "low")).lower(),
             max_completion_tokens=int(environ("JADE_MAX_COMPLETION_TOKENS", "2048")),
@@ -163,8 +168,8 @@ class Settings:
             twitch_send=_enabled(str(environ("JADE_TWITCH_SEND", "0")).lower()),
             twitch_auto_refresh=_enabled(str(environ("JADE_TWITCH_AUTO_REFRESH", "0")).lower()),
             discord_token=str(environ("DISCORD_TOKEN", "")),
-            # Obsolete Discord activation/broadcast/list/confirmation values are not
-            # loaded: existing private files are preserved but have no effect.
+            # The code switch is authoritative; historical private activation,
+            # broadcast/list/confirmation values remain ignored.
             cross_channel_discord_targets=_voice_users(str(environ("JADE_CROSS_CHANNEL_DISCORD_TARGETS", ""))),
             discord_voice_channel=int(environ("DISCORD_VOICE_CHANNEL", "0") or 0),
             discord_voice_auto_rate=float(environ("JADE_DISCORD_VOICE_AUTO_RATE", "0.20")),
@@ -222,6 +227,9 @@ class Settings:
         return cfg
 
     def validate(self):
+        if type(self.discord_enabled) is not bool:
+            raise ValueError("Discord enable switch must be boolean")
+        self.live.validate()
         if (self.reasoning_effort not in ("none", "low", "medium", "high", "xhigh", "max")
                 or not 128 <= self.max_completion_tokens <= 8192):
             raise ValueError("invalid LLM effort or completion budget")

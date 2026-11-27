@@ -45,7 +45,7 @@
   const counts = Object.create(null);
   const R21_MOTIONS = Object.freeze({
     neutral:"Neutral", playful:"Playful", excited:"Excited", curious:"Curious",
-    tender:"Tender", reassuring:"Reassuring", serious:"Serious",
+    tender:"Tender", reassuring:"Reassuring", serious:"Serious", sad:"Sad", angry:"Angry",
   });
   // Held poses are independent of the voice envelope and automatic blink.
   const R21_FACES = Object.freeze({
@@ -56,6 +56,8 @@
     tender:      {mouth:.23,  mouthAtFullOpen:.06, browL:-.06, browR:-.10, caption:"Douceur"},
     reassuring:  {mouth:.34,  mouthAtFullOpen:.16, browL:.09,  browR:.07,  caption:"Présence apaisante"},
     serious:     {mouth:-.74, browL:-.12, browR:-.12, caption:"Concentration tranquille"},
+    sad:         {mouth:-1,   mouthAtFullOpen:-.82, browL:.20, browR:.16, caption:"Peine retenue"},
+    angry:       {mouth:-.90, mouthAtFullOpen:-.66, browL:-.40, browR:-.36, caption:"Indignation"},
   });
   // Each row contains a parameter and its A/B offsets. A single offset is shared.
   // The brow accent in Playful A is already in its motion.
@@ -128,6 +130,25 @@
       posture: [["ParamBodyAngleX", .7, -.7]],
       aperture: [[.98, .98], [.98, .98]],
     },
+    sad: {
+      face: [
+        ["ParamEyeBallX", -.07, .09],
+        ["ParamEyeBallY", -.24, -.19],
+        ["ParamBrowLAngle", .50, .44],
+        ["ParamBrowRAngle", .44, .50],
+      ],
+      posture: [["ParamBodyAngleZ", -1.2, 1.2]],
+      aperture: [[.74, .78], [.78, .72]],
+    },
+    angry: {
+      face: [
+        ["ParamEyeBallX", -.04, .04],
+        ["ParamBrowLAngle", -.58, -.52],
+        ["ParamBrowRAngle", -.52, -.58],
+      ],
+      posture: [["ParamBodyAngleX", .9, -.9]],
+      aperture: [[.82, .87], [.88, .81]],
+    },
   });
   // Signed lifts of the left and right ears, in seconds from the first expression.
   // Each gesture settles into a held pose until the reply fades.
@@ -145,6 +166,12 @@
     tender: {keys:[[.59,-.16,-.19], [1.20,-.26,-.23], [1.91,-.16,-.14]]},
     reassuring: {keys:[[.31,-.07,-.08], [.95,.24,.22], [1.52,.15,.14], [2.10,.07,.07]]},
     serious: {keys:[[.30,-.22,-.24], [.63,-.37,-.34], [1.01,-.17,-.17], [1.53,-.13,-.13]]},
+    sad: {mirror:true, keys:[
+      [.65,-.25,-.21], [1.35,-.47,-.42], [2.10,-.38,-.34], [2.80,-.30,-.27],
+    ]},
+    angry: {mirror:true, keys:[
+      [.18,-.50,-.44], [.43,-.28,-.34], [.72,-.54,-.48], [1.25,-.32,-.28], [1.80,-.25,-.23],
+    ]},
   });
   const R21_EAR_BREATH = [
     {id:"ParamJadeEarFollowL", side:0, delayMs:130, gain:.34},
@@ -611,6 +638,10 @@
     setSpeaking(value) {
       speaking = Boolean(value);
       if (activeProfile?.id !== "next" && !speaking && pendingIntent !== "neutral") returnToIdle();
+      if (speaking && r21Reply?.fadeAt === null && resetTimer !== null) {
+        clearTimeout(resetTimer);
+        resetTimer = null;
+      }
     },
     startReplyMotion, finishReply,
     resetIntent() {
@@ -872,9 +903,9 @@
     const naturalWidth = Math.max(model.width / (model.scale.x || 1), 1);
     const naturalHeight = Math.max(model.height / (model.scale.y || 1), 1);
     const r21 = activeProfile?.id === "next";
-    const standingBedroom = r21 && room?.dataset.room === "bedroom";
+    const standingPortrait = r21 && ["bedroom", "kitchen", "living"].includes(room?.dataset.room);
     // The lifted standing avatar can render beyond its camera frame down to the room edge.
-    const cameraViewportHeight = standingBedroom ? target.parentElement?.clientHeight || height : height;
+    const cameraViewportHeight = standingPortrait ? target.parentElement?.clientHeight || height : height;
     const cameraWidth = r21 ? CLASSIC_CAMERA.width : naturalWidth;
     const cameraHeight = r21 ? CLASSIC_CAMERA.height : naturalHeight;
     const scale = Math.min((width * .95) / cameraWidth, (cameraViewportHeight * 1.32) / cameraHeight);
@@ -896,7 +927,7 @@
         sprite.height = height * layout.height;
       }
     }
-    if (seated || standingBedroom) {
+    if (seated || standingPortrait) {
       const headScale = 1.30;
       placeModel(Math.max(.05, scale * headScale), width * .555, cameraViewportHeight * .584,
         naturalWidth, naturalHeight);

@@ -26,6 +26,7 @@ Cet index est créé le 2 novembre 2026, avant les modifications documentaires d
 | [Journalisation du 15 novembre](2026-11-15-conversation-logs.md) | Demande de provenance, contenu, intention et modalités de réponse dans les logs | Verbatim utilisateur et résumé assistant ; aucune conversation privée journalisée dans Git |
 | [Plan professionnel du modèle du 13 novembre](2026-11-13-modele-plan-pro.md) | Nouvelle direction, recherche et feuille de route modèle et utilisation | Résumé des échanges accessibles ; vidéo non transcrite intégralement |
 | [Reprise develop sur Windows du 20 novembre](2026-11-20-reprise-develop.md) | Extraits de la demande de lancement et des priorités Discord, mobile et backlog | Extraits visibles, heures individuelles indisponibles ; synthèse assistant étiquetée |
+| [Évolution de la voix de Jade](2026-11-27-evolution-voix-jade.md) | Auditions, choix de Friponne, validation du débit et comparaison entre mobile et Discord Live | Extraits du chat courant, heures individuelles non fournies. Les enregistrements vocaux et identifiants de service sont exclus. |
 | Documents supplémentaires de `develop` | Audits du 30 octobre et pistes migrées du 1er novembre : à conserver lors de l’intégration | Ces documents sont encore sur la branche cible ; leur provenance est décrite dans le dossier de migration |
 
 ## Relais technique en cours — voix et intentions
@@ -47,6 +48,25 @@ Les décisions du propriétaire et les réponses de cadrage accessibles figurent
 Les demandes suivantes de zoom et déplacement tactile, service indépendant sur VPS, application Android dédiée et réaction aux secousses figurent dans la [passation du lot mobile](../../operations/handoffs/2026-11-26-codex-backlog-mobile.md#échanges-accessibles), avec rôles distincts, extraits et synthèses.
 
 L’autorisation de développer le push-to-talk en maintien et les secousses est consignée dans la [passation mobile du 26 novembre](../../operations/handoffs/2026-11-26-codex-mobile-ptt-shake.md#échanges-accessibles).
+
+## Voix et interface du Live mobile le 27 novembre 2026
+
+Le signalement et les décisions de réalisation sont consignés avec leurs rôles dans la [passation Live mobile](../../operations/handoffs/2026-11-27-codex-mobile-live-playback.md#échanges-accessibles).
+
+La [suite du 27 novembre](../../operations/handoffs/2026-11-27-codex-mobile-live-playback.md#mise-à-jour-du-micro-et-de-la-pastille) consigne la confirmation du correctif puis la nouvelle demande de commande et d’indicateurs.
+
+La [passation Discord Live](../../operations/handoffs/2026-11-27-codex-discord-live-control.md#échanges-accessibles) consigne le retrait demandé du salut, le suivi Discord dans Config, le signalement de couleur mobile et l’autorisation de publier.
+
+La [passation de reprise du Live mobile](../../operations/handoffs/2026-11-27-codex-reprise-fermeture-live-mobile.md#échanges-accessibles) consigne le signalement du micro inactif et le diagnostic de fermeture non confirmée.
+
+La [passation Pétillante et intentions](../../operations/handoffs/2026-11-27-codex-petillante-intentions-live.md#échanges-accessibles) consigne la confirmation du fonctionnement du Live, puis les demandes sur la voix, les intonations, le mouvement et le débit.
+
+La [passation de la pastille Live](../../operations/handoffs/2026-11-27-codex-pastille-live.md#échanges-accessibles) consigne le signalement suivant sur le bleu qui persistait après la coupure du micro et la décision d’affichage.
+
+## Synchronisation du clone de développement le 26 novembre 2026
+
+- **Propriétaire** (extrait de la conversation) « Je veux que tu push le local, mais attention il va y avoir du merge à faire ».
+- **Assistant** (synthèse) Conservation des sources du visage r21 et intégration des changements Live mobile sur `develop`. L’index réunit les deux passations. [Travail local sur le visage](../../operations/handoffs/2026-11-26-codex-volume-visage-r21.md) · [Live mobile](../../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md)
 
 ## Chambre portrait dans la PWA le 26 novembre 2026
 
