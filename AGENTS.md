@@ -2,6 +2,8 @@
 
 ## Avant toute modification du modèle 2D de Jade
 
+Le r21 est le modèle de développement et de recette. Il doit fonctionner dans une installation où le r20 est absent. Le r20 est conservé comme archive en vue de son retrait ultérieur. Pour les intentions Triste et Colère, suivre la [passation DEV-053](docs/operations/handoffs/2026-11-27-astra-dev053-r21.md).
+
 Pour chaque demande de modification du modèle 2D, quel que soit le travail prévu (dessin, découpage, texture, rig, animation ou physique), étudier avant la première retouche un tutoriel qui montre la technique concernée. Si le propriétaire a fourni un tutoriel pertinent, commencer par celui-ci. S’il ne demande pas de tutoriel, lui rappeler cette consigne et en chercher et étudier un de sa propre initiative. Indiquer brièvement le lien et le geste à appliquer à Jade, puis poursuivre le travail.
 
 ## Point d'entrée et gouvernance documentaire

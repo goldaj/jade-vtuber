@@ -31,6 +31,8 @@ Cet index est créé le 2 novembre 2026, avant les modifications documentaires d
 
 ## Relais technique en cours — voix et intentions
 
+La [passation DEV-053 pour Sol](../../operations/handoffs/2026-11-27-astra-dev053-r21.md#décisions-du-chat) conserve les décisions successives sur les gestes réutilisés, le r21 autonome et le futur retrait du r20.
+
 Pour le chantier du **13 novembre 2026**, le [relais opérationnel Codex](../gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md) récapitule les décisions d'Étincelle, les fichiers modifiés, le contrat de métadonnées d'intention, les tests, leurs limites et les étapes de recette réelle. Lire également la [spécification des voix](../../operations/reference/VOICE-PROFILES-20261113.md) et l'[audit PO/architecture/QA](../gpt6-jade/REVIEW-INTENT-ETINCELLE-20261113.md).
 
 Il s'agit de documents de passation **synthétiques**, pas d'une transcription verbatim des échanges ; les notes précédentes restent historiques. `develop` est la branche concernée ; `main` n'a pas reçu ce lot.

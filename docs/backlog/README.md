@@ -10,6 +10,8 @@
 
 ## REPRISE PRIORITAIRE — validations du 22 novembre 2026
 
+**DEV-053, arbitrage du 27/11.** Sol peut commencer par le r21 autonome, les deux nouvelles intentions vocales et quatre variantes utilisant les gestes livrés. ART-014 et ART-015 portent la finition artistique ultérieure. [Ordre de réalisation et référence de non-régression](../operations/handoffs/2026-11-27-astra-dev053-r21.md)
+
 **Priorité P0 du 27 novembre 2026 — expressions faciales :** [ART-015](04-PRODUCTION-2D.md#art-015--refonte-des-visages-expressifs-manga-pour-chaque-intention-p0) est placée en tête des P0 sur demande du propriétaire : un véritable visage expressif manga par intention, avec des bascules extrêmement visibles façon trigger VTube Studio et aucune rupture d'identité graphique. Toutes les intentions sont concernées, y compris les visages Triste/Colère prévus avec ART-014 et DEV-053. Le statut et les critères restent dans la vue ART.
 
 **Reprise du Live mobile le 27/11 :** le lot `3d2f3ea` était publié et sa CI Linux/Windows verte. L’audit retrouve un défaut de format des permissions envoyées à OpenAI et un message de fin de réponse périmé ; correction suivie dans **DEV-055**. [Diagnostic et preuves](../operations/handoffs/2026-11-27-chatgpt-live-resume.md). REC-044 à REC-050 restent les recettes mobiles. La demande suivante du propriétaire engage immédiatement Discord, suivi désormais en REC-051.
