@@ -84,6 +84,7 @@
           document.body.insertBefore(fragment.content, modal);
         }
         await Promise.all([loadStyle("/assets/styles.css"), loadStyle("/assets/jade-theme.css")]);
+        await loadScript("/assets/preferences.js");
         await loadScript("/assets/app.js");
         if (!window.JadeMobileApp?.login) throw new Error("Le salon n'a pas pu démarrer.");
         coreReady = true;
@@ -121,12 +122,15 @@
           /* Chat remains usable without the visual/voice enhancement. */
           if(url==="/assets/portrait-bedroom-motion.js"){
             const status=document.getElementById("portrait-motion-status");
-            if(status)status.textContent="Module des animations indisponible.";
+            if(status){status.textContent="Module des animations indisponible.";status.hidden=false;}
             console.warn("Portrait bedroom animation module unavailable:",error);
           }
           if (url === "/assets/avatar-shake.js") {
             const status = document.getElementById("avatar-shake-status");
-            if (status) status.textContent = "Le réglage des secousses n’a pas chargé. Rouvre l’application.";
+            if (status) {
+              status.textContent = "Le réglage des secousses n’a pas chargé. Rouvre l’application.";
+              status.hidden = false;
+            }
           }
         }
       }

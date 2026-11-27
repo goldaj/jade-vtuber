@@ -6,6 +6,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 const web = path.join(__dirname, "../src/jade_runtime/mobile_web");
 const source = fs.readFileSync(path.join(web, "avatar-models.js"), "utf8");
+const preferencesSource = fs.readFileSync(path.join(web, "preferences.js"), "utf8");
 
 function catalogue(nextAvailable = false) {
   return {version:1, defaultId:nextAvailable ? "next" : "classic", models:[
@@ -24,7 +25,7 @@ class Element {
   async emit(name) { for (const listener of this.listeners[name] || []) await listener({type:name, target:this}); }
 }
 
-function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
+function client({data = catalogue(), transport = "ok", withUi = true, storage = new Map()} = {}) {
   const selector = new Element(), status = new Element(), room = new Element();
   const document = {
     getElementById(id) { return withUi ? {"avatar-model-selector":selector, "avatar-model-status":status}[id] : null; },
@@ -33,6 +34,7 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
   const timers = new Map(), requests = [], selections = [], lifecycle = [];
   let nextTimer = 0, resolveFetch;
   const window = {
+    localStorage:{getItem:key => storage.get(key) ?? null, setItem:(key, value) => storage.set(key, value)},
     JadeConversation:{stopForModelChange() {
       lifecycle.push("stop");
       return () => lifecycle.push("resume");
@@ -54,7 +56,9 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
       return data;
     }};
   };
-  vm.runInNewContext(source, {window, document, fetch, AbortController, console}, {filename:"avatar-models.js"});
+  const context = vm.createContext({window, document, fetch, AbortController, console});
+  vm.runInContext(preferencesSource, context, {filename:"preferences.js"});
+  vm.runInContext(source, context, {filename:"avatar-models.js"});
   function renderer(state = {status:"ready", modelId:"classic", requestedId:"classic", message:""}, select) {
     let currentState = state;
     const avatar = {get state(){return currentState;}, async selectModel(id){
@@ -66,7 +70,7 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
     window.JadeAvatar = avatar;
     return {avatar, update};
   }
-  return {window, selector, status, room, timers, requests, selections, lifecycle, renderer,
+  return {window, selector, status, room, timers, requests, selections, lifecycle, renderer, storage,
     ready:window.JadeModelCatalog.ready,
     completeFetch(){resolveFetch();},
     async change(id){selector.value = id; await selector.emit("change");}
@@ -84,7 +88,8 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
   assert.equal(waiting.selector.disabled, false);
   assert.equal(waiting.selector.value, "classic");
   assert.equal(waiting.selector.children[1].textContent, "Jade actuelle (r21) — indisponible");
-  assert.match(waiting.status.textContent, /classique est utilisé/);
+  assert.equal(waiting.status.textContent, "");
+  assert.equal(waiting.status.hidden, true, "successful settings do not add explanatory paragraphs");
   await waiting.change("next");
   assert.equal(waiting.selections.length, 0, "unavailable model never reaches the renderer");
   assert.equal(waiting.selector.value, "classic");
@@ -95,7 +100,7 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
   assert.equal(waiting.selections.length, 0, "selecting the already displayed model does not reload it");
   await existing.update({status:"loading", modelId:"classic", requestedId:"classic", message:"Chargement…"});
   assert.equal(waiting.selector.disabled, true);
-  assert.equal(waiting.status.textContent, "Chargement…");
+  assert.equal(waiting.status.textContent, "");
   await waiting.change("classic");
   assert.equal(waiting.selections.length, 0, "a forced change during loading is ignored");
 
@@ -122,7 +127,9 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
   finishSelection(); await change;
   assert.equal(available.selector.disabled, false);
   assert.equal(available.selector.value, "next");
-  assert.equal(available.status.textContent, "Nouveau modèle affiché.");
+  assert.equal(available.status.textContent, "");
+  assert.equal(available.status.hidden, true);
+  assert.equal(available.window.JadePreferences.get("avatarModel"), "next");
   assert.deepEqual(available.lifecycle, ["stop", "select", "resume"]);
 
   const rollback = client({data:catalogue(true)}); await rollback.ready;
@@ -136,6 +143,7 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
   assert.equal(rollback.selector.disabled, false, "failure leaves the control available for another attempt");
   assert.equal(rollback.status.textContent, "Chargement impossible. Le modèle actuel reste affiché.");
   assert.deepEqual(rollback.lifecycle, ["stop", "select", "resume"]);
+  assert.equal(rollback.window.JadePreferences.get("avatarModel"), undefined, "a failed model switch is not saved");
 
   const thrown = client({data:catalogue(true)}); await thrown.ready;
   thrown.renderer({status:"ready", modelId:"classic", requestedId:"classic", message:"Modèle actuel affiché."},
@@ -150,6 +158,24 @@ function client({data = catalogue(), transport = "ok", withUi = true} = {}) {
   await dishonest.room.emit("jade-avatar-state"); await dishonest.change("next");
   assert.equal(dishonest.selector.value, "classic", "a fulfilled promise alone is not evidence of a loaded model");
   assert.match(dishonest.status.textContent, /n’a pas pu être chargé/);
+  assert.equal(dishonest.window.JadePreferences.get("avatarModel"), undefined);
+
+  const stored = new Map();
+  const first = client({data:catalogue(true), storage:stored}); await first.ready;
+  first.renderer({status:"ready",modelId:"next",message:""}, async (id, update) => {
+    await update({status:"ready",modelId:id,message:""});
+    return true;
+  });
+  await first.room.emit("jade-avatar-state");
+  await first.change("classic");
+  const reopened = client({data:catalogue(true), storage:stored}); await reopened.ready;
+  assert.equal(reopened.window.JadeModelCatalog.defaultId, "classic", "reopening preserves a successful classic choice instead of forcing r21");
+  reopened.window.JadePreferences.set("avatarModel", "next");
+  const missing = client({data:catalogue(false), storage:stored}); await missing.ready;
+  assert.equal(missing.window.JadeModelCatalog.defaultId, "classic", "unavailable remembered model uses safe current fallback");
+  assert.equal(missing.window.JadePreferences.get("avatarModel"), "next", "a temporary unavailability does not erase the user's choice");
+  const recovered = client({data:catalogue(true), storage:stored}); await recovered.ready;
+  assert.equal(recovered.window.JadeModelCatalog.defaultId, "next", "remembered model returns when available again");
 
   for (const transport of ["reject", "http-error", "invalid-json", "timeout"]) {
     const a = client({transport});

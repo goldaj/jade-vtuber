@@ -6,14 +6,18 @@
         <button type="button" class="icon-button" id="fullscreen" aria-label="Plein écran" title="Plein écran">⛶</button>
       </div>
     </header>
-    <section class="room" data-room="bedroom" aria-label="Jade et son décor animé">
-      <div class="room-picker">
-        <label for="room-selector">Décor</label>
-        <select id="room-selector" aria-label="Choisir la pièce de Jade">
-          <option value="bedroom">Chambre</option>
-          <option value="kitchen">Cuisine</option>
-        </select>
+    <div class="scene-panel">
+      <div class="scene-toolbar">
+        <div class="room-picker">
+          <label for="room-selector">Décor</label>
+          <select id="room-selector" aria-label="Choisir la pièce de Jade">
+            <option value="bedroom">Chambre</option>
+            <option value="kitchen">Cuisine</option>
+          </select>
+        </div>
+        <button type="button" id="avatar-recenter" aria-label="Recentrer Jade" hidden>Recentrer</button>
       </div>
+    <section class="room" data-room="bedroom" aria-label="Jade et son décor animé">
       <div class="room-art" data-paused aria-hidden="true">
         <div class="room-plane">
           <img width="1448" height="1086" alt="">
@@ -70,51 +74,38 @@
         </div>
       </div>
       <div id="avatar-touch-zone" aria-hidden="true" hidden></div>
-      <button type="button" id="avatar-recenter" aria-label="Recentrer Jade" hidden>Recentrer</button>
       <div class="room-bottom">
         <button type="button" id="mic" class="mic" aria-label="Maintenir pour parler" aria-pressed="false" title="Maintenir pour parler, relâcher pour envoyer">🎙</button>
         <span id="mic-feedback" role="status"></span>
         <span id="mood-line" hidden aria-hidden="true"></span>
       </div>
     </section>
+    </div>
 
     <section class="conversation" aria-label="Discussion">
-      <section class="profile-intro" id="profile-intro" aria-label="Mon espace privé">
-        <section class="live-mode-choice" aria-labelledby="live-mode-heading">
-          <h2 id="live-mode-heading">Conversation Live</h2>
-          <p>Live est activé par défaut. Tu peux le désactiver ici pour revenir au mode classique. En Live, touche le micro pour parler, puis une seconde fois pour le couper.</p>
-          <button type="button" id="live-mode-toggle" class="live-mode-toggle" aria-pressed="false" aria-describedby="live-mode-status" disabled>Activer le mode Live</button>
-          <p id="live-mode-status" role="status">Vérification du mode vocal…</p>
-          <button type="button" id="live-mode-retry" aria-describedby="live-mode-status" hidden>Réessayer</button>
-          <p id="live-voice-notice" class="live-voice-notice" hidden></p>
-          <p class="live-mode-hint">Ce choix ne démarre pas le micro. Après une fermeture ou un retour dans l’appli, touche le micro pour reprendre.</p>
-        </section>
-        <h2>Mon espace privé</h2>
-        <p>Paramètres, compte lié et informations techniques.</p>
+      <section class="profile-intro" id="profile-intro" aria-label="Paramètres">
+        <h2>Paramètres</h2>
         <div class="avatar-model-choice">
-          <label for="avatar-model-selector">Modèle de Jade</label>
+          <label for="avatar-model-selector">Modèle</label>
           <select id="avatar-model-selector" aria-describedby="avatar-model-status" disabled>
             <option value="classic">Jade classique (r20)</option>
             <option value="next" disabled>Jade actuelle (r21)</option>
           </select>
-          <p id="avatar-model-status" role="status" aria-live="polite">Chargement de Jade…</p>
+          <p id="avatar-model-status" role="status" aria-live="polite" hidden></p>
         </div>
-        <label class="portrait-motion-choice"><input type="checkbox" id="portrait-motion-enabled" checked> Animations de la chambre</label>
-        <p id="portrait-motion-status" role="status">Chargement des animations…</p>
-        <label class="avatar-shake-choice"><input type="checkbox" id="avatar-shake-enabled" aria-describedby="avatar-shake-status" disabled> Réagir aux secousses</label>
-        <p id="avatar-shake-status" role="status">Chargement du réglage…</p>
+        <label class="setting-choice live-mode-choice"><input type="checkbox" id="live-mode-toggle" aria-describedby="live-mode-status" disabled> Mode Live</label>
+        <p id="live-mode-status" role="status" hidden></p>
+        <button type="button" id="live-mode-retry" aria-describedby="live-mode-status" hidden>Réessayer</button>
+        <label class="setting-choice sound-choice"><input type="checkbox" id="sound-toggle" checked> Voix activée</label>
+        <label class="setting-choice portrait-motion-choice"><input type="checkbox" id="portrait-motion-enabled" checked> Animations de la chambre</label>
+        <p id="portrait-motion-status" role="status" hidden></p>
+        <label class="setting-choice avatar-shake-choice"><input type="checkbox" id="avatar-shake-enabled" aria-describedby="avatar-shake-status" disabled> Réagir aux secousses</label>
+        <p id="avatar-shake-status" role="status" hidden></p>
+        <label class="setting-choice notification-choice"><input type="checkbox" id="notifications-enabled" aria-describedby="notification-status" disabled> Recevoir les rappels sur ce téléphone</label>
+        <p id="notification-status" role="status" hidden></p>
       </section>
-        <fieldset class="notification-choice">
-          <legend>Recevoir les rappels sur ce téléphone</legend>
-          <div class="notification-options" role="group" aria-label="Notifications de rappels">
-            <label><input type="radio" id="notifications-on" name="reminder-notifications" value="on" disabled> Activer</label>
-            <label><input type="radio" id="notifications-off" name="reminder-notifications" value="off" disabled> Désactiver</label>
-          </div>
-          <p id="notification-status" role="status">État des notifications non vérifié.</p>
-        </fieldset>
       <div class="chat-heading">
         <div class="chat-tools">
-          <button type="button" class="text-button" id="sound-toggle" aria-pressed="true">Voix activée</button>
           <button type="button" class="text-button" id="new-chat">Nouveau fil</button>
         </div>
       </div>
@@ -139,24 +130,17 @@
       </section>
       <details class="billing-panel" id="billing-panel">
         <summary>Suivi OpenAI</summary>
-        <p>Solde prépayé : indisponible dans l’API ; aucune alerte de solde possible. <a href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" rel="noopener noreferrer">Voir la facturation OpenAI</a></p>
-        <p>Coûts de toute l’organisation API, éventuellement publiés avec retard.</p>
         <p>Dépenses aujourd’hui (UTC) : <strong id="billing-today">—</strong><br>Dépenses du mois (UTC) : <strong id="billing-month">—</strong></p>
-        <p id="billing-status" role="status">Ouvre ce panneau pour consulter les dépenses.</p>
-        <button type="button" id="billing-refresh">Actualiser</button>
+        <p id="billing-status" role="status">Dernière actualisation : —</p>
+        <p><a href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" rel="noopener noreferrer">Voir la facturation OpenAI</a></p>
       </details>
       <details class="identity-panel" id="deployment-panel">
-        <summary>Administrer Jade sur le PC</summary>
-        <p>Contrôle privé du Run PyCharm sur <strong>develop</strong>. Le service Windows reste accessible pendant un redémarrage.</p>
+        <summary>Gestion GIT de la branche develop</summary>
         <p id="deployment-state" role="status">État non interrogé.</p>
         <div class="deployment-actions" role="group" aria-label="Administration à distance">
           <button type="button" id="deployment-load">Actualiser l'état</button>
           <button type="button" id="deployment-run">Mettre à jour et redémarrer</button>
           <button type="button" id="deployment-restart">Redémarrer sans mise à jour</button>
-        </div>
-        <div class="deployment-log-heading">
-          <h3>Console PyCharm</h3>
-          <button type="button" id="deployment-logs-load">Actualiser les logs</button>
         </div>
         <div class="deployment-log-controls">
           <label for="deployment-level">Afficher</label>
@@ -165,41 +149,36 @@
             <option value="warning">Avertissements et erreurs</option>
             <option value="error">Erreurs uniquement</option>
           </select>
-          <label><input id="deployment-autoscroll" type="checkbox" checked> Défilement auto</label>
         </div>
         <pre id="deployment-logs" class="deployment-logs" role="log" aria-live="off">Ouvre ce panneau pour charger les logs.</pre>
-        <p>Si Jade ne répond plus pendant un redémarrage, l'administration reste accessible via <a href="/control" target="_blank" rel="noopener noreferrer">la page de secours</a> (même Tailscale).</p>
+        <p><a href="/control" target="_blank" rel="noopener noreferrer">page de secours</a></p>
       </details>
       <details class="identity-panel" id="identity-panel">
-        <summary>Associer mon compte Discord ou Twitch</summary>
-        <p>Cette association sert à faire reconnaître ton compte Discord ou Twitch par Jade. Elle n'est pas nécessaire pour activer la mémoire de l'application mobile, déjà associée au profil privé du propriétaire lorsque la mémoire est activée.</p>
+        <summary>Associer un compte</summary>
         <ol class="identity-steps">
           <li>
-            <strong>Sur Discord ou Twitch, depuis le compte à associer (pas dans cette application mobile) :</strong>
-            <p><strong>Discord (MP ou serveur) :</strong> la mémoire s'active automatiquement dès qu'un compte identifié interagit avec Jade. Envoie seulement <code>!jade-memoire identite</code> à Jade.</p>
-            <p><strong>Twitch (chat) :</strong> envoie d'abord <code>!jade-memoire activer</code>, puis <code>!jade-memoire identite</code> à Jade.</p>
-            <p>Recopie l'identifiant <strong>numérique</strong> renvoyé par Jade, pas le pseudo du compte.</p>
+            <strong>Sur Discord ou Twitch</strong>
+            <p><strong>Discord :</strong> Envoie <code>!jade-memoire identite</code> à Jade en MP ou sur son serveur.</p>
+            <p><strong>Twitch :</strong> envoie <code>!jade-memoire activer</code>, puis <code>!jade-memoire identite</code> sur le chat Twitch.</p>
+            <p>Recopie ensuite l'identifiant numérique envoyé par Jade.</p>
           </li>
           <li>
             <strong>Dans cette application mobile :</strong>
-            <p>Choisis le service du compte à associer et saisis son identifiant numérique.</p>
             <form id="identity-link-form">
               <label for="identity-platform">Compte externe</label>
               <select id="identity-platform"><option value="discord">Discord</option><option value="twitch">Twitch</option></select>
-              <label for="identity-id">Identifiant numérique renvoyé par Jade</label>
+              <label for="identity-id">Identifiant numérique</label>
               <input id="identity-id" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,24}" required maxlength="25" autocomplete="off">
               <button type="submit">Générer le code de confirmation</button>
             </form>
-            <p><strong>Le code de confirmation expire au bout de 5 minutes.</strong> Il est à usage unique et lié à ce compte. <strong>L'association, une fois confirmée, n'expire pas.</strong></p>
             <p id="identity-result" role="status" class="identity-result"></p>
             <button type="button" id="identity-copy" disabled>Copier la commande de confirmation</button>
           </li>
           <li>
-            <strong>Retour sur Discord ou Twitch, depuis ce même compte :</strong>
-            <p>Envoie à Jade la commande <code>!jade-memoire confirmer [code généré]</code> fournie par l'application mobile, avant l'expiration du code. Les souvenirs condensés des comptes liés peuvent être retrouvés sur mobile, au micro PC et en MP Discord. Les salons publics et les historiques complets restent isolés.</p>
+            <strong>Retour sur Discord ou Twitch</strong>
+            <p>Envoie à Jade la commande <code>!jade-memoire confirmer [code généré]</code> fournie par l'application mobile.</p>
           </li>
         </ol>
-        <p>Depuis Discord ou Twitch, <code>!jade-memoire delier</code> sépare les comptes sans effacer leurs souvenirs ; <code>!jade-memoire oublier</code> efface les données du compte concerné.</p>
       </details>
       <div class="messages" id="messages" role="log" aria-live="polite" aria-label="Historique de la discussion">
       </div>
@@ -214,6 +193,6 @@
       <button type="button" class="app-nav-item is-active" data-view-target="home" aria-current="page" aria-label="Accueil"><svg viewBox="0 0 24 24" width="23" height="23" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>Accueil</span></button>
       <button type="button" class="app-nav-item" data-view-target="reminders"  aria-label="Rappels"><svg viewBox="0 0 24 24" width="23" height="23" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 15h3"/></svg><span>Rappels</span></button>
       <button type="button" class="app-nav-item" data-view-target="chat"  aria-label="Chat"><svg viewBox="0 0 24 24" width="23" height="23" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.5 0-2.8-.4-4-1L3 21l1.8-5.3A8.5 8.5 0 1 1 21 11.5z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg><span>Chat</span></button>
-      <button type="button" class="app-nav-item" data-view-target="profile"  aria-label="Profil"><svg viewBox="0 0 24 24" width="23" height="23" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-5 3.5-7 8-7s8 2 8 7"/></svg><span>Profil</span></button>
+      <button type="button" class="app-nav-item" data-view-target="profile"  aria-label="Config"><svg viewBox="0 0 24 24" width="23" height="23" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-5 3.5-7 8-7s8 2 8 7"/></svg><span>Config</span></button>
     </nav>
   </main>

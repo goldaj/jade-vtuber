@@ -16,8 +16,8 @@
     previous_session_not_closed:"La conversation Live précédente se ferme encore. Réessaie dans quelques instants.",
     close_unconfirmed:"Jade vérifie encore la fermeture distante. Actualise son état avant de reprendre.",
     creation_unconfirmed:"Jade vérifie encore la connexion distante. Actualise son état avant de reprendre.",
-    live_mode_off:"Le mode Live a été désactivé. Vérifie le choix dans Profil.",
-    preference_conflict:"Le choix vocal a changé sur un autre appareil. Vérifie Profil.",
+    live_mode_off:"Le mode Live a été désactivé. Vérifie le choix dans Config.",
+    preference_conflict:"Le choix vocal a changé sur un autre appareil. Vérifie Config.",
     invalid_or_expired_live_lease:"L’autorisation du micro a expiré. Touche-le pour reprendre.",
     live_auth_failed:"OpenAI refuse l’authentification de Jade. Vérifie sa connexion OpenAI côté serveur.",
     live_access_denied:"Le compte OpenAI de Jade n’a pas accès au Live.",
@@ -150,7 +150,7 @@
         preference(value);
         if (!state.loaded) state.message = "Le choix vocal n’a pas pu être vérifié. Réessaie.";
       }
-      else state.message = "Le choix vocal n’a pas pu être vérifié. Réessaie depuis Profil.";
+      else state.message = "Le choix vocal n’a pas pu être vérifié. Réessaie depuis Config.";
       publish();
       return snapshot();
     }
@@ -192,7 +192,7 @@
       } catch (error) {
         if (turn === preferenceRequest) {
           state.message = mode === "classic" ? "Micro coupé. La désactivation doit encore être confirmée par Jade." :
-            (error.status === 409 ? "Le choix a changé sur un autre appareil. Vérifie Profil." : error.message);
+            (error.status === 409 ? "Le choix a changé sur un autre appareil. Vérifie Config." : error.message);
         }
         return false;
       } finally {
@@ -295,7 +295,7 @@
       state.reason = reason || state.reason;
       if (["opening_unknown", "close_unconfirmed"].includes(state.session_state)) {
         state.available = false;
-        state.message = "Micro coupé. Jade vérifie encore la connexion distante. Vérifie son état depuis Profil avant de reprendre.";
+        state.message = "Micro coupé. Jade vérifie encore la connexion distante. Vérifie son état depuis Config avant de reprendre.";
       }
       publish();
     }
@@ -618,7 +618,7 @@
         } finally {
           if (["opening_unknown", "close_unconfirmed", "closing"].includes(state.session_state)) {
             state.available = false;
-            if (!config.message) state.message = "Micro coupé. Vérifie la fermeture distante depuis Profil avant de reprendre.";
+            if (!config.message) state.message = "Micro coupé. Vérifie la fermeture distante depuis Config avant de reprendre.";
             if (state.session_state === "closing") state.session_state = "close_unconfirmed";
           }
           closePromise = null; publish();

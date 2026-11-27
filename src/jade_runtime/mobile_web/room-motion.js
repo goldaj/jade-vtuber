@@ -48,6 +48,7 @@
     }
     if (revision !== selectionRevision) return;
     activeRoom = next;
+    window.JadePreferences?.set("room", next);
     room.dataset.room = next;
     roomSelect.value = next;
     sync();
@@ -69,5 +70,9 @@
     }).observe(scene);
   }
   sync();
-  if (new URLSearchParams(window.location.search).get("room") === "kitchen") void changeRoom("kitchen");
+  const fromUrl = new URLSearchParams(window.location.search).get("room");
+  const explicitRoom = ["bedroom", "kitchen"].includes(fromUrl);
+  const initialRoom = explicitRoom ? fromUrl : window.JadePreferences?.get("room", "bedroom");
+  if (initialRoom === "kitchen") void changeRoom("kitchen");
+  else if (explicitRoom) window.JadePreferences?.set("room", "bedroom");
 })();

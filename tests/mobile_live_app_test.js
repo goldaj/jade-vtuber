@@ -8,7 +8,7 @@ const elements = new Map(), windows = {}, documents = {}, requests = [], stops =
 let serial = 0, liveOptions, toggles = 0, refreshes = 0, pendingClose = null, holdPreference = true;
 function node(id) {
   const classes = new Set();
-  return {id, value:"", textContent:"", disabled:false, hidden:false, children:[], handlers:{}, attrs:{}, dataset:{},
+  return {id, value:"", textContent:"", disabled:false, checked:false, hidden:false, children:[], handlers:{}, attrs:{}, dataset:{},
     classList:{add(...values) { values.forEach(value => classes.add(value)); },
       remove(...values) { values.forEach(value => classes.delete(value)); }, contains:value => classes.has(value),
       toggle(value, on) { if (on ?? !classes.has(value)) classes.add(value); else classes.delete(value); }},
@@ -88,8 +88,8 @@ const press = () => element("mic").handlers.pointerdown({button:0, isPrimary:tru
   assert.equal(shell.dataset.view, "home", "the default Live choice is ready without visiting Profile");
   assert.equal(element("live-mode-retry").hidden, true);
   assert.equal(toggles, 0, "persisted Live preference after login never arms the microphone");
-  assert.equal(element("live-mode-toggle").attrs["aria-pressed"], "true");
-  assert.equal(element("live-voice-notice").textContent, "Voix de test explicite");
+  assert.equal(element("live-mode-toggle").checked, true);
+  assert.equal(element("live-mode-status").hidden, true, "normal Live state adds no explanatory paragraph");
   assert.match(element("mic").attrs["aria-label"], /Commencer/);
   await press(); assert.equal(toggles, 1); assert.equal(state.active, true);
   element("mic").handlers.click({detail:1});
@@ -100,9 +100,11 @@ const press = () => element("mic").handlers.pointerdown({button:0, isPrimary:tru
   await element("fullscreen").handlers.click();
   assert.equal(stops.length, stopCount, "navigation, profile refresh and fullscreen keep the same Live capture");
   assert.equal(toggles, 1); assert(refreshes >= 2);
-  element("sound-toggle").handlers.click();
+  element("sound-toggle").checked = false;
+  element("sound-toggle").handlers.change();
   assert.equal(stops.at(-1), "sound_off"); assert.equal(state.active, false);
-  element("sound-toggle").handlers.click();
+  element("sound-toggle").checked = true;
+  element("sound-toggle").handlers.change();
   assert.equal(toggles, 1, "sound ON does not restart Live");
   await press();
 
@@ -161,7 +163,8 @@ const press = () => element("mic").handlers.pointerdown({button:0, isPrimary:tru
   assert.equal(stops.at(-1), "model_change"); finishModel();
   emitState({available:false});
   assert.equal(element("live-mode-toggle").disabled, false, "OFF remains accessible after an admission failure");
-  element("live-mode-toggle").handlers.click(); await tick();
+  element("live-mode-toggle").checked = false;
+  element("live-mode-toggle").handlers.change(); await tick();
   assert.equal(state.mode, "classic"); assert.equal(element("mic").disabled, false);
   assert.equal(element("mic").attrs["aria-label"], "Maintenir pour parler");
   const resets = avatarEvents.filter(event => event[0] === "reset").length;
@@ -240,7 +243,7 @@ const press = () => element("mic").handlers.pointerdown({button:0, isPrimary:tru
   answer("replacement-auth-token", "/api/live/capabilities", 0, capabilities);
   answer("replacement-auth-token", "/api/voice/preferences", 0, {mode:"live", revision:5});
   await tick();
-  assert.equal(element("live-mode-toggle").attrs["aria-pressed"], "true");
+  assert.equal(element("live-mode-toggle").checked, true);
   assert.equal(element("mic").disabled, false);
   assert.match(element("mic").attrs["aria-label"], /Commencer une conversation Live/);
   assert.equal(audioContexts, 0); assert.equal(captureRequests, 0);

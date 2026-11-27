@@ -129,7 +129,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 29 | REC-047 | Transverse | Personnalité, mémoire, histoire et délégations Live dans Jade | [REC](02-RECETTE.md) |
 | 30 | REC-048 | A | Audio mobile Live, réveil local, pré-roll et interruption | [REC](02-RECETTE.md) |
 | 31 | REC-049 | A | Chat, pièces jointes et avatar synchronisé sur le Live | [REC](02-RECETTE.md) |
-| 32 | REC-050 | A | Activer le Live dans Profil et intégrer la bascule classique/Live | [REC](02-RECETTE.md) |
+| 32 | REC-050 | A | Activer le Live dans Config et intégrer la bascule classique/Live | [REC](02-RECETTE.md) |
 | 33 | DEV-041 | A | Voix française originale de Jade par prompt | [DEV](01-DEVELOPPEMENT.md) |
 | 34 | REC-031 | Transverse | Conscience unique Jade et actions intercanaux autorisées | [REC](02-RECETTE.md) |
 | 35 | REC-033 | Transverse | Cache mémoire anticipé par présence et identité vérifiée | [REC](02-RECETTE.md) |

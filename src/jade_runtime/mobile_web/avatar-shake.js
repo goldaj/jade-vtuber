@@ -15,7 +15,8 @@
   const MIN_REVERSAL_MS = 20;
   const MAX_REVERSAL_MS = 400;
   const COOLDOWN_MS = 850;
-  let enabled = false;
+  const savedChoice = window.JadePreferences?.get("avatarShakeEnabled", false) ?? false;
+  let enabled = supported && savedChoice;
   let listening = false;
   let permissionAttempt = 0;
   let gravity = [null, null, null];
@@ -25,8 +26,11 @@
   let sampleTimer = null;
   let receivedMotion = false;
 
-  function report(message) {
-    if (status && status.textContent !== message) status.textContent = message;
+  function report(message = "") {
+    if (status) {
+      status.textContent = message;
+      status.hidden = !message;
+    }
   }
 
   function inScene() {
@@ -53,7 +57,7 @@
     listening = shouldListen;
     if (listening) {
       receivedMotion = false;
-      report("En attente des données du capteur de mouvement…");
+      report();
       window.addEventListener("devicemotion", readMotion, {passive:true});
       sampleTimer = window.setTimeout(() => {
         sampleTimer = null;
@@ -106,7 +110,7 @@
     if (!receivedMotion) {
       receivedMotion = true;
       clearSampleTimer();
-      report("Capteur de mouvement actif. Secoue le téléphone sur l’Accueil ou en plein écran.");
+      report();
     }
     if (now < nextShakeAt) return;
     const [x, y, z] = acceleration;
@@ -130,20 +134,22 @@
       ? x * Math.sin(angle) + y * Math.cos(angle) : z * .65;
     if (window.JadeAvatar?.nudgeFromShake?.(horizontal * intensity / magnitude, vertical * intensity / magnitude)) {
       nextShakeAt = now + COOLDOWN_MS;
-      report("Secousse détectée.");
     }
   }
 
-  control.checked = false;
+  // Restoring an opted-in setting never opens a browser permission dialog.
+  // The platform still controls delivery of sensor events; a fresh manual
+  // activation requests permission on browsers that require that gesture.
+  control.checked = savedChoice;
   control.disabled = !supported;
-  report(supported ? "Active le réglage, puis retourne à l’Accueil ou passe en plein écran."
-    : "Capteur de mouvement indisponible.");
+  report(supported ? "" : "Capteur de mouvement indisponible.");
   control.addEventListener("change", async () => {
     const attempt = ++permissionAttempt;
     enabled = false;
     sync();
     if (!control.checked) {
-      report("Réaction aux secousses désactivée.");
+      window.JadePreferences?.set("avatarShakeEnabled", false);
+      report();
       return;
     }
     let granted = supported;
@@ -159,13 +165,12 @@
       return;
     }
     enabled = true;
+    window.JadePreferences?.set("avatarShakeEnabled", true);
     onReducedMotionChange();
   });
 
   function onReducedMotionChange() {
-    if (enabled) report(reducedMotion?.matches
-      ? "Effet en pause selon la préférence de mouvement réduit."
-      : "Réaction aux secousses activée. Essaie dans l’Accueil ou en plein écran.");
+    if (enabled) report();
     sync();
   }
 
@@ -177,4 +182,5 @@
   room.addEventListener("jade-avatar-state", sync);
   room.addEventListener("jade-avatar-framing", sync);
   room.addEventListener("jade-room-changed", resetMovement);
+  sync();
 })();

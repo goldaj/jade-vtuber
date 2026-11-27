@@ -62,6 +62,7 @@ WEB_FILES = {
     "/assets/jade-seated-body.avif": ("jade-seated-body.avif", "image/avif"),
     "/assets/room-kitchen.webp": ("room-kitchen.webp", "image/webp"),
     "/assets/app.js": ("app.js", "text/javascript; charset=utf-8"),
+    "/assets/preferences.js": ("preferences.js", "text/javascript; charset=utf-8"),
     "/assets/duplex-client.js": ("duplex-client.js", "text/javascript; charset=utf-8"),
     "/assets/live-client.js": ("live-client.js", "text/javascript; charset=utf-8"),
     "/assets/live-audio-worklet.js": ("live-audio-worklet.js", "text/javascript; charset=utf-8"),

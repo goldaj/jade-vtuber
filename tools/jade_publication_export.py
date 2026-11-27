@@ -26,6 +26,8 @@ PUBLIC_TEST_FIXTURES = frozenset({
     "tests/mobile_live_audio_worklet_test.js",
     "tests/mobile_live_client_test.js",
     "tests/mobile_live_app_test.js",
+    "tests/mobile_config_app_test.js",
+    "tests/mobile_preferences_test.js",
 })
 # Only these reviewed mobile UI files enter the PRIVATE preview.
 # Never include SDK vendor binaries, LFS model art or private configuration.
@@ -57,6 +59,7 @@ MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/r21-expressions/WinkR.exp3.json",
     "src/jade_runtime/mobile_web/r21-expressions/Surprised.exp3.json",
     "src/jade_runtime/mobile_web/app.js",
+    "src/jade_runtime/mobile_web/preferences.js",
     "src/jade_runtime/mobile_web/duplex-client.js",
     "src/jade_runtime/mobile_web/live-client.js",
     "src/jade_runtime/mobile_web/live-audio-worklet.js",

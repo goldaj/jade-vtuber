@@ -1,5 +1,6 @@
-/* Jade owner-only phone client. No cookies, localStorage, sessionStorage,
- * analytics, third-party servers, remote libraries or alternative AI engines.
+/* Jade owner-only phone client. Only non-sensitive interface preferences are
+ * persisted by JadePreferences; tokens, conversations and media stay in memory.
+ * No analytics, third-party servers, remote libraries or alternative AI engines.
  * Classic voice uses Jade's existing STT; optional Live uses its own WebRTC
  * client. Only one of those paths may own capture and audible output.
  */
@@ -15,7 +16,8 @@
   const connection = $("connection-status"), soundToggle = $("sound-toggle");
   const newChat = $("new-chat");
   const liveModeToggle = $("live-mode-toggle"), liveModeStatus = $("live-mode-status");
-  const liveVoiceNotice = $("live-voice-notice"), liveModeRetry = $("live-mode-retry");
+  const liveModeRetry = $("live-mode-retry");
+  const preferences = window.JadePreferences;
   let liveClient = null, liveState = null, liveMotionPending = false, liveSpeaking = false;
   let liveLoadMessage = "", liveRetrying = false;
   let liveAuthentication = 0;
@@ -33,7 +35,8 @@
   let voicePending = false;
   let conversationGeneration = 0;
   let modelChanging = false;
-  let soundEnabled = true;
+  let soundEnabled = preferences?.get("soundEnabled", true) ?? true;
+  soundToggle.checked = soundEnabled;
   let audioContext = null;
   let playFrame = null;
   let playbackGeneration = 0;
@@ -193,16 +196,13 @@
   function liveDescription() {
     if (liveLoadMessage) return liveLoadMessage;
     if (!liveState) return "Vérification du mode vocal…";
-    if (!liveState.supported) return (liveState.availability_message ||
-      "Ce navigateur ne permet pas le mode Live.") + " Le mode classique reste disponible.";
+    if (!liveState.supported) return liveState.availability_message ||
+      "Ce navigateur ne permet pas le mode Live.";
     if (liveState.message) return liveState.message;
     if (!liveState.loaded) return "Vérification du mode vocal…";
-    if (!liveState.available && !liveState.active) return (liveState.availability_message ||
-      "Le mode Live est momentanément indisponible.") +
-      (liveState.mode === "live" ? " Tu peux choisir le mode classique dans Profil." : " Le mode classique reste disponible.");
-    if (liveState.mode !== "live") return liveState.available ?
-      "Mode classique : maintiens le micro pour parler, puis relâche pour envoyer." :
-      "Mode classique disponible. Le mode Live n’est pas disponible pour le moment.";
+    if (!liveState.available && !liveState.active) return liveState.availability_message ||
+      "Le mode Live est momentanément indisponible.";
+    if (liveState.mode !== "live") return "";
     if (liveState.lease_state === "draining") return "Micro coupé. Jade termine sa réponse.";
     if (liveState.capture === "requesting") return "Ouverture du micro…";
     if (liveState.capture === "closed" && liveState.session_state === "closing") return "Micro coupé · Fermeture du Live…";
@@ -211,8 +211,7 @@
       if (["absent", "closing"].includes(liveState.session_state)) return "Micro actif · Jade en veille. Parle quand tu veux.";
       return "Live en cours · Touche le micro pour le couper.";
     }
-    if (!soundEnabled) return "Voix coupée. Réactive-la, puis touche le micro pour parler en Live.";
-    return "Mode Live activé. Touche le micro pour commencer ; un second toucher le coupe.";
+    return "";
   }
 
   function renderLiveMic() {
@@ -249,12 +248,16 @@
     if (micFeedback && token && !busy && !modelChanging) {
       const description = liveDescription();
       if (micFeedback.textContent !== description) micFeedback.textContent = description;
-      micFeedback.hidden = false;
+      micFeedback.hidden = !description;
     }
   }
 
   function renderLiveAvailability() {
-    if (liveModeStatus) liveModeStatus.textContent = liveDescription();
+    if (liveModeStatus) {
+      const description = liveDescription();
+      liveModeStatus.textContent = description;
+      liveModeStatus.hidden = !description;
+    }
     if (liveModeRetry) {
       liveModeRetry.hidden = !(liveLoadMessage || (!liveState?.loaded && liveState?.message) ||
         (liveState?.loaded && !liveState.available && liveState.supported));
@@ -265,7 +268,7 @@
   }
 
   function liveModuleFailed() {
-    liveLoadMessage = "Le mode Live n’a pas pu charger. Réessaie depuis Profil ; tu peux toujours écrire à Jade.";
+    liveLoadMessage = "Le mode Live n’a pas pu charger. Réessaie depuis Config.";
     if (liveModeToggle) liveModeToggle.disabled = true;
     renderLiveAvailability();
   }
@@ -277,17 +280,11 @@
     liveState = value;
     liveLoadMessage = "";
     if (liveModeToggle) {
-      liveModeToggle.textContent = !value.loaded ? "Vérification du mode Live…" :
-        value.mode === "live" ? "Désactiver le mode Live" : "Activer le mode Live";
-      liveModeToggle.setAttribute("aria-pressed", String(value.loaded && value.mode === "live"));
+      liveModeToggle.checked = Boolean(value.loaded && value.mode === "live");
       // Turning OFF remains possible after a kill switch, provider refusal
       // or loss of browser capability. Admission restrictions only gate ON.
       liveModeToggle.disabled = value.changing || !value.loaded ||
         (value.mode !== "live" && !value.available);
-    }
-    if (liveVoiceNotice) {
-      liveVoiceNotice.textContent = value.capabilities?.voice_notice || value.capabilities?.voice?.notice || "";
-      liveVoiceNotice.hidden = !liveVoiceNotice.textContent;
     }
     if (wasLive && value.mode !== "live") {
       resetMicButton();
@@ -434,9 +431,9 @@
       if (generation === liveAuthentication) { liveRetrying = false; renderLiveAvailability(); }
     }
   });
-  liveModeToggle?.addEventListener("click", () => {
+  liveModeToggle?.addEventListener("change", () => {
     if (!liveClient || !liveState?.loaded || liveState.changing) return;
-    const mode = liveClient.mode === "live" ? "classic" : "live";
+    const mode = liveModeToggle.checked ? "live" : "classic";
     cancelConversation("mode_change");
     void liveClient.setMode(mode);
   });
@@ -1133,7 +1130,7 @@
         throw new Error("Réponse de liaison inattendue.");
       }
       linkCommand = "!jade-memoire confirmer " + result.code;
-      linkResult.textContent = linkCommand + "\nÀ envoyer depuis ce même compte " + (platform === "discord" ? "Discord" : "Twitch") + " dans les 5 minutes. Une fois confirmée, l'association n'expire pas.";
+      linkResult.textContent = linkCommand;
       linkCopy.disabled = false;
     } catch (error) {
       linkResult.textContent = error.message || "Liaison indisponible.";
@@ -1146,7 +1143,7 @@
     if (!linkCommand) return;
     try {
       await navigator.clipboard.writeText(linkCommand);
-      linkResult.textContent = "Commande copiée. À envoyer depuis le compte Discord ou Twitch à associer avant l'expiration du code (5 minutes). La liaison restera active.";
+      linkResult.textContent = linkCommand + "\nCommande copiée.";
     } catch (_) {
       linkResult.textContent = linkCommand + "\nCopie manuellement la commande.";
     }
@@ -1155,8 +1152,9 @@
   const deploymentPanel = $("deployment-panel");
   const deploymentLoad = $("deployment-load"), deploymentRun = $("deployment-run");
   const deploymentRestart = $("deployment-restart"), deploymentState = $("deployment-state");
-  const deploymentLogs = $("deployment-logs"), deploymentLogsLoad = $("deployment-logs-load");
-  const deploymentLevel = $("deployment-level"), deploymentAutoscroll = $("deployment-autoscroll");
+  const deploymentLogs = $("deployment-logs");
+  const deploymentLevel = $("deployment-level");
+  deploymentLevel.value = preferences?.get("deploymentLevel", "all") ?? "all";
   let deploymentPending = false, deploymentPolling = null, deploymentRawLogs = "";
 
   // Control runs outside Jade on Windows and stays online during a restart.
@@ -1185,7 +1183,7 @@
     else if (deploymentLevel.value === "warning")
       lines = lines.filter(line => /\b(WARNING|ERROR|CRITICAL|Traceback|Exception)\b/i.test(line));
     deploymentLogs.textContent = lines.join("\n") || "Aucune ligne correspondant au filtre.";
-    if (deploymentAutoscroll.checked) deploymentLogs.scrollTop = deploymentLogs.scrollHeight;
+    deploymentLogs.scrollTop = deploymentLogs.scrollHeight;
   }
 
   async function refreshDeployment() {
@@ -1245,12 +1243,14 @@
     }
   });
   deploymentLoad.addEventListener("click", refreshDeployment);
-  deploymentLogsLoad.addEventListener("click", refreshDeployment);
-  deploymentLevel.addEventListener("change", renderDeploymentLogs);
+  deploymentLevel.addEventListener("change", () => {
+    preferences?.set("deploymentLevel", deploymentLevel.value);
+    renderDeploymentLogs();
+  });
   deploymentRun.addEventListener("click", () => submitDeployment("update"));
   deploymentRestart.addEventListener("click", () => submitDeployment("restart"));
 
-  const billingPanel = $("billing-panel"), billingRefresh = $("billing-refresh");
+  const billingPanel = $("billing-panel");
   const billingStatus = $("billing-status"), billingToday = $("billing-today"), billingMonth = $("billing-month");
   let billingPending = false;
   function formatCosts(costs) {
@@ -1262,35 +1262,27 @@
   async function loadBilling(refresh = false) {
     if (billingPending || !token) return;
     billingPending = true;
-    billingRefresh.disabled = true;
-    billingStatus.textContent = "Chargement des dépenses…";
     try {
       const result = await makeRequest("/api/billing", JSON.stringify({refresh}), {"Content-Type":"application/json"});
       if (result.status === "ok" || result.status === "stale") {
         billingToday.textContent = formatCosts(result.today);
         billingMonth.textContent = formatCosts(result.month);
-        const checked = new Date(result.checked_at).toLocaleString("fr-FR");
-        billingStatus.textContent = result.status === "stale"
-          ? `Dernière actualisation : ${checked}. Actualisation indisponible.`
-          : `Dernière actualisation : ${checked}. Les dépenses peuvent être reportées par OpenAI avec un délai.`;
+        const checkedAt = new Date(result.checked_at);
+        const checked = result.checked_at && Number.isFinite(checkedAt.getTime())
+          ? checkedAt.toLocaleString("fr-FR") : "—";
+        billingStatus.textContent = `Dernière actualisation : ${checked}`;
       } else {
         billingToday.textContent = billingMonth.textContent = "—";
-        billingStatus.textContent = result.status === "not_configured"
-          ? "Suivi non configuré : une clé administrateur OpenAI est nécessaire sur le PC de Jade."
-          : result.status === "access_denied"
-            ? "Accès refusé : vérifie la clé administrateur de l’organisation OpenAI."
-            : "Dépenses momentanément indisponibles. Réessaie plus tard.";
+        billingStatus.textContent = "Dernière actualisation : —";
       }
-    } catch (error) {
-      billingToday.textContent = billingMonth.textContent = "—";
-      billingStatus.textContent = error.message || "Dépenses momentanément indisponibles.";
+    } catch (_) {
+      // Keep the last dated snapshot when a refresh fails. No successful
+      // update time is invented and unavailable amounts remain unspecified.
     } finally {
       billingPending = false;
-      billingRefresh.disabled = false;
     }
   }
   billingPanel.addEventListener("toggle", () => { if (billingPanel.open) loadBilling(); });
-  billingRefresh.addEventListener("click", () => loadBilling(true));
   setInterval(() => {
     if (billingPanel.open && !document.hidden && token) loadBilling();
   }, 300000);
@@ -1428,40 +1420,49 @@
     }
     return navigator.serviceWorker.ready;
   }
-  const notificationOn = $("notifications-on"), notificationOff = $("notifications-off");
-  let confirmedNotificationChoice = "";
+  const notificationToggle = $("notifications-enabled");
+  let confirmedNotificationChoice = preferences?.get("notificationsEnabled", false) ? "on" : "off";
   let notificationBusy = false;
+  let notificationReadVersion = 0;
   function showNotificationChoice(value) {
-    notificationOn.checked = value === "on";
-    notificationOff.checked = value === "off";
+    notificationToggle.checked = value === "on";
   }
   function lockNotificationChoice(value) {
-    notificationOn.disabled = value;
-    notificationOff.disabled = value;
+    notificationToggle.disabled = value;
   }
+  function showNotificationMessage(message = "") {
+    notificationStatus.textContent = message;
+    notificationStatus.hidden = !message;
+  }
+  showNotificationChoice(confirmedNotificationChoice);
   // Refresh from browser state. Never prompt for permission while rendering the page.
   async function refreshNotificationChoice() {
     if (!token || notificationBusy) return;
+    const version = ++notificationReadVersion;
     try {
       const registration = await registrationForPush();
       const subscription = await registration.pushManager.getSubscription();
+      if (version !== notificationReadVersion || notificationBusy) return;
       confirmedNotificationChoice = subscription && Notification.permission === "granted" ? "on" : "off";
+      preferences?.set("notificationsEnabled", confirmedNotificationChoice === "on");
       showNotificationChoice(confirmedNotificationChoice);
       lockNotificationChoice(false);
-      notificationStatus.textContent = confirmedNotificationChoice === "on"
-        ? "Notifications activées sur cet appareil." : "Notifications désactivées sur cet appareil.";
+      showNotificationMessage();
     } catch (error) {
-      confirmedNotificationChoice = "";
-      showNotificationChoice("");
+      if (version !== notificationReadVersion || notificationBusy) return;
+      showNotificationChoice(confirmedNotificationChoice);
       lockNotificationChoice(true);
-      notificationStatus.textContent = "Notifications indisponibles : " + error.message;
+      showNotificationMessage("Notifications indisponibles : " + error.message);
     }
   }
   async function changeNotificationChoice(enable) {
     if (notificationBusy) return;
     if (!token) { showNotificationChoice(confirmedNotificationChoice); authorizeAgain(); return; }
     notificationBusy = true;
+    notificationReadVersion++;
     lockNotificationChoice(true);
+    showNotificationMessage();
+    let createdSubscription = null;
     try {
       const registration = await registrationForPush();
       if (enable) {
@@ -1470,9 +1471,12 @@
         if (await Notification.requestPermission() !== "granted")
           throw new Error("Permission de notifications refusée.");
         let subscription = await registration.pushManager.getSubscription();
-        if (!subscription) subscription = await registration.pushManager.subscribe({
-          userVisibleOnly:true, applicationServerKey:decodeVapidKey(config.vapid_public_key)
-        });
+        if (!subscription) {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly:true, applicationServerKey:decodeVapidKey(config.vapid_public_key)
+          });
+          createdSubscription = subscription;
+        }
         await makeRequest("/api/push", JSON.stringify({
           action:"subscribe", subscription:subscription.toJSON()
         }), reminderHeaders);
@@ -1487,23 +1491,23 @@
         }
       }
       confirmedNotificationChoice = enable ? "on" : "off";
+      preferences?.set("notificationsEnabled", enable);
       showNotificationChoice(confirmedNotificationChoice);
-      notificationStatus.textContent = enable
-        ? "Notifications activées sur cet appareil." : "Notifications désactivées sur cet appareil.";
+      showNotificationMessage();
     } catch (error) {
+      // A browser subscription without the matching server registration is
+      // not an enabled setting. Remove only a subscription created by this try.
+      if (createdSubscription) {
+        try { await createdSubscription.unsubscribe(); } catch (_) {}
+      }
       showNotificationChoice(confirmedNotificationChoice);
-      notificationStatus.textContent = (enable ? "Activation impossible : " : "Désactivation incomplète : ") + error.message;
+      showNotificationMessage((enable ? "Activation impossible : " : "Désactivation incomplète : ") + error.message);
     } finally {
       notificationBusy = false;
       lockNotificationChoice(false);
     }
   }
-  notificationOn.addEventListener("change", () => {
-    if (notificationOn.checked) changeNotificationChoice(true);
-  });
-  notificationOff.addEventListener("change", () => {
-    if (notificationOff.checked) changeNotificationChoice(false);
-  });
+  notificationToggle.addEventListener("change", () => changeNotificationChoice(notificationToggle.checked));
 
   async function showReminder(reminderId) {
     if (!/^[0-9a-f]{24}$/.test(reminderId)) return;
@@ -1623,10 +1627,9 @@
     }
   });
   window.addEventListener("pagehide", cancelConversation);
-  soundToggle.addEventListener("click", () => {
-    soundEnabled = !soundEnabled;
-    soundToggle.textContent = soundEnabled ? "Voix activée" : "Voix coupée";
-    soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+  soundToggle.addEventListener("change", () => {
+    soundEnabled = soundToggle.checked;
+    preferences?.set("soundEnabled", soundEnabled);
     if (!soundEnabled) {
       liveClient?.stop("sound_off");
       stopPlayback();

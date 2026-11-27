@@ -8,7 +8,7 @@
 
 ```mermaid
 flowchart TD
-    P["Profil et micro mobile"] --> G["Gateway privé Jade"]
+    P["Config et micro mobile"] --> G["Gateway privé Jade"]
     P <-->|"WebRTC : audio"| O["OpenAI Live"]
     G --> S["Bail, sessions et usage"]
     S <-->|"Sideband de contrôle"| O
@@ -29,7 +29,7 @@ flowchart TD
 | `mobile_live.py`, `mobile_gateway.py` | Routes mêmes origine/identité/Bearer, contrôle WebSocket et limites de taille |
 | `live_bridge.py` | Persona, contexte, segments, journal, actions idempotentes, mémoire et délégations |
 | `live-client.js`, `live-audio-worklet.js` | Permission, VAD locale, tampon, WebRTC, lecture, supervision réciproque et nettoyage |
-| `app.js` | Profil, micro commun, chat, documents et commandes de l'avatar existant |
+| `app.js` | Cases Live/voix dans Config, micro commun, chat, documents et commandes de l'avatar existant |
 
 Le modèle est `gpt-live-1.1`. L'adaptateur utilise `httpx2`, déjà dépendance de l'OpenAI SDK épinglé `3.42.1`, et `websockets`. Le SDK inspecté ne déclare pas encore tous les champs de veille et d'usage employés ; le transport JSON conserve les champs officiels sans modifier la version du SDK. Les créations n'ont aucun retry automatique.
 
@@ -81,7 +81,7 @@ Le registre de sessions et le journal des opérations restent nécessaires à la
 
 ## Voix et suite Discord
 
-**Aube** reste la préférence du propriétaire pour le prototype. Sa présence dans ChatGPT ne prouve pas un ID d'API utilisable ; aucune équivalence avec **Brise** n'est affirmée. La configuration initiale explicite `brise`, affiche cette limite dans Profil et accepte un ID de voix personnalisée. `scripts/live_voice_preview.py` prépare le prompt original et sept cas français sans créer de voix ni payer une préécoute. Création, écoute et choix sont encore DEV-041.
+**Aube** reste la préférence du propriétaire pour le prototype. Sa présence dans ChatGPT ne prouve pas un ID d'API utilisable ; aucune équivalence avec **Brise** n'est affirmée. La configuration initiale explicite `brise` et accepte un ID de voix personnalisée. Le paragraphe permanent sur cette limite a été retiré de Config à la demande du propriétaire le 27/11. `scripts/live_voice_preview.py` prépare le prompt original et sept cas français sans créer de voix ni payer une préécoute. Création, écoute et choix sont encore DEV-041.
 
 **Demande complémentaire du 27/11 :** [Discord Live automatique](DISCORD_LIVE.md) est développé, avec la constante unique `DISCORD_ENABLED` dans `src/jade_runtime/discord_config.py`. `True` active Discord avec sélection Live/classique selon le total mensuel toutes API, à 50 EUR si couverture complète et fraîche ou 40 EUR pour les relevés estimés ; `False` désactive tout Discord. L'ancien `JADE_DISCORD_LIVE_ENABLED` n'est plus utilisé. Le mobile n'a aucun budget propre ; ses préférences et sessions ne sont jamais pilotées par cette règle. Sa consommation contribue seulement au total utilisé pour la décision Discord. DEV-052 est transférée en REC-051 pour la recette réelle.
 

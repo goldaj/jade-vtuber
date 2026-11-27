@@ -1,4 +1,4 @@
-/* Session-only model catalogue and profile control. Fetching the catalogue
+/* Validated model catalogue and persistent configuration control. Fetching the catalogue
  * never loads a model; JadeAvatar owns every real selection and its result. */
 "use strict";
 (() => {
@@ -67,13 +67,9 @@
     // The selected option describes the model actually on screen, including
     // rollback after a failed switch, never the last requested filename.
     selector.value = get(state?.modelId)?.id || "";
-    if (failure) status.textContent = failure;
-    else if (state?.message) status.textContent = state.message;
-    else if (waiting || selecting) status.textContent = "Chargement de Jade…";
-    else if (state.status === "error") status.textContent = "Le modèle n’a pas pu être chargé. Tu peux réessayer.";
-    else status.textContent = get("next").available
-      ? "Changer de modèle coupe la conversation en cours."
-      : "Jade r21 est indisponible. Le modèle classique est utilisé.";
+    status.textContent = failure || (state?.status === "error"
+      ? state.message || "Le modèle n’a pas pu être chargé. Tu peux réessayer." : "");
+    status.hidden = !status.textContent;
   }
 
   selector?.addEventListener("change", async () => {
@@ -90,6 +86,7 @@
       return;
     }
     if (avatar.state.modelId === requested) {
+      if (avatar.state.status === "ready") window.JadePreferences?.set("avatarModel", requested);
       syncState();
       return;
     }
@@ -101,13 +98,15 @@
     try {
       resumeControls = window.JadeConversation?.stopForModelChange();
       const selected = await avatar.selectModel(requested);
-      if (!selected || avatar.state.modelId !== requested) failure = "Ce modèle n’a pas pu être chargé.";
+      if (!selected || avatar.state.modelId !== requested || avatar.state.status !== "ready")
+        failure = "Ce modèle n’a pas pu être chargé.";
+      else window.JadePreferences?.set("avatarModel", requested);
     } catch (_) {
       failure = "Ce modèle n’a pas pu être chargé.";
     } finally {
       resumeControls?.();
       selecting = false;
-      if (failure && avatar.state.message && avatar.state.message !== previousMessage) failure = "";
+      if (failure && avatar.state.status === "error" && avatar.state.message && avatar.state.message !== previousMessage) failure = "";
       syncState(failure);
     }
   });
@@ -140,6 +139,9 @@
     }
     return profiles;
   })();
-  window.JadeModelCatalog = Object.freeze({ready, get defaultId(){return defaultId;},
+  window.JadeModelCatalog = Object.freeze({ready, get defaultId(){
+    const preferred = window.JadePreferences?.get("avatarModel", defaultId);
+    return get(preferred)?.available ? preferred : defaultId;
+  },
     list:() => profiles, get});
 })();

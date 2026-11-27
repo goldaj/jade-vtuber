@@ -95,7 +95,10 @@ async function submit(value){
   assert.equal(requests[2].url,"/assets/salon.html");
   assert(assets.includes("/assets/styles.css"));
   assert(assets.includes("/assets/jade-theme.css"));
+  assert(assets.includes("/assets/preferences.js"));
   assert(assets.includes("/assets/app.js"));
+  assert(assets.indexOf("/assets/preferences.js") < assets.indexOf("/assets/app.js"),
+    "saved settings are restored before the conversation initializes");
   assert.equal(button.disabled,false);
   await new Promise(resolve=>setImmediate(resolve));
   assert(assets.indexOf("/vendor/pixi.min.js") > assets.indexOf("/assets/app.js"));

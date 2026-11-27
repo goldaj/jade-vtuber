@@ -42,8 +42,9 @@ Un son entendu dans un canal privé ne doit pas être lu publiquement sur Discor
 
 La PWA permet :
 - **Texte** : rédiger/envoyer un message et voir la réponse ; session de discussion conservée pendant l'usage de la page.
-- **Voix** : Live est sélectionné par défaut, sans budget financier mobile ; un geste arme le micro et la conversation utilise WebRTC. Dans Profil, choisir le classique pour retrouver l'enregistrement pendant l'appui, puis l'envoi au relâchement via STT et TTS. Un choix classique déjà enregistré reste conservé. Permission microphone Chrome/Android obligatoire ; les arrêts de capture et changements de fil nécessitent un nouveau geste.
-- **Synthèse vocale** : bouton « Voix activée / Voix coupée ». Couper la voix évite un TTS mobile inutile.
+- **Voix** : Live est sélectionné par défaut, sans budget financier mobile ; un geste arme le micro et la conversation utilise WebRTC. Dans **Config → Paramètres**, décocher **Mode Live** pour retrouver l'enregistrement pendant l'appui, puis l'envoi au relâchement via STT et TTS. Un choix classique déjà enregistré reste conservé. Permission microphone Chrome/Android obligatoire ; les arrêts de capture et changements de fil nécessitent un nouveau geste.
+- **Synthèse vocale** : case **Voix activée** dans Config, cochée au premier lancement. Couper la voix évite un TTS mobile inutile ; ce choix reste conservé après fermeture.
+- **Réglages** : modèle, décor, voix, animations, secousses, notifications et filtre des logs sont sauvegardés automatiquement sur ce téléphone. Le choix Live est conservé par Jade. Rouvrir l’application ne réactive jamais le micro. Le bouton Décor et Recentrer occupent un bandeau au-dessus de la scène de l’Accueil.
 - **Avatar** : visage r20 sur fond transparent avec décor illustré et animé, expressions et bouche approximativement animées par l'audio **si le SDK Web compatible est installé sur D:**. Si le SDK manque ou n'est pas compatible, le chat peut rester accessible mais l'avatar sera absent.
 - **Nouveau fil / plein écran** : nouveau contexte de dialogue mobile ou affichage agrandi.
 - **Sécurité** : réseau privé Tailscale, identité utilisateur vérifiée et jeton Bearer ; sans ces deux éléments, refus 403/401. Ne pas activer Funnel ni modifier le VPS Hyperliquid.

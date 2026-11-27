@@ -8,7 +8,8 @@
 h1{font-size:1.35rem;margin:0}h2{font-size:1.05rem}p{line-height:1.5}
 section{background:#20372a;padding:1rem;border-radius:1rem}
 label{display:block;margin-bottom:.5rem}input{background:#122319;color:white;border:1px solid #597462;padding:.7rem;border-radius:.5rem;width:100%;font:inherit}
-button{font:inherit;background:#bfdabf;color:#102416;border:0;border-radius:.5rem;padding:.75rem 1rem;cursor:pointer}
+button{font:inherit;background:#bfdabf;color:#102416;border:0;border-radius:.5rem;padding:.75rem 1rem;cursor:pointer;touch-action:manipulation;transition:translate .08s,filter .08s,box-shadow .08s}
+button:active:not(:disabled){translate:0 2px;filter:brightness(.84);box-shadow:inset 0 2px 4px #10241645}
 button:disabled{opacity:.5;cursor:default}.controls{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:55dvh;overflow:auto;background:#101a14;border-radius:.5rem;padding:1rem;font:12px/1.5 ui-monospace,monospace}
 #feedback{color:#eddc9f}
