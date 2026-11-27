@@ -29,7 +29,7 @@ assert.equal(first.get("soundEnabled", true), true);
 assert.equal(first.get("avatarShakeEnabled", false), false);
 const settings = {
   soundEnabled:false, notificationsEnabled:false, portraitMotionEnabled:false,
-  avatarShakeEnabled:true, room:"kitchen", avatarModel:"classic", deploymentLevel:"error"
+  avatarShakeEnabled:true, room:"kitchen", avatarModel:"next", deploymentLevel:"error"
 };
 for (const [name, value] of Object.entries(settings)) assert.equal(first.set(name, value), true);
 const second = open(storage);
@@ -48,7 +48,7 @@ for (const [name, value] of [
 assert.deepEqual(Object.keys(JSON.parse(storage.get(key)).values).sort(), Object.keys(settings).sort());
 
 // Every stored field is checked on read too, not only on application writes.
-storage.set(key, JSON.stringify({version:1,values:{soundEnabled:false,token:"secret",room:"evil",avatarModel:"classic"}}));
+storage.set(key, JSON.stringify({version:1,values:{soundEnabled:false,token:"secret",room:"evil",avatarModel:"next"}}));
 const scrubbed = open(storage);
 assert.equal(scrubbed.get("soundEnabled", true), false);
 assert.equal(scrubbed.get("room", "bedroom"), "bedroom");

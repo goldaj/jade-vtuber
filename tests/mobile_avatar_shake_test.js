@@ -129,9 +129,10 @@ function createClient({motion = {}, secure = true, reduced = false, storage = ne
   assert.equal(session.window.count("devicemotion"), 0);
   assert.equal(session.status.hidden, true);
   await session.reduce(false);
-  session.state.modelId = "classic";
+  session.state.modelId = null;
+  session.state.status = "loading";
   await session.avatarChanged();
-  assert.equal(session.window.count("devicemotion"), 0, "r20 has no shake response");
+  assert.equal(session.window.count("devicemotion"), 0, "a loading r21 releases its motion sensor");
   const restored = createClient({storage:session.storage});
   assert.equal(restored.control.checked, true, "the saved checkbox is restored on reopening");
   assert.equal(restored.window.count("devicemotion"), 0, "restored motion still respects the current view");

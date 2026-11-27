@@ -1,5 +1,7 @@
 # Backlog opérationnel de Jade — source de vérité
 
+**Décision propriétaire du 27/11/2026 — maintenance et tests :** r21 est le seul modèle maintenu et testé. r20, ses ressources et le sélecteur existant restent dans l’application, mais aucune nouvelle maintenance ni recette r20 ne doit être engagée. Cette décision s’applique à toutes les cartes actives, au-delà du lot Triste/Colère. Les anciennes validations et preuves datées restent conservées comme historique ; elles ne prescrivent pas de nouveaux essais r20.
+
 **Arbitrage du 21/11/2026 :** les cartes exigeant le **microphone physique local du PC**, **Twitch** ou **OBS** sont suspendues en `Bloqué` jusqu'à nouvel ordre. Ce n'est **pas** une suspension générale des travaux sur Windows ni des tests Discord/Android/mémoire. Les sous-tests indépendants restent possibles, mais les cartes mixtes ne sont pas closes. [Passation](../operations/handoffs/2026-11-21-chatgpt-suspension-micro-twitch-obs.md).
 
 **Recettes automatisées du 21/11/2026 :** `REC-021` et `REC-025` ont maintenant **des tests d'acceptation exécutés avec succès sous Linux et Windows**, [CI sur le SHA `955ca2e255`](https://github.com/goldaj/jade-vtuber/actions/runs/44947197393). **Mise à jour du 22/11/2026 :** les deux cartes sont maintenant **`Done` sur validation expresse du propriétaire**, avec réserves documentées ; aucune inspection nouvelle des archives privées n'est affirmée pour REC-025. La vue [REC](02-RECETTE.md#compte-rendu-des-recettes-automatiques-rec-021-et-rec-025-21-novembre-2026) décrit les preuves.
@@ -10,7 +12,7 @@
 
 ## REPRISE PRIORITAIRE — validations du 22 novembre 2026
 
-**Priorité P0 du 27 novembre 2026 — expressions faciales :** [ART-015](04-PRODUCTION-2D.md#art-015--refonte-des-visages-expressifs-manga-pour-chaque-intention-p0) est placée en tête des P0 sur demande du propriétaire : un véritable visage expressif manga par intention, avec des bascules extrêmement visibles façon trigger VTube Studio et aucune rupture d'identité graphique. Toutes les intentions sont concernées, y compris les visages Triste/Colère prévus avec ART-014 et DEV-053. Le statut et les critères restent dans la vue ART.
+**Priorité P0 du 27 novembre 2026 — expressions faciales :** [ART-015](04-PRODUCTION-2D.md#art-015--refonte-des-visages-expressifs-manga-pour-chaque-intention-p0) reste en tête des P0 : un véritable visage manga par intention, des bascules extrêmement visibles façon trigger VTube Studio et une identité graphique continue. Le propriétaire autorise le report si les API ou applications nécessaires sont inaccessibles ; aucun accès natif Cubism, PSD2Live ou Turboism n’est disponible dans l’environnement de réalisation. Cette refonte est donc reportée, sans bloquer Triste/Colère et leur recette r21 dans ART-014 / REC-053. Le statut et les critères restent dans la vue ART. [Décision et livraison](../operations/handoffs/2026-11-27-chatgpt-intentions-r21-implementation.md).
 
 **Reprise du Live mobile le 27/11 :** le lot `3d2f3ea` était publié et sa CI Linux/Windows verte. L’audit retrouve un défaut de format des permissions envoyées à OpenAI et un message de fin de réponse périmé ; correction suivie dans **DEV-055**. [Diagnostic et preuves](../operations/handoffs/2026-11-27-chatgpt-live-resume.md). REC-044 à REC-050 restent les recettes mobiles. La demande suivante du propriétaire engage immédiatement Discord, suivi désormais en REC-051.
 
@@ -41,7 +43,7 @@
 
 **Microphone physique du PC, Twitch et OBS restent suspendus** dans leurs cartes concernées. [Décision et limites](../operations/handoffs/2026-11-22-validation-rec031-rec033-rec034.md).
 
-**Intentions supplémentaires — demande du 26/11 :** [DEV-053](01-DEVELOPPEMENT.md#dev-053--intentions-triste-et-colère-avec-parité-complète-p1) et son travail artistique distinct [ART-014](04-PRODUCTION-2D.md#art-014--expressions-et-animations-triste-et-colère-p1) sont ajoutés en **P1** : **Triste et Colère**, même prise en charge que les sept intentions existantes, voix, expressions, deux variantes A/B, corps et oreilles inclus. Le catalogue cible compte neuf intentions et dix-huit variantes. Les statuts restent dans les vues canoniques ; cette demande inscrit le travail à réaliser.
+**Intentions supplémentaires — développement du 27/11 :** **DEV-053 → [REC-053](02-RECETTE.md#rec-053--intentions-triste-et-colère-sur-r21-ancienne-dev-053)**, en **P1**, après implémentation de **Triste et Colère** : contrat commun, prosodie, représentations textuelles et intégration r21. [ART-014](04-PRODUCTION-2D.md#art-014--expressions-et-animations-triste-et-colère-p1) conserve l’acceptation des quatre motions originales A/B livrées sur le rig existant. La campagne porte exclusivement sur **r21, neuf intentions et dix-huit variantes** ; r20 est conservé dans l’application sans maintenance ni tests, dans ce lot comme dans les suivants. Les voix en service et le Redmi n’ont pas été observés. La refonte faciale ART-015 est reportée faute d’accès natif. Statuts et critères dans les vues canoniques ; [réalisation, preuves et limites](../operations/handoffs/2026-11-27-chatgpt-intentions-r21-implementation.md).
 
 ## Focus de travail léger (limite indicative : 3 tâches réellement « En cours »)
 
@@ -61,23 +63,25 @@
 
 | Type | Vue | Objet | Nombre actuel |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 31 |
-| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, dont les anciennes cartes DEV déplacées | 57 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 30 |
+| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, dont les anciennes cartes DEV déplacées | 52 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 16 |
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 15 |
 | **Total** | | **Cartes uniques dans la vue priorisée. OPS-012 et REC-028 sont classées sans suite, hors vue** | **113** |
+
+Le décompte porte sur les cartes canoniques uniques de la vue priorisée ; les rappels d’une carte dans les tableaux de preuves ne constituent pas des cartes supplémentaires. La vue REC contient 53 identifiants canoniques, dont REC-028 classée sans suite : 52 restent dans la vue priorisée.
 
 **Definition of Done officielle :** [lire les règles de clôture](DEFINITION_OF_DONE.md). Toute carte n'est **Done** que si les cinq exigences sont satisfaites, dont validation explicite par **Codex (tous ses modèles et sous-agents) OU le propriétaire**, **au moins un des deux**. L'intervention humaine n'est plus obligatoire si Codex a validé. La présence du code ou d'une CI verte ne clôture pas à elle seule une recette physique.
 
 Les sous-tâches de recette et les étapes matérielles restent séparées lorsqu'elles fournissent une preuve indépendante. Une anomalie constatée ouvre une carte `DEV` liée à `REC` ; pas de duplication du développement livré. Les fichiers thématiques sont **canoniques pour le détail et le statut de chaque carte** ; la présente vue fournit le classement global. Lorsqu'une carte change de priorité, mettre à jour le détail puis le rang ici.
 
-**Règle simple du propriétaire (21/11/2026) :** si une fonctionnalité est déjà développée et que seule son acceptation reste à faire, une **seule carte REC** porte le statut `À valider`. Pas de double suivi DEV Done / REC À valider. Anciens identifiants : `DEV-011 → REC-026`, `DEV-015 → REC-027`, `DEV-016 → REC-028`, `DEV-017 → REC-029`, `DEV-018 → REC-030`. Les cartes DEV encore à développer, bloquées ou Done restent inchangées.
+**Règle simple du propriétaire (21/11/2026) :** si une fonctionnalité est déjà développée et que seule son acceptation reste à faire, une **seule carte REC** porte le statut `À valider`. Pas de double suivi DEV Done / REC À valider. Anciens identifiants : `DEV-011 → REC-026`, `DEV-015 → REC-027`, `DEV-016 → REC-028`, `DEV-017 → REC-029`, `DEV-018 → REC-030`, puis `DEV-053 → REC-053` le 27/11/2026. Les cartes DEV encore à développer, bloquées ou Done restent inchangées.
 
 ## Deux jalons produit
 
 ### A · Jade actuelle opérationnelle
 
-Une instance `--all-channels` réellement utilisable, son, Discord écrit/vocal, Twitch, micro PC, accès HTTP local et PWA Android, mémoire opt-in et rendu r20, avec tests des audiences, des coupures, du coût et des limites constatées. **Le r21 final n'est pas bloquant pour ce jalon.** Une preuve matérielle reste à collecter ; les fonctionnalités sont néanmoins codées dans `develop`.
+Une instance `--all-channels` réellement utilisable, son, Discord écrit/vocal, Twitch, micro PC, accès HTTP local et PWA Android, mémoire opt-in et rendu mobile r21, avec tests des audiences, des coupures, du coût et des limites constatées. **La finition artistique finale du r21 n’est pas bloquante pour ce jalon.** Le renderer Windows historique r20 reste présent sans maintenance ni recette ; son raccordement r21 est suivi dans DEV-001. Les suspensions de recette existantes restent applicables. Une preuve matérielle reste à collecter ; les fonctionnalités sont néanmoins codées dans `develop`.
 
 ### B · Jade visuellement aboutie
 
@@ -153,8 +157,8 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 51 | REC-011 | A | Voix Étincelle et sept intentions | [REC](02-RECETTE.md) |
 | 52 | REC-018 | A | Avatar r20 Windows en rendu réel | [REC](02-RECETTE.md) |
 | 53 | REC-020 | A | Variantes d'intention A/B | [REC](02-RECETTE.md) |
-| 54 | ART-014 | B | Produire quatre variantes Triste et Colère avec expressions, corps et oreilles | [ART](04-PRODUCTION-2D.md#art-014--expressions-et-animations-triste-et-colère-p1) |
-| 55 | DEV-053 | Transverse | Ajouter Triste et Colère avec voix, animations et intégration complète | [DEV](01-DEVELOPPEMENT.md#dev-053--intentions-triste-et-colère-avec-parité-complète-p1) |
+| 54 | ART-014 | B | Valider quatre variantes Triste et Colère sur le rig r21 existant | [ART](04-PRODUCTION-2D.md#art-014--expressions-et-animations-triste-et-colère-p1) |
+| 55 | REC-053 | Transverse | Valider Triste/Colère et la non-régression des neuf intentions et dix-huit variantes r21 | [REC](02-RECETTE.md#rec-053--intentions-triste-et-colère-sur-r21-ancienne-dev-053) |
 | 56 | REC-022 | A | Liaisons des comptes Discord/Twitch avec Goldaj | [REC](02-RECETTE.md) |
 | 57 | REC-023 | A | Résilience des canaux et arrêt propre | [REC](02-RECETTE.md) |
 | 58 | DEV-002 | A | Corriger une éventuelle incompatibilité SDK Live2D Web Android | [DEV](01-DEVELOPPEMENT.md) |

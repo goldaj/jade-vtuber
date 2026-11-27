@@ -56,7 +56,7 @@ class MobileUiLayoutContract(unittest.TestCase):
         self.assertNotIn("room-kitchen.webp", CSS + JS + HTML)
         self.assertNotIn("kitchen-effects", HTML)
         self.assertIn('["bedroom", "kitchen", "living"].includes(room?.dataset.room)', AVATAR)
-        self.assertIn('.room[data-room="bedroom"] .room-art,.bedroom-frame,.portrait-seated-body{display:none}', CSS)
+        self.assertIn('.room[data-room="bedroom"] .bedroom-frame{display:block}', CSS)
 
 
 if __name__ == "__main__":

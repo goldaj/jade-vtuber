@@ -70,6 +70,22 @@
         {
           "File": "Jade_serious_B.motion3.json"
         }
+      ],
+      "Sad": [
+        {
+          "File": "mobile/Jade_sad_A.motion3.json"
+        },
+        {
+          "File": "mobile/Jade_sad_B.motion3.json"
+        }
+      ],
+      "Angry": [
+        {
+          "File": "mobile/Jade_angry_A.motion3.json"
+        },
+        {
+          "File": "mobile/Jade_angry_B.motion3.json"
+        }
       ]
     },
     "Expressions": [
@@ -80,6 +96,10 @@
       {
         "Name": "Sad",
         "File": "expressions/Sad.exp3.json"
+      },
+      {
+        "Name": "Angry",
+        "File": "expressions/Angry.exp3.json"
       }
     ]
   },

@@ -20,7 +20,7 @@ from src.jade_runtime.mobile_gateway import MobileGateway, WEB_ROOT
 
 
 class VisualContractTests(unittest.TestCase):
-    def test_every_intent_has_two_different_existing_expressions_and_texts(self):
+    def test_every_intent_has_two_captions_and_supported_expression_fallbacks(self):
         contract = visual_contract()
         self.assertEqual(contract["version"], 1)
         self.assertEqual(set(contract["intents"]), INTENTS)
@@ -29,16 +29,21 @@ class VisualContractTests(unittest.TestCase):
         for intent in sorted(INTENTS):
             choices = contract["intents"][intent]
             self.assertEqual(len(choices), 2, intent)
-            self.assertNotEqual(choices[0]["expression"], choices[1]["expression"])
+            # The r21 has its own A/B face, acting and motion parameters. The
+            # shared expression name is only a safe fallback: both sad variants
+            # stay sad, and both angry variants stay angry.
+            if intent not in {"sad", "angry"}:
+                self.assertNotEqual(choices[0]["expression"], choices[1]["expression"])
             self.assertNotEqual(choices[0]["text"], choices[1]["text"])
             self.assertIn(choices[0]["expression"], EXPRESSIONS)
             first.add(choices[0]["expression"])
             for choice in choices:
                 self.assertNotIn(choice["text"], captions)
                 captions.add(choice["text"])
-        # Seven different default faces even before new rigged motion assets.
-        self.assertEqual(len(first), len(INTENTS))
-        self.assertEqual(len(captions), 14)
+        self.assertEqual(first, EXPRESSIONS)
+        self.assertEqual(len(captions), 18)
+        self.assertEqual({v["expression"] for v in contract["intents"]["sad"]}, {"Sad"})
+        self.assertEqual({v["expression"] for v in contract["intents"]["angry"]}, {"Angry"})
 
     def test_unknown_label_has_trusted_neutral_fallback(self):
         self.assertEqual(reaction_for_intent("untrusted data"), reaction_for_intent("neutral"))

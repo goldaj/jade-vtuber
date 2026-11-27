@@ -105,7 +105,7 @@ async function submit(value){
   const catalogue = assets.indexOf("/assets/avatar-models.js");
   const loader = assets.indexOf("/assets/avatar-model-loader.js");
   assert(catalogue > assets.indexOf("/assets/app.js"), "catalogue loads only after private login");
-  assert(catalogue < assets.indexOf("/assets/seated-scene.js"), "seated scene sees the catalogue");
+  assert(catalogue < loader, "the r21 loader receives the catalogue");
   assert(loader > assets.indexOf("/vendor/cubism4.min.js"), "model loader receives the complete SDK");
   assert(loader < assets.indexOf("/assets/avatar.js"), "renderer receives its selection loader");
   assert(assets.indexOf("/assets/avatar-gestures.js") > assets.indexOf("/assets/avatar.js"),

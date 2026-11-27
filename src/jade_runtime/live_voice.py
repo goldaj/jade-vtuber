@@ -62,7 +62,12 @@ LIVE_DELIVERY_PROMPT = (
     "par le rythme et la mélodie : enjouée, laisse entendre un sourire malicieux ; enthousiaste, "
     "donne de l'élan sans hausser le volume ; curieuse, marque un intérêt vif et une légère "
     "montée sur les questions ; tendre, adoucis brièvement le timbre ; rassurante, ralentis "
-    "légèrement avec une cadence stable ; sérieuse, parle d'un ton posé et précis. "
+    "légèrement avec une cadence stable ; sérieuse, parle d'un ton posé et précis ; "
+    "triste, adoucis le timbre avec un rythme légèrement ralenti et des fins de phrase "
+    "descendantes, sans sanglots ni chuchotements ; en colère, marque des accents fermes "
+    "et une articulation plus incisive, sans crier ni changer d'identité vocale. "
+    "Exprime l'émotion de ta réponse : évoquer la tristesse ou la colère de quelqu'un "
+    "ne t'impose pas cette émotion ; pour réconforter, garde une intention rassurante. "
     "Pour les échanges neutres, garde une diction conversationnelle naturelle."
 )
 

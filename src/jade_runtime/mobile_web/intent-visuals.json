@@ -70,6 +70,26 @@
         "expression": "Neutral",
         "text": "Concentration tranquille"
       }
+    ],
+    "sad": [
+      {
+        "expression": "Sad",
+        "text": "Peine retenue"
+      },
+      {
+        "expression": "Sad",
+        "text": "Soupir mélancolique"
+      }
+    ],
+    "angry": [
+      {
+        "expression": "Angry",
+        "text": "Indignation contenue"
+      },
+      {
+        "expression": "Angry",
+        "text": "Protestation vive"
+      }
     ]
   }
 }

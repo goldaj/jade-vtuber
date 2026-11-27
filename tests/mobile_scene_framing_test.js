@@ -1,4 +1,4 @@
-/* Geometry of the real resize path, with PIXI-compatible scaled dimensions. */
+/* r21 portrait geometry through the real resize path and PIXI-scaled dimensions. */
 "use strict";
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -43,7 +43,7 @@ async function client() {
     appendChild(){}, getClientRects(){return [{}];}};
   const shell = {dataset:{view:"home"}, immersive:false,
     classList:{contains(name){return name === "is-room-only" && shell.immersive;}}};
-  const room = {dataset:{room:"kitchen", seatedReady:"false", seatedCompositor:"false"},
+  const room = {dataset:{room:"kitchen"},
     addEventListener(){}, dispatchEvent(){}};
   const fallback = {classList:{add(){},remove(){}}}, status = {textContent:""}, mood = {textContent:""};
   const document = {
@@ -54,12 +54,12 @@ async function client() {
   };
   // A standing model with a portrait aspect ratio; dimensions always reflect
   // scale, as PIXI does. Fixed width/height mocks would hide resize drift.
-  const model = new DisplayObject(600, 1300);
+  const model = new DisplayObject(3840, 5000);
   model.internalModel = {coreModel:{getDrawableRenderOrders(){return [0];}}, draw(){}};
   model.motion = () => Promise.resolve();
-  const sprites = [], isolationStates = [], viewport = {};
-  class Container {
-    constructor(){this.children = [];}
+  const viewport = {};
+  class Container extends DisplayObject {
+    constructor(){super(0,0);this.children = [];}
     addChild(child){this.children.push(child); child.parent = this;}
     addChildAt(child, index){this.children.splice(index, 0, child); child.parent = this;}
   }
@@ -70,24 +70,16 @@ async function client() {
       this.ticker = {start(){},stop(){},add(){}};
     }
   }
-  const PIXI = {
-    Application, Container,
-    Sprite:{from(image){
-      const sprite = new DisplayObject(image.naturalWidth, image.naturalHeight);
-      sprite.texture = {}; sprites.push(sprite); return sprite;
-    }},
-    live2d:{Live2DModel:{async from(){return model;}}}
-  };
-  const profile = {id:"classic", available:true, manifestUrl:"/model/Jade.model3.json",
-    presentation:"seated", classicIntents:true, idleMotion:"Idle"};
+  const PIXI = {Application, Container, live2d:{}};
+  const profile = {id:"next", available:true, manifestUrl:"/models/next/Jade.model3.json",
+    presentation:"full", classicIntents:false, idleMotion:"Idle"};
   const window = {PIXI, Live2DCubismCore:{}, devicePixelRatio:1,
-    JadeModelCatalog:{defaultId:"classic", ready:Promise.resolve([profile]),
+    JadeModelCatalog:{defaultId:"next", ready:Promise.resolve([profile]),
       get(id){return id === profile.id ? profile : null;}, list(){return [profile];}},
     JadeAvatarModelLoader:{async load(selected){
-      assert.equal(selected.id, "classic"); return {model, dispose(){model.autoUpdate = false;}};
-    }},
-    JadeHeadIsolation:{forModel(){return {canLayerHair:true,
-      sync(active){isolationStates.push(active);}, drawPass(_name, draw){return draw();}};}}};
+      assert.equal(selected.id, "next", "only r21 belongs to this campaign");
+      return {model, dispose(){model.autoUpdate = false;}};
+    }}};
   vm.runInNewContext(source, {window, document, console,
     fetch:async()=>({ok:true,json:async()=>({version:1,enabled:false,intents:{}})}),
     ResizeObserver:class {observe(){}},
@@ -95,87 +87,76 @@ async function client() {
   }, {filename:"avatar.js"});
   for (let turn = 0; turn < 60; turn++) await Promise.resolve();
   assert.equal(window.JadeAvatar.ready, true, status.textContent);
-  function resize(width, height, view = shell.dataset.view, immersive = false) {
-    target.clientWidth = width; target.clientHeight = height;
+  function resize(width, height, view = shell.dataset.view, immersive = false, extraCanvasHeight = 0) {
+    target.clientWidth = width; target.clientHeight = height + extraCanvasHeight;
+    target.parentElement = {clientHeight:height};
     shell.dataset.view = view; shell.immersive = immersive;
     window.JadeAvatar.resize();
-    assert.equal(viewport.width, width); assert.equal(viewport.height, height);
+    assert.equal(viewport.width, width); assert.equal(viewport.height, height + extraCanvasHeight);
     return snapshot(model);
   }
-  return {window, model, room, shell, target, sprites, isolationStates, resize};
+  return {window, model, room, shell, target, resize};
 }
 
 (async () => {
   const a = await client();
-  const sizes = [[336,180], [388,220], [360,115], [780,150], [300,500], [520,650]];
-  for (const view of ["chat", "reminders", "profile"]) {
-    for (const [width, height] of sizes) {
-      a.room.dataset.room = "kitchen";
-      const geometry = a.resize(width, height, view);
-      const top = geometry.y - a.model.anchor.y * geometry.height;
-      const left = geometry.x - a.model.anchor.x * geometry.width;
-      const right = left + geometry.width;
-      assert(top > 0, `${view} ${width}x${height}: leave room above the head`);
-      assert(top < height / 4, "the head stays near the top, not the vertical centre");
-      assert(top + geometry.height / 2 <= height, "the upper half remains visible in a short scene");
-      assert(left >= 0 && right <= width, "the head must not be cropped horizontally");
-      close(geometry.x, width / 2, "the model stays horizontally centred");
-      close(geometry.scaleX, geometry.scaleY, "uniform model scale");
-      close(geometry.width / geometry.height, a.model.naturalWidth / a.model.naturalHeight,
-        "the original model proportions are preserved");
-      for (let count = 0; count < 10; count++)
-        sameGeometry(a.resize(width, height, view), geometry, "repeated resize must not drift");
-      a.room.dataset.room = "living";
-      sameGeometry(a.resize(width, height, view), geometry, "salon and kitchen share the standing framing");
-      a.room.dataset.room = "bedroom";
-      sameGeometry(a.resize(width, height, view), geometry, "missing seated artwork uses the same face-priority framing");
+  // Absolute eye centres and spacing recorded for the current r21 portrait
+  // camera. No other model or renderer participates in these expectations.
+  const cases = [
+    [336,180,[173.48625,15.35175,27.10125]],
+    [388,220,[199.45875,18.76325,33.12375]],
+    [360,115,[191.05,6.71,18.25]],
+    [780,150,[422.071875,12.793125,22.584375]],
+    [300,500,[149.61523438,175.35039062,35.21679688]],
+    [520,650,[259.33307292,177.40734375,61.04244792]],
+    [413,735,[205.97030599,268.65237109,48.48179036]],
+    [400,220,[206.11875,18.76325,33.12375]],
+    [845,223,[452.8771875,19.0191125,33.5754375]],
+    [390,650,[194.49980469,227.95550781,45.78183594]],
+    [390,844,[194.49980469,341.25150781,45.78183594]],
+    [941,1672,[469.29311849,610.55705859,110.46335286]],
+  ];
+  const eyes = geometry => [geometry.x, geometry.y + (761 - 2500) * geometry.scaleY, 289 * geometry.scaleX];
+  for (const room of ["bedroom", "kitchen", "living"]) {
+    a.room.dataset.room = room;
+    for (const view of ["home", "chat", "reminders", "profile"]) {
+      for (const [width, height, expectedEyes] of cases) {
+        const geometry = a.resize(width, height, view);
+        const actualEyes = eyes(geometry);
+        actualEyes.forEach((value,index) => close(value,expectedEyes[index],
+          `${room} ${view} ${width}x${height}: r21 eye registration (${index})`));
+        assert(actualEyes[0] - actualEyes[2] / 2 > 0 && actualEyes[0] + actualEyes[2] / 2 < width,
+          "both eyes remain horizontally visible");
+        assert(actualEyes[1] > 0 && actualEyes[1] < height,"the face stays within the portrait frame");
+        close(geometry.scaleX,geometry.scaleY,"uniform r21 model scale");
+        close(geometry.width / geometry.height,3840 / 5000,"r21 proportions remain intact");
+        for (let count = 0; count < 5; count++)
+          sameGeometry(a.resize(width,height,view),geometry,"repeated resize does not drift");
+        sameGeometry(a.resize(width,height,view,false,88),geometry,
+          "extending the render surface below the portrait must not move its camera");
+      }
     }
   }
-  const short = a.resize(780, 150, "chat");
-  assert(short.y + (1 - a.model.anchor.y) * short.height > a.target.clientHeight,
-    "short scenes may crop the lower body to retain a readable head");
 
-  // Home and immersive transforms must be recovered after arbitrary visits,
-  // dimensions and rooms, rather than accumulating the mini-scene camera.
-  a.room.dataset.room = "kitchen";
-  const home = a.resize(390, 650, "home");
-  const fullscreen = a.resize(390, 844, "home", true);
-  for (const view of ["chat", "reminders", "profile"]) {
-    a.resize(780, 150, view);
-    sameGeometry(a.resize(390, 844, view, true), fullscreen, "fullscreen ignores the originating menu");
-    a.resize(336, 180, view);
-    sameGeometry(a.resize(390, 650, "home"), home, "home camera is restored on return");
-  }
-
-  a.room.dataset.room = "living";
-  sameGeometry(a.resize(390, 650, "home"), home, "salon home uses the kitchen camera");
-  sameGeometry(a.resize(390, 844, "home", true), fullscreen, "salon fullscreen uses the kitchen camera");
-
-  // The seated head and body keep one registration. The CSS camera moves the
-  // common scene plane; entering a menu must not reposition the head alone.
-  a.room.dataset.room = "bedroom";
-  a.room.dataset.seatedReady = "true";
-  a.room.dataset.seatedCompositor = "true";
-  assert.equal(a.window.JadeAvatar.prepareSeatedComposition({naturalWidth:670, naturalHeight:956}), true);
-  const body = a.sprites[0];
-  const seatedHead = a.resize(470.5, 836, "home");
-  const seatedBody = snapshot(body);
-  assert.equal(body.visible, true);
-  for (const view of ["chat", "reminders", "profile", "home"]) {
-    for (const immersive of [false, true]) {
-      sameGeometry(a.resize(470.5, 836, view, immersive), seatedHead, "seated head registration is menu-independent");
-      sameGeometry(snapshot(body), seatedBody, "seated body registration is menu-independent");
-      assert.equal(a.isolationStates.at(-1), true, "seated head isolation stays active");
+  // Menu visits and fullscreen entry must restore the same r21 registration.
+  const home = a.resize(390,650,"home");
+  const fullscreen = a.resize(390,844,"home",true);
+  for (const room of ["bedroom", "kitchen", "living"]) {
+    a.room.dataset.room = room;
+    for (const view of ["chat", "reminders", "profile"]) {
+      a.resize(780,150,view);
+      sameGeometry(a.resize(390,844,view,true),fullscreen,"fullscreen ignores the originating menu");
+      a.resize(336,180,view);
+      sameGeometry(a.resize(390,650,"home"),home,"the home camera is restored after a menu visit");
     }
   }
-  for (const factor of [0.6, 1.25, 2, 1]) {
-    const head = a.resize(470.5 * factor, 836 * factor, "chat");
-    const torso = snapshot(body);
-    for (const key of Object.keys(head)) {
-      close(head[key] / factor, seatedHead[key], `head scales with its scene (${key})`);
-      close(torso[key] / factor, seatedBody[key], `body scales with the same scene (${key})`);
-    }
+
+  const reference = a.resize(941,1672,"home");
+  for (const factor of [.6,1.25,2,1]) {
+    const geometry = a.resize(941 * factor,1672 * factor,"chat");
+    for (const key of Object.keys(reference))
+      close(geometry[key] / factor,reference[key],`r21 follows the portrait plane (${key})`);
   }
-  sameGeometry(a.resize(470.5, 836, "home"), seatedHead, "seated home camera is restored");
-  console.log("Scene framing: face priority, portrait/landscape, stable resize and shared seated registration PASS");
+  sameGeometry(a.resize(941,1672,"home"),reference,"the initial portrait transform is recovered");
+  console.log("r21 framing: 3 rooms, 4 views, 12 sizes, absolute eye landmarks, fullscreen and stable resize PASS");
 })().catch(error => {console.error(error); process.exitCode = 1;});

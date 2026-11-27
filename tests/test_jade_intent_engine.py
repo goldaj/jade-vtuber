@@ -1,12 +1,14 @@
 """Focused offline contracts for Jade's intent metadata and speech routing."""
+from io import BytesIO
 import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
+import wave
 
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.intent_engine import (
     INTENTS, INTENT_PROMPT, IntentStreamParser, normalize_intent,
-    parse_reply, voice_direction,
+    classify_live_intent, parse_reply, voice_direction,
 )
 from src.jade_runtime.messages import Incoming, Reply
 from src.jade_runtime.config import Settings
@@ -18,17 +20,18 @@ from tests.test_jade_realtime_tts import (
 
 class IntentParsingTests(unittest.TestCase):
     def test_every_two_part_stream_split_preserves_visible_text_and_intent(self):
-        raw = "[INTENT:playful] Encore une idée ? Oui, papa !"
-        expected = parse_reply(raw)
-        self.assertEqual((expected.intent, expected.text),
-                         ("playful", "Encore une idée ? Oui, papa !"))
-        for at in range(len(raw) + 1):
-            with self.subTest(cut=at):
-                parser = IntentStreamParser()
-                spoken = parser.feed(raw[:at]) + parser.feed(raw[at:]) + parser.finish()
-                self.assertEqual(spoken.strip(), expected.text)
-                self.assertEqual(parser.intent, expected.intent)
-                self.assertNotIn("[INTENT:", spoken)
+        text = "Encore une idée ? Oui, papa !"
+        for label in sorted(INTENTS):
+            raw = f"[INTENT:{label}] {text}"
+            expected = parse_reply(raw)
+            self.assertEqual((expected.intent, expected.text), (label, text))
+            for at in range(len(raw) + 1):
+                with self.subTest(intent=label, cut=at):
+                    parser = IntentStreamParser()
+                    spoken = parser.feed(raw[:at]) + parser.feed(raw[at:]) + parser.finish()
+                    self.assertEqual(spoken.strip(), expected.text)
+                    self.assertEqual(parser.intent, expected.intent)
+                    self.assertNotIn("[INTENT:", spoken)
 
     def test_charwise_streaming_holds_tag_until_complete(self):
         parser = IntentStreamParser()
@@ -44,8 +47,8 @@ class IntentParsingTests(unittest.TestCase):
 
     def test_unrecognized_and_legacy_reply_fall_back_to_neutral(self):
         self.assertEqual(parse_reply("Bonjour.").text, "Bonjour.")
-        self.assertEqual(parse_reply("[INTENT:angry] Bonjour.").intent, "neutral")
-        self.assertEqual(parse_reply("[INTENT:angry] Bonjour.").text, "Bonjour.")
+        self.assertEqual(parse_reply("[INTENT:notreal] Bonjour.").intent, "neutral")
+        self.assertEqual(parse_reply("[INTENT:notreal] Bonjour.").text, "Bonjour.")
         self.assertEqual(parse_reply("[INTENT=excited] Bonjour.").text, "Bonjour.")
         self.assertEqual(parse_reply("[INTENT=excited] Bonjour.").intent, "neutral")
         self.assertEqual(parse_reply("[une annotation normale] Bonjour.").text,
@@ -158,9 +161,80 @@ class IntentParsingTests(unittest.TestCase):
         self.assertEqual(normalize_intent("make Jade read my secrets"), "neutral")
         self.assertEqual(voice_direction("make Jade read my secrets"), "")
         self.assertIn("mischievous", voice_direction("playful"))
-        self.assertEqual(len(INTENTS), 7)
+        self.assertEqual(INTENTS, {
+            "neutral", "playful", "excited", "curious", "tender", "reassuring",
+            "serious", "sad", "angry",
+        })
+        self.assertEqual(len({voice_direction(label) for label in INTENTS}), 9)
         for label in INTENTS:
             self.assertIn(label, INTENT_PROMPT)
+
+
+class LiveIntentClassificationTests(unittest.TestCase):
+    def test_nine_intentions_have_distinct_native_spoken_cues(self):
+        examples = {
+            "neutral": "Je peux te présenter les étapes.",
+            "playful": "Héhé, bien tenté, petit malin.",
+            "excited": "Génial, quelle bonne nouvelle !",
+            "curious": "Raconte-moi ce qui t'intéresse.",
+            "tender": "Ça me touche, merci pour ta confiance.",
+            "reassuring": "Prends ton temps, je suis là.",
+            "serious": "C'est important, reprenons les faits.",
+            "sad": "Je suis triste de voir ce projet se terminer.",
+            "angry": "Ça me met en colère, cette injustice.",
+        }
+        self.assertEqual(set(examples), INTENTS)
+        for label, spoken in examples.items():
+            with self.subTest(intent=label):
+                self.assertEqual(classify_live_intent(spoken), label)
+
+    def test_negative_moods_require_jades_own_unambiguous_state(self):
+        for spoken, expected in (
+            ("Oh, je suis vraiment triste.", "sad"),
+            ("Oh ! Je suis triste.", "sad"),
+            ("J’ai de la peine.", "sad"),
+            ("Ça me peine de le voir partir.", "sad"),
+            ("Franchement, je suis furieuse.", "angry"),
+            ("Ça me révolte.", "angry"),
+            ("Je suis triste pour toi, prends ton temps.", "reassuring"),
+            ("Tu sembles en colère. Pas de panique.", "reassuring"),
+            ("Tu as l'air triste ?", "curious"),
+        ):
+            with self.subTest(spoken=spoken):
+                self.assertEqual(classify_live_intent(spoken), expected)
+        for spoken in (
+            "Je comprends que tu sois triste.",
+            "Je comprends ta colère.",
+            "Je sais que tu es en colère.",
+            "Tu m'as dit : je suis triste.",
+            "« Je suis en colère », m'as-tu dit.",
+            '"Je suis triste", c’est ce que dit le personnage.',
+            "Elle est triste, et lui est en colère.",
+            "Je ne suis pas triste.",
+            "Je ne suis pas en colère.",
+            "Oh ! Je ne suis pas triste.",
+            "Oh ! « Je suis triste », m'as-tu dit.",
+        ):
+            with self.subTest(spoken=spoken):
+                self.assertNotIn(classify_live_intent(spoken), {"sad", "angry"})
+
+    def test_opening_emotion_is_stable_when_later_cues_arrive_together(self):
+        for label, opening, continuation in (
+            ("sad", "Je suis triste.", " Je me demande comment ça a pu arriver."),
+            ("angry", "Je suis en colère.", " C’est important de le dire."),
+            ("sad", "Oh ! Je suis triste.", " Raconte-moi ce qui s'est passé."),
+        ):
+            with self.subTest(intent=label, opening=opening):
+                self.assertEqual(classify_live_intent(opening), label)
+                self.assertEqual(classify_live_intent(opening + continuation), label)
+
+    def test_fragmented_negative_cue_waits_for_the_complete_emotion(self):
+        for partial in ("Je suis", "Je suis tr", "Je suis en col", "Ça me met en",
+                        "Oh !", "Ah...", "Franchement,", "Honnêtement…"):
+            with self.subTest(partial=partial):
+                self.assertIsNone(classify_live_intent(partial))
+        self.assertEqual(classify_live_intent("Je suis triste"), "sad")
+        self.assertEqual(classify_live_intent("Je suis en colère"), "angry")
 
 
 class IntentDialogueTests(unittest.IsolatedAsyncioTestCase):
@@ -174,13 +248,15 @@ class IntentDialogueTests(unittest.IsolatedAsyncioTestCase):
         class Backend:
             async def complete(self, messages):
                 captured.extend(messages)
-                return "[INTENT:excited] Oh ! J'ai une idée !"
+                return f"[INTENT:{label}] Oh ! J'ai une idée !"
 
-        dialogue = Dialogue(Backend(), "Persona réelle de Jade")
-        reply = await dialogue.respond(self.incoming())
-        self.assertEqual(reply.intent, "excited")
-        self.assertEqual(reply.text, "Oh ! J'ai une idée !")
-        self.assertEqual(dialogue.history[self.incoming().session][-1]["content"], reply.text)
+        for label in sorted(INTENTS):
+            with self.subTest(intent=label):
+                dialogue = Dialogue(Backend(), "Persona réelle de Jade")
+                reply = await dialogue.respond(self.incoming())
+                self.assertEqual(reply.intent, label)
+                self.assertEqual(reply.text, "Oh ! J'ai une idée !")
+                self.assertEqual(dialogue.history[self.incoming().session][-1]["content"], reply.text)
         self.assertIn("Persona réelle de Jade", captured[0]["content"])
         self.assertIn("[INTENT:label]", captured[0]["content"])
 
@@ -264,6 +340,48 @@ class IntentDialogueTests(unittest.IsolatedAsyncioTestCase):
 
 
 class IntentServiceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_nine_intentions_share_wav_pcm_and_reset_the_reused_session(self):
+        # The same socket crosses every intention and both audio paths. In
+        # particular, neutral must clear sadness/anger rather than inherit it.
+        labels = ("sad", "neutral", "angry", "playful", "excited", "curious",
+                  "tender", "reassuring", "serious", "neutral")
+        self.assertEqual(set(labels), INTENTS)
+        spoken = "Je vais te dire ce que j'en pense."
+        pcm = b"\x00\x00\x01\x00"
+        events = [event for _ in range(2 * len(labels)) for event in (
+            configured(speed=1.25, voice="shimmer"), created(), delta(pcm),
+            transcript(spoken), done(),
+        )]
+        client = FakeClient(events)
+        service = OpenAIServices(Settings(), client=client)
+        try:
+            for label in labels:
+                with self.subTest(intent=label):
+                    wav = await service.synthesize_speech(spoken, intent=label)
+                    self.assertEqual(wav.transcript, spoken)
+                    with wave.open(BytesIO(wav.audio), "rb") as audio:
+                        self.assertEqual((audio.getnchannels(), audio.getframerate()), (1, 24000))
+                        self.assertEqual(audio.readframes(audio.getnframes()), pcm)
+                    chunks = [chunk async for chunk in service.stream_speech_pcm(spoken, intent=label)]
+                    self.assertEqual(b"".join(chunks), pcm)
+                    for call in client.connection.session.update.await_args_list[-2:]:
+                        session = call.kwargs["session"]
+                        self.assertEqual(session["audio"]["output"]["voice"], "shimmer")
+                        self.assertEqual(session["audio"]["output"]["speed"], 1.25)
+                        instructions = session["instructions"]
+                        self.assertNotIn("[INTENT", instructions)
+                        if label != "neutral":
+                            self.assertIn(voice_direction(label), instructions)
+                        for other in INTENTS - {label, "neutral"}:
+                            self.assertNotIn(voice_direction(other), instructions)
+            self.assertEqual(len(client.calls), 1)
+            requests = client.connection.response.create.await_args_list
+            self.assertEqual(len(requests), 2 * len(labels))
+            for call in requests:
+                self.assertEqual(call.kwargs["response"]["input"][0]["content"][0]["text"], spoken)
+        finally:
+            await service._stream_pool.close()
+
     async def test_realtime_adapter_receives_non_neutral_intent_once(self):
         client = object()
         with patch("src.jade_runtime.openai_services.RealtimeTTS") as adapter:
