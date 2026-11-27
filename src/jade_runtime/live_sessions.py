@@ -408,7 +408,7 @@ class LiveSessionManager:
         lease = self._leases.get(owner)
         session = self._sessions.get(lease.session) if lease and lease.session else None
         sessions = self._blocking_sessions(owner)
-        if session is not None and session.phase in INACTIVE_PHASES:
+        if session is not None and session.phase == "retired_unconfirmed":
             session = None
         if session is None:
             session = next(iter(sessions), None)
