@@ -1,9 +1,11 @@
 import asyncio
+from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import json
 from pathlib import Path
 import tempfile
+import threading
 import unittest
 from urllib.parse import parse_qs, urlsplit
 
@@ -166,6 +168,38 @@ class GlobalSpendTests(unittest.IsolatedAsyncioTestCase):
         result = await collector.collect()
         self.assertEqual(result["month"], "2026-12")
         self.assertNotIn("last_known_eur", result)
+
+    async def test_cancelled_collection_joins_source_worker_before_private_file_cleanup(self):
+        collector = self.collector()
+        entered, finished = asyncio.Event(), asyncio.Event()
+        release = threading.Event()
+        loop = asyncio.get_running_loop()
+        original = collector._tavily
+
+        def slow_source(now):
+            try:
+                with closing(collector.store.connect()) as db:
+                    db.execute("SELECT value FROM global_spend_state LIMIT 1").fetchone()
+                    loop.call_soon_threadsafe(entered.set)
+                    if not release.wait(2):
+                        raise AssertionError("test did not release collector worker")
+                return original(now)
+            finally:
+                loop.call_soon_threadsafe(finished.set)
+
+        collector._tavily = slow_source
+        task = asyncio.create_task(collector.collect())
+        await asyncio.wait_for(entered.wait(), 1)
+        try:
+            task.cancel()
+            await asyncio.sleep(.01)
+            task.cancel()  # A second stop request cannot detach the real worker.
+            await asyncio.sleep(.01)
+            self.assertFalse(task.done(), "collection cancellation abandoned its SQLite-owning worker")
+        finally:
+            release.set()
+            await asyncio.gather(task, return_exceptions=True)
+            await asyncio.wait_for(finished.wait(), 1)
 
     def test_month_boundaries_paris_not_utc_in_winter_summer_and_dst(self):
         for instant, month, start in (

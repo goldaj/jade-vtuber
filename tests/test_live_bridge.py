@@ -129,11 +129,20 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         return event
 
     async def finish_tasks(self):
+        # These are business/persistence assertions, not a 3-second latency
+        # contract. A slow Windows filesystem must not cancel an already
+        # completed action while its journal commits. Keep the real delegation
+        # deadline plus bounded persistence headroom, without injecting cancel.
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + self.bridge.delegation_timeout + 15
         for _ in range(6):
             tasks = [task for state in self.bridge.sessions.values() for task in state.tasks.values()]
             if not tasks:
                 return
-            await asyncio.wait_for(asyncio.gather(*tasks, return_exceptions=True), 3)
+            _, pending = await asyncio.wait(tasks, timeout=max(0, deadline - loop.time()))
+            if pending:
+                self.fail("Live tasks exceeded delegation and persistence deadline")
+            await asyncio.gather(*tasks, return_exceptions=True)
         self.fail("Live tasks did not finish")
 
     async def finish_flushes(self):

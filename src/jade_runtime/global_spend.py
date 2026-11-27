@@ -46,6 +46,34 @@ TAVILY_STANDARD_PLANS = frozenset(("researcher", "free", "project", "bootstrap",
 ZERO = Decimal(0)
 
 
+async def run_blocking_owned(function, *args):
+    """Keep ownership of bounded blocking work until its real thread finishes.
+
+    Cancelling an await on to_thread does not stop SQLite/HTTP in that thread.
+    Releasing a policy lock or reporting close complete at that point can leave
+    a writer touching state after shutdown; Windows also refuses file cleanup.
+    Preserve cancellation, including repeated requests, but first join the work
+    while its caller still owns the relevant lock and private resources.
+    """
+    worker = asyncio.create_task(asyncio.to_thread(function, *args))
+    cancelled = None
+    while True:
+        try:
+            result = await asyncio.shield(worker)
+        except asyncio.CancelledError as error:
+            if worker.cancelled():
+                raise
+            cancelled = error
+        except BaseException:
+            if cancelled is not None:
+                raise cancelled from None
+            raise
+        else:
+            if cancelled is not None:
+                raise cancelled
+            return result
+
+
 def aware(value: datetime) -> datetime:
     if not isinstance(value, datetime) or value.tzinfo is None or value.utcoffset() is None:
         raise ValueError("spend timestamps must be timezone-aware")
@@ -303,7 +331,7 @@ class GlobalSpendCollector:
     async def _source(self, name, function, now):
         try:
             async with asyncio.timeout(20):
-                return await asyncio.to_thread(function, now)
+                return await run_blocking_owned(function, now)
         except HTTPError as exc:
             return {"status": "unknown", "reason": name + ("_access_denied" if exc.code in (401, 403) else "_unavailable")}
         except Exception:
@@ -313,10 +341,16 @@ class GlobalSpendCollector:
         async with self._lock:
             now = aware(self._now())
             month, start, end = paris_month(now)
-            openai, tavily, fx = await asyncio.gather(
+            # Join every source on cancellation. Ordinary gather may propagate
+            # the first cancelled child while another still owns SQLite state.
+            results = await asyncio.gather(
                 self._source("openai", self._openai, now),
                 self._source("tavily", self._tavily, now),
-                self._source("fx", self._fx, now))
+                self._source("fx", self._fx, now), return_exceptions=True)
+            for result in results:
+                if isinstance(result, BaseException):
+                    raise result
+            openai, tavily, fx = results
             sources = {"openai": openai, "tavily": tavily}
             failures = [value.get("reason", key + "_unavailable") for key, value in sources.items()
                         if value.get("status") not in ("ok", "not_applicable")]
@@ -341,13 +375,13 @@ class GlobalSpendCollector:
                 if snapshot["coverage"] == "bounded":
                     snapshot["spent_eur"] = str(total.quantize(Decimal("0.000001"), rounding=ROUND_UP))
             try:
-                previous = await asyncio.to_thread(self.store.get, "last_good_snapshot")
+                previous = await run_blocking_owned(self.store.get, "last_good_snapshot")
                 if snapshot["coverage"] != "unknown":
-                    await asyncio.to_thread(self.store.put, "last_good_snapshot", snapshot)
+                    await run_blocking_owned(self.store.put, "last_good_snapshot", snapshot)
                 elif previous and previous.get("month") == month:
                     snapshot["last_known_eur"] = previous.get("spent_eur")
                     snapshot["last_known_at"] = previous.get("checked_at")
-                await asyncio.to_thread(self.store.put, "last_attempt", snapshot)
+                await run_blocking_owned(self.store.put, "last_attempt", snapshot)
             except (OSError, sqlite3.Error, ValueError):
                 snapshot.update(coverage="unknown", reason="spend_storage_unavailable", spent_eur=None)
             return snapshot

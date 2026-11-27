@@ -76,6 +76,7 @@ PUBLIC_TOOLS = frozenset({
     "scripts/live_voice_preview.py",
     "tools/jade_publication_audit.py",
     "tools/jade_publication_export.py",
+    "tools/jade_preview_tests.py",
     "tools/jade_ci_preflight.py",
     "tools/jade_twitch_authorize.py",
     "tools/jade_pycharm_runner.py",

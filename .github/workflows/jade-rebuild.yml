@@ -116,3 +116,30 @@ jobs:
           assert not names.intersection({"elevenlabs", "google-cloud-texttospeech",
               "speechrecognition", "whisper", "faster-whisper", "pyttsx3"})
           PY
+
+  preview-offline:
+    name: Exported preview (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install locked dependencies including optional transports
+        run: |
+          python -m pip install --disable-pip-version-check poetry==2.2.1
+          poetry sync --only main --extras discord --extras mic --extras vts --extras discord-voice --no-interaction
+          poetry run python -m pip install --disable-pip-version-check tzdata
+      - name: Run complete offline suite from isolated export
+        run: poetry run python tools/jade_preview_tests.py

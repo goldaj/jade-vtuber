@@ -16,7 +16,7 @@ import inspect
 import json
 import sqlite3
 
-from .global_spend import SpendStore, amount, aware, paris_month
+from .global_spend import SpendStore, amount, aware, paris_month, run_blocking_owned
 from .live_usage import quote_voice
 
 
@@ -80,7 +80,7 @@ class DiscordLiveSpendPolicy:
                 if not isinstance(snapshot, dict):
                     raise ValueError("invalid spend snapshot")
                 async with self._lock:
-                    await asyncio.to_thread(self._reconcile_snapshot_sync, snapshot)
+                    await run_blocking_owned(self._reconcile_snapshot_sync, snapshot)
                     self._local_unavailable = False
             except asyncio.CancelledError:
                 raise
@@ -89,7 +89,7 @@ class DiscordLiveSpendPolicy:
                     self._snapshot = {"month": paris_month(aware(self._now()))[0], "coverage": "unknown",
                                       "checked_at": aware(self._now()).isoformat(), "reason": "spend_collection_failed"}
                     try:
-                        await asyncio.to_thread(self._reconcile_snapshot_sync, self._snapshot)
+                        await run_blocking_owned(self._reconcile_snapshot_sync, self._snapshot)
                     except (OSError, sqlite3.Error, ValueError, TypeError, KeyError):
                         self._local_unavailable = True
 
@@ -217,11 +217,11 @@ class DiscordLiveSpendPolicy:
             return
         async with self._lock:
             try:
-                await asyncio.to_thread(self._record_usage_sync, session_id, usage, model, aware(self._now()))
+                await run_blocking_owned(self._record_usage_sync, session_id, usage, model, aware(self._now()))
             except (ValueError, TypeError, KeyError, OSError, sqlite3.Error):
                 self._unknown_usage(aware(self._now()))
                 try:
-                    await asyncio.to_thread(self._save_usage)
+                    await run_blocking_owned(self._save_usage)
                 except (OSError, sqlite3.Error, ValueError):
                     pass
 
@@ -378,7 +378,7 @@ class DiscordLiveSpendPolicy:
         now = aware(self._now())
         async with self._lock:
             try:
-                result = await asyncio.to_thread(self._decide_sync, now, specification)
+                result = await run_blocking_owned(self._decide_sync, now, specification)
             except (OSError, sqlite3.Error, ValueError, KeyError, TypeError):
                 result = {"allow_live": False, "mode": "classic", "month": paris_month(now)[0],
                           "reason": "spend_state_unavailable", "coverage": "unknown",
@@ -432,7 +432,7 @@ class DiscordLiveSpendPolicy:
                                   observed_seconds=self._usage.get(session_key, {}).get("seconds", "0"))
                     self._put_reservation(db, key, record)
                 return True
-            return await asyncio.to_thread(bind)
+            return await run_blocking_owned(bind)
 
     async def settle_live(self, attempt_id, *, confirmed=False, never_started=False,
                           session_id=None, usage=None, model):
@@ -445,7 +445,7 @@ class DiscordLiveSpendPolicy:
         """
         key = self._identifier(attempt_id)
         async with self._lock:
-            return await asyncio.to_thread(self._settle_sync, key, confirmed is True,
+            return await run_blocking_owned(self._settle_sync, key, confirmed is True,
                                            never_started is True, session_id, usage, model, aware(self._now()))
 
     def _settle_sync(self, key, confirmed, never_started, session_id, usage, model, now):

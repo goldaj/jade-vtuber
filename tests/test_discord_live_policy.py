@@ -1,9 +1,11 @@
 import asyncio
 import copy
+from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 import tempfile
+import threading
 import unittest
 
 from src.jade_runtime.discord_live_policy import DiscordLiveSpendPolicy
@@ -178,6 +180,40 @@ class DiscordLiveSpendPolicyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.collector.calls, 1)
         await self.policy.close()
         self.assertEqual((await self.policy.decision())["reason"], "spend_policy_stopped")
+
+    async def test_close_joins_inflight_sqlite_refresh_before_releasing_private_files(self):
+        await self.set_snapshot("1")
+        entered, finished = asyncio.Event(), asyncio.Event()
+        release = threading.Event()
+        loop = asyncio.get_running_loop()
+        original = self.policy._reconcile_snapshot_sync
+
+        def slow_sqlite(snapshot):
+            # Windows cannot remove this private file while the worker owns it.
+            # The barrier makes the same ownership race deterministic on Linux.
+            try:
+                with closing(self.policy.store.connect()) as db:
+                    db.execute("SELECT value FROM global_spend_state LIMIT 1").fetchone()
+                    loop.call_soon_threadsafe(entered.set)
+                    if not release.wait(2):
+                        raise AssertionError("test did not release SQLite worker")
+                return original(snapshot)
+            finally:
+                loop.call_soon_threadsafe(finished.set)
+
+        self.policy._reconcile_snapshot_sync = slow_sqlite
+        self.now += timedelta(seconds=331)
+        self.assertEqual((await self.policy.decision())["reason"], "spend_stale")
+        await asyncio.wait_for(entered.wait(), 1)
+        closing_task = asyncio.create_task(self.policy.close())
+        try:
+            await asyncio.sleep(.02)
+            self.assertFalse(closing_task.done(), "close returned while SQLite still owned the private file")
+            self.assertFalse(finished.is_set())
+        finally:
+            release.set()
+            await asyncio.wait_for(closing_task, 1)
+            await asyncio.wait_for(finished.wait(), 1)
 
     async def reserve(self, attempt="attempt-1", policy=None):
         return await (policy or self.policy).reserve_live(attempt, model="gpt-live-1.1",
