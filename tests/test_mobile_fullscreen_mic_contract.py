@@ -43,7 +43,7 @@ class MobileFullscreenMicContract(unittest.TestCase):
         self.assertNotIn('id="live-microphone-control"', html)
         self.assertRegex(html, r'id="mic"[^>]*aria-label="Maintenir pour parler"[^>]*>🎙</button>')
         room = html.split('<section class="room"', 1)[1].split("</section>", 1)[0]
-        self.assertIn('id="live-indicator" role="status" aria-label="Mode Live en veille" hidden', room)
+        self.assertIn('id="live-indicator" role="status" aria-label="Live inactif" hidden', room)
         self.assertIn('#live-indicator{position:absolute;', css)
         self.assertIn('.shell:not([data-view="home"]) .live-indicator-label,', css)
         self.assertIn('.shell.is-room-only .live-indicator-label{display:none}', css)
