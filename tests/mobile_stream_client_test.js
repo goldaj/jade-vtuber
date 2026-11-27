@@ -260,8 +260,7 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
   assert.equal(frames, 12288, "all chunks, including silence, stream during the push");
   assert.equal(finished, 0, "silence must not finish the utterance while held");
   assert.equal(mic.classList.contains("recording"), true);
-  assert.equal(element("mic-feedback").hidden, false);
-  assert.match(element("mic-feedback").textContent, /Relâche pour envoyer/);
+  assert.match(element("status").textContent, /Relâche pour envoyer/);
   mouseEnds("pointerup", 2);
   assert.equal(finished, 0, "another pointer must not stop the capture");
   mouseEnds();
@@ -277,7 +276,7 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
   assert.deepEqual(performanceEvents.at(-1), ["finish"]);
   finishVoice();
   await tick();
-  assert.equal(element("mic-feedback").hidden, true, "ready clears the visible voice feedback");
+  assert.equal(element("status").textContent, "Prête.", "the screen-reader status returns to ready");
 
   await press();
   sample(.15);
@@ -309,7 +308,7 @@ vm.runInThisContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mo
   assert.equal(frames - beforeLimit, 960000, "bounded capture: exactly 20 seconds of PCM");
   assert.equal(stops, beforeLimitClosed + 1);
   assert.equal(finished, 2, "the limit closes the microphone and waits for release");
-  assert.match(element("mic-feedback").textContent, /Limite de 20 s/);
+  assert.match(element("status").textContent, /Limite de 20 s/);
   mouseEnds();
   assert.equal(finished, 3);
   assert.equal(stops, beforeLimitClosed + 1, "release after the limit does not stop the tracks twice");

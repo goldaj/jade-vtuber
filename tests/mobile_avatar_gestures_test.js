@@ -117,6 +117,10 @@ assert.deepEqual(single.calls.vibrations, []);
 const drag = client();
 drag.pointer("pointerdown");
 assert(drag.zone.hasPointerCapture(1), "the finger is tracked beyond the avatar");
+assert(drag.zone.dispatch("touchstart", {cancelable:true, changedTouches:[{clientX:100, clientY:160}]}).defaultPrevented,
+  "a touch on Jade suppresses the WebView long press before its timer starts");
+assert(!drag.zone.dispatch("touchstart", {cancelable:true, changedTouches:[{clientX:75, clientY:160}]}).defaultPrevented,
+  "the transparent area around Jade does not claim native touch behavior");
 assert.equal(drag.pointer("contextmenu").defaultPrevented, true, "a browser popup must not interrupt an avatar hold");
 drag.advance(1199);
 assert(!drag.zone.classList.contains("is-grabbed"));

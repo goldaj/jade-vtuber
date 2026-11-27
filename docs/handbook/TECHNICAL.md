@@ -4,7 +4,7 @@
 
 **Code présent sur `develop`, lot `90ec0c7` intégré le 26/11 à la demande du propriétaire ; base `6dc8d1b` conservée.** [Architecture et états](../architecture/LIVE_MOBILE.md) · [preuves et reprise](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md) · [REC-044 à REC-050](../backlog/02-RECETTE.md).
 
-Le gateway mobile raccorde `create_mobile_live` au Runtime existant. **Live est activé par défaut, sans plafond financier mobile.** La case **Mode Live** de **Config → Paramètres** choisit un mode persistant (`live` par défaut, `classic` explicite conservé), puis le bouton micro arme un bail exclusif. Les pistes et la session ne sont jamais restaurées automatiquement. La signalisation et le contrôle restent sur l'origine privée Jade ; l'audio négocié utilise WebRTC vers OpenAI. Aucun secret fournisseur n'est envoyé au navigateur.
+Le gateway mobile raccorde `create_mobile_live` au Runtime existant. **Live est sélectionné par défaut, sans plafond financier mobile.** La case **Mode Live** de **Config → Paramètres** conserve le choix (`live` par défaut, `classic` explicite conservé). L’activation explicite du mode tente d’armer le bail. Après rechargement ou interruption, **Activer le micro Live** dans Config fournit le geste requis par le navigateur. Le micro rouge d’Accueil et du plein écran sert d’indicateur. La signalisation et le contrôle restent sur l’origine privée Jade. L’audio négocié utilise WebRTC vers OpenAI. Les clés du fournisseur restent sur le serveur.
 
 ### Configuration privée Live
 

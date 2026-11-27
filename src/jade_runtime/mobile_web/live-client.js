@@ -18,7 +18,7 @@
     creation_unconfirmed:"Jade vérifie encore la connexion distante. Actualise son état avant de reprendre.",
     live_mode_off:"Le mode Live a été désactivé. Vérifie le choix dans Config.",
     preference_conflict:"Le choix vocal a changé sur un autre appareil. Vérifie Config.",
-    invalid_or_expired_live_lease:"L’autorisation du micro a expiré. Touche-le pour reprendre.",
+    invalid_or_expired_live_lease:"L’autorisation du micro a expiré. Réactive le micro Live dans Config.",
     live_auth_failed:"OpenAI refuse l’authentification de Jade. Vérifie sa connexion OpenAI côté serveur.",
     live_access_denied:"Le compte OpenAI de Jade n’a pas accès au Live.",
     live_model_unavailable:"Le modèle Live configuré n’est pas disponible pour le compte OpenAI de Jade.",
@@ -60,7 +60,7 @@
     let leaseId = null, leaseThread = null, socket = null, controlReady = false;
     let heartbeatTimer = null, heartbeatSeq = 0, acknowledgedSeq = 0, lastAck = 0, lastHeartbeat = 0;
     let context = null, media = null, source = null, worklet = null, destination = null;
-    let peer = null, dataChannel = null, remoteSource = null, analyser = null, playbackFrame = null;
+    let peer = null, dataChannel = null, remoteAudio = null, remoteSource = null, analyser = null, playbackFrame = null;
     let openingTimer = null, drainTimer = null, disconnectTimer = null;
     let opening = false, speechActive = false, playbackActive = false, lastAudible = -Infinity;
     let pendingResponse = false, sentSpeech = false, closePromise = null, heldSession = null;
@@ -237,6 +237,12 @@
       }
       if (playbackFrame !== null) env.cancelAnimationFrame(playbackFrame);
       playbackFrame = null;
+      if (remoteAudio) {
+        remoteAudio.pause();
+        remoteAudio.srcObject = null;
+        remoteAudio.remove();
+        remoteAudio = null;
+      }
       try { remoteSource?.disconnect(); analyser?.disconnect(); } catch (_) {}
       remoteSource = analyser = null;
       playbackActive = false;
@@ -354,7 +360,7 @@
             thread_id:leaseThread, lease_id:leaseId}));
         };
         ws.onerror = () => failed(new Error("Connexion Live interrompue."));
-        ws.onclose = () => failed(new Error("Supervision Live interrompue. Touche le micro pour reprendre."));
+        ws.onclose = () => failed(new Error("Supervision Live interrompue. Réactive le micro Live dans Config."));
         ws.onmessage = ({data}) => {
           if (generation !== epoch || socket !== ws) return;
           let event;
@@ -402,18 +408,36 @@
     function installOutput(stream, generation, connection) {
       if (generation !== epoch || peer !== connection || !context || !options.getSoundEnabled?.()) return;
       stopOutput(false);
+      // Attach the remote track to the browser's media player. Some Chromium
+      // builds leave WebRTC output silent with only a Web Audio consumer.
+      const audio = doc.createElement("audio");
+      audio.hidden = true;
+      audio.setAttribute("playsinline", "");
+      doc.body.appendChild(audio);
+      remoteAudio = audio;
+      audio.srcObject = stream;
       remoteSource = context.createMediaStreamSource(stream);
       analyser = context.createAnalyser();
       analyser.fftSize = 512;
       remoteSource.connect(analyser);
-      analyser.connect(context.destination);
+      let webAudioOutput = false;
+      audio.play().catch(() => {
+        if (remoteAudio !== audio) return;
+        // The capture gesture already unlocked this context. Use it as the
+        // single audible sink if the media player is blocked by autoplay.
+        audio.muted = true;
+        analyser.connect(context.destination);
+        webAudioOutput = true;
+        // Muted playback can still activate the WebRTC track on Chromium.
+        audio.play().catch(() => {});
+      });
       const samples = new Float32Array(analyser.fftSize);
       function animate() {
-        if (generation !== epoch || peer !== connection || !analyser) return;
+        if (generation !== epoch || peer !== connection || remoteAudio !== audio) return;
         analyser.getFloatTimeDomainData(samples);
         let power = 0;
         for (const sample of samples) power += sample * sample;
-        const level = Math.sqrt(power / samples.length);
+        const level = webAudioOutput || !audio.paused ? Math.sqrt(power / samples.length) : 0;
         if (level > .006) lastAudible = clock();
         const playing = clock() - lastAudible < 200;
         if (playing && !playbackActive) observePlayback("playing");
@@ -438,7 +462,7 @@
       publish();
       openingTimer = later(() => {
         if (generation === epoch && opening) void stop("opening_timeout",
-          {message:"La connexion a pris trop de temps. Touche le micro et répète ta phrase."});
+          {message:"La connexion a pris trop de temps. Réactive le micro Live dans Config."});
       }, Math.max(0, Math.min(8000, Number(state.capabilities?.opening_timeout_seconds || 8) * 1000) - (clock() - wakeStarted)));
       let connection;
       try {
@@ -462,6 +486,7 @@
           }
         };
         connection.ontrack = event => {
+          if (event.track?.kind !== "audio") return;
           const stream = event.streams?.[0] || new env.MediaStream([event.track]);
           installOutput(stream, generation, connection);
           if (event.track) event.track.onended = () => {
@@ -500,13 +525,13 @@
       } catch (error) {
         if (generation === epoch) void stop(error.code || "opening_failed",
           {message:error.code ? error.message : (error.message === "live_cancelled" ? "Live interrompu." :
-            "Connexion Live impossible. Touche le micro et répète ta phrase.")});
+            "Connexion Live impossible. Réactive le micro Live dans Config.")});
       }
     }
     async function arm() {
       if (leaseId || state.capture !== "closed" || state.changing || closePromise || doc.hidden) return false;
       if (state.mode !== "live" || !state.loaded || !state.available || !availableBrowser) return false;
-      if (!options.getSoundEnabled?.()) { message("sound_off", "Réactive la voix, puis touche le micro pour parler en Live."); return false; }
+      if (!options.getSoundEnabled?.()) { message("sound_off", "Réactive la voix dans Config pour parler en Live."); return false; }
       const generation = ++epoch;
       const bearer = options.getToken?.();
       const requestedThread = options.getThread?.();
@@ -547,7 +572,7 @@
         media = stream;
         await audioReady;
         if (audioError) throw audioError;
-        if (currentContext.state !== "running") throw new Error("L’audio est suspendu. Touche le micro pour reprendre.");
+        if (currentContext.state !== "running") throw new Error("L’audio est suspendu. Réactive le micro Live dans Config.");
         assertCurrent(generation);
         await currentContext.audioWorklet.addModule("/assets/live-audio-worklet.js");
         assertCurrent(generation);
@@ -570,22 +595,22 @@
             sentSpeech = true; pendingResponse = true;
           }
           else if (data.type === "overflow") void stop("buffer_overflow",
-            {message:"La connexion est trop lente. Touche le micro et répète ta phrase."});
+            {message:"La connexion est trop lente. Réactive le micro Live dans Config."});
         };
         for (const track of stream.getTracks()) track.onended = () => {
           if (generation === epoch && state.capture === "armed") void stop("microphone_ended",
-            {message:"Le microphone s’est arrêté. Touche-le pour reprendre."});
+            {message:"Le microphone s’est arrêté. Réactive le micro Live dans Config."});
         };
         currentContext.onstatechange = () => {
           if (generation === epoch && state.capture === "armed" && currentContext.state !== "running")
-            void stop("audio_suspended", {message:"L’audio a été suspendu. Touche le micro pour reprendre."});
+            void stop("audio_suspended", {message:"L’audio a été suspendu. Réactive le micro Live dans Config."});
         };
         state.capture = "armed";
         publish();
         return true;
       } catch (error) {
         if (generation === epoch) await stop("arm_failed", {message:error.name === "NotAllowedError" ?
-          "Accès au micro refusé. Autorise-le, puis touche le micro." : error.message});
+          "Accès au micro refusé. Autorise-le dans le navigateur, puis réactive le micro Live dans Config." : error.message});
         return false;
       }
     }

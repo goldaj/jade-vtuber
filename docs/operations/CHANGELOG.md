@@ -1,3 +1,9 @@
+## 2026-11-27 — Lecture et interface du Live mobile
+
+- Le lecteur natif joue la piste distante WebRTC et l’analyseur alimente la bouche et la motion de réponse. Le graphe Web Audio reprend en cas de lecture native refusée. Le nettoyage retire le lecteur et empêche les reprises tardives. Le bouclage WebRTC synthétique dans Chromium reproduit le silence de l’ancien graphe et mesure un signal après le raccordement du lecteur. Recette Redmi encore ouverte.
+- Sur Accueil et en plein écran, le micro Live est rouge et passif. La pastille rouge indique Live dans toutes les vues et affiche « Live » sur Accueil uniquement. La capture s’active et se coupe depuis Config. Les retours visibles du micro sont donnés par la couleur. L’icône de sortie plein écran est centrée.
+- Le toucher sur la silhouette r21 prend la priorité sur le menu natif de la WebView pendant le maintien. Vérifications ciblées de l’interface et des gestes. [Passation et recette](handoffs/2026-11-27-codex-mobile-live-playback.md)
+
 ## 2026-11-27 — Suivi CI Windows du lot Discord Live
 
 - La [CI de `0122897`](https://github.com/goldaj/jade-vtuber/actions/runs/45960438650) réussit sur Linux mais Windows atteint la limite globale de huit minutes. Le journal contient deux erreurs dans les tests du suivi mensuel, un échec de test mémoire compatible avec une persistance lente et un timeout de 180 s dans la suite complète relancée depuis l'export.

@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Voix et interface du Live mobile](2026-11-27-codex-mobile-live-playback.md) · Lecture WebRTC, animation de parole, indicateurs Live, plein écran et maintien sur Jade r21.
+
 - [Config mobile épurée et réglages persistants](2026-11-27-chatgpt-mobile-config.md) · Demande du 27/11 : cases Live/voix/rappels, textes allégés, boutons hors scène, retours d’appui et sauvegarde automatique.
 
 - [REC-051 · Discord Live automatique et interrupteur global (ancienne DEV-052)](2026-11-27-chatgpt-discord-auto-live.md) · Demande complémentaire du 27/11 : switch code unique, transport vocal Live, dépenses API globales 50/40 EUR, repli classique et indépendance mobile.

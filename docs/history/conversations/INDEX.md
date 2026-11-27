@@ -48,6 +48,10 @@ Les demandes suivantes de zoom et déplacement tactile, service indépendant sur
 
 L’autorisation de développer le push-to-talk en maintien et les secousses est consignée dans la [passation mobile du 26 novembre](../../operations/handoffs/2026-11-26-codex-mobile-ptt-shake.md#échanges-accessibles).
 
+## Voix et interface du Live mobile le 27 novembre 2026
+
+Le signalement et les décisions de réalisation sont consignés avec leurs rôles dans la [passation Live mobile](../../operations/handoffs/2026-11-27-codex-mobile-live-playback.md#échanges-accessibles).
+
 ## Synchronisation du clone de développement le 26 novembre 2026
 
 - **Propriétaire** (extrait de la conversation) « Je veux que tu push le local, mais attention il va y avoir du merge à faire ».

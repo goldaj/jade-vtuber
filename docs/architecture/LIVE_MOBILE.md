@@ -29,7 +29,7 @@ flowchart TD
 | `mobile_live.py`, `mobile_gateway.py` | Routes mêmes origine/identité/Bearer, contrôle WebSocket et limites de taille |
 | `live_bridge.py` | Persona, contexte, segments, journal, actions idempotentes, mémoire et délégations |
 | `live-client.js`, `live-audio-worklet.js` | Permission, VAD locale, tampon, WebRTC, lecture, supervision réciproque et nettoyage |
-| `app.js` | Cases Live/voix dans Config, micro commun, chat, documents et commandes de l'avatar existant |
+| `app.js` | Choix Live/classique et commande de capture Live dans Config, indicateurs visuels, chat, documents et commandes de l’avatar |
 
 Le modèle est `gpt-live-1.1`. L'adaptateur utilise `httpx2`, déjà dépendance de l'OpenAI SDK épinglé `3.42.1`, et `websockets`. Le SDK inspecté ne déclare pas encore tous les champs de veille et d'usage employés ; le transport JSON conserve les champs officiels sans modifier la version du SDK. Les créations n'ont aucun retry automatique.
 
@@ -44,6 +44,8 @@ La fermeture idle ne libère pas le bail armé : une nouvelle parole ouvre une n
 Un mute après entrée utilisateur peut laisser finir la réponse demandée pendant **15 s au maximum**, sans prolongation par un heartbeat ou un second mute. Si aucune entrée n'a été envoyée, l'arrêt est direct. La fermeture des pistes et de la lecture locale reste distincte de la confirmation fournisseur.
 
 ## Audio et arrêt
+
+Le navigateur raccorde la piste distante WebRTC à un lecteur audio. Un analyseur observe cette piste pour la bouche et la motion de parole. Si le navigateur refuse la lecture du lecteur, la sortie Web Audio déjà déverrouillée prend le relais et le lecteur reste muet. La fermeture ou le remplacement de la piste détache le lecteur et remet l’avatar au repos.
 
 Le Worklet maintient un pré-roll de **500 ms**, une confirmation VAD de **60 ms** et un tampon total de **8 s**, pré-roll compris. La première parole est conservée pendant la négociation, puis réinjectée par `MediaStreamAudioDestinationNode` dans la piste WebRTC. Le rattrapage retire uniquement des plages classées silencieuses par la VAD ; il préserve les échantillons classés vocaux et le tampon initial protégé. L'absence de perte phonétique reste à valider sur Redmi. Un dépassement impose un nouvel essai explicite.
 

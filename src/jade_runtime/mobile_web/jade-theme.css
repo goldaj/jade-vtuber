@@ -25,6 +25,18 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .connection:before{background:#aab9aa}
 .connection.online:before{background:#398f59;box-shadow:0 0 0 3px #bbe9bb}
 .icon-button,.notification-button{color:var(--forest);border:1px solid #cbdac9;background:#fffefacc;border-radius:13px;min-width:36px;height:36px;display:grid;place-items:center}
+#fullscreen{padding:0}
+#fullscreen svg{display:block;width:22px;height:22px;fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+#fullscreen .fullscreen-exit,.shell.is-room-only #fullscreen .fullscreen-enter{display:none}
+.shell.is-room-only #fullscreen .fullscreen-exit{display:block;width:28px;height:28px}
+#live-indicator{display:inline-flex;align-items:center;gap:5px;
+  color:#9a2438;font-size:.74rem;font-weight:700;white-space:nowrap}
+#live-indicator[hidden],
+.shell:not([data-view="home"]) .live-indicator-label,
+.shell.is-room-only .live-indicator-label{display:none}
+.live-indicator-dot{width:9px;height:9px;border-radius:50%;background:#c12b45;
+  box-shadow:0 0 0 2px #fffdf7}
 .notification-button{position:relative;padding:4px}
 .notification-dot{position:absolute;top:3px;right:2px;background:var(--flower);border:2px solid #fff;border-radius:100%;width:11px;height:11px}
 .scene-panel{margin:10px 12px 4px;gap:8px}
@@ -115,10 +127,8 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .setting-choice:has(input:disabled){opacity:.65;cursor:wait}
 .profile-intro :is(#live-mode-status,#notification-status,#portrait-motion-status,#avatar-shake-status){
   font-size:.78rem;line-height:1.4;margin:3px 0 8px;overflow-wrap:anywhere}
-#live-mode-retry{min-height:44px;padding:8px 14px;border:1px solid #8caf96;border-radius:12px;
+:is(#live-mode-retry,#live-microphone-control){min-height:44px;padding:8px 14px;border:1px solid #8caf96;border-radius:12px;
   background:#fff;color:#2f5d45;font-weight:600}
-.mic.live-armed{background:#376b50;box-shadow:0 0 0 4px #a6ca9f}
-.mic.live-connecting{box-shadow:0 0 0 4px #d4bb78}
 .live-transcript-status{display:block;font-style:italic;font-size:.7rem;opacity:.8}
 .live-attachments{display:flex;flex-wrap:wrap;gap:8px}
 .profile-intro .avatar-model-choice{display:grid;gap:6px;margin:16px 0;min-width:0}
@@ -214,11 +224,12 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
   z-index:35;border:0;background:transparent;box-shadow:none}
 .shell.is-room-only .topbar .mark,.shell.is-room-only .topbar #connection-status,
 .shell.is-room-only .topbar #header-notifications{display:none!important}
-.shell.is-room-only .topbar .top-actions{display:block;margin:0}
+.shell.is-room-only .topbar .top-actions{display:flex;align-items:flex-start;margin:0}
+.shell.is-room-only #live-indicator{margin-top:4px}
 .shell.is-room-only #fullscreen{
   display:grid;place-items:center;min-width:46px;min-height:46px;
   border:1px solid #b6d5bb;border-radius:14px;
-  background:#fffdf7e8;color:#204b36;font-size:1.6rem;
+  background:#fffdf7e8;color:#204b36;
   box-shadow:0 3px 15px #214a3044}
 
 /* The room gesture keeps native scrolling/pinch zoom, without double-tap zoom. */
@@ -277,14 +288,13 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .shell.is-room-only .room-bottom #mic.recording{
   background:#a95057;color:#fff;border-color:#a95057;
 }
-.room-bottom #mood-line{display:none}
-#mic-feedback{
-  position:absolute;bottom:calc(96px + env(safe-area-inset-bottom,0px));left:50%;
-  transform:translateX(-50%);max-width:calc(100% - 28px);width:max-content;
-  padding:5px 10px;border:1px solid #c9dfc8;border-radius:10px;
-  background:#fffdf7ed;color:#28523b;font-size:.8rem;text-align:center
+#mic.live-mode-indicator,
+.shell[data-view="home"] .room-bottom #mic.live-mode-indicator,
+.shell.is-room-only .room-bottom #mic.live-mode-indicator{
+  background:#b92b43;color:#fff;border-color:#b92b43;
+  opacity:1;cursor:default
 }
-#mic-feedback:empty{display:none}
+.room-bottom #mood-line{display:none}
 /* Operational updates are kept for screen readers without a permanent status banner. */
 .footer-status{
   position:absolute;width:1px;height:1px;padding:0;margin:-1px;

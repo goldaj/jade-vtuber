@@ -36,6 +36,18 @@ class MobileFullscreenMicContract(unittest.TestCase):
         self.assertIn("shell.dataset.view = view;\n    syncMicPlacement();", js)
         self.assertIn('shell.classList.toggle("is-room-only", active);\n    syncMicPlacement();', js)
 
+    def test_live_header_and_fullscreen_icon_replace_visible_mic_status(self):
+        html = (WEB / "salon.html").read_text(encoding="utf-8")
+        css = (WEB / "jade-theme.css").read_text(encoding="utf-8")
+        self.assertNotIn('id="mic-feedback"', html)
+        self.assertRegex(html, r'id="mic"[^>]*aria-label="Maintenir pour parler"[^>]*>🎙</button>')
+        self.assertIn('id="live-indicator" role="status" aria-label="Mode Live activé" hidden', html)
+        self.assertIn('.shell:not([data-view="home"]) .live-indicator-label,', css)
+        self.assertIn('.shell.is-room-only .live-indicator-label{display:none}', css)
+        self.assertIn('class="fullscreen-exit" viewBox="0 0 24 24"', html)
+        self.assertIn('#fullscreen{padding:0}', css)
+        self.assertIn('.shell.is-room-only #fullscreen .fullscreen-exit{display:block;width:28px;height:28px}', css)
+
 
 if __name__ == "__main__":
     unittest.main()

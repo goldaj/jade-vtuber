@@ -15,11 +15,26 @@ function deferred() {
 function harness(options = {}) {
   let now = 0, nextTimer = 0, nextId = 0, amplitude = 0;
   const timers = new Map(), frames = new Map(), requests = [], sockets = [], peers = [], contexts = [], worklets = [];
-  const order = [], tracks = [], states = [], transcripts = [], playbacks = [];
+  const order = [], tracks = [], states = [], transcripts = [], playbacks = [], players = [], meters = [];
   let authFailures = 0;
   const server = {mode:options.mode || "live", revision:0, lease:"lease-1", autoAck:true, autoConnect:true,
     available:true, sound:true, permission:null, arm:null, create:null, close:null, session:0};
-  const doc = {hidden:false};
+  const doc = {hidden:false, body:{appendChild(player) { player.attached = true; }},
+    createElement(tag) {
+      assert.equal(tag, "audio");
+      const player = {paused:true, muted:false, setAttribute() {},
+        play() {
+          assert(this.attached && this.srcObject);
+          if (this.muted) order.push("muted-play");
+          if (server.play) return server.play.promise;
+          this.paused = false;
+          return Promise.resolve();
+        },
+        pause() { this.paused = true; },
+        remove() { this.attached = false; }};
+      players.push(player);
+      return player;
+    }};
   function track() {
     const value = {kind:"audio", stops:0, stop() { this.stops++; }};
     tracks.push(value);
@@ -41,8 +56,11 @@ function harness(options = {}) {
     }
     createMediaStreamDestination() { return {stream:stream()}; }
     createAnalyser() {
-      return {fftSize:512, connect(node) { this.destination = node; }, disconnect() {},
+      const meter = {fftSize:512, connect(node) { this.destination = node; },
+        disconnect() { this.destination = null; },
         getFloatTimeDomainData(array) { array.fill(amplitude); }};
+      meters.push(meter);
+      return meter;
     }
   }
   class Worklet {
@@ -164,7 +182,7 @@ function harness(options = {}) {
     now = target; await tick();
   }
   return {client, selectLive, arm, advance, server, sockets, peers, contexts, worklets, requests,
-    order, tracks, transcripts, states, playbacks, stream, response, doc, timers, frames,
+    order, tracks, transcripts, states, playbacks, stream, response, doc, timers, frames, players, meters,
     get authFailures() { return authFailures; },
     audio(level) { amplitude = level; const pending = [...frames.values()]; frames.clear(); pending.forEach(fn => fn()); }};
 }
@@ -267,7 +285,13 @@ function harness(options = {}) {
       "WebRTC sends worklet output, never the unbuffered microphone track");
     assert.equal(first.channel.sent.length, 0, "frontend does not control provider sessions/responses");
     assert(h.worklets[0].commands.some(event => event.type === "connected"));
-    first.ontrack({streams:[h.stream()]}); h.audio(.1);
+    const remote = h.stream();
+    first.ontrack({streams:[remote], track:remote.track});
+    assert.equal(h.players[0].srcObject, remote);
+    assert.equal(h.players[0].paused, false);
+    assert.equal(h.players[0].muted, false);
+    assert.equal(h.meters[0].destination, undefined, "the analyser must not play a second copy");
+    h.audio(.1);
     assert(h.playbacks.at(-1).level > 0);
     assert(h.sockets[0].sent.some(event => event.type === "playback" && event.state === "playing" && event.offset_ms === undefined));
     h.sockets[0].emit({type:"transcript", session_id:"stale-session", segment_id:"x", text:"old"});
@@ -277,6 +301,10 @@ function harness(options = {}) {
     h.sockets[0].emit({type:"state", ...{mode:"live", revision:1, lease_id:"lease-1", lease_state:"armed",
       session_state:"absent", session_id:null}});
     assert.equal(first.closed, true); assert.equal(h.tracks[0].stops, 0);
+    assert.equal(h.players[0].srcObject, null);
+    assert.equal(h.players[0].paused, true);
+    assert.equal(h.players[0].attached, false);
+    assert.equal(h.playbacks.at(-1).playing, false);
     assert.equal(h.client.state.capture, "armed", "server idle releases only the remote generation");
     assert.equal(h.sockets[0].closed, undefined);
     assert.equal(h.worklets[0].commands.at(-1).type, "local");
@@ -285,6 +313,31 @@ function harness(options = {}) {
     await h.client.stop("test_complete");
     assert.equal(h.tracks[0].stops, 1); assert.equal(h.contexts[0].state, "closed");
     assert.equal(h.frames.size, 0); assert.equal(h.timers.size, 0);
+  }
+  {
+    const h = harness(); await h.selectLive(); await h.arm();
+    h.worklets[0].emit({type:"speech"}); await tick();
+    h.server.play = deferred();
+    const remote = h.stream();
+    h.peers[0].ontrack({streams:[remote], track:remote.track});
+    h.audio(.1);
+    assert.equal(h.playbacks.at(-1).playing, false, "waiting for playback is not audible delivery");
+    h.server.play.reject(new Error("Autoplay blocked")); await tick();
+    assert.equal(h.players[0].muted, true);
+    assert.equal(h.meters[0].destination, h.contexts[0].destination);
+    assert(h.order.includes("muted-play"));
+    h.audio(.1);
+    assert(h.playbacks.at(-1).level > 0, "Web Audio fallback still drives the avatar");
+    const oldPlayer = h.players[0];
+    h.server.play = deferred();
+    const replacement = h.stream();
+    h.peers[0].ontrack({streams:[replacement], track:replacement.track});
+    assert.equal(oldPlayer.srcObject, null);
+    assert.equal(h.meters[0].destination, null);
+    await h.client.stop("test_complete");
+    h.server.play.reject(new Error("Playback ended")); await tick();
+    assert(h.players.every(player => !player.attached && player.srcObject === null));
+    assert.equal(h.meters[1].destination, null, "stale play rejection cannot reconnect after stop");
   }
   {
     const h = harness(); await h.selectLive(); h.server.permission = deferred();

@@ -122,6 +122,18 @@
     }
   }
 
+  // Claim touches on Jade before the browser or WebView starts its native
+  // long press. Pointer events still drive dragging, pinching and double taps.
+  zone.addEventListener("touchstart", event => {
+    if (!event.cancelable || zone.hidden || !ready()) return;
+    for (const touch of event.changedTouches) {
+      if (renderer().isModelAt(touch.clientX, touch.clientY)) {
+        event.preventDefault();
+        return;
+      }
+    }
+  }, {passive:false});
+
   zone.addEventListener("pointerdown", event => {
     if (event.pointerType !== "touch" || !ready() || zone.hidden || (!pointers.size && event.isPrimary === false))
       return;
