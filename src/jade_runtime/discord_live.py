@@ -171,6 +171,7 @@ class DiscordLiveAdapter:
         self._loop = None
         self._running = False
         self._allow_live = False
+        self._owner_preference_revision = 0
         self._blocked = False
         self._block_reason = ""
         self._recovery_checked = False
@@ -209,6 +210,14 @@ class DiscordLiveAdapter:
                 and self.bridge.reply_authorized(state.source)
                 and (state.mode != "solo" or self._solo(state.source.speaker_id)))
 
+    def playback_allowed(self, live_session=None):
+        """Live owns the speaking lane until its local teardown completes."""
+        state = self._current
+        if live_session is None:
+            return state is None
+        return (self._allow_live and state is not None
+                and state.context["session_id"] == live_session and self._valid(state))
+
     async def start(self):
         if self._running:
             return
@@ -219,26 +228,40 @@ class DiscordLiveAdapter:
         self._watchdog = self._task(self._monitor(), "jade-discord-live-policy")
 
     async def _decision(self):
-        threshold = None
+        revision = self._owner_preference_revision
         try:
             decision = await self.policy.decision()
-            self._allow_live = bool(decision.get("allow_live")) and not self._blocked
-            self.last_reason = self._block_reason or str(decision.get("reason", "policy"))[:80]
-            threshold = decision.get("threshold_eur")
-            while self._starts and self.clock() - self._starts[0] >= 60:
-                self._starts.popleft()
-            if (self._allow_live and self._current is None
-                    and len(self._starts) >= self.config.max_starts_per_minute):
-                self._allow_live = False
-                self.last_reason = "live_start_rate_limit"
         except Exception:
+            decision = {"allow_live": False, "reason": "spend_status_unavailable"}
+        if revision != self._owner_preference_revision:
+            return self._allow_live
+        self._allow_live = bool(decision.get("allow_live")) and not self._blocked
+        self.last_reason = self._block_reason or str(decision.get("reason", "policy"))[:80]
+        threshold = decision.get("threshold_eur")
+        while self._starts and self.clock() - self._starts[0] >= 60:
+            self._starts.popleft()
+        if (self._allow_live and self._current is None
+                and len(self._starts) >= self.config.max_starts_per_minute):
             self._allow_live = False
-            self.last_reason = self._block_reason or "spend_status_unavailable"
+            self.last_reason = "live_start_rate_limit"
         diagnostic = ("live" if self._allow_live else "classic", self.last_reason, threshold)
         if diagnostic != self._last_diagnostic:
             LOG.info("Discord voice mode=%s reason=%s monthly_threshold_eur=%s", *diagnostic)
             self._last_diagnostic = diagnostic
         return self._allow_live
+
+    async def apply_owner_preference(self, enabled):
+        # An already-running policy read can finish after the owner's write.
+        self._owner_preference_revision += 1
+        if enabled:
+            if self._running:
+                await self._decision()
+            return
+        self._allow_live = False
+        self.last_reason = "manual_classic"
+        state = self._current
+        if state is not None:
+            await self._close_session(state, "manual_classic")
 
     def _block(self, reason):
         self._blocked, self._allow_live = True, False
@@ -334,9 +357,12 @@ class DiscordLiveAdapter:
         with self.bridge.buffers_lock:
             return bool(self.bridge._segmenter._users or self.bridge._assemblies
                         or self.bridge._scheduled or self.bridge.pending._unfinished_tasks
-                        or self.bridge._transcribing is not None or self.bridge._playback_active
-                        or any(not work.cancelled and (work.task is None or not work.task.done())
-                               for _, work in self.bridge._submitted))
+                        or self.bridge._transcribing is not None or self._classic_output_busy())
+
+    def _classic_output_busy(self):
+        return self.bridge._playback_active or any(
+            not work.cancelled and (work.task is None or not work.task.done())
+            for _, work in self.bridge._submitted)
 
     def offer_pcm(self, user_id, author, pcm):
         """Called from Discord's capture thread; admission never performs I/O."""
@@ -419,6 +445,10 @@ class DiscordLiveAdapter:
             self._task(self._close_session(current, "speaker_changed"), "jade-discord-live-speaker")
             return
         if current is None:
+            # Playback can start between the capture thread's admission check
+            # and this callback. Do not claim the lane over an existing reply.
+            if self._classic_busy():
+                return
             if self._preroll_speaker != user_id:
                 self._preroll.clear()
                 self._candidate = 0
@@ -464,9 +494,7 @@ class DiscordLiveAdapter:
         """
         if not self._running or not await self._decision() or not self.bridge.reply_authorized(source):
             return False
-        if self.bridge._playback_active or any(
-                not work.cancelled and (work.task is None or not work.task.done())
-                for _, work in self.bridge._submitted):
+        if self._classic_output_busy():
             return False
         if valid is not None and not valid():
             return True
@@ -484,7 +512,8 @@ class DiscordLiveAdapter:
             await self._close_session(previous, "next_admitted_turn")
         if valid is not None and not valid():
             return True
-        if self._blocked or not self._allow_live or not self.bridge.reply_authorized(source):
+        if (self._blocked or not self._allow_live or self._classic_output_busy()
+                or not self.bridge.reply_authorized(source)):
             return False
         state = self._new(source, "group")
         if state is None:
@@ -539,7 +568,7 @@ class DiscordLiveAdapter:
                     await self._finish_attempt(state, {"confirmed": False, "started": False,
                         "session_id": None, "usage": {}, "reason": self.last_reason})
                     return
-            if not self._valid(state):
+            if not self._allow_live or not self._valid(state):
                 await self._finish_attempt(state, {"confirmed": False, "started": False,
                     "session_id": None, "usage": {}, "reason": "cancelled_before_start"})
                 return
@@ -552,7 +581,7 @@ class DiscordLiveAdapter:
             bind = getattr(self.policy, "bind_live", None)
             if callable(bind):
                 await _await(bind(state.attempt_id, remote.session_id))
-            if not self._valid(state):
+            if not self._allow_live or not self._valid(state):
                 await self._finish_attempt(state, await remote.close())
                 return
             state.context["session_id"] = remote.session_id
@@ -724,7 +753,8 @@ class DiscordLiveAdapter:
                 return
             await self.conversation.observe_playback(state.context, {"state": "playing"})
             played = await self.bridge.play_pcm_stream_for_reply(
-                chunks(), state.source, max_input_bytes=int(48_000 * self.config.max_session_seconds))
+                chunks(), state.source, max_input_bytes=int(48_000 * self.config.max_session_seconds),
+                live_session=state.context["session_id"])
             if played and self._valid(state):
                 self.bridge.mark_voice_reply_played(state.source)
                 await self.conversation.observe_playback(state.context, {"state": "drained"})

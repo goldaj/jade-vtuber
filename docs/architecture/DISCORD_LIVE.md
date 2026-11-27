@@ -2,7 +2,7 @@
 
 Le propriétaire demande de développer l'automatisme mensuel Discord maintenant, à la suite de la reprise du Live mobile. Cette décision remplace le cadrage « Discord futur » du 26/11. La fonction est suivie en **REC-051 (ancienne DEV-052)** ; les tests logiciels ne remplacent pas l'essai du compte et du salon Discord réels. [Passation](../operations/handoffs/2026-11-27-chatgpt-discord-auto-live.md) · [État de develop](../handbook/BRANCH_STATE.md).
 
-## Un seul interrupteur
+## Interrupteur global et choix du moteur vocal
 
 Dans `src/jade_runtime/discord_config.py` :
 
@@ -18,6 +18,8 @@ DISCORD_ENABLED = True
 Redémarrer Jade après modification. Le masque est appliqué avant les prérequis du token et la construction des connecteurs. Les anciens paramètres privés `JADE_DISCORD_ENABLED`, `JADE_DISCORD_VOICE_ENABLED` et `JADE_DISCORD_LIVE_ENABLED` ne contournent pas cette constante. Les options CLI individuelles restent des choix de transport pour les diagnostics ; le lancement habituel est `--all-channels`.
 
 Le texte Discord garde son moteur écrit. L'interrupteur n'ouvre pas de session audio facturée à lui seul : la voix attend une nouvelle parole admissible. Les flags Live mobiles et le choix du Profil mobile ne pilotent pas Discord.
+
+La préférence serveur **Activer GPT-Live sur Discord** de **Config → Suivi Discord** est cochée par défaut. Elle autorise la politique ci-dessous. Une désactivation retire l’admission, coupe la session Live locale et lance sa fermeture fournisseur. Le moteur classique prend en charge la prochaine parole admissible après libération de la sortie. Réactiver applique la décision financière courante. Le panneau utilise `/api/discord/live` sur la passerelle authentifiée.
 
 ## Décision financière limitée au moteur Discord
 
@@ -56,6 +58,8 @@ Le rafraîchissement fournisseur cible **300 secondes**, avec délais réseau et
 
 `jade-global-spend.sqlite3`, voisin du fichier `JADE_LIVE_USAGE_DB_PATH`, conserve relevés, provenance, fixing, observations Live et verrou mensuel. Les observations de durée sont cumulatives et dédupliquées. Le coût local non encore réconcilié complète le relevé OpenAI ; une simple lecture réussie, une variation Tavily ou un changement de taux ne le supprime pas. La croissance monétaire OpenAI effectivement relevée peut absorber ce report. L'absence d'usage final ne vaut pas zéro.
 
+Le panneau mobile rapporte uniquement les minutes observées pour Discord au mois civil Europe/Paris. Le compteur de durée est conservé indépendamment de la réconciliation des dépenses. Les observations partielles sont signalées.
+
 La décision expose mode, raison, mois, montant, seuil, qualité et date de collecte. Les changements de décision sont consignés sans spam dans les journaux. Une indisponibilité de la collecte garde le parcours classique ; elle ne bloque pas le démarrage du mobile.
 
 ## Transport audio et conversation
@@ -66,7 +70,7 @@ La décision expose mode, raison, mois, montant, seuil, qualité et date de coll
 
 - **Solo humain vérifié :** détection locale de parole, pré-roll borné, ouverture seulement pour une nouvelle parole, puis streaming natif sans STT préalable.
 - **Groupe :** conserver la segmentation, STT et décision de participation du vocal existant ; envoyer au Live seulement le tour autorisé, avec son auteur vérifié. Ce parcours a une latence plus élevée que le solo.
-- **Sortie :** PCM vers le lecteur Discord existant, bouche/observateurs pilotés par ce qui est joué. Durée cumulative bornée par la session ; files audio en mémoire bornées séparément. Les événements de transcript alimentent le contexte et la mémoire, sans seconde synthèse TTS.
+- **Sortie.** PCM vers le lecteur Discord existant, bouche et observateurs pilotés par ce qui est joué. Le moteur Live possède la sortie vocale pour la durée de sa session. L’arrivée au salon vocal met à jour la présence sans créer de dialogue de bienvenue. La durée est bornée par la session et les files audio sont bornées séparément. Les événements de transcription alimentent le contexte et la mémoire.
 - **Mémoire et outils :** `LiveConversationBridge` réutilise persona, Runtime, arbitrage, droits d'écriture/suppression, politique de lecture globale et identités Discord vérifiées. Le contexte source est enregistré dans le journal privé pour la reprise. Les délégations et effets métier sont idempotents. Les documents sont publiés dans le texte du salon vocal, avec la rétention existante, sans double réponse classique.
 
 Un changement de présence/speaker/canal, une déconnexion, l'inactivité, la durée maximale ou la politique invalide la génération avant de demander sa fermeture. Une phrase déjà commencée dans un moteur n'est pas coupée en deux routes lors d'une bascule. Un énoncé ambigu ou partiellement consommé n'est pas réémis automatiquement dans le classique ; la parole suivante utilise le moteur disponible.

@@ -19,6 +19,9 @@ import sqlite3
 from .global_spend import SpendStore, amount, aware, paris_month, run_blocking_owned
 from .live_usage import quote_voice
 
+OWNER_ENABLED_KEY = "discord_live_owner_enabled"
+MONTHLY_USAGE_KEY = "discord_live_monthly_usage"
+
 
 class DiscordLiveSpendPolicy:
     def __init__(self, collector, *, db_path=None, refresh_seconds=300, now=None):
@@ -61,6 +64,38 @@ class DiscordLiveSpendPolicy:
         else:
             db.execute("INSERT OR REPLACE INTO global_spend_state VALUES(?,?)",
                        (key, json.dumps(value, allow_nan=False, separators=(",", ":"))))
+
+    def _month_usage(self, db, month):
+        # Seed only once from the retained cumulative observations. Older
+        # sessions lack dated seconds, so their historical split is partial.
+        saved = self._get_state(MONTHLY_USAGE_KEY, None, db)
+        if saved is None:
+            seconds = sum((amount(value["seconds"]) for value in self._usage.values()
+                           if value.get("month") == month), Decimal(0))
+            saved = {"month": month, "seconds": str(seconds), "partial": bool(seconds)}
+            self._put_state(MONTHLY_USAGE_KEY, saved, db)
+        if saved["month"] != month:
+            return {"month": month, "seconds": "0", "partial": False}
+        return saved
+
+    async def mobile_settings(self, enabled=None):
+        """Expose only the owner's Discord preference and observed monthly usage."""
+        async with self._lock:
+            return await run_blocking_owned(self._mobile_settings_sync, aware(self._now()), enabled)
+
+    def _mobile_settings_sync(self, now, enabled):
+        with closing(self.store.connect()) as db, db:
+            db.execute("BEGIN IMMEDIATE")
+            self._load_usage(db)
+            if enabled is not None:
+                self._put_state(OWNER_ENABLED_KEY, enabled, db)
+            month = paris_month(now)[0]
+            usage = self._month_usage(db, month)
+            partial = usage["partial"] or self._usage_unknown or any(
+                record.get("phase") != "settled" for record in self._reservations(db).values())
+            return {"enabled": self._get_state(OWNER_ENABLED_KEY, True, db),
+                    "month": month, "minutes": float(amount(usage["seconds"]) / 60),
+                    "partial": partial}
 
     async def start(self):
         if self._closed:
@@ -184,10 +219,13 @@ class DiscordLiveSpendPolicy:
         month = paris_month(now)[0]
         previous = self._usage.get(key, {"seconds": "0", "month": month})
         old = amount(previous["seconds"])
-        credited = old
-        if seconds > credited:
+        monthly = self._month_usage(db, month)
+        if seconds > old:
+            delta = seconds - old
             self._usage_events.append({"at": now.isoformat(), "month": month,
-                                       "usd": str(quote_voice(seconds - credited))})
+                                       "usd": str(quote_voice(delta))})
+            monthly["seconds"] = str(amount(monthly["seconds"]) + delta)
+            self._put_state(MONTHLY_USAGE_KEY, monthly, db)
         previous.update(seconds=str(max(old, seconds)), month=month)
         self._usage[key] = previous
         reservations = self._reservations(db)
@@ -340,6 +378,8 @@ class DiscordLiveSpendPolicy:
                 result.update(reserved_eur="0", unreported_live_exposure_eur="0")
             if unknown:
                 result.update(allow_live=False, mode="classic", reason="live_reservation_unknown")
+            if not self._get_state(OWNER_ENABLED_KEY, True, db):
+                result.update(allow_live=False, mode="classic", reason="manual_classic")
             if not result["allow_live"]:
                 return result
             total, threshold = amount(result["spent_eur"]), amount(result["threshold_eur"])

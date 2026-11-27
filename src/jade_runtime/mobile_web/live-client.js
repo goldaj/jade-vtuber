@@ -407,6 +407,7 @@
     }
     function installOutput(stream, generation, connection) {
       if (generation !== epoch || peer !== connection || !context || !options.getSoundEnabled?.()) return;
+      const replacedActiveOutput = playbackActive;
       stopOutput(false);
       // Attach the remote track to the browser's media player. Some Chromium
       // builds leave WebRTC output silent with only a Web Audio consumer.
@@ -440,11 +441,15 @@
         const level = webAudioOutput || !audio.paused ? Math.sqrt(power / samples.length) : 0;
         if (level > .006) lastAudible = clock();
         const playing = clock() - lastAudible < 200;
-        if (playing && !playbackActive) observePlayback("playing");
-        playbackActive = playing;
+        if (playing !== playbackActive) {
+          playbackActive = playing;
+          if (playing) observePlayback("playing");
+          publish();
+        }
         callbacks("onPlayback", Math.min(1, level * 7), playing);
         playbackFrame = env.requestAnimationFrame(animate);
       }
+      if (replacedActiveOutput) publish();
       animate();
     }
     async function openSession(generation) {
@@ -586,7 +591,10 @@
         worklet.port.onmessage = ({data}) => {
           if (generation !== epoch || state.capture !== "armed") return;
           if (data.type === "speech") void openSession(generation);
-          else if (data.type === "speech_activity") speechActive = Boolean(data.active);
+          else if (data.type === "speech_activity" && speechActive !== Boolean(data.active)) {
+            speechActive = Boolean(data.active);
+            publish();
+          }
           else if (data.type === "sent_speech") {
             // The initial voice may precede both the next periodic heartbeat
             // and its provider transcript. Establish pending input before a

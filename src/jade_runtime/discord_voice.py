@@ -660,13 +660,6 @@ class DiscordVoiceBridge:
                         except Exception:
                             continue
                         participant_count = len(humans)
-                    # A real voice response ends unanswered spontaneous outreach.
-                    # Only post-STT, authorized, non-echo human speech can do this.
-                    initiative_tracker = getattr(self, "initiatives", None)
-                    if initiative_tracker is not None and item.user_id != self.own_bot_id:
-                        initiative_tracker.human_replied(
-                            str(self.channel_id), text=value,
-                            directed=bool(re.search(r"(?<!\w)jade(?!\w)", value, re.I)))
                     # Even a recognized stop word may belong to the surrounding
                     # conversation. Finish Jade's answer before accepting commands.
                     if during_playback:
@@ -825,13 +818,15 @@ class DiscordVoiceBridge:
             raise PermissionError("Discord voice reply source is not authorized")
         return await self.play(wav, expected_session=session_id, expected_speaker=speaker_id)
 
-    async def play_pcm_stream_for_reply(self, chunks, source, *, max_input_bytes=4_800_000):
+    async def play_pcm_stream_for_reply(self, chunks, source, *, max_input_bytes=4_800_000,
+                                        live_session=None):
         """Session-bound progressive audio; no second OpenAI request."""
         if not self.reply_authorized(source):
             raise PermissionError("Discord voice reply source is not authorized")
         return await self.play_pcm_stream(
             chunks, expected_session=source.voice_session_id,
-            expected_speaker=source.speaker_id, max_input_bytes=max_input_bytes)
+            expected_speaker=source.speaker_id, max_input_bytes=max_input_bytes,
+            live_session=live_session)
 
     def mark_voice_reply_played(self, source):
         """Acknowledge a successfully played reply in its still-valid session."""
@@ -911,8 +906,12 @@ class DiscordVoiceBridge:
                 import logging
                 logging.getLogger("jade.discord.voice").warning("Playback observer failed")
 
+    def _voice_output_available(self, live_session=None):
+        live = getattr(self, "live", None)
+        return live.playback_allowed(live_session) if live is not None else live_session is None
+
     async def play_pcm_stream(self, chunks, *, expected_session=None, expected_speaker=None,
-                              max_input_bytes=4_800_000):
+                              max_input_bytes=4_800_000, live_session=None):
         """Play 24 kHz mono PCM incrementally as 20 ms Discord PCM frames.
 
         Transport snapshots, mute and generation checks remain authoritative.
@@ -929,7 +928,7 @@ class DiscordVoiceBridge:
                      or not self._playback_speaker_valid_locked(expected_speaker))):
                 raise PermissionError("Discord voice reply is from another session")
         await self._require_playback_authorization(connection, generation, session_id)
-        if connection.is_playing():
+        if not self._voice_output_available(live_session) or connection.is_playing():
             return False
         self._begin_playback(connection, generation, session_id)
         self.last_pcm_metrics = None
@@ -1042,6 +1041,8 @@ class DiscordVoiceBridge:
                     (session_id != expected_session or not self._playback_speaker_valid_locked(expected_speaker))):
                 raise PermissionError("Discord voice reply is from another session")
         await self._require_playback_authorization(connection, generation, session_id)
+        if not self._voice_output_available():
+            return False
         self._begin_playback(connection, generation, session_id)
         path = None
         source = None

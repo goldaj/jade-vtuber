@@ -231,6 +231,107 @@ class DiscordLiveTests(unittest.IsolatedAsyncioTestCase):
         remote.events.put_nowait({"type": "session.output_audio.delta", "pcm": b"\1\0" * 480})
         await until(lambda: bool(self.played))
         self.assertEqual(self.played[0][1].speaker_id, 12)
+        self.assertEqual(self.bridge.play_pcm_stream_for_reply.await_args.kwargs["live_session"],
+                         remote.session_id)
+
+    async def test_live_blocks_classic_pcm_and_wav_until_teardown(self):
+        self.adapter.registry = None  # This test exercises audio ownership, not the disk journal.
+        source = self.source()
+        remote = Remote("live-output-owner")
+        turn = self.adapter._new(source, "solo")
+        turn.remote = remote
+        turn.context["session_id"] = remote.session_id
+        transport = self.bridge.delivery_context()
+        self.connection.play = Mock(side_effect=lambda audio, after: after(None))
+        real_pcm = OpenVoiceBridge.play_pcm_stream_for_reply.__get__(self.bridge)
+
+        async def unexpected_classic_pcm():
+            self.fail("classic PCM was consumed during Live")
+            yield b""
+
+        self.assertTrue(self.adapter.playback_allowed(remote.session_id))
+        self.assertFalse(self.adapter.playback_allowed("another-live-session"))
+        self.assertFalse(await real_pcm(unexpected_classic_pcm(), source))
+        self.assertFalse(await self.bridge.play_pcm_stream_for_context(unexpected_classic_pcm(), transport))
+        self.assertFalse(await self.bridge.play_for_context(b"classic", transport))
+        self.connection.play.assert_not_called()
+
+        original_close = remote.close
+        closing, release = asyncio.Event(), asyncio.Event()
+
+        async def delayed_close():
+            closing.set()
+            await release.wait()
+            return await original_close()
+
+        remote.close = delayed_close
+        task = asyncio.create_task(self.adapter.transport_changed())
+        try:
+            await asyncio.wait_for(closing.wait(), timeout=2)
+            self.assertFalse(self.adapter.playback_allowed(remote.session_id))
+            self.assertFalse(await self.bridge.play_for_reply(b"classic", source))
+            self.connection.play.assert_not_called()
+        finally:
+            release.set()
+            await task
+        self.assertTrue(self.adapter.playback_allowed())
+        self.assertFalse(self.adapter.playback_allowed(remote.session_id))
+
+    async def test_classic_playback_start_wins_over_queued_solo_capture(self):
+        self.bridge.receive_pcm(12, "Alice", pcm(.08))
+        self.assertGreater(self.adapter._scheduled_bytes, 0)
+        self.bridge._begin_playback(self.connection, self.bridge.generation, self.bridge.session_id)
+        try:
+            await until(lambda: self.adapter._scheduled_bytes == 0)
+            self.assertIsNone(self.adapter._current)
+            self.assertEqual(self.provider.calls, [])
+        finally:
+            self.bridge._end_playback()
+
+    async def test_owner_switch_cuts_an_active_session_before_returning_to_classic(self):
+        # The owner gate is in the adapter. Recovery tests cover registry I/O.
+        self.adapter.registry = None
+        self.group()
+        self.assertTrue(await self.adapter.handle_turn(self.source(), pcm(.2)))
+        state = self.adapter._current
+        await asyncio.wait_for(state.opening, timeout=10)
+        remote = state.remote
+        self.assertIsNotNone(remote)
+        self.policy.allowed = False
+        await self.adapter.apply_owner_preference(False)
+        self.assertTrue(remote.closed)
+        self.assertIsNone(self.adapter._current)
+        self.assertFalse(self.adapter._allow_live)
+        self.assertEqual(self.conversation.closed[-1][1], "manual_classic")
+        self.assertFalse(await self.adapter.handle_turn(self.source(), pcm(.2)))
+        self.assertEqual(len(self.provider.calls), 1)
+        await self.adapter.apply_owner_preference(True)
+        self.assertFalse(self.adapter._allow_live, "checked only permits the automatic policy")
+        self.policy.allowed = True
+        await self.adapter.apply_owner_preference(True)
+        self.assertTrue(self.adapter._allow_live)
+        self.assertEqual(len(self.provider.calls), 1, "checking never opens a session by itself")
+
+    async def test_owner_switch_prevents_open_after_admission_returns(self):
+        self.adapter.registry = None
+        self.group()
+        reached_reservation = asyncio.Event()
+        admission = asyncio.get_running_loop().create_future()
+
+        async def reserve(*args, **kwargs):
+            reached_reservation.set()
+            return await admission
+
+        self.policy.reserve_live = reserve
+        self.assertTrue(await self.adapter.handle_turn(self.source(), pcm(.2)))
+        await asyncio.wait_for(reached_reservation.wait(), timeout=10)
+        # Wake the admitted opener, then switch OFF before the close task
+        # gets its first event-loop turn.
+        admission.set_result({"allow_live": True})
+        self.policy.allowed = False
+        await self.adapter.apply_owner_preference(False)
+        self.assertEqual(self.provider.calls, [])
+        self.assertIsNone(self.adapter._current)
 
     async def test_group_requires_existing_gate_and_never_sends_sampled_out_audio(self):
         self.group()

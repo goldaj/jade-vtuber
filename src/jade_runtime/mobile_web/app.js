@@ -75,6 +75,7 @@
     if (view === "profile" && token) {
       refreshNotificationChoice();
       liveClient?.refresh();
+      if (discordLivePanel?.open) refreshDiscordLive();
     }
   }
   navItems.forEach(button => button.addEventListener("click", () =>
@@ -108,6 +109,7 @@
     liveLoadMessage = "";
     liveRetrying = false;
     if (liveModeToggle) liveModeToggle.disabled = true;
+    resetDiscordLivePanel();
   }
 
   function authorizeAgain() {
@@ -184,6 +186,13 @@
     }
   }
 
+  function liveOnAir() {
+    return liveState?.capture === "armed" &&
+      (["opening", "active"].includes(liveState.session_state) ||
+        liveState.media_state === "connecting" ||
+        liveState.speech_active === true || liveState.playback_active === true);
+  }
+
   function liveDescription() {
     if (liveLoadMessage) return liveLoadMessage;
     if (!liveState) return "Vérification du mode vocal…";
@@ -199,8 +208,7 @@
     if (liveState.capture === "closed" && liveState.session_state === "closing") return "Micro coupé · Fermeture du Live…";
     if (liveState.capture === "armed") {
       if (liveState.session_state === "opening" || liveState.media_state === "connecting") return "Micro actif · Connexion à Jade…";
-      if (["absent", "closing", "standby"].includes(liveState.session_state)) return "Micro actif · Jade en veille. Parle quand tu veux.";
-      return "Live en cours.";
+      return liveOnAir() ? "Live en cours." : "Micro actif · Jade en veille. Parle quand tu veux.";
     }
     return "";
   }
@@ -208,8 +216,7 @@
   function renderLiveMic() {
     const enabled = Boolean(token && liveState?.loaded && liveState.mode === "live");
     const capturing = enabled && liveState.capture !== "closed";
-    const onAir = enabled && liveState.capture === "armed" &&
-      ["opening", "active"].includes(liveState.session_state);
+    const onAir = enabled && liveOnAir();
     if (liveIndicator) {
       liveIndicator.hidden = !enabled;
       liveIndicator.classList.toggle("live-on-air", onAir);
@@ -439,7 +446,7 @@
   async function makeRequest(path, body, extraHeaders, signal) {
     const headers = Object.assign({"Authorization":"Bearer " + token}, extraHeaders);
     const response = await fetch(path, {
-      method: "POST", mode: "same-origin", credentials: "omit",
+      method: body === undefined ? "GET" : "POST", mode: "same-origin", credentials: "omit",
       cache: "no-store", headers, body, signal
     });
     if (signal?.aborted) return null;
@@ -1233,6 +1240,55 @@
   deploymentRun.addEventListener("click", () => submitDeployment("update"));
   deploymentRestart.addEventListener("click", () => submitDeployment("restart"));
 
+  const discordLivePanel = $("discord-live-panel"), discordLiveToggle = $("discord-live-enabled");
+  const discordLiveMinutes = $("discord-live-minutes"), discordLiveStatus = $("discord-live-status");
+  const discordMinutesFormat = new Intl.NumberFormat("fr-FR", {maximumFractionDigits:2});
+  let discordLiveEnabled = null, discordLiveRequest = null;
+  function resetDiscordLivePanel() {
+    discordLiveRequest?.abort();
+    discordLiveRequest = discordLiveEnabled = null;
+    if (!discordLiveToggle) return;
+    discordLiveToggle.checked = true;
+    discordLiveToggle.disabled = true;
+    discordLiveMinutes.textContent = "—";
+    discordLiveStatus.hidden = true;
+  }
+  async function refreshDiscordLive(enabled) {
+    if (!token || discordLiveRequest || (enabled !== undefined && discordLiveEnabled === null)) return;
+    const controller = new AbortController();
+    discordLiveRequest = controller;
+    discordLiveToggle.disabled = true;
+    const body = enabled === undefined ? undefined : JSON.stringify({enabled});
+    try {
+      const result = await makeRequest("/api/discord/live", body,
+        body === undefined ? undefined : {"Content-Type":"application/json"}, controller.signal);
+      if (controller.signal.aborted) return;
+      if (typeof result?.enabled !== "boolean") throw new Error("Suivi Discord indisponible.");
+      discordLiveEnabled = result.enabled;
+      const recorded = Number.isFinite(result.minutes) && result.minutes >= 0;
+      discordLiveMinutes.textContent = recorded ? discordMinutesFormat.format(result.minutes) : "—";
+      discordLiveStatus.textContent = recorded
+        ? (result.partial ? "Relevé partiel pour ce mois." : "")
+        : "Relevé indisponible.";
+    } catch (_) {
+      if (controller.signal.aborted) return;
+      discordLiveStatus.textContent = enabled === undefined
+        ? "Impossible de charger le suivi Discord."
+        : "Impossible de confirmer le changement. Réessaie.";
+    } finally {
+      if (discordLiveRequest === controller) {
+        discordLiveRequest = null;
+        discordLiveToggle.checked = discordLiveEnabled ?? true;
+        discordLiveToggle.disabled = discordLiveEnabled === null;
+        discordLiveStatus.hidden = !discordLiveStatus.textContent;
+      }
+    }
+  }
+  discordLivePanel?.addEventListener("toggle", () => {
+    if (discordLivePanel.open) refreshDiscordLive();
+  });
+  discordLiveToggle?.addEventListener("change", () => refreshDiscordLive(discordLiveToggle.checked));
+
   const billingPanel = $("billing-panel");
   const billingStatus = $("billing-status"), billingToday = $("billing-today"), billingMonth = $("billing-month");
   let billingPending = false;
@@ -1759,7 +1815,10 @@
       if (shell.dataset.view === "reminders") {
         loadReminders();
       }
-      if (shell.dataset.view === "profile") refreshNotificationChoice();
+      if (shell.dataset.view === "profile") {
+        refreshNotificationChoice();
+        if (discordLivePanel?.open) refreshDiscordLive();
+      }
     }
   };
 })();

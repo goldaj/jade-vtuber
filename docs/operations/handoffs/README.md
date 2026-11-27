@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Commande du Live Discord et indicateurs mobiles](2026-11-27-codex-discord-live-control.md) · Retrait du salut, sortie vocale exclusive, compteur mensuel, commande depuis Config et reprise du rouge pendant la parole.
+
 - [Voix et interface du Live mobile](2026-11-27-codex-mobile-live-playback.md) · Lecture WebRTC, animation de parole, indicateurs Live, plein écran et maintien sur Jade r21.
 
 - [Config mobile épurée et réglages persistants](2026-11-27-chatgpt-mobile-config.md) · Demande du 27/11 : cases Live/voix/rappels, textes allégés, boutons hors scène, retours d’appui et sauvegarde automatique.

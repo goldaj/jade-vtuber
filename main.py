@@ -342,26 +342,18 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                 avatar_intent_enabled=config.avatar_intent_enabled,
                 reminder_service=reminders, live_manager=live_manager)
         social_policy = None
-        initiatives = None
-        if discord and live and config.memory_enabled:
+        if discord and live and config.memory_enabled and config.social_hybrid_enabled:
             from src.jade_runtime.cost_guard import CostGuard
             from src.jade_runtime.social_intelligence import HybridSocialPolicy
-            from src.jade_runtime.initiatives import InitiativeScheduler
             guard = CostGuard(Path(config.memory_db_path))
-            if config.social_hybrid_enabled:
-                social_policy = HybridSocialPolicy(
-                    chat, guard, daily_usd=config.social_budget_daily_usd,
-                    monthly_usd=config.social_budget_monthly_usd)
-            if config.initiatives_enabled:
-                initiatives = InitiativeScheduler(
-                    guard, daily_usd=config.initiative_budget_daily_usd,
-                    monthly_usd=config.initiative_budget_monthly_usd)
+            social_policy = HybridSocialPolicy(
+                chat, guard, daily_usd=config.social_budget_daily_usd,
+                monthly_usd=config.social_budget_monthly_usd)
         if discord_voice:
             from src.jade_runtime.discord_voice import OpenVoiceBridge
             discord_voice_bridge = OpenVoiceBridge(
                 chat, runtime, config.discord_voice_channel,
                 group_reply_rate=config.discord_voice_auto_rate)
-            discord_voice_bridge.initiatives = initiatives
             speech.secondary_player = discord_voice_bridge
             if avatar_client is not None:
                 discord_voice_bridge.playback_observer = avatar_client.observer("discord")
@@ -395,6 +387,9 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     publish_reply=publish_discord_live_reply)
                 if discord_voice_bridge.live is not None:
                     scopes.push_async_callback(discord_voice_bridge.live.shutdown)
+            if mobile_gateway is not None:
+                mobile_gateway.discord_live_policy = discord_live_policy
+                mobile_gateway.discord_live_adapter = discord_voice_bridge.live
 
         async def accept(message):
             # Twitch needs the Work.finished signal to ignore stale chat while replying.
@@ -431,7 +426,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                     voice_bridge=discord_voice_bridge, bot_name=config.bot_name,
                     auto_rate=config.discord_text_auto_rate,
                     cooldown_seconds=config.discord_text_cooldown_seconds,
-                    social_policy=social_policy, initiatives=initiatives,
+                    social_policy=social_policy,
                     document_store=documents.store if documents else None)
 
             if twitch or discord or mic or http or mobile:

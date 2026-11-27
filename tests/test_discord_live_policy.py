@@ -43,6 +43,48 @@ class DiscordLiveSpendPolicyTests(unittest.IsolatedAsyncioTestCase):
         self.collector.snapshot = self.snapshot(spent, coverage, month)
         await self.policy.refresh()
 
+    async def test_owner_preference_persists_and_does_not_override_the_spend_latch(self):
+        await self.set_snapshot("1", "complete")
+        self.assertTrue((await self.policy.mobile_settings())["enabled"])
+        self.assertFalse((await self.policy.mobile_settings(False))["enabled"])
+        peer = DiscordLiveSpendPolicy(self.collector, now=lambda: self.now)
+        try:
+            self.assertFalse((await peer.mobile_settings())["enabled"])
+            denied = await peer.reserve_live("manually-disabled", model="gpt-live-1.1",
+                                            opening_seconds=8, close_seconds=5, control_seconds=1)
+            self.assertEqual(denied["reason"], "manual_classic")
+            self.assertNotIn("reservation_id", denied)
+            self.assertTrue((await peer.mobile_settings(True))["enabled"])
+            self.assertTrue((await self.policy.decision())["allow_live"])
+            await peer.mobile_settings(False)
+            await self.set_snapshot("51", "complete")
+            disabled = await self.policy.decision()
+            self.assertEqual(disabled["reason"], "manual_classic")
+            self.assertTrue(disabled["latched"])
+            await self.set_snapshot("1", "complete")
+            await peer.mobile_settings(True)
+            self.assertEqual((await self.policy.decision())["reason"], "monthly_threshold_reached")
+        finally:
+            await peer.close()
+
+    async def test_monthly_minutes_preserve_migration_and_deduplicate_cumulative_usage(self):
+        key = self.policy._identifier("retained-live")
+        self.policy.store.put("discord_live_usage", {"sessions": {
+            key: {"seconds": "60", "month": "2026-11"}
+        }})
+        self.assertEqual(await self.policy.mobile_settings(),
+                         {"enabled": True, "month": "2026-11", "minutes": 1, "partial": True})
+        for seconds in (90, 90, 60):
+            await self.policy.record_live_usage("retained-live", {"seconds": seconds}, model="gpt-live-1.1")
+        await self.set_snapshot()
+        self.assertEqual((await self.policy.mobile_settings())["minutes"], 1.5)
+        self.now = datetime(2026, 11, 30, 23, tzinfo=timezone.utc)
+        self.assertEqual(await self.policy.mobile_settings(),
+                         {"enabled": True, "month": "2026-12", "minutes": 0, "partial": False})
+        for seconds in (90, 120, 120):
+            await self.policy.record_live_usage("retained-live", {"seconds": seconds}, model="gpt-live-1.1")
+        self.assertEqual((await self.policy.mobile_settings())["minutes"], .5)
+
     async def test_exact_boundary_50_with_complete_fresh_coverage(self):
         await self.set_snapshot("49.99", "complete")
         self.assertTrue((await self.policy.decision())["allow_live"])

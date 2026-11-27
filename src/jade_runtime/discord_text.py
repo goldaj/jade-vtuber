@@ -5,7 +5,6 @@ alone never joins voice channels or records other users.
 """
 import asyncio
 import logging
-import re
 from collections import OrderedDict
 from dataclasses import replace
 
@@ -39,7 +38,7 @@ class DiscordText:
     def __init__(self, token: str, on_message, *, send_enabled=False,
                  voice_bridge=None, bot_name="Jade", auto_rate=0.20,
                  cooldown_seconds=180, social_policy=None,
-                 initiatives=None, document_store=None):
+                 document_store=None):
         if not token or token == "example":
             raise ValueError("Discord token required")
         self.token = token
@@ -48,7 +47,6 @@ class DiscordText:
         self.client = None
         self.voice_bridge = voice_bridge
         self.social_policy = social_policy
-        self.initiatives = initiatives
         self.document_store = document_store
         self._expiry_task = None
         self.dropped = 0
@@ -151,24 +149,6 @@ class DiscordText:
                           source_channel="[privé]" if incoming.private_channel else incoming.channel,
                           private_channel=incoming.private_channel, input_text=incoming.text)
                     parent._remember_dm_channel(incoming, message.channel)
-                    if (parent.initiatives is not None
-                            and incoming.account_id
-                            and getattr(message.author, "bot", True) is False):
-                        own_id = self.user.id if self.user else None
-                        mentions = getattr(message, "mentions", ()) or ()
-                        ref = getattr(message, "reference", None)
-                        resolved = getattr(ref, "resolved", None)
-                        state = parent.policy.channels.get(incoming.channel)
-                        directed = bool(
-                            (own_id is not None and
-                             (any(getattr(p, "id", None) == own_id for p in mentions)
-                              or getattr(getattr(resolved, "author", None), "id", None) == own_id
-                              or (state is not None and
-                                  getattr(ref, "message_id", None) in state.sent_ids)))
-                            or re.search(r"(?<!\w)" + re.escape(parent.policy.bot_name)
-                                         + r"(?!\w)", incoming.text, re.I))
-                        parent.initiatives.human_replied(
-                            incoming.channel, text=incoming.text, directed=directed)
                     selected = parent.policy.observe(
                         message, incoming, own_user_id=self.user.id if self.user else None)
                     event("discord_policy_decision", source_platform="discord",
@@ -248,27 +228,6 @@ class DiscordText:
                     if lost_voice and self._gateway_available:
                         LOG.warning("Discord voice left while Gateway is available; scheduling reconnect")
                         self._schedule_voice_retry(bridge)
-                if parent.initiatives is not None:
-                    previous = getattr(before, "channel", None)
-                    current = getattr(after, "channel", None)
-                    if previous is not None and previous != current:
-                        members = getattr(previous, "members", None)
-                        if isinstance(members, (list, tuple)) and not any(
-                                getattr(person, "bot", True) is False
-                                for person in members):
-                            parent.initiatives.room_emptied(str(previous.id))
-                if parent.initiatives is not None and self._gateway_available:
-                    source = await parent.initiatives.voice_join(
-                        member, before, after, channel_id=bridge.channel_id,
-                        own_bot_id=own_bot_id,
-                        voice_session_id=(bridge.session_id
-                                          if getattr(bridge, "connection", None) is not None
-                                          else ""))
-                    if source is not None:
-                        try:
-                            await parent.on_message(source)
-                        except (asyncio.QueueFull, RuntimeError):
-                            parent.dropped += 1
 
             async def on_disconnect(self):
                 retry = self._cancel_voice_retry()

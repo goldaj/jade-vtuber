@@ -16,6 +16,7 @@ import logging
 from pathlib import Path, PurePosixPath
 import re
 import secrets
+import sqlite3
 from urllib.parse import urlsplit, quote
 import wave
 import time
@@ -26,6 +27,7 @@ from .intent_visuals import public_visual_contract
 from .mobile_live import LIVE_GET_ROUTES, LIVE_POST_ROUTES, LIVE_SDP_BODY_LIMIT
 
 LOG = logging.getLogger("jade.mobile")
+DISCORD_LIVE_ROUTE = "/api/discord/live"
 HERE = Path(__file__).resolve().parent
 WEB_ROOT = HERE / "mobile_web"
 ROOT = HERE.parents[1]
@@ -120,6 +122,9 @@ class MobileGateway:
         self.document_store = getattr(getattr(runtime, "document_service", None), "store", None)
         self.reminders = reminder_service
         self.live_manager = live_manager
+        self.discord_live_policy = None
+        self.discord_live_adapter = None
+        self._discord_live_settings_lock = asyncio.Lock()
         if owner_login is not None and (not isinstance(owner_login, str)
                                          or not 3 <= len(owner_login.strip()) <= 256
                                          or not owner_login.isascii()):
@@ -535,10 +540,44 @@ class MobileGateway:
                 reply_future.cancel()
             self.pending.pop(incoming.message_id, None)
 
+    async def _discord_live_settings(self, writer, enabled=None):
+        if self.discord_live_policy is None:
+            await self._json(writer, 503, {"error": "discord_live_unavailable"})
+            return
+        async with self._discord_live_settings_lock:
+            try:
+                status = await self.discord_live_policy.mobile_settings(enabled)
+                if enabled is not None and self.discord_live_adapter is not None:
+                    await self.discord_live_adapter.apply_owner_preference(enabled)
+            except (OSError, sqlite3.Error, ValueError):
+                await self._json(writer, 503, {"error": "discord_live_unavailable"})
+                return
+            if enabled is False and self.discord_live_adapter is not None:
+                try:
+                    status = await self.discord_live_policy.mobile_settings()
+                except (OSError, sqlite3.Error, ValueError):
+                    # OFF is already committed and applied. Only the freshly
+                    # reported minutes are unavailable for this response.
+                    status["partial"] = True
+        await self._json(writer, 200, status)
+
     async def _post(self, writer, route: str, headers: dict, body: bytes, *, streaming=False):
         if route in LIVE_POST_ROUTES:
             from .mobile_live import live_http
             await live_http(self, writer, "POST", route, headers, body)
+            return
+        if route == DISCORD_LIVE_ROUTE:
+            if headers.get("content-type", "").split(";")[0].strip() != "application/json":
+                await self._json(writer, 400, {"error": "expected JSON"})
+                return
+            try:
+                request = json.loads(body)
+            except (UnicodeDecodeError, ValueError):
+                request = None
+            if not isinstance(request, dict) or set(request) != {"enabled"} or type(request["enabled"]) is not bool:
+                await self._json(writer, 400, {"error": "invalid Discord Live setting"})
+                return
+            await self._discord_live_settings(writer, request["enabled"])
             return
         if route in ("/api/push", "/api/reminders"):
             if headers.get("content-type", "").split(";")[0].strip() != "application/json":
@@ -852,7 +891,7 @@ class MobileGateway:
                 await self._json(writer, 403, {"error": "private owner required"})
                 return
             if method == "GET":
-                if route in LIVE_GET_ROUTES or route == "/api/live/control":
+                if route in LIVE_GET_ROUTES or route in ("/api/live/control", DISCORD_LIVE_ROUTE):
                     if not self._origin_allowed(headers) or not headers.get("host"):
                         await self._json(writer, 403, {"error": "invalid_origin"})
                         return
@@ -861,6 +900,8 @@ class MobileGateway:
                         await live_control(self, reader, writer, headers)
                     elif not hmac.compare_digest(headers.get("authorization", ""), "Bearer " + self.token):
                         await self._json(writer, 401, {"error": "authentication_required"})
+                    elif route == DISCORD_LIVE_ROUTE:
+                        await self._discord_live_settings(writer)
                     else:
                         from .mobile_live import live_http
                         await live_http(self, writer, "GET", route, headers)
@@ -891,7 +932,7 @@ class MobileGateway:
                 await self._static(writer, route)
                 return
             if route not in ("/api/chat", "/api/voice", "/api/link", "/api/billing", "/api/metrics",
-                              "/api/push", "/api/reminders", "/api/auth") and route not in LIVE_POST_ROUTES:
+                              "/api/push", "/api/reminders", "/api/auth", DISCORD_LIVE_ROUTE) and route not in LIVE_POST_ROUTES:
                 await self._json(writer, 404, {"error": "unknown route"})
                 return
             if (headers.get("transfer-encoding") or not self._origin_allowed(headers)

@@ -54,6 +54,8 @@ Le signalement et les décisions de réalisation sont consignés avec leurs rôl
 
 La [suite du 27 novembre](../../operations/handoffs/2026-11-27-codex-mobile-live-playback.md#mise-à-jour-du-micro-et-de-la-pastille) consigne la confirmation du correctif puis la nouvelle demande de commande et d’indicateurs.
 
+La [passation Discord Live](../../operations/handoffs/2026-11-27-codex-discord-live-control.md#échanges-accessibles) consigne le retrait demandé du salut, le suivi Discord dans Config, le signalement de couleur mobile et l’autorisation de publier.
+
 ## Synchronisation du clone de développement le 26 novembre 2026
 
 - **Propriétaire** (extrait de la conversation) « Je veux que tu push le local, mais attention il va y avoir du merge à faire ».

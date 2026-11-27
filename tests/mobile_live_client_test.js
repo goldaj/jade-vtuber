@@ -317,6 +317,36 @@ function harness(options = {}) {
   {
     const h = harness(); await h.selectLive(); await h.arm();
     h.worklets[0].emit({type:"speech"}); await tick();
+    const remote = h.stream();
+    h.peers[0].ontrack({streams:[remote], track:remote.track});
+    h.sockets[0].emit({type:"state", mode:"live", revision:1, lease_id:"lease-1",
+      lease_state:"armed", session_state:"standby", session_id:"session-1"});
+    const activity = () => {
+      const {session_state, speech_active, playback_active} = h.states.at(-1);
+      return [session_state, speech_active, playback_active];
+    };
+    for (let turn = 0; turn < 2; turn++) {
+      const count = h.states.length;
+      h.worklets[0].emit({type:"speech_activity", active:true});
+      h.worklets[0].emit({type:"speech_activity", active:true});
+      assert.deepEqual(activity(), ["standby", true, false]);
+      assert.equal(h.states.length, count + 1, "unchanged speech activity does not publish again");
+      h.worklets[0].emit({type:"speech_activity", active:false});
+      assert.deepEqual(activity(), ["standby", false, false]);
+      h.audio(.1);
+      h.audio(.1);
+      assert.deepEqual(activity(), ["standby", false, true]);
+      assert.equal(h.states.length, count + 3, "the playback start publishes once across frames");
+      await h.advance(201);
+      h.audio(0);
+      assert.deepEqual(activity(), ["standby", false, false]);
+    }
+    assert.equal(h.peers.length, 1, "repeated speech and playback do not reopen the session");
+    await h.client.stop("test_complete");
+  }
+  {
+    const h = harness(); await h.selectLive(); await h.arm();
+    h.worklets[0].emit({type:"speech"}); await tick();
     h.server.play = deferred();
     const remote = h.stream();
     h.peers[0].ontrack({streams:[remote], track:remote.track});

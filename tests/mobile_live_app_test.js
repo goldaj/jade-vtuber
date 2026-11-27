@@ -115,6 +115,16 @@ function expectLiveColor(onAir) {
   emitState({session_state:"standby"});
   expectLiveColor(false);
   assert.equal(mic.attrs["aria-pressed"], "true", "provider standby keeps the explicit capture armed");
+  for (let turn = 0; turn < 2; turn++) {
+    emitState({speech_active:true});
+    expectLiveColor(true);
+    emitState({speech_active:false});
+    expectLiveColor(false);
+    emitState({playback_active:true});
+    expectLiveColor(true);
+    emitState({playback_active:false});
+    expectLiveColor(false);
+  }
   const stopCount = stops.length;
   for (const value of navigation) value.handlers.click();
   await controlLive();
@@ -122,11 +132,14 @@ function expectLiveColor(onAir) {
   await element("fullscreen").handlers.click();
   assert.equal(mic.disabled, false);
   expectLiveColor(false);
-  emitState({session_state:"active"});
+  emitState({playback_active:true});
   expectLiveColor(true);
   await controlLive();
   assert.equal(mic.attrs["aria-pressed"], "false");
   expectLiveColor(false);
+  emitState({lease_state:"draining", playback_active:true});
+  expectLiveColor(false);
+  emitState({lease_state:"closed", playback_active:false});
   assert.equal(toggles, 2, "the second click cuts capture in fullscreen");
   assert.equal(state.active, false);
   await controlLive();

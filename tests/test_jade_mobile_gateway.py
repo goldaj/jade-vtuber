@@ -159,6 +159,32 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(b"Cache-Control: no-store", raw)
         self.mobile.billing.get.assert_awaited_once_with(refresh=True)
 
+    async def test_discord_live_settings_require_owner_auth_and_a_boolean(self):
+        route = "/api/discord/live"
+        self.mobile.owner_login = "local-owner"
+        headers = dict(self.headers("application/json"), **{"Tailscale-User-Login": "local-owner"})
+        policy = AsyncMock()
+        adapter = AsyncMock()
+        self.mobile.discord_live_policy, self.mobile.discord_live_adapter = policy, adapter
+        summary = {"enabled": False, "month": "2026-11", "minutes": 2.5, "partial": False}
+        policy.mobile_settings.return_value = summary
+        self.assertEqual((await self.request("GET", route, headers=self.headers("application/json")))[0], 403)
+        owner = {"Tailscale-User-Login": "local-owner", "Content-Type": "application/json"}
+        self.assertEqual((await self.request("GET", route, headers=owner))[0], 401)
+        self.assertEqual((await self.request("POST", route, body=b'{"enabled":false}', headers=owner))[0], 401)
+        policy.mobile_settings.assert_not_awaited()
+        for payload in (b'{"enabled":"false"}', b'{"enabled":0}', b'{', b'{"enabled":false,"extra":true}'):
+            self.assertEqual((await self.request("POST", route, body=payload, headers=headers))[0], 400)
+        policy.mobile_settings.assert_not_awaited()
+        status, body, raw = await self.request("GET", route, headers=headers)
+        self.assertEqual((status, json.loads(body)), (200, summary))
+        self.assertIn(b"Cache-Control: no-store", raw)
+        policy.mobile_settings.assert_awaited_once_with(None)
+        status, body, _ = await self.request("POST", route, body=b'{"enabled":false}', headers=headers)
+        self.assertEqual((status, json.loads(body)), (200, summary))
+        policy.mobile_settings.assert_any_await(False)
+        adapter.apply_owner_preference.assert_awaited_once_with(False)
+
     async def test_owner_link_endpoint_binds_target_without_public_token_issuance(self):
         store = MemoryStore(Path(self.temp.name) / "linked.sqlite3")
         owner, target = ("microphone", "goldaj"), ("twitch", "6001")

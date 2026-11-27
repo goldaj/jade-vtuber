@@ -10,6 +10,7 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
 function harness(storage = new Map(), device = {permission:"default", subscription:null}) {
   const elements = new Map(), requests = [], stops = [], intervals = [];
   let serial = 0, permissionRequests = 0, audioContexts = 0, captureRequests = 0, subscribeFailure = false;
+  let discordEnabled = true, discordFailure = false;
   let options;
   function node(id) {
     const classes = new Set();
@@ -81,6 +82,11 @@ function harness(storage = new Map(), device = {permission:"default", subscripti
       else if (url === "/control/api/status") result = {phase:"idle", branch:"develop", pycharm_run:true, running:true};
       else if (url === "/control/api/logs") result = {text:"INFO Started\nWARNING Warning\nERROR Failure"};
       else if (url === "/api/billing") result = {status:"ok", today:{usd:"1.25"}, month:{usd:"12.50"}, checked_at:"2026-11-27T08:00:00Z"};
+      else if (url === "/api/discord/live") {
+        if (body && discordFailure) return {status:503, ok:false, json:async () => ({error:"unavailable"})};
+        if (body) discordEnabled = body.enabled;
+        result = {enabled:discordEnabled, minutes:12.5, month:"2026-11", partial:true};
+      }
       return {status:200, ok:true, json:async () => result};
     }};
   const context = vm.createContext(sandbox);
@@ -95,6 +101,7 @@ function harness(storage = new Map(), device = {permission:"default", subscripti
     get options() { return options; }, get permissionRequests() { return permissionRequests; },
     get audioContexts() { return audioContexts; }, get captureRequests() { return captureRequests; },
     set subscribeFailure(value) { subscribeFailure = value; },
+    set discordFailure(value) { discordFailure = value; },
     async login() { window.JadeMobileApp.login("private-in-memory-bearer"); await tick(); },
     async config() { element("nav-profile").handlers.click(); await tick(); }};
 }
@@ -163,5 +170,34 @@ function harness(storage = new Map(), device = {permission:"default", subscripti
   assert.equal(disabled.element("billing-month").textContent, "12.50 USD");
   assert.match(disabled.element("billing-status").textContent, /Dernière actualisation/);
   assert(!disabled.element("billing-status").textContent.includes("reportées"));
-  console.log("Mobile Config: persistent sound, notification checkbox/permission, log scroll/filter, minimal billing PASS");
+
+  const discordPanel = disabled.element("discord-live-panel"), discordToggle = disabled.element("discord-live-enabled");
+  discordPanel.open = true;
+  discordPanel.handlers.toggle(); await tick();
+  const discordRead = disabled.requests.find(request => request.url === "/api/discord/live");
+  assert.equal(discordRead.request.method, "GET");
+  assert.equal(discordRead.request.headers.Authorization, "Bearer private-in-memory-bearer");
+  assert.equal(discordToggle.checked, true);
+  assert.equal(discordToggle.disabled, false);
+  assert.equal(disabled.element("discord-live-minutes").textContent, "12,5");
+  assert.match(disabled.element("discord-live-status").textContent, /partiel/);
+
+  await disabled.change("discord-live-enabled", false);
+  const discordWrite = disabled.requests.at(-1);
+  assert.equal(discordWrite.url, "/api/discord/live");
+  assert.equal(discordWrite.request.method, "POST");
+  assert.deepEqual(discordWrite.body, {enabled:false});
+  assert.equal(discordToggle.checked, false);
+  assert.equal(disabled.state.mode, "live", "Discord has a separate voice choice from mobile");
+  await disabled.login();
+  assert.equal(discordToggle.checked, false, "the server choice is restored after authentication");
+
+  disabled.discordFailure = true;
+  await disabled.change("discord-live-enabled", true);
+  assert.equal(discordToggle.checked, false, "a failure restores the last confirmed choice");
+  assert.match(disabled.element("discord-live-status").textContent, /Impossible de confirmer/);
+  disabled.discordFailure = false;
+  await disabled.change("discord-live-enabled", true);
+  assert.equal(discordToggle.checked, true);
+  console.log("Mobile Config: sound, notifications, deployment logs, billing and Discord follow-up PASS");
 })().catch(error => { console.error(error); process.exitCode = 1; });

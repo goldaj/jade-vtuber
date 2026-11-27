@@ -1,3 +1,9 @@
+## 2026-11-27 — Commande du Live Discord et couleur de la conversation mobile
+
+- Le salon Discord n’émet plus de salut automatique à l’arrivée. Le moteur Live possède la sortie vocale jusqu’à la fin de sa session. Les réponses classiques prennent la suite à la prochaine interaction admissible après bascule.
+- **Suivi Discord**, au-dessus de **Suivi OpenAI** dans Config, rapporte les minutes observées du mois Europe/Paris. La case serveur **Activer GPT-Live sur Discord**, cochée par défaut, permet de couper le Live et de réautoriser la politique automatique.
+- Les indicateurs Live mobiles suivent la parole captée et la voix reçue après la première ouverture. Contrôles hors réseau du panneau, du compteur, de la bascule exclusive et de deux tours mobiles successifs. [Passation et recette](handoffs/2026-11-27-codex-discord-live-control.md)
+
 ## 2026-11-27 — Micro Live et indicateur dans la scène
 
 - Accueil et plein écran reprennent l’activation et la coupure du micro Live par appuis successifs. Config conserve le choix Live/classique. Aucun texte de micro ne s’affiche sur la scène. La pastille occupe le coin de la scène dans les quatre vues. Le mot « Live » reste sur Accueil fenêtré.
