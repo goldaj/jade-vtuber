@@ -8,7 +8,7 @@ from src.jade_runtime.live_voice import LiveVoice, JADE_VOICE_PROMPT, VOICE_REVI
 
 
 class LiveConfigTests(unittest.TestCase):
-    def test_defaults_enable_mobile_live_without_enabling_discord_or_reading_keys(self):
+    def test_defaults_enable_mobile_and_follow_the_single_discord_code_switch(self):
         keys = []
 
         def get(key, default):
@@ -18,12 +18,13 @@ class LiveConfigTests(unittest.TestCase):
         config = LiveConfig.from_env(get)
         self.assertTrue(config.enabled)
         self.assertTrue(config.mobile_enabled)
-        self.assertFalse(config.discord_enabled)
+        self.assertTrue(config.discord_enabled)
         self.assertTrue(config.preflight(api_key_present=True)["available"])
         self.assertFalse(hasattr(config, "daily_usd"))
         self.assertFalse(hasattr(config, "monthly_usd"))
         self.assertFalse(hasattr(config, "backend_reservation_usd"))
         self.assertNotIn("OPENAI_API_KEY", keys)
+        self.assertNotIn("JADE_DISCORD_LIVE_ENABLED", keys)
 
     def test_old_financial_settings_are_ignored_even_when_zero_or_invalid(self):
         obsolete = {"JADE_LIVE_DAILY_USD", "JADE_LIVE_MONTHLY_USD",
@@ -65,7 +66,7 @@ class LiveConfigTests(unittest.TestCase):
 
     def test_discord_flag_does_not_claim_missing_adapter_exists(self):
         config = replace(LiveConfig(), discord_enabled=True)
-        result = config.preflight(api_key_present=True)
+        result = config.preflight(api_key_present=True, discord_adapter_available=False)
         self.assertEqual(result["reasons"], [])
         self.assertTrue(result["available"])
         self.assertFalse(result["discord"]["available"])

@@ -10,7 +10,7 @@
 
 ## REPRISE PRIORITAIRE — validations du 22 novembre 2026
 
-**Reprise du Live mobile le 27/11 :** le lot `3d2f3ea` était publié et sa CI Linux/Windows verte. L’audit retrouve un défaut de format des permissions envoyées à OpenAI et un message de fin de réponse périmé ; correction suivie dans **DEV-055**. [Diagnostic et preuves](../operations/handoffs/2026-11-27-chatgpt-live-resume.md). REC-044 à REC-050 restent les seules recettes du lot ; DEV-052 demeure une étape future.
+**Reprise du Live mobile le 27/11 :** le lot `3d2f3ea` était publié et sa CI Linux/Windows verte. L’audit retrouve un défaut de format des permissions envoyées à OpenAI et un message de fin de réponse périmé ; correction suivie dans **DEV-055**. [Diagnostic et preuves](../operations/handoffs/2026-11-27-chatgpt-live-resume.md). REC-044 à REC-050 restent les recettes mobiles. La demande suivante du propriétaire engage immédiatement Discord, suivi désormais en REC-051.
 
 **Correction produit du 26/11 :** Live mobile activé par défaut, désactivable dans Profil, **sans budget financier mobile ni plafond quotidien**. Les critères initiaux contraires sont remplacés ci-dessous. Le seul seuil financier demandé est mensuel, global toutes API, et décide du moteur Discord : 50 EUR ou 40 EUR si le suivi est incomplet. [Correctif et preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-default-no-budget.md). Le correctif est suivi dans **DEV-054** ; les sept recettes matérielles restent ouvertes.
 
@@ -29,7 +29,7 @@
 
 **DEV-032 (UX-19) → REC-039 (P2, Done le 22/11/2026)** : génération de fichiers mobile et Discord, en texte et vocal, intégrée sur `develop`. **Le propriétaire confirme explicitement après recette réelle que l'ensemble de l'US fonctionne**. Les deux parcours mobiles avaient été vérifiés avant le correctif ; les trois parcours Discord ont été acceptés globalement après activation du mode `all` par défaut. [Statut canonique REC-039](02-RECETTE.md). Aucun DEV-032 actif en parallèle. DEV-033/034/035 (PER-01/02/03, images) restent « À qualifier ». **NEW-16 (P2) est prise en charge dans [DEV-036](01-DEVELOPPEMENT.md), statut « En cours »** : rappels persistants, push Android en arrière-plan et ouverture ciblée codés ; recette réelle Android et configuration Web Push restent ouvertes ; l'idée n'est plus active dans le catalogue prospectif et les autres idées supprimées ne sont pas réintroduites.
 
-**Lot vocal mobile — développement du 26/11 :** le code testé hors réseau dans `90ec0c7` est intégré sur `develop`, sur demande explicite du propriétaire pour son test mobile. La mise à jour develop `b4a85e8` et ses cartes DEV-053 / ART-014 sont conservées dans la fusion. **DEV-046/048/051/049/047/050/040 → REC-044/045/046/047/048/049/050**, avec recette réelle restante et sans doublon DEV/REC. **DEV-041** garde la création/écoute/choix de la voix ; **DEV-052**, P2, décrit le futur basculement Discord sous 50 EUR (40 EUR si suivi incomplet), indépendant du choix mobile. [Passation et preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md) · [Architecture du code](../architecture/LIVE_MOBILE.md).
+**Lot vocal mobile — développement du 26/11 :** le code testé hors réseau dans `90ec0c7` est intégré sur `develop`, sur demande explicite du propriétaire pour son test mobile. La mise à jour develop `b4a85e8` et ses cartes DEV-053 / ART-014 sont conservées dans la fusion. **DEV-046/048/051/049/047/050/040 → REC-044/045/046/047/048/049/050**, avec recette réelle restante et sans doublon DEV/REC. **DEV-041** garde la création/écoute/choix de la voix ; **DEV-052 → REC-051**, P2 : automatisme Discord désormais développé sur instruction du 27/11, sous 50 EUR ou 40 EUR si suivi incomplet, avec un interrupteur unique et sans effet sur le mobile. [Passation et preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md) · [Architecture du code](../architecture/LIVE_MOBILE.md).
 
 **Transferts du 23/11 : DEV-037 (NEW-29, sous-titres mobiles, P2) et DEV-038 (NEW-38, autonomie fonctionnelle, P1) sont À qualifier, sans développement lancé. Les deux anciennes idées ont été retirées du catalogue actif.**
 
@@ -59,8 +59,8 @@
 
 | Type | Vue | Objet | Nombre actuel |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 33 |
-| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, dont les anciennes cartes DEV déplacées | 50 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 32 |
+| `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, dont les anciennes cartes DEV déplacées | 51 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 16 |
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 14 |
 | **Total** | | **Cartes uniques dans la vue priorisée ; OPS-012 est classée sans suite, hors vue** | **113** |
@@ -214,7 +214,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 109 | DEV-043 | Transverse | Faire fonctionner Jade sur VPS avec le PC éteint et le mobile sans avatar | [DEV](01-DEVELOPPEMENT.md#dev-043--service-jade-indépendant-du-pc) |
 | 110 | DEV-044 | A | Livrer l’application Android installable (UX-14) | [DEV](01-DEVELOPPEMENT.md#dev-044--application-android-installable) |
 | 111 | DEV-045 | B | Changer de coiffure à chaud sur Jade r21 dans l'application mobile | [DEV](01-DEVELOPPEMENT.md#dev-045--coiffures-interchangeables-en-temps-réel) |
-| 112 | DEV-052 | A | Piloter Live Discord selon la consommation API mensuelle globale (50/40 EUR), sans changer le mobile | [DEV](01-DEVELOPPEMENT.md#dev-052--live-discord-selon-la-consommation-api-mensuelle-globale-p2) |
+| 112 | REC-051 | A | Valider Live Discord automatique (50/40 EUR) et interrupteur global, mobile indépendant | [REC](02-RECETTE.md#rec-051--live-discord-automatique-et-interrupteur-global-ancienne-dev-052) |
 
 ### P3 · 1 tâche
 

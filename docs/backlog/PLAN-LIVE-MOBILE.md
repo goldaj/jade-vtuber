@@ -1,5 +1,7 @@
 # GPT-Live mobile — plan d'architecture et feuille de route
 
+**Actualisation du 27/11/2026 :** le propriétaire demande de développer maintenant l'automatisme Discord 50/40 EUR avec un seul paramètre code ON/OFF. Ce lot complémentaire est décrit dans [DISCORD_LIVE.md](../architecture/DISCORD_LIVE.md), suivi par **REC-051 (ancienne DEV-052)**. Il remplace les mentions de Discord « futur/réservé » du cadrage daté ci-dessous ; les règles mobiles sans budget restent inchangées.
+
 **Cadrage du 26 novembre 2026**, demandé par Goldaj. Code audité : `develop`, `990dfbe043f16619359d86405f5c128b435d0bb8`. Ce document conserve le cadrage technique, corrigé par la décision propriétaire ci-dessous. La note de mise en œuvre ci-dessous renvoie au code actuel ; les statuts restent canoniques dans [DEV](01-DEVELOPPEMENT.md) et [REC](02-RECETTE.md). Aucun micro, création de voix ni appel API facturé n’a été activé pendant cette mission.
 
 **Mise en œuvre du 26/11 :** ce cadrage initial est conservé comme référence datée. Le code de `feat/live-mobile-20261126` (`90ec0c7`) est désormais intégré sur `develop`, après reprise de `6dc8d1b` et autorisation du propriétaire pour son test ; voir [architecture actuelle](../architecture/LIVE_MOBILE.md) et [preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md). Sept suivis sont transférés en REC-044 à REC-050, sans recette OpenAI/Android présumée. DEV-041 garde les voix à créer/choisir. DEV-052 ajoute la politique Discord 50/40 EUR future, sans changement de préférence mobile ni adaptateur Discord livré dans ce lot.
@@ -122,7 +124,7 @@ Ces paramètres sont désormais codés ; les valeurs ci-dessous intègrent la co
 | --- | --- | --- |
 | `JADE_LIVE_ENABLED` | `true` | Live disponible par défaut ; OFF explicite permet de désactiver le moteur. |
 | `JADE_MOBILE_LIVE_ENABLED` | `true` | Autorise seulement le canal mobile lorsque le verrou global est ouvert et les contrôles passent. |
-| `JADE_DISCORD_LIVE_ENABLED` | `false` | Réservé au futur adaptateur ; actuellement `true` produit un diagnostic Discord « adaptateur non disponible », sans bloquer le mobile ni activer un autre chemin. |
+| `DISCORD_ENABLED` dans `discord_config.py` | `True` | Depuis le 27/11 : interrupteur unique de tout Discord avec sélection Live/classique ; `False` coupe tout Discord. Ancien `JADE_DISCORD_LIVE_ENABLED` ignoré. |
 | `JADE_LIVE_MODEL` | `gpt-live-1.1` | Indépendant de `JADE_TTS_MODEL` et des modèles backend. |
 | `JADE_LIVE_VOICE` | Identifiant API validé ; `brise` comme recours technique documenté | Aube est prioritaire si son accès API est confirmé ; aucun identifiant `aube` ni équivalence avec Brise supposés. Remplacer ensuite par la voix originale validée dans DEV-041. |
 | Préférence `voice_mode` | `live` | Persistante côté serveur ; choix classique explicite conservé ; la capture ne l’est jamais. |

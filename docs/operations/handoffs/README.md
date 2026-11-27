@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [REC-051 · Discord Live automatique et interrupteur global (ancienne DEV-052)](2026-11-27-chatgpt-discord-auto-live.md) · Demande complémentaire du 27/11 : switch code unique, transport vocal Live, dépenses API globales 50/40 EUR, repli classique et indépendance mobile.
+
 - [DEV-055 · Reprise et correctifs du Live mobile](2026-11-27-chatgpt-live-resume.md) · Audit de `3d2f3ea`, contrat des sélecteurs API, libellé d’arrêt et kit vocal ; recettes physiques conservées ouvertes.
 
 - [DEV-054 · Live mobile par défaut, sans plafond financier](2026-11-26-chatgpt-live-mobile-default-no-budget.md) · Correction propriétaire du 26/11, diagnostics visibles, usage passif et politique Discord strictement séparée.

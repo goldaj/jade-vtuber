@@ -20,7 +20,11 @@ Vérifier dans Discord que les messages privés ne sont pas diffusés oralement 
 
 ## 4. Converser sur Discord vocal
 
-Configurer un salon vocal initial `DISCORD_VOICE_CHANNEL`, les droits du bot, le transport Discord et FFmpeg ; la voix de l'utilisateur est envoyée à STT OpenAI, la réponse suit le moteur puis TTS. Il n'est pas nécessaire de prononcer systématiquement « Jade » si les politiques du dialogue et du pont vocal autorisent la participation. Vérifier sur un vrai serveur la capture, les changements de canal, la lecture et le comportement à la déconnexion. Les canaux audio/écrit Discord peuvent partager une identité de conversation contrôlée par la session ; le pont ne prouve pas l'identité d'une personne par son pseudo seul.
+Configurer un salon vocal initial `DISCORD_VOICE_CHANNEL`, les droits du bot, le transport Discord et FFmpeg. Depuis le 27/11, **un seul paramètre dans `src/jade_runtime/discord_config.py`** contrôle Discord : `DISCORD_ENABLED = True` active le texte et la voix dans le lancement habituel, avec choix automatique du moteur vocal ; `False` désactive complètement Discord. Redémarrer Jade après ce changement. `--all-channels` respecte aussi cet interrupteur.
+
+Le vocal utilise Live tant que les dépenses API mensuelles globales restent sous le seuil : **50 EUR si le suivi est complet et suffisamment à jour, sinon 40 EUR avec un suivi estimé exploitable**. Les relevés standard conduisent normalement au seuil de 40 EUR. Au seuil, Jade revient au parcours classique STT → dialogue → TTS pour le reste du mois. Sans données essentielles de coûts, elle reste en classique et indique la raison dans les journaux. La collecte OpenAI emploie la clé d'administration déjà prévue par `JADE_OPENAI_ADMIN_KEY` ; la clé normale du dialogue seule ne suffit pas à lire ces dépenses. Le mobile garde son propre choix Live/classique et n'a aucun budget financier.
+
+En tête-à-tête, la parole peut être transmise directement au Live. En groupe, Jade conserve ses règles de participation et transcrit d'abord pour décider si elle doit intervenir ; ce parcours a donc une latence supérieure. Il n'est pas nécessaire de prononcer systématiquement « Jade » si les politiques du dialogue et du pont vocal autorisent la participation. Vérifier sur un vrai serveur la capture, les changements de canal, la lecture et le comportement à la déconnexion. Les canaux audio/écrit Discord partagent une identité contrôlée par le compte et la session ; un pseudo seul ne prouve pas cette identité. [Détails et recette restante](../architecture/DISCORD_LIVE.md).
 
 ## 5. Twitch : lecture et réponse écrite
 
@@ -38,7 +42,7 @@ Un son entendu dans un canal privé ne doit pas être lu publiquement sur Discor
 
 La PWA permet :
 - **Texte** : rédiger/envoyer un message et voir la réponse ; session de discussion conservée pendant l'usage de la page.
-- **Voix** : appuyer pour enregistrer, toucher à nouveau pour envoyer, durée maximale 20 s ; permission microphone Chrome/Android obligatoire ; STT et TTS exécutés par le PC. **Pas d'écoute continue/interruptions WebRTC**.
+- **Voix** : Live est sélectionné par défaut, sans budget financier mobile ; un geste arme le micro et la conversation utilise WebRTC. Dans Profil, choisir le classique pour retrouver l'enregistrement pendant l'appui, puis l'envoi au relâchement via STT et TTS. Un choix classique déjà enregistré reste conservé. Permission microphone Chrome/Android obligatoire ; les arrêts de capture et changements de fil nécessitent un nouveau geste.
 - **Synthèse vocale** : bouton « Voix activée / Voix coupée ». Couper la voix évite un TTS mobile inutile.
 - **Avatar** : visage r20 sur fond transparent avec décor illustré et animé, expressions et bouche approximativement animées par l'audio **si le SDK Web compatible est installé sur D:**. Si le SDK manque ou n'est pas compatible, le chat peut rester accessible mais l'avatar sera absent.
 - **Nouveau fil / plein écran** : nouveau contexte de dialogue mobile ou affichage agrandi.

@@ -42,6 +42,22 @@ class _Player:
 
 
 class DiscordVoiceRoutingTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        # Main's wiring tests isolate the new monthly collector and adapter;
+        # their real behavior has dedicated injected-provider suites.
+        self.monthly_policy = SimpleNamespace(start=AsyncMock(), close=AsyncMock())
+        collector = patch("src.jade_runtime.global_spend.GlobalSpendCollector")
+        policy = patch("src.jade_runtime.discord_live_policy.DiscordLiveSpendPolicy",
+                       return_value=self.monthly_policy)
+        adapter = patch("src.jade_runtime.discord_live.create_discord_live",
+                        new_callable=AsyncMock, return_value=None)
+        self.spend_collector = collector.start()
+        self.spend_policy_factory = policy.start()
+        self.live_adapter_factory = adapter.start()
+        self.addCleanup(collector.stop)
+        self.addCleanup(policy.stop)
+        self.addCleanup(adapter.stop)
+
     async def test_default_sends_all_spoken_replies_once_to_connected_voice(self):
         with tempfile.TemporaryDirectory() as directory:
             local, discord = _Player(), _Player()
@@ -234,6 +250,13 @@ class DiscordVoiceRoutingTests(unittest.IsolatedAsyncioTestCase):
                     task.cancel()
                     with self.assertRaises(asyncio.CancelledError):
                         await task
+
+            self.monthly_policy.start.assert_awaited_once()
+            self.monthly_policy.close.assert_awaited_once()
+            self.live_adapter_factory.assert_awaited_once()
+            self.assertIs(self.live_adapter_factory.await_args.args[2], config)
+            self.assertIs(self.live_adapter_factory.await_args.args[3], self.monthly_policy)
+            self.assertTrue(callable(self.live_adapter_factory.await_args.kwargs["publish_reply"]))
 
     async def test_main_vts_hotkey_starts_with_first_streamed_sentence_once_per_turn(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Callable
 
 from .live_voice import LiveVoice
+from .discord_config import is_discord_enabled
 
 
 def _default_db_path() -> str:
@@ -31,7 +32,7 @@ def _bool(value: object) -> bool:
 class LiveConfig:
     enabled: bool = True
     mobile_enabled: bool = True
-    discord_enabled: bool = False
+    discord_enabled: bool = field(default_factory=is_discord_enabled)
     model: str = "gpt-live-1.1"
     voice: str = "brise"
     voice_id: str = ""
@@ -56,7 +57,7 @@ class LiveConfig:
         cfg = cls(
             enabled=_bool(get("JADE_LIVE_ENABLED", "true")),
             mobile_enabled=_bool(get("JADE_MOBILE_LIVE_ENABLED", "true")),
-            discord_enabled=_bool(get("JADE_DISCORD_LIVE_ENABLED", "false")),
+            discord_enabled=is_discord_enabled(),
             model=get("JADE_LIVE_MODEL", "gpt-live-1.1"),
             voice=get("JADE_LIVE_VOICE", "brise"),
             voice_id=get("JADE_LIVE_VOICE_ID", ""),
@@ -121,7 +122,7 @@ class LiveConfig:
                 raise ValueError("Live state must use an absolute private SQLite path outside Git")
 
     def preflight(self, api_key_present: bool = False,
-                  discord_adapter_available: bool = False) -> dict:
+                  discord_adapter_available: bool = True) -> dict:
         """Diagnostic only: no environment/secret reads, I/O or paid requests."""
         self.validate()
         reasons = []
@@ -133,12 +134,12 @@ class LiveConfig:
             reasons.append("api_key_missing")
         discord_reason = ("discord_live_disabled" if not self.discord_enabled else
                           "discord_adapter_unavailable" if not discord_adapter_available else
-                          "live_disabled" if not self.enabled else
                           "api_key_missing" if not api_key_present else "ready")
         return {"available": not reasons, "reasons": reasons, "model": self.model,
                 "voice": LiveVoice(self.voice, self.voice_id).public_status(),
                 "discord": {"enabled": self.discord_enabled,
-                            "available": discord_reason == "ready", "reason": discord_reason}}
+                            "available": discord_reason == "ready", "reason": discord_reason,
+                            "monthly_policy_required": True}}
 
     def session_config(self, *, instructions: str = "", input: list | None = None) -> dict:
         """Trusted server configuration; the mobile never chooses these settings."""

@@ -1,5 +1,7 @@
 # DEV-055 · Reprise du Live mobile après interruption de conversation
 
+**Suite de la demande, le 27/11 :** après ce correctif mobile publié dans `31efc13`, le propriétaire exige le développement immédiat de l'automatisme Discord 50/40 EUR avec un interrupteur code unique. Cette suite est prise en charge dans [la passation Discord](2026-11-27-chatgpt-discord-auto-live.md), REC-051 (ancienne DEV-052), et remplace le périmètre « futur » constaté ci-dessous lors du premier audit.
+
 - **Date :** 27 novembre 2026, Europe/Paris.
 - **Demande :** retrouver la fin de « Planifier le live mobile », vérifier ce qui a réellement été livré et terminer les travaux nécessaires sur `develop`.
 - **Branche de travail :** `fix/live-resume-audit-20261127`, depuis `develop@3d2f3ea72286241c658598bf4ec1e11671bec1c1`. Worktree distinct ; aucun travail local d'une autre mission écrasé.

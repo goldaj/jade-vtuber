@@ -3,11 +3,13 @@ import argparse
 import asyncio
 import logging
 import os
+import sqlite3
 from contextlib import AsyncExitStack
 from pathlib import Path
 
 from src.jade_runtime.assets import load_prompt
 from src.jade_runtime.config import Settings
+from src.jade_runtime.discord_config import selected_discord_channels
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.messages import Incoming
 from src.jade_runtime.openai_services import OpenAIServices
@@ -42,6 +44,8 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
                   avatar=False, mobile=False, all_channels=False):
     config = Settings.load()
     config.validate()
+    discord, discord_voice = selected_discord_channels(
+        config.discord_enabled, discord, discord_voice)
     enable_console_logs(enable_latency=config.latency_logging)
     summary("runtime_configuration", live=live, discord=discord, discord_voice=discord_voice,
             mobile=mobile, microphone=mic, twitch=twitch, memory=config.memory_enabled,
@@ -93,6 +97,7 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
     local_api = None
     mobile_gateway = None
     live_manager = None
+    discord_live_policy = None
     reminders = None
     shutdown_deadline = None
 
@@ -360,6 +365,36 @@ async def console(*, live=False, voice=False, mic=False, twitch=False,
             speech.secondary_player = discord_voice_bridge
             if avatar_client is not None:
                 discord_voice_bridge.playback_observer = avatar_client.observer("discord")
+            from src.jade_runtime.global_spend import GlobalSpendCollector
+            from src.jade_runtime.discord_live_policy import DiscordLiveSpendPolicy
+            from src.jade_runtime.discord_live import create_discord_live
+
+            async def publish_discord_live_reply(reply):
+                if discord_client is None or not reply.attachments:
+                    return False
+                return await discord_client.send_chat(
+                    reply.source.channel,
+                    "Voici les documents demandés (disponibles pendant 24 h).",
+                    attachments=reply.attachments)
+
+            try:
+                spend_collector = GlobalSpendCollector(
+                    admin_key=config.billing_admin_key,
+                    tavily_key=config.tavily_api_key,
+                    web_enabled=config.web_enabled,
+                    db_path=Path(config.live.usage_db_path).with_name("jade-global-spend.sqlite3"))
+                discord_live_policy = DiscordLiveSpendPolicy(spend_collector)
+                await discord_live_policy.start()
+                scopes.push_async_callback(discord_live_policy.close)
+            except (OSError, sqlite3.Error, ValueError):
+                LOG.error("Discord monthly usage tracking unavailable; Discord uses classic voice")
+                discord_live_policy = None
+            if discord_live_policy is not None:
+                discord_voice_bridge.live = await create_discord_live(
+                    discord_voice_bridge, runtime, config, discord_live_policy,
+                    publish_reply=publish_discord_live_reply)
+                if discord_voice_bridge.live is not None:
+                    scopes.push_async_callback(discord_voice_bridge.live.shutdown)
 
         async def accept(message):
             # Twitch needs the Work.finished signal to ignore stale chat while replying.
@@ -501,9 +536,14 @@ def main():
         # the autonomous r20 avatar is started in every case.
         settings = Settings.load()
         args.update(live=True, voice=True, mic=True, twitch=True,
-                    discord=True, discord_voice=True, http=True,
+                    discord=settings.discord_enabled,
+                    discord_voice=settings.discord_enabled, http=True,
                     avatar=True, mobile=True, vts=settings.vts_enabled,
                     all_channels=True)
+    elif args["discord"] or args["discord_voice"]:
+        settings = Settings.load()
+        args["discord"], args["discord_voice"] = selected_discord_channels(
+            settings.discord_enabled, args["discord"], args["discord_voice"])
     if preflight:
         from src.jade_runtime.diagnostics import inspect_environment
         try:

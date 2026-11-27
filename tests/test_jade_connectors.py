@@ -58,7 +58,7 @@ class ConnectionTests(unittest.IsolatedAsyncioTestCase):
 
     def test_extra_connector_flags_are_safe_by_default(self):
         self.assertFalse(Settings().twitch_enabled)
-        self.assertFalse(Settings().discord_enabled)
+        self.assertTrue(Settings().discord_enabled)  # Master code switch; no connection on construction.
         with self.assertRaises(ValueError):
             Settings(twitch_send=True).validate()
         # The old Discord send flag no longer gates a CLI-selected connector.

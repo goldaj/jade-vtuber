@@ -12,9 +12,9 @@ Les valeurs sont lues par `Settings.live` depuis la configuration privée habitu
 
 | Variable | Défaut | Effet |
 | --- | --- | --- |
-| `JADE_LIVE_ENABLED` | `1` | Live disponible par défaut ; un OFF explicite reste un verrou serveur |
+| `JADE_LIVE_ENABLED` | `1` | Live mobile disponible par défaut ; un OFF explicite verrouille le mobile, sans piloter Discord |
 | `JADE_MOBILE_LIVE_ENABLED` | `1` | Canal mobile autorisé lorsque les autres conditions sont remplies |
-| `JADE_DISCORD_LIVE_ENABLED` | `0` | Paramètre réservé ; diagnostic isolé, sans effet sur le mobile, et Discord classique conservé |
+| `DISCORD_ENABLED` dans `src/jade_runtime/discord_config.py` | `True` | Unique interrupteur code de tout Discord et de sa sélection vocale automatique ; anciennes variables privées Discord ignorées |
 | `JADE_LIVE_MODEL` | `gpt-live-1.1` | Modèle distinct du dialogue et du TTS classique |
 | `JADE_LIVE_VOICE` | `brise` | Voix API explicite ; Aube non confirmée, aucune équivalence supposée |
 | `JADE_LIVE_VOICE_ID` | vide | ID autorisé d'une voix personnalisée, prioritaire sur le nom |
@@ -48,7 +48,17 @@ Les routes conservent identité Tailscale, origine privée et Bearer. L'envelopp
 
 La clôture fournisseur confirme `session.closed`, pas une déconnexion. `opening_unknown` et `close_unconfirmed` restent visibles et bloquent une nouvelle session. Le serveur invalide les travaux avant les attentes, tente les fermetures bornées et reprend la réconciliation au démarrage. Un heartbeat ne prolonge ni le délai de mute ni l'activité conversationnelle. La curation en attente ne démarre qu'à la prochaine session active, avec contrôle du bail et de l'idempotence, sans condition financière.
 
-Les compteurs d'usage Live n'implémentent pas DEV-052 : le futur total global **mensuel en EUR**, toutes API confondues, gouvernera seulement Discord, avec seuil **50 EUR ou 40 EUR** si le suivi est incomplet ou trop ancien. Aucun seuil quotidien ni plafond mobile. L'usage backend connu est conservé sans lui attribuer un montant fictif ; sa valorisation complète reste à rapprocher des fournisseurs. Le script `python scripts/live_voice_preview.py` prépare uniquement les variantes et le corpus ; aucune création/écoute ni sélection acoustique n'est incluse.
+Les compteurs d'usage mobile restent passifs. La politique Discord distincte ci-dessous agrège les dépenses globales ; aucun seuil quotidien ni plafond mobile. Le script `python scripts/live_voice_preview.py` prépare uniquement les variantes et le corpus ; aucune création/écoute ni sélection acoustique n'est incluse.
+
+## Discord Live automatique — 27 novembre 2026
+
+Le propriétaire demande désormais l'implémentation de DEV-052, transférée en [REC-051](../backlog/02-RECETTE.md#rec-051--live-discord-automatique-et-interrupteur-global-ancienne-dev-052). Dans `src/jade_runtime/discord_config.py`, `DISCORD_ENABLED=True` autorise les transports Discord du lancement habituel et le choix vocal automatique ; `False` masque Discord écrit et vocal avant le contrôle du token et la création des connecteurs, y compris avec `--all-channels`. Redémarrer Jade après modification. Aucun second flag Live Discord n'est requis ; `JADE_DISCORD_ENABLED`, `JADE_DISCORD_VOICE_ENABLED` et `JADE_DISCORD_LIVE_ENABLED` sont ignorés. Les interrupteurs Live mobiles ne contrôlent pas Discord.
+
+`global_spend.py` collecte toutes les lignes OpenAI de l'organisation via la clé existante `JADE_OPENAI_ADMIN_KEY`, sans filtre de projet/produit/canal, ainsi que les crédits consommés du compte Tavily lorsque ce fournisseur est configuré. Le mois est civil en Europe/Paris et les devises sont converties avec le taux ECB daté et mis en cache. Rafraîchissement cible : 300 secondes ; une décision ne bloque pas sur le réseau. Le fichier privé `jade-global-spend.sqlite3`, voisin de `JADE_LIVE_USAGE_DB_PATH`, conserve relevés, provenance, estimations et verrou mensuel. Aucun audio, texte de conversation ou secret n'y est enregistré.
+
+`discord_live_policy.py` sélectionne Live sous **50 EUR** seulement avec une couverture monétaire complète et explicitement à jour ; une collecte estimée utilise **40 EUR**. Les sources standard n'exposant pas de borne certaine de fraîcheur, **40 EUR est le régime normal**. Une donnée essentielle absente/inexploitable ou un relevé trop ancien impose le classique avec un motif. Un dépassement conserve le classique pour le reste du mois, même après redémarrage ou correction baissière. Les usages Live observés avant facturation ne sont pas effacés par une simple lecture réussie ; les quotas inutilisés ne sont jamais comptés comme dépenses. Il s'agit d'un choix de moteur : les autres appels, le mobile et le classique continuent, donc ce seuil n'est pas un plafond garanti de facture.
+
+`discord_live_provider.py` transporte le PCM via la WebSocket primaire Live ; `discord_live.py` raccorde la voix et le pont de conversation/mémoire/outils. Solo : streaming natif après détection locale de parole. Groupe : admission par les règles existantes, puis envoi cadencé du tour admis ; l'étape STT ajoute de la latence. Changement de présence, seuil, déconnexion et arrêt invalident le tour avant fermeture ; un tour ambigu n'est pas rejoué en classique. [Architecture, limites et protocole](../architecture/DISCORD_LIVE.md).
 
 **Références fonctionnelles prioritaires :** [atlas du 16 novembre 2026](../architecture/atlas-fonctionnel-2026-11-16/README.md) (cinq vues compactes) et [contrat exhaustif des parcours](../architecture/atlas-fonctionnel-2026-11-16/CONTRAT_FLUX_COMPLET.md), couvrant règles propres à Twitch/Discord/micro/Android/HTTP, arbitrage, appels IA distincts, parallélisme, mémoire et incidents. Les [deux anciens schémas](../architecture/README.md) sont conservés pour l'infrastructure. L'atlas est basé sur `develop` au SHA `a841628b`, non sur une recette PC en conditions réelles ; le code et les réglages de la branche ont priorité.
 

@@ -90,6 +90,28 @@ class PCMBufferTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "incomplete"):
             await buffer.finish()
 
+    async def test_live_can_exceed_tts_duration_without_growing_the_buffer(self):
+        buffer = DiscordPCMBuffer(max_frames=5, max_input_bytes=48_000 * 102)
+        frame = b"\x12\x00" * 480
+        # 101 seconds of synthetic audio, drained immediately without waiting
+        # for wall clock or retaining a long recording in the test process.
+        for index in range(5050):
+            await buffer.feed(frame)
+            self.assertEqual(len(buffer.read()), FRAME_BYTES)
+            if index % 250 == 0:
+                await asyncio.sleep(0)
+        await buffer.finish()
+        self.assertEqual(buffer.read(), b"")
+        self.assertEqual(buffer.metrics().frames_read, 5050)
+        self.assertLessEqual(buffer.metrics().max_queued_frames, 5)
+        self.assertLessEqual(len(buffer._tail), FRAME_BYTES)
+
+    async def test_default_tts_duration_limit_remains_bounded(self):
+        buffer = DiscordPCMBuffer()
+        buffer._received = 4_800_000
+        with self.assertRaisesRegex(ValueError, "limit"):
+            await buffer.feed(b"\x01\x00" * 480)
+
 
 class TTSStreamTests(unittest.IsolatedAsyncioTestCase):
     async def test_audio_is_available_before_terminal_response(self):

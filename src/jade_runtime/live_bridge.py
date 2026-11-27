@@ -8,7 +8,7 @@ a crash. This module neither opens an OpenAI connection nor owns a microphone.
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 import hashlib
 import inspect
@@ -22,6 +22,8 @@ from .context_selection import select_context
 from .dialogue import Dialogue
 from .intent_engine import IntentStreamParser
 from .messages import Incoming, Reply
+from .memory_store import identity_of
+from .memory_service import _scope
 
 
 _ID = re.compile(r"[A-Za-z0-9_.:-]{1,256}\Z")
@@ -67,8 +69,18 @@ def _context(value):
         raise ValueError("trusted Live context required")
     owner, thread, session = (value.get(k) for k in ("owner", "thread_id", "session_id"))
     generation = value.get("generation")
-    if (not isinstance(owner, str) or owner.casefold() != "goldaj"
-            or not isinstance(thread, str) or not _THREAD.fullmatch(thread)
+    source = value.get("source")
+    if source is None:
+        verified = isinstance(owner, str) and owner.casefold() == "goldaj"
+    else:
+        # Only the trusted Discord transport can supply an Incoming. A JSON
+        # object, nickname or spoken claim can never select another identity.
+        verified = (isinstance(source, Incoming) and source.platform == "discord_voice"
+                    and source.speaker_id is not None and bool(source.voice_session_id)
+                    and bool(source.conversation_id) and not source.system_initiative
+                    and owner == f"discord:{source.speaker_id}"
+                    and thread == source.conversation_id)
+    if (not verified or not isinstance(thread, str) or not _THREAD.fullmatch(thread)
             or not isinstance(session, str) or not _ID.fullmatch(session)
             or type(generation) not in (int, str)
             or not _ID.fullmatch(str(generation))):
@@ -76,7 +88,7 @@ def _context(value):
     if value.get("valid") is not None and not callable(value["valid"]):
         raise ValueError("invalid Live validity callback")
     result = dict(value)
-    result["owner"] = "Goldaj"
+    result["owner"] = "Goldaj" if source is None else owner
     return result
 
 
@@ -86,10 +98,32 @@ def _key(context):
 
 
 def _source(context, text, message_id=""):
+    if isinstance(context.get("source"), Incoming):
+        return replace(context["source"], text=text, message_id=message_id,
+                       force_reply=True, input_modality="voice", requested_speech=False,
+                       direct_request=True)
     return Incoming(platform="mobile", author="Goldaj", text=text,
                     channel=context["thread_id"], message_id=message_id,
                     force_reply=True, input_modality="voice", requested_speech=False,
                     direct_request=True)
+
+
+def _stored_source(context):
+    source = context.get("source")
+    if not isinstance(source, Incoming):
+        return {}
+    # Persist only the routing template; native speech lives in the consent
+    # checked transcript journal, never in this routing metadata.
+    return asdict(replace(source, text="Ouverture de la conversation Live.",
+                          message_id="", context=()))
+
+
+def _restore_source(raw):
+    if not raw:
+        return None
+    values = dict(raw)
+    values["context"] = tuple(values.get("context", ()))
+    return Incoming(**values)
 
 
 async def _await(value):
@@ -168,6 +202,8 @@ class LiveJournal:
             columns = {row[1] for row in db.execute("PRAGMA table_info(live_sessions)")}
             if "person_id" not in columns:
                 db.execute("ALTER TABLE live_sessions ADD COLUMN person_id TEXT")
+            if "source_json" not in columns:
+                db.execute("ALTER TABLE live_sessions ADD COLUMN source_json TEXT NOT NULL DEFAULT '{}'")
             # Started work from a previous process may already have committed
             # an external effect. Never infer "not executed" from a crash.
             db.execute("UPDATE live_operations SET state='unknown' WHERE state='started'")
@@ -212,10 +248,11 @@ class LiveJournal:
             if row is not None and row["state"] != "open":
                 raise LiveJournalConflict("closed Live generation cannot be resumed")
             db.execute("""INSERT OR IGNORE INTO live_sessions
-                (session_key,provider_session,owner,thread_id,generation,retain,person_id,state,created_at)
-                VALUES(?,?,?,?,?,?,?,'open',?)""", (
+                (session_key,provider_session,owner,thread_id,generation,retain,person_id,state,created_at,source_json)
+                VALUES(?,?,?,?,?,?,?,'open',?,?)""", (
                 key, context["session_id"], context["owner"], context["thread_id"],
-                str(context["generation"]), int(person_id is not None), person_id, _now()))
+                str(context["generation"]), int(person_id is not None), person_id, _now(),
+                _json(_stored_source(context))))
 
     def redact(self, context):
         """Consent/profile changed: preserve only IDs that prevent replay."""
@@ -311,7 +348,8 @@ class LiveJournal:
 
     def queue_curation(self, context, person_id, pair_id, question, answer):
         source = _json({"thread_id": context["thread_id"], "question": question,
-                        "answer": answer, "message_id": pair_id})
+                        "answer": answer, "message_id": pair_id,
+                        "source": _stored_source(context)})
         with self._db() as db:
             db.execute("INSERT OR IGNORE INTO live_curations VALUES(?,?,?,?,'pending',?)",
                        (pair_id, _key(context), person_id, source, _now()))
@@ -534,17 +572,18 @@ class LiveConversationBridge:
         self._recovered = False
         self._flush_tasks = set()
 
-    async def _memory_profile(self):
+    async def _memory_profile(self, context):
         memory = self.runtime.memory_service
         if memory is None or getattr(memory, "_closed", False):
             return None
         store = getattr(memory, "store", None)
         if store is None:
             return None
-        return await asyncio.to_thread(store.account, ("microphone", "goldaj"))
+        return await asyncio.to_thread(store.account,
+            identity_of(_source(context, "Vérification de la mémoire Live.")))
 
     async def _check_retention(self, state):
-        if state.retain and (not state.person_id or await self._memory_profile() != state.person_id):
+        if state.retain and (not state.person_id or await self._memory_profile(state.context) != state.person_id):
             state.retain = False
             await asyncio.to_thread(self.journal.redact, state.context)
         return state.retain
@@ -562,7 +601,7 @@ class LiveConversationBridge:
             if any(s.context["owner"] == context["owner"] and not s.closed
                    for s in self.sessions.values()):
                 raise LiveJournalConflict("owner already has an active Live conversation")
-            person_id = await self._memory_profile()
+            person_id = await self._memory_profile(context)
             await asyncio.to_thread(self.journal.open, context, person_id)
             state = _Session(context, person_id is not None, person_id)
             self.sessions[key] = state
@@ -578,6 +617,10 @@ class LiveConversationBridge:
             for row in await asyncio.to_thread(self.journal.pending):
                 context = {"owner": row["owner"], "thread_id": row["thread_id"],
                            "session_id": row["provider_session"], "generation": row["generation"]}
+                source = _restore_source(json.loads(row.get("source_json") or "{}"))
+                if source is not None:
+                    context["source"] = source
+                context = _context(context)
                 state = _Session(context, bool(row["retain"]), row["person_id"], closed=True,
                                  reason=row["reason"] or "server_restart")
                 state.chunks = await asyncio.to_thread(self.journal.chunks, row["session_key"])
@@ -585,11 +628,11 @@ class LiveConversationBridge:
                 await self._flush(state)
             self._recovered = True
 
-    async def prepare_context(self, owner, thread_id):
+    async def prepare_context(self, owner, thread_id, *, source=None):
         context = _context({"owner": owner, "thread_id": thread_id,
-                            "session_id": "context", "generation": "0"})
+                            "session_id": "context", "generation": "0", "source": source})
         await self._recover()
-        incoming = _source(context, "Ouverture de la conversation vocale avec Goldaj.")
+        incoming = _source(context, "Ouverture de la conversation vocale.")
         prepared = await self.runtime.prepare_turn(incoming, commands=False)
         _revision, history = await self.runtime.dialogue.context_snapshot(
             incoming, history_messages=prepared.history_messages,
@@ -606,7 +649,7 @@ class LiveConversationBridge:
         # Never silently cut the approved personality. Fail before session cost.
         if len(instructions.encode("utf-8")) + 128 > 16384:
             raise ValueError("Live personality exceeds the conservative instruction budget")
-        selected = select_context(history, "Goldaj conversation récente", max_chars=12000)
+        selected = select_context(history, incoming.author + " conversation récente", max_chars=12000)
         messages = []
         budget = 7900  # conservative UTF-8 token upper bound including framing
         if prepared.memory_context:
@@ -935,6 +978,10 @@ class LiveConversationBridge:
                 or self.reserve_delegation is None):
             return
         limit = memory.batch.batch_size if memory.batch is not None else 1
+        # A Discord identity may have candidates in several public channels.
+        # Keep each original scope intact instead of batching unlike scopes.
+        if state.context.get("source") is not None:
+            limit = 1
         while state.valid() and await self._check_retention(state):
             rows = await asyncio.to_thread(self.journal.pending_curations, state.person_id, limit)
             if not rows:
@@ -963,6 +1010,9 @@ class LiveConversationBridge:
                 for row in rows:
                     source = json.loads(row["source_json"])
                     original = dict(state.context, thread_id=source["thread_id"])
+                    saved_source = _restore_source(source.get("source"))
+                    if saved_source is not None:
+                        original["source"] = saved_source
                     incoming = _source(original, source["question"], source["message_id"])
                     pairs.append((incoming, Reply(incoming, source["answer"])))
 
@@ -1042,14 +1092,14 @@ class LiveConversationBridge:
                 # Directly use the existing store transaction: False means
                 # duplicate/inactive, an exception must remain retryable.
                 await asyncio.to_thread(memory.store.append_conversation_turn,
-                    ("microphone", "goldaj"), "person", source_platform="mobile",
-                    message_id=pair_id, user_content=f"Goldaj (mobile): {question}",
-                    assistant_content=text, source_author_name="Goldaj",
+                    identity_of(incoming), _scope(incoming), source_platform=incoming.platform,
+                    message_id=pair_id, user_content=f"{incoming.author} ({incoming.platform}): {question}",
+                    assistant_content=text, source_author_name=incoming.author,
                     expected_person_id=state.person_id)
                 persisted = True
             else:
                 await self.runtime.dialogue.observe_external(incoming, [
-                    {"role": "user", "content": f"Goldaj (mobile): {question}"},
+                    {"role": "user", "content": f"{incoming.author} ({incoming.platform}): {question}"},
                     {"role": "assistant", "content": text}])
             # Queue only a durable candidate here; stopping never starts a
             # new paid request. The next active session admits it through the

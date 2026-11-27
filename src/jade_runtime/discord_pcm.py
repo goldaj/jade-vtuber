@@ -40,13 +40,16 @@ class DiscordPCMBuffer:
     frame; only finish+drain yields b'', so a temporary gap is not an EOF.
     """
 
-    def __init__(self, *, max_frames=50, prebuffer_frames=1, on_frame=None, idle_timeout=30.0):
+    def __init__(self, *, max_frames=50, prebuffer_frames=1, on_frame=None, idle_timeout=30.0,
+                 max_input_bytes=4_800_000):
         if not isinstance(max_frames, int) or isinstance(max_frames, bool) or not 5 <= max_frames <= 150:
             raise ValueError("invalid PCM queue capacity")
         if not isinstance(prebuffer_frames, int) or not 1 <= prebuffer_frames <= max_frames:
             raise ValueError("invalid prebuffer length")
         if not 1 <= idle_timeout <= 120:
             raise ValueError("invalid PCM idle timeout")
+        if (type(max_input_bytes) is not int or not 960 <= max_input_bytes <= 48_000 * 3600):
+            raise ValueError("invalid PCM duration limit")
         self._frames = Queue(maxsize=max_frames)
         self._tail = bytearray()
         self._pending_byte = b""
@@ -57,6 +60,7 @@ class DiscordPCMBuffer:
         self._last_progress = time.monotonic()
         self._idle_timeout = idle_timeout
         self._received = 0
+        self._max_input_bytes = max_input_bytes
         self._prebuffer_frames = prebuffer_frames
         self._started = False
         self._created_at = time.monotonic()
@@ -83,7 +87,7 @@ class DiscordPCMBuffer:
         if not isinstance(pcm, bytes) or not pcm:
             raise ValueError("invalid 24 kHz mono PCM chunk")
         self._received += len(pcm)
-        if self._received > 4_800_000:
+        if self._received > self._max_input_bytes:
             raise ValueError("Discord PCM limit exceeded")
         # A transport delta can end between the bytes of a 16-bit sample.
         # Keep at most one byte until the next delta; do not pad or drop it.

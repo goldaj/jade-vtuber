@@ -7,13 +7,24 @@
 - Fermeture fournisseur suivie jusqu'au terminal ou à l'état inconnu, registre privé et réconciliation au redémarrage. Une erreur SQLite ne bloque pas la demande de clôture ; un module Live indisponible préserve le parcours classique.
 - Même persona, histoire, mémoire et outils Jade ; délégations dans le worker/arbitre existant, effets idempotents et curation différée. Aucun budget financier mobile ne conditionne ces opérations. Le dialogue oral natif Live peut se dérouler pendant un tour d'un autre canal.
 - Chat par segments, pièces jointes privées, états de lecture explicites et avatar piloté par le son distant, sans modification des assets r20/r21.
-- Usages cumulés et métriques passifs, sans plafonds quotidiens/mensuels ni arrêt pour dépense. Les anciennes variables de montant Live sont ignorées. Une panne du suivi d'usage ne désactive pas le mobile ; le registre de sessions et le journal métier restent nécessaires. Coûts backend incomplets explicitement identifiés. Discord classique conservé, diagnostic indépendant du mobile.
+- Usages cumulés et métriques passifs, sans plafonds quotidiens/mensuels ni arrêt pour dépense. Les anciennes variables de montant Live sont ignorées. Une panne du suivi d'usage ne désactive pas le mobile ; le registre de sessions et le journal métier restent nécessaires. Coûts backend incomplets explicitement identifiés. La politique Discord ci-dessous reste indépendante du mobile.
 - Profil explique les indisponibilités et les erreurs de chargement ; les refus fournisseur distinguent authentification, accès au modèle, quota fournisseur et connexion, sans publier de contenu privé.
 - Aube est souhaitée mais non confirmée dans l'API ; Brise est le recours explicite. Support d'un ID personnalisé et kit de comparaison hors ligne prêts ; voix originale encore à créer/choisir.
 
 **Correctif de reprise du 27/11 (DEV-055) :** permissions d’événements serveur au format objet conforme à l’API, validation avant réseau et contrôle par le SDK officiel dans le test du corps HTTP. Le message de fin de réponse disparaît dès l’arrêt ; les diagnostics restent visibles. Le kit vocal ne mentionne plus de budget mobile. [Preuves](../operations/handoffs/2026-11-27-chatgpt-live-resume.md).
 
-**Suivis :** sept développements transférés en REC-044 à REC-050, À valider, avec tests automatisés et recette OpenAI/Redmi restante. DEV-041 conserve la voix originale. DEV-052 décrit seulement la future bascule Discord à 50/40 EUR mensuels, sans pilotage du mobile.
+**Suivis :** sept développements transférés en REC-044 à REC-050, À valider, avec tests automatisés et recette OpenAI/Redmi restante. DEV-041 conserve la voix originale. La demande complémentaire du 27/11 engage l'automatisme Discord ci-dessous.
+
+## Discord Live automatique et interrupteur unique (27 novembre 2026)
+
+- `src/jade_runtime/discord_config.py`, **`DISCORD_ENABLED = True`** : Discord écrit et vocal disponibles dans le lancement habituel, avec choix automatique Live/classique. **`False`** : tous les transports Discord sont désactivés, même avec `--all-channels` ou les options Discord explicites. Redémarrage requis ; anciens flags privés Discord ignorés.
+- Total API du mois civil Europe/Paris : toutes les lignes OpenAI de l'organisation, tous produits/projets/canaux, plus l'usage du compte Tavily configuré, convertis en EUR avec une source de change datée. Rafraîchissement toutes les cinq minutes et contrôle local pendant la voix.
+- Seuil **50 EUR** si les données monétaires sont complètes avec une couverture explicitement fraîche ; **40 EUR** pour les relevés estimés standard. Données essentielles indisponibles ou devenues trop anciennes : classique avec motif. Seuil atteint : classique jusqu'au mois suivant, verrou persistant après redémarrage. Les limites du reporting ne permettent pas de garantir une facture finale plafonnée.
+- Primaire WebSocket Live avec PCM natif en solo ; en groupe, STT et règles de participation existantes avant l'envoi cadencé du tour admis. Sortie sur Discord, mémoire/histoire/outils communs avec identité de transport vérifiée et pièces jointes dans le texte du vocal.
+- Fermeture sur seuil, présence, canal, déconnexion ou arrêt ; les états incertains sont persistés et ne provoquent aucun replay automatique de l'énoncé en classique. Aucune nouvelle capture/session payante au simple démarrage du bot.
+- Aucun budget financier mobile, aucune modification de sa préférence ni fermeture mobile du fait de cette politique. La consommation mobile contribue seulement au total observé pour Discord.
+
+**Suivi : DEV-052 → REC-051, À valider.** Code et tests automatisés livrés ; audio réel, accès des comptes et comportement Discord/Redmi restent à observer. [Architecture](../architecture/DISCORD_LIVE.md) · [Passation et preuves](../operations/handoffs/2026-11-27-chatgpt-discord-auto-live.md).
 
 ## Contrôle distant PyCharm sur develop (24 novembre 2026)
 

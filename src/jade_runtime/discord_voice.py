@@ -699,19 +699,20 @@ class DiscordVoiceBridge:
                         if len(self._turn_ids) >= 8:
                             self._turn_ids.pop(next(iter(self._turn_ids)))
                         self._turn_ids[message_id] = (item.session_id, item.user_id, decision.turn_id)
-                    work = await self.runtime.submit(Incoming(
+                    incoming = Incoming(
                         "discord_voice", item.author, value,
                         channel=str(self.channel_id),
                         message_id=message_id, force_reply=True,
                         speaker_id=item.user_id, voice_session_id=item.session_id,
                         conversation_id=(self.voice_conversation_id(
-                            item.user_id, item.session_id) or "")))
-                    if isinstance(work, Work):
-                        self._submitted = [(generation, previous) for generation, previous in self._submitted
-                                           if not previous.cancelled and (previous.task is None or not previous.task.done())]
-                        self._submitted.append((item.generation, work))
-                        if not self._allowed(item.user_id, item.generation, item.session_id):
-                            self.runtime.cancel_work(work)
+                            item.user_id, item.session_id) or ""))
+                    live_adapter = getattr(self, "live", None)
+                    if live_adapter is not None and await live_adapter.handle_turn(
+                            incoming, item.pcm,
+                            valid=lambda: self._capture_authorized(
+                                item.user_id, item.generation, item.session_id, item.audio_epoch)):
+                        continue
+                    await self.submit_admitted_turn(incoming, generation=item.generation)
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -720,6 +721,18 @@ class DiscordVoiceBridge:
                     "Discord voice chunk dropped after STT or delivery failure")
             finally:
                 self.pending.task_done()
+
+    async def submit_admitted_turn(self, incoming, *, generation):
+        """Submit one already admitted turn, retaining transport cancellation."""
+        if not self._allowed(incoming.speaker_id, generation, incoming.voice_session_id):
+            return
+        work = await self.runtime.submit(incoming)
+        if isinstance(work, Work):
+            self._submitted = [(old_generation, previous) for old_generation, previous in self._submitted
+                               if not previous.cancelled and (previous.task is None or not previous.task.done())]
+            self._submitted.append((generation, work))
+            if not self._allowed(incoming.speaker_id, generation, incoming.voice_session_id):
+                self.runtime.cancel_work(work)
 
     async def connect(self, client):
         async with self.lifecycle_lock:
@@ -812,13 +825,13 @@ class DiscordVoiceBridge:
             raise PermissionError("Discord voice reply source is not authorized")
         return await self.play(wav, expected_session=session_id, expected_speaker=speaker_id)
 
-    async def play_pcm_stream_for_reply(self, chunks, source):
+    async def play_pcm_stream_for_reply(self, chunks, source, *, max_input_bytes=4_800_000):
         """Session-bound progressive audio; no second OpenAI request."""
         if not self.reply_authorized(source):
             raise PermissionError("Discord voice reply source is not authorized")
         return await self.play_pcm_stream(
             chunks, expected_session=source.voice_session_id,
-            expected_speaker=source.speaker_id)
+            expected_speaker=source.speaker_id, max_input_bytes=max_input_bytes)
 
     def mark_voice_reply_played(self, source):
         """Acknowledge a successfully played reply in its still-valid session."""
@@ -898,7 +911,8 @@ class DiscordVoiceBridge:
                 import logging
                 logging.getLogger("jade.discord.voice").warning("Playback observer failed")
 
-    async def play_pcm_stream(self, chunks, *, expected_session=None, expected_speaker=None):
+    async def play_pcm_stream(self, chunks, *, expected_session=None, expected_speaker=None,
+                              max_input_bytes=4_800_000):
         """Play 24 kHz mono PCM incrementally as 20 ms Discord PCM frames.
 
         Transport snapshots, mute and generation checks remain authoritative.
@@ -937,7 +951,8 @@ class DiscordVoiceBridge:
             except RuntimeError:
                 pass
 
-        buffer = DiscordPCMBuffer(on_frame=observed_frame, prebuffer_frames=5)
+        buffer = DiscordPCMBuffer(on_frame=observed_frame, prebuffer_frames=5,
+                                  max_input_bytes=max_input_bytes)
         timing = PCMProgressTiming()
         timing_token = active_pcm_timing.set(timing)
         playback_completed = False
@@ -1144,6 +1159,28 @@ class OpenVoiceBridge(DiscordVoiceBridge):
         super().__init__(services, runtime, channel_id, threshold=threshold)
         self._decider = ConversationTurnDecider(group_reply_probability=group_reply_rate)
         self._awaiting_channel_update = False
+        self.live = None
+
+    def receive_pcm(self, user_id, author, pcm):
+        # The adapter takes only verified solo streaming. Group audio follows
+        # the existing STT/participation gate before handle_turn above.
+        if self.live is not None and self.live.offer_pcm(user_id, author, pcm):
+            return
+        return super().receive_pcm(user_id, author, pcm)
+
+    def receive_classic_pcm(self, user_id, author, pcm):
+        """Resume a captured turn only when Live provably never started."""
+        for offset in range(0, len(pcm), PCM_CHUNK_BYTES):
+            super().receive_pcm(user_id, author, pcm[offset:offset + PCM_CHUNK_BYTES])
+
+    async def _close_locked(self):
+        try:
+            if self.live is not None:
+                await self.live.close()
+        finally:
+            # Discord's connector bounds shutdown. Cancellation of a slow Live
+            # close cannot skip revocation/disconnection of its voice transport.
+            await super()._close_locked()
 
     def _speaker_allowed_locked(self, user_id):
         # This is only the self-echo guard, not a filter on other bot accounts.
@@ -1254,6 +1291,8 @@ class OpenVoiceBridge(DiscordVoiceBridge):
             self.worker = asyncio.create_task(self._consume(), name="jade-discord-voice")
             self._poller = asyncio.create_task(self._poll_turns(), name="jade-discord-turn-poll")
             connection.listen(Sink())
+            if self.live is not None:
+                await self.live.start()
         except BaseException:
             await self._close_locked()
             raise
@@ -1291,6 +1330,8 @@ class OpenVoiceBridge(DiscordVoiceBridge):
                 loop.call_soon_threadsafe(self._purge_stale, generation)
             except RuntimeError:
                 pass
+        if self.live is not None:
+            self.live.notify_transport_changed()
         return True
 
     def _transport_current(self, connection, expected):
@@ -1371,10 +1412,13 @@ class OpenVoiceBridge(DiscordVoiceBridge):
                     and getattr(source, "channel", None) == str(self.channel_id))
 
     async def voice_state_changed(self, member, before, after, *, own_bot_id=None):
-        if getattr(member, "id", None) != own_bot_id:
-            return  # Other users and bots require no validation or reauthorization.
         before_id = getattr(getattr(before, "channel", None), "id", None)
         after_id = getattr(getattr(after, "channel", None), "id", None)
+        if (self.live is not None and before_id != after_id
+                and self.channel_id in (before_id, after_id)):
+            await self.live.transport_changed()
+        if getattr(member, "id", None) != own_bot_id:
+            return  # Other users and bots require no validation or reauthorization.
         if before_id == after_id:
             return
         with self.buffers_lock:

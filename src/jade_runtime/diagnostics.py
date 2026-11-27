@@ -4,6 +4,7 @@ from importlib.util import find_spec
 from importlib import metadata
 import os
 from shutil import which
+from .discord_config import selected_discord_channels
 
 
 @dataclass(frozen=True)
@@ -45,6 +46,12 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
     not a validation that paid APIs, audio or OAuth work in the real world.
     """
     checks = [Check("Configuration Jade", True, "Format vérifié localement")]
+    requested_discord = discord or discord_voice
+    discord, discord_voice = selected_discord_channels(
+        settings.discord_enabled, discord, discord_voice)
+    if requested_discord and not settings.discord_enabled:
+        checks.append(Check("Discord désactivé", True,
+                            "DISCORD_ENABLED=False : aucun transport Discord", required=False))
     selected = any((voice, mic, twitch, discord, vts, discord_voice, http, mobile))
     if selected and not live:
         checks.append(Check("Mode live", False,
@@ -116,6 +123,14 @@ def inspect_environment(settings, *, live=False, voice=False, mic=False,
                             "PCM/codec installés, périphériques non testés"))
         checks.append(Check("FFmpeg Discord", which("ffmpeg") is not None,
                             "ffmpeg sur PATH, lecture non testée"))
+        checks.append(Check("Transport Live Discord", _installed("websockets"),
+                            "WebSocket audio installé ; accès OpenAI et audio non testés",
+                            required=False))
+        checks.append(Check("Suivi mensuel Discord", bool(settings.billing_admin_key.strip())
+                            and settings.billing_admin_key.strip() != "example",
+                            "JADE_OPENAI_ADMIN_KEY permet de lire les coûts de toute l’organisation. "
+                            "Sans suivi utilisable, Discord reste classique ; le mobile reste indépendant.",
+                            required=False))
     if vts:
         from .vtube_studio import _validate_url
         try:

@@ -547,6 +547,55 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all(item["role"] in ("user", "assistant", "developer") for item in seeded["input"]))
         self.assertEqual(self.model.requests, [])
 
+    async def test_discord_native_identity_history_and_delegation_never_become_mobile_owner(self):
+        source = Incoming("discord_voice", "Goldaj", "Ouverture Live", channel="700",
+            speaker_id=123, account_id="123", voice_session_id="discord-session-0123456789",
+            conversation_id="dc-" + "a" * 32, input_modality="voice", force_reply=True)
+        context = {"owner": "discord:123", "thread_id": source.conversation_id,
+                   "session_id": "discord-native-session", "generation": 2,
+                   "source": source, "valid": lambda: True}
+        seeded = await self.bridge.prepare_context("discord:123", source.conversation_id, source=source)
+        self.assertNotIn("Application mobile privée authentifiée", seeded["instructions"])
+        self.assertIsNotNone(self.store.account(("discord", "123")))
+        await self.bridge.open_session(context)
+        await self.transcript("user", "Mon histoire sur Discord.", context=context)
+        await self.delegation("discord-delegation", context=context)
+        self.assertIn("Goldaj (discord_voice)", str(self.model.requests[-1]))
+        self.assertEqual(self.classic, [], "native delegation cannot emit a second classic reply")
+        await self.transcript("assistant", "Je garde le bon interlocuteur.", 1100, 1600, context=context)
+        await self.bridge.close_session(context, "discord_disconnected")
+        await self.finish_flushes()
+        history = self.store.recent_conversation_turns(("discord", "123"), "discord:700")
+        self.assertIn("Mon histoire sur Discord", str(history))
+        self.assertEqual(self.store.recent_conversation_turns(OWNER, "person"), [])
+        again = await self.bridge.prepare_context("discord:123", source.conversation_id, source=source)
+        self.assertIn("Mon histoire sur Discord", str(again["input"]))
+        with self.assertRaises(ValueError):
+            await self.bridge.open_session({**context, "owner": "discord:999"})
+        with self.assertRaises(ValueError):
+            await self.bridge.open_session({**context, "source": {"speaker_id": 123}})
+
+    async def test_discord_recovery_restores_original_verified_routing(self):
+        source = Incoming("discord_voice", "Alice", "Ouverture Live", channel="701",
+            speaker_id=321, voice_session_id="discord-session-9876543210",
+            conversation_id="dc-" + "b" * 32, input_modality="voice", force_reply=True)
+        context = {"owner": "discord:321", "thread_id": source.conversation_id,
+                   "session_id": "discord-crashed-session", "generation": 3,
+                   "source": source, "valid": lambda: True}
+        await self.bridge.prepare_context("discord:321", source.conversation_id, source=source)
+        await self.bridge.open_session(context)
+        await self.transcript("user", "Une phrase avant le redémarrage Discord.", context=context)
+        recovered = LiveConversationBridge(self.runtime, journal_path=self.root / "live.sqlite3")
+        try:
+            await recovered.prepare_context("discord:321", source.conversation_id, source=source)
+            history = self.store.recent_conversation_turns(("discord", "321"), "discord:701")
+            self.assertIn("redémarrage Discord", str(history))
+            self.assertEqual(self.store.recent_conversation_turns(OWNER, "person"), [])
+            await recovered.prepare_context("discord:321", source.conversation_id, source=source)
+            self.assertEqual(len(self.store.recent_conversation_turns(("discord", "321"), "discord:701")), 2)
+        finally:
+            await recovered.close()
+
 
 if __name__ == "__main__":
     unittest.main()
