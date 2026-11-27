@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [REC-052 · Rendu de Friponne sur Discord Live](2026-11-27-codex-rendu-friponne-discord.md) · Conversion PCM des aigus et écoute comparative avec le mobile.
+
 - [Cuisine portrait statique](2026-11-27-chatgpt-cuisine-portrait.md) · Nouveau décor AVIF, remplacement du WebP, retrait des anciens effets et cadrage partagé ; recette visuelle à réaliser.
 
 - [REC-052 · Friponne sur GPT-Live](2026-11-27-codex-voix-friponne.md) · Voix choisie dans le Playground, léger ajustement du débit et écoute à mener avec r21.

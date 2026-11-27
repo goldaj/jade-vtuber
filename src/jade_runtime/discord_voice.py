@@ -951,7 +951,8 @@ class DiscordVoiceBridge:
                 pass
 
         buffer = DiscordPCMBuffer(on_frame=observed_frame, prebuffer_frames=5,
-                                  max_input_bytes=max_input_bytes)
+                                  max_input_bytes=max_input_bytes,
+                                  live_audio=live_session is not None)
         timing = PCMProgressTiming()
         timing_token = active_pcm_timing.set(timing)
         playback_completed = False

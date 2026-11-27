@@ -1,3 +1,7 @@
+## 2026-11-27 — Fidélité des aigus sur Discord Live
+
+- Le propriétaire entend une différence entre Friponne sur le mobile et sur Discord Live et préfère le rendu mobile. La conversion du PCM de GPT-Live vers Discord utilise maintenant une interpolation à huit points. Elle préserve mieux les aigus tout en gardant des trames de 20 ms. L’écoute comparative reste en REC-052. [Passation](handoffs/2026-11-27-codex-rendu-friponne-discord.md)
+
 ## 2026-11-27 — Cuisine portrait statique
 
 - Nouveau fond AVIF 941 × 1672 choisi par le propriétaire, retrait du précédent WebP et des calques SVG/CSS de la cuisine. Cadrage portrait commun aux deux décors et au r21 ; chambre animée et modèle classique préservés. La cuisine est chargée à la demande, sans animation.

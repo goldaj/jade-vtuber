@@ -24,3 +24,9 @@ Extraits du chat accessible le 27 novembre 2026, avec rôles. Les heures individ
 - **Assistant** (synthèse) · Retient la voix enregistrée et ajuste légèrement le débit des phrases. [Passation Friponne](../../operations/handoffs/2026-11-27-codex-voix-friponne.md)
 - **Assistant** (synthèse) · Fait entendre le nouveau débit sur la même voix. La session de 25 secondes joue le passage jusqu’à la fin.
 - **Utilisateur** (verbatim) · « ok pour la nouvelle friponne. On valide et on mets sur develop »
+
+## Comparaison de Friponne entre le mobile et Discord Live
+
+- **Utilisateur** (synthèse) · Friponne lui paraît correcte sur mobile. Il demande si la voix utilisée sur Discord est la même et souhaite qu’elle y soit employée aussi.
+- **Utilisateur** (verbatim) · « non non je parlais bien du mode live. J'ai l'impression qu'en live, les voix sur mobile et discord sont différentes. Et je préfère celle sur mobile. J'aimerais qu'elle s'applique aussi à discord »
+- **Assistant** (synthèse) · Retrouve la même voix et les mêmes consignes vocales dans la configuration des deux transports. Identifie une atténuation des aigus dans la conversion PCM de Discord Live et améliore cette conversion. La comparaison auditive dans les applications reste ouverte. [Passation](../../operations/handoffs/2026-11-27-codex-rendu-friponne-discord.md)
