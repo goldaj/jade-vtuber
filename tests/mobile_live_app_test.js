@@ -49,8 +49,13 @@ const live = {
     return pendingClose || Promise.resolve();
   },
 };
+const closeTimers = new Map();
+let closeTimerId = 0, recoveries = 0;
+live.recover = async () => { recoveries++; return live.refresh(); };
 const window = {document, location:{hash:""}, crypto:{randomUUID:() => "thread-" + (++serial)},
-  setTimeout, clearTimeout, addEventListener(name, fn) { (windows[name] ||= []).push(fn); },
+  setTimeout(fn, ms) { const id = ++closeTimerId; closeTimers.set(id, {fn, ms}); return id; },
+  clearTimeout(id) { closeTimers.delete(id); },
+  addEventListener(name, fn) { (windows[name] ||= []).push(fn); },
   JadeAvatar:{setMouth:value => avatarEvents.push(["mouth", value]), setSpeaking:value => avatarEvents.push(["speaking", value]),
     setIntent:(value, config) => avatarEvents.push(["intent", value, config]), resetIntent:() => avatarEvents.push(["reset"]),
     startReplyMotion:value => avatarEvents.push(["motion", value]), resize() {}},
@@ -244,6 +249,29 @@ function expectLiveColor(onAir) {
   assert.equal(toggles, 6, "selecting Live in Config changes only the preference");
   assert.equal(state.active, false);
   expectLiveColor(false);
+
+  chooseView("home");
+  emitState({available:false, waiting_for_close:true, session_state:"closing"});
+  assert.equal(mic.disabled, false, "the stage microphone can check a closing conversation");
+  assert.match(mic.attrs["aria-label"], /Vérifier la fermeture/);
+  for (let i = 0; i < 8; i++) {
+    assert.equal(closeTimers.size, 1, "one bounded foreground status check at a time");
+    const [id, timer] = closeTimers.entries().next().value;
+    closeTimers.delete(id); timer.fn();
+    await tick();
+  }
+  assert.equal(closeTimers.size, 0, "status checks stop after the waiting window");
+  const beforeCloseClick = refreshes;
+  await controlLive();
+  assert.equal(refreshes, beforeCloseClick + 1);
+  assert.equal(recoveries, 0, "an ordinary pending close only reads state");
+  emitState({session_state:"close_unconfirmed"});
+  await controlLive();
+  assert.equal(recoveries, 1, "the microphone can request explicit recovery");
+  assert.equal(toggles, 6, "status checks and recovery never activate capture");
+  emitState({available:true, waiting_for_close:false, session_state:"absent"});
+  assert.equal(closeTimers.size, 0);
+  assert.equal(mic.attrs["aria-label"], "Micro Live");
 
   // Exercise reauthentication with the real Live client. The old instance has
   // a verified classic choice and a second GET in flight; the new login must

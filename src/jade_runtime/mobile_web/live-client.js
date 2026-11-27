@@ -14,8 +14,8 @@
     browser_unsupported:"Ce navigateur ne permet pas le mode Live. Utilise un navigateur compatible avec WebRTC et AudioWorklet.",
     microphone_owned_by_other_client:"Le micro Live est déjà ouvert sur un autre appareil.",
     previous_session_not_closed:"La conversation Live précédente se ferme encore. Réessaie dans quelques instants.",
-    close_unconfirmed:"Jade vérifie encore la fermeture distante. Actualise son état avant de reprendre.",
-    creation_unconfirmed:"Jade vérifie encore la connexion distante. Actualise son état avant de reprendre.",
+    close_unconfirmed:"La fermeture de l’ancienne conversation n’a pas été confirmée. Appuie sur Réessayer pour reprendre.",
+    creation_unconfirmed:"Jade attend de confirmer l’ouverture précédente. Le micro est coupé.",
     live_mode_off:"Le mode Live a été désactivé. Vérifie le choix dans Config.",
     preference_conflict:"Le choix vocal a changé sur un autre appareil. Vérifie Config.",
     invalid_or_expired_live_lease:"L’autorisation du micro a expiré. Touche le micro pour reprendre.",
@@ -29,6 +29,11 @@
     live_start_rate_limit:"Plusieurs connexions Live ont été ouvertes récemment. Patiente un instant avant de reprendre.",
   };
   const publicReason = code => publicReasons[code] || "Le mode Live est momentanément indisponible. Réessaie dans quelques instants.";
+  const closingReasons = {closing:"previous_session_not_closed", close_unconfirmed:"close_unconfirmed",
+    opening_unknown:"creation_unconfirmed"};
+  function closureReason(phase, reason) {
+    return closingReasons[phase] || (Object.values(closingReasons).includes(reason) ? reason : "");
+  }
   function create(options = {}) {
     const env = options.environment || window;
     const doc = env.document || document;
@@ -55,7 +60,7 @@
     const state = {mode:"live", revision:-1, loaded:false, supported:availableBrowser,
       available:false, availability_message:availableBrowser ? "" : publicReason(browserReason),
       capabilities:null, capture:"closed", lease_state:"closed",
-      session_state:"absent", session_id:null, reason:"", message:"", changing:false};
+      session_state:"absent", session_id:null, recovery_allowed:false, reason:"", message:"", changing:false};
     let epoch = 0, preferenceRequest = 0, requestedMode = null;
     let leaseId = null, leaseThread = null, socket = null, controlReady = false;
     let heartbeatTimer = null, heartbeatSeq = 0, acknowledgedSeq = 0, lastAck = 0, lastHeartbeat = 0;
@@ -66,12 +71,21 @@
     let pendingResponse = false, sentSpeech = false, closePromise = null, heldSession = null;
     let pendingWake = false, wakeStarted = null;
     let modeForcedOff = false;
-    let refreshPromise = null;
+    let refreshPromise = null, recoveryPromise = null;
     const snapshot = () => ({...state, active:Boolean(leaseId || state.capture !== "closed"),
+      waiting_for_close:Boolean(closureReason(state.session_state, state.reason)),
       media_state:peer ? (opening ? "connecting" : "connected") : "absent",
       playback_active:playbackActive, speech_active:speechActive});
     const publish = () => callbacks("onState", snapshot());
     const message = (reason, text) => { state.reason = reason; state.message = text; publish(); };
+    function waitForClose(reason) {
+      state.session_state = Object.keys(closingReasons).find(phase => closingReasons[phase] === reason);
+      state.available = false;
+      state.recovery_allowed = false;
+      state.reason = reason;
+      state.message = "";
+      state.availability_message = publicReason(reason);
+    }
     const leaseMs = () => Math.max(1000, Number(state.capabilities?.lease_seconds || 5) * 1000);
     const heartbeatMs = () => Math.max(250, Number(state.capabilities?.heartbeat_seconds || 2) * 1000);
     function assertCurrent(generation) {
@@ -121,6 +135,7 @@
       publish();
     }
     async function refreshState() {
+      const observedEpoch = epoch;
       const results = await Promise.allSettled([
         request("/api/live/capabilities"), request("/api/voice/preferences")]);
       if (results[0].status === "fulfilled") {
@@ -136,10 +151,18 @@
         // Read-only reconciliation after an uncertain close. A snapshot from
         // another client never transfers its lease or authorizes capture here.
         const observed = state.capabilities.state;
-        if (!leaseId && state.capture === "closed" && !closePromise && observed?.session_state === "absent") {
-          state.session_state = "absent";
-          state.session_id = null;
-          if (state.available) state.reason = state.message = "";
+        if (observedEpoch === epoch && !leaseId && state.capture === "closed" && !closePromise) {
+          const closure = closureReason(observed?.session_state, state.capabilities.reason);
+          if (closure) {
+            waitForClose(closure);
+            state.recovery_allowed = closure === "close_unconfirmed" && observed?.recovery_allowed === true;
+          }
+          else if (state.available && ["absent", "closed"].includes(observed?.session_state)) {
+            state.session_state = "absent";
+            state.session_id = null;
+            state.recovery_allowed = false;
+            state.reason = state.message = "";
+          }
         }
       } else {
         state.available = false;
@@ -157,6 +180,21 @@
     function refresh() {
       if (!refreshPromise) refreshPromise = refreshState().finally(() => { refreshPromise = null; });
       return refreshPromise;
+    }
+    function recover() {
+      if (state.session_state !== "close_unconfirmed" || closePromise || leaseId || doc.hidden) return refresh();
+      if (!recoveryPromise) {
+        recoveryPromise = (async () => {
+          if (!state.recovery_allowed) await refresh();
+          if (!state.recovery_allowed || state.session_state !== "close_unconfirmed" ||
+              closePromise || leaseId || doc.hidden) return snapshot();
+          try { await request("/api/live/recover", {}); }
+          catch (_) { /* The capability response remains authoritative. */ }
+          if (refreshPromise) await refreshPromise;
+          return refresh();
+        })().finally(() => { recoveryPromise = null; });
+      }
+      return recoveryPromise;
     }
     async function setMode(mode) {
       if (!["classic", "live"].includes(mode)) return false;
@@ -297,12 +335,10 @@
       leaseId = leaseThread = null;
       pendingWake = false; wakeStarted = null;
       state.lease_state = "closed";
-      state.session_state = sessionState === "closing" ? "close_unconfirmed" : sessionState;
+      state.session_state = sessionState;
       state.reason = reason || state.reason;
-      if (["opening_unknown", "close_unconfirmed"].includes(state.session_state)) {
-        state.available = false;
-        state.message = "Micro coupé. Jade vérifie encore la connexion distante. Vérifie son état depuis Config avant de reprendre.";
-      }
+      const closure = closureReason(sessionState, reason);
+      if (closure) waitForClose(closure);
       publish();
     }
     function acceptSnapshot(value, generation) {
@@ -535,7 +571,8 @@
     }
     async function arm() {
       if (leaseId || state.capture !== "closed" || state.changing || closePromise || doc.hidden) return false;
-      if (state.mode !== "live" || !state.loaded || !state.available || !availableBrowser) return false;
+      if (state.mode !== "live" || !state.loaded || !state.available || !availableBrowser ||
+          closureReason(state.session_state, state.reason)) return false;
       if (!options.getSoundEnabled?.()) { message("sound_off", "Réactive la voix dans Config pour parler en Live."); return false; }
       const generation = ++epoch;
       const bearer = options.getToken?.();
@@ -617,8 +654,16 @@
         publish();
         return true;
       } catch (error) {
-        if (generation === epoch) await stop("arm_failed", {message:error.name === "NotAllowedError" ?
-          "Accès au micro refusé. Autorise-le dans le navigateur, puis touche le micro." : error.message});
+        if (generation === epoch) {
+          const stopping = stop("arm_failed", {message:error.name === "NotAllowedError" ?
+            "Accès au micro refusé. Autorise-le dans le navigateur, puis touche le micro." : error.message});
+          const closure = closureReason("", error.code);
+          if (closure) {
+            waitForClose(closure);
+            publish();
+          }
+          await stopping;
+        }
         return false;
       }
     }
@@ -626,6 +671,7 @@
       // Physical capture/output are revoked synchronously, before any fetch.
       const id = leaseId, bearer = options.getToken?.();
       const shouldClose = Boolean(id);
+      const previousClosure = closureReason(state.session_state, state.reason);
       epoch++;
       releaseAudio();
       closeControl();
@@ -633,8 +679,10 @@
       leaseId = leaseThread = null;
       pendingWake = false; wakeStarted = null;
       state.lease_state = "closed";
-      state.session_state = shouldClose ? "closing" : "absent";
-      state.reason = reason;
+      if (shouldClose || !previousClosure) {
+        state.session_state = shouldClose ? "closing" : "absent";
+        state.reason = reason;
+      }
       if (config.message) state.message = config.message;
       publish();
       if (!shouldClose) return closePromise;
@@ -649,11 +697,8 @@
           state.session_state = "close_unconfirmed";
           if (!config.message) state.message = "Micro coupé. La fermeture distante reste à confirmer.";
         } finally {
-          if (["opening_unknown", "close_unconfirmed", "closing"].includes(state.session_state)) {
-            state.available = false;
-            if (!config.message) state.message = "Micro coupé. Vérifie la fermeture distante depuis Config avant de reprendre.";
-            if (state.session_state === "closing") state.session_state = "close_unconfirmed";
-          }
+          const closure = closureReason(state.session_state);
+          if (closure) waitForClose(closure);
           closePromise = null; publish();
         }
       })();
@@ -684,7 +729,7 @@
     function toggleMicrophone() {
       return state.capture !== "closed" || leaseId ? mute() : arm();
     }
-    return {refresh, setMode, arm, mute, stop, toggleMicrophone,
+    return {refresh, recover, setMode, arm, mute, stop, toggleMicrophone,
       get state() { return snapshot(); }, get mode() { return state.mode; },
       get active() { return Boolean(leaseId || state.capture !== "closed" || closePromise); }};
   }

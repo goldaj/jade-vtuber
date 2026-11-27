@@ -143,6 +143,11 @@ function harness(options = {}) {
       return response({mode:server.mode, revision:server.revision});
     }
     if (url === "/api/live/arm") return server.arm ? server.arm.promise : response({...baseState(), heartbeat_seconds:2, lease_seconds:5});
+    if (url === "/api/live/recover") {
+      assert.equal(JSON.stringify(body), "{}");
+      assert(server.recover, "the explicit recovery must be requested only for a recoverable session");
+      return server.recover();
+    }
     if (url === "/api/live/sessions") {
       server.session++;
       return server.create ? server.create.promise : response({sdp:"private-answer", session_id:"session-" + server.session});
@@ -478,6 +483,41 @@ function harness(options = {}) {
     assert.equal(h.client.state.session_state, "absent");
     assert.equal(h.client.state.available, true);
     assert.equal(h.client.state.capture, "closed", "reconciliation never rearms the microphone");
+  }
+  {
+    const h = harness(); await h.selectLive();
+    h.server.arm = deferred();
+    h.server.arm.resolve(h.response({code:"previous_session_not_closed"},409));
+    assert.equal(await h.arm(), false);
+    assert.equal(h.client.state.waiting_for_close, true);
+    assert.equal(h.client.state.available, false);
+    assert.equal(h.client.state.session_state, "closing");
+    assert.equal(h.client.state.message, "");
+    assert(!h.order.includes("getUserMedia"), "a refused lease never requests microphone permission");
+
+    h.server.available = false; h.server.reason = "close_unconfirmed";
+    h.server.observed = {session_state:"close_unconfirmed", lease_state:"closed", recovery_allowed:false};
+    await h.client.refresh();
+    assert.match(h.client.state.availability_message, /fermeture.*pas été confirmée.*Réessayer/);
+    assert.equal(h.client.state.message, "", "the stale closing error cannot override the authoritative state");
+    await h.client.recover();
+    assert(!h.order.includes("/api/live/recover"), "a close still being checked cannot be retired");
+
+    h.server.observed.recovery_allowed = true;
+    h.server.recover = () => {
+      h.server.available = true; h.server.reason = "ready";
+      h.server.observed = {session_state:"absent", lease_state:"closed", recovery_allowed:false};
+      return h.response(h.server.observed);
+    };
+    await Promise.all([h.client.recover(), h.client.recover()]);
+    assert.equal(h.order.filter(value => value === "/api/live/recover").length, 1);
+    assert.equal(h.client.state.available, true);
+    assert.equal(h.client.state.waiting_for_close, false);
+    assert.equal(h.client.state.capture, "closed");
+    assert(!h.order.includes("getUserMedia"), "retiring a stale session never arms capture");
+    h.server.arm = null;
+    assert.equal(await h.arm(), true, "a new explicit gesture can arm the recovered microphone");
+    await h.client.stop();
   }
   console.log("Mobile Live client: lifecycle, leases, WebRTC source, replay guards and bounded drain PASS (doubles only)");
 })().catch(error => { console.error(error); process.exitCode = 1; });

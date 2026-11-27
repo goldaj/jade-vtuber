@@ -256,8 +256,18 @@ class MobileLiveGatewayTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.manager.snapshot("Goldaj")["lease_state"], "closed")
         self.assertEqual(self.provider.created, [])
 
+    async def test_live_recover_without_lost_session_never_arms_microphone(self):
+        status, result, _ = await self.request("POST", "/api/live/recover", {})
+        self.assertEqual((status, result["lease_state"], result["session_state"]),
+                         (200, "closed", "absent"))
+        await self.arm()
+        status, result, _ = await self.request("POST", "/api/live/recover", {})
+        self.assertEqual((status, result["code"]), (409, "microphone_owned_by_other_client"))
+        self.assertEqual(self.provider.created, [])
+
     async def test_http_payloads_cannot_override_identity_config_or_idle_policy(self):
         requests = (
+            ("/api/live/recover", {"owner": "other"}),
             ("/api/voice/preferences", {"mode": "live", "revision": True}),
             ("/api/voice/preferences", {"mode": "live", "revision": 0, "owner": "other"}),
             ("/api/live/arm", {"client_id": CLIENT, "thread_id": THREAD, "channel": "discord"}),
@@ -280,7 +290,8 @@ class MobileLiveGatewayTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.provider.created, [])
 
     async def test_post_auth_origin_and_size_are_checked_before_manager(self):
-        routes = ("/api/voice/preferences", "/api/live/arm", "/api/live/sessions", "/api/live/sessions/close")
+        routes = ("/api/voice/preferences", "/api/live/arm", "/api/live/sessions",
+                  "/api/live/sessions/close", "/api/live/recover")
         for route in routes:
             with self.subTest(route=route):
                 status, _, _ = await self.request("POST", route, {}, authenticated=False)

@@ -21,6 +21,7 @@
   let liveClient = null, liveState = null, liveMotionPending = false, liveSpeaking = false;
   let liveLoadMessage = "", liveRetrying = false;
   let liveAuthentication = 0;
+  let liveCloseTimer = null, liveCloseChecks = 0;
   const liveTranscripts = new Map();
   const linkForm = $("identity-link-form"), linkResult = $("identity-result");
   const linkCopy = $("identity-copy");
@@ -108,6 +109,7 @@
     liveClient = liveState = null;
     liveLoadMessage = "";
     liveRetrying = false;
+    clearLiveCloseChecks();
     if (liveModeToggle) liveModeToggle.disabled = true;
     resetDiscordLivePanel();
   }
@@ -198,6 +200,8 @@
     if (!liveState) return "Vérification du mode vocal…";
     if (!liveState.supported) return liveState.availability_message ||
       "Ce navigateur ne permet pas le mode Live.";
+    if (liveState.waiting_for_close && !liveState.active) return liveState.availability_message ||
+      "La conversation Live précédente se ferme encore. Réessaie dans quelques instants.";
     if (liveState.message) return liveState.message;
     if (!liveState.loaded) return "Vérification du mode vocal…";
     if (!liveState.available && !liveState.active) return liveState.availability_message ||
@@ -235,12 +239,15 @@
       mic.disabled = modelChanging || (busy && !micPress && !voicePending);
     } else {
       const draining = liveState.lease_state === "draining";
+      const canCheckClose = !liveState.active && liveState.supported && liveState.waiting_for_close &&
+        liveState.session_state !== "opening_unknown";
       mic.classList.remove("recording");
-      mic.disabled = modelChanging || busy || liveState.changing ||
-        (liveState.capture === "closed" && liveState.session_state === "closing" && !draining) ||
-        (!liveState.active && (!liveState.available || !soundEnabled));
+      mic.disabled = modelChanging || busy || liveState.changing || (canCheckClose ? liveRetrying :
+        ((liveState.capture === "closed" && liveState.session_state === "closing" && !draining) ||
+         (!liveState.active && (!liveState.available || !soundEnabled))));
       mic.setAttribute("aria-pressed", String(capturing));
-      mic.setAttribute("aria-label", draining ? "Interrompre la réponse Live" : "Micro Live");
+      mic.setAttribute("aria-label", canCheckClose ? "Vérifier la fermeture de la conversation Live" :
+        draining ? "Interrompre la réponse Live" : "Micro Live");
     }
   }
 
@@ -252,7 +259,7 @@
     }
     if (liveModeRetry) {
       liveModeRetry.hidden = !(liveLoadMessage || (!liveState?.loaded && liveState?.message) ||
-        (liveState?.loaded && !liveState.available && liveState.supported));
+        (liveState?.loaded && (!liveState.available || liveState.waiting_for_close) && liveState.supported));
       liveModeRetry.disabled = liveRetrying;
       liveModeRetry.textContent = liveRetrying ? "Vérification…" : "Réessayer";
     }
@@ -263,6 +270,29 @@
     liveLoadMessage = "Le mode Live n’a pas pu charger. Réessaie depuis Config.";
     if (liveModeToggle) liveModeToggle.disabled = true;
     renderLiveAvailability();
+  }
+
+  function clearLiveCloseChecks() {
+    if (liveCloseTimer !== null) window.clearTimeout(liveCloseTimer);
+    liveCloseTimer = null;
+    liveCloseChecks = 0;
+  }
+
+  function scheduleLiveCloseCheck() {
+    if (!token || !liveClient || document.hidden || liveState?.mode !== "live" ||
+        !liveState.waiting_for_close || liveState.active) {
+      clearLiveCloseChecks();
+      return;
+    }
+    // Short foreground capability checks only. A user action owns recovery
+    // and a later, separate microphone gesture still owns capture.
+    if (liveCloseTimer !== null || liveCloseChecks >= 8) return;
+    const client = liveClient;
+    liveCloseTimer = window.setTimeout(() => {
+      liveCloseTimer = null;
+      liveCloseChecks++;
+      if (client === liveClient && !document.hidden) void client.refresh();
+    }, 2000);
   }
 
   function renderLiveState(value) {
@@ -277,13 +307,14 @@
       // Turning OFF remains possible after a kill switch, provider refusal
       // or loss of browser capability. Admission restrictions only gate ON.
       liveModeToggle.disabled = value.changing || !value.loaded ||
-        (value.mode !== "live" && !value.available);
+        (value.mode !== "live" && !value.available && !(value.supported && value.waiting_for_close));
     }
     if (value.loaded && value.mode !== "live" && (wasLive || !hadPreference)) {
       resetMicButton();
       mic.disabled = modelChanging || (busy && !micPress && !voicePending);
     }
     renderLiveAvailability();
+    scheduleLiveCloseCheck();
     if (((wasActive && !value.active) || (hadSession && !value.session_id)) && !busy && !voicePending) {
       liveMotionPending = liveSpeaking = false;
       avatar().setMouth(0);
@@ -407,14 +438,16 @@
     } catch (_) { liveModuleFailed(); }
   }
   window.addEventListener("jade-live-ready", initializeLive);
-  liveModeRetry?.addEventListener("click", async () => {
+  async function retryLiveAvailability() {
     if (liveRetrying || !token) return;
     const generation = liveAuthentication;
     liveRetrying = true;
     liveLoadMessage = "";
+    clearLiveCloseChecks();
     renderLiveAvailability();
     try {
-      if (liveClient) await liveClient.refresh();
+      if (liveClient) await (liveState?.session_state === "close_unconfirmed"
+        ? liveClient.recover() : liveClient.refresh());
       else {
         const ready = await window.JadeLogin?.retryLive?.();
         if (generation === liveAuthentication && !ready) liveModuleFailed();
@@ -423,7 +456,8 @@
     finally {
       if (generation === liveAuthentication) { liveRetrying = false; renderLiveAvailability(); }
     }
-  });
+  }
+  liveModeRetry?.addEventListener("click", retryLiveAvailability);
   liveModeToggle?.addEventListener("change", () => {
     if (!liveClient || !liveState?.loaded || liveState.changing) return;
     const mode = liveModeToggle.checked ? "live" : "classic";
@@ -1603,6 +1637,7 @@
   mic.addEventListener("click", () => {
     if (mic.disabled || liveClient?.mode !== "live") return;
     if (shell.dataset.view === "home" || shell.classList.contains("is-room-only")) {
+      if (liveState?.waiting_for_close && !liveState.active) return retryLiveAvailability();
       return liveClient.toggleMicrophone();
     }
   });
@@ -1650,8 +1685,9 @@
       const interrupted = Boolean(starting || busy || recording || liveClient?.active);
       cancelConversation("background");
       if (interrupted && !modelChanging) setStatus("Conversation interrompue.");
-    } else if (token && shell.dataset.view === "reminders") {
-      loadReminders();
+    } else {
+      scheduleLiveCloseCheck();
+      if (token && shell.dataset.view === "reminders") loadReminders();
     }
   });
   window.addEventListener("pagehide", cancelConversation);

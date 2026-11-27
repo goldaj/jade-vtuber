@@ -1,3 +1,7 @@
+## 2026-11-27 — Reprise du Live mobile après une fermeture non confirmée
+
+- La passerelle et la PWA distinguent la fermeture en cours, l’ancienne session connue sans terminal et la création ambiguë sans identifiant. L’action de reprise peut retirer une génération arrêtée localement tout en gardant son usage indéterminé. Le retour de disponibilité ne déclenche aucune capture automatique. [Diagnostic et reprise](handoffs/2026-11-27-codex-reprise-fermeture-live-mobile.md)
+
 ## 2026-11-27 — Pétillante sur GPT-Live
 
 - La candidate Pétillante enregistrée sert de voix à l’essai dans Jade. La consigne de session choisie par le propriétaire vise un registre très aigu, un jeu inspiré du manga et un accent français de France.

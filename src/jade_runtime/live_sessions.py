@@ -27,6 +27,7 @@ from .turn_metrics import TurnMetrics
 
 LOG = logging.getLogger("jade.live.sessions")
 IDENTIFIER = re.compile(r"[A-Za-z0-9_-]{8,96}\Z")
+INACTIVE_PHASES = ("closed", "retired_unconfirmed")
 TECHNICAL_REASONS = frozenset((
     "opening", "waiting_for_speech", "idle", "mute", "muted_draining", "muted_drain_timeout",
     "mode_off", "user_stop", "text", "classic_voice", "background", "heartbeat_expired",
@@ -34,7 +35,7 @@ TECHNICAL_REASONS = frozenset((
     "server_restart", "live_disabled", "live_state_unavailable", "live_supervisor_failed",
     "live_duration_limit", "live_start_rate_limit", "live_provider_error",
     "opening_timeout", "opening_abandoned", "live_open_failed", "creation_unconfirmed",
-    "creation_rejected", "close_unconfirmed", "provider_closed",
+    "creation_rejected", "close_unconfirmed", "provider_closed", "owner_recovery",
 ))
 
 
@@ -112,7 +113,7 @@ class LiveRegistry:
     def pending(self):
         with self._lock:
             return [dict(row) for row in self._db.execute(
-                "SELECT * FROM live_sessions WHERE phase!='closed'").fetchall()]
+                "SELECT * FROM live_sessions WHERE phase NOT IN (?,?)", INACTIVE_PHASES).fetchall()]
 
     def close(self):
         with self._lock:
@@ -274,6 +275,59 @@ class LiveSessionManager:
         return any(s.owner == owner and s.phase in ("close_unconfirmed", "opening_unknown")
                    for s in self._sessions.values())
 
+    def _blocking_sessions(self, owner):
+        return [s for s in self._sessions.values()
+                if s.owner == owner and s.phase not in INACTIVE_PHASES]
+
+    def _can_retire(self, sessions):
+        return bool(sessions) and all(
+            s.phase == "close_unconfirmed" and s.provider_id and s.abandoned
+            and s.close_task is not None and s.close_task.done()
+            and (s.open_task is None or s.open_task.done())
+            and (s.sideband_task is None or s.sideband_task.done())
+            for s in sessions)
+
+    async def _close_bridge(self, session, reason):
+        if self.bridge:
+            try:
+                await asyncio.wait_for(_call(self.bridge.close_session, self._context(session), reason),
+                                       self.config.close_timeout_seconds)
+            except Exception:
+                LOG.warning("Live history finalization incomplete; private journal retained")
+
+    async def recover(self, owner):
+        """Retire a lost transport explicitly, keeping unsettled usage unknown."""
+        await self.start()
+        async with self._lock:
+            lease = self._leases.get(owner)
+            if lease and lease.state != "closed":
+                raise LiveSessionError("microphone_owned_by_other_client")
+            if self._storage_failed:
+                raise LiveSessionError("live_state_unavailable", 503)
+            sessions = self._blocking_sessions(owner)
+            if not sessions:
+                return self.snapshot(owner)
+            if not self._can_retire(sessions):
+                code = "close_unconfirmed" if self._unresolved(owner) else "previous_session_not_closed"
+                raise LiveSessionError(code)
+            if self.bridge:
+                for session in sessions:
+                    await self._close_bridge(session, "owner_recovery")
+                sessions = self._blocking_sessions(owner)
+                if sessions and not self._can_retire(sessions):
+                    raise LiveSessionError("previous_session_not_closed")
+            for session in sessions:
+                reason = session.reason
+                session.phase, session.reason = "retired_unconfirmed", "owner_recovery"
+                if not await self._persist(session):
+                    session.phase, session.reason = "close_unconfirmed", reason
+                    raise LiveSessionError("live_state_unavailable", 503)
+                if lease and lease.session == session.handle:
+                    lease.session, lease.reason = None, "owner_recovery"
+                self._trace(session, "live_retired_unconfirmed")
+            self._state(owner)
+            return self.snapshot(owner)
+
     async def _observe_usage(self, method, *args, **kwargs):
         """Best-effort telemetry; it never grants or refuses Live work."""
         if self.usage is None:
@@ -295,6 +349,7 @@ class LiveSessionManager:
         return {"available": True, **result}
 
     async def capabilities(self, owner):
+        usage = await self.usage_snapshot()
         result = dict(self.config.preflight(api_key_present=self.api_key_present))
         reasons = list(result.get("reasons", []))
         if self._stopped:
@@ -303,14 +358,17 @@ class LiveSessionManager:
             reasons.append("live_state_unavailable")
         if self._unresolved(owner):
             reasons.append("close_unconfirmed")
+        state = self.snapshot(owner)
+        if state["session_state"] == "closing" and state["lease_state"] == "closed":
+            reasons.append("previous_session_not_closed")
         result.update(enabled=self.config.enabled, available=not reasons,
                       reason=reasons[0] if reasons else "ready", reasons=reasons,
-                      usage=await self.usage_snapshot(),
+                      usage=usage,
                       heartbeat_seconds=self.config.heartbeat_seconds,
                       lease_seconds=self.config.lease_seconds,
                       opening_timeout_seconds=self.config.opening_timeout_seconds,
                       idle_close_seconds=self.config.idle_close_seconds,
-                      state=self.snapshot(owner))
+                      state=state)
         return result
 
     async def arm(self, owner, client_id, thread_id):
@@ -329,7 +387,7 @@ class LiveSessionManager:
                 if current.client_id == client_id and current.thread_id == thread_id:
                     return self.snapshot(owner)
                 raise LiveSessionError("microphone_owned_by_other_client")
-            if any(s.owner == owner and s.phase != "closed" for s in self._sessions.values()):
+            if self._blocking_sessions(owner):
                 raise LiveSessionError("previous_session_not_closed")
             lease = ClientLease(owner, client_id, thread_id, secrets.token_urlsafe(24), self.clock())
             self._leases[owner] = lease
@@ -349,14 +407,19 @@ class LiveSessionManager:
     def snapshot(self, owner):
         lease = self._leases.get(owner)
         session = self._sessions.get(lease.session) if lease and lease.session else None
+        sessions = self._blocking_sessions(owner)
+        if session is not None and session.phase in INACTIVE_PHASES:
+            session = None
         if session is None:
-            session = next((s for s in self._sessions.values()
-                            if s.owner == owner and s.phase in ("close_unconfirmed", "opening_unknown")), None)
+            session = next(iter(sessions), None)
         result = {"lease_id": lease.lease_id if lease else None,
                   "lease_state": lease.state if lease else "closed",
                   "session_state": session.phase if session else "absent",
                   "session_id": session.handle if session else None,
                   "reason": session.reason if session else (lease.reason if lease else "ready"),
+                  "recovery_allowed": (not self._storage_failed and not self._stopped
+                                       and (lease is None or lease.state == "closed")
+                                       and self._can_retire(sessions)),
                   "heartbeat_seconds": self.config.heartbeat_seconds,
                   "lease_seconds": self.config.lease_seconds,
                   **self._preferences.get(owner, {"mode": "live", "revision": 0})}
@@ -483,7 +546,7 @@ class LiveSessionManager:
                 and lease.state in ("armed", "draining")
                 and self.clock() - lease.heartbeat < self.config.lease_seconds
                 and (lease.state != "draining" or self.clock() < (lease.drain_deadline or 0))
-                and session.phase not in ("closing", "closed", "close_unconfirmed", "opening_unknown"))
+                and session.phase in ("opening", "active", "standby"))
 
     async def _open(self, session, sdp):
         sent = False
@@ -577,9 +640,11 @@ class LiveSessionManager:
             LOG.warning("Live sideband unavailable; finalization requires reconciliation")
         finally:
             session.channel = None
-            if not session.closed.is_set():
+            if not session.closed.is_set() and session.phase not in INACTIVE_PHASES:
                 if session.close_task is None or session.close_task.done():
-                    self._invalidate(session.owner, "sideband_lost")
+                    lease = self._leases.get(session.owner)
+                    if lease and lease.lease_id == session.lease_id:
+                        self._invalidate(session.owner, "sideband_lost")
                     session.abandoned = True
                     session.reason = "sideband_lost"
                     # Schedule after this receiver unwinds, so retry can attach.
@@ -643,15 +708,10 @@ class LiveSessionManager:
                 if not session.keep_arm:
                     lease.state = "closed"
                 lease.reason = session.reason
-            if self.bridge:
-                try:
-                    await asyncio.wait_for(_call(self.bridge.close_session, self._context(session),
-                                                  session.reason), self.config.close_timeout_seconds)
-                except Exception:
-                    LOG.warning("Live history finalization incomplete; private journal retained")
+            await self._close_bridge(session, session.reason)
             self._trace(session, "live_terminal", usage_seconds=session.usage_seconds)
             self.metrics.end("live:" + session.handle)
-        elif kind == "error":
+        elif kind == "error" and not session.abandoned and session.phase not in INACTIVE_PHASES:
             # Provider bodies may contain prompt fragments: expose a stable code only.
             self._broadcast(session.owner, {"type": "incident", "code": "live_provider_error",
                                            "session_id": session.handle})
@@ -799,14 +859,15 @@ class LiveSessionManager:
         self._invalidate(owner, reason)
         self._state(owner)
         pending = []
-        for session in tuple(self._sessions.values()):
-            if session.owner == owner and session.phase != "closed":
-                pending.append(self._request_close(session, reason, keep_arm=False, wait=wait))
+        for session in self._blocking_sessions(owner):
+            if session.phase == "close_unconfirmed" and session.close_task and session.close_task.done():
+                continue
+            pending.append(self._request_close(session, reason, keep_arm=False, wait=wait))
         if pending:
             await asyncio.gather(*pending, return_exceptions=True)
 
     async def _request_close(self, session, reason, *, keep_arm, wait=True):
-        if session.closed.is_set():
+        if session.closed.is_set() or session.phase in INACTIVE_PHASES:
             return
         session.abandoned, session.keep_arm, session.reason = True, keep_arm, reason
         self._trace(session, "live_close_requested")
@@ -823,12 +884,7 @@ class LiveSessionManager:
             session.close_task = self._spawn(self._close_provider(session), "live-close")
         self._state(session.owner)
         await self._persist(session)
-        if self.bridge:
-            try:
-                await asyncio.wait_for(_call(self.bridge.close_session, self._context(session), reason),
-                                       self.config.close_timeout_seconds)
-            except Exception:
-                LOG.warning("Live history finalization incomplete; private journal retained")
+        await self._close_bridge(session, reason)
         if wait:
             await asyncio.shield(session.close_task)
 

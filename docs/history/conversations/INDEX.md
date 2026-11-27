@@ -57,6 +57,8 @@ La [suite du 27 novembre](../../operations/handoffs/2026-11-27-codex-mobile-live
 
 La [passation Discord Live](../../operations/handoffs/2026-11-27-codex-discord-live-control.md#échanges-accessibles) consigne le retrait demandé du salut, le suivi Discord dans Config, le signalement de couleur mobile et l’autorisation de publier.
 
+La [passation de reprise du Live mobile](../../operations/handoffs/2026-11-27-codex-reprise-fermeture-live-mobile.md#échanges-accessibles) consigne le signalement du micro inactif et le diagnostic de fermeture non confirmée.
+
 ## Synchronisation du clone de développement le 26 novembre 2026
 
 - **Propriétaire** (extrait de la conversation) « Je veux que tu push le local, mais attention il va y avoir du merge à faire ».

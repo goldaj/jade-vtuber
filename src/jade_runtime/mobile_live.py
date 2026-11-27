@@ -15,7 +15,8 @@ from .mobile_duplex import WebSocketPeer
 OWNER = "Goldaj"
 LIVE_GET_ROUTES = frozenset(("/api/live/capabilities", "/api/voice/preferences"))
 LIVE_POST_ROUTES = frozenset(("/api/voice/preferences", "/api/live/arm",
-                              "/api/live/sessions", "/api/live/sessions/close"))
+                              "/api/live/sessions", "/api/live/sessions/close",
+                              "/api/live/recover"))
 LIVE_SDP_BODY_LIMIT = 128 * 1024  # JSON envelope; decoded SDP is separately limited to 64 KiB.
 _CONTROL_CLEANUP_SECONDS = 1.0
 
@@ -63,6 +64,10 @@ async def live_http(gateway, writer, method, route, headers, body=b""):
                 for future in tuple(gateway.pending.values()):
                     if not future.done():
                         future.cancel()
+            elif route == "/api/live/recover":
+                if request:
+                    raise LiveSessionError("invalid_live_request", 400)
+                result = await manager.recover(OWNER)
             elif route == "/api/live/sessions":
                 if set(request) != {"client_id", "thread_id", "lease_id", "request_id", "sdp"}:
                     raise LiveSessionError("invalid_live_request", 400)

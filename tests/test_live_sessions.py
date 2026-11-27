@@ -6,7 +6,7 @@ Android microphone behavior, the provider's shutdown delay or invoice totals.
 from __future__ import annotations
 
 import asyncio
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, closing
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -449,6 +449,64 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
             await self.manager.arm(OWNER, CLIENT, THREAD)
         self.assertEqual(len(self.provider.creations), 1)
 
+    async def test_explicit_recovery_retires_lost_generation_and_keeps_usage_unknown(self):
+        self.provider.close_ack = False
+        await self.arm()
+        await self.create()
+        old_session = self.session
+        await self.manager.close(OWNER, CLIENT, self.lease_id)
+        await self.until(lambda: self.manager.snapshot(OWNER)["recovery_allowed"])
+        provider_calls = list(self.provider.commands)
+
+        # Toggling OFF need not relaunch reconciliation already exhausted for
+        # this connection. Recovery itself does not change the preference.
+        saved = await self.manager.set_mode(OWNER, "classic", 1)
+        self.assertEqual(self.provider.commands, provider_calls)
+        state = await self.manager.recover(OWNER)
+        self.assertEqual(state["mode"], "classic")
+        self.assertEqual(state["session_state"], "absent")
+        self.assertEqual(state["lease_state"], "closed")
+        self.assertEqual(old_session.phase, "retired_unconfirmed")
+        self.assertFalse(old_session.closed.is_set())
+        self.assertEqual(self.ledger.reservation(old_session.reservation_id)["state"], "unknown")
+        self.assertFalse(self.manager.registry.pending())
+        with closing(sqlite3.connect(self.config.session_db_path)) as db:
+            self.assertEqual(db.execute("SELECT phase FROM live_sessions WHERE handle=?",
+                                        (old_session.handle,)).fetchone(), ("retired_unconfirmed",))
+        self.assertEqual(len(self.provider.creations), 1)
+
+        self.provider.close_ack = True
+        await self.manager.set_mode(OWNER, "live", saved["revision"])
+        lease = await self.manager.arm(OWNER, CLIENT, THREAD)
+        await self.manager._provider_event(old_session, {"type": "error"})
+        self.assertEqual(self.manager.snapshot(OWNER)["lease_id"], lease["lease_id"])
+        self.assertEqual(self.manager.snapshot(OWNER)["lease_state"], "armed")
+        await self.manager.stop()
+
+        restarted = LiveSessionManager(self.config, self.provider, self.ledger, clock=self.clock)
+        self.managers.append(restarted)
+        await restarted.start()
+        self.assertTrue((await restarted.capabilities(OWNER))["available"])
+        self.assertEqual(self.provider.commands, provider_calls)
+
+    async def test_close_in_flight_is_reported_and_cannot_be_retired(self):
+        await self.arm()
+        await self.create()
+        self.provider.send_gate.clear()
+        close = asyncio.create_task(self.manager.close(OWNER, CLIENT, self.lease_id))
+        try:
+            await asyncio.wait_for(self.provider.close_requested.wait(), timeout=1)
+            caps = await self.manager.capabilities(OWNER)
+            self.assertEqual(caps["state"]["session_state"], "closing")
+            self.assertFalse(caps["state"]["recovery_allowed"])
+            self.assertEqual(caps["reason"], "previous_session_not_closed")
+            with self.assertRaises(LiveSessionError) as raised:
+                await self.manager.recover(OWNER)
+            self.assertEqual(raised.exception.code, "previous_session_not_closed")
+        finally:
+            self.provider.send_gate.set()
+            await close
+
     async def test_missing_final_usage_preserves_cost_uncertainty_after_confirmed_close(self):
         self.provider.final_usage = None
         await self.arm()
@@ -476,6 +534,9 @@ class LiveSessionManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse((await restarted.capabilities(OWNER))["available"])
         with self.assertRaises(LiveSessionError):
             await restarted.arm(OWNER, CLIENT, THREAD)
+        with self.assertRaises(LiveSessionError) as raised:
+            await restarted.recover(OWNER)
+        self.assertEqual(raised.exception.code, "close_unconfirmed")
         self.assertEqual(len(self.provider.creations), 1)
         self.assertEqual(self.ledger.snapshot()["unknown_records"], 1)
 
