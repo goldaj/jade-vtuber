@@ -18,6 +18,11 @@ Les revues par domaine ont croisé les points d’entrée, imports, appels, sél
 - Assets. Six dérivés mobiles obsolètes, dont quatre copies identiques, libèrent 46 216 156 octets dans le checkout. Le paquet livré garde ses sources et ses exports utilisés. L’inventaire couvre les fichiers suivis et les empreintes du paquet portable sont recalculées. Les anciennes révisions restent récupérables depuis le point de retour ou l’archive.
 - Documentation. Les guides d’usage, d’installation, de maintenance et de reprise décrivent le code actuel. Le relevé historique des branches du 18 novembre est conservé dans l’historique.
 
+## Vérifications
+
+- Edge a chargé le r21 avec le SDK Live2D local. Les 18 variantes et les neuf cadrages passent, ainsi que le clignement et la synchronisation de la bouche avec l’audio synthétique. Le relevé compte zéro requête au r20 et zéro erreur JavaScript. Les 83 fichiers du paquet portable et les 97 références de modèles ont été vérifiés.
+- Le premier export Windows a dépassé le délai de deux secondes du test Discord Live avec SQLite. Le délai d’attente de ce scénario de test a été porté à dix secondes. L’horloge simulée, le seuil de dépenses et les assertions sont conservés. Deux exécutions locales successives passent.
+
 ## Dépendances encore actives
 
 La PWA utilise les dix-huit variantes r21. Le r20 sert toujours au renderer Windows lancé par `--avatar`, y compris via le Run PyCharm, et au secours du client mobile. Le raccordement Windows du r21 et la recette avec un paquet r20 absent sont suivis dans DEV-001. Ces dépendances expliquent la présence des assets r20 dans l’arbre. Les fichiers de voix, de mémoire et de configuration privée du poste restent gérés hors du dépôt.

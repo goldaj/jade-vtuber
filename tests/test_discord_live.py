@@ -21,8 +21,8 @@ def pcm(seconds, value=1800):
     return struct.pack("<hh", value, value) * int(48000 * seconds)
 
 
-async def until(predicate):
-    async with asyncio.timeout(2):
+async def until(predicate, *, timeout=2):
+    async with asyncio.timeout(timeout):
         while not predicate():
             await asyncio.sleep(.002)
 
@@ -188,10 +188,11 @@ class DiscordLiveTests(unittest.IsolatedAsyncioTestCase):
             await asyncio.wait(tuple(self.adapter._tasks), timeout=2)
         self.directory.cleanup()
 
-    async def start_solo(self):
+    async def start_solo(self, *, timeout=2):
         count = len(self.provider.sessions)
         self.bridge.receive_pcm(12, "Alice", pcm(.08))
-        await until(lambda: len(self.provider.sessions) > count and self.provider.sessions[-1].audio)
+        await until(lambda: len(self.provider.sessions) > count and self.provider.sessions[-1].audio,
+                    timeout=timeout)
         return self.provider.sessions[-1]
 
     def group(self):
@@ -707,11 +708,13 @@ class DiscordLiveTests(unittest.IsolatedAsyncioTestCase):
             await policy.refresh()
             self.adapter.policy = policy
             await self.adapter._decision()
-            remote = await self.start_solo()
+            # This test uses real SQLite writes on both paths. Their wall time
+            # varies on Windows and is independent of the policy's fake clock.
+            remote = await self.start_solo(timeout=10)
             self.assertEqual((await policy.decision())["outstanding_live_reservations"], 1)
             now[0] += timedelta(seconds=30)
             self.assertFalse((await policy.decision())["allow_live"])
-            await until(lambda: remote.closed and self.adapter._current is None)
+            await until(lambda: remote.closed and self.adapter._current is None, timeout=10)
             self.assertEqual((await policy.decision())["outstanding_live_reservations"], 0)
             self.assertIsNone(self.registry.pending())
             self.assertEqual(len(self.provider.calls), 1)
