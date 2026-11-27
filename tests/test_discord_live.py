@@ -620,6 +620,69 @@ class DiscordLiveTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(remote.closed)
         self.assertEqual(remote.commands, [])  # No invented provider cancel command.
 
+    async def test_audio_continues_while_transcript_persistence_waits(self):
+        state = self.adapter._new(self.source(), "solo")
+        remote = state.remote = Remote("live-control-order")
+        state.receiver = asyncio.create_task(self.adapter._receive(state))
+        writing_transcript = asyncio.Event()
+        release_transcript = asyncio.Event()
+        handle_event = self.conversation.handle_event
+
+        async def delayed_handler(event, context, send):
+            if event["type"] == "session.output_transcript.delta":
+                writing_transcript.set()
+                await release_transcript.wait()
+            await handle_event(event, context, send)
+
+        self.conversation.handle_event = delayed_handler
+        first = b"\1\0" * 2400
+        second = b"\2\0" * 2400
+        transcript = {"type": "session.output_transcript.delta", "event_id": "transcript",
+                      "delta": "Bonjour", "start_ms": 0, "end_ms": 100}
+        delegation = {"type": "session.delegation.created", "event_id": "delegation",
+                      "delegation": {"id": "lookup", "target": "client"}, "offset_ms": 100}
+        for event in ({"type": "session.output_audio.delta", "pcm": first}, transcript, delegation,
+                      {"type": "session.output_audio.delta", "pcm": second}):
+            remote.events.put_nowait(event)
+        try:
+            await asyncio.wait_for(writing_transcript.wait(), timeout=2)
+            await until(lambda: len(self.played) == 2)
+            self.assertEqual([data for data, _source in self.played], [first, second])
+            self.assertEqual(self.conversation.events, [])
+        finally:
+            release_transcript.set()
+        await until(lambda: len(self.conversation.events) == 2 and
+                    any(event["state"] == "drained" for event in self.conversation.played))
+        self.assertEqual([event for event, _context in self.conversation.events],
+                         [transcript, delegation])
+
+    async def test_isolated_noisy_frame_does_not_interrupt_but_confirmed_speech_does(self):
+        state = self.adapter._new(self.source(), "solo")
+        remote = state.remote = Remote("live-speech-confirmation")
+        state.receiver = asyncio.create_task(self.adapter._receive(state))
+        state.sender = asyncio.create_task(self.adapter._send_audio(state))
+
+        first = b"\1\0" * 480
+        second = b"\2\0" * 480
+        remote.events.put_nowait({"type": "session.output_audio.delta", "pcm": first})
+        await until(lambda: bool(self.played))
+        input_index = len(remote.audio)
+        self.bridge.receive_pcm(12, "Alice", pcm(.02, 7200))
+        self.bridge.receive_pcm(12, "Alice", pcm(.08, 0))
+        await until(lambda: self.adapter._scheduled_bytes == 0 and not state.input_pcm
+                    and len(remote.audio) >= input_index + 6)
+        self.assertTrue(all(not any(chunk) for chunk in remote.audio[input_index:]))
+        self.assertFalse(any(event["state"] == "interrupted" for event in self.conversation.played))
+
+        remote.events.put_nowait({"type": "session.output_audio.delta", "pcm": second})
+        await until(lambda: len(self.played) == 2)
+        self.assertEqual([data for data, _source in self.played], [first, second])
+        self.assertEqual(self.bridge.play_pcm_stream_for_reply.await_count, 1)
+
+        self.bridge.receive_pcm(12, "Alice", pcm(.08))
+        await until(lambda: any(event["state"] == "interrupted" for event in self.conversation.played))
+        self.assertFalse(remote.closed)
+
     async def test_technical_start_limit_selects_classic_without_dropping_new_turn(self):
         self.adapter._starts.extend([self.adapter.clock()] * 3)
         # Simulate capture just before the policy tick observes the rate cap.

@@ -410,6 +410,7 @@ Sept suivis passent de DEV vers REC, sans double carte. Ces recettes ne sont pas
 - Écoute/réponse simultanées, barge-in, suppression d'écho et aucun réveil par la propre sortie de Jade. Distinguer arrêt local audible, instruction fournisseur et coût d'inférence ; ne pas inventer une commande de cancel vocal Live.
 - Gérer permissions refusées/révoquées/tardives, AudioContext suspendu, changements de périphérique, casque/Bluetooth, piste terminée et appel système. Toutes les pistes tardives sont immédiatement arrêtées si la génération a été invalidée.
 - Au mute visible, finir seulement une réponse déjà demandée dans la borne REC-045 ; fermeture immédiate seulement si aucune réponse n’est attendue. Une réponse après audio utilisateur envoyé peut être encore en préparation malgré l’absence de son/transcript : appliquer la borne en cas d’incertitude. Background/kill/arrêt sont plus forts que mute. Effacer RAM audio, arrêter worklet/listeners et publier l'état.
+- Sur le haut-parleur du téléphone, couper le micro au milieu d’une phrase. Vérifier l’arrêt de la capture et écouter la fin de la même réplique pour caractériser la variation de timbre signalée par le propriétaire. [Diagnostic du routage mobile](../operations/handoffs/2026-11-27-codex-saccades-discord-live.md#coupure-du-micro-sur-mobile)
 - Le Live n'hérite pas du plafond d'énoncé PTT de 20 s ; il utilise ses bornes techniques de connexion. Aucun changement du fonctionnement classique livré.
 - Tests simulés de buffer/ordre/annulation/ressources puis Redmi : première syllabe, pauses longues, 30–60 min sans interlocuteur, bruit, écho, interruption, plein écran et Wi-Fi/mobile. Un prototype « connecter puis parler » ne clôt pas la promesse de réveil à la voix si le pré-roll reste défaillant.
 
@@ -477,6 +478,8 @@ Sept suivis passent de DEV vers REC, sans double carte. Ces recettes ne sont pas
 **Voix et contexte :** primaire WebSocket PCM natif en tête-à-tête ; en groupe, admission par les règles existantes puis envoi cadencé du tour autorisé au Live. Ce parcours groupe conserve une étape STT et n'a pas la même latence que le streaming solo. Identité Discord vérifiée, mémoire/histoire/outils communs, pièces jointes dans le texte du vocal, interruptions et arrêts bornés. Aucune réémission automatique d'un tour ambigu dans le moteur classique.
 
 **Recette réelle restante :** utiliser le compte et le salon Discord du propriétaire pour observer audio/latence en solo et groupe, permissions/DAVE, montée réelle des compteurs, seuil et arrêt fournisseur, clé de coûts et usage Tavily, changement de mois, OFF complet et conservation du Live mobile. Les tests injectés couvrent les transitions, formats, pannes et calculs sans facturer de fournisseur.
+
+- Vérifier la continuité de plusieurs réponses Discord Live en solo et en groupe. Tester une courte impulsion de bruit pendant la lecture, puis une vraie interruption et une demande d’arrêt. L’écoute doit distinguer une pause de la réponse d’une coupure pendant une phrase. [Passation du correctif](../operations/handoffs/2026-11-27-codex-saccades-discord-live.md)
 
 <a id="rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041"></a>
 

@@ -30,3 +30,12 @@ Extraits du chat accessible le 27 novembre 2026, avec rôles. Les heures individ
 - **Utilisateur** (synthèse) · Friponne lui paraît correcte sur mobile. Il demande si la voix utilisée sur Discord est la même et souhaite qu’elle y soit employée aussi.
 - **Utilisateur** (verbatim) · « non non je parlais bien du mode live. J'ai l'impression qu'en live, les voix sur mobile et discord sont différentes. Et je préfère celle sur mobile. J'aimerais qu'elle s'applique aussi à discord »
 - **Assistant** (synthèse) · Retrouve la même voix et les mêmes consignes vocales dans la configuration des deux transports. Identifie une atténuation des aigus dans la conversion PCM de Discord Live et améliore cette conversion. La comparaison auditive dans les applications reste ouverte. [Passation](../../operations/handoffs/2026-11-27-codex-rendu-friponne-discord.md)
+
+## Coupure du micro sur mobile et saccades sur Discord
+
+**Utilisateur** (verbatim)
+
+> je suis sur haut parleur. J'ai coupé le micro en cours de phrase. C'est bien là que j'ai eu le problème.\
+> 2e problème : le micro de jade saccade régulièrement sur discord, alors qu'il ne coupe pas du tout sur l'appli mobile. Il faut corriger ça, aussi.
+
+- **Assistant** (synthèse) · Vérifie que la coupure du micro laisse finir le même flux WebRTC sur mobile. Retrouve deux causes de saccades dans le traitement de Discord Live et les reproduit hors réseau. [Passation](../../operations/handoffs/2026-11-27-codex-saccades-discord-live.md)

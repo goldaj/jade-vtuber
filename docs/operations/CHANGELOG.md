@@ -1,3 +1,7 @@
+## 2026-11-27 — Continuité de la parole dans Discord Live
+
+- Pendant les réponses Discord Live, les fragments audio arrivent au lecteur indépendamment de la file bornée qui traite les transcriptions, les délégations et les relevés d’usage. En solo, 60 ms de signal vocal continu déclenchent l’interruption et l’envoi de la nouvelle prise de parole. Une demande d’arrêt reconnue reste immédiate. [Passation et recettes](handoffs/2026-11-27-codex-saccades-discord-live.md)
+
 ## 2026-11-27 — Salon portrait statique
 
 - Ajout du troisième décor Salon, AVIF 941 × 1672 choisi par le propriétaire, dans le sélecteur Accueil et les préférences persistantes. Cadrage commun avec la cuisine ; aucune animation de décor, aucune modification du modèle ou de la chambre.

@@ -31,6 +31,10 @@ from .messages import Incoming, Reply
 LOG = logging.getLogger("jade.discord.live")
 _FRAME = 3840  # 20 ms, 48 kHz stereo PCM16LE from Discord.
 _RATE = 192000
+_SPEECH_ONSET_BYTES = 3 * _FRAME
+_ONSET_PACKET_GAP_SECONDS = .08
+_SPEECH_GAP_SECONDS = .3
+_CONTROL_QUEUE_LIMIT = 256
 _SILENCE = bytes(_FRAME)
 
 
@@ -149,8 +153,11 @@ class _Conversation:
     attempt_id: str = ""
     open_result: dict | None = None
     input_pcm: bytearray = field(default_factory=bytearray)
+    interruption_pcm: bytearray = field(default_factory=bytearray)
+    interruption_sample_at: float = float("-inf")
     converter: PCM48StereoTo24Mono = field(default_factory=PCM48StereoTo24Mono)
     speech_active: bool = False
+    pending_control_events: int = 0
     output_bytes: int = 0
     muted_until: float = 0.0
     last_capture: float = float("-inf")
@@ -446,6 +453,8 @@ class DiscordLiveAdapter:
                         or not self._valid(current)):
             self._task(self._close_session(current, "speaker_changed"), "jade-discord-live-speaker")
             return
+        voiced = _voiced(pcm, self.bridge.threshold)
+        now = self.clock()
         if current is None:
             # Playback can start between the capture thread's admission check
             # and this callback. Do not claim the lane over an existing reply.
@@ -456,12 +465,12 @@ class DiscordLiveAdapter:
                 self._candidate = 0
                 self._preroll_speaker = user_id
             self._preroll.extend(pcm)
-            if _voiced(pcm, self.bridge.threshold):
+            if voiced:
                 self._candidate += len(pcm)
             else:
                 self._candidate = 0
             del self._preroll[:max(0, len(self._preroll) - int(_RATE * .5) - self._candidate)]
-            if self._candidate < int(_RATE * .06):
+            if self._candidate < _SPEECH_ONSET_BYTES:
                 return
             source = self._source(user_id, author)
             if source is None:
@@ -475,17 +484,34 @@ class DiscordLiveAdapter:
             self._candidate = 0
             current.opening = self._task(self._open(current), "jade-discord-live-open")
         else:
+            playing = current.playback is not None and not current.playback.done()
+            new_speech = not current.speech_active or now - current.last_capture >= _SPEECH_GAP_SECONDS
+            if playing and (new_speech or current.interruption_pcm):
+                # Hold the candidate until sustained speech is confirmed.
+                # Sending an isolated noise to the provider could interrupt it
+                # even if Discord kept playing the local response.
+                if not voiced or now - current.interruption_sample_at >= _ONSET_PACKET_GAP_SECONDS:
+                    current.interruption_pcm.clear()
+                if not voiced:
+                    current.speech_active = False
+                    return
+                current.interruption_sample_at = now
+                current.interruption_pcm.extend(pcm)
+                if len(current.interruption_pcm) < _SPEECH_ONSET_BYTES:
+                    return
+                pcm = bytes(current.interruption_pcm)
+                self._interrupt_output(current)
+            elif (current.interruption_pcm and voiced
+                  and now - current.interruption_sample_at < _ONSET_PACKET_GAP_SECONDS):
+                # Playback drained while the next utterance was starting.
+                pcm = bytes(current.interruption_pcm) + pcm
+            current.interruption_pcm.clear()
             if len(current.input_pcm) + len(pcm) > _RATE * 8:
                 self._overflow()
                 return
             current.input_pcm.extend(pcm)
-        voiced = _voiced(pcm, self.bridge.threshold)
         if voiced:
-            began = not current.speech_active or self.clock() - current.last_capture >= .3
-            current.last_input = self.clock()
-            current.last_capture = self.clock()
-            if began and current.playback and not current.playback.done():
-                self._interrupt_output(current)
+            current.last_input = current.last_capture = now
         current.speech_active = voiced
 
     async def handle_turn(self, source, pcm, valid=None):
@@ -665,7 +691,7 @@ class DiscordLiveAdapter:
     def _interrupt_output(self, state):
         # The primary protocol has no response.cancel. Native input continues;
         # discard locally queued speech while the human is speaking.
-        state.muted_until = self.clock() + .3
+        state.muted_until = self.clock() + _SPEECH_GAP_SECONDS
         if state.output is not None:
             while not state.output.empty():
                 try:
@@ -683,39 +709,32 @@ class DiscordLiveAdapter:
     async def _account(self, state, event):
         await self._record_usage(state.remote.session_id, event.get("usage", {}))
 
-    async def _receive(self, state):
-        try:
-            async for event in state.remote:
-                if not self._valid(state):
-                    break
-                kind = event.get("type")
-                if kind == "session.output_audio.delta":
-                    state.last_output = self.clock()
-                    state.output_seen = True
-                    if (state.mode == "solo" and
-                            (self.clock() - state.last_capture < .3 or self.clock() < state.muted_until)):
-                        continue
-                    await self._output(state, event["pcm"])
-                elif kind in ("session.input_transcript.delta", "session.output_transcript.delta",
-                              "session.delegation.created"):
-                    if kind == "session.input_transcript.delta":
-                        if event.get("start_ms", 0) > getattr(state, "last_transcript_end", 0) + 700:
-                            state.transcript = ""
-                        state.transcript = (state.transcript + event.get("delta", ""))[-4000:]
-                        state.last_transcript_end = event.get("end_ms", 0)
-                        if (state.mode == "solo" and
-                                self.bridge._decider.is_stop_command(state.transcript)):
-                            with self.bridge.buffers_lock:
-                                self.bridge._decider.decide(state.source.voice_session_id,
-                                    state.source.speaker_id, state.transcript, authorized=True,
-                                    consent_confirmed=True, participant_count=1, direct_address=True)
-                            self._task(self._close_session(state, "voice_muted"), "jade-discord-live-muted")
-                            break
-                    await self.conversation.handle_event(event, state.context, state.remote.send)
-                elif kind in ("session.usage.updated", "session.closed"):
+    async def _receive_control(self, state, queue):
+        while self._valid(state):
+            event = await queue.get()
+            if event is None:
+                return
+            kind = event["type"]
+            try:
+                if kind in ("session.usage.updated", "session.closed"):
                     await self._account(state, event)
-                    if kind == "session.closed":
-                        break
+                else:
+                    await self.conversation.handle_event(event, state.context, state.remote.send)
+            finally:
+                state.pending_control_events -= 1
+            if kind == "session.closed":
+                return
+
+    async def _receive(self, state):
+        control = asyncio.Queue(maxsize=_CONTROL_QUEUE_LIMIT)
+        try:
+            async with asyncio.TaskGroup() as tasks:
+                worker = tasks.create_task(self._receive_control(state, control),
+                                           name="jade-discord-live-control-events")
+                try:
+                    await self._receive_media(state, control, worker)
+                finally:
+                    worker.cancel()
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -723,6 +742,50 @@ class DiscordLiveAdapter:
         finally:
             if state.active:
                 self._task(self._close_session(state, "provider_stream_ended"), "jade-discord-live-ended")
+
+    async def _receive_media(self, state, control, worker):
+        async for event in state.remote:
+            if not self._valid(state):
+                return
+            kind = event.get("type")
+            if kind == "session.output_audio.delta":
+                now = self.clock()
+                state.last_output = now
+                state.output_seen = True
+                if (state.mode == "solo" and
+                        (now - state.last_capture < _SPEECH_GAP_SECONDS or now < state.muted_until)):
+                    continue
+                await self._output(state, event["pcm"])
+            elif kind in ("session.input_transcript.delta", "session.output_transcript.delta",
+                          "session.delegation.created", "session.usage.updated", "session.closed"):
+                if kind == "session.input_transcript.delta" and self._stop_requested(state, event):
+                    self._task(self._close_session(state, "voice_muted"), "jade-discord-live-muted")
+                    return
+                # Keep database writes and avatar/transcript observers off the
+                # PCM delivery path. A full queue ends the session safely.
+                control.put_nowait(event)
+                state.pending_control_events += 1
+                if kind == "session.closed":
+                    await asyncio.wait_for(worker, self.config.close_timeout_seconds)
+                    return
+        if self._valid(state):
+            # Let already accepted events finish on a normal end of stream.
+            async with asyncio.timeout(self.config.close_timeout_seconds):
+                await control.put(None)
+                await worker
+
+    def _stop_requested(self, state, event):
+        if event.get("start_ms", 0) > getattr(state, "last_transcript_end", 0) + 700:
+            state.transcript = ""
+        state.transcript = (state.transcript + event.get("delta", ""))[-4000:]
+        state.last_transcript_end = event.get("end_ms", 0)
+        if state.mode != "solo" or not self.bridge._decider.is_stop_command(state.transcript):
+            return False
+        with self.bridge.buffers_lock:
+            self.bridge._decider.decide(state.source.voice_session_id, state.source.speaker_id,
+                state.transcript, authorized=True, consent_confirmed=True, participant_count=1,
+                direct_address=True)
+        return True
 
     async def _output(self, state, pcm):
         if not state.accepting_output:
@@ -769,15 +832,19 @@ class DiscordLiveAdapter:
             if state.output is queue:
                 state.accepting_output = False
 
-    def _delegating(self, state):
-        return any(not session.closed and session.context["session_id"] == state.context["session_id"]
-                   and any(not task.done() for task in session.tasks.values())
-                   for session in self.conversation.sessions.values())
+    def _has_pending_work(self, state):
+        if state.pending_control_events:
+            return True
+        return any(
+            not session.closed and session.context["session_id"] == state.context["session_id"]
+            and any(not task.done() for task in session.tasks.values())
+            for session in self.conversation.sessions.values()
+        )
 
     def _group_finished(self, state):
         return (state.mode == "group" and state.output_seen and not state.input_pcm
                 and (state.playback is None or state.playback.done())
-                and self.clock() - state.last_output >= 1.0 and not self._delegating(state))
+                and self.clock() - state.last_output >= 1.0 and not self._has_pending_work(state))
 
     async def _monitor(self):
         while self._running:
@@ -795,7 +862,7 @@ class DiscordLiveAdapter:
                 reason = "maximum_duration"
             elif self._group_finished(state):
                 reason = "turn_completed"
-            elif (not self._delegating(state) and not state.input_pcm
+            elif (not self._has_pending_work(state) and not state.input_pcm
                   and self.clock() - max(state.last_input, state.last_output) >= self.config.idle_close_seconds):
                 reason = "idle"
             if reason:
@@ -812,6 +879,7 @@ class DiscordLiveAdapter:
     async def _finish_close(self, state, reason):
         state.active = False
         state.input_pcm.clear()
+        state.interruption_pcm.clear()
         if state.mode == "solo" and reason not in ("idle", "classic_before_start"):
             with self._capture_lock:
                 self._suppressed[state.source.speaker_id] = 0

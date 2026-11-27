@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [REC-051 · Continuité de la parole dans Discord Live](2026-11-27-codex-saccades-discord-live.md) · Distribution du PCM, interruption de parole et diagnostic de la coupure micro sur haut-parleur mobile.
+
 - [Salon portrait statique](2026-11-27-chatgpt-salon-portrait.md) · Troisième environnement, sélection persistante et cadrage partagé, chargement indépendant des deux décors statiques ; recette visuelle à réaliser.
 
 - [REC-052 · Rendu de Friponne sur Discord Live](2026-11-27-codex-rendu-friponne-discord.md) · Conversion PCM des aigus et écoute comparative avec le mobile.
