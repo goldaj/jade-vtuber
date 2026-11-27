@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [ART-015 · Expressions faciales manga en P0](2026-11-27-chatgpt-expressions-manga-p0.md) · Un visage expressif dédié par intention, bascules très marquées et continuité du design ; ajout à la backlog.
+
 - [Pastille Live et micro coupé](2026-11-27-codex-pastille-live.md) · Distinction immédiate entre micro coupé et veille.
 
 - [Pétillante, intonations et mouvements GPT-Live](2026-11-27-codex-petillante-intentions-live.md) · Vérification du profil personnalisé, débit et expressions des tours natifs et délégués.
