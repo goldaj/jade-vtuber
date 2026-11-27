@@ -32,7 +32,8 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .shell.is-room-only #fullscreen .fullscreen-exit{display:block;width:28px;height:28px}
 #live-indicator{position:absolute;top:16px;right:18px;z-index:4;pointer-events:none;
   display:inline-flex;align-items:center;gap:6px;
-  color:#165a98;font-size:.74rem;font-weight:700;white-space:nowrap}
+  color:#3177b1;font-size:.74rem;font-weight:700;white-space:nowrap}
+#live-indicator.live-standby{color:#165a98}
 #live-indicator.live-on-air{color:#a52239}
 .shell[data-view="home"]:not(.is-room-only) #live-indicator{
   padding:5px 8px;border-radius:12px;background:#fffdf7f2
@@ -42,6 +43,7 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .shell.is-room-only .live-indicator-label{display:none}
 .live-indicator-dot{width:9px;height:9px;border-radius:50%;background:currentColor;
   box-shadow:0 0 0 2px #fffdf7}
+#live-indicator:not(.live-standby):not(.live-on-air) .live-indicator-dot{background:#4995d7}
 .notification-button{position:relative;padding:4px}
 .notification-dot{position:absolute;top:3px;right:2px;background:var(--flower);border:2px solid #fff;border-radius:100%;width:11px;height:11px}
 .scene-panel{margin:10px 12px 4px;gap:8px}

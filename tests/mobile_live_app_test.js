@@ -76,11 +76,16 @@ const mic = element("mic"), indicator = element("live-indicator");
 const press = () => mic.handlers.pointerdown({button:0, isPrimary:true, pointerId:1, preventDefault() {}});
 const controlLive = () => mic.handlers.click();
 const chooseView = view => navigation.find(value => value.dataset.viewTarget === view).handlers.click();
-function expectLiveColor(onAir) {
+function expectLiveColor(phase) {
+  const onAir = phase === "on-air";
   assert.equal(mic.classList.contains("live-mode-indicator"), true);
   assert.equal(mic.classList.contains("live-on-air"), onAir);
   assert.equal(indicator.hidden, false);
   assert.equal(indicator.classList.contains("live-on-air"), onAir);
+  assert.equal(indicator.classList.contains("live-standby"), phase === "standby");
+  assert.equal(indicator.attrs["aria-label"], {
+    inactive:"Live inactif", standby:"Live en veille", "on-air":"Live en cours",
+  }[phase]);
 }
 
 (async () => {
@@ -108,28 +113,28 @@ function expectLiveColor(onAir) {
   assert.equal(mic.attrs["aria-label"], "Micro Live");
   assert.equal(mic.attrs["aria-pressed"], "false");
   assert.equal(mic.disabled, false);
-  expectLiveColor(false);
+  expectLiveColor("inactive");
   await press(); assert.equal(toggles, 0, "Live uses the native click rather than the classic hold");
   mic.handlers.keydown({key:"Enter", preventDefault() { throw new Error("Live must allow the native keyboard click"); }});
   await controlLive(); assert.equal(toggles, 1); assert.equal(state.active, true);
   assert.equal(mic.attrs["aria-pressed"], "true");
-  expectLiveColor(false);
+  expectLiveColor("standby");
   emitState({session_state:"opening"});
-  expectLiveColor(true);
+  expectLiveColor("on-air");
   emitState({session_state:"active"});
-  expectLiveColor(true);
+  expectLiveColor("on-air");
   emitState({session_state:"standby"});
-  expectLiveColor(false);
+  expectLiveColor("standby");
   assert.equal(mic.attrs["aria-pressed"], "true", "provider standby keeps the explicit capture armed");
   for (let turn = 0; turn < 2; turn++) {
     emitState({speech_active:true});
-    expectLiveColor(true);
+    expectLiveColor("on-air");
     emitState({speech_active:false});
-    expectLiveColor(false);
+    expectLiveColor("standby");
     emitState({playback_active:true});
-    expectLiveColor(true);
+    expectLiveColor("on-air");
     emitState({playback_active:false});
-    expectLiveColor(false);
+    expectLiveColor("standby");
   }
   const stopCount = stops.length;
   for (const value of navigation) value.handlers.click();
@@ -137,15 +142,18 @@ function expectLiveColor(onAir) {
   assert.equal(toggles, 1, "Live voice is controlled from the stage");
   await element("fullscreen").handlers.click();
   assert.equal(mic.disabled, false);
-  expectLiveColor(false);
+  expectLiveColor("standby");
   emitState({playback_active:true});
-  expectLiveColor(true);
-  await controlLive();
+  expectLiveColor("on-air");
+  const mute = controlLive();
   assert.equal(mic.attrs["aria-pressed"], "false");
-  expectLiveColor(false);
-  emitState({lease_state:"draining", playback_active:true});
-  expectLiveColor(false);
-  emitState({lease_state:"closed", playback_active:false});
+  expectLiveColor("inactive");
+  await mute;
+  emitState({lease_state:"draining", session_state:"active", playback_active:true});
+  expectLiveColor("inactive");
+  emitState({lease_state:"closed", session_state:"closing", playback_active:false});
+  expectLiveColor("inactive");
+  emitState({session_state:"absent"});
   assert.equal(toggles, 2, "the second click cuts capture in fullscreen");
   assert.equal(state.active, false);
   await controlLive();
@@ -260,7 +268,7 @@ function expectLiveColor(onAir) {
   assert.equal(state.mode, "live");
   assert.equal(toggles, 6, "selecting Live in Config changes only the preference");
   assert.equal(state.active, false);
-  expectLiveColor(false);
+  expectLiveColor("inactive");
 
   chooseView("home");
   emitState({available:false, waiting_for_close:true, session_state:"closing"});
@@ -346,7 +354,7 @@ function expectLiveColor(onAir) {
   assert.equal(mic.disabled, false);
   assert.equal(mic.attrs["aria-label"], "Micro Live");
   assert.equal(mic.attrs["aria-pressed"], "false");
-  expectLiveColor(false);
+  expectLiveColor("inactive");
   assert.equal(audioContexts, 0); assert.equal(captureRequests, 0);
   assert.equal(reads.length, 6);
   console.log("Mobile Live app: profile, navigation, exclusive text/audio, transcripts and lifecycle PASS (inert client)");

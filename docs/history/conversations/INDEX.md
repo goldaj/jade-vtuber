@@ -61,6 +61,8 @@ La [passation de reprise du Live mobile](../../operations/handoffs/2026-11-27-co
 
 La [passation Pétillante et intentions](../../operations/handoffs/2026-11-27-codex-petillante-intentions-live.md#échanges-accessibles) consigne la confirmation du fonctionnement du Live, puis les demandes sur la voix, les intonations, le mouvement et le débit.
 
+La [passation de la pastille Live](../../operations/handoffs/2026-11-27-codex-pastille-live.md#échanges-accessibles) consigne le signalement suivant sur le bleu qui persistait après la coupure du micro et la décision d’affichage.
+
 ## Synchronisation du clone de développement le 26 novembre 2026
 
 - **Propriétaire** (extrait de la conversation) « Je veux que tu push le local, mais attention il va y avoir du merge à faire ».

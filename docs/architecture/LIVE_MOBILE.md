@@ -43,6 +43,8 @@ La fermeture idle ne libère pas le bail armé : une nouvelle parole ouvre une n
 
 Un mute après entrée utilisateur peut laisser finir la réponse demandée pendant **15 s au maximum**, sans prolongation par un heartbeat ou un second mute. Si aucune entrée n'a été envoyée, l'arrêt est direct. La fermeture des pistes et de la lecture locale reste distincte de la confirmation fournisseur.
 
+La pastille reflète d’abord la capture locale. Elle passe au bleu clair dès que le micro est coupé, même si le fournisseur termine la réponse. Avec le micro armé, le bleu foncé indique la veille et le rouge un échange ou une connexion en cours.
+
 ## Audio et arrêt
 
 Le navigateur raccorde la piste distante WebRTC à un lecteur audio. Un analyseur observe cette piste pour la bouche et la motion de parole. Si le navigateur refuse la lecture du lecteur, la sortie Web Audio déjà déverrouillée prend le relais et le lecteur reste muet. La fermeture ou le remplacement de la piste détache le lecteur et remet l’avatar au repos.

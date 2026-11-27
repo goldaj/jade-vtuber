@@ -1,3 +1,7 @@
+## 2026-11-27 — Pastille Live et micro coupé
+
+- La pastille distingue le micro coupé en bleu clair de la veille avec micro ouvert en bleu foncé. La couleur bascule au moment du clic, y compris pendant la fin de lecture. [Passation et recette REC-050](handoffs/2026-11-27-codex-pastille-live.md)
+
 ## 2026-11-27 — Intonations et mouvements de Pétillante en Live
 
 - Le profil Pétillante garde la voix enregistrée et la consigne choisie. GPT-Live reçoit une direction d’intonation selon le contexte et un débit légèrement plus vif. Les tours délégués reçoivent leur propre consigne de jeu silencieuse. La configuration résolue par le fournisseur est comparée si elle est présente, sans publier d’identifiant.

@@ -222,9 +222,12 @@
     const capturing = enabled && liveState.capture !== "closed";
     const onAir = enabled && liveOnAir();
     if (liveIndicator) {
+      const standby = enabled && liveState.capture === "armed" && !onAir;
       liveIndicator.hidden = !enabled;
       liveIndicator.classList.toggle("live-on-air", onAir);
-      liveIndicator.setAttribute("aria-label", onAir ? "Live en cours" : "Live en veille");
+      liveIndicator.classList.toggle("live-standby", standby);
+      liveIndicator.setAttribute("aria-label", onAir ? "Live en cours" :
+        standby ? "Live en veille" : "Live inactif");
     }
     mic.classList.toggle("live-mode-indicator", enabled);
     mic.classList.toggle("live-on-air", onAir);

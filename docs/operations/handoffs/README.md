@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [Pastille Live et micro coupé](2026-11-27-codex-pastille-live.md) · Distinction immédiate entre micro coupé et veille.
+
 - [Pétillante, intonations et mouvements GPT-Live](2026-11-27-codex-petillante-intentions-live.md) · Vérification du profil personnalisé, débit et expressions des tours natifs et délégués.
 
 - [Reprise après fermeture Live non confirmée](2026-11-27-codex-reprise-fermeture-live-mobile.md) · Déblocage local explicite, conservation de l’usage indéterminé et état du micro.
