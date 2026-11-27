@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [REC-053 / ART-014 · Neuf intentions et dix-huit variantes r21](2026-11-27-chatgpt-intentions-r21-implementation.md) · Réalisation de Triste/Colère, non-régression des sept intentions sur r21, preuves automatisées et rendu réel local ; refonte faciale native ART-015 reportée selon la décision propriétaire.
+
 - [REC-051 · Continuité de la parole dans Discord Live](2026-11-27-codex-saccades-discord-live.md) · Distribution du PCM, interruption de parole et diagnostic de la coupure micro sur haut-parleur mobile.
 
 - [Salon portrait statique](2026-11-27-chatgpt-salon-portrait.md) · Troisième environnement, sélection persistante et cadrage partagé, chargement indépendant des deux décors statiques ; recette visuelle à réaliser.

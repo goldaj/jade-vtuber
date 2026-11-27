@@ -1,0 +1,3047 @@
+{
+  "result": "PASS",
+  "model": "r21",
+  "audio": "synthetic Web Audio only",
+  "blink": "closed blink injected before the application's held face",
+  "viewport": {
+    "width": 393,
+    "height": 873
+  },
+  "cases": [
+    {
+      "case": "neutral-A",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.687783420085907,
+          "ParamMouthForm": 0.01871277578175068,
+          "ParamEyeLOpen": 0.9900000095367432,
+          "ParamEyeROpen": 0.9900000095367432,
+          "ParamAngleX": 14.122514724731445,
+          "ParamAngleY": 2.2983291149139404,
+          "ParamAngleZ": 8.36385440826416,
+          "ParamBrowLAngle": -0.029999999329447746,
+          "ParamBrowRAngle": -0.019999999552965164,
+          "ParamJadeEarFollowL": -0.005964078940451145,
+          "ParamJadeEarFollowR": -0.003400659654289484
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Neutral",
+            "index": 0,
+            "at": 2646.3000000000466
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0.05999999865889549,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": 11.472594261169434,
+          "ParamAngleY": -0.3937360346317291,
+          "ParamAngleZ": 6.464741230010986,
+          "ParamBrowLAngle": -0.029999999329447746,
+          "ParamBrowRAngle": -0.019999999552965164,
+          "ParamJadeEarFollowL": -0.059572722762823105,
+          "ParamJadeEarFollowR": -0.04981468990445137
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Neutral",
+            "index": 0,
+            "at": 2646.3000000000466
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": 3.254793167114258,
+          "ParamAngleY": -3.8595283031463623,
+          "ParamAngleZ": -0.18811416625976562,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.14255374670028687,
+          "ParamJadeEarFollowR": -0.13262978196144104
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Neutral",
+            "index": 0,
+            "at": 2646.3000000000466
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 4754.700000000186
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "neutral-B",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.685415506362915,
+          "ParamMouthForm": 0.01887506991624832,
+          "ParamEyeLOpen": 0.9800000190734863,
+          "ParamEyeROpen": 0.9900000095367432,
+          "ParamAngleX": -8.567472457885742,
+          "ParamAngleY": 0.3393543064594269,
+          "ParamAngleZ": -8.028658866882324,
+          "ParamBrowLAngle": -0.029999999329447746,
+          "ParamBrowRAngle": -0.019999999552965164,
+          "ParamJadeEarFollowL": -0.047357019037008286,
+          "ParamJadeEarFollowR": -0.045596130192279816
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0.9999998807907104,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Neutral",
+            "index": 1,
+            "at": 5313.5
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0.05999999865889549,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": -9.88265323638916,
+          "ParamAngleY": 4.246420860290527,
+          "ParamAngleZ": -7.375726699829102,
+          "ParamBrowLAngle": -0.029999999329447746,
+          "ParamBrowRAngle": -0.019999999552965164,
+          "ParamJadeEarFollowL": -0.05145503208041191,
+          "ParamJadeEarFollowR": -0.05339321494102478
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Neutral",
+            "index": 1,
+            "at": 5313.5
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": -6.65139102935791,
+          "ParamAngleY": -0.6978479027748108,
+          "ParamAngleZ": -0.7582911849021912,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.1361819952726364,
+          "ParamJadeEarFollowR": -0.11761138588190079
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Neutral",
+            "index": 1,
+            "at": 5313.5
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 7368.800000000047
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "playful-A",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.7143559455871582,
+          "ParamMouthForm": 0.2986729145050049,
+          "ParamEyeLOpen": 0.9100000262260437,
+          "ParamEyeROpen": 0.9700000286102295,
+          "ParamAngleX": -15.199101448059082,
+          "ParamAngleY": -2.0463974475860596,
+          "ParamAngleZ": 12.604743003845215,
+          "ParamBrowLAngle": -0.23000000417232513,
+          "ParamBrowRAngle": -0.12999999523162842,
+          "ParamJadeEarFollowL": -0.02789854072034359,
+          "ParamJadeEarFollowR": -0.08574876189231873
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1.0000001192092896,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Playful",
+            "index": 0,
+            "at": 7926.40000000014
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0.4000000059604645,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": -8.881205558776855,
+          "ParamAngleY": -0.014974863268435001,
+          "ParamAngleZ": 9.867660522460938,
+          "ParamBrowLAngle": -0.23000000417232513,
+          "ParamBrowRAngle": -0.12999999523162842,
+          "ParamJadeEarFollowL": -0.07664063572883606,
+          "ParamJadeEarFollowR": -0.0901426374912262
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Playful",
+            "index": 0,
+            "at": 7926.40000000014
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": 7.420738697052002,
+          "ParamAngleY": 3.9740042686462402,
+          "ParamAngleZ": 1.589456558227539,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.1099243238568306,
+          "ParamJadeEarFollowR": -0.08920419216156006
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Playful",
+            "index": 0,
+            "at": 7926.40000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 9976.600000000093
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "playful-B",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.6651191115379333,
+          "ParamMouthForm": 0.3068833351135254,
+          "ParamEyeLOpen": 0.9700000286102295,
+          "ParamEyeROpen": 0.9100000262260437,
+          "ParamAngleX": 1.4222819805145264,
+          "ParamAngleY": -3.3059005737304688,
+          "ParamAngleZ": 1.9276306629180908,
+          "ParamBrowLAngle": -0.23000000417232513,
+          "ParamBrowRAngle": -0.12999999523162842,
+          "ParamJadeEarFollowL": -0.15955647826194763,
+          "ParamJadeEarFollowR": 0.020464541390538216
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Playful",
+            "index": 1,
+            "at": 10536.600000000093
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0.4000000059604645,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": 5.60236930847168,
+          "ParamAngleY": -3.9915904998779297,
+          "ParamAngleZ": -9.83347225189209,
+          "ParamBrowLAngle": -0.23000000417232513,
+          "ParamBrowRAngle": -0.12999999523162842,
+          "ParamJadeEarFollowL": -0.2347864955663681,
+          "ParamJadeEarFollowR": -0.024029677733778954
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Playful",
+            "index": 1,
+            "at": 10536.600000000093
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": -5.378877639770508,
+          "ParamAngleY": 0.21315588057041168,
+          "ParamAngleZ": -2.3726186752319336,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.04692167416214943,
+          "ParamJadeEarFollowR": -0.07717124372720718
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Playful",
+            "index": 1,
+            "at": 10536.600000000093
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 12594.100000000093
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "excited-A",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.7006717920303345,
+          "ParamMouthForm": 0.3708186149597168,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": -6.421233177185059,
+          "ParamAngleY": 15.822219848632812,
+          "ParamAngleZ": 0.8747605681419373,
+          "ParamBrowLAngle": -0.1899999976158142,
+          "ParamBrowRAngle": -0.15000000596046448,
+          "ParamJadeEarFollowL": 0.11862804740667343,
+          "ParamJadeEarFollowR": 0.1636601984500885
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Excited",
+            "index": 0,
+            "at": 13152.5
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0.5600000023841858,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": -4.963856220245361,
+          "ParamAngleY": 9.326977729797363,
+          "ParamAngleZ": 4.1118950843811035,
+          "ParamBrowLAngle": -0.1899999976158142,
+          "ParamBrowRAngle": -0.15000000596046448,
+          "ParamJadeEarFollowL": 0.037673015147447586,
+          "ParamJadeEarFollowR": 0.06903790682554245
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0.9999998807907104,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0.9999998807907104
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Excited",
+            "index": 0,
+            "at": 13152.5
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": 1.4163650274276733,
+          "ParamAngleY": -3.9990572929382324,
+          "ParamAngleZ": 3.0128707885742188,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.10844650864601135,
+          "ParamJadeEarFollowR": -0.0709606483578682
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Excited",
+            "index": 0,
+            "at": 13152.5
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 15228.100000000093
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "excited-B",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.6248680949211121,
+          "ParamMouthForm": 0.37587201595306396,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": 29.173603057861328,
+          "ParamAngleY": 8.870637893676758,
+          "ParamAngleZ": -8.824151992797852,
+          "ParamBrowLAngle": -0.14000000059604645,
+          "ParamBrowRAngle": -0.20000000298023224,
+          "ParamJadeEarFollowL": 0.08463830500841141,
+          "ParamJadeEarFollowR": 0.14911580085754395
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Excited",
+            "index": 1,
+            "at": 15785.5
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0.5600000023841858,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": 25.608182907104492,
+          "ParamAngleY": 9.393524169921875,
+          "ParamAngleZ": -7.896081924438477,
+          "ParamBrowLAngle": -0.14000000059604645,
+          "ParamBrowRAngle": -0.20000000298023224,
+          "ParamJadeEarFollowL": 0.03861474245786667,
+          "ParamJadeEarFollowR": 0.04069356992840767
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1.0000001192092896,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1.0000001192092896
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Excited",
+            "index": 1,
+            "at": 15785.5
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": 3.164921760559082,
+          "ParamAngleY": 0.15684594213962555,
+          "ParamAngleZ": -3.6480605602264404,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.11266472190618515,
+          "ParamJadeEarFollowR": -0.13444899022579193
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Excited",
+            "index": 1,
+            "at": 15785.5
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 17848.90000000014
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "curious-A",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.6774734854698181,
+          "ParamMouthForm": -0.09030742198228836,
+          "ParamEyeLOpen": 0.9900000095367432,
+          "ParamEyeROpen": 0.9100000262260437,
+          "ParamAngleX": 5.589041233062744,
+          "ParamAngleY": -6.60645866394043,
+          "ParamAngleZ": -3.4827189445495605,
+          "ParamBrowLAngle": -0.1899999976158142,
+          "ParamBrowRAngle": 0.07999999821186066,
+          "ParamJadeEarFollowL": 0.16086174547672272,
+          "ParamJadeEarFollowR": -0.22573183476924896
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Curious",
+            "index": 0,
+            "at": 18409.600000000093
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": -0.2800000011920929,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": 3.1494486331939697,
+          "ParamAngleY": -5.2772216796875,
+          "ParamAngleZ": -1.914067029953003,
+          "ParamBrowLAngle": -0.1899999976158142,
+          "ParamBrowRAngle": 0.07999999821186066,
+          "ParamJadeEarFollowL": 0.10302845388650894,
+          "ParamJadeEarFollowR": -0.21210114657878876
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Curious",
+            "index": 0,
+            "at": 18409.600000000093
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": -6.547306537628174,
+          "ParamAngleY": 3.979954719543457,
+          "ParamAngleZ": 4.176797389984131,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.15105511248111725,
+          "ParamJadeEarFollowR": -0.1306428611278534
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Curious",
+            "index": 0,
+            "at": 18409.600000000093
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 20465.600000000093
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "curious-B",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.7099260091781616,
+          "ParamMouthForm": -0.08122071623802185,
+          "ParamEyeLOpen": 0.9100000262260437,
+          "ParamEyeROpen": 0.9900000095367432,
+          "ParamAngleX": 4.797682762145996,
+          "ParamAngleY": -0.11629603058099747,
+          "ParamAngleZ": -0.7692990303039551,
+          "ParamBrowLAngle": 0.07999999821186066,
+          "ParamBrowRAngle": -0.1899999976158142,
+          "ParamJadeEarFollowL": -0.3242066502571106,
+          "ParamJadeEarFollowR": 0.1775178164243698
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Curious",
+            "index": 1,
+            "at": 21021.100000000093
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": -0.2800000011920929,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": 17.762969970703125,
+          "ParamAngleY": 6.273376941680908,
+          "ParamAngleZ": -6.782430648803711,
+          "ParamBrowLAngle": 0.07999999821186066,
+          "ParamBrowRAngle": -0.1899999976158142,
+          "ParamJadeEarFollowL": -0.2071467787027359,
+          "ParamJadeEarFollowR": 0.13692811131477356
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Curious",
+            "index": 1,
+            "at": 21021.100000000093
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 0.3240000009536743,
+          "ParamEyeROpen": 0.3240000009536743,
+          "ParamAngleX": 7.434599876403809,
+          "ParamAngleY": -0.7584834694862366,
+          "ParamAngleZ": -4.620697975158691,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.1318594515323639,
+          "ParamJadeEarFollowR": -0.1164170354604721
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0.02015502192080021,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0.02015502192080021
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Curious",
+            "index": 1,
+            "at": 21021.100000000093
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 23066.40000000014
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "tender-A",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.7170861959457397,
+          "ParamMouthForm": 0.10809534788131714,
+          "ParamEyeLOpen": 0.8700000047683716,
+          "ParamEyeROpen": 0.9300000071525574,
+          "ParamAngleX": 2.8438727855682373,
+          "ParamAngleY": 1.1210236549377441,
+          "ParamAngleZ": 14.757027626037598,
+          "ParamBrowLAngle": 0.10999999940395355,
+          "ParamBrowRAngle": 0.09000000357627869,
+          "ParamJadeEarFollowL": -0.37502333521842957,
+          "ParamJadeEarFollowR": -0.35462358593940735
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Tender",
+            "index": 0,
+            "at": 23623.300000000047
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0.23000000417232513,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": 0.8718425631523132,
+          "ParamAngleY": 0.9971171617507935,
+          "ParamAngleZ": 15.694206237792969,
+          "ParamBrowLAngle": 0.10999999940395355,
+          "ParamBrowRAngle": 0.09000000357627869,
+          "ParamJadeEarFollowL": -0.2701985836029053,
+          "ParamJadeEarFollowR": -0.26255786418914795
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0.9999999403953552,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0.9999999403953552
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Tender",
+            "index": 0,
+            "at": 23623.300000000047
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": -5.447700500488281,
+          "ParamAngleY": -3.8739521503448486,
+          "ParamAngleZ": 4.878407955169678,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.04644498601555824,
+          "ParamJadeEarFollowR": -0.045681457966566086
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Tender",
+            "index": 0,
+            "at": 23623.300000000047
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 25670.90000000014
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "tender-B",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.706328272819519,
+          "ParamMouthForm": 0.10751714557409286,
+          "ParamEyeLOpen": 0.9300000071525574,
+          "ParamEyeROpen": 0.8899999856948853,
+          "ParamAngleX": -20.103240966796875,
+          "ParamAngleY": -5.580275058746338,
+          "ParamAngleZ": -5.903762340545654,
+          "ParamBrowLAngle": 0.07999999821186066,
+          "ParamBrowRAngle": 0.10999999940395355,
+          "ParamJadeEarFollowL": -0.4255998134613037,
+          "ParamJadeEarFollowR": -0.35559824109077454
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1.0000001192092896,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1.0000001192092896,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Tender",
+            "index": 1,
+            "at": 26226.90000000014
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0.23000000417232513,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": -15.391345977783203,
+          "ParamAngleY": 1.960808515548706,
+          "ParamAngleZ": -7.498155117034912,
+          "ParamBrowLAngle": 0.07999999821186066,
+          "ParamBrowRAngle": 0.10999999940395355,
+          "ParamJadeEarFollowL": -0.3744884729385376,
+          "ParamJadeEarFollowR": -0.29986193776130676
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0.9999999403953552,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0.9999999403953552
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Tender",
+            "index": 1,
+            "at": 26226.90000000014
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": 1.396452784538269,
+          "ParamAngleY": 1.2309762239456177,
+          "ParamAngleZ": -4.993790626525879,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.0872969850897789,
+          "ParamJadeEarFollowR": -0.059410396963357925
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Tender",
+            "index": 1,
+            "at": 26226.90000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 28284.800000000047
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "reassuring-A",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.682033896446228,
+          "ParamMouthForm": 0.21723389625549316,
+          "ParamEyeLOpen": 0.949999988079071,
+          "ParamEyeROpen": 0.9599999785423279,
+          "ParamAngleX": 7.472647190093994,
+          "ParamAngleY": -1.9479714632034302,
+          "ParamAngleZ": 1.730112075805664,
+          "ParamBrowLAngle": -0.11999999731779099,
+          "ParamBrowRAngle": -0.09000000357627869,
+          "ParamJadeEarFollowL": 0.040730126202106476,
+          "ParamJadeEarFollowR": 0.04226061329245567
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Reassuring",
+            "index": 0,
+            "at": 28844.5
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0.3400000035762787,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": 7.369285583496094,
+          "ParamAngleY": -4.364368915557861,
+          "ParamAngleZ": 3.13617205619812,
+          "ParamBrowLAngle": -0.11999999731779099,
+          "ParamBrowRAngle": -0.09000000357627869,
+          "ParamJadeEarFollowL": 0.01932714506983757,
+          "ParamJadeEarFollowR": 0.023985275998711586
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Reassuring",
+            "index": 0,
+            "at": 28844.5
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 0.6679999828338623,
+          "ParamEyeROpen": 0.6679999828338623,
+          "ParamAngleX": 3.3990604877471924,
+          "ParamAngleY": 3.6309261322021484,
+          "ParamAngleZ": 4.936934471130371,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.14243455231189728,
+          "ParamJadeEarFollowR": -0.14007247984409332
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Reassuring",
+            "index": 0,
+            "at": 28844.5
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 30877.40000000014
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "reassuring-B",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.6780925989151001,
+          "ParamMouthForm": 0.21794332563877106,
+          "ParamEyeLOpen": 0.9599999785423279,
+          "ParamEyeROpen": 0.949999988079071,
+          "ParamAngleX": -0.20879845321178436,
+          "ParamAngleY": 2.162870407104492,
+          "ParamAngleZ": -7.832660675048828,
+          "ParamBrowLAngle": -0.09000000357627869,
+          "ParamBrowRAngle": -0.11999999731779099,
+          "ParamJadeEarFollowL": 0.19219204783439636,
+          "ParamJadeEarFollowR": 0.1753166913986206
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Reassuring",
+            "index": 1,
+            "at": 31433.800000000047
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0.3400000035762787,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": -2.1873834133148193,
+          "ParamAngleY": -1.5904552936553955,
+          "ParamAngleZ": -9.127671241760254,
+          "ParamBrowLAngle": -0.09000000357627869,
+          "ParamBrowRAngle": -0.11999999731779099,
+          "ParamJadeEarFollowL": 0.12514498829841614,
+          "ParamJadeEarFollowR": 0.11687416583299637
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0.9999999403953552,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0.9999999403953552
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Reassuring",
+            "index": 1,
+            "at": 31433.800000000047
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": -6.670686721801758,
+          "ParamAngleY": -1.8968265056610107,
+          "ParamAngleZ": -4.729984760284424,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.15176977217197418,
+          "ParamJadeEarFollowR": -0.1323259472846985
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Reassuring",
+            "index": 1,
+            "at": 31433.800000000047
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 33495.200000000186
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "serious-A",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.726690948009491,
+          "ParamMouthForm": -0.7400000095367432,
+          "ParamEyeLOpen": 0.9800000190734863,
+          "ParamEyeROpen": 0.9800000190734863,
+          "ParamAngleX": 1.6217471361160278,
+          "ParamAngleY": 12.054121971130371,
+          "ParamAngleZ": -1.711997151374817,
+          "ParamBrowLAngle": 0.1599999964237213,
+          "ParamBrowRAngle": 0.14000000059604645,
+          "ParamJadeEarFollowL": -0.22987206280231476,
+          "ParamJadeEarFollowR": -0.21868552267551422
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0.9999998211860657,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0.9999998211860657,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Serious",
+            "index": 0,
+            "at": 34062.200000000186
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": -0.7400000095367432,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": 3.532703161239624,
+          "ParamAngleY": 10.371994972229004,
+          "ParamAngleZ": -0.1386450082063675,
+          "ParamBrowLAngle": 0.1599999964237213,
+          "ParamBrowRAngle": 0.14000000059604645,
+          "ParamJadeEarFollowL": -0.19426172971725464,
+          "ParamJadeEarFollowR": -0.17405781149864197
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Serious",
+            "index": 0,
+            "at": 34062.200000000186
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": 7.395689964294434,
+          "ParamAngleY": -3.33554744720459,
+          "ParamAngleZ": 4.338770389556885,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.13151384890079498,
+          "ParamJadeEarFollowR": -0.10742036253213882
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Serious",
+            "index": 0,
+            "at": 34062.200000000186
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 36091.60000000009
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "serious-B",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.7057115435600281,
+          "ParamMouthForm": -0.7400000095367432,
+          "ParamEyeLOpen": 0.9800000190734863,
+          "ParamEyeROpen": 0.9800000190734863,
+          "ParamAngleX": 3.0837364196777344,
+          "ParamAngleY": 3.8079004287719727,
+          "ParamAngleZ": 2.5683658123016357,
+          "ParamBrowLAngle": 0.1599999964237213,
+          "ParamBrowRAngle": 0.14000000059604645,
+          "ParamJadeEarFollowL": -0.3197590708732605,
+          "ParamJadeEarFollowR": -0.30342206358909607
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Serious",
+            "index": 1,
+            "at": 36652
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": -0.7400000095367432,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": 1.1306289434432983,
+          "ParamAngleY": 6.49876070022583,
+          "ParamAngleZ": 1.0805913209915161,
+          "ParamBrowLAngle": 0.1599999964237213,
+          "ParamBrowRAngle": 0.14000000059604645,
+          "ParamJadeEarFollowL": -0.26361700892448425,
+          "ParamJadeEarFollowR": -0.2565496265888214
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Serious",
+            "index": 1,
+            "at": 36652
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": -5.264437675476074,
+          "ParamAngleY": 2.4073338508605957,
+          "ParamAngleZ": -3.8521645069122314,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.05099061131477356,
+          "ParamJadeEarFollowR": -0.052400872111320496
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Serious",
+            "index": 1,
+            "at": 36652
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 38703.700000000186
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "sad-A",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.724048912525177,
+          "ParamMouthForm": -0.8696711659431458,
+          "ParamEyeLOpen": 0.7400000095367432,
+          "ParamEyeROpen": 0.7799999713897705,
+          "ParamAngleX": -6.562434196472168,
+          "ParamAngleY": -18.083541870117188,
+          "ParamAngleZ": 2.00685715675354,
+          "ParamBrowLAngle": 0.5,
+          "ParamBrowRAngle": 0.4399999976158142,
+          "ParamJadeEarFollowL": -0.606363832950592,
+          "ParamJadeEarFollowR": -0.5501207709312439
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0.9999998211860657,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0.9999998807907104,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 39260.90000000014
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": -1,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": -5.343027114868164,
+          "ParamAngleY": -16.993295669555664,
+          "ParamAngleZ": 3.3603010177612305,
+          "ParamBrowLAngle": 0.5,
+          "ParamBrowRAngle": 0.4399999976158142,
+          "ParamJadeEarFollowL": -0.5911970138549805,
+          "ParamJadeEarFollowR": -0.5261985659599304
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 39260.90000000014
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": 1.9620031118392944,
+          "ParamAngleY": 3.511720895767212,
+          "ParamAngleZ": 3.726466417312622,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.08136894553899765,
+          "ParamJadeEarFollowR": -0.06535597145557404
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 39260.90000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 41443.200000000186
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "sad-B",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.6535826921463013,
+          "ParamMouthForm": -0.8823550939559937,
+          "ParamEyeLOpen": 0.7799999713897705,
+          "ParamEyeROpen": 0.7200000286102295,
+          "ParamAngleX": 19.884328842163086,
+          "ParamAngleY": -11.388833999633789,
+          "ParamAngleZ": -0.68048495054245,
+          "ParamBrowLAngle": 0.4399999976158142,
+          "ParamBrowRAngle": 0.5,
+          "ParamJadeEarFollowL": -0.5399144887924194,
+          "ParamJadeEarFollowR": -0.5480124354362488
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Sad",
+            "index": 1,
+            "at": 42000.200000000186
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": -1,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": 17.790809631347656,
+          "ParamAngleY": -15.48788833618164,
+          "ParamAngleZ": -2.823504686355591,
+          "ParamBrowLAngle": 0.4399999976158142,
+          "ParamBrowRAngle": 0.5,
+          "ParamJadeEarFollowL": -0.5038488507270813,
+          "ParamJadeEarFollowR": -0.5521185398101807
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Sad",
+            "index": 1,
+            "at": 42000.200000000186
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": 1.847046971321106,
+          "ParamAngleY": -1.3826003074645996,
+          "ParamAngleZ": -3.5948381423950195,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.12575559318065643,
+          "ParamJadeEarFollowR": -0.1320193111896515
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Sad",
+            "index": 1,
+            "at": 42000.200000000186
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 44169.200000000186
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "angry-A",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.6801509261131287,
+          "ParamMouthForm": -0.7367637753486633,
+          "ParamEyeLOpen": 0.8199999928474426,
+          "ParamEyeROpen": 0.8700000047683716,
+          "ParamAngleX": -6.50249719619751,
+          "ParamAngleY": 1.2353991270065308,
+          "ParamAngleZ": -3.9458045959472656,
+          "ParamBrowLAngle": -0.5799999833106995,
+          "ParamBrowRAngle": -0.5199999809265137,
+          "ParamJadeEarFollowL": -0.4180060923099518,
+          "ParamJadeEarFollowR": -0.3732720613479614
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 0,
+            "at": 44726.200000000186
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": -0.8999999761581421,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": -7.268424034118652,
+          "ParamAngleY": -0.25050094723701477,
+          "ParamAngleZ": -2.585890531539917,
+          "ParamBrowLAngle": -0.5799999833106995,
+          "ParamBrowRAngle": -0.5199999809265137,
+          "ParamJadeEarFollowL": -0.3934563398361206,
+          "ParamJadeEarFollowR": -0.3594475984573364
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0.9999999403953552,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0.9999999403953552
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 0,
+            "at": 44726.200000000186
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": -5.265562534332275,
+          "ParamAngleY": -3.8890323638916016,
+          "ParamAngleZ": 3.3891663551330566,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.14603270590305328,
+          "ParamJadeEarFollowR": -0.1224210187792778
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 0,
+            "at": 44726.200000000186
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 46893.60000000009
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "case": "angry-B",
+      "active": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.7245645523071289,
+          "ParamMouthForm": -0.7261044979095459,
+          "ParamEyeLOpen": 0.8799999952316284,
+          "ParamEyeROpen": 0.8100000023841858,
+          "ParamAngleX": -1.9470194578170776,
+          "ParamAngleY": -2.467820644378662,
+          "ParamAngleZ": 6.129158973693848,
+          "ParamBrowLAngle": -0.5199999809265137,
+          "ParamBrowRAngle": -0.5799999833106995,
+          "ParamJadeEarFollowL": -0.26052379608154297,
+          "ParamJadeEarFollowR": -0.41579318046569824
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 1,
+            "at": 47458.40000000014
+          }
+        ],
+        "canvasCount": 1
+      },
+      "pause": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": -0.8999999761581421,
+          "ParamEyeLOpen": 0,
+          "ParamEyeROpen": 0,
+          "ParamAngleX": 7.572845935821533,
+          "ParamAngleY": 0.2712535560131073,
+          "ParamAngleZ": 3.6224417686462402,
+          "ParamBrowLAngle": -0.5199999809265137,
+          "ParamBrowRAngle": -0.5799999833106995,
+          "ParamJadeEarFollowL": -0.3648494780063629,
+          "ParamJadeEarFollowR": -0.29265567660331726
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 1,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 1
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 1,
+            "at": 47458.40000000014
+          }
+        ],
+        "canvasCount": 1
+      },
+      "rest": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0,
+          "ParamMouthForm": 0,
+          "ParamEyeLOpen": 1,
+          "ParamEyeROpen": 1,
+          "ParamAngleX": 7.242266654968262,
+          "ParamAngleY": 0.4766339659690857,
+          "ParamAngleZ": -3.171851634979248,
+          "ParamBrowLAngle": 0,
+          "ParamBrowRAngle": 0,
+          "ParamJadeEarFollowL": -0.14041323959827423,
+          "ParamJadeEarFollowR": -0.11692924797534943
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 1,
+            "at": 47458.40000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 49616
+          }
+        ],
+        "canvasCount": 1
+      }
+    }
+  ],
+  "layouts": [
+    {
+      "room": "bedroom",
+      "view": "home",
+      "state": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.6950666308403015,
+          "ParamMouthForm": -0.874888002872467,
+          "ParamEyeLOpen": 0.7400000095367432,
+          "ParamEyeROpen": 0.7799999713897705,
+          "ParamAngleX": 3.1022043228149414,
+          "ParamAngleY": -14.29232120513916,
+          "ParamAngleZ": -1.8405342102050781,
+          "ParamBrowLAngle": 0.5,
+          "ParamBrowRAngle": 0.4399999976158142,
+          "ParamJadeEarFollowL": -0.3781711757183075,
+          "ParamJadeEarFollowR": -0.37197649478912354
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 1,
+            "at": 47458.40000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 49616
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 50216.5
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "room": "bedroom",
+      "view": "profile",
+      "state": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.5951095819473267,
+          "ParamMouthForm": -0.8928802609443665,
+          "ParamEyeLOpen": 0.7400000095367432,
+          "ParamEyeROpen": 0.7799999713897705,
+          "ParamAngleX": -2.6333415508270264,
+          "ParamAngleY": -9.788073539733887,
+          "ParamAngleZ": 0.29338037967681885,
+          "ParamBrowLAngle": 0.5,
+          "ParamBrowRAngle": 0.4399999976158142,
+          "ParamJadeEarFollowL": -0.2851019501686096,
+          "ParamJadeEarFollowR": -0.29589274525642395
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "profile",
+        "full": false,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 1,
+            "at": 47458.40000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 49616
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 50216.5
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 50900.80000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51101.200000000186
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "room": "bedroom",
+      "view": "full",
+      "state": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.7102012038230896,
+          "ParamMouthForm": -0.8721637725830078,
+          "ParamEyeLOpen": 0.7400000095367432,
+          "ParamEyeROpen": 0.7799999713897705,
+          "ParamAngleX": -7.012041091918945,
+          "ParamAngleY": -6.364569664001465,
+          "ParamAngleZ": 5.565616607666016,
+          "ParamBrowLAngle": 0.5,
+          "ParamBrowRAngle": 0.4399999976158142,
+          "ParamJadeEarFollowL": -0.3834781348705292,
+          "ParamJadeEarFollowR": -0.37280938029289246
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1.0000001192092896,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "bedroom",
+        "view": "home",
+        "full": true,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 1,
+            "at": 47458.40000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 49616
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 50216.5
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 50900.80000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51101.200000000186
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 51707.40000000014
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51907.90000000014
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "room": "kitchen",
+      "view": "home",
+      "state": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.7181512713432312,
+          "ParamMouthForm": -0.8707327842712402,
+          "ParamEyeLOpen": 0.7400000095367432,
+          "ParamEyeROpen": 0.7799999713897705,
+          "ParamAngleX": -6.572571754455566,
+          "ParamAngleY": -9.07348346710205,
+          "ParamAngleZ": 7.8692240715026855,
+          "ParamBrowLAngle": 0.5,
+          "ParamBrowRAngle": 0.4399999976158142,
+          "ParamJadeEarFollowL": -0.37569668889045715,
+          "ParamJadeEarFollowR": -0.33844342827796936
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "kitchen",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 1,
+            "at": 47458.40000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 49616
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 50216.5
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 50900.80000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51101.200000000186
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 51707.40000000014
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51907.90000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 52646.5
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 52846.80000000005
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "room": "kitchen",
+      "view": "profile",
+      "state": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.6399823427200317,
+          "ParamMouthForm": -0.8848031759262085,
+          "ParamEyeLOpen": 0.7400000095367432,
+          "ParamEyeROpen": 0.7799999713897705,
+          "ParamAngleX": -2.0937588214874268,
+          "ParamAngleY": -12.92739200592041,
+          "ParamAngleZ": 5.762411117553711,
+          "ParamBrowLAngle": 0.5,
+          "ParamBrowRAngle": 0.4399999976158142,
+          "ParamJadeEarFollowL": -0.3631070852279663,
+          "ParamJadeEarFollowR": -0.30733877420425415
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "kitchen",
+        "view": "profile",
+        "full": false,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 1,
+            "at": 47458.40000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 49616
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 50216.5
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 50900.80000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51101.200000000186
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 51707.40000000014
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51907.90000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 52646.5
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 52846.80000000005
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 53494.30000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 53694.60000000009
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "room": "kitchen",
+      "view": "full",
+      "state": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.5380347371101379,
+          "ParamMouthForm": -0.9031537771224976,
+          "ParamEyeLOpen": 0.7400000095367432,
+          "ParamEyeROpen": 0.7799999713897705,
+          "ParamAngleX": 4.3239874839782715,
+          "ParamAngleY": -11.95510482788086,
+          "ParamAngleZ": 1.5286390781402588,
+          "ParamBrowLAngle": 0.5,
+          "ParamBrowRAngle": 0.4399999976158142,
+          "ParamJadeEarFollowL": -0.3709598183631897,
+          "ParamJadeEarFollowR": -0.31273743510246277
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "kitchen",
+        "view": "home",
+        "full": true,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 1,
+            "at": 47458.40000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 49616
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 50216.5
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 50900.80000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51101.200000000186
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 51707.40000000014
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51907.90000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 52646.5
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 52846.80000000005
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 53494.30000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 53694.60000000009
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 54315.40000000014
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 54516.90000000014
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "room": "living",
+      "view": "home",
+      "state": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.7170782685279846,
+          "ParamMouthForm": -0.8709259033203125,
+          "ParamEyeLOpen": 0.7400000095367432,
+          "ParamEyeROpen": 0.7799999713897705,
+          "ParamAngleX": 7.468947410583496,
+          "ParamAngleY": -5.721945285797119,
+          "ParamAngleZ": -2.059835195541382,
+          "ParamBrowLAngle": 0.5,
+          "ParamBrowRAngle": 0.4399999976158142,
+          "ParamJadeEarFollowL": -0.39101842045783997,
+          "ParamJadeEarFollowR": -0.3520745038986206
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "living",
+        "view": "home",
+        "full": false,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 1,
+            "at": 47458.40000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 49616
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 50216.5
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 50900.80000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51101.200000000186
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 51707.40000000014
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51907.90000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 52646.5
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 52846.80000000005
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 53494.30000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 53694.60000000009
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 54315.40000000014
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 54516.90000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 55294.200000000186
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 55494.700000000186
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "room": "living",
+      "view": "profile",
+      "state": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.596967339515686,
+          "ParamMouthForm": -0.8925458788871765,
+          "ParamEyeLOpen": 0.7400000095367432,
+          "ParamEyeROpen": 0.7799999713897705,
+          "ParamAngleX": 5.840264320373535,
+          "ParamAngleY": -7.591543674468994,
+          "ParamAngleZ": -1.178623080253601,
+          "ParamBrowLAngle": 0.5,
+          "ParamBrowRAngle": 0.4399999976158142,
+          "ParamJadeEarFollowL": -0.34638166427612305,
+          "ParamJadeEarFollowR": -0.3381812572479248
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 0.9999999403953552,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "living",
+        "view": "profile",
+        "full": false,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 1,
+            "at": 47458.40000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 49616
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 50216.5
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 50900.80000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51101.200000000186
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 51707.40000000014
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51907.90000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 52646.5
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 52846.80000000005
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 53494.30000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 53694.60000000009
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 54315.40000000014
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 54516.90000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 55294.200000000186
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 55494.700000000186
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 56143
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 56343.30000000005
+          }
+        ],
+        "canvasCount": 1
+      }
+    },
+    {
+      "room": "living",
+      "view": "full",
+      "state": {
+        "state": {
+          "status": "ready",
+          "modelId": "next",
+          "requestedId": "next",
+          "message": ""
+        },
+        "frame": {
+          "ParamMouthOpenY": 0.6951572299003601,
+          "ParamMouthForm": -0.8748716711997986,
+          "ParamEyeLOpen": 0.7400000095367432,
+          "ParamEyeROpen": 0.7799999713897705,
+          "ParamAngleX": 0.3243961036205292,
+          "ParamAngleY": -14.429252624511719,
+          "ParamAngleZ": 4.068533897399902,
+          "ParamBrowLAngle": 0.5,
+          "ParamBrowRAngle": 0.4399999976158142,
+          "ParamJadeEarFollowL": -0.32071179151535034,
+          "ParamJadeEarFollowR": -0.33841055631637573
+        },
+        "eyes": {
+          "JAD_R21_EYE_L_SOCKET_SKIN": 1.000000238418579,
+          "JAD_R21_EYE_L_CLOSED_TRUE": 0,
+          "JAD_R21_EYE_R_SOCKET_SKIN": 1.000000238418579,
+          "JAD_R21_EYE_R_CLOSED_TRUE": 0
+        },
+        "room": "living",
+        "view": "home",
+        "full": true,
+        "calls": [
+          {
+            "group": "Angry",
+            "index": 1,
+            "at": 47458.40000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 49616
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 50216.5
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 50900.80000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51101.200000000186
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 51707.40000000014
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 51907.90000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 52646.5
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 52846.80000000005
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 53494.30000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 53694.60000000009
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 54315.40000000014
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 54516.90000000014
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 55294.200000000186
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 55494.700000000186
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 56143
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 56343.30000000005
+          },
+          {
+            "group": "Idle",
+            "index": 0,
+            "at": 56934.80000000005
+          },
+          {
+            "group": "Sad",
+            "index": 0,
+            "at": 57135.30000000005
+          }
+        ],
+        "canvasCount": 1
+      }
+    }
+  ],
+  "pageErrors": [],
+  "failedRequests": [],
+  "r20Requests": [],
+  "blockedRequests": [],
+  "mocSha256": "033196b5b31c5e12885fb2d70b371354e0f2c3e1965dbc92e55e57d0ece5b875",
+  "manifestSha256": "7bcc09afebaa906aa03cb1ae8a57d27ac24bd10d351a56a46cd8707a82c23ab8",
+  "avatarSha256": "ba6fe0ce61274e6d569badf55c19932467a31ceba0b519c94254989751c4618d",
+  "coreSha256": "8741f739779b5d5210872bd3d7d99f0f1e56e6c87409e7d26d6bb4b80aa1ef47",
+  "browser": "158.0.8127.0"
+}

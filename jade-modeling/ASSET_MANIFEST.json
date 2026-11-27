@@ -1866,8 +1866,8 @@
   {
     "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_r21_v45.model3.json",
     "source_group": "jade-r21-release-v45.1",
-    "bytes": 2169,
-    "sha256": "df9c2c46cc98e560f2303a12d4b84fdc4638df868ca543ca497d49d181ca9f1d",
+    "bytes": 2617,
+    "sha256": "bcd6d3edf44b825f787860e6039867ec65c8b9cd5c00b17a7c07fe8548c70d5b",
     "storage": "git",
     "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
   },
@@ -1998,5 +1998,69 @@
     "sha256": "a0e1c3fe2fb095e9e02c0031cbb793503d2c1faec0a3c17c16a2a45d0ca1b245",
     "storage": "git",
     "selection_reason": "Jade v45.1 portable release, editor sources and restoration instructions"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/mobile-intentions/Jade_angry.psd2live-motions.json",
+    "source_group": "jade-r21-intentions-triste-colere-20261127",
+    "bytes": 56066,
+    "sha256": "b465cd08e30984bb975840fcee77ee40f7baf32fc6df991bcae15de483847936",
+    "storage": "git",
+    "selection_reason": "Original Sad/Angry r21 motions, editable PSD2Live curves and shared manifests; existing rig and fourteen animations preserved"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Edition/mobile-intentions/Jade_sad.psd2live-motions.json",
+    "source_group": "jade-r21-intentions-triste-colere-20261127",
+    "bytes": 52704,
+    "sha256": "4e1c9f40e13c4272cc43a867729a672777b403c2c5b34ca6e7f5307f178343ad",
+    "storage": "git",
+    "selection_reason": "Original Sad/Angry r21 motions, editable PSD2Live curves and shared manifests; existing rig and fourteen animations preserved"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/Jade_r21_mobile.model3.json",
+    "source_group": "jade-r21-intentions-triste-colere-20261127",
+    "bytes": 2670,
+    "sha256": "7bcc09afebaa906aa03cb1ae8a57d27ac24bd10d351a56a46cd8707a82c23ab8",
+    "storage": "git",
+    "selection_reason": "Original Sad/Angry r21 motions, editable PSD2Live curves and shared manifests; existing rig and fourteen animations preserved"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/expressions/Angry.exp3.json",
+    "source_group": "jade-r21-intentions-triste-colere-20261127",
+    "bytes": 609,
+    "sha256": "3fa564c0c2fa752defdbf3114ad68ba12770f619df18edd4092a3802e22400e3",
+    "storage": "git",
+    "selection_reason": "Original Sad/Angry r21 motions, editable PSD2Live curves and shared manifests; existing rig and fourteen animations preserved"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_angry_A.motion3.json",
+    "source_group": "jade-r21-intentions-triste-colere-20261127",
+    "bytes": 10295,
+    "sha256": "a314c65c6f1b3bdd3b5b83400a85acd001016707bc65af4aa58850fc5fb2ea82",
+    "storage": "git",
+    "selection_reason": "Original Sad/Angry r21 motions, editable PSD2Live curves and shared manifests; existing rig and fourteen animations preserved"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_angry_B.motion3.json",
+    "source_group": "jade-r21-intentions-triste-colere-20261127",
+    "bytes": 11067,
+    "sha256": "4809eae458c8ea6753c074fdb66a7685fca9fafbf743102ea4b357b94f213528",
+    "storage": "git",
+    "selection_reason": "Original Sad/Angry r21 motions, editable PSD2Live curves and shared manifests; existing rig and fourteen animations preserved"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_sad_A.motion3.json",
+    "source_group": "jade-r21-intentions-triste-colere-20261127",
+    "bytes": 9900,
+    "sha256": "86ecfa20a2284d39f4304ac0b351d9373bf672faff7c482b9a5ecfee83dce34b",
+    "storage": "git",
+    "selection_reason": "Original Sad/Angry r21 motions, editable PSD2Live curves and shared manifests; existing rig and fourteen animations preserved"
+  },
+  {
+    "path": "jade-modeling/assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/Jade_r21_v45/mobile/Jade_sad_B.motion3.json",
+    "source_group": "jade-r21-intentions-triste-colere-20261127",
+    "bytes": 10450,
+    "sha256": "152e0ac47f150c5ec7d5c19ffcd953109109b38526571fc308163ab077e200c2",
+    "storage": "git",
+    "selection_reason": "Original Sad/Angry r21 motions, editable PSD2Live curves and shared manifests; existing rig and fourteen animations preserved"
   }
 ]

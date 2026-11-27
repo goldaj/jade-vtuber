@@ -13,7 +13,7 @@ import unittest
 
 from src.jade_runtime.dialogue import Dialogue
 from src.jade_runtime.documents import DocumentService
-from src.jade_runtime.intent_engine import voice_direction
+from src.jade_runtime.intent_engine import INTENTS, voice_direction
 from src.jade_runtime.live_bridge import LiveConversationBridge, LiveJournalConflict
 from src.jade_runtime.live_provider import LiveProviderError
 from src.jade_runtime.memory_service import MemoryService
@@ -230,6 +230,102 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
                          ["curious"])
         self.assertEqual([event["intent"] for event in self.published if event["type"] == "live_intent"],
                          ["reassuring"])
+
+    async def test_new_native_intents_wait_for_fragments_and_keep_comfort_distinct(self):
+        def intentions():
+            return [event["intent"] for event in self.published if event["type"] == "live_intent"]
+
+        await self.transcript("user", "Que ressens-tu face à cette injustice ?", 0, 500)
+        await self.transcript("assistant", "Je suis en col", 700, 800)
+        self.assertEqual(intentions(), [])
+        completed = await self.transcript("assistant", "ère face à cette injustice.", 800, 1300)
+        await self.bridge.handle_event(completed, self.ctx, self.send)
+        await self.transcript("assistant", " Je veux qu'on le dise clairement.", 1300, 1700)
+        self.assertEqual(intentions(), ["angry"])
+
+        await self.transcript("user", "Je suis triste.", 2000, 2300)
+        await self.transcript("assistant", "Prends ton temps, je suis là.", 2500, 3000)
+        self.assertEqual(intentions(), ["angry", "reassuring"])
+
+        await self.transcript("user", "Et toi, pour la fin de cette histoire ?", 3300, 3800)
+        await self.transcript("assistant", "Je suis tr", 4000, 4200)
+        self.assertEqual(intentions(), ["angry", "reassuring"])
+        await self.transcript("assistant", "iste de la voir se terminer.", 4200, 4700)
+        self.assertEqual(intentions(), ["angry", "reassuring", "sad"])
+        self.assertEqual(self.model.requests, [])
+
+    async def test_every_delegated_intent_wins_and_its_voice_cue_stays_silent(self):
+        labels = ("sad", "neutral", "angry", "playful", "excited", "curious",
+                  "tender", "reassuring", "serious")
+        self.assertEqual(set(labels), INTENTS)
+        for index, label in enumerate(labels):
+            with self.subTest(intent=label):
+                offset = index * 3000
+                ident = f"intent_{label}"
+                spoken = f"Voici le résultat numéro {index + 1}."
+                self.model.answer = f"[INTENT:{label}] {spoken}"
+                await self.transcript("user", f"Vérifie le résultat numéro {index + 1}.", offset, offset + 500)
+                await self.delegation(ident, offset + 500)
+                await self.transcript("assistant", "Génial, j'ai trouvé le résultat !", offset + 800, offset + 1500)
+                delivered = [event for event in self.sent if event.get("delegation_id") == ident]
+                directions = [event["content"] for event in delivered
+                              if event["type"] == "session.thinking.append" and event["content"]]
+                expected = [] if label == "neutral" else [f"Direction vocale pour ce résultat : {voice_direction(label)}"]
+                self.assertEqual(directions, expected)
+                self.assertEqual([event["content"] for event in delivered
+                                  if event["type"] == "session.commentary.append"], [spoken])
+                self.assertTrue(all("[INTENT" not in event.get("content", "") for event in delivered))
+        self.assertEqual([event["intent"] for event in self.published if event["type"] == "live_delegation"],
+                         list(labels))
+        self.assertFalse(any(event["type"] == "live_intent" for event in self.published))
+        self.assertEqual(self.classic, [])
+
+    async def test_native_opening_moods_do_not_depend_on_transcript_chunking(self):
+        cases = (
+            ("sad", "Je suis triste.", " Je me demande comment ça a pu arriver."),
+            ("angry", "Je suis en colère.", " C’est important de le dire."),
+            ("sad", "Oh ! Je suis triste.", " Raconte-moi ce qui s'est passé."),
+        )
+        offset = 0
+        for label, opening, continuation in cases:
+            for fragmented in (False, True):
+                with self.subTest(intent=label, fragmented=fragmented, opening=opening):
+                    count = sum(event["type"] == "live_intent" for event in self.published)
+                    await self.transcript("user", "Et toi, que ressens-tu ?", offset, offset + 500)
+                    pieces = (opening, continuation) if fragmented else (opening + continuation,)
+                    for index, piece in enumerate(pieces):
+                        await self.transcript("assistant", piece, offset + 700 + index * 500, offset + 1200 + index * 500)
+                    intents = [event["intent"] for event in self.published if event["type"] == "live_intent"]
+                    self.assertEqual(intents[count:], [label])
+                    offset += 3000
+
+    async def test_standalone_interjection_waits_for_sad_or_angry_continuation(self):
+        for index, (label, continuation) in enumerate((
+            ("sad", " Je suis triste."), ("angry", " Je suis en colère."),
+        )):
+            with self.subTest(intent=label):
+                offset = index * 3000
+                count = sum(event["type"] == "live_intent" for event in self.published)
+                await self.transcript("user", "Que ressens-tu ?", offset, offset + 500)
+                await self.transcript("assistant", "Oh !", offset + 700, offset + 900)
+                self.assertEqual(sum(event["type"] == "live_intent" for event in self.published), count)
+                await self.transcript("assistant", continuation, offset + 900, offset + 1600)
+                intents = [event["intent"] for event in self.published if event["type"] == "live_intent"]
+                self.assertEqual(intents[count:], [label])
+
+    async def test_interjection_only_closes_without_starting_a_late_emotional_reaction(self):
+        await self.transcript("user", "Tu as vu ?", 0, 500)
+        await self.transcript("assistant", "Oh !", 700, 1000)
+        await self.bridge.observe_playback(self.ctx, {"state": "drained", "offset_ms": 1000})
+        await self.close_and_flush("idle")
+        self.assertTrue(all(state.closed for state in self.bridge.sessions.values()))
+        # No selected mood overrides the avatar's normal finish/close reset to
+        # neutral. A final transcript is preserved without a new animation.
+        self.assertFalse(any(event["type"] == "live_intent" for event in self.published))
+        projection = [event for event in self.published if event["type"] == "live_transcript"][-1]
+        self.assertEqual(projection["segments"][-1]["text"], "Oh !")
+        self.assertEqual(projection["segments"][-1]["status"], "complete")
+        self.assertEqual(self.model.requests, [])
 
     async def test_late_cache_invalidation_loads_inside_dialogue_lock(self):
         await self.bridge.prepare_context("Goldaj", self.ctx["thread_id"])
@@ -458,6 +554,19 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.published[-1]["segments"], [])
         await self.transcript("assistant", "rious] Bonjour.", 200, 500)
         self.assertEqual(self.published[-1]["segments"][0]["text"], "Bonjour.")
+
+    async def test_new_intent_metadata_survives_fragmented_live_transcripts(self):
+        for index, label in enumerate(("sad", "angry")):
+            with self.subTest(intent=label):
+                offset = index * 3000
+                await self.transcript("user", "À toi.", offset, offset + 500)
+                await self.transcript("assistant", f"[INTENT:{label[:2]}", offset + 700, offset + 800)
+                self.assertTrue(all("INTENT" not in segment["text"]
+                                    for segment in self.published[-1]["segments"]))
+                await self.transcript("assistant", f"{label[2:]}] Une phrase sans indice.", offset + 800, offset + 1500)
+                projection = [event for event in self.published if event["type"] == "live_transcript"][-1]
+                self.assertEqual(projection["segments"][-1]["text"], "Une phrase sans indice.")
+                self.assertEqual([event["intent"] for event in self.published if event["type"] == "live_intent"][-1], label)
 
     async def test_crash_recovery_keeps_input_and_never_repeats_unknown_effect(self):
         await self.transcript("user", "À conserver après une interruption du serveur.")

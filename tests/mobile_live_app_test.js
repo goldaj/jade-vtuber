@@ -214,6 +214,18 @@ function expectLiveColor(phase) {
   liveOptions.onPlayback(.4, true);
   assert.deepEqual(avatarEvents.at(-1), ["speaking", true], "audio frames never restart the gesture");
 
+  for (const intent of ["sad", "angry"]) {
+    liveOptions.onPlayback(0, false);
+    liveOptions.onIntent(intent);
+    assert.equal(avatarEvents.at(-1)[1], intent, "new intentions reach the same avatar path as the original seven");
+    assert.equal(avatarEvents.at(-1)[2].deferMotion, true);
+    const motions = avatarEvents.filter(event => event[0] === "motion").length;
+    liveOptions.onPlayback(.5, true);
+    liveOptions.onPlayback(.3, true);
+    assert.equal(avatarEvents.filter(event => event[0] === "motion").length, motions + 1,
+      `${intent}: one r21 motion starts when its audio is played`);
+  }
+
   let resolveClose;
   pendingClose = new Promise(resolve => { resolveClose = resolve; });
   element("message").value = "Par écrit";
