@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Callable
 
-from .live_voice import LIVE_DELIVERY_PROMPT, PETILLANTE_SESSION_PROMPT, LiveVoice
+from .live_voice import LIVE_DELIVERY_PROMPT, LIVE_VOICE_STYLE_PROMPTS, LiveVoice
 from .discord_config import is_discord_enabled
 
 
@@ -89,7 +89,7 @@ class LiveConfig:
         if self.model not in ("gpt-live-1", "gpt-live-1.1"):
             raise ValueError("Live requires a documented Live model, not a Realtime TTS model")
         LiveVoice(self.voice, self.voice_id).validate()
-        if self.voice_style not in ("", "petillante"):
+        if self.voice_style not in ("", *LIVE_VOICE_STYLE_PROMPTS):
             raise ValueError("unsupported JADE_LIVE_VOICE_STYLE")
         if self.voice_style and not self.voice_id:
             raise ValueError("JADE_LIVE_VOICE_STYLE requires JADE_LIVE_VOICE_ID")
@@ -167,8 +167,8 @@ class LiveConfig:
             "input": input if input is not None else [],
         }
         sections = [instructions] if instructions else []
-        if self.voice_style == "petillante":
-            sections.append(f"Direction vocale\n{PETILLANTE_SESSION_PROMPT}")
+        if self.voice_style:
+            sections.append(f"Direction vocale\n{LIVE_VOICE_STYLE_PROMPTS[self.voice_style]}")
         sections.append(f"Jeu et débit\n{LIVE_DELIVERY_PROMPT}")
         session["instructions"] = "\n\n".join(sections)
         if len(session["instructions"].encode("utf-8")) > 16384:

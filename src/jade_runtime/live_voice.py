@@ -38,6 +38,24 @@ PETILLANTE_SESSION_PROMPT = (
     "discrètes et une énergie crédible sur une conversation entière."
 )
 
+# Friponne's saved voice description, followed by its session-only pace adjustment.
+FRIPONNE_SESSION_PROMPT = (
+    "Neutral accent. approximately 20s. feminine voice. bright timbre. smooth vocal texture. "
+    "very high pitch. moderate loudness. fast speech rate. high distinctiveness.\n"
+    "Jeune femme adulte, locutrice native du français de France. Accent naturel de Paris et de sa région. "
+    "Registre parlé très aigu, timbre fin, brillant et sonore. Le sourire donne aux voyelles un éclat "
+    "légèrement nasal. Elle parle tout près du micro, à volume ordinaire. Dans le feu du jeu, elle part "
+    "vite, rebondit vers l’aigu sur le mot qui la surprend et s’arrête une fraction de seconde avant "
+    "une réplique malicieuse. Même dans un aparté, sa voix reste haute et sa diction francilienne.\n"
+    "Parle un peu plus vite que dans l’essai initial : enchaîne plus vite les mots à l’intérieur "
+    "de chaque phrase. Garde la courte pause avant une pique et articule la dernière syllabe."
+)
+
+LIVE_VOICE_STYLE_PROMPTS = {
+    "petillante": PETILLANTE_SESSION_PROMPT,
+    "friponne": FRIPONNE_SESSION_PROMPT,
+}
+
 LIVE_DELIVERY_PROMPT = (
     "Par défaut, parle légèrement plus vite qu'en conversation ordinaire, avec des pauses "
     "brèves, une articulation nette et des fins de phrase audibles. Fais entendre l'intention "

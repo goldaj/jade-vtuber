@@ -18,7 +18,7 @@ Les valeurs sont lues par `Settings.live` depuis la configuration privée habitu
 | `JADE_LIVE_MODEL` | `gpt-live-1.1` | Modèle distinct du dialogue et du TTS classique |
 | `JADE_LIVE_VOICE` | `brise` | Voix API explicite ; Aube non confirmée, aucune équivalence supposée |
 | `JADE_LIVE_VOICE_ID` | vide | ID autorisé d’une voix personnalisée, prioritaire sur le nom |
-| `JADE_LIVE_VOICE_STYLE` | vide | `petillante` joint la consigne vocale choisie aux sessions mobiles et Discord Live et exige un `JADE_LIVE_VOICE_ID` privé |
+| `JADE_LIVE_VOICE_STYLE` | vide | `friponne` sélectionne la direction vocale retenue, `petillante` celle de l’ancienne voix. Chaque profil requiert l’identifiant de la voix correspondante dans `JADE_LIVE_VOICE_ID` et s’applique aux sessions mobiles et Discord Live. |
 | `JADE_LIVE_HEARTBEAT_SECONDS` / `JADE_LIVE_LEASE_SECONDS` | `2` / `5` | Cadence de contrôle et expiration du bail |
 | `JADE_LIVE_IDLE_STANDBY_SECONDS` / `JADE_LIVE_IDLE_CLOSE_SECONDS` | `8` / `30` | Veille fournisseur puis fermeture idle avec bail conservé |
 | `JADE_LIVE_OPENING_TIMEOUT_SECONDS` / `JADE_LIVE_CLOSE_TIMEOUT_SECONDS` | `8` / `5` | Deadlines de création et de demande de clôture |
@@ -49,7 +49,7 @@ Les routes conservent identité Tailscale, origine privée et Bearer. L'envelopp
 
 L’événement `session.closed` confirme la finalisation fournisseur. Le serveur invalide les travaux avant les attentes et vise une fermeture bornée. La création sans identifiant confirmé reste bloquante. Pour une session connue dont le bail est révoqué et la tentative de fermeture terminée, la passerelle privée accepte une demande explicite sur `POST /api/live/recover`. Le registre conserve la ligne en `retired_unconfirmed` et l’usage final reste indéterminé. La demande ne réactive pas le micro. Un heartbeat ne prolonge ni le délai de mute ni l’activité conversationnelle. La curation en attente ne démarre qu’à la prochaine session active, avec contrôle du bail et de l’idempotence.
 
-Les compteurs d'usage mobile restent passifs. La politique Discord distincte ci-dessous agrège les dépenses globales ; aucun seuil quotidien ni plafond mobile. Le script `python scripts/live_voice_preview.py` prépare hors ligne les variantes et le corpus. Voir [REC-052](../backlog/02-RECETTE.md#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041) pour le profil Pétillante et l’essai avec l’avatar.
+Les compteurs d'usage mobile restent passifs. La politique Discord distincte ci-dessous agrège les dépenses globales ; aucun seuil quotidien ni plafond mobile. Le script `python scripts/live_voice_preview.py` prépare hors ligne les variantes et le corpus. Voir [REC-052](../backlog/02-RECETTE.md#rec-052--voix-friponne-avec-lavatar-de-jade-ancienne-dev-041) pour le profil Friponne et l’essai avec l’avatar.
 
 ## Discord Live automatique — 27 novembre 2026
 

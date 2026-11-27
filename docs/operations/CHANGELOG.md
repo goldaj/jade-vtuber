@@ -1,3 +1,8 @@
+## 2026-11-27 — Friponne sur GPT-Live
+
+- Le propriétaire a choisi Friponne après l’avoir entendue dans le Playground OpenAI. Le profil `friponne` dans `live_voice.py` et `live_config.py` associe la voix enregistrée à sa direction francilienne et demande un enchaînement des mots légèrement plus rapide. Le mobile et Discord Live utilisent la même consigne. Le profil `petillante` reste disponible.
+- Le propriétaire a confirmé le choix après une seconde écoute de 25 secondes portant sur le débit ajusté. L’écoute du nouveau débit avec r21 reste ouverte. [Passation et vérifications](handoffs/2026-11-27-codex-voix-friponne.md)
+
 ## 2026-11-27 — Pastille Live et micro coupé
 
 - La pastille distingue le micro coupé en bleu clair de la veille avec micro ouvert en bleu foncé. La couleur bascule au moment du clic, y compris pendant la fin de lecture. [Passation et recette REC-050](handoffs/2026-11-27-codex-pastille-live.md)

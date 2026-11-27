@@ -133,7 +133,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 31 | REC-048 | A | Audio mobile Live, réveil local, pré-roll et interruption | [REC](02-RECETTE.md) |
 | 32 | REC-049 | A | Chat, pièces jointes et avatar synchronisé sur le Live | [REC](02-RECETTE.md) |
 | 33 | REC-050 | A | Activer le Live dans Config et intégrer la bascule classique/Live | [REC](02-RECETTE.md) |
-| 34 | REC-052 | A | Valider Pétillante dans GPT-Live et sur l’avatar r21 (ancienne DEV-041) | [REC](02-RECETTE.md#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041) |
+| 34 | REC-052 | A | Valider Friponne avec son nouveau débit sur l’avatar r21 et sur Discord Live (ancienne DEV-041) | [REC](02-RECETTE.md#rec-052--voix-friponne-avec-lavatar-de-jade-ancienne-dev-041) |
 | 35 | REC-031 | Transverse | Conscience unique Jade et actions intercanaux autorisées | [REC](02-RECETTE.md) |
 | 36 | REC-033 | Transverse | Cache mémoire anticipé par présence et identité vérifiée | [REC](02-RECETTE.md) |
 | 37 | REC-036 | Transverse | Personnalité durable, cohérente et corrigible | [REC](02-RECETTE.md) |

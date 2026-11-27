@@ -6,7 +6,8 @@ import unittest
 from src.jade_runtime.discord_live_provider import build_discord_live_config
 from src.jade_runtime.live_config import LiveConfig
 from src.jade_runtime.live_voice import (
-    JADE_VOICE_PROMPT, LIVE_DELIVERY_PROMPT, PETILLANTE_SESSION_PROMPT, VOICE_REVIEW_CORPUS,
+    FRIPONNE_SESSION_PROMPT, JADE_VOICE_PROMPT, LIVE_DELIVERY_PROMPT, PETILLANTE_SESSION_PROMPT,
+    VOICE_REVIEW_CORPUS,
     LiveVoice, prepare_voice_review,
 )
 
@@ -85,6 +86,7 @@ class LiveConfigTests(unittest.TestCase):
             {"opening_timeout_seconds": float("inf")},
             {"model": "gpt-realtime-2.1-mini"}, {"voice": "aube"},
             {"usage_db_path": "state.sqlite3"},
+            {"voice_style": None}, {"voice_style": False},
         )
         for changes in bad:
             with self.subTest(changes=changes), self.assertRaises(ValueError):
@@ -135,22 +137,20 @@ class LiveConfigTests(unittest.TestCase):
         self.assertTrue(JADE_VOICE_PROMPT)
         self.assertEqual(len(VOICE_REVIEW_CORPUS), 7)
 
-    def test_petillante_reuses_the_private_voice_and_preserves_instructions_in_both_transports(self):
-        config = LiveConfig.from_env({
-            "JADE_LIVE_VOICE_ID": "voice_selected_for_test",
-            "JADE_LIVE_VOICE_STYLE": "petillante",
-        }.get)
+    def test_saved_voice_styles_use_the_selected_voice_and_prompt_in_both_transports(self):
         persona = "Tu es Jade. Garde les règles du canal et délègue les recherches."
-        mobile = config.session_config(instructions=persona)
-        discord = build_discord_live_config(config, instructions=persona)
-        for payload in (mobile, discord):
-            self.assertEqual(payload["audio"]["output"], {"voice": {"id": "voice_selected_for_test"}})
-            self.assertTrue(payload["instructions"].startswith(persona))
-            self.assertEqual(payload["instructions"].count(PETILLANTE_SESSION_PROMPT), 1)
-            self.assertEqual(payload["instructions"].count(LIVE_DELIVERY_PROMPT), 1)
-        self.assertEqual(mobile["instructions"], discord["instructions"])
+        for style, prompt in (("petillante", PETILLANTE_SESSION_PROMPT), ("friponne", FRIPONNE_SESSION_PROMPT)):
+            with self.subTest(style=style):
+                voice_id = f"voice_test_{style}"
+                config = LiveConfig.from_env({"JADE_LIVE_VOICE_ID": voice_id, "JADE_LIVE_VOICE_STYLE": style}.get)
+                mobile = config.session_config(instructions=persona)
+                discord = build_discord_live_config(config, instructions=persona)
+                expected = f"{persona}\n\nDirection vocale\n{prompt}\n\nJeu et débit\n{LIVE_DELIVERY_PROMPT}"
+                for payload in (mobile, discord):
+                    self.assertEqual(payload["audio"]["output"], {"voice": {"id": voice_id}})
+                    self.assertEqual(payload["instructions"], expected)
 
-    def test_petillante_does_not_change_default_or_unrelated_custom_voice(self):
+    def test_no_voice_style_is_applied_to_default_or_unrelated_custom_voice(self):
         persona = "Tu es Jade."
         for voice_id, expected in (("", "brise"), ("voice_other", {"id": "voice_other"})):
             with self.subTest(voice_id=voice_id):
@@ -158,10 +158,12 @@ class LiveConfigTests(unittest.TestCase):
                 self.assertEqual(payload["audio"]["output"]["voice"], expected)
                 self.assertTrue(payload["instructions"].startswith(persona))
                 self.assertNotIn(PETILLANTE_SESSION_PROMPT, payload["instructions"])
+                self.assertNotIn(FRIPONNE_SESSION_PROMPT, payload["instructions"])
                 self.assertEqual(payload["instructions"].count(LIVE_DELIVERY_PROMPT), 1)
 
-    def test_petillante_requires_a_custom_voice_and_an_explicit_supported_style(self):
+    def test_voice_styles_require_a_custom_voice_and_an_explicit_supported_style(self):
         for env in ({"JADE_LIVE_VOICE_STYLE": "petillante"},
+                    {"JADE_LIVE_VOICE_STYLE": "friponne"},
                     {"JADE_LIVE_VOICE_STYLE": "unknown", "JADE_LIVE_VOICE_ID": "voice_other"}):
             with self.subTest(env=env), self.assertRaises(ValueError):
                 LiveConfig.from_env(env.get)
