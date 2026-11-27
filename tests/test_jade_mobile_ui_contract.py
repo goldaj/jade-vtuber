@@ -43,15 +43,16 @@ class MobileUiLayoutContract(unittest.TestCase):
         self.assertNotIn('<fieldset class="notification-choice"', HTML)
 
     def test_scenes_remain_undistorted_and_avatar_zooms_separately(self):
-        self.assertIn('roomPlane.getBoundingClientRect().width', JS)
-        self.assertIn("var(--room-immersive-width,100%)", CSS)
+        self.assertNotIn("room-immersive-width", JS + CSS)
+        self.assertIn(".room-plane,.bedroom-frame{", CSS)
+        self.assertIn("width:max(100cqw,56.28cqh);height:max(177.6833cqw,100cqh);", CSS)
         self.assertIn("immersive ? 1.9 : 1.5", AVATAR)
         self.assertIn('window.JadeAvatar?.resize?.()', JS)
         self.assertIn('.shell:not([data-view="home"]),.shell[data-view="chat"]', CSS)
-        # The portrait bedroom now owns its separate camera and hides room-art;
-        # the remaining room-art background is the kitchen (develop v49.1).
-        self.assertIn('.room-art::before{', CSS)
-        self.assertIn('background:url("/assets/room-kitchen.webp") center/cover no-repeat;', CSS)
+        self.assertIn('id="portrait-kitchen" width="941" height="1672"', HTML)
+        self.assertNotIn("room-kitchen.webp", CSS + JS + HTML)
+        self.assertNotIn("kitchen-effects", HTML)
+        self.assertIn('["bedroom", "kitchen"].includes(room?.dataset.room)', AVATAR)
         self.assertIn('.room[data-room="bedroom"] .room-art,.bedroom-frame,.portrait-seated-body{display:none}', CSS)
 
 

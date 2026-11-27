@@ -1714,7 +1714,6 @@
     setStatus("Nouveau fil.");
   });
   const fullscreenButton = $("fullscreen");
-  const roomPlane = document.querySelector(".room-plane");
   const scene = document.querySelector(".room");
   let nativeRoomFullscreen = false;
   let fullscreenPending = false;
@@ -1728,14 +1727,8 @@
   }
   function setRoomFullscreen(active) {
     resetSceneGesture();
-    // Freeze the 4:3 background width before its enclosing viewport expands.
-    if (active && roomPlane) {
-      const width = roomPlane.getBoundingClientRect().width;
-      if (width > 0) shell.style.setProperty("--room-immersive-width", width + "px");
-    }
     shell.classList.toggle("is-room-only", active);
     syncMicPlacement();
-    if (!active) shell.style.removeProperty("--room-immersive-width");
     const description = active ? "Quitter le plein écran" : "Afficher uniquement Jade en plein écran";
     fullscreenButton.setAttribute("aria-label", description);
     fullscreenButton.setAttribute("title", description);

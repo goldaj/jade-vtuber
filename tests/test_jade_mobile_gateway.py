@@ -455,7 +455,11 @@ class MobileBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status, 200)
         self.assertEqual(image[4:12], b"ftypavif")
         self.assertIn(b"Content-Type: image/avif", response)
-        for name in ("room-spring.webp", "room-backdrop.webp", "room-curtain.webp"):
+        status, image, response = await self.request("GET", "/assets/room-kitchen-portrait.avif")
+        self.assertEqual(status, 200)
+        self.assertEqual(image[4:12], b"ftypavif")
+        self.assertIn(b"Content-Type: image/avif", response)
+        for name in ("room-spring.webp", "room-backdrop.webp", "room-curtain.webp", "room-kitchen.webp"):
             self.assertNotIn(name.encode(), salon)
             code, _, _ = await self.request("GET", f"/assets/{name}")
             self.assertEqual(code, 404)

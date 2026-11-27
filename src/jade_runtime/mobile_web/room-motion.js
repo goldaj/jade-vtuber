@@ -6,21 +6,11 @@
   if (!room || !scene || !roomSelect) return;
 
   const kitchenImage = scene.querySelector(".room-plane > img");
-  const kitchenEffects = scene.querySelector(".kitchen-effects");
-  if (!kitchenImage || !kitchenEffects) return;
-  const kitchenSource = "/assets/room-kitchen.webp";
-  const supportsKitchenEffects = typeof CSS !== "undefined" && CSS.supports("width", "1cqh");
-  const preference = matchMedia("(prefers-reduced-motion: reduce)");
+  if (!kitchenImage) return;
+  const kitchenSource = "/assets/room-kitchen-portrait.avif";
   let activeRoom = "bedroom";
   let selectionRevision = 0;
-  let visible = true;
   let kitchenLoad = null;
-
-  function sync() {
-    const enabled = activeRoom === "kitchen" && supportsKitchenEffects && !preference.matches;
-    kitchenEffects.hidden = !enabled;
-    scene.toggleAttribute("data-paused", !(enabled && visible && !document.hidden));
-  }
 
   function loadKitchen() {
     if (!kitchenLoad) {
@@ -51,7 +41,6 @@
     window.JadePreferences?.set("room", next);
     room.dataset.room = next;
     roomSelect.value = next;
-    sync();
     room.dispatchEvent(new Event("jade-room-changed"));
     const url = new URL(window.location.href);
     if (next === "bedroom") url.searchParams.delete("room");
@@ -60,16 +49,6 @@
   }
 
   roomSelect.addEventListener("change", () => { void changeRoom(roomSelect.value); });
-  document.addEventListener("visibilitychange", sync);
-  if (typeof preference.addEventListener === "function") preference.addEventListener("change", sync);
-  else preference.addListener(sync);
-  if (typeof IntersectionObserver === "function") {
-    new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-      sync();
-    }).observe(scene);
-  }
-  sync();
   const fromUrl = new URLSearchParams(window.location.search).get("room");
   const explicitRoom = ["bedroom", "kitchen"].includes(fromUrl);
   const initialRoom = explicitRoom ? fromUrl : window.JadePreferences?.get("room", "bedroom");

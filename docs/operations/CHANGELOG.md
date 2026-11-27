@@ -1,3 +1,8 @@
+## 2026-11-27 — Cuisine portrait statique
+
+- Nouveau fond AVIF 941 × 1672 choisi par le propriétaire, retrait du précédent WebP et des calques SVG/CSS de la cuisine. Cadrage portrait commun aux deux décors et au r21 ; chambre animée et modèle classique préservés. La cuisine est chargée à la demande, sans animation.
+- Tests de sélection, gestes et contrat de passerelle adaptés ; vérification de l'asset (146261 octets, SHA Git `64c660bcc6deeb598e286412bb2677b9c4275634`). CI et recette visuelle Android à vérifier. [Passation](handoffs/2026-11-27-chatgpt-cuisine-portrait.md)
+
 ## 2026-11-27 — Friponne sur GPT-Live
 
 - Le propriétaire a choisi Friponne après l’avoir entendue dans le Playground OpenAI. Le profil `friponne` dans `live_voice.py` et `live_config.py` associe la voix enregistrée à sa direction francilienne et demande un enchaînement des mots légèrement plus rapide. Le mobile et Discord Live utilisent la même consigne. Le profil `petillante` reste disponible.

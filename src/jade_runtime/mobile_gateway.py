@@ -62,7 +62,7 @@ WEB_FILES = {
     "/assets/head-isolation.js": ("head-isolation.js", "text/javascript; charset=utf-8"),
     "/assets/room-bedroom-portrait.avif": ("room-bedroom-portrait.avif", "image/avif"),
     "/assets/jade-seated-body.avif": ("jade-seated-body.avif", "image/avif"),
-    "/assets/room-kitchen.webp": ("room-kitchen.webp", "image/webp"),
+    "/assets/room-kitchen-portrait.avif": ("room-kitchen-portrait.avif", "image/avif"),
     "/assets/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/assets/preferences.js": ("preferences.js", "text/javascript; charset=utf-8"),
     "/assets/duplex-client.js": ("duplex-client.js", "text/javascript; charset=utf-8"),

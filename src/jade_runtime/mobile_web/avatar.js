@@ -876,9 +876,9 @@
     const naturalWidth = Math.max(model.width / (model.scale.x || 1), 1);
     const naturalHeight = Math.max(model.height / (model.scale.y || 1), 1);
     const r21 = activeProfile?.id === "next";
-    const standingBedroom = r21 && room?.dataset.room === "bedroom";
+    const standingPortrait = r21 && ["bedroom", "kitchen"].includes(room?.dataset.room);
     // The lifted standing avatar can render beyond its camera frame down to the room edge.
-    const cameraViewportHeight = standingBedroom ? target.parentElement?.clientHeight || height : height;
+    const cameraViewportHeight = standingPortrait ? target.parentElement?.clientHeight || height : height;
     const cameraWidth = r21 ? CLASSIC_CAMERA.width : naturalWidth;
     const cameraHeight = r21 ? CLASSIC_CAMERA.height : naturalHeight;
     const scale = Math.min((width * .95) / cameraWidth, (cameraViewportHeight * 1.32) / cameraHeight);
@@ -900,7 +900,7 @@
         sprite.height = height * layout.height;
       }
     }
-    if (seated || standingBedroom) {
+    if (seated || standingPortrait) {
       const headScale = 1.30;
       placeModel(Math.max(.05, scale * headScale), width * .555, cameraViewportHeight * .584,
         naturalWidth, naturalHeight);
