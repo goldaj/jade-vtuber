@@ -1,4 +1,4 @@
-"""Prepare the voice review packet offline; never open an unbudgeted audio session.
+"""Prepare the voice review packet offline; never open an audio session.
 
 Usage: python scripts/live_voice_preview.py --name "Jade candidate 1"
 The JSON includes the future creation request and a common French corpus. It is

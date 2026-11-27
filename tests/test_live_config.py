@@ -109,6 +109,10 @@ class LiveConfigTests(unittest.TestCase):
         self.assertEqual(payload["idle_timeout_s"], 8)
         self.assertNotIn("format", payload["audio"])
         self.assertEqual(payload["client"]["data_channel"]["allowed_client_events"], [])
+        self.assertEqual(payload["client"]["data_channel"]["allowed_server_events"], [
+            {"type": "session.started"}, {"type": "session.resumed"},
+            {"type": "session.paused"}, {"type": "session.closed"},
+        ])
         self.assertEqual(payload["input"], history)
 
     def test_voice_selection_never_invents_aube_identifier_or_alias(self):

@@ -6,6 +6,8 @@ La procédure est dans [AGENT_COORDINATION.md](../AGENT_COORDINATION.md). **Chaq
 
 ## Missions actuelles
 
+- [DEV-055 · Reprise et correctifs du Live mobile](2026-11-27-chatgpt-live-resume.md) · Audit de `3d2f3ea`, contrat des sélecteurs API, libellé d’arrêt et kit vocal ; recettes physiques conservées ouvertes.
+
 - [DEV-054 · Live mobile par défaut, sans plafond financier](2026-11-26-chatgpt-live-mobile-default-no-budget.md) · Correction propriétaire du 26/11, diagnostics visibles, usage passif et politique Discord strictement séparée.
 
 - [DEV-053 / ART-014 · Intentions Triste et Colère](2026-11-26-chatgpt-intentions-triste-colere.md) · Ajout P1, neuf intentions et dix-huit variantes avec parité voix/animations ; cadrage uniquement.

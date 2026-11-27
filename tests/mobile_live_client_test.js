@@ -318,6 +318,20 @@ function harness(options = {}) {
     await h.advance(1000);
     assert.equal(h.peers[0].closed, true); assert.equal(h.contexts[0].state, "closed");
     assert(h.requests.some(value => value.body?.reason === "drain_timeout"), "new activity cannot extend the 15 s deadline");
+    assert.equal(h.client.state.message, "", "a completed drain cannot still announce that Jade is finishing her reply");
+  }
+  for (const diagnostic of [null, "live_rate_limited"]) {
+    const h = harness(); await h.client.refresh(); await h.arm();
+    h.worklets[0].emit({type:"speech"}); await tick();
+    h.worklets[0].emit({type:"sent_speech"}); await h.client.mute();
+    if (diagnostic) h.sockets[0].emit({type:"incident", code:diagnostic, fatal:false});
+    h.sockets[0].emit({type:"state", mode:"live", revision:0, lease_id:"lease-1",
+      lease_state:"closed", session_state:"absent", session_id:null});
+    assert.equal(h.client.state.active, false); assert.equal(h.client.state.session_state, "absent");
+    assert.equal(h.contexts[0].state, "closed"); assert.equal(h.timers.size, 0);
+    if (diagnostic) assert.match(h.client.state.message, /trop de demandes/,
+      "finishing a drain preserves a provider diagnostic");
+    else assert.equal(h.client.state.message, "", "provider completion removes the transient drain guidance too");
   }
   {
     const h = harness(); await h.selectLive(); await h.arm(); h.server.autoAck = false;

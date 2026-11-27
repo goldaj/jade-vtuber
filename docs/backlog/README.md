@@ -10,6 +10,8 @@
 
 ## REPRISE PRIORITAIRE — validations du 22 novembre 2026
 
+**Reprise du Live mobile le 27/11 :** le lot `3d2f3ea` était publié et sa CI Linux/Windows verte. L’audit retrouve un défaut de format des permissions envoyées à OpenAI et un message de fin de réponse périmé ; correction suivie dans **DEV-055**. [Diagnostic et preuves](../operations/handoffs/2026-11-27-chatgpt-live-resume.md). REC-044 à REC-050 restent les seules recettes du lot ; DEV-052 demeure une étape future.
+
 **Correction produit du 26/11 :** Live mobile activé par défaut, désactivable dans Profil, **sans budget financier mobile ni plafond quotidien**. Les critères initiaux contraires sont remplacés ci-dessous. Le seul seuil financier demandé est mensuel, global toutes API, et décide du moteur Discord : 50 EUR ou 40 EUR si le suivi est incomplet. [Correctif et preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-default-no-budget.md). Le correctif est suivi dans **DEV-054** ; les sept recettes matérielles restent ouvertes.
 
 **Priorité du 26 novembre 2026.** Le propriétaire valide le jeu mobile de Sérieuse et Enjouée et lance [ART-013](04-PRODUCTION-2D.md), P0, pour faire des oreilles une composante du jeu de Jade. Ce lot précède la reprise des dix variantes restantes.
@@ -57,11 +59,11 @@
 
 | Type | Vue | Objet | Nombre actuel |
 | --- | --- | --- | ---: |
-| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 32 |
+| `DEV` | [Développement](01-DEVELOPPEMENT.md) | Travaux de code, anomalies et développements déjà clôturés | 33 |
 | `REC` | [Recette](02-RECETTE.md) | Acceptations des fonctionnalités codées, dont les anciennes cartes DEV déplacées | 50 |
 | `OPS` | [Installation/Ops](03-INSTALLATION-OPS.md) | Préparer PC/Android, dépendances, comptes, sécurité, maintenance Git et passations | 16 |
 | `ART` | [Production 2D](04-PRODUCTION-2D.md) | Finir le dessin/rig/physique/animations/export r21 | 14 |
-| **Total** | | **Cartes uniques dans la vue priorisée ; OPS-012 est classée sans suite, hors vue** | **112** |
+| **Total** | | **Cartes uniques dans la vue priorisée ; OPS-012 est classée sans suite, hors vue** | **113** |
 
 **Definition of Done officielle :** [lire les règles de clôture](DEFINITION_OF_DONE.md). Toute carte n'est **Done** que si les cinq exigences sont satisfaites, dont validation explicite par **Codex (tous ses modèles et sous-agents) OU le propriétaire**, **au moins un des deux**. L'intervention humaine n'est plus obligatoire si Codex a validé. La présence du code ou d'une CI verte ne clôture pas à elle seule une recette physique.
 
@@ -116,7 +118,7 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 23 | DEV-003 | A | Corriger la sortie indésirable du repli WAV s'il se produit réellement | [DEV](01-DEVELOPPEMENT.md) |
 | 24 | REC-034 | Transverse | Mesure du temps réellement perçu, du coût et des p50/p95 par canal | [REC](02-RECETTE.md) |
 
-### P1 · 65 tâches
+### P1 · 66 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
@@ -185,39 +187,40 @@ Le tri vise d'abord l'utilisabilité, puis le nombre de canaux concernés, l'imp
 | 87 | DEV-038 | Transverse | Connaissance des capacités et initiative autonome de Jade (NEW-38, P1) | [DEV](01-DEVELOPPEMENT.md) |
 | 88 | REC-041 | B | Valider le zoom et le déplacement tactile de Jade r21 (ancienne DEV-042) | [REC](02-RECETTE.md) |
 | 89 | DEV-054 | A | Live mobile par défaut sans plafond financier et diagnostics utilisables | [DEV](01-DEVELOPPEMENT.md) |
+| 90 | DEV-055 | A | Corriger le contrat d’ouverture Live et l’affichage de son arrêt | [DEV](01-DEVELOPPEMENT.md) |
 
 ### P2 · 22 tâches
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 90 | REC-032 | Transverse | Recherche de souvenirs ciblée, pertinente et sécurisée | [REC](02-RECETTE.md) |
-| 91 | REC-035 | Transverse | Compréhension des apartés et fils de discussion de groupe | [REC](02-RECETTE.md) |
-| 92 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
-| 93 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
-| 94 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
-| 95 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
-| 96 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
-| 97 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
-| 98 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
-| 99 | REC-037 | Transverse | Choisir une branche Git et redéployer/redémarrer Jade depuis l'application mobile | [REC](02-RECETTE.md) |
-| 100 | DEV-031 | Transverse | Explications d'indisponibilité sur demandes directes, PWA et client local (NEW-20) | [DEV](01-DEVELOPPEMENT.md) |
-| 101 | REC-039 | A | Valider les fichiers téléchargeables PWA et Discord, texte et voix (UX-19, ancienne DEV-032) | [REC](02-RECETTE.md) |
-| 102 | DEV-033 | A | Réception explicite d'images fixes par Jade (PER-01) | [DEV](01-DEVELOPPEMENT.md) |
-| 103 | DEV-034 | A | Compréhension des images et du texte visible (PER-02) | [DEV](01-DEVELOPPEMENT.md) |
-| 104 | DEV-035 | A | Réactions conversationnelles contextualisées aux images (PER-03) | [DEV](01-DEVELOPPEMENT.md) |
-| 105 | DEV-036 | Transverse | Rappels persistants et notifications push Android (NEW-16), en cours | [DEV](01-DEVELOPPEMENT.md) |
-| 106 | REC-040 | A | Valider les quatre onglets PWA, les rappels et la chambre plein écran | [REC](02-RECETTE.md) |
-| 107 | DEV-037 | A | Sous-titres synchronisés de Jade dans l'application mobile (NEW-29, P2) | [DEV](01-DEVELOPPEMENT.md) |
-| 108 | DEV-043 | Transverse | Faire fonctionner Jade sur VPS avec le PC éteint et le mobile sans avatar | [DEV](01-DEVELOPPEMENT.md#dev-043--service-jade-indépendant-du-pc) |
-| 109 | DEV-044 | A | Livrer l’application Android installable (UX-14) | [DEV](01-DEVELOPPEMENT.md#dev-044--application-android-installable) |
-| 110 | DEV-045 | B | Changer de coiffure à chaud sur Jade r21 dans l'application mobile | [DEV](01-DEVELOPPEMENT.md#dev-045--coiffures-interchangeables-en-temps-réel) |
-| 111 | DEV-052 | A | Piloter Live Discord selon la consommation API mensuelle globale (50/40 EUR), sans changer le mobile | [DEV](01-DEVELOPPEMENT.md#dev-052--live-discord-selon-la-consommation-api-mensuelle-globale-p2) |
+| 91 | REC-032 | Transverse | Recherche de souvenirs ciblée, pertinente et sécurisée | [REC](02-RECETTE.md) |
+| 92 | REC-035 | Transverse | Compréhension des apartés et fils de discussion de groupe | [REC](02-RECETTE.md) |
+| 93 | REC-024 | A | Seule Démo Express distribuée | [REC](02-RECETTE.md) |
+| 94 | OPS-015 | B | Étudier les redondances artistiques et outils inutiles | [OPS](03-INSTALLATION-OPS.md) |
+| 95 | OPS-016 | Transverse | Vérifier secrets historiques, LFS, licences et provenance | [OPS](03-INSTALLATION-OPS.md) |
+| 96 | OPS-014 | Transverse | Auditer les branches divergentes | [OPS](03-INSTALLATION-OPS.md) |
+| 97 | OPS-013 | Transverse | Nettoyer les branches déjà intégrées | [OPS](03-INSTALLATION-OPS.md) |
+| 98 | OPS-017 | Transverse | Réviser les protections de branches et fermer les passations | [OPS](03-INSTALLATION-OPS.md) |
+| 99 | DEV-010 | B | Empêcher l'animation du rideau de déformer le cadre de la fenêtre mobile | [DEV](01-DEVELOPPEMENT.md) |
+| 100 | REC-037 | Transverse | Choisir une branche Git et redéployer/redémarrer Jade depuis l'application mobile | [REC](02-RECETTE.md) |
+| 101 | DEV-031 | Transverse | Explications d'indisponibilité sur demandes directes, PWA et client local (NEW-20) | [DEV](01-DEVELOPPEMENT.md) |
+| 102 | REC-039 | A | Valider les fichiers téléchargeables PWA et Discord, texte et voix (UX-19, ancienne DEV-032) | [REC](02-RECETTE.md) |
+| 103 | DEV-033 | A | Réception explicite d'images fixes par Jade (PER-01) | [DEV](01-DEVELOPPEMENT.md) |
+| 104 | DEV-034 | A | Compréhension des images et du texte visible (PER-02) | [DEV](01-DEVELOPPEMENT.md) |
+| 105 | DEV-035 | A | Réactions conversationnelles contextualisées aux images (PER-03) | [DEV](01-DEVELOPPEMENT.md) |
+| 106 | DEV-036 | Transverse | Rappels persistants et notifications push Android (NEW-16), en cours | [DEV](01-DEVELOPPEMENT.md) |
+| 107 | REC-040 | A | Valider les quatre onglets PWA, les rappels et la chambre plein écran | [REC](02-RECETTE.md) |
+| 108 | DEV-037 | A | Sous-titres synchronisés de Jade dans l'application mobile (NEW-29, P2) | [DEV](01-DEVELOPPEMENT.md) |
+| 109 | DEV-043 | Transverse | Faire fonctionner Jade sur VPS avec le PC éteint et le mobile sans avatar | [DEV](01-DEVELOPPEMENT.md#dev-043--service-jade-indépendant-du-pc) |
+| 110 | DEV-044 | A | Livrer l’application Android installable (UX-14) | [DEV](01-DEVELOPPEMENT.md#dev-044--application-android-installable) |
+| 111 | DEV-045 | B | Changer de coiffure à chaud sur Jade r21 dans l'application mobile | [DEV](01-DEVELOPPEMENT.md#dev-045--coiffures-interchangeables-en-temps-réel) |
+| 112 | DEV-052 | A | Piloter Live Discord selon la consommation API mensuelle globale (50/40 EUR), sans changer le mobile | [DEV](01-DEVELOPPEMENT.md#dev-052--live-discord-selon-la-consommation-api-mensuelle-globale-p2) |
 
 ### P3 · 1 tâche
 
 | Rang | ID | Jalon | Tâche | Vue |
 | ---: | --- | --- | --- | --- |
-| 112 | REC-043 | B | Valider la réaction du r21 aux secousses du téléphone (ancienne UX-20) | [REC](02-RECETTE.md) |
+| 113 | REC-043 | B | Valider la réaction du r21 aux secousses du téléphone (ancienne UX-20) | [REC](02-RECETTE.md) |
 
 ### Décision classée sans suite (hors liste de priorisation)
 

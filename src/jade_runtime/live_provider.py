@@ -130,8 +130,23 @@ def _session_config(value: object) -> dict:
     permissions = client["data_channel"]
     if permissions.get("allowed_client_events") != []:
         raise LiveProviderError("untrusted_live_commands_must_be_disabled")
-    if not isinstance(permissions.get("allowed_server_events"), list):
+    selectors = permissions.get("allowed_server_events")
+    if not isinstance(selectors, list) or len(selectors) > 256:
         raise LiveProviderError("live_ui_events_must_be_allowlisted")
+    for selector in selectors:
+        # The server-event list uses selector objects, unlike the list of
+        # client-event names. Validate before making a provider request.
+        if (not isinstance(selector, dict)
+                or set(selector) - {"type", "response_event"}
+                or not isinstance(selector.get("type"), str)
+                or not 1 <= len(selector["type"]) <= 256):
+            raise LiveProviderError("live_ui_events_must_be_allowlisted")
+        if selector["type"] == "response.event":
+            if (not isinstance(selector.get("response_event"), str)
+                    or not 1 <= len(selector["response_event"]) <= 256):
+                raise LiveProviderError("live_ui_events_must_be_allowlisted")
+        elif "response_event" in selector:
+            raise LiveProviderError("live_ui_events_must_be_allowlisted")
     return result
 
 

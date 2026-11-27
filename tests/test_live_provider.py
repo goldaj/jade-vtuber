@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 import httpx2
+from openai.types.live.data_channel_config import DataChannelConfig
 
 from src.jade_runtime.live_config import LiveConfig
 from src.jade_runtime.live_provider import LiveProviderError, OpenAILiveProvider, MAX_SDP_BYTES
@@ -48,8 +49,32 @@ class LiveProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(str(captured[0].url), "https://api.openai.com/v1/live/sessions")
         self.assertEqual(captured[0].headers["authorization"], "Bearer unit-test-key")
         body = json.loads(captured[0].content)
+        # Validate the actual HTTP payload against the pinned provider SDK,
+        # independently of the fake provider and Jade's own configuration.
+        DataChannelConfig.model_validate(body["session"]["client"]["data_channel"], strict=True)
         self.assertEqual(body, {"session": config, "transport": {"type": "webrtc", "sdp": SDP}})
         self.assertNotIn("unit-test-key", str(result))
+
+    async def test_invalid_server_event_selectors_are_rejected_before_http(self):
+        http = AsyncMock()
+        provider = OpenAILiveProvider("unit-test-key", http_client=http)
+        variants = (
+            "all", ["session.started"], [None], [{}], [{"type": ""}],
+            [{"type": 1}], [{"type": "x" * 257}],
+            [{"type": "session.started", "response_event": "response.completed"}],
+            [{"type": "response.event"}],
+            [{"type": "response.event", "response_event": ""}],
+            [{"type": "response.event", "response_event": "x" * 257}],
+            [{"type": "session.started", "unexpected": "value"}],
+            [{"type": "session.started"}] * 257,
+        )
+        for selectors in variants:
+            config = LiveConfig().session_config()
+            config["client"]["data_channel"]["allowed_server_events"] = selectors
+            with self.subTest(selectors=selectors), self.assertRaises(LiveProviderError) as raised:
+                await provider.create_session(SDP, config)
+            self.assertEqual(raised.exception.code, "live_ui_events_must_be_allowlisted")
+        http.post.assert_not_awaited()
 
     async def test_missing_key_and_invalid_sdp_never_make_requests(self):
         http = AsyncMock()

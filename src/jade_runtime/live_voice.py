@@ -84,7 +84,7 @@ def prepare_voice_review(name: str = "Jade candidate 1", prompt: str = JADE_VOIC
     """Prepare the official prompt-to-voice JSON and repeatable listening protocol.
 
     The creation endpoint returns metadata, not audio. Actual listening belongs
-    to the budgeted mobile Live flow after a returned voice ID is configured.
+    to the mobile Live flow after a returned voice ID is configured.
     """
     if not isinstance(name, str) or not 1 <= len(name.strip()) <= 64:
         raise ValueError("voice review name must contain between 1 and 64 characters")
@@ -109,7 +109,7 @@ def prepare_voice_review(name: str = "Jade candidate 1", prompt: str = JADE_VOIC
             "Créer au plus les candidates nécessaires, avec les accès existants, sans clé nouvelle.",
             "Conserver chaque ID renvoyé ; une nouvelle session réutilise cet ID sans recréer la voix.",
             "Configurer JADE_LIVE_VOICE_ID avec l’ID choisi et fermer toute session avant de changer de voix.",
-            "Effectuer les écoutes dans le parcours mobile Live avec ses budgets et contrôles d’arrêt.",
+            "Effectuer les écoutes dans le parcours mobile Live avec ses contrôles d’arrêt.",
             "Ne pas confondre création de la voix et coût des sessions utilisées pour l’écouter.",
         ],
         "source": "https://developers.openai.com/api/docs/guides/custom-voices",

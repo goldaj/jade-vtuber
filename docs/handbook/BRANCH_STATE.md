@@ -11,6 +11,8 @@
 - Profil explique les indisponibilités et les erreurs de chargement ; les refus fournisseur distinguent authentification, accès au modèle, quota fournisseur et connexion, sans publier de contenu privé.
 - Aube est souhaitée mais non confirmée dans l'API ; Brise est le recours explicite. Support d'un ID personnalisé et kit de comparaison hors ligne prêts ; voix originale encore à créer/choisir.
 
+**Correctif de reprise du 27/11 (DEV-055) :** permissions d’événements serveur au format objet conforme à l’API, validation avant réseau et contrôle par le SDK officiel dans le test du corps HTTP. Le message de fin de réponse disparaît dès l’arrêt ; les diagnostics restent visibles. Le kit vocal ne mentionne plus de budget mobile. [Preuves](../operations/handoffs/2026-11-27-chatgpt-live-resume.md).
+
 **Suivis :** sept développements transférés en REC-044 à REC-050, À valider, avec tests automatisés et recette OpenAI/Redmi restante. DEV-041 conserve la voix originale. DEV-052 décrit seulement la future bascule Discord à 50/40 EUR mensuels, sans pilotage du mobile.
 
 ## Contrôle distant PyCharm sur develop (24 novembre 2026)

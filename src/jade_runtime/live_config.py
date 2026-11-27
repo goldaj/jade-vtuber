@@ -152,8 +152,10 @@ class LiveConfig:
             "idle_timeout_s": self.idle_standby_seconds,
             "client": {"data_channel": {
                 "allowed_client_events": [],
-                "allowed_server_events": ["session.started", "session.resumed",
-                                          "session.paused", "session.closed"],
+                "allowed_server_events": [
+                    {"type": "session.started"}, {"type": "session.resumed"},
+                    {"type": "session.paused"}, {"type": "session.closed"},
+                ],
             }},
             "input": input if input is not None else [],
         }

@@ -1,3 +1,10 @@
+## 2026-11-27 — DEV-055 : reprise et correctifs du Live mobile
+
+- **Défaut d’ouverture :** `LiveConfig.session_config` envoyait les événements serveur autorisés comme chaînes, alors que la référence OpenAI et le SDK épinglé 3.42.1 exigent des objets `ServerEventSelector`. Format corrigé dans `live_config.py`, validation avant réseau renforcée dans `live_provider.py`. Les quatre événements autorisés et l’interdiction des commandes frontend sont conservés.
+- **Interface :** `live-client.js` ne conserve plus le libellé temporaire de fin de réponse dans le champ des diagnostics. L’état `draining` pilote déjà ce message ; la fermeture l’enlève sans effacer les erreurs fournisseur. Régressions sur délai, terminal serveur et conservation des diagnostics.
+- **Kit vocal :** `live_voice.py` et `scripts/live_voice_preview.py` ne mentionnent plus de budget mobile. La préparation demeure hors ligne, sans création ni écoute de voix.
+- **Vérification et risque :** test du corps HTTP réellement capturé validé par le modèle officiel `DataChannelConfig`, échec reproduit avant correction, rejets locaux des anciens formats, suites ciblées et contrôle documentaire. Aucun appel fournisseur réel ni kill Android observé ; ces recettes restent REC-044 à REC-050. La correction de schéma ne prétend pas prouver l’accès du compte ni la négociation WebRTC. [Passation et résultats](handoffs/2026-11-27-chatgpt-live-resume.md).
+
 ## 2026-11-26 — DEV-054 : Live mobile par défaut, sans plafond financier
 
 - **Suivi CI Windows :** sur `893182c`, le scénario de migration de `test_live_usage.py` gardait sa connexion SQLite de fixture ouverte après la transaction. Windows refusait la suppression du fichier temporaire, également dans l'export autonome. Fermeture explicite et déterministe de cette connexion ; les assertions de migration sont conservées. Le runtime ferme déjà ses connexions dans `finally` et ne change pas. Vérification ciblée usage puis nouvelle CI Linux/Windows ; [preuve de l'échec initial](https://github.com/goldaj/jade-vtuber/actions/runs/45900608688).

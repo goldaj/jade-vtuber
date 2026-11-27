@@ -315,6 +315,8 @@ Sept suivis passent de DEV vers REC, sans double carte. Ces recettes ne sont pas
 
 **Preuves automatisées et revue :** [passation du lot Live](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md), avec tests fournisseur, sessions, usage passif, pont métier, gateway HTTP/WS et client JS. **Recette restante :** Accès effectif au modèle/voix du compte, négociation WebRTC et ICE en Wi-Fi/mobile ; commande frontend interdite rejetée par le vrai fournisseur.
 
+**Correction du 27/11 (DEV-055) :** les permissions des événements serveur sont désormais des objets `{"type": "session.started"}` conformes au schéma API. La régression valide le corps HTTP capturé avec le modèle officiel du SDK épinglé ; elle échouait avec l’ancienne liste de chaînes. Les configurations invalides sont refusées avant tout appel. Aucun succès fournisseur réel n’en est déduit. [Preuves](../operations/handoffs/2026-11-27-chatgpt-live-resume.md).
+
 **US :** En tant que mainteneur de Jade, je veux un adaptateur Live isolé et configurable par canal, afin d'activer le mobile en gardant le classique et de préparer Discord sans l'activer.
 
 **Critères d'acceptation :**
@@ -431,6 +433,8 @@ Sept suivis passent de DEV vers REC, sans double carte. Ces recettes ne sont pas
 **Livraison du code :** `90ec0c7` intégré sur `develop` le 26/11 après autorisation explicite du propriétaire pour son test. La base `6dc8d1b` est conservée ; aucune acceptation matérielle n’est présumée. **Statut : À valider.**
 
 **Preuves automatisées et revue :** [passation du lot Live](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md), avec tests fournisseur, sessions, usage passif, pont métier, gateway HTTP/WS et client JS. **Recette restante :** 20–30 bascules, permission refusée/révoquée, deux clients, mode restauré sans capture, texte/son/nouveau fil/modèle et non-régression REC-042.
+
+**Correction du 27/11 (DEV-055) :** le message transitoire de fin de réponse dépend de l’état `draining` et disparaît à l’arrêt, après délai ou terminal serveur. Un diagnostic fournisseur reste affiché. Régressions hors ligne ajoutées, sans clôturer la recette Redmi. [Preuves](../operations/handoffs/2026-11-27-chatgpt-live-resume.md).
 
 **US :** En tant que Goldaj, je veux choisir le mode Live dans le Profil mobile et revenir au classique, afin de contrôler simplement mon mode de conversation sans maintenir une connexion payante inutilement.
 

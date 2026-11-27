@@ -633,7 +633,8 @@
       stopCapture();
       state.lease_state = "draining";
       state.reason = "mute";
-      state.message = "Micro coupé. Jade termine sa réponse.";
+      // The UI derives drain guidance from lease_state. Keep message for
+      // diagnostics so terminal states cannot retain a false pending reply.
       publish();
       // Never extended by transcripts, audio or new server activity.
       drainTimer = later(() => {
