@@ -18,7 +18,7 @@
     creation_unconfirmed:"Jade vérifie encore la connexion distante. Actualise son état avant de reprendre.",
     live_mode_off:"Le mode Live a été désactivé. Vérifie le choix dans Config.",
     preference_conflict:"Le choix vocal a changé sur un autre appareil. Vérifie Config.",
-    invalid_or_expired_live_lease:"L’autorisation du micro a expiré. Réactive le micro Live dans Config.",
+    invalid_or_expired_live_lease:"L’autorisation du micro a expiré. Touche le micro pour reprendre.",
     live_auth_failed:"OpenAI refuse l’authentification de Jade. Vérifie sa connexion OpenAI côté serveur.",
     live_access_denied:"Le compte OpenAI de Jade n’a pas accès au Live.",
     live_model_unavailable:"Le modèle Live configuré n’est pas disponible pour le compte OpenAI de Jade.",
@@ -360,7 +360,7 @@
             thread_id:leaseThread, lease_id:leaseId}));
         };
         ws.onerror = () => failed(new Error("Connexion Live interrompue."));
-        ws.onclose = () => failed(new Error("Supervision Live interrompue. Réactive le micro Live dans Config."));
+        ws.onclose = () => failed(new Error("Supervision Live interrompue. Touche le micro pour reprendre."));
         ws.onmessage = ({data}) => {
           if (generation !== epoch || socket !== ws) return;
           let event;
@@ -462,7 +462,7 @@
       publish();
       openingTimer = later(() => {
         if (generation === epoch && opening) void stop("opening_timeout",
-          {message:"La connexion a pris trop de temps. Réactive le micro Live dans Config."});
+          {message:"La connexion a pris trop de temps. Touche le micro pour reprendre."});
       }, Math.max(0, Math.min(8000, Number(state.capabilities?.opening_timeout_seconds || 8) * 1000) - (clock() - wakeStarted)));
       let connection;
       try {
@@ -525,7 +525,7 @@
       } catch (error) {
         if (generation === epoch) void stop(error.code || "opening_failed",
           {message:error.code ? error.message : (error.message === "live_cancelled" ? "Live interrompu." :
-            "Connexion Live impossible. Réactive le micro Live dans Config.")});
+            "Connexion Live impossible. Touche le micro pour reprendre.")});
       }
     }
     async function arm() {
@@ -572,7 +572,7 @@
         media = stream;
         await audioReady;
         if (audioError) throw audioError;
-        if (currentContext.state !== "running") throw new Error("L’audio est suspendu. Réactive le micro Live dans Config.");
+        if (currentContext.state !== "running") throw new Error("L’audio est suspendu. Touche le micro pour reprendre.");
         assertCurrent(generation);
         await currentContext.audioWorklet.addModule("/assets/live-audio-worklet.js");
         assertCurrent(generation);
@@ -595,22 +595,22 @@
             sentSpeech = true; pendingResponse = true;
           }
           else if (data.type === "overflow") void stop("buffer_overflow",
-            {message:"La connexion est trop lente. Réactive le micro Live dans Config."});
+            {message:"La connexion est trop lente. Touche le micro pour reprendre."});
         };
         for (const track of stream.getTracks()) track.onended = () => {
           if (generation === epoch && state.capture === "armed") void stop("microphone_ended",
-            {message:"Le microphone s’est arrêté. Réactive le micro Live dans Config."});
+            {message:"Le microphone s’est arrêté. Touche le micro pour reprendre."});
         };
         currentContext.onstatechange = () => {
           if (generation === epoch && state.capture === "armed" && currentContext.state !== "running")
-            void stop("audio_suspended", {message:"L’audio a été suspendu. Réactive le micro Live dans Config."});
+            void stop("audio_suspended", {message:"L’audio a été suspendu. Touche le micro pour reprendre."});
         };
         state.capture = "armed";
         publish();
         return true;
       } catch (error) {
         if (generation === epoch) await stop("arm_failed", {message:error.name === "NotAllowedError" ?
-          "Accès au micro refusé. Autorise-le dans le navigateur, puis réactive le micro Live dans Config." : error.message});
+          "Accès au micro refusé. Autorise-le dans le navigateur, puis touche le micro." : error.message});
         return false;
       }
     }

@@ -1,3 +1,8 @@
+## 2026-11-27 — Micro Live et indicateur dans la scène
+
+- Accueil et plein écran reprennent l’activation et la coupure du micro Live par appuis successifs. Config conserve le choix Live/classique. Aucun texte de micro ne s’affiche sur la scène. La pastille occupe le coin de la scène dans les quatre vues. Le mot « Live » reste sur Accueil fenêtré.
+- Les trois indicateurs sont bleus en veille. Le micro est rempli quand il écoute en veille. Le rouge correspond à la connexion ou à une session active avec la capture ouverte. Les tests d’intégration vérifient les appuis, la veille, la reprise et la coupure. [Décision et recette](handoffs/2026-11-27-codex-mobile-live-playback.md#mise-à-jour-du-micro-et-de-la-pastille)
+
 ## 2026-11-27 — Lecture et interface du Live mobile
 
 - Le lecteur natif joue la piste distante WebRTC et l’analyseur alimente la bouche et la motion de réponse. Le graphe Web Audio reprend en cas de lecture native refusée. Le nettoyage retire le lecteur et empêche les reprises tardives. Le bouclage WebRTC synthétique dans Chromium reproduit le silence de l’ancien graphe et mesure un signal après le raccordement du lecteur. Recette Redmi encore ouverte.

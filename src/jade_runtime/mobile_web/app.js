@@ -15,7 +15,7 @@
   const connection = $("connection-status"), soundToggle = $("sound-toggle");
   const newChat = $("new-chat");
   const liveModeToggle = $("live-mode-toggle"), liveModeStatus = $("live-mode-status");
-  const liveModeRetry = $("live-mode-retry"), liveMicrophoneControl = $("live-microphone-control");
+  const liveModeRetry = $("live-mode-retry");
   const liveIndicator = $("live-indicator");
   const preferences = window.JadePreferences;
   let liveClient = null, liveState = null, liveMotionPending = false, liveSpeaking = false;
@@ -199,7 +199,7 @@
     if (liveState.capture === "closed" && liveState.session_state === "closing") return "Micro coupé · Fermeture du Live…";
     if (liveState.capture === "armed") {
       if (liveState.session_state === "opening" || liveState.media_state === "connecting") return "Micro actif · Connexion à Jade…";
-      if (["absent", "closing"].includes(liveState.session_state)) return "Micro actif · Jade en veille. Parle quand tu veux.";
+      if (["absent", "closing", "standby"].includes(liveState.session_state)) return "Micro actif · Jade en veille. Parle quand tu veux.";
       return "Live en cours.";
     }
     return "";
@@ -207,8 +207,16 @@
 
   function renderLiveMic() {
     const enabled = Boolean(token && liveState?.loaded && liveState.mode === "live");
-    if (liveIndicator) liveIndicator.hidden = !enabled;
+    const capturing = enabled && liveState.capture !== "closed";
+    const onAir = enabled && liveState.capture === "armed" &&
+      ["opening", "active"].includes(liveState.session_state);
+    if (liveIndicator) {
+      liveIndicator.hidden = !enabled;
+      liveIndicator.classList.toggle("live-on-air", onAir);
+      liveIndicator.setAttribute("aria-label", onAir ? "Live en cours" : "Live en veille");
+    }
     mic.classList.toggle("live-mode-indicator", enabled);
+    mic.classList.toggle("live-on-air", onAir);
     if (!liveState?.loaded) {
       // Until the owner's persisted choice is known, a tap cannot fall through
       // to classic capture while the default Live module is still loading.
@@ -219,22 +227,13 @@
     } else if (!enabled) {
       mic.disabled = modelChanging || (busy && !micPress && !voicePending);
     } else {
+      const draining = liveState.lease_state === "draining";
       mic.classList.remove("recording");
-      mic.disabled = true;
-      mic.removeAttribute("aria-pressed");
-      mic.setAttribute("aria-label", "Mode Live activé");
-    }
-    if (liveMicrophoneControl) {
-      liveMicrophoneControl.hidden = !enabled;
-      if (enabled) {
-        const capturing = liveState.capture !== "closed";
-        const draining = liveState.lease_state === "draining";
-        liveMicrophoneControl.disabled = modelChanging || busy || liveState.changing ||
-          (liveState.capture === "closed" && liveState.session_state === "closing" && !draining) ||
-          (!liveState.active && (!liveState.available || !soundEnabled));
-        liveMicrophoneControl.textContent = draining ? "Interrompre la réponse Live" :
-          capturing ? "Couper le micro Live" : "Activer le micro Live";
-      }
+      mic.disabled = modelChanging || busy || liveState.changing ||
+        (liveState.capture === "closed" && liveState.session_state === "closing" && !draining) ||
+        (!liveState.active && (!liveState.available || !soundEnabled));
+      mic.setAttribute("aria-pressed", String(capturing));
+      mic.setAttribute("aria-label", draining ? "Interrompre la réponse Live" : "Micro Live");
     }
   }
 
@@ -418,21 +417,11 @@
       if (generation === liveAuthentication) { liveRetrying = false; renderLiveAvailability(); }
     }
   });
-  liveModeToggle?.addEventListener("change", async () => {
+  liveModeToggle?.addEventListener("change", () => {
     if (!liveClient || !liveState?.loaded || liveState.changing) return;
-    const client = liveClient;
     const mode = liveModeToggle.checked ? "live" : "classic";
     cancelConversation("mode_change");
-    if (await client.setMode(mode) && mode === "live" && liveClient === client &&
-        !liveMicrophoneControl?.disabled && !document.hidden && soundEnabled) {
-      // This attempt follows the explicit enable action. Browsers that still
-      // require a fresh gesture can start capture from the Config button.
-      await client.arm();
-    }
-  });
-  liveMicrophoneControl?.addEventListener("click", () => {
-    if (liveMicrophoneControl.disabled || liveMicrophoneControl.hidden) return;
-    return liveClient?.toggleMicrophone();
+    return liveClient.setMode(mode);
   });
 
   function applyAvatarIntent(intent, deferMotion) {
@@ -1555,6 +1544,12 @@
     event.preventDefault();
     return startRecording({pointerId:event.pointerId});
   });
+  mic.addEventListener("click", () => {
+    if (mic.disabled || liveClient?.mode !== "live") return;
+    if (shell.dataset.view === "home" || shell.classList.contains("is-room-only")) {
+      return liveClient.toggleMicrophone();
+    }
+  });
   window.addEventListener("pointerup", event => {
     if (micPress?.pointerId === event.pointerId) finishMicPress(true);
   }, true);
@@ -1572,9 +1567,9 @@
       } else finishMicPress(false);
       return;
     }
-    if (event.key !== " " && event.key !== "Enter") return;
+    if (liveClient?.mode === "live" || (event.key !== " " && event.key !== "Enter")) return;
     event.preventDefault();
-    if (mic.disabled || liveClient?.mode === "live") return;
+    if (mic.disabled) return;
     if (!event.repeat) return startRecording({key:event.key});
   });
   mic.addEventListener("keyup", event => {

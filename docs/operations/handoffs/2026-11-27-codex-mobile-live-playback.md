@@ -13,3 +13,8 @@
 - **Assistant** (synthèse) Corrige la sortie audio et son cycle de vie, fait relire les gestuelles et l’interface, puis vérifie la branche d’intégration.
 
 Les heures individuelles ne sont pas disponibles.
+
+## Mise à jour du micro et de la pastille
+
+- **Propriétaire** (suite du 27 novembre) Confirme que le correctif précédent fonctionne. Demande la pastille dans le coin de la scène, le retour de la commande sur le micro d’Accueil et de plein écran, et le bleu pour le Live en veille.
+- **Assistant** (synthèse) Retire la commande de capture de Config, ancre la pastille dans la scène et lie la couleur à la session. Un appui arme le micro, le suivant coupe la capture. Une veille, avec ou sans capture locale, reste bleue. Le remplissage du bouton distingue visuellement la capture ouverte. Les tests couvrent la connexion et la session en rouge, la veille fournisseur, la remise au bleu et le retour au classique.

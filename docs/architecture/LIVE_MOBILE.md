@@ -29,7 +29,7 @@ flowchart TD
 | `mobile_live.py`, `mobile_gateway.py` | Routes mêmes origine/identité/Bearer, contrôle WebSocket et limites de taille |
 | `live_bridge.py` | Persona, contexte, segments, journal, actions idempotentes, mémoire et délégations |
 | `live-client.js`, `live-audio-worklet.js` | Permission, VAD locale, tampon, WebRTC, lecture, supervision réciproque et nettoyage |
-| `app.js` | Choix Live/classique et commande de capture Live dans Config, indicateurs visuels, chat, documents et commandes de l’avatar |
+| `app.js` | Choix Live/classique dans Config, commande de capture sur la scène, indicateurs visuels, chat, documents et commandes de l’avatar |
 
 Le modèle est `gpt-live-1.1`. L'adaptateur utilise `httpx2`, déjà dépendance de l'OpenAI SDK épinglé `3.42.1`, et `websockets`. Le SDK inspecté ne déclare pas encore tous les champs de veille et d'usage employés ; le transport JSON conserve les champs officiels sans modifier la version du SDK. Les créations n'ont aucun retry automatique.
 

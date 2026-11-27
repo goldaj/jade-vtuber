@@ -52,6 +52,8 @@ L’autorisation de développer le push-to-talk en maintien et les secousses est
 
 Le signalement et les décisions de réalisation sont consignés avec leurs rôles dans la [passation Live mobile](../../operations/handoffs/2026-11-27-codex-mobile-live-playback.md#échanges-accessibles).
 
+La [suite du 27 novembre](../../operations/handoffs/2026-11-27-codex-mobile-live-playback.md#mise-à-jour-du-micro-et-de-la-pastille) consigne la confirmation du correctif puis la nouvelle demande de commande et d’indicateurs.
+
 ## Synchronisation du clone de développement le 26 novembre 2026
 
 - **Propriétaire** (extrait de la conversation) « Je veux que tu push le local, mais attention il va y avoir du merge à faire ».

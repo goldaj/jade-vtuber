@@ -30,12 +30,17 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
   stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 #fullscreen .fullscreen-exit,.shell.is-room-only #fullscreen .fullscreen-enter{display:none}
 .shell.is-room-only #fullscreen .fullscreen-exit{display:block;width:28px;height:28px}
-#live-indicator{display:inline-flex;align-items:center;gap:5px;
-  color:#9a2438;font-size:.74rem;font-weight:700;white-space:nowrap}
+#live-indicator{position:absolute;top:16px;right:18px;z-index:4;pointer-events:none;
+  display:inline-flex;align-items:center;gap:6px;
+  color:#165a98;font-size:.74rem;font-weight:700;white-space:nowrap}
+#live-indicator.live-on-air{color:#a52239}
+.shell[data-view="home"]:not(.is-room-only) #live-indicator{
+  padding:5px 8px;border-radius:12px;background:#fffdf7f2
+}
 #live-indicator[hidden],
 .shell:not([data-view="home"]) .live-indicator-label,
 .shell.is-room-only .live-indicator-label{display:none}
-.live-indicator-dot{width:9px;height:9px;border-radius:50%;background:#c12b45;
+.live-indicator-dot{width:9px;height:9px;border-radius:50%;background:currentColor;
   box-shadow:0 0 0 2px #fffdf7}
 .notification-button{position:relative;padding:4px}
 .notification-dot{position:absolute;top:3px;right:2px;background:var(--flower);border:2px solid #fff;border-radius:100%;width:11px;height:11px}
@@ -127,7 +132,7 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .setting-choice:has(input:disabled){opacity:.65;cursor:wait}
 .profile-intro :is(#live-mode-status,#notification-status,#portrait-motion-status,#avatar-shake-status){
   font-size:.78rem;line-height:1.4;margin:3px 0 8px;overflow-wrap:anywhere}
-:is(#live-mode-retry,#live-microphone-control){min-height:44px;padding:8px 14px;border:1px solid #8caf96;border-radius:12px;
+#live-mode-retry{min-height:44px;padding:8px 14px;border:1px solid #8caf96;border-radius:12px;
   background:#fff;color:#2f5d45;font-weight:600}
 .live-transcript-status{display:block;font-style:italic;font-size:.7rem;opacity:.8}
 .live-attachments{display:flex;flex-wrap:wrap;gap:8px}
@@ -225,7 +230,10 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .shell.is-room-only .topbar .mark,.shell.is-room-only .topbar #connection-status,
 .shell.is-room-only .topbar #header-notifications{display:none!important}
 .shell.is-room-only .topbar .top-actions{display:flex;align-items:flex-start;margin:0}
-.shell.is-room-only #live-indicator{margin-top:4px}
+.shell.is-room-only #live-indicator{
+  top:calc(env(safe-area-inset-top,0px) + 68px);
+  right:calc(env(safe-area-inset-right,0px) + 18px)
+}
 .shell.is-room-only #fullscreen{
   display:grid;place-items:center;min-width:46px;min-height:46px;
   border:1px solid #b6d5bb;border-radius:14px;
@@ -288,11 +296,15 @@ summary:focus-visible{outline:3px solid #e9b943;outline-offset:3px}
 .shell.is-room-only .room-bottom #mic.recording{
   background:#a95057;color:#fff;border-color:#a95057;
 }
-#mic.live-mode-indicator,
-.shell[data-view="home"] .room-bottom #mic.live-mode-indicator,
-.shell.is-room-only .room-bottom #mic.live-mode-indicator{
-  background:#b92b43;color:#fff;border-color:#b92b43;
-  opacity:1;cursor:default
+.shell:not([data-view="home"]):not(.is-room-only) #mic.live-mode-indicator{display:none}
+.shell .room-bottom #mic.live-mode-indicator{
+  background:#eff7ff;color:#165a98;border-color:#5392c9
+}
+.shell .room-bottom #mic.live-mode-indicator[aria-pressed="true"]{
+  background:#165a98;color:#fff;border-color:#165a98
+}
+.shell .room-bottom #mic.live-mode-indicator.live-on-air{
+  background:#b92b43;color:#fff;border-color:#b92b43
 }
 .room-bottom #mood-line{display:none}
 /* Operational updates are kept for screen readers without a permanent status banner. */

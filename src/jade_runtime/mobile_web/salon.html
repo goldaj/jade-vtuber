@@ -11,9 +11,6 @@
             <path d="M4 9h5V4m6 0v5h5M4 15h5v5m6 0v-5h5"/>
           </svg>
         </button>
-        <span id="live-indicator" role="status" aria-label="Mode Live activé" hidden>
-          <span class="live-indicator-dot" aria-hidden="true"></span><span class="live-indicator-label" aria-hidden="true">Live</span>
-        </span>
       </div>
     </header>
     <div class="scene-panel">
@@ -84,6 +81,9 @@
         </div>
       </div>
       <div id="avatar-touch-zone" aria-hidden="true" hidden></div>
+      <span id="live-indicator" role="status" aria-label="Mode Live en veille" hidden>
+        <span class="live-indicator-dot" aria-hidden="true"></span><span class="live-indicator-label" aria-hidden="true">Live</span>
+      </span>
       <div class="room-bottom">
         <button type="button" id="mic" class="mic" aria-label="Maintenir pour parler" aria-pressed="false">🎙</button>
         <span id="mood-line" hidden aria-hidden="true"></span>
@@ -104,7 +104,6 @@
         </div>
         <label class="setting-choice live-mode-choice"><input type="checkbox" id="live-mode-toggle" aria-describedby="live-mode-status" disabled> Mode Live</label>
         <p id="live-mode-status" role="status" hidden></p>
-        <button type="button" id="live-microphone-control" aria-describedby="live-mode-status" hidden>Activer le micro Live</button>
         <button type="button" id="live-mode-retry" aria-describedby="live-mode-status" hidden>Réessayer</button>
         <label class="setting-choice sound-choice"><input type="checkbox" id="sound-toggle" checked> Voix activée</label>
         <label class="setting-choice portrait-motion-choice"><input type="checkbox" id="portrait-motion-enabled" checked> Animations de la chambre</label>

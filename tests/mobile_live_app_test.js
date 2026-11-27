@@ -40,10 +40,9 @@ const live = {
   get mode() { return state.mode; }, get active() { return state.active; },
   async refresh() { refreshes++; if (!holdPreference) emitState(); },
   async setMode(mode) { emitState({mode, revision:state.revision + 1}); return true; },
-  async arm() { if (!state.active) return this.toggleMicrophone(); },
   async toggleMicrophone() {
     toggles++; emitState({active:!state.active, capture:state.active ? "closed" : "armed",
-      lease_state:state.active ? "closed" : "armed"});
+      lease_state:state.active ? "closed" : "armed", session_state:"absent"});
   },
   stop(reason) {
     stops.push(reason); emitState({active:false, capture:"closed", lease_state:"closed", session_state:"absent", session_id:null});
@@ -67,9 +66,16 @@ const sandbox = {window, document, navigator:{}, crypto:window.crypto, performan
   }};
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../src/jade_runtime/mobile_web/app.js"), "utf8"), sandbox);
 const tick = () => new Promise(resolve => setImmediate(resolve));
-const press = () => element("mic").handlers.pointerdown({button:0, isPrimary:true, pointerId:1, preventDefault() {}});
-const liveMicrophone = element("live-microphone-control");
-const controlLive = () => liveMicrophone.handlers.click();
+const mic = element("mic"), indicator = element("live-indicator");
+const press = () => mic.handlers.pointerdown({button:0, isPrimary:true, pointerId:1, preventDefault() {}});
+const controlLive = () => mic.handlers.click();
+const chooseView = view => navigation.find(value => value.dataset.viewTarget === view).handlers.click();
+function expectLiveColor(onAir) {
+  assert.equal(mic.classList.contains("live-mode-indicator"), true);
+  assert.equal(mic.classList.contains("live-on-air"), onAir);
+  assert.equal(indicator.hidden, false);
+  assert.equal(indicator.classList.contains("live-on-air"), onAir);
+}
 
 (async () => {
   window.JadeMobileApp.login("in-memory-token"); await tick();
@@ -93,28 +99,48 @@ const controlLive = () => liveMicrophone.handlers.click();
   assert.equal(toggles, 0, "persisted Live preference after login never arms the microphone");
   assert.equal(element("live-mode-toggle").checked, true);
   assert.equal(element("live-mode-status").hidden, true, "normal Live state adds no explanatory paragraph");
-  assert.equal(element("mic").attrs["aria-label"], "Mode Live activé");
-  assert.equal(element("mic").classList.contains("live-mode-indicator"), true);
-  assert.equal(element("mic").disabled, true);
-  assert.equal(element("live-indicator").hidden, false);
-  await press(); assert.equal(toggles, 0, "the stage microphone is a non-interactive Live indicator");
-  assert.equal(liveMicrophone.textContent, "Activer le micro Live");
+  assert.equal(mic.attrs["aria-label"], "Micro Live");
+  assert.equal(mic.attrs["aria-pressed"], "false");
+  assert.equal(mic.disabled, false);
+  expectLiveColor(false);
+  await press(); assert.equal(toggles, 0, "Live uses the native click rather than the classic hold");
+  mic.handlers.keydown({key:"Enter", preventDefault() { throw new Error("Live must allow the native keyboard click"); }});
   await controlLive(); assert.equal(toggles, 1); assert.equal(state.active, true);
-  assert.equal(liveMicrophone.textContent, "Couper le micro Live");
+  assert.equal(mic.attrs["aria-pressed"], "true");
+  expectLiveColor(false);
+  emitState({session_state:"opening"});
+  expectLiveColor(true);
+  emitState({session_state:"active"});
+  expectLiveColor(true);
+  emitState({session_state:"standby"});
+  expectLiveColor(false);
+  assert.equal(mic.attrs["aria-pressed"], "true", "provider standby keeps the explicit capture armed");
   const stopCount = stops.length;
   for (const value of navigation) value.handlers.click();
+  await controlLive();
+  assert.equal(toggles, 1, "Live voice is controlled from the stage");
   await element("fullscreen").handlers.click();
-  assert.equal(element("mic").disabled, true);
-  assert.equal(element("live-indicator").hidden, false);
+  assert.equal(mic.disabled, false);
+  expectLiveColor(false);
+  emitState({session_state:"active"});
+  expectLiveColor(true);
+  await controlLive();
+  assert.equal(mic.attrs["aria-pressed"], "false");
+  expectLiveColor(false);
+  assert.equal(toggles, 2, "the second click cuts capture in fullscreen");
+  assert.equal(state.active, false);
+  await controlLive();
+  assert.equal(toggles, 3, "the fullscreen microphone can also start Live");
   await element("fullscreen").handlers.click();
   assert.equal(stops.length, stopCount, "navigation, profile refresh and fullscreen keep the same Live capture");
-  assert.equal(toggles, 1); assert(refreshes >= 2);
+  assert.equal(state.active, true); assert(refreshes >= 2);
   element("sound-toggle").checked = false;
   element("sound-toggle").handlers.change();
   assert.equal(stops.at(-1), "sound_off"); assert.equal(state.active, false);
   element("sound-toggle").checked = true;
   element("sound-toggle").handlers.change();
-  assert.equal(toggles, 1, "sound ON does not restart Live");
+  assert.equal(toggles, 3, "sound ON does not restart Live");
+  chooseView("home");
   await controlLive();
 
   liveOptions.onTranscript({session_id:"s1", replace:true, segments:[
@@ -158,16 +184,17 @@ const controlLive = () => liveMicrophone.handlers.click();
   assert.equal(requests.filter(value => value.url === "/api/chat").length, 0, "text waits for the bounded close request");
   pendingClose = null; resolveClose(); await text;
   assert.equal(requests.filter(value => value.url === "/api/chat").length, 1);
-  assert.equal(toggles, 2, "a written reply never rearms Live");
+  assert.equal(toggles, 4, "a written reply never rearms Live");
   const previousThread = liveOptions.getThread();
   element("new-chat").handlers.click();
   assert.equal(stops.at(-1), "new_thread"); assert.notEqual(liveOptions.getThread(), previousThread);
   assert.equal(log.children.length, 0);
+  chooseView("home");
   await controlLive(); document.hidden = true; documents.visibilitychange();
   assert.equal(stops.at(-1), "background"); document.hidden = false; documents.visibilitychange();
-  assert.equal(toggles, 3, "returning foreground requires a new gesture");
+  assert.equal(toggles, 5, "returning foreground requires a new gesture");
   await controlLive();
-  assert.equal(toggles, 4, "the standard Config button supplies the explicit resume gesture");
+  assert.equal(toggles, 6, "a microphone click supplies the explicit resume gesture");
   const finishModel = window.JadeConversation.stopForModelChange();
   assert.equal(stops.at(-1), "model_change"); finishModel();
   emitState({available:false});
@@ -178,7 +205,7 @@ const controlLive = () => liveMicrophone.handlers.click();
   assert.equal(element("mic").attrs["aria-label"], "Maintenir pour parler");
   assert.equal(element("mic").classList.contains("live-mode-indicator"), false);
   assert.equal(element("live-indicator").hidden, true);
-  assert.equal(liveMicrophone.hidden, true);
+  assert.equal(mic.classList.contains("live-on-air"), false);
   const resets = avatarEvents.filter(event => event[0] === "reset").length;
   await live.refresh();
   assert.equal(avatarEvents.filter(event => event[0] === "reset").length, resets,
@@ -196,13 +223,14 @@ const controlLive = () => liveMicrophone.handlers.click();
   await element("live-mode-retry").handlers.click();
   assert.equal(refreshes, beforeRetry + 1);
   assert.equal(state.mode, "classic", "retry never overwrites the stored OFF choice");
-  assert.equal(toggles, 4, "diagnostic refresh never captures or reconnects audio");
+  assert.equal(toggles, 6, "diagnostic refresh never captures or reconnects audio");
   emitState({available:true, availability_message:""});
   element("live-mode-toggle").checked = true;
   await element("live-mode-toggle").handlers.change();
   assert.equal(state.mode, "live");
-  assert.equal(toggles, 5, "explicitly enabling Live starts capture after saving the preference");
-  assert.equal(state.active, true);
+  assert.equal(toggles, 6, "selecting Live in Config changes only the preference");
+  assert.equal(state.active, false);
+  expectLiveColor(false);
 
   // Exercise reauthentication with the real Live client. The old instance has
   // a verified classic choice and a second GET in flight; the new login must
@@ -262,10 +290,10 @@ const controlLive = () => liveMicrophone.handlers.click();
   answer("replacement-auth-token", "/api/voice/preferences", 0, {mode:"live", revision:5});
   await tick();
   assert.equal(element("live-mode-toggle").checked, true);
-  assert.equal(element("mic").disabled, true);
-  assert.equal(element("mic").attrs["aria-label"], "Mode Live activé");
-  assert.equal(element("live-indicator").hidden, false);
-  assert.equal(liveMicrophone.disabled, false);
+  assert.equal(mic.disabled, false);
+  assert.equal(mic.attrs["aria-label"], "Micro Live");
+  assert.equal(mic.attrs["aria-pressed"], "false");
+  expectLiveColor(false);
   assert.equal(audioContexts, 0); assert.equal(captureRequests, 0);
   assert.equal(reads.length, 6);
   console.log("Mobile Live app: profile, navigation, exclusive text/audio, transcripts and lifecycle PASS (inert client)");
