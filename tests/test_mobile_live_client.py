@@ -14,7 +14,7 @@ class MobileLiveClientTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node is required for browser doubles")
     def test_client_worklet_and_app_behaviour(self):
         for filename in (
-            "mobile_live_audio_worklet_test.js", "mobile_live_output_worklet_test.js", "mobile_live_client_test.js",
+            "mobile_live_audio_worklet_test.js", "mobile_live_client_test.js",
             "mobile_live_app_test.js", "mobile_preferences_test.js", "mobile_config_app_test.js",
         ):
             with self.subTest(script=filename):
@@ -34,7 +34,7 @@ class MobileLiveClientTests(unittest.TestCase):
         self.assertIsNotNone(live_input)
         self.assertIn('type="checkbox"', live_input.group(0))
         self.assertNotIn("aria-pressed", live_input.group(0))
-        for filename in ("live-client.js", "live-audio-worklet.js", "live-output-worklet.js"):
+        for filename in ("live-client.js", "live-audio-worklet.js"):
             source = (WEB / filename).read_text(encoding="utf-8")
             for forbidden in ("localStorage.", "sessionStorage.", "indexedDB.", "OPENAI_API_KEY", "navigator.sendBeacon"):
                 self.assertNotIn(forbidden, source)

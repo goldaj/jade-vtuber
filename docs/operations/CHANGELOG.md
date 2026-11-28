@@ -1,3 +1,7 @@
+## 2026-11-28 — Retrait du traitement audio de Friponne
+
+- Après écoute, le propriétaire retire l’essai de `cd437aa` à cause du timbre modifié et des variations de vitesse audibles. Le mobile reprend la lecture WebRTC directe et Discord Live retrouve sa conversion PCM d’avant l’essai. La consigne de débit rapide reste dans les prompts de Jade et de Friponne. Les fichiers de code et de tests audio correspondent à la référence `01351b1`. Compilation et 43 tests ciblés réussis. [Passation](handoffs/2026-11-28-codex-friponne-tempo-live.md#retrait-après-écoute)
+
 ## 2026-11-28 — Essai de lecture accélérée de Friponne
 
 - Le propriétaire a demandé de publier l’état courant de `develop` sur `main` avant l’essai. Le commit `main@ad1e1e6` contient l’arbre de `develop@01351b1`.

@@ -24,7 +24,6 @@ PUBLIC_FILES = frozenset({
 PUBLIC_PREFIXES = ("src/", "tests/", "config/profiles/")
 PUBLIC_TEST_FIXTURES = frozenset({
     "tests/mobile_live_audio_worklet_test.js",
-    "tests/mobile_live_output_worklet_test.js",
     "tests/mobile_live_client_test.js",
     "tests/mobile_live_app_test.js",
     "tests/mobile_config_app_test.js",
@@ -65,7 +64,6 @@ MOBILE_WEB_PUBLIC = frozenset({
     "src/jade_runtime/mobile_web/duplex-client.js",
     "src/jade_runtime/mobile_web/live-client.js",
     "src/jade_runtime/mobile_web/live-audio-worklet.js",
-    "src/jade_runtime/mobile_web/live-output-worklet.js",
     "src/jade_runtime/mobile_web/manifest.webmanifest",
     "src/jade_runtime/mobile_web/sw.js",
     "src/jade_runtime/mobile_web/icon.svg",

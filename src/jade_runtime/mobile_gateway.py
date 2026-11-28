@@ -69,7 +69,6 @@ WEB_FILES = {
     "/assets/duplex-client.js": ("duplex-client.js", "text/javascript; charset=utf-8"),
     "/assets/live-client.js": ("live-client.js", "text/javascript; charset=utf-8"),
     "/assets/live-audio-worklet.js": ("live-audio-worklet.js", "text/javascript; charset=utf-8"),
-    "/assets/live-output-worklet.js": ("live-output-worklet.js", "text/javascript; charset=utf-8"),
     "/manifest.webmanifest": ("manifest.webmanifest", "application/manifest+json"),
     "/sw.js": ("sw.js", "text/javascript; charset=utf-8"),
     "/icon.svg": ("icon.svg", "image/svg+xml"),

@@ -60,3 +60,6 @@ Extraits du chat accessible les 27 et 28 novembre 2026, avec rôles. Les heures 
 > Mais d'abord, mets develop dans main en l'état
 
 - **Assistant** (synthèse) · Publie d’abord l’état de `develop@01351b1` sur `main@ad1e1e6`, puis prépare l’essai de lecture accélérée sur `develop`. [Passation](../../operations/handoffs/2026-11-28-codex-friponne-tempo-live.md)
+- **Assistant** (synthèse) · Déploie l’essai sur mobile et Discord Live avec une vitesse cible de ×1,10 et un retour progressif vers ×1 quand le tampon baisse.
+- **Utilisateur** (verbatim) · « non c'est nul, on retire tout. La voix est trop modifée finalement, et en plus le fait de repasser de x1.1 à x1 ponctuellement c'est juste horrible »
+- **Assistant** (synthèse) · Retire le traitement audio de l’essai et restaure la lecture précédente de Friponne sur mobile et Discord Live. [Passation](../../operations/handoffs/2026-11-28-codex-friponne-tempo-live.md#retrait-après-écoute)

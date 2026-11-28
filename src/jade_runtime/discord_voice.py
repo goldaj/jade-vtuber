@@ -950,12 +950,9 @@ class DiscordVoiceBridge:
             except RuntimeError:
                 pass
 
-        is_live = live_session is not None
-        live_config = getattr(getattr(self, "live", None), "config", None)
-        faster_live = is_live and getattr(live_config, "output_tempo", 1.0) == 1.10
-        buffer = DiscordPCMBuffer(on_frame=observed_frame, prebuffer_frames=9 if faster_live else 5,
-                                  max_input_bytes=max_input_bytes, live_audio=is_live,
-                                  faster_live=faster_live)
+        buffer = DiscordPCMBuffer(on_frame=observed_frame, prebuffer_frames=5,
+                                  max_input_bytes=max_input_bytes,
+                                  live_audio=live_session is not None)
         timing = PCMProgressTiming()
         timing_token = active_pcm_timing.set(timing)
         playback_completed = False

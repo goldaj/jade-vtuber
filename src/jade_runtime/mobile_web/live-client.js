@@ -66,8 +66,6 @@
     let heartbeatTimer = null, heartbeatSeq = 0, acknowledgedSeq = 0, lastAck = 0, lastHeartbeat = 0;
     let context = null, media = null, source = null, worklet = null, destination = null;
     let peer = null, dataChannel = null, remoteAudio = null, remoteSource = null, analyser = null, playbackFrame = null;
-    let outputModuleReady = false, outputTempoNode = null, outputPending = false;
-    let outputTail = null, outputTailTimer = null;
     let openingTimer = null, drainTimer = null, disconnectTimer = null;
     let opening = false, speechActive = false, playbackActive = false, lastAudible = -Infinity;
     let pendingResponse = false, sentSpeech = false, closePromise = null, heldSession = null;
@@ -251,7 +249,7 @@
       lastHeartbeat = clock();
       sendControl({type:"heartbeat", seq:++heartbeatSeq, visible:!doc.hidden,
         capture:state.capture === "armed" ? "armed" : "closed",
-        playback_active:playbackActive || outputPending, speech_active:submittedSpeech || speechActive});
+        playback_active:playbackActive, speech_active:submittedSpeech || speechActive});
     }
     function stopCapture() {
       state.capture = "closed";
@@ -270,39 +268,13 @@
         try { Promise.resolve(sender.replaceTrack(null)).catch(() => {}); } catch (_) {}
       }
     }
-    function releaseOutputTempo() {
-      if (outputTempoNode) {
-        outputTempoNode.onprocessorerror = outputTempoNode.port.onmessage = null;
-        try { outputTempoNode.port.postMessage({type:"stop"}); } catch (_) {}
-        try { outputTempoNode.disconnect(); } catch (_) {}
-        outputTempoNode = null;
-      }
-      outputPending = false;
-    }
-    function finishOutputTail() {
-      const finish = outputTail;
-      cancelLater(outputTailTimer); outputTailTimer = null;
-      outputTail = null;
-      finish?.();
-    }
-    function finishRemoteOutput(finish) {
-      if (outputTail) { outputTail = finish; return; }
-      if (!outputTempoNode || !outputPending) { finish(); return; }
-      outputTail = finish;
-      try { outputTempoNode.port.postMessage({type:"drain"}); }
-      catch (_) { finishOutputTail(); return; }
-      outputTailTimer = later(finishOutputTail, 350);
-    }
     function stopOutput(interrupted = true) {
-      if (interrupted && (playbackActive || outputPending || pendingResponse)) {
+      if (interrupted && (playbackActive || pendingResponse)) {
         observePlayback("interrupted");
         callbacks("onInterruption", heldSession, playbackActive ? "interrupted" : "delivery_unknown");
       }
       if (playbackFrame !== null) env.cancelAnimationFrame(playbackFrame);
       playbackFrame = null;
-      cancelLater(outputTailTimer); outputTailTimer = null;
-      outputTail = null;
-      releaseOutputTempo();
       if (remoteAudio) {
         remoteAudio.pause();
         remoteAudio.srcObject = null;
@@ -344,7 +316,6 @@
         Promise.resolve(context.close()).catch(() => {});
       }
       context = null;
-      outputModuleReady = false;
     }
     function closeControl() {
       if (heartbeatTimer !== null) env.clearInterval(heartbeatTimer);
@@ -376,11 +347,6 @@
       preference(value);
       if (generation !== epoch || !leaseId) return;
       if (value.lease_id && value.lease_id !== leaseId) return;
-      if (value.lease_state === "closed" && value.session_state === "absent" &&
-          state.lease_state === "draining" && (!value.reason || value.reason === "provider_closed")) {
-        finishRemoteOutput(() => finishLease(value.reason, "absent"));
-        return;
-      }
       if (value.lease_state) state.lease_state = value.lease_state;
       if (value.session_state) state.session_state = value.session_state;
       if (value.reason) state.reason = value.reason;
@@ -390,21 +356,13 @@
         return;
       }
       if (value.lease_state === "draining") stopCapture();
-      if (value.session_state === "absent" && (!opening || heldSession) && (peer || heldSession)) {
-        finishRemoteOutput(() => {
-          closePeer(false);
-          if (state.capture === "armed" && !pendingWake) worklet?.port.postMessage({type:"local"});
-          if (pendingWake && state.capture === "armed") {
-            pendingWake = false;
-            void openSession(generation);
-          }
-          publish();
-        });
-        return;
-      }
-      if (value.session_state === "closing" && state.lease_state === "armed" && peer && !outputTail) {
+      if (value.session_state === "closing" && state.lease_state === "armed" && peer) {
         closePeer(false);
         worklet?.port.postMessage({type:"local"});
+      }
+      if (value.session_state === "absent" && (!opening || heldSession) && (peer || heldSession)) {
+        closePeer(false);
+        if (state.capture === "armed" && !pendingWake) worklet?.port.postMessage({type:"local"});
       }
       if (["close_unconfirmed", "opening_unknown"].includes(value.session_state)) {
         // A missing provider terminal must never leave a local microphone or
@@ -498,55 +456,18 @@
       remoteSource = context.createMediaStreamSource(stream);
       analyser = context.createAnalyser();
       analyser.fftSize = 512;
+      remoteSource.connect(analyser);
       let webAudioOutput = false;
-      function playDirect() {
-        remoteSource.connect(analyser);
-        audio.muted = false;
-        webAudioOutput = false;
-        audio.play().catch(() => {
-          if (remoteAudio !== audio || outputTempoNode) return;
-          // Use Web Audio as the sole audible sink if autoplay is blocked.
-          audio.muted = true;
-          analyser.connect(context.destination);
-          webAudioOutput = true;
-          audio.play().catch(() => {});
-        });
-      }
-      if (outputModuleReady) {
-        try {
-          const node = new env.AudioWorkletNode(context, "jade-live-output", {
-            numberOfInputs:1, numberOfOutputs:1, outputChannelCount:[1], channelCount:1,
-            channelCountMode:"explicit", processorOptions:{speed:state.capabilities?.output_tempo}});
-          outputTempoNode = node;
-          audio.muted = true;
-          remoteSource.connect(node);
-          node.connect(analyser);
-          analyser.connect(context.destination);
-          webAudioOutput = true;
-          function fallback() {
-            if (outputTempoNode !== node || generation !== epoch) return;
-            releaseOutputTempo();
-            if (outputTail) { finishOutputTail(); return; }
-            remoteSource.disconnect();
-            analyser.disconnect();
-            playDirect();
-          }
-          node.port.onmessage = ({data}) => {
-            if (outputTempoNode !== node || generation !== epoch) return;
-            if (data?.type === "overflow") { fallback(); return; }
-            if (data?.type !== "state") return;
-            outputPending = data.state === "buffering" || data.state === "playing";
-            if (data.state === "drained") finishOutputTail();
-          };
-          node.onprocessorerror = fallback;
-          audio.play().catch(() => {});
-        } catch (_) {
-          releaseOutputTempo();
-          remoteSource.disconnect();
-          analyser.disconnect();
-          playDirect();
-        }
-      } else playDirect();
+      audio.play().catch(() => {
+        if (remoteAudio !== audio) return;
+        // The capture gesture already unlocked this context. Use it as the
+        // single audible sink if the media player is blocked by autoplay.
+        audio.muted = true;
+        analyser.connect(context.destination);
+        webAudioOutput = true;
+        // Muted playback can still activate the WebRTC track on Chromium.
+        audio.play().catch(() => {});
+      });
       const samples = new Float32Array(analyser.fftSize);
       function animate() {
         if (generation !== epoch || peer !== connection || remoteAudio !== audio) return;
@@ -595,19 +516,13 @@
           if (generation !== epoch || peer !== connection) return;
           let event;
           try { event = JSON.parse(data); } catch (_) { return; }
-          if (event.type === "session.closed" && !outputTail) {
+          if (event.type === "session.closed") {
             // The server may close an idle remote generation while preserving
             // the local arm lease. Await its authoritative terminal snapshot.
-            finishRemoteOutput(() => {
-              closePeer(false);
-              if (state.session_state !== "absent") state.session_state = "closing";
-              if (state.capture === "armed") worklet?.port.postMessage({type:"local"});
-              if (state.session_state === "absent" && pendingWake && state.capture === "armed") {
-                pendingWake = false;
-                void openSession(generation);
-              }
-              publish();
-            });
+            closePeer(false);
+            state.session_state = "closing";
+            if (state.capture === "armed") worklet?.port.postMessage({type:"local"});
+            publish();
           }
         };
         connection.ontrack = event => {
@@ -615,17 +530,14 @@
           const stream = event.streams?.[0] || new env.MediaStream([event.track]);
           installOutput(stream, generation, connection);
           if (event.track) event.track.onended = () => {
-            if (generation === epoch && peer === connection && !outputTail) void stop("media_ended");
+            if (generation === epoch && peer === connection) void stop("media_ended");
           };
         };
         const connectionChanged = () => {
           if (generation !== epoch || peer !== connection) return;
           const failed = [connection.connectionState, connection.iceConnectionState]
             .some(value => ["failed", "disconnected", "closed"].includes(value));
-          if (failed) {
-            if (!outputTail) void stop("media_lost", {message:"La liaison audio est interrompue. Micro coupé."});
-            return;
-          }
+          if (failed) { void stop("media_lost", {message:"La liaison audio est interrompue. Micro coupé."}); return; }
           if (connection.connectionState === "connected" ||
               ["connected", "completed"].includes(connection.iceConnectionState)) {
             if (!opening) return;
@@ -675,11 +587,6 @@
         let audioError = null;
         const audioReady = context.resume().catch(error => { audioError = error; });
         const currentContext = context;
-        if (Number(state.capabilities?.output_tempo) > 1) {
-          void currentContext.audioWorklet.addModule("/assets/live-output-worklet.js").then(() => {
-            if (generation === epoch && context === currentContext) outputModuleReady = true;
-          }, () => {}); // The WebRTC track can still play directly.
-        }
         const acquired = await request("/api/live/arm", {client_id:clientId, thread_id:requestedThread}, 5000, bearer);
         if (generation !== epoch) {
           if (acquired.lease_id) void request("/api/live/sessions/close", {client_id:clientId,
