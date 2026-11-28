@@ -77,6 +77,64 @@ class PCMBufferTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(-32768, struct.unpack("<1920h", frame))
         self.assertIn(32767, struct.unpack("<1920h", frame))
 
+    async def test_faster_live_keeps_phase_across_deltas_and_raises_pitch(self):
+        samples = [round(10000 * math.sin(math.tau * 300 * index / 24000))
+                   for index in range(11 * 480)]
+        pcm = struct.pack("<5280h", *samples)
+        live = DiscordPCMBuffer(live_audio=True, faster_live=True)
+        fragmented = DiscordPCMBuffer(live_audio=True, faster_live=True)
+        await live.feed(pcm)
+        for offset in range(0, len(pcm), 319):
+            await fragmented.feed(pcm[offset:offset + 319])
+        await live.finish()
+        await fragmented.finish()
+
+        frames = []
+        while frame := live.read():
+            self.assertEqual(frame, fragmented.read())
+            self.assertEqual(len(frame), FRAME_BYTES)
+            frames.append(frame)
+        self.assertEqual(len(frames), 10)
+        self.assertEqual(fragmented.read(), b"")
+        # The 48 kHz Discord speaker clock is fixed. The 300 Hz source must
+        # peak at 330 Hz after compression, ignoring the very first samples.
+        channel = [left for left, _right in struct.iter_unpack("<hh", b"".join(frames))]
+        middle = channel[480:-480]
+        for frequency, minimum_gain, maximum_gain in ((330, .97, 1.02), (300, 0, .1)):
+            sine = sum(sample * math.sin(math.tau * frequency * index / 48000)
+                       for index, sample in enumerate(middle))
+            cosine = sum(sample * math.cos(math.tau * frequency * index / 48000)
+                         for index, sample in enumerate(middle))
+            gain = 2 * math.hypot(sine, cosine) / (len(middle) * 10000)
+            self.assertLessEqual(minimum_gain, gain)
+            self.assertLess(gain, maximum_gain)
+
+    async def test_faster_live_returns_to_nominal_speed_as_its_reserve_falls(self):
+        buffer = DiscordPCMBuffer(live_audio=True, faster_live=True, prebuffer_frames=9)
+        source_frame = b"\x12\x00" * 480
+        await buffer.feed(source_frame * 11)
+        steps = []
+        for _ in range(220):
+            await buffer.feed(source_frame)
+            self.assertTrue(any(buffer.read()))
+            steps.append(buffer._tempo_step)
+        self.assertEqual(steps[0], 44)
+        self.assertEqual(steps[-1], 40)
+        self.assertTrue(all(abs(a - b) <= 1 for a, b in zip(steps, steps[1:])))
+        self.assertEqual(buffer.metrics().underrun_silence_frames, 0)
+        await buffer.feed(source_frame * 15)
+        self.assertEqual(buffer._tempo_step, 44)
+
+    async def test_faster_live_starts_short_sound_before_its_prebuffer_fills(self):
+        buffer = DiscordPCMBuffer(live_audio=True, faster_live=True, prebuffer_frames=9)
+        await buffer.feed(b"\x01\x00" * 960)
+        self.assertFalse(any(buffer.read()))
+        buffer._first_input_at -= .241
+        self.assertTrue(any(buffer.read()))
+        await buffer.finish()
+        self.assertTrue(any(buffer.read()))
+        self.assertEqual(buffer.read(), b"")
+
     async def test_backpressure_bounded_and_abort_unblocks_writer(self):
         buffer = DiscordPCMBuffer(max_frames=5)
         task = asyncio.create_task(buffer.feed(b"\x10\x00" * (480 * 8)))
@@ -319,6 +377,21 @@ class StreamBridgeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([event for event, _ in events if event in ("pcm_start", "pcm_end")],
                          ["pcm_start", "pcm_end"])
         self.assertGreater(self.connection.stops, 0)
+
+    async def test_bridge_uses_its_live_tempo_only_for_live_output(self):
+        for configured, session, expected_frames in ((1.10, "live", 10),
+                                                     (1.0, "live", 11), (1.10, None, 11)):
+            with self.subTest(configured=configured, session=session):
+                self.bridge.live = types.SimpleNamespace(
+                    config=types.SimpleNamespace(output_tempo=configured),
+                    playback_allowed=lambda current: current == session)
+                self.connection.frames.clear()
+
+                async def producer():
+                    yield b"\x11\x00" * (480 * 11)
+
+                self.assertTrue(await self.bridge.play_pcm_stream(producer(), live_session=session))
+                self.assertEqual(sum(any(frame) for frame in self.connection.frames), expected_frames)
 
     async def test_revoked_session_cannot_publish_stale_pcm_metrics(self):
         release = asyncio.Event()

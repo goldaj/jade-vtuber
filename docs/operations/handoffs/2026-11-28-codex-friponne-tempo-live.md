@@ -1,0 +1,9 @@
+# Essai de lecture accélérée de Friponne
+
+Le 28 novembre 2026, le propriétaire autorise l’essai d’une lecture plus rapide sur mobile et Discord Live et accepte que la voix monte dans les aigus. Il demande d’abord la publication de l’état de `develop` sur `main`. Le commit `ad1e1e64676107bbbb1cd24fef53078ee963d14c` sur `main` a le même arbre que `develop@01351b1`. Cette révision sert de référence pour écouter Friponne avant l’ajout du traitement audio. [Échanges accessibles](../../history/conversations/2026-11-27-evolution-voix-jade.md#essai-de-lecture-accélérée-de-friponne-le-28-novembre-2026)
+
+L’essai sur `develop` accélère la lecture du signal GPT-Live de Friponne jusqu’à ×1,10 sur les deux canaux. Le rapport de lecture remonte aussi la hauteur, d’environ +1,65 demi-ton à la vitesse cible. La voix reste sélectionnée par le profil `friponne` et sa consigne de débit fait toujours partie du contexte fourni à GPT-Live.
+
+Le mobile traite en Web Audio la piste distante reçue par WebRTC. Discord adapte sa lecture PCM avant de former les trames destinées au salon vocal. Les deux lecteurs bornent leur tampon et reviennent progressivement vers ×1,00 lorsque leur réserve diminue. L’arrêt complet purge la lecture et l’animation de parole suit le signal joué. [Architecture mobile](../../architecture/LIVE_MOBILE.md#audio-et-arrêt) · [Architecture Discord](../../architecture/DISCORD_LIVE.md#transport-audio-et-conversation)
+
+La [REC-052](../../backlog/02-RECETTE.md#rec-052--voix-friponne-avec-lavatar-de-jade-ancienne-dev-041) reste **À valider**. Répéter une réplique courte et une réponse longue avec la référence et l’essai, sur le même haut-parleur ou casque. Écouter le débit, la hauteur, les pauses et d’éventuelles coupures. Sur mobile, observer la bouche, laisser finir une réplique après coupure du micro et vérifier le retour au repos après un arrêt complet.

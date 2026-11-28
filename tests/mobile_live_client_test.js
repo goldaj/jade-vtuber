@@ -15,7 +15,7 @@ function deferred() {
 function harness(options = {}) {
   let now = 0, nextTimer = 0, nextId = 0, amplitude = 0;
   const timers = new Map(), frames = new Map(), requests = [], sockets = [], peers = [], contexts = [], worklets = [];
-  const order = [], tracks = [], states = [], transcripts = [], playbacks = [], players = [], meters = [];
+  const order = [], tracks = [], states = [], transcripts = [], playbacks = [], players = [], meters = [], outputWorklets = [];
   let authFailures = 0;
   const server = {mode:options.mode || "live", revision:0, lease:"lease-1", autoAck:true, autoConnect:true,
     available:true, sound:true, permission:null, arm:null, create:null, close:null, session:0};
@@ -47,7 +47,13 @@ function harness(options = {}) {
   class Context {
     constructor() {
       order.push("audio-context"); contexts.push(this); this.state = "running"; this.destination = {speaker:true};
-      this.audioWorklet = {addModule:async url => { assert.equal(url, "/assets/live-audio-worklet.js"); }};
+      this.audioWorklet = {addModule:async url => {
+        if (url === "/assets/live-output-worklet.js" && options.outputTempo > 1) {
+          if (options.outputModuleFailure) throw new Error("Module unavailable");
+          return;
+        }
+        assert.equal(url, "/assets/live-audio-worklet.js");
+      }};
     }
     resume() { return Promise.resolve(); }
     close() { this.state = "closed"; return Promise.resolve(); }
@@ -64,8 +70,15 @@ function harness(options = {}) {
     }
   }
   class Worklet {
-    constructor(context, name) {
-      assert.equal(name, "jade-live-capture"); worklets.push(this); this.commands = [];
+    constructor(context, name, config) {
+      if (name === "jade-live-output") {
+        assert.equal(config.processorOptions.speed, options.outputTempo);
+        outputWorklets.push(this);
+      } else {
+        assert.equal(name, "jade-live-capture");
+        worklets.push(this);
+      }
+      this.commands = [];
       this.port = {postMessage:event => this.commands.push(event)};
     }
     connect(destination) { this.destination = destination; }
@@ -121,16 +134,17 @@ function harness(options = {}) {
   clearTimeout(id) { timers.delete(id); },
   setInterval(fn, ms) { const id = ++nextTimer; timers.set(id, {fn, at:now + ms, interval:ms}); return id; },
   clearInterval(id) { timers.delete(id); }, dispatchEvent() {},
-  async fetch(url, options) {
-    assert.equal(options.credentials, "omit"); assert.equal(options.cache, "no-store");
-    assert.equal(options.headers.Authorization, "Bearer in-memory-owner-token");
+  async fetch(url, requestOptions) {
+    assert.equal(requestOptions.credentials, "omit"); assert.equal(requestOptions.cache, "no-store");
+    assert.equal(requestOptions.headers.Authorization, "Bearer in-memory-owner-token");
     assert(!url.includes("token"));
-    const body = options.body ? JSON.parse(options.body) : null;
-    requests.push({url, body, options}); order.push(url);
+    const body = requestOptions.body ? JSON.parse(requestOptions.body) : null;
+    requests.push({url, body, options:requestOptions}); order.push(url);
     if (url === "/api/live/capabilities") {
       if (server.capabilities) return server.capabilities.promise;
       return response({enabled:true, available:server.available, reason:server.reason, reasons:server.reasons,
       heartbeat_seconds:2, lease_seconds:5, opening_timeout_seconds:8,
+      output_tempo:options.outputTempo || 1,
       ...(server.observed ? {state:server.observed} : {}),
       voice:{selected:"test-voice", notice:"Voix de test"}});
     }
@@ -187,7 +201,7 @@ function harness(options = {}) {
     now = target; await tick();
   }
   return {client, selectLive, arm, advance, server, sockets, peers, contexts, worklets, requests,
-    order, tracks, transcripts, states, playbacks, stream, response, doc, timers, frames, players, meters,
+    order, tracks, transcripts, states, playbacks, stream, response, doc, timers, frames, players, meters, outputWorklets,
     get authFailures() { return authFailures; },
     audio(level) { amplitude = level; const pending = [...frames.values()]; frames.clear(); pending.forEach(fn => fn()); }};
 }
@@ -420,6 +434,51 @@ function harness(options = {}) {
     if (diagnostic) assert.match(h.client.state.message, /trop de demandes/,
       "finishing a drain preserves a provider diagnostic");
     else assert.equal(h.client.state.message, "", "provider completion removes the transient drain guidance too");
+  }
+  for (const abort of [false, true]) {
+    const h = harness({outputTempo:1.1}); await h.selectLive(); await h.arm();
+    h.worklets[0].emit({type:"speech"}); await tick();
+    h.worklets[0].emit({type:"sent_speech"});
+    const remote = h.stream(), peer = h.peers[0];
+    peer.ontrack({streams:[remote], track:remote.track});
+    const output = h.outputWorklets[0];
+    assert.equal(h.players[0].muted, true, "the native element cannot play a second copy");
+    assert.equal(output.destination, h.meters[0]);
+    assert.equal(h.meters[0].destination, h.contexts[0].destination);
+    output.emit({type:"state", state:"buffering"});
+    await h.advance(2000);
+    assert.equal(h.sockets[0].sent.findLast(event => event.type === "heartbeat").playback_active, true);
+    output.emit({type:"state", state:"playing"});
+    h.audio(.1);
+    assert(h.playbacks.at(-1).playing, "the processed audio drives the avatar");
+    await h.client.mute();
+    assert.equal(h.tracks[0].stops, 1);
+    assert.equal(output.commands.length, 0, "cutting the mic preserves the exact output path");
+    if (abort) {
+      await h.client.stop("new_thread");
+    } else {
+      h.sockets[0].emit({type:"state", mode:"live", revision:0, lease_id:"lease-1",
+        lease_state:"closed", session_state:"absent", session_id:null, reason:"provider_closed"});
+      assert.equal(output.commands.at(-1).type, "drain");
+      remote.track.onended();
+      assert.equal(peer.closed, undefined, "an orderly final frame can outlive the incoming track");
+      output.emit({type:"state", state:"drained"});
+    }
+    assert.equal(output.commands.at(-1).type, "stop");
+    assert.equal(h.contexts[0].state, "closed");
+    assert.equal(h.players[0].srcObject, null);
+  }
+  for (const failure of ["module", "processor", "overflow"]) {
+    const h = harness({outputTempo:1.1, outputModuleFailure:failure === "module"});
+    await h.selectLive(); await h.arm();
+    h.worklets[0].emit({type:"speech"}); await tick();
+    const remote = h.stream();
+    h.peers[0].ontrack({streams:[remote], track:remote.track});
+    if (failure === "processor") h.outputWorklets[0].onprocessorerror();
+    if (failure === "overflow") h.outputWorklets[0].emit({type:"overflow"});
+    assert.equal(h.players[0].muted, false, "a failed worklet leaves the direct audio path");
+    assert.equal(h.meters[0].destination || null, null);
+    await h.client.stop("test_complete");
   }
   {
     const h = harness(); await h.selectLive(); await h.arm(); h.server.autoAck = false;

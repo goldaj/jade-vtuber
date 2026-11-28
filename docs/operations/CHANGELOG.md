@@ -1,3 +1,8 @@
+## 2026-11-28 — Essai de lecture accélérée de Friponne
+
+- Le propriétaire a demandé de publier l’état courant de `develop` sur `main` avant l’essai. Le commit `main@ad1e1e6` contient l’arbre de `develop@01351b1`.
+- Sur `develop`, la sortie mobile WebRTC et la sortie PCM Discord Live visent une lecture à ×1,10 pour Friponne, soit environ +1,65 demi-ton à la vitesse cible. La lecture se rapproche de ×1,00 si le tampon est peu rempli. La fermeture libère le tampon et l’animation suit le signal joué. L’écoute sur Redmi et Discord reste à valider. [Passation et recette](handoffs/2026-11-28-codex-friponne-tempo-live.md)
+
 ## 2026-11-28 — Débit rapide de Friponne dans GPT-Live
 
 - Sur mobile et dans Discord Live, la direction de Friponne demande désormais de parler le plus vite possible du premier au dernier mot, pour chaque réponse. Les consignes de ralentissement, de pause obligatoire et d’articulation sortent de ce profil. Le même débit s’applique aux résultats des outils. [Passation et recette](handoffs/2026-11-28-codex-friponne-debit-rapide.md)

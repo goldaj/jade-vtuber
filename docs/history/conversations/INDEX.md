@@ -26,7 +26,7 @@ Cet index est créé le 2 novembre 2026, avant les modifications documentaires d
 | [Journalisation du 15 novembre](2026-11-15-conversation-logs.md) | Demande de provenance, contenu, intention et modalités de réponse dans les logs | Verbatim utilisateur et résumé assistant ; aucune conversation privée journalisée dans Git |
 | [Plan professionnel du modèle du 13 novembre](2026-11-13-modele-plan-pro.md) | Nouvelle direction, recherche et feuille de route modèle et utilisation | Résumé des échanges accessibles ; vidéo non transcrite intégralement |
 | [Reprise develop sur Windows du 20 novembre](2026-11-20-reprise-develop.md) | Extraits de la demande de lancement et des priorités Discord, mobile et backlog | Extraits visibles, heures individuelles indisponibles ; synthèse assistant étiquetée |
-| [Évolution de la voix de Jade](2026-11-27-evolution-voix-jade.md) | Auditions, choix de Friponne, validation du débit et comparaison entre mobile et Discord Live | Extraits du chat courant, heures individuelles non fournies. Les enregistrements vocaux et identifiants de service sont exclus. |
+| [Évolution de la voix de Jade](2026-11-27-evolution-voix-jade.md) | Auditions, choix de Friponne, débit, comparaison mobile et Discord Live, sauvegarde sur main puis essai de lecture accélérée | Extraits du chat courant, heures individuelles non fournies. Les enregistrements vocaux et identifiants de service sont exclus. |
 | Documents supplémentaires de `develop` | Audits du 30 octobre et pistes migrées du 1er novembre : à conserver lors de l’intégration | Ces documents sont encore sur la branche cible ; leur provenance est décrite dans le dossier de migration |
 
 ## Relais technique en cours — voix et intentions

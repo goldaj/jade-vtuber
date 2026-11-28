@@ -144,6 +144,7 @@ class LiveConfigTests(unittest.TestCase):
             with self.subTest(style=style):
                 voice_id = f"voice_test_{style}"
                 config = LiveConfig.from_env({"JADE_LIVE_VOICE_ID": voice_id, "JADE_LIVE_VOICE_STYLE": style}.get)
+                self.assertEqual(config.preflight()["output_tempo"], 1.10 if style == "friponne" else 1.0)
                 mobile = config.session_config(instructions=persona)
                 discord = build_discord_live_config(config, instructions=persona)
                 delivery = FRIPONNE_PACE_PROMPT if style == "friponne" else LIVE_DELIVERY_PROMPT

@@ -48,3 +48,15 @@ Extraits du chat accessible les 27 et 28 novembre 2026, avec rôles. Les heures 
 - **Utilisateur** (synthèse) · Retient la formulation « rap god » et demande un texte valable pour toutes les expressions et intentions, y compris les futures.
 - **Utilisateur** (verbatim) · « ok fait ça, corrige partout où il le faut. Rajoute aussi cette consigne dans le prompt d'origine de Jade, comme quoi elle parle toujours vite. Puis push sur develop tes correctifs »
 - **Assistant** (synthèse) · Reporte le débit rapide dans le prompt d’origine et adapte la direction de Friponne en GPT-Live, y compris pour les résultats d’outils. La consigne validée fixe le débit le plus rapide possible comme rythme habituel. [Consigne et passation](../../operations/handoffs/2026-11-28-codex-friponne-debit-rapide.md)
+
+## Essai de lecture accélérée de Friponne le 28 novembre 2026
+
+- **Utilisateur** (verbatim) · « au pire, remonter la hauteur de friponne n'est pas grave, au contraire »
+
+**Utilisateur** (verbatim)
+
+> vas-y, tente de faire ça. Mets le sur develop. On va voir ce que ça donne.
+>
+> Mais d'abord, mets develop dans main en l'état
+
+- **Assistant** (synthèse) · Publie d’abord l’état de `develop@01351b1` sur `main@ad1e1e6`, puis prépare l’essai de lecture accélérée sur `develop`. [Passation](../../operations/handoffs/2026-11-28-codex-friponne-tempo-live.md)

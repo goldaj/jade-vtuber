@@ -127,6 +127,10 @@ class LiveConfig:
                     or path.resolve().is_relative_to(repo_root)):
                 raise ValueError("Live state must use an absolute private SQLite path outside Git")
 
+    @property
+    def output_tempo(self) -> float:
+        return 1.10 if self.voice_style == "friponne" else 1.0
+
     def preflight(self, api_key_present: bool = False,
                   discord_adapter_available: bool = True) -> dict:
         """Diagnostic only: no environment/secret reads, I/O or paid requests."""
@@ -142,6 +146,7 @@ class LiveConfig:
                           "discord_adapter_unavailable" if not discord_adapter_available else
                           "api_key_missing" if not api_key_present else "ready")
         return {"available": not reasons, "reasons": reasons, "model": self.model,
+                "output_tempo": self.output_tempo,
                 "voice": LiveVoice(self.voice, self.voice_id).public_status(),
                 "discord": {"enabled": self.discord_enabled,
                             "available": discord_reason == "ready", "reason": discord_reason,
