@@ -15,10 +15,10 @@ function deferred() {
 }
 async function flush() { for (let i = 0; i < 30; i++) await Promise.resolve(); }
 
-function client({manifest, setup = "success", textureGates = {}, brokenCleanup = false} = {}) {
+function client({manifest, setup = "success", textureGates = {}, brokenCleanup = false, manifestStatuses = []} = {}) {
   const settings = manifest || {Version:3, FileReferences:{Moc:"Jade.moc3",Textures:["a.png","b.png"]}};
   const events = [], textures = new Map(), models = [];
-  let calls = 0, coreReleases = 0, mocReleases = 0;
+  let calls = 0, fetches = 0, coreReleases = 0, mocReleases = 0;
   const runtime = {createInternalModel() {
     if (setup === "constructor-error") throw new Error("internal constructor failed");
     return {destroy() { coreReleases++; mocReleases++; }};
@@ -76,10 +76,14 @@ function client({manifest, setup = "success", textureGates = {}, brokenCleanup =
   }}}};
   const window = {PIXI,location:{href:"https://jade.example/",origin:"https://jade.example"}};
   const context = {window,URL,AbortController,setTimeout,clearTimeout,
-    fetch:async () => ({ok:true,json:async () => structuredClone(settings)})};
+    fetch:async () => {
+      const status = manifestStatuses[fetches++] ?? 200;
+      return {ok:status === 200,status,json:async () => structuredClone(settings)};
+    }};
   vm.runInNewContext(source,context,{filename:"avatar-model-loader.js"});
   return {loader:window.JadeAvatarModelLoader,textures,models,events,runtime,originalConstructor,
-    get calls(){return calls;},get coreReleases(){return coreReleases;},get mocReleases(){return mocReleases;}};
+    get calls(){return calls;},get fetches(){return fetches;},
+    get coreReleases(){return coreReleases;},get mocReleases(){return mocReleases;}};
 }
 
 (async () => {
@@ -94,6 +98,14 @@ function client({manifest, setup = "success", textureGates = {}, brokenCleanup =
   assert.equal(valid.coreReleases,1); assert.equal(valid.mocReleases,1);
   assert([...valid.textures.values()].every(texture => texture.destroyed === 1));
   assert(valid.events.indexOf("model-destroy") < valid.events.indexOf("texture-destroy:a.png"));
+
+  const transient = client({manifestStatuses:[502,200]});
+  (await transient.loader.load(profile)).dispose();
+  assert.equal(transient.fetches,2);
+  assert.equal(transient.calls,1,"retry the manifest before allocating model resources");
+  const missing = client({manifestStatuses:[404,200]});
+  await assert.rejects(missing.loader.load(profile),/Model manifest unavailable/);
+  assert.equal(missing.fetches,1,"a missing model is not retried");
 
   // Failure in one image cannot free the slot while another image is in flight.
   const first = deferred(), second = deferred();

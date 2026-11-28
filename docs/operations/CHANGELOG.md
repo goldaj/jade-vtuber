@@ -1,3 +1,7 @@
+## 2026-11-28 — Chargement du r21 dans la PWA
+
+- Le préchargement des 18 gestes r21 s’effectue une requête à la fois, après l’affichage du modèle. Le catalogue et le manifeste r21 retentent une fois en cas d’échec réseau transitoire. [Diagnostic et recette](handoffs/2026-11-28-codex-chargement-r21-mobile.md)
+
 ## 2026-11-28 — Friponne rapide sur GPT-Live
 
 - Le propriétaire a validé dans le Playground la voix **Jade H - Friponne rapide**, dont la description fixe un débit rapide et régulier dès la première syllabe. Mobile et Discord Live reprennent sa description exacte via le profil `friponne`. La consigne « rap god » et les rappels pour les résultats d’outils restent appliqués. L’identifiant de la voix relève de la configuration privée. [Passation](handoffs/2026-11-28-codex-friponne-rapide-live.md)

@@ -40,21 +40,25 @@ function client({data = catalogue(), transport = "ok", withUi = true, storage = 
       lifecycle.push("stop");
       return () => lifecycle.push("resume");
     }},
-    setTimeout(callback) { const id = ++nextTimer; timers.set(id, callback); return id; },
+    setTimeout(callback, ms) { const id = ++nextTimer; timers.set(id, {callback, ms}); return id; },
     clearTimeout(id) { timers.delete(id); }
   };
   const fetch = async (url, options) => {
+    const outcome = Array.isArray(transport) ? transport[requests.length] : transport;
     requests.push({url, options});
     assert.equal(url, "/assets/avatar-models.json", "catalogue code never loads model assets");
-    if (transport === "reject") throw new Error("offline");
-    if (transport === "pending" || transport === "timeout") {
+    if (outcome === "reject") throw new Error("unexpected fetch error");
+    if (outcome === "network-error") throw new TypeError("Failed to fetch");
+    if (outcome === "aborted") throw new DOMException("Load aborted", "AbortError");
+    if (outcome === "pending" || outcome === "timeout") {
       await new Promise((resolve, reject) => {
         resolveFetch = resolve;
-        options.signal.addEventListener("abort", () => reject(new Error("aborted")), {once:true});
+        options.signal.addEventListener("abort", () => reject(options.signal.reason), {once:true});
       });
     }
-    return {ok:transport !== "http-error", async json(){
-      if (transport === "invalid-json") throw new SyntaxError("invalid JSON");
+    const status = typeof outcome === "number" ? outcome : 200;
+    return {status, ok:status === 200, async json(){
+      if (outcome === "invalid-json") throw new SyntaxError("invalid JSON");
       return data;
     }};
   };
@@ -76,6 +80,13 @@ function client({data = catalogue(), transport = "ok", withUi = true, storage = 
   return {window, selector, status, room, timers, requests, selections, lifecycle, renderer, storage,
     ready:window.JadeModelCatalog.ready,
     completeFetch(){resolveFetch();},
+    fireTimer(ms) {
+      const timer = [...timers].find(([, pending]) => pending.ms === ms);
+      assert(timer, `expected a ${ms} ms catalogue timer`);
+      const [id, {callback}] = timer;
+      timers.delete(id);
+      callback();
+    },
     async change(id){selector.value = id; await selector.emit("change");}
   };
 }
@@ -181,18 +192,52 @@ function client({data = catalogue(), transport = "ok", withUi = true, storage = 
   assert.equal(reopened.window.JadeModelCatalog.defaultId, "next", "reopening preserves a successful r21 choice");
   const missing = client({data:catalogue(false), storage:stored}); await missing.ready;
   assert.equal(missing.window.JadeModelCatalog.get("next").available, false);
+  assert.equal(missing.requests.length, 1, "confirmed unavailability is not retried");
   assert.equal(missing.window.JadePreferences.get("avatarModel"), "next", "a temporary unavailability does not erase the user's choice");
   const recovered = client({data:catalogue(true), storage:stored}); await recovered.ready;
   assert.equal(recovered.window.JadeModelCatalog.defaultId, "next", "remembered model returns when available again");
 
-  for (const transport of ["reject", "http-error", "invalid-json", "timeout"]) {
+  for (const transport of ["reject", 403, 404, "invalid-json"]) {
     const a = client({transport});
-    if (transport === "timeout") for (const fire of [...a.timers.values()]) fire();
     await a.ready;
     assert.equal(a.window.JadeModelCatalog.get("next").available, false);
+    assert.equal(a.requests.length, 1, "definitive errors are not retried");
     assert.equal(a.selections.length, 0, "catalogue failure never loads a substitute model");
     assert.equal(a.timers.size, 0, "catalogue timeout is always cleaned up");
   }
+
+  const settle = () => new Promise(resolve => setImmediate(resolve));
+  for (const failure of [502, 503, 504, "network-error", "aborted", "timeout"]) {
+    const a = client({data:catalogue(true), transport:[failure, "ok"]});
+    if (failure === "timeout") a.fireTimer(5000);
+    await settle();
+    assert.equal(a.requests.length, 1, "retry waits a short delay");
+    a.fireTimer(250);
+    await a.ready;
+    assert.equal(a.requests.length, 2);
+    assert.notEqual(a.requests[0].options.signal, a.requests[1].options.signal, "retry gets a fresh timeout");
+    assert.equal(a.window.JadeModelCatalog.defaultId, "next", "r21 becomes available after a transient failure");
+    assert.equal(a.timers.size, 0);
+  }
+  const classic = client({data:catalogue(true), transport:[503, "ok"]});
+  classic.window.JadePreferences.set("avatarModel", "classic");
+  await settle();
+  classic.fireTimer(250);
+  await classic.ready;
+  assert.equal(classic.window.JadeModelCatalog.get("next").available, true);
+  assert.equal(classic.window.JadeModelCatalog.defaultId, "classic", "recovery preserves explicit r20 selection");
+
+  const exhausted = client({data:catalogue(true), transport:"timeout"});
+  exhausted.fireTimer(5000);
+  await settle();
+  exhausted.fireTimer(250);
+  await settle();
+  exhausted.fireTimer(5000);
+  await settle();
+  assert.equal(exhausted.timers.size, 0, "a second failure leaves no retry or expiry timer");
+  await exhausted.ready;
+  assert.equal(exhausted.requests.length, 2, "a second failure ends retries");
+  assert.equal(exhausted.window.JadeModelCatalog.get("next").available, false);
 
   const invalid = [
     data => {data.version = 2;},

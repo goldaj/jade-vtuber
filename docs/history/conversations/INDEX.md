@@ -45,6 +45,8 @@ Après toute nouvelle intervention, ajouter les échanges effectivement accessib
 
 ## Jade r21 par défaut dans la PWA le 26 novembre 2026
 
+Le [diagnostic de chargement du 28 novembre](../../operations/handoffs/2026-11-28-codex-chargement-r21-mobile.md#échanges-accessibles) reprend le signalement du r21 indisponible sur le téléphone.
+
 Les décisions du propriétaire et les réponses de cadrage accessibles figurent dans la [passation du raccordement mobile](../../operations/handoffs/2026-11-26-codex-mobile-r21.md#échanges-accessibles). Heures individuelles indisponibles. La passation ne reprend ni les données privées ni les sorties d’outils.
 
 Les demandes suivantes de zoom et déplacement tactile, service indépendant sur VPS, application Android dédiée et réaction aux secousses figurent dans la [passation du lot mobile](../../operations/handoffs/2026-11-26-codex-backlog-mobile.md#échanges-accessibles), avec rôles distincts, extraits et synthèses.

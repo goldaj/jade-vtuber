@@ -42,6 +42,26 @@
     };
   }
 
+  async function readManifest(manifest, retry) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      let response;
+      try {
+        response = await fetch(manifest.href, {
+          mode:"same-origin", credentials:"omit", cache:"no-store", signal:controller.signal
+        });
+      } catch (error) {
+        if (!retry || (error.name !== "AbortError" && error.name !== "TypeError")) throw error;
+      }
+      if (response?.ok) return await response.json();
+      if (!retry || (response && ![502, 503, 504].includes(response.status)))
+        throw new Error("Model manifest unavailable");
+    } finally { clearTimeout(timeout); }
+    await new Promise(resolve => setTimeout(resolve, 250));
+    return readManifest(manifest, false);
+  }
+
   async function load(profile) {
     if (occupied) throw cleanupFailure || new Error("Dispose the previous model before loading another");
     const PIXI = window.PIXI;
@@ -88,16 +108,7 @@
     try {
       const manifest = new URL(profile.manifestUrl, window.location.href);
       if (manifest.origin !== window.location.origin) throw new Error("Non-local model");
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      let settings;
-      try {
-        const response = await fetch(manifest.href, {
-          mode:"same-origin", credentials:"omit", cache:"no-store", signal:controller.signal
-        });
-        if (!response.ok) throw new Error("Model manifest unavailable");
-        settings = await response.json();
-      } finally { clearTimeout(timeout); }
+      const settings = await readManifest(manifest, profile.id === "next");
       const refs = settings?.FileReferences;
       if (settings?.Version !== 3 || !refs || !Array.isArray(refs.Textures) ||
           !refs.Textures.length || refs.Textures.length > 64)

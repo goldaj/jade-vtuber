@@ -59,7 +59,7 @@ class Container extends DisplayObject {
   destroy(options) { if (options?.children) this.children.slice().forEach(child => child.destroy?.(options)); super.destroy(); }
 }
 
-async function client({hidden = false, reactions = false, random = Math.random} = {}) {
+async function client({hidden = false, reactions = false, random = Math.random, motionLoad} = {}) {
   const target = new Element(); target.clientWidth = 390; target.clientHeight = 690;
   const room = new Element(); room.dataset = {room:"bedroom"};
   const shell = new Element(); shell.dataset.view = "profile";
@@ -132,6 +132,7 @@ async function client({hidden = false, reactions = false, random = Math.random} 
       motionManager:Object.assign(new EventEmitter(), {
       }),
     });
+    if (motionLoad) model.internalModel.motionManager.loadMotion = motionLoad;
     model.shakeParameters = new Map();
     model.parameters = new Map();
     model.addedParameters = new Map();
@@ -181,6 +182,19 @@ async function client({hidden = false, reactions = false, random = Math.random} 
 }
 
 (async () => {
+  const firstWarmup = deferred(), secondWarmup = deferred(), warmups = [];
+  const warmupClient = await client({motionLoad(group,index) {
+    warmups.push([group,index]);
+    return warmups.length === 1 ? firstWarmup.promise : secondWarmup.promise;
+  }});
+  assert.equal(warmupClient.avatar.state.status,"ready","pending motions cannot delay the r21");
+  assert.deepEqual(warmups,[["Neutral",0]]);
+  firstWarmup.resolve(); await flush();
+  assert.deepEqual(warmups,[["Neutral",0],["Neutral",1]],"only one warm-up request runs at a time");
+  assert.equal(await warmupClient.avatar.selectModel("candidate"),true);
+  secondWarmup.resolve(); await flush();
+  assert.equal(warmups.length,2,"a disposed avatar cannot start another warm-up");
+
   const a = await client();
   assert.equal(a.avatar.state.status,"ready");
   assert.equal(a.avatar.state.modelId,"next");

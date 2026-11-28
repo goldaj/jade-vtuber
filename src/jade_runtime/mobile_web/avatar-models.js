@@ -114,29 +114,38 @@
   renderOptions();
   syncState();
 
-  const ready = (async () => {
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 5000);
-    try {
-      const response = await fetch("/assets/avatar-models.json", {
-        mode:"same-origin", credentials:"omit", cache:"no-store", signal:controller.signal
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const validProfiles = validate(data);
-        if (validProfiles) {
-          profiles = validProfiles;
-          defaultId = data.defaultId;
-        }
+  async function fetchCatalogue() {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      // A brief mobile connection failure should not select the fallback for the whole page.
+      if (attempt > 0) await new Promise(resolve => window.setTimeout(resolve, 250));
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 5000);
+      try {
+        const response = await fetch("/assets/avatar-models.json", {
+          mode:"same-origin", credentials:"omit", cache:"no-store", signal:controller.signal
+        });
+        if (response.ok) return await response.json();
+        if (![502, 503, 504].includes(response.status)) return null;
+      } catch (error) {
+        if (!controller.signal.aborted && !["AbortError", "TypeError"].includes(error?.name))
+          return null;
+      } finally {
+        window.clearTimeout(timeout);
       }
-    } catch (_) {
-      profiles = fallback;
-    } finally {
-      window.clearTimeout(timeout);
-      loaded = true;
-      renderOptions();
-      syncState();
     }
+    return null;
+  }
+
+  const ready = (async () => {
+    const data = await fetchCatalogue();
+    const validProfiles = validate(data);
+    if (validProfiles) {
+      profiles = validProfiles;
+      defaultId = data.defaultId;
+    }
+    loaded = true;
+    renderOptions();
+    syncState();
     return profiles;
   })();
   window.JadeModelCatalog = Object.freeze({ready, get defaultId(){

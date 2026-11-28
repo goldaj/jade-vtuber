@@ -197,7 +197,18 @@
   }
 
   function loadMotion(group, index) {
-    return model?.internalModel?.motionManager?.loadMotion?.(group, index)?.catch?.(() => null);
+    try { return model?.internalModel?.motionManager?.loadMotion?.(group, index)?.catch?.(() => null); }
+    catch (_) { return null; } // Optional motion failures must leave the model visible.
+  }
+
+  async function warmReplyMotions(mounted) {
+    // Leave capacity for the scene, chat and a second device on the gateway.
+    for (const group of Object.values(R21_MOTIONS)) {
+      for (const index of [0, 1]) {
+        if (model !== mounted) return;
+        await loadMotion(group, index);
+      }
+    }
   }
 
   function canShake() {
@@ -1073,14 +1084,8 @@
     if (profile.id === "next") releaseMotionBindings = bindR21MotionPlayback(next.internalModel, profile.idleMotion);
     if (profile.idleMotion) playMotion(profile.idleMotion, 0,
       profile.id === "next" ? window.PIXI?.live2d?.MotionPriority?.IDLE ?? 1 : undefined);
-    if (profile.id === "next") {
-      // Warm the reply clips without holding up model display or audio.
-      for (const group of Object.values(R21_MOTIONS)) {
-        loadMotion(group, 0);
-        loadMotion(group, 1);
-      }
-    }
     syncRenderVisibility();
+    if (profile.id === "next") void warmReplyMotions(next);
   }
 
   async function switchTo(profile, version, recovering = false) {
