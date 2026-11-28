@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Callable
 
-from .live_voice import LIVE_DELIVERY_PROMPT, LIVE_VOICE_STYLE_PROMPTS, LiveVoice
+from .live_voice import FRIPONNE_PACE_PROMPT, LIVE_DELIVERY_PROMPT, LIVE_VOICE_STYLE_PROMPTS, LiveVoice
 from .discord_config import is_discord_enabled
 
 
@@ -169,7 +169,8 @@ class LiveConfig:
         sections = [instructions] if instructions else []
         if self.voice_style:
             sections.append(f"Direction vocale\n{LIVE_VOICE_STYLE_PROMPTS[self.voice_style]}")
-        sections.append(f"Jeu et débit\n{LIVE_DELIVERY_PROMPT}")
+        delivery = FRIPONNE_PACE_PROMPT if self.voice_style == "friponne" else LIVE_DELIVERY_PROMPT
+        sections.append(f"Jeu et débit\n{delivery}")
         session["instructions"] = "\n\n".join(sections)
         if len(session["instructions"].encode("utf-8")) > 16384:
             raise ValueError("Live instructions and vocal delivery exceed the conservative instruction budget")

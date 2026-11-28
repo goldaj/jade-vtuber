@@ -1,3 +1,8 @@
+## 2026-11-28 — Débit rapide de Friponne dans GPT-Live
+
+- Sur mobile et dans Discord Live, la direction de Friponne demande désormais de parler le plus vite possible du premier au dernier mot, pour chaque réponse. Les consignes de ralentissement, de pause obligatoire et d’articulation sortent de ce profil. Le même débit s’applique aux résultats des outils. [Passation et recette](handoffs/2026-11-28-codex-friponne-debit-rapide.md)
+- Le prompt d’origine indique que Jade parle vite en permanence et joue ses différentes intentions par la voix. [Personnalité de Jade](../../prompt_chat.txt)
+
 ## 2026-11-27 — Nettoyage du dépôt après sauvegarde de develop
 
 - `main@e5dd826` contient l’arbre exact de `develop@56eb108`, vérifié avant le nettoyage. Les références de branches et leurs assets Git LFS ont été sauvegardés avant le retrait des branches temporaires.
