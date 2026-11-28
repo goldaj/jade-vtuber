@@ -63,3 +63,12 @@ Extraits du chat accessible les 27 et 28 novembre 2026, avec rôles. Les heures 
 - **Assistant** (synthèse) · Déploie l’essai sur mobile et Discord Live avec une vitesse cible de ×1,10 et un retour progressif vers ×1 quand le tampon baisse.
 - **Utilisateur** (verbatim) · « non c'est nul, on retire tout. La voix est trop modifée finalement, et en plus le fait de repasser de x1.1 à x1 ponctuellement c'est juste horrible »
 - **Assistant** (synthèse) · Retire le traitement audio de l’essai et restaure la lecture précédente de Friponne sur mobile et Discord Live. [Passation](../../operations/handoffs/2026-11-28-codex-friponne-tempo-live.md#retrait-après-écoute)
+
+## Variante Friponne rapide le 28 novembre 2026
+
+- **Utilisateur** (synthèse) · Demande d’explorer d’autres façons d’obtenir un débit rapide sans les défauts de la lecture accélérée.
+- **Assistant** (synthèse) · Propose plusieurs pistes, dont une variante dont la description fixe le débit dès la création.
+- **Utilisateur** (verbatim) · « on va essayer la 4 dans lpayground déjà »
+- **Assistant** (synthèse) · Crée et enregistre Jade H - Friponne rapide à partir de la description de Friponne et prépare une réplique en français dans le Playground Live.
+- **Utilisateur** (verbatim) · « ok c'est pas mal, partons sur ça. Si on garde en plus tous les éléments de demande de vitesse qu'on a mis dans les autres prompts ça pourrait suffire. Prends cette nouvelle version de Friponne rapide et mets là sur develop »
+- **Assistant** (synthèse) · Reprend la description de la variante dans le profil Live commun et conserve les consignes de débit déjà validées. [Passation](../../operations/handoffs/2026-11-28-codex-friponne-rapide-live.md)

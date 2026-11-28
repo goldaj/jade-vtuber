@@ -62,7 +62,7 @@ Le r21 mobile joue les dix-huit mouvements d’intention. Son raccordement autom
 
 ## 9. Voix et intonations
 
-Sur mobile et Discord en GPT-Live, Jade suit les consignes de prosodie associées à la session. Le propriétaire a choisi **Friponne** pour son installation. Un nouveau profil Live utilise Brise par défaut. Le chemin vocal classique utilise `shimmer` à 1,25×, avec pitch +2 demi-tons si FFmpeg dispose de Rubber Band.
+Sur mobile et Discord en GPT-Live, Jade suit les consignes de prosodie associées à la session. Le propriétaire a choisi **Friponne rapide** pour son installation. Un nouveau profil Live utilise Brise par défaut. Le chemin vocal classique utilise `shimmer` à 1,25×, avec pitch +2 demi-tons si FFmpeg dispose de Rubber Band.
 
 Le dialogue classique produit une intention avant le texte, enlevée avant l’affichage, la voix et la mémorisation. L’intention aide le moteur de synthèse à jouer le ton. Écouter les répliques reste la façon de comparer le rendu effectif de chaque moteur.
 

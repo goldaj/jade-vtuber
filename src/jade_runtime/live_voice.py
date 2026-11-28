@@ -38,15 +38,16 @@ PETILLANTE_SESSION_PROMPT = (
     "discrètes et une énergie crédible sur une conversation entière."
 )
 
-# Friponne's voice design, with delivery paced separately at session startup.
+# The saved Friponne rapide design, followed by the shared delivery prompt at session startup.
 FRIPONNE_SESSION_PROMPT = (
     "Neutral accent. approximately 20s. feminine voice. bright timbre. smooth vocal texture. "
-    "very high pitch. moderate loudness. fast speech rate. high distinctiveness.\n"
+    "very high pitch. moderate loudness. very fast, steady speech rate. high distinctiveness.\n"
     "Jeune femme adulte, locutrice native du français de France. Accent naturel de Paris et de sa région. "
     "Registre parlé très aigu, timbre fin, brillant et sonore. Le sourire donne aux voyelles un éclat "
-    "légèrement nasal. Elle parle tout près du micro, à volume ordinaire. Dans le feu du jeu, elle part "
-    "vite, rebondit vers l’aigu sur le mot qui la surprend et lance ses répliques avec malice. "
-    "Même dans un aparté, sa voix reste haute et sa diction francilienne."
+    "légèrement nasal. Elle parle tout près du micro, à volume ordinaire. Son débit de base est très rapide "
+    "et régulier dès la première syllabe. Les syllabes sont courtes et liées, avec très peu d’espace entre "
+    "les groupes de mots. Elle garde le même débit jusqu’au dernier mot, même dans un aparté. Elle rebondit "
+    "vers l’aigu sur le mot qui la surprend et garde sa malice dans la mélodie de la voix."
 )
 
 FRIPONNE_PACE_PROMPT = (
