@@ -16,6 +16,7 @@ from src.jade_runtime.documents import DocumentService
 from src.jade_runtime.intent_engine import INTENTS, voice_direction
 from src.jade_runtime.live_bridge import LiveConversationBridge, LiveJournalConflict
 from src.jade_runtime.live_provider import LiveProviderError
+from src.jade_runtime.live_voice import FRIPONNE_PACE_PROMPT
 from src.jade_runtime.memory_service import MemoryService
 from src.jade_runtime.memory_store import MemoryStore
 from src.jade_runtime.messages import Incoming
@@ -279,6 +280,28 @@ class LiveBridgeTests(unittest.IsolatedAsyncioTestCase):
                          list(labels))
         self.assertFalse(any(event["type"] == "live_intent" for event in self.published))
         self.assertEqual(self.classic, [])
+
+    async def test_friponne_keeps_rapid_delivery_for_delegated_sad_and_neutral_replies(self):
+        self.bridge.voice_style = "friponne"
+        for index, intent in enumerate(("sad", "neutral")):
+            with self.subTest(intent=intent):
+                offset = index * 3000
+                ident = f"friponne_{intent}"
+                spoken = f"Voici le résultat numéro {index + 1}."
+                self.model.answer = f"[INTENT:{intent}] {spoken}"
+                await self.transcript("user", f"Vérifie le résultat numéro {index + 1}.", offset, offset + 500)
+                await self.delegation(ident, offset + 500)
+                await self.transcript("assistant", spoken, offset + 800, offset + 1500)
+                delivered = [event for event in self.sent if event.get("delegation_id") == ident]
+                directions = [event["content"] for event in delivered
+                              if event["type"] == "session.thinking.append" and event["content"]]
+                self.assertEqual(len(directions), 1)
+                self.assertIn(FRIPONNE_PACE_PROMPT, directions[0])
+                self.assertNotIn("slower", directions[0])
+                self.assertEqual([event["content"] for event in delivered
+                                  if event["type"] == "session.commentary.append"], [spoken])
+        self.assertEqual([event["intent"] for event in self.published if event["type"] == "live_delegation"],
+                         ["sad", "neutral"])
 
     async def test_native_opening_moods_do_not_depend_on_transcript_chunking(self):
         cases = (

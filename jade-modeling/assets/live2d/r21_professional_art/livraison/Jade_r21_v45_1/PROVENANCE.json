@@ -7,12 +7,17 @@
     "lecture": "VTube Studio 1.35.10",
     "courbes_editables": "PSD2Live"
   },
-  "convention": "Les chemins du champ origine décrivent la provenance dans le projet de production. Les membres de la copie Git sont recensés dans SHA256SUMS.txt.",
+  "convention": "Les chemins du champ origine décrivent la provenance du paquet VTube Studio, de ses sources et du complément mobile. Le catalogue SHA256SUMS.txt recense les membres de la livraison courante.",
   "provenance": [
     {
-      "fichiers": "Jade_r21_v45/ (hors profil .vtube.json)",
+      "fichiers": "Fichiers du manifeste VTube Studio Jade_r21_v45.model3.json et ressources référencées",
       "origine": "vts_export/v45_1/Jade_r21_v45",
       "detail": "Rig natif de parole v43, gestes v45 et page d’atlas des iris v45.1. Copie intégrale des 24 fichiers de cet export."
+    },
+    {
+      "fichiers": "Jade_r21_v45/Jade_r21_mobile.model3.json, ses ressources mobile/ et Edition/mobile-intentions/",
+      "origine": "Export mobile du visage continu v49.1 et courbes PSD2Live des neuf intentions",
+      "detail": "Le manifeste mobile associe le MOC3 et les textures actifs aux dix-huit gestes. Le catalogue recense aussi les jalons compilés conservés dans cette livraison."
     },
     {
       "fichier": "Jade_r21_v45/Jade_r21_v45.vtube.json",

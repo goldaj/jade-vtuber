@@ -20,8 +20,9 @@ import sqlite3
 
 from .context_selection import select_context
 from .dialogue import Dialogue
-from .intent_engine import IntentStreamParser, classify_live_intent, voice_direction
+from .intent_engine import IntentStreamParser, classify_live_intent, normalize_intent, voice_direction
 from .live_provider import LiveProviderError
+from .live_voice import FRIPONNE_PACE_PROMPT
 from .messages import Incoming, Reply
 from .memory_store import identity_of
 from .memory_service import _scope
@@ -585,7 +586,7 @@ class LiveConversationBridge:
     def __init__(self, runtime, *, journal_path, publish=None,
                  reserve_delegation=None, settle_delegation=None,
                  fragment_wait_seconds=1.25, delegation_timeout=45.0,
-                 close_timeout=2.0):
+                 close_timeout=2.0, voice_style=""):
         if not isinstance(runtime.dialogue, Dialogue):
             raise ValueError("Live requires the shared Jade Dialogue")
         if not 0 <= fragment_wait_seconds <= 5 or not 1 <= delegation_timeout <= 120:
@@ -598,6 +599,7 @@ class LiveConversationBridge:
         self.fragment_wait_seconds = float(fragment_wait_seconds)
         self.delegation_timeout = float(delegation_timeout)
         self.close_timeout = float(close_timeout)
+        self.voice_style = voice_style
         self.sessions = {}
         self._session_lock = asyncio.Lock()
         self._recover_lock = asyncio.Lock()
@@ -951,7 +953,13 @@ class LiveConversationBridge:
             if state.valid():
                 await self._publish(state, {"type": "live_delegation", "delegation_id": did,
                     "status": "completed", "intent": reply.intent, "attachments": result["attachments"]})
-                direction = voice_direction(reply.intent)
+                if self.voice_style == "friponne":
+                    intent = normalize_intent(reply.intent)
+                    direction = FRIPONNE_PACE_PROMPT
+                    if intent != "neutral":
+                        direction += f" Joue l’intention « {intent} » en gardant ce débit."
+                else:
+                    direction = voice_direction(reply.intent)
                 if reply.text and direction:
                     try:
                         if not await asyncio.wait_for(self._send(

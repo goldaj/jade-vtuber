@@ -23,7 +23,7 @@
 
 ## Limites importantes
 
-- **Recette avant merge :** le profil Run exige develop par défaut. Pour tester cette branche isolée sans l'intégrer, sélectionner localement feat/jade-pycharm-remote-control-20261123 dans PyCharm, définir temporairement JADE_PYCHARM_TEST_BRANCH=feat/jade-pycharm-remote-control-20261123 dans l'environnement Run puis lancer normalement. Le bouton « Mettre à jour develop » reste désactivé sur cette branche, mais le redémarrage et les logs peuvent être éprouvés. Supprimer la variable après la recette et revenir sur develop. Ne jamais lancer deux instances simultanément.
+- **Recette.** Le profil Run du poste cible `develop`. Tester le redémarrage et les logs dans ce Run. Relever le SHA affiché après la mise à jour et le PID du moteur. Une commande de mise à jour du code et le redémarrage de Jade ont des résultats distincts.
 - Le contrôleur ne démarre pas Jade lui-même ; il exige la session Run PyCharm. Cliquer sur le raccourci ne crée aucune connexion IA/Discord.
 - Le filtre de secrets sur les logs est imparfait : l'accès doit rester privé et les journaux ne doivent jamais être publiés.
 - Une mise à jour qui change profondément les dépendances Python, les assets ou le schéma de données peut encore exiger une intervention locale si la synchronisation échoue. La procédure ne promet pas de rollback automatique.

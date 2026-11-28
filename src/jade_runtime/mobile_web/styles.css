@@ -29,9 +29,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
   background:linear-gradient(100deg,#23203a,#171527);
 }
 .mark {display:flex;align-items:center;gap:10px; min-width:0}
-.mark-gem { width:32px; height:32px; border-radius:12px; display:grid; place-items:center;
-  color:#f1e1ff; background:linear-gradient(145deg,#7060a3,#3d325e); font-size:23px;
-  box-shadow:0 0 14px rgba(156,121,235,.24); }
 .mark b {display:block;font-size:1.12rem;line-height:1.1;letter-spacing:.025em}
 .mark small {display:block;font-size:.66rem;color:#b0a5cc;line-height:1.5;letter-spacing:.06em}
 .top-actions {margin-left:auto;display:flex;align-items:center;gap:12px}
@@ -63,16 +60,12 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
 .room-bottom {position:absolute;left:0;right:0;bottom:0;z-index:3;pointer-events:none;
   display:flex;justify-content:space-between;gap:14px;align-items:end;padding:12px 16px;
   background:linear-gradient(transparent,rgba(17,13,32,.53))}
-.character-label {padding:7px 11px;font-size:.93rem;font-weight:700;border:1px solid #d6bcf13b;
-  border-radius:12px;background:#241d38ab}
-.tiny-star {color:#e2b2fb}.label-small{font-weight:400;font-size:.73rem;color:#cab9dc}
 .mood-line{font-size:.72rem;color:#edd6ff;text-align:right;text-shadow:0 1px 8px #151321;max-width:53%}
 .conversation {grid-row:3; min-height:0;display:flex;flex-direction:column;
   background:linear-gradient(180deg,#231d36,#191628);border-top:1px solid #8e76a94d;
   box-shadow:0 -12px 25px #17112955;z-index:4}
 .chat-heading{display:flex;align-items:center;gap:6px;padding:10px 15px;font-size:.75rem;
   font-weight:700;color:#e6daf8;border-bottom:1px solid var(--line)}
-.chat-pulse{display:inline-block;width:7px;height:7px;background:#b5a2d7;border-radius:100%;margin-right:5px}
 .chat-tools{margin-left:auto;display:flex;gap:13px}
 .text-button {border:0;color:#ccbce9;background:transparent;font-size:.72rem;padding:3px 0}
 .identity-panel{border-bottom:1px solid var(--line);padding:8px 15px;
@@ -92,7 +85,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
 .identity-result{overflow-wrap:anywhere;white-space:pre-wrap}
 .messages{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
   padding:12px 15px;scrollbar-width:thin;scrollbar-color:#706183 transparent}
-.welcome{align-self:center;text-align:center;color:#bcaeca;font-size:.77rem;max-width:75%;padding:9px 0}
 .bubble{max-width:84%;font-size:.88rem;line-height:1.44;padding:10px 13px;white-space:pre-wrap;
   overflow-wrap:anywhere;border:1px solid #ffffff0f}
 .bubble.me{align-self:end;background:#5b4777;border-radius:16px 16px 4px 16px}
@@ -173,38 +165,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible {
   margin: .75rem 0;
 }
 .deployment-actions button { flex: 1 1 11rem; min-height: 2.8rem; }
-.deployment-console-head {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .5rem;
-  align-items: center;
-  margin-top: 1rem;
-}
-.deployment-console-head h3 { margin: 0; flex: 1 1 100%; font-size: 1rem; }
-.deployment-console-head select,
-.deployment-console-head button { flex: 1 1 auto; max-width: 100%; }
-.deployment-console {
-  display: block;
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 10rem;
-  height: min(42dvh, 24rem);
-  padding: .85rem;
-  overflow: auto;
-  color: #d8e8d9;
-  background: #13241b;
-  border: 1px solid rgba(130, 185, 148, .35);
-  border-radius: .65rem;
-  font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  overscroll-behavior: contain;
-}
-
-
 /* Owner-only local administration console: compact and readable on Android. */
-.deployment-log-heading{display:flex;justify-content:space-between;align-items:center;gap:.65rem;margin-top:1rem}
-.deployment-log-heading h3{font-size:1rem;margin:0}
 .deployment-log-controls{display:flex;align-items:center;flex-wrap:wrap;gap:.6rem;font-size:.83rem}
 .deployment-log-controls select{max-width:13rem;width:auto;min-height:2.2rem}
 .deployment-log-controls label{display:inline-flex;align-items:center;gap:.35rem}

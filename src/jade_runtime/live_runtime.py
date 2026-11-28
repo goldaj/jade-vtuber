@@ -38,7 +38,7 @@ async def create_mobile_live(runtime, settings, *, provider=None):
         manager.bridge = LiveConversationBridge(
             runtime, journal_path=Path(config.usage_db_path).with_name("jade-live-journal.sqlite3"),
             publish=manager.publish, reserve_delegation=manager.reserve_delegation,
-            settle_delegation=manager.settle_delegation)
+            settle_delegation=manager.settle_delegation, voice_style=config.voice_style)
     except (OSError, sqlite3.Error):
         manager._storage_failed = True
         LOG.error("Live journal unavailable; classic mobile remains available")

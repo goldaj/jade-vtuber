@@ -1,6 +1,6 @@
-# Statut de publication vérifié le 16 novembre 2026
+# Statut de publication vérifié le 27 novembre 2026
 
-Le dépôt GitHub [`goldaj/jade-vtuber`](https://github.com/goldaj/jade-vtuber) a été **observé comme public** (`private=false`, branche par défaut `main`). Ceci est un constat factuel, **pas** une attestation que l'historique, les secrets, les archives LFS ou les licences sont correctement assainis.
+Le dépôt GitHub `goldaj/jade-vtuber` est public et sa branche par défaut est `main`. Le 27 novembre, `main@e5dd826` a reçu l’état de `develop@56eb108` comme point de retour avant nettoyage. Le projet conserve les audits de provenance et de confidentialité ainsi que l’outil d’export isolé. [Dépôt GitHub](https://github.com/goldaj/jade-vtuber) · [Instantané](https://github.com/goldaj/jade-vtuber/commit/e5dd826)
 
 ## Risques et contrôles à ne pas ignorer
 
@@ -10,4 +10,4 @@ Le dépôt GitHub [`goldaj/jade-vtuber`](https://github.com/goldaj/jade-vtuber) 
 4. Si un secret réellement exposé est identifié, le faire révoquer et renouveler hors Git ; ne pas supposer qu'un simple nettoyage de branche suffit.
 5. Ne pas transformer le snapshot de readiness daté du 28 octobre (`04-RELEASE-GATES.json`) en état courant ; il correspond à un ancien plan sur un autre dépôt.
 
-L'outillage de prévisualisation reste distinct d'une publication ou de sa validation. Aucun changement de visibilité n'a été demandé ni effectué par le rangement documentaire.
+L’outillage de prévisualisation produit un export local selon sa liste de fichiers. Examiner en particulier l’historique, les ressources Git LFS et les droits de redistribution pour toute utilisation de cet export.

@@ -1,4 +1,5 @@
 {
+  "scope": "Historical snapshot of the initial local asset selection. ASSET_MANIFEST.json covers the verified selection. The delivery SHA256SUMS.txt covers the complete r21 delivery.",
   "selection_policy": "Only the most recent relevant editable sources, current candidate/native baseline, latest valid installed runtime, current documentation and required tool dependencies. Original local archives are unchanged.",
   "selected_files": 207,
   "selected_bytes": 467683416,

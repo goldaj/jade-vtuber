@@ -1,8 +1,6 @@
-# Accès au chat Jade depuis le téléphone, sans exposition publique
+# Accès historique au chat HTTP local sur le téléphone
 
-**État : guide de mise en place, pas de tunnel activé automatiquement.**
-Cette procédure se fait sur le **PC qui exécute Jade**, connecté à un
-compte Tailscale privé, et sur le téléphone connecté au même tailnet.
+Cette procédure historique concerne l’interface HTTP de diagnostic sur `8765`. Le parcours mobile actuel utilise la **PWA privée sur 8766** avec identité Tailscale et jeton mobile. Installer son accès Serve depuis le manuel. [Installation mobile actuelle](../../handbook/INSTALLATION.md)
 
 ## 1. Vérifier Jade localement (sans API facturée)
 

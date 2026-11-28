@@ -277,7 +277,7 @@ Le propriétaire rapporte deux arrêts durant une discussion à plusieurs : reco
 ### REC-035 (ancienne DEV-025) — NEW-17 · Compréhension sémantique des groupes
 
 - **Besoin :** Jade reconnaît destinataire, apartés, changements de sujet, conflits de fils et moments pertinents dans un salon de groupe. **Ne pas recoder** la sélection sociale hybride existante (REC-027 Done).
-- **Conception cible :** enrichir la décision sociale avec une représentation de sujets et des destinataires par conversation autorisée, en privilégiant mentions et adresses directes, indices locaux et classifieur LLM facultatif seulement en cas d'ambiguïté réelle. Conserver budget de classification, silence après initiative ignorée, identité des auteurs et détection de changement d'audience.
+- **Conception cible :** enrichir la décision sociale avec une représentation de sujets et des destinataires par conversation autorisée, en privilégiant mentions et adresses directes, indices locaux et classifieur LLM facultatif seulement en cas d'ambiguïté réelle. Conserver le budget de classification, l’identité des auteurs et la détection de changement d’audience. L’arrivée dans le vocal met à jour la présence.
 - **Acceptation :** (1) phrase adressée à un autre participant ne déclenche pas une réponse indue ; (2) Jade intervient sur question qui lui est réellement adressée, même en discussion animée ; (3) deux sujets parallèles ne se contaminent pas ; (4) aucun polling ou coût en veille, aucun texte/son d'un autre salon révélé ; (5) évolution mesurée sur corpus de dialogues annotés (précision d'adresse, interventions utiles et intempestives, coût).
 - **Tests :** scénarios synthétiques avec mentions, pseudos identiques, apartés et alternance de sujets ; Discord réel si disponible, Twitch reporté selon suspension existante.
 
@@ -310,7 +310,7 @@ Le propriétaire accepte la livraison **telle qu'elle fonctionne**. Les limitati
 
 ## Lot Live mobile intégré sur develop — 26 novembre 2026
 
-Sept suivis passent de DEV vers REC, sans double carte. Ces recettes ne sont pas Done : le code est intégré sur develop, les services réels et le Redmi restent à observer. La sélection de Pétillante le 27/11 transfère DEV-041 vers [REC-052](#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041).
+Sept suivis passent de DEV vers REC, sans double carte. Ces recettes ne sont pas Done : le code est intégré sur develop, les services réels et le Redmi restent à observer. La sélection de Pétillante le 27/11 transfère DEV-041 vers [REC-052](#rec-052--voix-friponne-avec-lavatar-de-jade-ancienne-dev-041).
 
 **Correction produit du 26/11 :** Live mobile activé par défaut, désactivable dans Profil, **sans budget financier mobile ni plafond quotidien**. Les critères initiaux contraires sont remplacés ci-dessous. Le seul seuil financier demandé est mensuel, global toutes API, et décide du moteur Discord : 50 EUR ou 40 EUR si le suivi est incomplet. [Correctif et preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-default-no-budget.md).
 
@@ -490,9 +490,11 @@ Sept suivis passent de DEV vers REC, sans double carte. Ces recettes ne sont pas
 
 **Statut : À valider.** Après [l’essai de Pétillante](../operations/handoffs/2026-11-27-codex-voix-petillante.md), le propriétaire a choisi Friponne lors d’une écoute de 21 secondes dans le Playground OpenAI. Il a ensuite validé son débit légèrement accéléré après une seconde écoute de 25 secondes. L’essai dans l’application doit permettre de juger le nouveau débit, l’accent et le synchronisme avec r21. [Passation Friponne](../operations/handoffs/2026-11-27-codex-voix-friponne.md)
 
+Le 28 novembre, le propriétaire demande à Friponne de parler systématiquement au débit le plus rapide possible, comme lorsqu’il le lui demande directement. [Passation du nouveau débit](../operations/handoffs/2026-11-28-codex-friponne-debit-rapide.md)
+
 - Dans la configuration privée du serveur, associer `JADE_LIVE_VOICE_STYLE=friponne` à l’identifiant de Friponne par `JADE_LIVE_VOICE_ID`. Contrôler l’admission d’une nouvelle session Live par le projet OpenAI de Jade. Reprendre le même identifiant après la fermeture ou le redémarrage.
 - Sur le téléphone, sélectionner Jade r21 et ouvrir le mode Live depuis Accueil. Demander une salutation, une courte répartie, une réaction sérieuse et une réponse plus longue. Observer l’accent français de France, le registre aigu, l’articulation et le mouvement de la bouche au début, pendant et à la fin de la lecture. Refaire une réponse en plein écran.
-- Comparer une même phrase à l’essai initial de Friponne. Écouter la vitesse à l’intérieur des phrases, la syllabe finale et la pause avant une pique. Enchaîner au moins deux tours natifs et un tour délégué dans la même session. Vérifier la différence d’intonation entre une réplique enjouée et une réplique rassurante, les gestes r21 pendant la voix et le retour au neutre après la réponse.
+- Vérifier que Friponne adopte spontanément le débit rapide dès le premier mot d’une salutation et le tient sur une réponse plus longue. Enchaîner au moins deux tours natifs et un tour délégué dans la même session. Comparer le débit à celui d’une réponse obtenue en le demandant à voix haute. Écouter aussi l’intonation enjouée et rassurante et observer les gestes r21 ainsi que le retour au neutre.
 - Vérifier la pause, l’interruption et la reprise. Couper le micro pour fermer le tour et vérifier que la bouche revient au repos lorsque l’audio finit. Si la voix est indisponible, relever le message et le chemin réellement suivi.
 - Lorsque Discord sélectionne le moteur Live, comparer la même réplique sur les deux canaux avec le même casque. Écouter en particulier la clarté des aigus, les consonnes et le naturel des pauses. Le propriétaire a préféré le rendu mobile avant l’amélioration de la conversion PCM de Discord. L’écoute comparative du correctif reste à faire. [Passation du correctif](../operations/handoffs/2026-11-27-codex-rendu-friponne-discord.md) · [Choix du moteur et retour au classique dans REC-051](#rec-051--live-discord-automatique-et-interrupteur-global-ancienne-dev-052)
 

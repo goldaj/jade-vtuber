@@ -4,7 +4,9 @@ Le [plan directeur approuvé](MODEL2D_MASTER_PLAN.md) gouverne la reprise r21 vi
 
 ## Sources actuelles
 
-La [livraison Jade v45.1](assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md) contient le modèle VTube Studio en pied, ses quatorze gestes, le CMO3 natif, l’atelier PSD2Live et les sources KRA/PSD réconciliées.
+La livraison Jade r21 contient le modèle VTube Studio v45.1 en pied et ses quatorze gestes, le profil mobile v49.1 et ses dix-huit gestes, ainsi que les sources Cubism, PSD2Live et KRA/PSD. [Guide de la livraison](assets/live2d/r21_professional_art/livraison/Jade_r21_v45_1/LISEZMOI.md)
+
+Reprendre le mobile depuis [le CMO3 v49.1](assets/live2d/r21_professional_art/working_v005/Jade_r21_v49_1_visage_continu.cmo3) et le profil servi à la PWA. Le paquet r20 reste utilisé par le renderer autonome Windows tant que le raccordement du r21 sur ce poste est suivi dans DEV-001.
 
 ## Jalons antérieurs
 
@@ -21,7 +23,7 @@ récupèrent avec `git lfs pull` ; `git lfs fsck` vérifie les objets locaux.
 | PSD d'interchange du rig | `assets/live2d/r21_professional_art/working_v005/jade_cubism_v005_r21_rig_only_v2.psd` |
 | Maître graphique intact | `assets/live2d/r21_professional_art/master_v4_assets_v1/Jade_r21_master_v3_canvas_3840x4160.png` |
 | Package animé r20 complet à restaurer | `runtime-installed/Jade_professional_r20_idle_complete/` |
-| Politique retenus/exclus | `INVENTORY.json`, avec justification par fichier dans `ASSET_MANIFEST.json` |
+| Tri initial | `INVENTORY.json` pour le relevé historique, `ASSET_MANIFEST.json` pour la sélection suivie |
 
 Les sources KRA/PSD de ces anciens jalons ne sont pas synchronisées avec les derniers ajouts
 plein pied et cheveux du CMO3 r21. Ne pas réimporter aveuglément le PSD dans le
@@ -30,7 +32,7 @@ dernier CMO3 : cela risquerait de réintroduire des éléments anciens. Les fich
 
 Le v31 fournit la référence native du dessin et du rig. Le v32 local en reprend le corps, avec l’atlas recalé, deux textures de masque dédiées et des contrôles d’oreilles. Le v30 et le r02 restent disponibles comme jalons précédents. Les composants source du bas du corps, des épaules, des yeux et de la bouche sont conservés.
 
-## Restaurer le package VTube Studio
+## Restaurer le paquet historique r20
 
 1. Installer VTube Studio séparément et quitter l'application avant la copie.
 2. Récupérer les objets LFS. Vérifier la présence de `Jade.moc3`, des fichiers de
@@ -43,13 +45,13 @@ Le v31 fournit la référence native du dessin et du rig. Le v32 local en repren
    raccourcis, mouvements et réglages du suivi. La calibration du poste peut demander
    un ajustement.
 
-Le package r20 contient notamment les mouvements idle, preuve et perte de suivi,
-les expressions et le réglage de physique. Il sert de sauvegarde de l'animation
-existante ; il n'est pas présenté comme un export final du CMO3 r21 en cours.
+Le paquet r20 contient les mouvements idle, preuve et perte de suivi, les expressions
+et la physique. Pour installer le r21 actuel dans VTube Studio, suivre le guide de
+la livraison r21.
 
 ## Reprendre le rig r21
 
-Ouvrir une **copie de travail** du v32 dans Cubism PRO 5.3.05 et identifier le document actif via Turboism. Ouvrir le fichier avec Cubism si l’ouverture MCP n’est pas disponible pour cette version. PSD2Live sert aux préparations et aux essais isolés. Se reporter au [point de reprise](CONTINUATION.md) pour les annexes, l’état réel du candidat et la prochaine action après feu vert.
+Ouvrir une **copie de travail** de la source correspondant à la cible dans Cubism PRO 5.3.05. Le mobile part du CMO3 v49.1 et VTube Studio du CMO3 v45.1 de la livraison. Identifier le document actif via Turboism. PSD2Live sert aux préparations et aux essais isolés. Le point de reprise du 25 novembre conserve les décisions et les sources de la livraison VTube Studio. [Point de reprise](CONTINUATION.md)
 
 `ASSET_MANIFEST.json` fournit les SHA-256 des octets d'origine ; les pointeurs LFS
 doivent référencer les mêmes SHA-256 et tailles. `DEPENDENCY_CHECK.json` détaille

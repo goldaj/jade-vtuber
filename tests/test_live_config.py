@@ -6,7 +6,8 @@ import unittest
 from src.jade_runtime.discord_live_provider import build_discord_live_config
 from src.jade_runtime.live_config import LiveConfig
 from src.jade_runtime.live_voice import (
-    FRIPONNE_SESSION_PROMPT, JADE_VOICE_PROMPT, LIVE_DELIVERY_PROMPT, PETILLANTE_SESSION_PROMPT,
+    FRIPONNE_PACE_PROMPT, FRIPONNE_SESSION_PROMPT, JADE_VOICE_PROMPT, LIVE_DELIVERY_PROMPT,
+    PETILLANTE_SESSION_PROMPT,
     VOICE_REVIEW_CORPUS,
     LiveVoice, prepare_voice_review,
 )
@@ -145,7 +146,8 @@ class LiveConfigTests(unittest.TestCase):
                 config = LiveConfig.from_env({"JADE_LIVE_VOICE_ID": voice_id, "JADE_LIVE_VOICE_STYLE": style}.get)
                 mobile = config.session_config(instructions=persona)
                 discord = build_discord_live_config(config, instructions=persona)
-                expected = f"{persona}\n\nDirection vocale\n{prompt}\n\nJeu et débit\n{LIVE_DELIVERY_PROMPT}"
+                delivery = FRIPONNE_PACE_PROMPT if style == "friponne" else LIVE_DELIVERY_PROMPT
+                expected = f"{persona}\n\nDirection vocale\n{prompt}\n\nJeu et débit\n{delivery}"
                 for payload in (mobile, discord):
                     self.assertEqual(payload["audio"]["output"], {"voice": {"id": voice_id}})
                     self.assertEqual(payload["instructions"], expected)
@@ -159,6 +161,7 @@ class LiveConfigTests(unittest.TestCase):
                 self.assertTrue(payload["instructions"].startswith(persona))
                 self.assertNotIn(PETILLANTE_SESSION_PROMPT, payload["instructions"])
                 self.assertNotIn(FRIPONNE_SESSION_PROMPT, payload["instructions"])
+                self.assertNotIn(FRIPONNE_PACE_PROMPT, payload["instructions"])
                 self.assertEqual(payload["instructions"].count(LIVE_DELIVERY_PROMPT), 1)
 
     def test_voice_styles_require_a_custom_voice_and_an_explicit_supported_style(self):

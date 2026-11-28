@@ -85,7 +85,7 @@ Le registre de sessions et le journal des opérations restent nécessaires à la
 
 ## Voix et suite Discord
 
-**Friponne** est la voix choisie dans le Playground OpenAI. Renseigner `JADE_LIVE_VOICE_ID` avec l’identifiant privé de Friponne et `JADE_LIVE_VOICE_STYLE=friponne`. À l’ouverture d’une session PWA ou Discord Live, le serveur demande à GPT-Live de conserver l’accent francilien et le timbre aigu tout en enchaînant légèrement plus vite les mots de chaque phrase. Le modèle interprète cette consigne de débit. [Guide de direction vocale GPT-Live](https://developers.openai.com/api/docs/guides/live-prompting#pace)
+**Friponne** est la voix choisie dans le Playground OpenAI. Renseigner `JADE_LIVE_VOICE_ID` avec l’identifiant privé de Friponne et `JADE_LIVE_VOICE_STYLE=friponne`. À l’ouverture d’une session PWA ou Discord Live, le serveur demande à GPT-Live de parler le plus vite possible à chaque réponse, en gardant l’accent francilien et le timbre aigu. La direction des réponses déléguées reprend cette consigne. Le modèle interprète le débit. [Guide de direction vocale GPT-Live](https://developers.openai.com/api/docs/guides/live-prompting#pace)
 
 Le lecteur WebRTC fournit à l’analyseur le signal qui pilote la bouche et la motion de réponse. Une intention visuelle est déduite localement de la transcription d’un tour natif, avec retour au neutre en l’absence d’indices. Le résultat délégué conserve l’intention du dialogue pour l’avatar et transmet une direction de lecture silencieuse. La vérification conjointe du son et du mouvement avec cette voix sur r21 est suivie dans [REC-052](../backlog/02-RECETTE.md#rec-052--voix-friponne-avec-lavatar-de-jade-ancienne-dev-041).
 

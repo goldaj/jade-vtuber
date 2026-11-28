@@ -38,17 +38,24 @@ PETILLANTE_SESSION_PROMPT = (
     "discrètes et une énergie crédible sur une conversation entière."
 )
 
-# Friponne's saved voice description, followed by its session-only pace adjustment.
+# Friponne's voice design, with delivery paced separately at session startup.
 FRIPONNE_SESSION_PROMPT = (
     "Neutral accent. approximately 20s. feminine voice. bright timbre. smooth vocal texture. "
     "very high pitch. moderate loudness. fast speech rate. high distinctiveness.\n"
     "Jeune femme adulte, locutrice native du français de France. Accent naturel de Paris et de sa région. "
     "Registre parlé très aigu, timbre fin, brillant et sonore. Le sourire donne aux voyelles un éclat "
     "légèrement nasal. Elle parle tout près du micro, à volume ordinaire. Dans le feu du jeu, elle part "
-    "vite, rebondit vers l’aigu sur le mot qui la surprend et s’arrête une fraction de seconde avant "
-    "une réplique malicieuse. Même dans un aparté, sa voix reste haute et sa diction francilienne.\n"
-    "Parle un peu plus vite que dans l’essai initial : enchaîne plus vite les mots à l’intérieur "
-    "de chaque phrase. Garde la courte pause avant une pique et articule la dernière syllabe."
+    "vite, rebondit vers l’aigu sur le mot qui la surprend et lance ses répliques avec malice. "
+    "Même dans un aparté, sa voix reste haute et sa diction francilienne."
+)
+
+FRIPONNE_PACE_PROMPT = (
+    "Parle le plus vite possible dès le premier mot et jusqu’au dernier. "
+    "C’est ton débit habituel à chaque réponse, même pour une salutation, un aparté ou une réponse longue. "
+    "Tu vas en mode \"rap god\". "
+    "Enchaîne les mots et les phrases avec très peu de pauses. "
+    "Garde cette vitesse sur toutes tes expressions et intentions. "
+    "Fais passer l’émotion par le timbre, le volume et la mélodie de la voix."
 )
 
 LIVE_VOICE_STYLE_PROMPTS = {

@@ -17,10 +17,10 @@ Les versions de documentation sont **spécifiques à chaque branche** et reflèt
 1. **Une seule Jade, tous les supports simultanément.** Le launcher n'a pas de menu de mode. Utiliser `--all-channels`, pas choisir Discord au détriment de mobile/micro/Twitch. Les flags individuels existent pour le diagnostic et tests uniquement. Aucune priorité fixe par canal.
 2. **Jade décide du prochain tour en attente.** `TurnArbiter` permet un choix LLM sensible au contexte, limité par délais et équité, sans préemption d'une réponse en cours. Garder l'ordre d'un fil, le fallback FIFO, la file bornée et `task_done`.
 3. **Routes privées** : un message mobile/micro/HTTP local ne doit pas être diffusé publiquement via Discord, OBS ou Twitch par simple présence de ces canaux ; respecter l'identité authentifiée du propriétaire.
-4. **Android est une PWA privée** : Tailscale Serve uniquement sur le PC vers loopback `8766`, double protection compte Tailscale + Bearer ; aucun service public, aucune modification du VPS Hyperliquid. SDK Web Live2D propriétaire installé hors Git et compatible avec le modèle r20.
+4. **Android.** PWA via Tailscale Serve et le PC Jade en loopback sur `8766`, avec identité Tailscale et jeton Bearer. Installer le SDK Web Live2D compatible séparément sur D:. Le r21 est le modèle des recettes mobiles. Utiliser les instructions d’installation du manuel.
 5. **Mémoire persistante optionnelle et respect du consentement** : SQLite hors repo, identités transport vérifiées, Core Memories non purgées automatiquement mais effaçables sur demande, curation facultative avec coûts et risques.
 6. **Voix/intention** : préfixe strict `[INTENT:...]` supprimé avant sorties et mémoire, pitch DSP nécessitant FFmpeg/rubberband ; aucune affirmation de prosodie garantie sans écoute.
-7. **Une seule démonstration livrable** : Démo Express Windows sans API et purement simulée. Le vrai rendu Live2D r20 appartient au runtime `src/jade_runtime/avatar_renderer.py`, et non plus à `demo/reelle/`. Ne pas vendre la simulation comme preuve d'IA opérationnelle.
+7. **Démo Express.** Le programme Windows simule le dialogue localement. Le moteur complet lance son renderer Live2D séparément selon le profil.
 
 ## Procédure de travail des agents
 
@@ -34,15 +34,13 @@ Les versions de documentation sont **spécifiques à chaque branche** et reflèt
 8. **Revoir et merger** selon la politique propriétaire : ne pas modifier `main` ni les routes du VPS sans instruction claire. Un connecteur qui n'est pas configuré ne doit pas être masqué pour faire passer le launcher.
 9. **Livrer** une synthèse avec SHA/branche/PR, fichiers et documents mis à jour, tests automatiques vs tests réels, limites ouvertes, dépendances manuelles et risques. **La clôture Done** exige en plus les cinq conditions de la DoD et la mise à jour du statut de la carte ; un compte rendu seul ne suffit pas. Les consignes de chat ne remplacent pas les changements enregistrés dans le dépôt.
 
-## Reprise Codex sur le PC Windows et Android
+## Reprise sur Windows et Android
 
-Avant toute manipulation sur le vrai PC de Goldaj, lire [le guide d'installation PC Android](../history/gpt6-jade/HANDOFF-CODEX-MOBILE-20261115.md), le [launcher](../operations/reference/LAUNCHER-WINDOWS-20261115.md), les [voix](../history/gpt6-jade/HANDOFF-CODEX-VOICE-INTENTS-20261113.md), la [mémoire](../history/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md) et [l'audit transverse](../history/gpt6-jade/AUDIT-TRANSVERSE-20261115.md). Réaliser l'inventaire du volume D:, de la config privée, du SDK/Live2D, des routes Serve et du stockage SQLite avant installation. Ne pas afficher/committer le contenu des secrets. Ne pas annoncer de connexion ou d'animation réussie sur Android sans avoir vu le test.
+Suivre l’installation actuelle et l’état de la branche. Faire l’inventaire du SDK, du paquet r21, de la route Serve et du volume D:. Pour les essais PC, utiliser la configuration Run de PyCharm lorsque le poste en dispose. Les secrets, journaux et données SQLite restent dans les emplacements privés. [Installation](INSTALLATION.md) · [PyCharm](../operations/reference/REMOTE-PYCHARM-CONTROL-20261123.md)
 
-L'utilisateur ne veut pas de longue chaîne de prérequis pour la **démo** : privilégier le programme WinForms simulé pour les visiteurs, et conserver la chaîne technique complète seulement pour le **vrai runtime**.
+## Nettoyage des branches
 
-## Nettoyage des branches historiques
-
-Le connecteur GitHub de cette session ne dispose pas d'action de suppression de référence. **Codex devra supprimer les huit branches déjà ancêtres de develop après revalidation individuelle**, voir [BRANCH_MAINTENANCE.md](BRANCH_MAINTENANCE.md). Ne pas supprimer les trois branches divergentes tant que leur apport unique n'est pas audité et repris ou rejeté. Ne pas créer un clone de travail entier uniquement pour modifier la doc d'une autre branche sans vérifier ses commits.
+Examiner la pointe exacte de chaque référence, les PR et le travail local. Comparer les apports divergents avant retrait et consigner leur emplacement de reprise. `main` est le point de retour quand le propriétaire autorise sa mise à jour. [Maintenance](BRANCH_MAINTENANCE.md)
 
 ## Checklist avant fermeture d'une PR
 
@@ -54,19 +52,11 @@ Le connecteur GitHub de cette session ne dispose pas d'action de suppression de 
 - [ ] Test automatique Windows/Linux et scan secrets, et limites de recette matérielle détaillées
 - [ ] Aucun changement de `main` ou VPS non demandé
 
-## Addendum obligatoire : 14 réactions propres par intention (15/11/2026)
+## Contrats à préserver
 
-Le propriétaire demande maintenant **deux animations Live2D réellement différentes ET deux représentations textuelles par chacune des sept intentions**, sur un modèle **2D**, pas 3D. Sur cette branche, seules deux expressions faciales de substitution et deux libellés PWA ont été codés par intention, avec toggle global et synchronisation PC/mobile. Les **14 motion assets dédiés** et le rig en pied validé ne sont PAS livrés. Codex doit lire la [passation Live2D explicite et sa matrice de statuts](../history/gpt6-jade/LIVE2D-INTENT-ANIMATION-HANDOFF-20261115.md), réaliser le travail artistique/technique qui manque sur une branche indépendante, ne brancher aucun motion ID fictif ou SDK incompatible, effectuer une recette réelle PC + Android, et synchroniser les documentations **effectivement impactées** de cette branche, avec une entrée au journal technique. Ne pas afficher de didascalies sur les canaux publics ni modifier `main` sans accord.
-
-## Passation obligatoire : évolution dialogue (2026-11-15)
-
-Goldaj a validé un prompt exact : **ne pas le réécrire** sans autorisation. Fichier d'exécution `prompt_chat.txt` ; les trois prototypes dans `docs/history/gpt6-jade/PROPOSITIONS-PERSONNALITE-20261115.md` ne sont plus à activer. Garder les intentions `[INTENT:...]` séparées et inchangées. Le code `develop` a reçu `low / 320`, mémoire SQLite v3 des échanges entiers opt-in, 48 messages d'historique, et participation solo 100 % / groupe 20 % sur Discord et 30 % sur Twitch pour les interventions spontanées admissibles, avec contraintes de plateforme.
-
-Avant toute autre modification, lire [la passation technique de ce chantier](../history/gpt6-jade/DIALOGUE-LOW320-HISTORIQUE-PARTICIPATION-20261115.md), examiner les variables privées et contrôler les règles de consentement. Tester la migration d'une base v2 sur copie de sauvegarde, les reprises après redémarrage, l'effacement, les politiques solo/groupe et le coût. Les **deux variantes faciales/textuelles r20 par intention sont codées** ; les **14 motions corporelles originales** restent à créer. Les scénarios de recette sont une activité QA distincte de l'inventaire fonctionnel.
-
-## Passation Codex : sécurité, CI et restauration (15/11/2026)
-
-**Audit de référence** : [revue DevOps develop du 15 novembre 2026](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md). Priorité : garder les checks Ubuntu/Windows bloquants, **ne pas** masquer les erreurs de la suite ni fusionner dans `main` pour contourner un échec. Vérifier l'ordre des changements des agents sur `develop`, le diagnostic des 17 tests en échec et 5 erreurs observés sur le commit initial, le transfert SQLite v3, la conservation des logs privés et la protection GitHub de `develop`. Les documents et l'historique GitHub Actions décrivent les résultats observables, pas un test sur le poste Jade. Après tout changement technique, actualiser le journal technique puis les guides de la branche concernés par ce changement.
+- **Rendu.** Neuf intentions et dix-huit mouvements sur le r21 mobile. La recette vise ce modèle. L’avatar autonome Windows reste dépendant du paquet r20 tant que DEV-001 est ouvert. [État courant](BRANCH_STATE.md)
+- **Dialogue et mémoire.** La personnalité approuvée se trouve dans `prompt_chat.txt`. Le moteur d’intention conserve sa métadonnée hors du texte livré et de la mémoire. Le schéma SQLite v8 permet la lecture globale L1/L2/L3 avec provenance. Les écritures et effacements restent soumis aux droits d’identité. [Contrat mémoire](../operations/handoffs/2026-11-22-jade-global-memory.md)
+- **Vérification.** Exécuter les contrôles adaptés aux changements sur Ubuntu et Windows. Pour les essais matériels, consigner les canaux, la version observée et les preuves de fonctionnement. L’historique DevOps est conservé parmi les audits datés. [Audit d’origine](../history/gpt6-jade/AUDIT-DEVOPS-DEVELOP-20261115.md)
 
 ## Références courantes
 

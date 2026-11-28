@@ -990,7 +990,8 @@ async def create_discord_live(bridge, runtime, settings, spend_policy, *,
     config = settings.live
     try:
         conversation = LiveConversationBridge(runtime,
-            journal_path=Path(config.usage_db_path).with_name("jade-discord-live-journal.sqlite3"))
+            journal_path=Path(config.usage_db_path).with_name("jade-discord-live-journal.sqlite3"),
+            voice_style=config.voice_style)
         adapter = DiscordLiveAdapter(bridge, runtime, config, spend_policy,
             provider or DiscordLiveProvider(settings.api_key,
                 opening_timeout_seconds=config.opening_timeout_seconds,

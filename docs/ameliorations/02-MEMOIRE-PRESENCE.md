@@ -10,12 +10,12 @@
 | MEM-14 | P2 / P | Anticiper récupération L2 à partir de **transcriptions STT provisoires**, sans injecter ni stocker une hypothèse erronée ; revalidation finale et annulation en cas de changement d'interlocuteur. |
 | MEM-15 | P2 / E | Qualité de la **curation asynchrone** : pertinence des Core, doublons sémantiques, contradictions, coûts, surcharge, possibilité de curation par lots, sans retarder la parole. |
 | MEM-16 | P2 / E | Commandes personnelles de **consultation, correction ciblée, export, déliaison et effacement** ; révoquer les caches, clarifier les archives déjà sauvegardées et les journaux séparés de SQLite. |
-| MEM-17 | P3 / D | Éventuelle mémoire autobiographique globale de Jade partageable publiquement, uniquement après classification des événements, politique de visibilité et accord explicite ; l'actuel core_self privé ne devient jamais public par défaut. |
 
-**Normalisation et récupération structurée :** la sélection pertinente et le rappel sécurisé sont désormais dans [DEV-022](../backlog/01-DEVELOPPEMENT.md), le cache sensible à la présence dans [DEV-023](../backlog/01-DEVELOPPEMENT.md). Les données structurées et la provenance restent traitées dans [10-NORMALISATION-DONNEES-MEMOIRE.md](10-NORMALISATION-DONNEES-MEMOIRE.md) ; la qualité de la curation asynchrone demeure une proposition distincte (MEM-15).
 
-## Invariants de sécurité
+La sélection de souvenirs est suivie en REC-032 et le cache de présence en REC-033. La lecture globale de l’autobiographie, anciennement envisagée dans MEM-17, est intégrée à la consultation L1/L2/L3. [Recettes](../backlog/02-RECETTE.md) · [Mémoire globale](../operations/handoffs/2026-11-22-jade-global-memory.md)
 
-La **présence n'est ni un consentement à mémoriser, ni une permission de divulgation**. On peut préparer un cache autorisé pour une identité déjà opt-in ; pour un utilisateur non opt-in, aucune récupération de souvenirs personnels ni activation mémoire automatique. Les données de tiers ne sont pas exposées à Goldaj simplement parce qu'il utilise l'application privée.
+## Présence et droits de mémoire
+
+La présence et la liaison des comptes donnent des repères aux parcours d’écriture et à la reprise d’une session. La consultation globale permet à Jade de rappeler ses souvenirs avec leur origine, y compris sur les canaux publics. Les futures optimisations de cache doivent préserver les contrôles d’inscription, d’écriture et de suppression.
 
 **Sources :** [mémoire Codex](../history/gpt6-jade/HANDOFF-CODEX-MEMORY-20261115.md), [spécification mémoire](../history/gpt6-jade/PLAN-MEMOIRE-PERSISTANTE-IDENTITES-CORE-20261115.md) (historique, état initial périmé), [audit transverse](../history/gpt6-jade/AUDIT-TRANSVERSE-20261115.md), [conversation unifiée](../history/gpt6-jade/IDEE-CONVERSATION-UNIFIEE-20261115.md), code memory_store.py / memory_service.py, conversation du 16/11/2026.

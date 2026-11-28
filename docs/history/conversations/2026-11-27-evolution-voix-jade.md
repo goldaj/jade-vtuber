@@ -1,6 +1,6 @@
 # Évolution de la voix de Jade
 
-Extraits du chat accessible le 27 novembre 2026, avec rôles. Les heures individuelles et les enregistrements ne sont pas repris. Les réponses de l’assistant sont résumées. Les identifiants du projet et des voix, les liens privés et les résultats bruts des outils sont exclus.
+Extraits du chat accessible les 27 et 28 novembre 2026, avec rôles. Les heures individuelles et les enregistrements ne sont pas repris. Les réponses de l’assistant sont résumées. Les identifiants du projet et des voix, les liens privés et les résultats bruts des outils sont exclus.
 
 - **Utilisateur** · Demande une voix GPT-Live créée à partir d’un prompt décrivant Jade, plusieurs essais ensemble et le développement après le choix.
 - **Assistant** · Confirme le chemin de création OpenAI à partir d’une description et propose trois registres sur une même base vocale française.
@@ -39,3 +39,12 @@ Extraits du chat accessible le 27 novembre 2026, avec rôles. Les heures individ
 > 2e problème : le micro de jade saccade régulièrement sur discord, alors qu'il ne coupe pas du tout sur l'appli mobile. Il faut corriger ça, aussi.
 
 - **Assistant** (synthèse) · Vérifie que la coupure du micro laisse finir le même flux WebRTC sur mobile. Retrouve deux causes de saccades dans le traitement de Discord Live et les reproduit hors réseau. [Passation](../../operations/handoffs/2026-11-27-codex-saccades-discord-live.md)
+
+## Débit spontané de Friponne le 28 novembre 2026
+
+- **Utilisateur** (verbatim) · « il faut dire à jade de parler systématiquement beaucoup plus vite »
+- **Utilisateur** (verbatim) · « Quand je lui demande d'aller le plus vite possible, elle arrive à peine à avoir une voix raisonnablement rapide. Par contre il faut que je lui dise, elle ne le fait pas naturellement »
+- **Utilisateur** (verbatim) · « oui redonne moi le nouveau prompt ici, je vais checker aussi. On retire tout ce qui est "articule" etc, on veut que ça soit fast »
+- **Utilisateur** (synthèse) · Retient la formulation « rap god » et demande un texte valable pour toutes les expressions et intentions, y compris les futures.
+- **Utilisateur** (verbatim) · « ok fait ça, corrige partout où il le faut. Rajoute aussi cette consigne dans le prompt d'origine de Jade, comme quoi elle parle toujours vite. Puis push sur develop tes correctifs »
+- **Assistant** (synthèse) · Reporte le débit rapide dans le prompt d’origine et adapte la direction de Friponne en GPT-Live, y compris pour les résultats d’outils. La consigne validée fixe le débit le plus rapide possible comme rythme habituel. [Consigne et passation](../../operations/handoffs/2026-11-28-codex-friponne-debit-rapide.md)

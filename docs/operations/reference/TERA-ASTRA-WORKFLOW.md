@@ -1,6 +1,6 @@
 # Jade — Répartition Tera 6.1 / Astra 6.1 (directive du propriétaire)
 
-**Décision du 29 octobre 2026 — applicable aux prochaines reprises Codex.**
+Document historique du 29 octobre 2026. Les choix de modèle assistant décrivent l’organisation en place à cette date. Les consignes de la mission et AGENTS.md donnent le cadre courant. [Contrat de collaboration](../AGENT_COORDINATION.md)
 Cette directive encadre le **choix du modèle assistant pour effectuer les
 travaux**, et non les modèles IA qui seront appelés par Jade en production.
 
@@ -116,7 +116,7 @@ les grandes sources r21, les assets LFS, les versions et les backups sans
 - Les modèles de dialogue de Jade restent configurables.
 - Les outils, accès payants et plateformes externes ne sont pas activés
   silencieusement.
-- Le dépôt Jade reste **privé** ; aucune autorisation de publication,
+- En octobre 2026, le dépôt de travail était privé. Cette note ne donnait aucune autorisation de publication,
   d'effacement de secrets ou d'historique Git n'est apportée par cette note.
 - Pas de merge ou déploiement automatique ; les validations du
   propriétaire et les règles existantes de Codex restent applicables.

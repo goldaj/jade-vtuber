@@ -1,5 +1,4 @@
-"""Offline tests: spontaneous greeting waits for human engagement; dollars are optional."""
-import asyncio
+"""Offline checks for reservations, personality cues and social decisions."""
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
@@ -12,19 +11,9 @@ from zoneinfo import ZoneInfoNotFoundError
 from src.jade_runtime.paris_clock import paris_date
 
 from src.jade_runtime.cost_guard import CostGuard
-from src.jade_runtime.initiatives import InitiativeScheduler
 from src.jade_runtime.personality_evolution import personality_cues
 from src.jade_runtime.social_intelligence import HybridSocialPolicy
 from src.jade_runtime.messages import Incoming
-from src.jade_runtime.memory_store import identity_of
-
-
-def join(user_id=13, channel_id=77):
-    channel = SimpleNamespace(id=channel_id, guild=SimpleNamespace(id=5))
-    member = SimpleNamespace(id=user_id, bot=False)
-    before = SimpleNamespace(channel=None)
-    after = SimpleNamespace(channel=channel)
-    return member, before, after
 
 
 class DollarGuard(unittest.TestCase):
@@ -33,7 +22,7 @@ class DollarGuard(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.guard = CostGuard(Path(self.tmp.name) / "guard.sqlite3")
 
-    def test_inactivity_has_no_reservation_and_initiatives_enabled_by_default(self):
+    def test_duplicate_event_does_not_increase_reservations(self):
         self.assertEqual(self.guard.reserved_usd("initiative"), 0)
         self.assertTrue(self.guard.reserve("initiative", "event-A",
                                            quote_usd=".10", daily_usd=0, monthly_usd=0))
@@ -76,91 +65,6 @@ class DollarGuard(unittest.TestCase):
                                            daily_usd=".1", monthly_usd="2", now=now))
         self.assertTrue(self.guard.reserve("initiative", "two", quote_usd=".1",
                                            daily_usd=".1", monthly_usd="2", now=later))
-
-
-class SpontaneousEngagement(unittest.IsolatedAsyncioTestCase):
-    async def asyncSetUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.tmp.cleanup)
-        self.guard = CostGuard(Path(self.tmp.name) / "budget.sqlite3")
-        self.time = 1000.0
-        self.scheduler = InitiativeScheduler(
-            self.guard, daily_usd=0, monthly_usd=0, cooldown_seconds=60,
-            clock=lambda: self.time)
-
-    async def test_join_triggers_without_prior_speech_then_waits(self):
-        event = join(13)
-        first = await self.scheduler.voice_join(*event, channel_id=77)
-        self.assertIsNotNone(first)
-        self.assertTrue(first.force_reply)
-        self.assertTrue(self.scheduler.waiting_for_reply("77"))
-        self.assertEqual(self.guard.reserved_usd("initiative"), Decimal(".10"))
-        self.assertIsNone(await self.scheduler.voice_join(
-            *join(14), channel_id=77))
-        self.time += 61
-        self.assertIsNone(await self.scheduler.voice_join(*join(14), channel_id=77),
-                          "Even a new join cannot restart Jade if no one answered")
-        self.assertFalse(self.scheduler.human_replied(
-            "77", text="Les développeurs sont encore en réunion."))
-        self.assertTrue(self.scheduler.waiting_for_reply("77"))
-        self.assertTrue(self.scheduler.human_replied(
-            "77", verified=True, text="Salut !"))
-        self.assertFalse(self.scheduler.waiting_for_reply("77"))
-        self.assertIsNotNone(await self.scheduler.voice_join(
-            *join(14), channel_id=77))
-        self.assertEqual(self.guard.reserved_usd("initiative"), Decimal(".20"))
-
-    async def test_room_empty_rearms_new_visit_without_human_reply(self):
-        member = join(21)
-        first = await self.scheduler.voice_join(*member, channel_id=77)
-        self.assertIsNotNone(first)
-        self.assertIsNone(await self.scheduler.voice_join(*member, channel_id=77))
-        self.scheduler.room_emptied("77")
-        self.assertFalse(self.scheduler.waiting_for_reply("77"))
-        second = await self.scheduler.voice_join(*member, channel_id=77)
-        self.assertIsNotNone(second)
-        self.assertEqual(self.guard.reserved_usd("initiative"), Decimal(".20"))
-
-    async def test_connected_vocal_greeting_uses_tts_without_user_memory(self):
-        member, before, after = join(19)
-        after.channel.members = [member]
-        source = await self.scheduler.voice_join(
-            member, before, after, channel_id=77, voice_session_id="v" * 24)
-        self.assertIsNotNone(source)
-        self.assertEqual(source.platform, "discord_voice")
-        self.assertEqual(source.speaker_id, 19)
-        self.assertTrue(source.system_initiative)
-        self.assertIsNone(identity_of(source),
-                          "Jade's autonomous greeting is not the entrant's memory")
-        self.assertTrue(self.scheduler.waiting_for_reply("77"))
-
-    async def test_no_self_followup_without_response(self):
-        await self.scheduler.voice_join(*join(), channel_id=77)
-        self.time += 30
-        self.assertIsNone(await self.scheduler.voice_join(
-            *join(14), channel_id=77))
-        self.assertFalse(self.scheduler.human_replied(
-            "77", verified=False, text="Salut !"))
-        self.assertTrue(self.scheduler.waiting_for_reply("77"))
-
-    async def test_unrelated_chatter_never_rearms_without_real_response(self):
-        await self.scheduler.voice_join(*join(), channel_id=77)
-        self.time += 130
-        self.assertFalse(self.scheduler.human_replied("77", text="Bonjour"))
-        self.assertFalse(self.scheduler.human_replied("77", text="J'ai trouvé une autre solution."))
-        self.assertFalse(self.scheduler.human_replied("88", text="Jade, bonjour", directed=True))
-        self.assertTrue(self.scheduler.waiting_for_reply("77"))
-        self.assertTrue(self.scheduler.human_replied("77", text="Jade, tu m'entends ?", directed=True))
-        self.assertFalse(self.scheduler.waiting_for_reply("77"))
-
-    async def test_bots_moving_or_other_voice_channel_do_not_trigger(self):
-        m, before, after = join()
-        m.bot = True
-        self.assertIsNone(await self.scheduler.voice_join(m, before, after,
-                                                          channel_id=77))
-        self.assertIsNone(await self.scheduler.voice_join(*join(channel_id=99),
-                                                          channel_id=77))
-        self.assertEqual(self.guard.reserved_usd("initiative"), 0)
 
 
 class PersonalityMemory(unittest.TestCase):

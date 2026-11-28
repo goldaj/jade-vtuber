@@ -1,6 +1,6 @@
 # Backlog opérationnel de Jade — source de vérité
 
-**Décision propriétaire du 27/11/2026 — maintenance et tests :** r21 est le seul modèle maintenu et testé. r20, ses ressources et le sélecteur existant restent dans l’application, mais aucune nouvelle maintenance ni recette r20 ne doit être engagée. Cette décision s’applique à toutes les cartes actives, au-delà du lot Triste/Colère. Les anciennes validations et preuves datées restent conservées comme historique ; elles ne prescrivent pas de nouveaux essais r20.
+**Modèle de référence.** Le r21 est le seul modèle maintenu et recetté. Le r20 reste archivé. Le renderer Windows en dépend encore. DEV-001 suit l’autonomie du r21 à tous les points d’entrée.
 
 **Arbitrage du 21/11/2026 :** les cartes exigeant le **microphone physique local du PC**, **Twitch** ou **OBS** sont suspendues en `Bloqué` jusqu'à nouvel ordre. Ce n'est **pas** une suspension générale des travaux sur Windows ni des tests Discord/Android/mémoire. Les sous-tests indépendants restent possibles, mais les cartes mixtes ne sont pas closes. [Passation](../operations/handoffs/2026-11-21-chatgpt-suspension-micro-twitch-obs.md).
 
@@ -33,13 +33,13 @@
 
 **DEV-032 (UX-19) → REC-039 (P2, Done le 22/11/2026)** : génération de fichiers mobile et Discord, en texte et vocal, intégrée sur `develop`. **Le propriétaire confirme explicitement après recette réelle que l'ensemble de l'US fonctionne**. Les deux parcours mobiles avaient été vérifiés avant le correctif ; les trois parcours Discord ont été acceptés globalement après activation du mode `all` par défaut. [Statut canonique REC-039](02-RECETTE.md). Aucun DEV-032 actif en parallèle. DEV-033/034/035 (PER-01/02/03, images) restent « À qualifier ». **NEW-16 (P2) est prise en charge dans [DEV-036](01-DEVELOPPEMENT.md), statut « En cours »** : rappels persistants, push Android en arrière-plan et ouverture ciblée codés ; recette réelle Android et configuration Web Push restent ouvertes ; l'idée n'est plus active dans le catalogue prospectif et les autres idées supprimées ne sont pas réintroduites.
 
-**Lot vocal mobile — développement du 26/11 :** le code testé hors réseau dans `90ec0c7` est intégré sur `develop`, sur demande explicite du propriétaire pour son test mobile. La mise à jour develop `b4a85e8` et ses cartes DEV-053 / ART-014 sont conservées dans la fusion. **DEV-046/048/051/049/047/050/040 → REC-044/045/046/047/048/049/050**, avec recette réelle restante et sans doublon DEV/REC. **DEV-041 → [REC-052](02-RECETTE.md#rec-052--voix-pétillante-avec-lavatar-de-jade-ancienne-dev-041)** après le choix de Pétillante pour l’essai ; **DEV-052 → REC-051**, P2 : automatisme Discord désormais développé sur instruction du 27/11, sous 50 EUR ou 40 EUR si suivi incomplet, avec un interrupteur unique et sans effet sur le mobile. [Passation et preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md) · [Architecture du code](../architecture/LIVE_MOBILE.md).
+**Lot vocal mobile — développement du 26/11 :** le code testé hors réseau dans `90ec0c7` est intégré sur `develop`, sur demande explicite du propriétaire pour son test mobile. La mise à jour develop `b4a85e8` et ses cartes DEV-053 / ART-014 sont conservées dans la fusion. **DEV-046/048/051/049/047/050/040 → REC-044/045/046/047/048/049/050**, avec recette réelle restante et sans doublon DEV/REC. **DEV-041 → [REC-052](02-RECETTE.md#rec-052--voix-friponne-avec-lavatar-de-jade-ancienne-dev-041)** après le choix de Pétillante pour l’essai ; **DEV-052 → REC-051**, P2 : automatisme Discord désormais développé sur instruction du 27/11, sous 50 EUR ou 40 EUR si suivi incomplet, avec un interrupteur unique et sans effet sur le mobile. [Passation et preuves](../operations/handoffs/2026-11-26-chatgpt-live-mobile-implementation.md) · [Architecture du code](../architecture/LIVE_MOBILE.md).
 
 **Transferts du 23/11 : DEV-037 (NEW-29, sous-titres mobiles, P2) et DEV-038 (NEW-38, autonomie fonctionnelle, P1) sont À qualifier, sans développement lancé. Les deux anciennes idées ont été retirées du catalogue actif.**
 
 **Lot mobile du 26/11 :** [REC-041](02-RECETTE.md) (P1, ancienne DEV-042) couvre la recette Android du zoom et du déplacement du r21. [DEV-043](01-DEVELOPPEMENT.md#dev-043--service-jade-indépendant-du-pc) et [DEV-044](01-DEVELOPPEMENT.md#dev-044--application-android-installable) (P2) couvrent la continuité sur VPS et le client Android. [REC-043](02-RECETTE.md) (P3, ancienne UX-20) couvre la recette de la secousse du r21. [Décisions et ordre proposé](../operations/handoffs/2026-11-26-codex-backlog-mobile.md)
 
-**Quick wins engagés le 22/11 : DEV-027 (VIS-04) et DEV-028 (RTE-12) sont en développement sur `develop`.** **Élargissement validé le même jour : DEV-029 (VIS-07) en développement, DEV-030 (LAT-10) À faire.** Les idées prospectives correspondantes sont retirées de la liste active, sans duplication. La CI mémoire en cours de remise au vert est suivie séparément.
+**Visibilité, journaux et délais classiques.** La suspension du rendu hors champ et l’hystérésis sont présentes dans la PWA. Les traces de livraison précisent ce que chaque canal a confirmé. Vérifier les suites dans les cartes DEV-027/028/029. L’harmonisation des délais classiques est suivie dans DEV-030.
 
 **Microphone physique du PC, Twitch et OBS restent suspendus** dans leurs cartes concernées. [Décision et limites](../operations/handoffs/2026-11-22-validation-rec031-rec033-rec034.md).
 
@@ -54,8 +54,8 @@
 ---
 
 **Référence :** `goldaj/jade-vtuber` · branche `develop` · créé le 18 novembre 2026.
-**Périmètre :** tâches identifiées pour livrer, installer, recetter et maintenir **la Jade déjà en chantier**. **Ne pas confondre** avec les [97 idées prospectives restantes](../ameliorations/README.md), qui restent un catalogue distinct, ni avec les archives historiques.
-**Photographie GitHub initiale :** aucune issue ni PR ouverte au relevé du 18 novembre ; les modules existants demeurent **codés** même sans recette physique. Les dernières CI hors ligne et le scan des secrets ont réussi au SHA `01c7551f8b4f4aae22e7e42a5a090fc05fbaac99`. Le PC, les clés et les comptes n'ont pas été inspectés par cet audit.
+**Périmètre :** tâches identifiées pour livrer, installer, recetter et maintenir **la Jade déjà en chantier**. **Ne pas confondre** avec les [idées prospectives restantes](../ameliorations/README.md), qui restent un catalogue distinct, ni avec les archives historiques.
+
 
 ## Organisation retenue par le propriétaire
 
@@ -81,7 +81,7 @@ Les sous-tâches de recette et les étapes matérielles restent séparées lorsq
 
 ### A · Jade actuelle opérationnelle
 
-Une instance `--all-channels` réellement utilisable, son, Discord écrit/vocal, Twitch, micro PC, accès HTTP local et PWA Android, mémoire opt-in et rendu mobile r21, avec tests des audiences, des coupures, du coût et des limites constatées. **La finition artistique finale du r21 n’est pas bloquante pour ce jalon.** Le renderer Windows historique r20 reste présent sans maintenance ni recette ; son raccordement r21 est suivi dans DEV-001. Les suspensions de recette existantes restent applicables. Une preuve matérielle reste à collecter ; les fonctionnalités sont néanmoins codées dans `develop`.
+Une instance `--all-channels` réellement utilisable, son, Discord écrit/vocal, Twitch, micro PC, accès HTTP local et PWA Android, mémoire selon l’identité du canal et rendu mobile r21, avec tests des audiences, des coupures, du coût et des limites constatées. **La finition artistique finale du r21 n’est pas bloquante pour ce jalon.** Le renderer Windows historique r20 reste présent sans maintenance ni recette ; son raccordement r21 est suivi dans DEV-001. Les suspensions de recette existantes restent applicables. Une preuve matérielle reste à collecter ; les fonctionnalités sont néanmoins codées dans `develop`.
 
 ### B · Jade visuellement aboutie
 
